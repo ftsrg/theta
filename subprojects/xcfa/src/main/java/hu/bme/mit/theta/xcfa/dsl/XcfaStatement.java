@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -43,10 +43,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
 
-	private Stmt stmt = null;
-
 	private final Scope scope;
 	private final StmtContext context;
+	private Stmt stmt = null;
 
 	XcfaStatement(final Scope scope, final StmtContext context) {
 		this.scope = checkNotNull(scope);
@@ -54,7 +53,7 @@ final class XcfaStatement {
 	}
 
 	Stmt instantiate() {
-		if(stmt != null) return stmt;
+		if (stmt != null) return stmt;
 		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope);
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
@@ -101,10 +100,8 @@ final class XcfaStatement {
 			final Expr<?> expr = expression.instantiate();
 
 			if (expr.getType().equals(var.getType())) {
-				@SuppressWarnings("unchecked")
-				final VarDecl<Type> tVar = (VarDecl<Type>) var;
-				@SuppressWarnings("unchecked")
-				final Expr<Type> tExpr = (Expr<Type>) expr;
+				@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
+				@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
 				return Assign(tVar, tExpr);
 			} else {
 				throw new IllegalArgumentException("Type of " + var + " is incompatible with " + expr);
@@ -116,14 +113,13 @@ final class XcfaStatement {
 			final String callee = ctx.funcName.getText();
 
 			final VarDecl<?> var;
-			if(ctx.lhs != null){
+			if (ctx.lhs != null) {
 				final String lhsId = ctx.lhs.getText();
 				Optional<? extends Symbol> opt = scope.resolve(lhsId);
 				checkState(opt.isPresent());
 				InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 				var = (VarDecl<?>) lhsSymbol.instantiate();
-			}
-			else var = null;
+			} else var = null;
 
 			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent());
@@ -133,17 +129,17 @@ final class XcfaStatement {
 
 			List<VarDecl<?>> params = new ArrayList<>();
 
-			if(ctx.params != null) {
+			if (ctx.params != null) {
 				ctx.params.forEach(token -> {
 					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
 					checkState(optionalSymbol.isPresent());
 					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
-					params.add( (VarDecl<?>) varSymbol.instantiate() );
+					params.add((VarDecl<?>) varSymbol.instantiate());
 
 				});
 			}
 			final CallStmt callStmt = new CallStmt(var, procedure, params);
-			if(procedure == null) ((XcfaProcedureSymbol)calleeSymbol).addIncompleteInstantiation(callStmt);
+			if (procedure == null) ((XcfaProcedureSymbol) calleeSymbol).addIncompleteInstantiation(callStmt);
 			return callStmt;
 		}
 
@@ -160,7 +156,7 @@ final class XcfaStatement {
 			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
 
 			final boolean atomic = ctx.atomic != null;
-			final String ordering = atomic ?  ctx.ordering.getText() : null;
+			final String ordering = atomic ? ctx.ordering.getText() : null;
 
 			return new StoreStmt(lhs, rhs, atomic, ordering);
 
@@ -179,7 +175,7 @@ final class XcfaStatement {
 			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
 
 			final boolean atomic = ctx.atomic != null;
-			final String ordering = atomic ?  ctx.ordering.getText() : null;
+			final String ordering = atomic ? ctx.ordering.getText() : null;
 
 			return new LoadStmt(lhs, rhs, atomic, ordering);
 		}

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedure.Location> {
 
-	private XCFA.Process.Procedure.Location loc = null;
-
 	private final boolean init;
 	private final boolean finall;
 	private final boolean error;
 	private final String name;
-
 	private final Map<String, String> dictionary;
+	private XCFA.Process.Procedure.Location loc = null;
 
 	XcfaLocationSymbol(final LocContext context) {
 		checkNotNull(context);
@@ -61,7 +59,7 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 	}
 
 	public XCFA.Process.Procedure.Location instantiate() {
-		if(loc != null) return loc;
+		if (loc != null) return loc;
 		return loc = new XCFA.Process.Procedure.Location(name, dictionary);
 	}
 

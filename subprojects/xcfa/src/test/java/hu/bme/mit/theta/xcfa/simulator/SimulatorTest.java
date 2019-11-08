@@ -17,23 +17,23 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class SimulatorTest {
 
-    @Parameter()
-    public String filepath;
+	@Parameter()
+	public String filepath;
 
-    @Parameters()
-    public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{"/functions-global-local.xcfa"},
-                new Object[]{"/simple-test.xcfa"}
-            );
-    }
+	@Parameters()
+	public static Collection<Object[]> data() {
+		return Arrays.asList(
+				new Object[]{"/functions-global-local.xcfa"},
+				new Object[]{"/simple-test.xcfa"}
+		);
+	}
 
-    @Test
-    public void test() throws IOException {
-        System.out.println(new File(".").getAbsolutePath());
-        //final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
-        final InputStream inputStream = getClass().getResourceAsStream(filepath);
-        XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        new Simulator(xcfa);
-    }
+	@Test
+	public void test() throws IOException {
+		System.out.println(new File(".").getAbsolutePath());
+		//final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
+		final InputStream inputStream = getClass().getResourceAsStream(filepath);
+		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+		new Simulator(xcfa);
+	}
 }

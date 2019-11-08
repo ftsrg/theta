@@ -39,7 +39,7 @@ public final class XcfaCliTest {
     }
 
     @Test
-    public void test(){
+    public void test() {
         XcfaCli.main(new String[]{"--model", getClass().getResource(filepath).getFile()});
     }
 

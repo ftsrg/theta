@@ -21,7 +21,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -42,31 +44,31 @@ public final class XCFA {
 		mainProcess = builder.mainProcess;
 	}
 
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	public CFA createCFA() {
 		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
 		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
 		CFA.Builder builder = CFA.builder();
 		CFA.Loc initLoc = null, errorLoc = null, finalLoc = null;
-		for(Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
+		for (Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
 			List<CFA.Loc> locations = new ArrayList<>();
 			locations.add(builder.createLoc(e.source.name));
-			for(int i = 1; i<e.getStmts().size(); ++i)
+			for (int i = 1; i < e.getStmts().size(); ++i)
 				locations.add(builder.createLoc(""));
 			locations.add(builder.createLoc(e.target.name));
-			for(int i = 0; i<e.getStmts().size(); ++i)
-				builder.createEdge(locations.get(i), locations.get(i+1), e.stmts.get(i));
-			if(e.source == mainProcess.mainProcedure.initLoc) initLoc = locations.get(0);
-			if(e.target == mainProcess.mainProcedure.errorLoc) errorLoc = locations.get(locations.size()-1);
-			else if(e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size()-1);
+			for (int i = 0; i < e.getStmts().size(); ++i)
+				builder.createEdge(locations.get(i), locations.get(i + 1), e.stmts.get(i));
+			if (e.source == mainProcess.mainProcedure.initLoc) initLoc = locations.get(0);
+			if (e.target == mainProcess.mainProcedure.errorLoc) errorLoc = locations.get(locations.size() - 1);
+			else if (e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size() - 1);
 		}
 		builder.setInitLoc(initLoc);
 		builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
 		return builder.build();
-    }
-
-	public static Builder builder() {
-		return new Builder();
 	}
 
 	public List<VarDecl<?>> getVars() {
@@ -251,21 +253,16 @@ public final class XCFA {
 
 			public static final class Builder {
 				private static final String RESULT_NAME = "result";
+				private final List<VarDecl<?>> params;
+				private final List<VarDecl<?>> vars;
+				private final List<Location> locs;
+				private final List<Edge> edges;
 				private boolean built;
-
 				private Type rtype;
 				private VarDecl<?> result;
-
-				private final List<VarDecl<?>> params;
-
-				private final List<VarDecl<?>> vars;
-
-				private final List<Location> locs;
 				private Location initLoc;
 				private Location errorLoc;
 				private Location finalLoc;
-
-				private final List<Edge> edges;
 
 				private Builder() {
 					params = new ArrayList<>();
@@ -275,25 +272,24 @@ public final class XCFA {
 					built = false;
 				}
 
-				public void createParam(final VarDecl<?> param){
+				public void createParam(final VarDecl<?> param) {
 					checkNotBuilt();
 					params.add(param);
 				}
 
-				public void createVar(final VarDecl<?> var){
+				public void createVar(final VarDecl<?> var) {
 					checkNotBuilt();
-					if(var.getName().equals(RESULT_NAME)) setResult(var);
+					if (var.getName().equals(RESULT_NAME)) setResult(var);
 					vars.add(var);
 				}
 
-				public Location addLoc(Location loc){
+				public Location addLoc(Location loc) {
 					checkNotBuilt();
 					locs.add(loc);
 					return loc;
 				}
 
-				public void addEdge(Edge e)
-				{
+				public void addEdge(Edge e) {
 					checkNotBuilt();
 					checkArgument(locs.contains(e.source), "Invalid source.");
 					checkArgument(locs.contains(e.target), "Invalid target.");
@@ -360,8 +356,7 @@ public final class XCFA {
 					this.finalLoc = finalLoc;
 				}
 
-				public Procedure build()
-				{
+				public Procedure build() {
 					checkState(initLoc != null, "Initial location must be set.");
 					checkState(finalLoc != null, "Final location must be set.");
 					//checkState(errorLoc != null, "Error location must be set."); //TODO:
@@ -378,13 +373,10 @@ public final class XCFA {
 		}
 
 		public static final class Builder {
-			private boolean built;
-
 			private final List<VarDecl<?>> params;
-
 			private final List<VarDecl<?>> vars;
-
 			private final List<Procedure> procedures;
+			private boolean built;
 			private Procedure mainProcedure;
 
 			private String name;
@@ -434,8 +426,7 @@ public final class XCFA {
 				this.name = name;
 			}
 
-			public Process build()
-			{
+			public Process build() {
 				checkNotBuilt();
 				checkState(mainProcedure != null, "Main procedure must be set.");
 				Process process = new Process(this);
@@ -446,11 +437,9 @@ public final class XCFA {
 	}
 
 	public static final class Builder {
-		private boolean built;
-
 		private final List<VarDecl<?>> vars;
-
 		private final List<XCFA.Process> processes;
+		private boolean built;
 		private XCFA.Process mainProcess;
 
 		private Builder() {

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,13 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Procedure> implements Scope {
 
-	private XCFA.Process.Procedure procedure = null;
-	private boolean startedBuilding = false;
-	private Set<CallStmt> incompleteInstantiations;
-
 	private final XcfaProcessSymbol scope;
 	private final SymbolTable symbolTable;
-
 	private final String name;
 	private final boolean main;
 	private final Type rtype;
@@ -46,6 +41,9 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 	private final List<XcfaVariableSymbol> variables;
 	private final List<XcfaLocationSymbol> locations;
 	private final List<XcfaEdge> edges;
+	private XCFA.Process.Procedure procedure = null;
+	private boolean startedBuilding = false;
+	private Set<CallStmt> incompleteInstantiations;
 
 	XcfaProcedureSymbol(final XcfaProcessSymbol scope, final XcfaDslParser.ProcedureDeclContext context) {
 		checkNotNull(context);
@@ -54,23 +52,21 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		incompleteInstantiations = new HashSet<>();
 		name = context.id.getText();
 		main = (context.main != null);
-		if(context.varDecls != null) {
+		if (context.varDecls != null) {
 			variables = createVariables(context.varDecls);
 			declareAll(variables);
-		}
-		else variables = null;
-		if(context.paramDecls != null) {
+		} else variables = null;
+		if (context.paramDecls != null) {
 			params = createParams(context.paramDecls.decls);
 			declareAll(params);
-		}
-		else params = null;
+		} else params = null;
 
 		locations = createLocations(context.locs);
-        declareAll(locations);
+		declareAll(locations);
 
-        edges = createEdges(context.edges);
-		if(context.rtype != null) rtype = new XcfaType(context.rtype).instantiate();
-        else rtype = null;
+		edges = createEdges(context.edges);
+		if (context.rtype != null) rtype = new XcfaType(context.rtype).instantiate();
+		else rtype = null;
 	}
 
 	@Override
@@ -89,18 +85,19 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 	}
 
 	public XCFA.Process.Procedure instantiate() {
-		if(procedure != null) return procedure;
-		else if(startedBuilding) return null;
+		if (procedure != null) return procedure;
+		else if (startedBuilding) return null;
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
 		builder.setRtype(rtype);
-		if(params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
-		if(variables != null) variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
+		if (variables != null)
+			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
 		locations.forEach(xcfaLocationSymbol -> {
 			XCFA.Process.Procedure.Location loc = xcfaLocationSymbol.instantiate();
 			builder.addLoc(loc);
-			if(xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
-			else if(xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
-			else if(xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
+			if (xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
+			else if (xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
+			else if (xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
 		});
 		edges.forEach(xcfaEdgeDefinition -> builder.addEdge(xcfaEdgeDefinition.instantiate()));
 		procedure = builder.build();
@@ -140,6 +137,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		}
 		return result;
 	}
+
 	private List<XcfaParamSymbol> createParams(final List<XcfaDslParser.DeclContext> declContexts) {
 		final List<XcfaParamSymbol> result = new ArrayList<>();
 		for (final XcfaDslParser.DeclContext declContext : declContexts) {
@@ -167,7 +165,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 				nErrorLocs++;
 			}
 
-			for(final XcfaDslParser.CommentContext commentContext : locContext.comments) {
+			for (final XcfaDslParser.CommentContext commentContext : locContext.comments) {
 				symbol.addDictionaryEntry(commentContext.id.getText(), commentContext.value.getText());
 			}
 			result.add(symbol);
