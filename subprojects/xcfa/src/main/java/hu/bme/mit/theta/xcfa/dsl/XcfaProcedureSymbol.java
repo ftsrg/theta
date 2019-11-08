@@ -87,6 +87,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 	public XCFA.Process.Procedure instantiate() {
 		if (procedure != null) return procedure;
 		else if (startedBuilding) return null;
+		startedBuilding = true;
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
 		builder.setRtype(rtype);
 		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
