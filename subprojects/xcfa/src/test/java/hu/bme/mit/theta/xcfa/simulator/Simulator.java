@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Budapest University of Technology and Economics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
@@ -51,7 +67,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 
 	@Override
 	public Boolean visit(XcfaCallStmt _stmt, CallState param) {
-	    Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
+		Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
 		CallStmt stmt = (CallStmt) _stmt;
 		// paraméterek befelé: stmt.getParams()
 		// az, amit hívnak: stmt.getProcedure()
@@ -205,7 +221,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 		public void begin(List<VarDecl<?>> parameters) {
 			//  map everything *first* to the indexed version, because modifying the numbering can have effect to the variables
 			// for example: gcd(a,b) call to gcd(b,a%b) would change `a`'s meaning first
-            // so it's basically the same as gcd(a',b') { gcd(a':=b,b':=a%b) }
+			// so it's basically the same as gcd(a',b') { gcd(a':=b,b':=a%b) }
 			List<Decl<?>> callerParamsIndexed = new ArrayList<>(parameters);
 			callerParamsIndexed.replaceAll((a) -> ((VarDecl<?>) a).getConstDecl(parent.parent.vars.get((VarDecl<?>) a)));
 
@@ -215,7 +231,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 			// go through all parameters, "push stack" with VarIndexing
 			for (int i = 0; i < parameters.size(); i++) {
 				Decl<?> callerParamIndexed = callerParamsIndexed.get(i);
-                Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParamIndexed);
+				Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParamIndexed);
 
 				VarDecl<?> calleeParam = procedure.getParams().get(i);
 
@@ -225,12 +241,12 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 				Decl<?> calleeParamIndexed = calleeParam.getConstDecl(calleeParamIndex);
 
 				// Uninitialized parameter value means that the callee parameter will be uninitialized too
-                if (callerParameterValue.isPresent())
-                    parent.parent.valuation.put(calleeParamIndexed, callerParameterValue.get());
+				if (callerParameterValue.isPresent())
+					parent.parent.valuation.put(calleeParamIndexed, callerParameterValue.get());
 			}
 
 			// "push" local variables with VarIndexing
-            // result is a variable too, it is pushed here
+			// result is a variable too, it is pushed here
 			for (VarDecl var : procedure.getVars()) {
 				parent.parent.vars = parent.parent.vars.inc(var);
 			}
@@ -241,12 +257,12 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 		 * Deletes values associated with the current values.
 		 */
 		public void end() {
-		    // All values that must be calculated (result) must be calculated at the start of the function
-            // After, all variables and parameters can be popped and removed from the valuation
-            // Values are removed so a bug does not cause us to use a previous call's return value
-            //  (and for memory efficiency)
-            // AFTER popping the variables, we are in the caller's state, which means we can WRITE the result of the variables
-            // So: calculate with callee's state, pop stack, and write result only then
+			// All values that must be calculated (result) must be calculated at the start of the function
+			// After, all variables and parameters can be popped and removed from the valuation
+			// Values are removed so a bug does not cause us to use a previous call's return value
+			//  (and for memory efficiency)
+			// AFTER popping the variables, we are in the caller's state, which means we can WRITE the result of the variables
+			// So: calculate with callee's state, pop stack, and write result only then
 
 			// evaluate result
 			Optional<? extends LitExpr<?>> result = Optional.empty();
@@ -262,24 +278,24 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 				parent.parent.vars = parent.parent.vars.inc(var, -1);
 			}
 
-            // "pop" variables
-            for (VarDecl var : procedure.getVars()) {
-                int index = parent.parent.vars.get(var);
-                parent.parent.valuation.remove(var.getConstDecl(index));
-                parent.parent.vars = parent.parent.vars.inc(var, -1);
-            }
+			// "pop" variables
+			for (VarDecl var : procedure.getVars()) {
+				int index = parent.parent.vars.get(var);
+				parent.parent.valuation.remove(var.getConstDecl(index));
+				parent.parent.vars = parent.parent.vars.inc(var, -1);
+			}
 
 			// write result
 			if (procedure.getResult() != null) {
-                // return variable should have been written to...
+				// return variable should have been written to...
 				Preconditions.checkState(result.isPresent(), "Procedure has return value, but nothing is returned.");
 				Decl<? extends Type> resultDecl = resultVar.getConstDecl(parent.parent.vars.get(resultVar));
-                parent.parent.valuation.put(resultDecl, result.get());
+				parent.parent.valuation.put(resultDecl, result.get());
 			} else {
 				Preconditions.checkState(!result.isPresent(), "Procedure has no return value, but something is returned.");
 			}
 
-            // tell parent we are finished
+			// tell parent we are finished
 			parent.pop();
 		}
 
@@ -291,21 +307,21 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 			}
 			for (Edge edge : currentLocation.getOutgoingEdges()) {
 				// TODO multiple stmts on an edge is not fully supported
-                // some special stmt could mess up everything with multiple statements:
+				// some special stmt could mess up everything with multiple statements:
 				// L0 -> L1 {
 				//   call proc()
 				//   a = a + 2
 				// }
-                // this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
+				// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
 
-                // Because of this, currently only one stmt/edge is enforced:
-                Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
+				// Because of this, currently only one stmt/edge is enforced:
+				Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
 				for (Stmt stmt : edge.getStmts()) {
 					if (stmt.accept(parent.parent.simulator, this)) {
 						currentLocation = edge.getTarget();
 
 						// test that the procedure did not get to the error location
-                        Preconditions.checkState(currentLocation != procedure.getErrorLoc(), "Test failed: Reached error location.");
+						Preconditions.checkState(currentLocation != procedure.getErrorLoc(), "Test failed: Reached error location.");
 						// step succeeded
 						return true;
 					}

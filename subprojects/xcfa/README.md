@@ -1,4 +1,5 @@
 ## Overview
+> :warning: **This README has not yet been modified from its ancestor project, `cfa`**
 
 This project contains the Control Flow Automata (XCFA) formalism. Its main purpose is to describe programs as a graphs, where edges are annotated with program statements. The project contains:
 

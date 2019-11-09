@@ -1,4 +1,5 @@
 ## Overview
+> :warning: **This README has not yet been modified from its ancestor project, `cfa-cli`**
 
 This project contains an executable tool (command line) for running analyses on CFAs.
 
