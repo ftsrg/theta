@@ -32,6 +32,7 @@ The table below shows the architecture and the projects. Each project contains a
 Tools are concrete instantiations of the framework to solve a certain problem using the built in algorithms. Currently, the following 3 tools are available. Follow the links for more information about each tool.
 
 * [`theta-cfa`](subprojects/cfa): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
+  * [Gazer](https://github.com/FTSRG/gazer) is an LLVM-based frontend to verify C programs using theta-cfa.
 * [`theta-sts`](subprojects/sts): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
 * [`theta-xta`](subprojects/xta): Verification of Uppaal timed automata (XTA).
 
