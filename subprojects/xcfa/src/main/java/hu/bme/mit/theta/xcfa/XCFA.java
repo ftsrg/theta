@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -72,11 +73,11 @@ public final class XCFA {
 	}
 
 	public List<VarDecl<?>> getVars() {
-		return vars;
+		return Collections.unmodifiableList(vars);
 	}
 
 	public List<Process> getProcesses() {
-		return processes;
+		return Collections.unmodifiableList(processes);
 	}
 
 	public Process getMainProcess() {
@@ -106,15 +107,15 @@ public final class XCFA {
 		}
 
 		public List<VarDecl<?>> getParams() {
-			return params;
+			return Collections.unmodifiableList(params);
 		}
 
 		public List<VarDecl<?>> getVars() {
-			return vars;
+			return Collections.unmodifiableList(vars);
 		}
 
 		public List<Procedure> getProcedures() {
-			return procedures;
+			return Collections.unmodifiableList(procedures);
 		}
 
 		public Procedure getMainProcedure() {
@@ -161,15 +162,15 @@ public final class XCFA {
 			}
 
 			public List<VarDecl<?>> getParams() {
-				return params;
+				return Collections.unmodifiableList(params);
 			}
 
 			public List<VarDecl<?>> getVars() {
-				return vars;
+				return Collections.unmodifiableList(vars);
 			}
 
 			public List<Location> getLocs() {
-				return locs;
+				return Collections.unmodifiableList(locs);
 			}
 
 			public Location getInitLoc() {
@@ -185,7 +186,7 @@ public final class XCFA {
 			}
 
 			public List<Edge> getEdges() {
-				return edges;
+				return Collections.unmodifiableList(edges);
 			}
 
 			public VarDecl<?> getResult() {
@@ -216,11 +217,11 @@ public final class XCFA {
 				}
 
 				public List<Edge> getIncomingEdges() {
-					return incomingEdges;
+					return Collections.unmodifiableList(incomingEdges);
 				}
 
 				public List<Edge> getOutgoingEdges() {
-					return outgoingEdges;
+					return Collections.unmodifiableList(outgoingEdges);
 				}
 			}
 
@@ -247,7 +248,7 @@ public final class XCFA {
 				}
 
 				public List<Stmt> getStmts() {
-					return stmts;
+					return Collections.unmodifiableList(stmts);
 				}
 			}
 
@@ -309,15 +310,15 @@ public final class XCFA {
 				}
 
 				public List<VarDecl<?>> getParams() {
-					return params;
+					return Collections.unmodifiableList(params);
 				}
 
 				public List<VarDecl<?>> getVars() {
-					return vars;
+					return Collections.unmodifiableList(vars);
 				}
 
 				public List<Location> getLocs() {
-					return locs;
+					return Collections.unmodifiableList(locs);
 				}
 
 				public Location getInitLoc() {
