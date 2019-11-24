@@ -29,12 +29,14 @@ class RuntimeState {
     /**
      * Steps in a deterministic way
      */
-    public boolean step() {
+    public boolean step(Scheduler sched) {
+        ArrayList<Transition> enabledTransitions = new ArrayList<>();
         for (ProcessState state : processStates) {
-            if (state.step()) {
-                return true;
-            }
+            state.collectEnabledTransitions(this, enabledTransitions);
         }
-        return false;
+        if (enabledTransitions.isEmpty())
+            return false;
+        sched.getNextTransition(enabledTransitions).step();
+        return true;
     }
 }

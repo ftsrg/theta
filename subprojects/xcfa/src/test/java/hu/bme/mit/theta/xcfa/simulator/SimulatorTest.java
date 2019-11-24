@@ -41,16 +41,19 @@ public class SimulatorTest {
 		return Arrays.asList(
 				new Object[]{"/functions-global-local.xcfa"},
 				new Object[]{"/fibonacci.xcfa"},
-				new Object[]{"/simple-test.xcfa"}
+				new Object[]{"/simple-test.xcfa"},
+				new Object[]{"/gcd.xcfa"}
 		);
 	}
 
 	@Test
 	public void test() throws IOException {
-		System.out.println(new File(".").getAbsolutePath());
 		//final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		new Simulator(xcfa);
+		Simulator s = new Simulator(xcfa);
+		while (s.step()) {
+			//
+		}
 	}
 }
