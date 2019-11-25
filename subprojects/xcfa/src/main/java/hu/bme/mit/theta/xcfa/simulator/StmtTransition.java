@@ -13,7 +13,7 @@ public class StmtTransition extends ProcessTransition {
 
 	private Edge edge;
 
-	StmtTransition(XCFA.Process p, Edge edge) {
+	public StmtTransition(XCFA.Process p, Edge edge) {
 		super(p);
 		this.edge = edge;
 	}

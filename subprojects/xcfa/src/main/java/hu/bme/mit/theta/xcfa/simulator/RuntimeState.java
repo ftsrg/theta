@@ -14,7 +14,7 @@ import java.util.*;
 
 public class RuntimeState {
 	private Map<XCFA.Process, ProcessState> processStates;
-	XCFA xcfa;
+	private XCFA xcfa;
 	private MutableValuation valuation;
 	private VarIndexing vars;
 
