@@ -31,14 +31,14 @@ import java.util.*;
 public class Simulator {
 
 	private RuntimeState state;
-    private final Scheduler s = enabledTransitions -> enabledTransitions.iterator().next();
+	private final Scheduler s = enabledTransitions -> enabledTransitions.iterator().next();
 
 	public Simulator(XCFA xcfa) {
-		state = new RuntimeState(this, xcfa);
+		state = new RuntimeState(xcfa);
 	}
 
-	boolean step() {
-	    return state.step(s);
-    }
+	public boolean step() {
+		return state.step(s);
+	}
 
 }

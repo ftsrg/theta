@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-abstract public class ProcessTransition implements Transition{
+import hu.bme.mit.theta.xcfa.XCFA;
 
-    protected ProcessState processState;
+abstract public class ProcessTransition implements Transition {
 
-    public ProcessTransition(ProcessState p) {
-        processState = p;
-    }
+	protected XCFA.Process process;
+
+	public ProcessTransition(XCFA.Process p) {
+		process = p;
+	}
 
 }

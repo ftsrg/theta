@@ -8,34 +8,43 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
-class ProcessState {
-    Stack<CallState> callStack;
-    XCFA.Process process;
-    RuntimeState parent;
+public class ProcessState {
+	Stack<CallState> callStack;
+	XCFA.Process process;
+	RuntimeState parent;
 
-    public ProcessState(RuntimeState parent, XCFA.Process process) {
-        this.parent = parent;
-        callStack = new Stack<>();
-        this.process = process;
-        push(process.getMainProcedure(), new ArrayList<>(), null);
-    }
+	public ProcessState(RuntimeState parent, XCFA.Process process) {
+		this.parent = parent;
+		callStack = new Stack<>();
+		this.process = process;
+		push(process.getMainProcedure(), new ArrayList<>(), null);
+	}
 
-    public void pop() {
-        callStack.pop();
-    }
+	public ProcessState(RuntimeState stepParent, ProcessState toCopy) {
+		process = toCopy.process; // no need to copy static structure
+		parent = stepParent;
+		callStack = new Stack<>();
+		for (CallState c : toCopy.callStack) {
+			callStack.push(new CallState(this, c));
+		}
+	}
 
-    public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
-        callStack.push(new CallState(this, procedure, params, resultVar));
-    }
+	public void pop() {
+		callStack.pop();
+	}
 
-    public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
-        callStack.push(new CallState(this, procedure, params));
-    }
+	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
+		callStack.push(new CallState(this, procedure, params, resultVar));
+	}
 
-    public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
-        // process has finished
-        if (callStack.empty())
-            return;
-        callStack.peek().collectEnabledTransitions(x, transitions);
-    }
+	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
+		callStack.push(new CallState(this, procedure, params));
+	}
+
+	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
+		// process has finished
+		if (callStack.empty())
+			return;
+		callStack.peek().collectEnabledTransitions(x, transitions);
+	}
 }

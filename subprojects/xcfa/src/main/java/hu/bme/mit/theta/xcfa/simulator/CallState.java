@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-class CallState {
+public class CallState {
 	/**
 	 * current location, or where-to-return (after returning from current call)
 	 */
@@ -37,6 +37,13 @@ class CallState {
 		this(parent, procedure, parameters, null);
 	}
 
+	public CallState(ProcessState stepParent, CallState toCopy) {
+		parent = stepParent;
+		procedure = toCopy.procedure;
+		currentLocation = toCopy.currentLocation;
+		resultVar = toCopy.resultVar;
+	}
+
 	/**
 	 * Called when the procedure gets called.
 	 * Pushes local variable instances.
@@ -50,9 +57,6 @@ class CallState {
 
 		// TODO this could be checked statically...
 		Preconditions.checkState(callerParamsIndexed.size() == procedure.getParams().size(), "Procedure has wrong number of parameters passed.");
-
-		// TODO there is an error here in the simulator: evaluating parameters and pushing must be done in two stages
-		// TODO write a test case catching the error (GCD?)
 
 		// go through all parameters, "push stack" with VarIndexing
 		for (int i = 0; i < parameters.size(); i++) {
@@ -126,43 +130,9 @@ class CallState {
 		parent.pop();
 	}
 
-	// returning from a function counts as a step
-	public boolean step() {
-		if (currentLocation == procedure.getFinalLoc()) {
-			end();
-			return true;
-		}
-		for (XCFA.Process.Procedure.Edge edge : currentLocation.getOutgoingEdges()) {
-			// TODO multiple stmts on an edge is not fully supported
-			// some special stmt could mess up everything with multiple statements:
-			// L0 -> L1 {
-			//   call proc()
-			//   a = a + 2
-			// }
-			// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
-
-			// Because of this, currently only one stmt/edge is enforced:
-			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-			for (Stmt stmt : edge.getStmts()) {
-				if (!stmt.accept(EnabledTransitionVisitor.getInstance(), parent.parent))
-					continue;
-				stmt.accept(StateUpdateVisitor.getInstance(), this);
-				currentLocation = edge.getTarget();
-
-				// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-				// test that the procedure did not get to the error location
-				Preconditions.checkState(currentLocation != procedure.getErrorLoc(), "Test failed: Reached error location.");
-				// step succeeded
-				return true;
-			}
-		}
-		return false;
-	}
-
 	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
-		// TODO create an end call statement
 		if (currentLocation == procedure.getFinalLoc()) {
-			transitions.add(new LeaveTransition(parent));
+			transitions.add(new LeaveTransition(parent.process));
 			return;
 		}
 		boolean alreadyAddedOne = false;
@@ -173,7 +143,7 @@ class CallState {
 				if (stmt.accept(EnabledTransitionVisitor.getInstance(), x)) {
 					Preconditions.checkState(!alreadyAddedOne, "Probably only 1 edge should be active in a given process.");
 					alreadyAddedOne = true;
-					transitions.add(new StmtTransition(parent, edge));
+					transitions.add(new StmtTransition(parent.process, edge));
 				}
 			}
 		}

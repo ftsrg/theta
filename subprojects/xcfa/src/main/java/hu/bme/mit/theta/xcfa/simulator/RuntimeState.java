@@ -4,39 +4,54 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-class RuntimeState {
-    List<ProcessState> processStates;
-    XCFA xcfa;
-    Simulator simulator;
-    MutableValuation valuation;
-    VarIndexing vars;
+public class RuntimeState {
+	private Map<XCFA.Process, ProcessState> processStates;
+	XCFA xcfa;
+	MutableValuation valuation;
+	VarIndexing vars;
 
-    public RuntimeState(Simulator simulator, XCFA xcfa) {
-        valuation = new MutableValuation();
-        vars = VarIndexing.builder(0).build();
-        this.simulator = simulator;
-        this.xcfa = xcfa;
-        List<XCFA.Process> procs = xcfa.getProcesses();
-        processStates = new ArrayList<>();
-        for (XCFA.Process proc : procs) {
-            processStates.add(new ProcessState(this, proc));
-        }
-    }
+	public ProcessState getProcessState(XCFA.Process process) {
+		return processStates.get(process);
+	}
 
-    /**
-     * Steps in a deterministic way
-     */
-    public boolean step(Scheduler sched) {
-        ArrayList<Transition> enabledTransitions = new ArrayList<>();
-        for (ProcessState state : processStates) {
-            state.collectEnabledTransitions(this, enabledTransitions);
-        }
-        if (enabledTransitions.isEmpty())
-            return false;
-        sched.getNextTransition(enabledTransitions).step();
-        return true;
-    }
+	public RuntimeState(XCFA xcfa) {
+		valuation = new MutableValuation();
+		vars = VarIndexing.builder(0).build();
+		this.xcfa = xcfa;
+		List<XCFA.Process> procs = xcfa.getProcesses();
+		processStates = new HashMap<>();
+		for (XCFA.Process proc : procs) {
+			processStates.put(proc, new ProcessState(this, proc));
+		}
+	}
+
+	public RuntimeState(RuntimeState toCopy) {
+		valuation = MutableValuation.copyOf(toCopy.valuation);
+		vars = toCopy.vars.transform().build();
+		xcfa = toCopy.xcfa; // no need to copy static structure
+		processStates = new HashMap<>();
+		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
+			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
+		}
+	}
+
+	public Collection<Transition> getEnabledTransitions() {
+		ArrayList<Transition> enabledTransitions = new ArrayList<>();
+		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
+			entry.getValue().collectEnabledTransitions(this, enabledTransitions);
+		}
+		return enabledTransitions;
+	}
+
+	public boolean step(Scheduler sched) {
+		Collection<Transition> enabledTransitions = getEnabledTransitions();
+		if (enabledTransitions.isEmpty())
+			return false;
+		sched.getNextTransition(enabledTransitions).step(this);
+		return true;
+	}
+
+
 }

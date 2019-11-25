@@ -9,20 +9,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-class DeclarationCollector {
+public class DeclarationCollector {
 
-    static private void collectDeclarations(Expr<? extends Type> expr, Collection<Decl<?>> collectTo) {
-        if (expr instanceof RefExpr) {
-            final RefExpr<?> refExpr = (RefExpr<?>) expr;
-            final Decl<?> decl = refExpr.getDecl();
-            collectTo.add(decl);
-        }
-        expr.getOps().forEach(op -> collectDeclarations(op, collectTo));
-    }
+	static private void collectDeclarations(Expr<? extends Type> expr, Collection<Decl<?>> collectTo) {
+		if (expr instanceof RefExpr) {
+			final RefExpr<?> refExpr = (RefExpr<?>) expr;
+			final Decl<?> decl = refExpr.getDecl();
+			collectTo.add(decl);
+		}
+		expr.getOps().forEach(op -> collectDeclarations(op, collectTo));
+	}
 
-    static Set<Decl<?>> getDecls(Expr<? extends Type> expr) {
-        Set<Decl<?>> x = new HashSet<>();
-        collectDeclarations(expr, x);
-        return x;
-    }
+	static Set<Decl<?>> getDecls(Expr<? extends Type> expr) {
+		Set<Decl<?>> x = new HashSet<>();
+		collectDeclarations(expr, x);
+		return x;
+	}
 }

@@ -2,49 +2,54 @@ package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 
+/**
+ * If an edge associated with a transition, this transition should be used.
+ * An exception is LeaveTransition, which leaves a call.
+ */
 public class StmtTransition extends ProcessTransition {
 
-    private Edge edge;
+	private Edge edge;
 
-    StmtTransition(ProcessState p, Edge edge) {
-        super(p);
-        this.edge = edge;
-    }
+	StmtTransition(XCFA.Process p, Edge edge) {
+		super(p);
+		this.edge = edge;
+	}
 
-    @Override
-    public void step() {
-        // TODO multiple stmts on an edge is not fully supported
-        // some special stmt could mess up everything with multiple statements:
-        // L0 -> L1 {
-        //   call proc()
-        //   a = a + 2
-        // }
-        // this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
+	@Override
+	public void step(RuntimeState state) {
+		// TODO multiple stmts on an edge is not fully supported
+		// some special stmt could mess up everything with multiple statements:
+		// L0 -> L1 {
+		//   call proc()
+		//   a = a + 2
+		// }
+		// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
 
-        // Because of this, currently only one stmt/edge is enforced:
-        Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-        for (Stmt stmt : edge.getStmts()) {
-            CallState x = processState.callStack.peek();
-            stmt.accept(StateUpdateVisitor.getInstance(), x);
-            x.currentLocation = edge.getTarget();
+		// Because of this, currently only one stmt/edge is enforced:
+		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
+		for (Stmt stmt : edge.getStmts()) {
+			CallState x = state.getProcessState(process).callStack.peek();
+			stmt.accept(StateUpdateVisitor.getInstance(), x);
+			x.currentLocation = edge.getTarget();
 
-            // TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-            // test that the procedure did not get to the error location
-            Preconditions.checkState(x.currentLocation != x.procedure.getErrorLoc(), "Test failed: Reached error location.");
-            // step succeeded
-        }
-    }
+			// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
+			// test that the procedure did not get to the error location
+			Preconditions.checkState(x.currentLocation != x.procedure.getErrorLoc(), "Test failed: Reached error location.");
+			// step succeeded
+		}
+	}
 
-    @Override
-    public boolean enabled(RuntimeState state) {
-        Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-        for (Stmt stmt : edge.getStmts()) {
-            if (stmt.accept(EnabledTransitionVisitor.getInstance(), state)) {
-                return true;
-            }
-        }
-        return false;
-    }
+	@Override
+	public boolean enabled(RuntimeState state) {
+		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
+		for (Stmt stmt : edge.getStmts()) {
+			if (stmt.accept(EnabledTransitionVisitor.getInstance(), state)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

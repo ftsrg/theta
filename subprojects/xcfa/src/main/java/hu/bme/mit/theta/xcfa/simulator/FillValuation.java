@@ -14,22 +14,22 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
  * procedures shall store how many calls have they made
  */
 
-class FillValuation {
-    static FillValuation instance;
+public class FillValuation {
+	static FillValuation instance;
 
-    private FillValuation() {
-    }
+	private FillValuation() {
+	}
 
-    public static FillValuation getInstance() {
-        if (instance == null) instance = new FillValuation();
-        return instance;
-    }
+	public static FillValuation getInstance() {
+		if (instance == null) instance = new FillValuation();
+		return instance;
+	}
 
-    <DeclType extends Type> void fill(Expr<DeclType> expr, MutableValuation param) {
-        for (Decl var : DeclarationCollector.getDecls(expr)) {
-            if (!param.getDecls().contains(var)) {
-                param.put(var, IntExprs.Int(0));
-            }
-        }
-    }
+	<DeclType extends Type> void fill(Expr<DeclType> expr, MutableValuation param) {
+		for (Decl var : DeclarationCollector.getDecls(expr)) {
+			if (!param.getDecls().contains(var)) {
+				param.put(var, IntExprs.Int(0));
+			}
+		}
+	}
 }

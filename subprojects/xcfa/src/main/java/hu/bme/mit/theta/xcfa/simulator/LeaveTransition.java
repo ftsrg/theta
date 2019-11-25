@@ -1,18 +1,20 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.xcfa.XCFA;
+
 public class LeaveTransition extends ProcessTransition {
 
-    public LeaveTransition(ProcessState p) {
-        super(p);
-    }
+	public LeaveTransition(XCFA.Process p) {
+		super(p);
+	}
 
-    @Override
-    public void step() {
-        processState.callStack.peek().end();
-    }
+	@Override
+	public void step(RuntimeState state) {
+		state.getProcessState(process).callStack.peek().end();
+	}
 
-    @Override
-    public boolean enabled(RuntimeState state) {
-        return true;
-    }
+	@Override
+	public boolean enabled(RuntimeState state) {
+		return true;
+	}
 }
