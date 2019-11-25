@@ -189,8 +189,11 @@ public class CallState implements StmtExecutorInterface {
 		updateCurrentValue(stmt.getVarDecl(), x);
 	}
 
+	private void removeCurrentVariable(VarDecl<?> var) {
+		getRuntimeState().valuation.remove(getCurrentVar(var));
+	}
+
 	public void havoc(HavocStmt<?> stmt) {
-		RuntimeState state = getRuntimeState();
-		state.valuation.remove(stmt.getVarDecl()); // TODO fix
+		removeCurrentVariable(stmt.getVarDecl());
 	}
 }

@@ -40,6 +40,7 @@ public class SimulatorTest {
 		return Arrays.asList(
 				new Object[]{"/functions-global-local.xcfa"},
 				new Object[]{"/fibonacci.xcfa"},
+				new Object[]{"/havoc-test.xcfa"},
 				new Object[]{"/simple-test.xcfa"},
 				new Object[]{"/gcd.xcfa"}
 		);
