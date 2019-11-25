@@ -31,7 +31,7 @@ public class StmtTransition extends ProcessTransition {
 		// Because of this, currently only one stmt/edge is enforced:
 		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
 		for (Stmt stmt : edge.getStmts()) {
-			CallState callState = state.getProcessState(process).callStack.peek();
+			CallState callState = state.getProcessState(process).getCallStackPeek();
 			stmt.accept(StateUpdateVisitor.getInstance(), callState);
 			callState.updateLocation(edge.getTarget());
 		}

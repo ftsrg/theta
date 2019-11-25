@@ -2,11 +2,8 @@ package hu.bme.mit.theta.xcfa.simulator;
 
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.stmt.xcfa.*;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.PathUtils;
 
 public class EnabledTransitionVisitor implements XcfaStmtVisitor<RuntimeState, Boolean> {
 
@@ -17,9 +14,7 @@ public class EnabledTransitionVisitor implements XcfaStmtVisitor<RuntimeState, B
 
 	@Override
 	public Boolean visit(AssumeStmt stmt, RuntimeState state) {
-		Expr<BoolType> unfolded = PathUtils.unfold(stmt.getCond(), state.vars);
-		FillValuation.getInstance().fill(unfolded, state.valuation);
-		BoolLitExpr a = (BoolLitExpr) unfolded.eval(state.valuation);
+		BoolLitExpr a = (BoolLitExpr) state.evalExpr(stmt.getCond());
 		return a.getValue();
 	}
 

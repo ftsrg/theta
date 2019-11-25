@@ -30,25 +30,21 @@ public class ProcedureData {
 	public void pushProcedure(RuntimeState state) {
 		// result is a variable, it is already pushed here
 		for (VarDecl<?> var: procedure.getVars()) {
-			state.vars = state.vars.inc(var);
+			state.pushVariable(var);
 		}
 		for (VarDecl<?> var: procedure.getParams()) {
-			state.vars = state.vars.inc(var);
+			state.pushVariable(var);
 		}
-	}
-
-	private IndexedConstDecl<? extends Type> getCurrentVar(VarDecl<?> var, RuntimeState state) {
-		return var.getConstDecl(state.vars.get(var));
 	}
 
 	public void popProcedure(RuntimeState state) {
 		for (VarDecl<?> var: procedure.getVars()) {
-			state.valuation.remove(getCurrentVar(var, state));
-			state.vars = state.vars.inc(var, -1);
+			state.havocVariable(var);
+			state.popVariable(var);
 		}
 		for (VarDecl<?> var: procedure.getParams()) {
-			state.valuation.remove(getCurrentVar(var, state));
-			state.vars = state.vars.inc(var, -1);
+			state.havocVariable(var);
+			state.popVariable(var);
 		}
 	}
 
@@ -68,13 +64,11 @@ public class ProcedureData {
 		return procedure.getParams().get(i);
 	}
 
-	public Optional<Decl<? extends Type>> getCurrentResultVar(RuntimeState state) {
-		if (procedure.getResult() == null)
-			return Optional.empty();
-		return Optional.of(getCurrentVar(procedure.getResult(), state));
-	}
-
 	public Location getFinalLoc() {
 		return procedure.getFinalLoc();
+	}
+
+	public Optional<VarDecl<?>> getResultVar() {
+		return procedure.getResult() == null ? Optional.empty() : Optional.of(procedure.getResult());
 	}
 }

@@ -1,17 +1,12 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
@@ -53,15 +48,15 @@ public class CallState implements StmtExecutorInterface {
 	}
 
 	private RuntimeState getRuntimeState() {
-		return parent.parent;
+		return parent.getRuntimeState();
 	}
 
-	private void updateCurrentValue(VarDecl<?> variable, LitExpr<?> newValue) {
-		getRuntimeState().valuation.put(getCurrentVar(variable), newValue);
+	private <DeclType extends Type> void updateCurrentValue(VarDecl<DeclType> variable, LitExpr<DeclType> newValue) {
+		getRuntimeState().updateVariable(variable, newValue);
 	}
 
 	private <DeclType extends Type> Optional<LitExpr<DeclType>> evaluateVariable(VarDecl<DeclType> variable) {
-		return getRuntimeState().valuation.eval(getCurrentVar(variable));
+		return getRuntimeState().evalVariable(variable);
 	}
 	/**
 	 * Called when the procedure gets called.
@@ -79,27 +74,26 @@ public class CallState implements StmtExecutorInterface {
 		// evaluate the parameters
 		List<Optional<? extends LitExpr<?>>> callerParamValues = new ArrayList<>();
 		for (VarDecl<?> param: parameters) {
-			Decl<? extends Type> callerIndexedParam = getCurrentVar(param);
-			callerParamValues.add(parent.parent.valuation.eval(callerIndexedParam));
+			callerParamValues.add(evaluateVariable(param));
 		}
 
-		procData.pushProcedure(parent.parent);
+		procData.pushProcedure(getRuntimeState());
 
 		// go through all parameters and initialize them
 		for (int i = 0; i < parameters.size(); i++) {
-			Optional<? extends LitExpr<?>> callerParameterValue = callerParamValues.get(i);
-
 			VarDecl<?> calleeParam = procData.getParam(i);
-
-			Decl<?> calleeParamIndexed = getCurrentVar(calleeParam);
-
 			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			callerParameterValue.ifPresent(litExpr -> parent.parent.valuation.put(calleeParamIndexed, litExpr));
+			callerParamValues.get(i).ifPresent(litExpr -> getRuntimeState().updateVariable(calleeParam, forceCast(litExpr)));
 		}
 	}
 
-	private<DeclType extends Type> IndexedConstDecl<DeclType> getCurrentVar(VarDecl<DeclType> var) {
-		return var.getConstDecl(getRuntimeState().vars.get(var));
+	/** TODO :( Used for updateVariable */
+	private <A, B> B forceCast(A a) {
+		/*
+		 * updateVariable(VarDecl<A>, LitExpr<A>) needs that they are the same type.
+		 * What I needed was a way to cast one of the values between them
+		 */
+		return (B)a;
 	}
 
 	/**
@@ -116,23 +110,19 @@ public class CallState implements StmtExecutorInterface {
 
 		// evaluate result
 		Optional<? extends LitExpr<?>> resultValue = Optional.empty();
-		Optional<Decl<? extends Type>> calleeResultVarIndexed = procData.getCurrentResultVar(getRuntimeState());
-		if (calleeResultVarIndexed.isPresent()) {
-			resultValue = parent.parent.valuation.eval(calleeResultVarIndexed.get());
+		if (procData.getResultVar().isPresent()) {
+			resultValue = evaluateVariable(procData.getResultVar().get());
 		}
 
 		procData.popProcedure(getRuntimeState());
 
 		// write result
-		if (calleeResultVarIndexed.isPresent()) {
+		if (resultValue.isPresent()) {
 			// return variable should have been written to...
-			Preconditions.checkState(resultValue.isPresent(), "Procedure has return value, but return value is not used.");
 			Preconditions.checkState(callerResultVar.isPresent(), "Procedure has variable called return, but return value is not used.");
 
-			Decl<? extends Type> resultDecl = getCurrentVar(callerResultVar.get());
-			parent.parent.valuation.put(resultDecl, resultValue.get());
+			getRuntimeState().updateVariable(callerResultVar.get(), forceCast(resultValue.get()));
 		} else {
-			Preconditions.checkState(!resultValue.isPresent(), "Procedure has no return value, but return value is used.");
 			Preconditions.checkState(!callerResultVar.isPresent(), "Procedure has no variable named return, but return value is used.");
 		}
 
@@ -142,7 +132,7 @@ public class CallState implements StmtExecutorInterface {
 
 	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
 		if (currentLocation == procData.getFinalLoc()) {
-			transitions.add(new LeaveTransition(parent.process));
+			transitions.add(new LeaveTransition(parent.getProcess()));
 			return;
 		}
 		boolean alreadyAddedOne = false;
@@ -153,7 +143,7 @@ public class CallState implements StmtExecutorInterface {
 				if (stmt.accept(EnabledTransitionVisitor.getInstance(), x)) {
 					Preconditions.checkState(!alreadyAddedOne, "Probably only 1 edge should be active in a given process.");
 					alreadyAddedOne = true;
-					transitions.add(new StmtTransition(parent.process, edge));
+					transitions.add(new StmtTransition(parent.getProcess(), edge));
 				}
 			}
 		}
@@ -182,18 +172,15 @@ public class CallState implements StmtExecutorInterface {
 
 	public void assign(AssignStmt<?> stmt) {
 		RuntimeState state = getRuntimeState();
-		Expr<? extends Type> unfolded = PathUtils.unfold(stmt.getExpr(), state.vars);
-
-		FillValuation.getInstance().fill(unfolded, state.valuation);
-		LitExpr x = unfolded.eval(state.valuation);
+		LitExpr x = state.evalExpr(stmt.getExpr());
 		updateCurrentValue(stmt.getVarDecl(), x);
 	}
 
-	private void removeCurrentVariable(VarDecl<?> var) {
-		getRuntimeState().valuation.remove(getCurrentVar(var));
+	private void havocVariable(VarDecl<?> var) {
+		getRuntimeState().havocVariable(var);
 	}
 
 	public void havoc(HavocStmt<?> stmt) {
-		removeCurrentVariable(stmt.getVarDecl());
+		havocVariable(stmt.getVarDecl());
 	}
 }

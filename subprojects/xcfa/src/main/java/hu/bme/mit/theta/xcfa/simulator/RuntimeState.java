@@ -1,6 +1,12 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 
@@ -9,8 +15,8 @@ import java.util.*;
 public class RuntimeState {
 	private Map<XCFA.Process, ProcessState> processStates;
 	XCFA xcfa;
-	MutableValuation valuation;
-	VarIndexing vars;
+	private MutableValuation valuation;
+	private VarIndexing vars;
 
 	public ProcessState getProcessState(XCFA.Process process) {
 		return processStates.get(process);
@@ -53,5 +59,33 @@ public class RuntimeState {
 		return true;
 	}
 
+	private  <DeclType extends Type> IndexedConstDecl<DeclType> getCurrentVar(VarDecl<DeclType> var) {
+		return var.getConstDecl(vars.get(var));
+	}
 
+	public <DeclType extends Type> void updateVariable(VarDecl<DeclType> variable, LitExpr<DeclType> litExpr) {
+		valuation.put(getCurrentVar(variable), litExpr);
+	}
+
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> evalVariable(VarDecl<DeclType> variable) {
+		return valuation.eval(getCurrentVar(variable));
+	}
+
+	public void havocVariable(VarDecl<? extends Type> variable) {
+		valuation.remove(getCurrentVar(variable));
+	}
+
+	public void pushVariable(VarDecl<? extends Type> variable) {
+		vars = vars.inc(variable);
+	}
+
+	public void popVariable(VarDecl<? extends Type> variable) {
+		vars = vars.inc(variable, -1);
+	}
+
+	public <DeclType extends Type> LitExpr<DeclType> evalExpr(Expr<DeclType> expr) {
+		Expr<DeclType> unfolded = PathUtils.unfold(expr, vars);
+		FillValuation.getInstance().fill(unfolded, valuation);
+		return unfolded.eval(valuation);
+	}
 }

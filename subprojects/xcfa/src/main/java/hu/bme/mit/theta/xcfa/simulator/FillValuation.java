@@ -15,7 +15,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
  */
 
 public class FillValuation {
-	static FillValuation instance;
+	private static FillValuation instance;
 
 	private FillValuation() {
 	}

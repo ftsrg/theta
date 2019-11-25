@@ -10,7 +10,7 @@ public class LeaveTransition extends ProcessTransition {
 
 	@Override
 	public void step(RuntimeState state) {
-		state.getProcessState(process).callStack.peek().end();
+		state.getProcessState(process).getCallStackPeek().end();
 	}
 
 	@Override

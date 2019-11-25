@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Stack;
 
 public class ProcessState {
-	Stack<CallState> callStack;
-	XCFA.Process process;
-	RuntimeState parent;
+	private Stack<CallState> callStack;
+	private XCFA.Process process;
+	private RuntimeState parent;
 
 	public ProcessState(RuntimeState parent, XCFA.Process process) {
 		this.parent = parent;
@@ -46,5 +46,17 @@ public class ProcessState {
 		if (callStack.empty())
 			return;
 		callStack.peek().collectEnabledTransitions(x, transitions);
+	}
+
+	public RuntimeState getRuntimeState() {
+		return parent;
+	}
+
+	public CallState getCallStackPeek() {
+		return callStack.peek();
+	}
+
+	public XCFA.Process getProcess() {
+		return process;
 	}
 }
