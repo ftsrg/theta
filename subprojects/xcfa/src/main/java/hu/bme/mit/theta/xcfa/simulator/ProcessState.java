@@ -34,11 +34,11 @@ public class ProcessState {
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
-		callStack.push(new CallState(this, procedure, params, resultVar));
+		callStack.push(new CallState(this, new ProcedureData(procedure), params, resultVar));
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
-		callStack.push(new CallState(this, procedure, params));
+		callStack.push(new CallState(this, new ProcedureData(procedure), params));
 	}
 
 	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {

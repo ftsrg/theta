@@ -13,7 +13,7 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 /**
  * Updates state without checking enabledness. Does not update locations.
  */
-public class StateUpdateVisitor implements XcfaStmtVisitor<CallState, Void> {
+public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface, Void> {
 
 	private StateUpdateVisitor() {
 	}
@@ -26,87 +26,75 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<CallState, Void> {
 	}
 
 	@Override
-	public Void visit(XcfaCallStmt _stmt, CallState param) {
+	public Void visit(XcfaCallStmt _stmt, StmtExecutorInterface param) {
 		Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
 		CallStmt stmt = (CallStmt) _stmt;
+		param.call(stmt);
 		// paraméterek befelé: stmt.getParams()
 		// az, amit hívnak: stmt.getProcedure()
 		// visszatérési értéket stmt.getVar()-ba kell írni
-		ProcessState process = param.parent;
-		if (stmt.isVoid()) {
-			process.push(stmt.getProcedure(), stmt.getParams());
-		} else {
-			process.push(stmt.getProcedure(), stmt.getParams(), stmt.getVar());
-		}
 		return null;
 	}
 
 	@Override
-	public Void visit(StoreStmt storeStmt, CallState param) {
+	public Void visit(StoreStmt storeStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(LoadStmt loadStmt, CallState param) {
+	public Void visit(LoadStmt loadStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(AtomicBeginStmt atomicBeginStmt, CallState param) {
+	public Void visit(AtomicBeginStmt atomicBeginStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(AtomicEndStmt atomicEndStmt, CallState param) {
+	public Void visit(AtomicEndStmt atomicEndStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(NotifyAllStmt notifyAllStmt, CallState param) {
+	public Void visit(NotifyAllStmt notifyAllStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(NotifyStmt notifyStmt, CallState param) {
+	public Void visit(NotifyStmt notifyStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(WaitStmt waitStmt, CallState param) {
+	public Void visit(WaitStmt waitStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Void visit(SkipStmt stmt, CallState param) {
+	public Void visit(SkipStmt stmt, StmtExecutorInterface param) {
 		return null;
 	}
 
 	@Override
-	public Void visit(AssumeStmt stmt, CallState param) {
+	public Void visit(AssumeStmt stmt, StmtExecutorInterface param) {
 		return null;
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, CallState param) {
-		RuntimeState state = param.parent.parent;
-		Expr<? extends Type> unfolded = PathUtils.unfold(stmt.getExpr(), state.vars);
-
-		IndexedConstDecl<DeclType> y = stmt.getVarDecl().getConstDecl(state.vars.get(stmt.getVarDecl()));
-		FillValuation.getInstance().fill(unfolded, state.valuation);
-		LitExpr x = unfolded.eval(state.valuation);
-		state.valuation.put(y, x);
+	public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, StmtExecutorInterface param) {
+		param.assign(stmt);
 		return null;
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt, CallState param) {
-		RuntimeState state = param.parent.parent;
-		state.valuation.remove(stmt.getVarDecl());
+	public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt, StmtExecutorInterface param) {
+		param.havoc(stmt);
 		return null;
 	}
 
 	@Override
-	public Void visit(XcfaStmt xcfaStmt, CallState param) {
+	public Void visit(XcfaStmt xcfaStmt, StmtExecutorInterface param) {
 		return xcfaStmt.accept(this, param);
 	}
 

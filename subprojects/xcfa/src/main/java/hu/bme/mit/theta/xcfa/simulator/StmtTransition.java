@@ -31,14 +31,9 @@ public class StmtTransition extends ProcessTransition {
 		// Because of this, currently only one stmt/edge is enforced:
 		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
 		for (Stmt stmt : edge.getStmts()) {
-			CallState x = state.getProcessState(process).callStack.peek();
-			stmt.accept(StateUpdateVisitor.getInstance(), x);
-			x.currentLocation = edge.getTarget();
-
-			// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-			// test that the procedure did not get to the error location
-			Preconditions.checkState(x.currentLocation != x.procedure.getErrorLoc(), "Test failed: Reached error location.");
-			// step succeeded
+			CallState callState = state.getProcessState(process).callStack.peek();
+			stmt.accept(StateUpdateVisitor.getInstance(), callState);
+			callState.updateLocation(edge.getTarget());
 		}
 	}
 
