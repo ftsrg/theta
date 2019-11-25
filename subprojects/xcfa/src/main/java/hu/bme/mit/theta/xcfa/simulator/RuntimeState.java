@@ -51,11 +51,25 @@ public class RuntimeState {
 		return enabledTransitions;
 	}
 
-	public boolean step(Scheduler sched) {
+	public boolean step(Scheduler sched) throws ErrorReachedException {
 		Collection<Transition> enabledTransitions = getEnabledTransitions();
-		if (enabledTransitions.isEmpty())
+		if (enabledTransitions.isEmpty()) {
+			if (!isFinished()) {
+				throw new ErrorReachedException("Deadlock");
+			}
 			return false;
+		}
 		sched.getNextTransition(enabledTransitions).step(this);
+		return true;
+	}
+
+	/** Returns true when every thread has finished, meaning that every thread has exit its main procedure. */
+	public boolean isFinished() {
+		ArrayList<Transition> enabledTransitions = new ArrayList<>();
+		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
+			if (!entry.getValue().isFinished())
+				return false;
+		}
 		return true;
 	}
 

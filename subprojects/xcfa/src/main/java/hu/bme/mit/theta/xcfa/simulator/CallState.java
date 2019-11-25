@@ -153,11 +153,11 @@ public class CallState implements StmtExecutorInterface {
 		return currentLocation == procData.getErrorLoc();
 	}
 
-	public void updateLocation(Location target) {
+	public void updateLocation(Location target) throws ErrorReachedException {
 		currentLocation = target;
 		if (isErrorLocation()) {
 			// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-			throw new RuntimeException("Error location reached!");
+			throw new ErrorReachedException("Error location reached!");
 		}
 	}
 

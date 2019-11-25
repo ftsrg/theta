@@ -1,41 +1,47 @@
 package hu.bme.mit.theta.xcfa.explicit;
 
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.simulator.ErrorReachedException;
 import hu.bme.mit.theta.xcfa.simulator.RuntimeState;
 import hu.bme.mit.theta.xcfa.simulator.Transition;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
 
-// TODO add capability for checking for deadlocks
-// TODO error location reachability should not throw AssertionError
+// TODO add capability for checking deadlocks
+// TODO error location reachability should not throw AssertionError or RuntimeException
 public class ExplicitChecker {
-	public ExplicitChecker(XCFA xcfa) {
+	public ExplicitChecker(XCFA xcfa) throws ErrorReachedException {
 		RuntimeState state = new RuntimeState(xcfa);
 		dfs(state);
 	}
 
 	private static class DfsNode {
-		RuntimeState state;
-		Iterator<Transition> nextTransition;
+		private RuntimeState state;
+		private Iterator<Transition> nextTransition;
 
-		DfsNode(RuntimeState state) {
+		private DfsNode(RuntimeState state) throws ErrorReachedException {
 			this.state = state;
+			Collection<Transition> transitions = state.getEnabledTransitions();
+			if (transitions.size() == 0 && !state.isFinished()) {
+				throw new ErrorReachedException("Deadlock caught");
+			}
 			nextTransition = state.getEnabledTransitions().iterator();
 		}
 
-		boolean hasChild() {
+		private boolean hasChild() {
 			return nextTransition.hasNext();
 		}
 
-		DfsNode child() {
+		private DfsNode child() throws ErrorReachedException {
 			RuntimeState newState = new RuntimeState(state);
 			nextTransition.next().step(newState);
 			return new DfsNode(newState);
 		}
 	}
 
-	private void dfs(RuntimeState s) {
+	private void dfs(RuntimeState s) throws ErrorReachedException {
 		Stack<DfsNode> dfsStack = new Stack<>();
 		dfsStack.push(new DfsNode(s));
 		while (!dfsStack.empty()) {

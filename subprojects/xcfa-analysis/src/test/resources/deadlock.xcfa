@@ -1,0 +1,11 @@
+main process mainProcess{
+
+	main procedure mainProcedure(){
+		init loc L0
+		final loc L1
+
+		L0 -> L1 {
+		    assume false
+		}
+	}
+}

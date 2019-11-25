@@ -7,7 +7,7 @@ package hu.bme.mit.theta.xcfa.simulator;
  * 	   For this, a procedure wrapper could be created (which could cache every static data in CallState)
  */
 public interface Transition {
-	void step(RuntimeState state);
+	void step(RuntimeState state) throws ErrorReachedException;
 
 	boolean enabled(RuntimeState state);
 }

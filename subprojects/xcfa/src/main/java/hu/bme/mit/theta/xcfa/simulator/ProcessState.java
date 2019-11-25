@@ -59,4 +59,8 @@ public class ProcessState {
 	public XCFA.Process getProcess() {
 		return process;
 	}
+
+	public boolean isFinished() {
+		return callStack.empty();
+	}
 }

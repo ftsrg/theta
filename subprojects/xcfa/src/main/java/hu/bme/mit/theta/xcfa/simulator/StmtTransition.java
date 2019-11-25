@@ -19,7 +19,7 @@ public class StmtTransition extends ProcessTransition {
 	}
 
 	@Override
-	public void step(RuntimeState state) {
+	public void step(RuntimeState state) throws ErrorReachedException {
 		// TODO multiple stmts on an edge is not fully supported
 		// some special stmt could mess up everything with multiple statements:
 		// L0 -> L1 {

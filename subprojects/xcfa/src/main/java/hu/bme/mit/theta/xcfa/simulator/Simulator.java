@@ -37,7 +37,7 @@ public class Simulator {
 		state = new RuntimeState(xcfa);
 	}
 
-	public boolean step() {
+	public boolean step() throws ErrorReachedException {
 		return state.step(s);
 	}
 
