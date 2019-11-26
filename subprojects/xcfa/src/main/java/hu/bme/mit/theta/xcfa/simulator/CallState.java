@@ -16,30 +16,89 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public class CallState implements StmtExecutorInterface {
+/**
+ * Call state stores data (and is responsible) of one call (not a procedure, rather an instance of it being called)
+ * For example, a recursion might have more callstate of the same procedure at a given moment.
+ *
+ * Naming:
+ * procedure Caller() {
+ *     L1 -> L2 {
+ *         callerResultVar := call Callee(callerParamVar1, callerParamVar2)
+ *     }
+ * }
+ *
+ * procedure Callee(calleeParam1 : int, calleeParamVar2 : int) {
+ * 	   var result : int // calleeResultVar
+ *     L1 -> L2 {
+ *         result := 123
+ *     }
+ * }
+ *
+ * TODO remove implicit type checks
+ */
+public final class CallState implements StmtExecutorInterface {
+
 	/**
-	 * current location, or where-to-return (after returning from current call)
+	 * Stores which procedure is called
 	 */
 	private ProcedureData procData;
-	private Location currentLocation;
-	private ProcessState parent;
-	/**
-	 * Where to return the result
-	 */
-	private Optional<VarDecl<?>> callerResultVar;
 
-	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> parameters, VarDecl<?> callerResultVar) {
+	/**
+	 * Stores the current location of the procedure, or the location to return to, when there is a method call inside.
+	 */
+	private Location currentLocation;
+
+	/**
+	 * The ProcessState the call belongs to
+	 *
+	 * The whole state is wrapped up in RuntimeState which consists of multiple ProcessStates,
+	 * which consists of multiple CallStates in a tree-like structure.
+	 */
+	private ProcessState parent;
+
+	/**
+	 * The variable to be filled with the result when the procedure ends
+	 * null means result is not expected by the caller (e.g. call foo() instead of bar := call foo())
+	 */
+	private VarDecl<? extends Type> callerResultVar;
+
+	/**
+	 * Constructor
+	 *
+	 * The result is not expected, when call foo() is used instead of bar := foo() (callerResultVar is null)
+	 *
+	 * @param parent The ProcessState it belongs to
+	 * @param procData The procedure (independent of state) which is called
+	 * @param callerParameters the parameter variables passed (the caller side, not the function)
+	 * @param callerResultVar the variable to be filled when the procedure ends. If null, a result is not expected
+	 */
+	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters, VarDecl<?> callerResultVar) {
 		this.parent = parent;
 		this.procData = procData;
-		this.callerResultVar = (callerResultVar == null ? Optional.empty() : Optional.of(callerResultVar));
+		this.callerResultVar = callerResultVar;
 		currentLocation = procData.getInitLoc();
-		begin(parameters);
+		begin(callerParameters);
 	}
 
-	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> parameters) {
-		this(parent, procData, parameters, null);
+	/**
+	 * Shorthand for constructor without expected return value
+	 *
+	 * The result is not expected, when call foo() is used instead of bar := foo() (callerResultVar is null).
+	 * @param parent The ProcessState it belongs to
+	 * @param procData The procedure (independent of state) which is called
+	 * @param callerParameters the parameter variables passed (the caller side, not the function)
+	 */
+	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters) {
+		this(parent, procData, callerParameters, null);
 	}
 
+	/**
+	 * CPP-style copy constructor. Used by DFS to be able to "revert" a transition
+	 *
+	 * Used by ProcessState (and indirectly, by RuntimeState) when copying the whole explicit state of a program
+	 * @param stepParent The already copied parent ProcessState
+	 * @param toCopy The CallState to copy
+	 */
 	public CallState(ProcessState stepParent, CallState toCopy) {
 		parent = stepParent;
 		procData = toCopy.procData;
@@ -51,49 +110,43 @@ public class CallState implements StmtExecutorInterface {
 		return parent.getRuntimeState();
 	}
 
-	private <DeclType extends Type> void updateCurrentValue(VarDecl<DeclType> variable, LitExpr<DeclType> newValue) {
-		getRuntimeState().updateVariable(variable, newValue);
-	}
-
-	private <DeclType extends Type> Optional<LitExpr<DeclType>> evaluateVariable(VarDecl<DeclType> variable) {
+	/** Evaluates the variable given the stack state and variable valuation */
+	private <DeclType extends Type> Optional<LitExpr<DeclType>> evalVariable(VarDecl<DeclType> variable) {
 		return getRuntimeState().evalVariable(variable);
 	}
+
 	/**
 	 * Called when the procedure gets called.
 	 * Pushes local variable instances.
 	 */
-	public void begin(List<VarDecl<?>> parameters) {
+	public void begin(List<VarDecl<?>> callerParameters) {
 
+		/* The order is important:
+		 * 1. Evaluate caller parameter values (it should be enough to remember the indexing at this point)
+		 * 2. "Push" parameters & locals "to stack"
+		 * 3. Copy caller parameter values to callees'
+		 *
+		 * gcd(big,little) call to gcd(little,big%little) must not change little's value
+		 */
 		// TODO this could be checked statically...
-		Preconditions.checkArgument(parameters.size() == procData.getParamSize(), "Procedure has wrong number of parameters passed.");
+		Preconditions.checkArgument(callerParameters.size() == procData.getParamSize(), "Procedure has wrong number of parameters passed.");
 
-		//  map everything *first* to the indexed version, because modifying the numbering can have effect to the variables
-		// for example: gcd(a,b) call to gcd(b,a%b) would change `a`'s meaning first
 		// so it's basically the same as gcd(a',b') { gcd(a':=b,b':=a%b) }
 
 		// evaluate the parameters
 		List<Optional<? extends LitExpr<?>>> callerParamValues = new ArrayList<>();
-		for (VarDecl<?> param: parameters) {
-			callerParamValues.add(evaluateVariable(param));
+		for (VarDecl<?> param: callerParameters) {
+			callerParamValues.add(evalVariable(param));
 		}
 
 		procData.pushProcedure(getRuntimeState());
 
 		// go through all parameters and initialize them
-		for (int i = 0; i < parameters.size(); i++) {
-			VarDecl<?> calleeParam = procData.getParam(i);
+		for (int i = 0; i < callerParameters.size(); i++) {
+			VarDecl calleeParam = procData.getParam(i);
 			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			callerParamValues.get(i).ifPresent(litExpr -> getRuntimeState().updateVariable(calleeParam, forceCast(litExpr)));
+			callerParamValues.get(i).ifPresent(litExpr -> getRuntimeState().updateVariable(calleeParam, litExpr));
 		}
-	}
-
-	/** TODO :( Used for updateVariable */
-	private <A, B> B forceCast(A a) {
-		/*
-		 * updateVariable(VarDecl<A>, LitExpr<A>) needs that they are the same type.
-		 * What I needed was a way to cast one of the values between them
-		 */
-		return (B)a;
 	}
 
 	/**
@@ -101,29 +154,25 @@ public class CallState implements StmtExecutorInterface {
 	 * Deletes values associated with the current values.
 	 */
 	public void end() {
-		// All values that must be calculated (result) must be calculated at the start of the function
-		// After, all variables and parameters can be popped and removed from the valuation
-		// Values are removed so a bug does not cause us to use a previous call's return value
-		//  (and for memory efficiency)
-		// AFTER popping the variables, we are in the caller's state, which means we can WRITE the result of the variables
-		// So: calculate with callee's state, pop stack, and write result only then
 
-		// evaluate result
-		Optional<? extends LitExpr<?>> resultValue = Optional.empty();
+		/* The order is important:
+		 * 1. Calculate return value from the current context
+		 * 2. Pop parameters & locals "from stack" (also remove now unused values from the valuation)
+		 * 3. Write result to caller's variable
+		 */
+		Optional<? extends LitExpr> resultValue = Optional.empty();
 		if (procData.getResultVar().isPresent()) {
-			resultValue = evaluateVariable(procData.getResultVar().get());
+			resultValue = evalVariable(procData.getResultVar().get());
 		}
 
 		procData.popProcedure(getRuntimeState());
 
-		// write result
 		if (resultValue.isPresent()) {
-			// return variable should have been written to...
-			Preconditions.checkState(callerResultVar.isPresent(), "Procedure has variable called return, but return value is not used.");
+			Preconditions.checkState(callerResultVar != null, "Procedure has variable called return, but caller expects none.");
 
-			getRuntimeState().updateVariable(callerResultVar.get(), forceCast(resultValue.get()));
+			getRuntimeState().updateVariable(callerResultVar, (LitExpr)resultValue.get());
 		} else {
-			Preconditions.checkState(!callerResultVar.isPresent(), "Procedure has no variable named return, but return value is used.");
+			Preconditions.checkState(callerResultVar == null, "Procedure has no variable named return, but caller expects one.");
 		}
 
 		// tell parent we are finished
@@ -140,10 +189,11 @@ public class CallState implements StmtExecutorInterface {
 			// TODO multiple stmts on an edge is not fully supported
 			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
 			for (Stmt stmt : edge.getStmts()) {
-				if (stmt.accept(EnabledTransitionVisitor.getInstance(), x)) {
-					Preconditions.checkState(!alreadyAddedOne, "Probably only 1 edge should be active in a given process.");
+				StmtTransition tr = new StmtTransition(parent.getProcess(), edge);
+				if (tr.enabled(getRuntimeState())) {
+					Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
 					alreadyAddedOne = true;
-					transitions.add(new StmtTransition(parent.getProcess(), edge));
+					transitions.add(tr);
 				}
 			}
 		}
@@ -171,9 +221,7 @@ public class CallState implements StmtExecutorInterface {
 	}
 
 	public void assign(AssignStmt<?> stmt) {
-		RuntimeState state = getRuntimeState();
-		LitExpr x = state.evalExpr(stmt.getExpr());
-		updateCurrentValue(stmt.getVarDecl(), x);
+		getRuntimeState().assign(stmt);
 	}
 
 	private void havocVariable(VarDecl<?> var) {

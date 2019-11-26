@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
-public class ProcessState {
+public final class ProcessState {
 	private Stack<CallState> callStack;
 	private XCFA.Process process;
 	private RuntimeState parent;
@@ -34,11 +34,11 @@ public class ProcessState {
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
-		callStack.push(new CallState(this, new ProcedureData(procedure), params, resultVar));
+		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params, resultVar));
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
-		callStack.push(new CallState(this, new ProcedureData(procedure), params));
+		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params));
 	}
 
 	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {

@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.simulator;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -33,7 +34,7 @@ public class RuntimeState {
 		}
 	}
 
-	public RuntimeState(RuntimeState toCopy) {
+	protected RuntimeState(RuntimeState toCopy) {
 		valuation = MutableValuation.copyOf(toCopy.valuation);
 		vars = toCopy.vars.transform().build();
 		xcfa = toCopy.xcfa; // no need to copy static structure
@@ -41,6 +42,11 @@ public class RuntimeState {
 		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
 			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
 		}
+	}
+
+	/** Clone is used instead of C++ style copy constructor to be able to derive from RuntimeState */
+	protected RuntimeState copy() {
+		return new RuntimeState(this);
 	}
 
 	public Collection<Transition> getEnabledTransitions() {
@@ -101,5 +107,16 @@ public class RuntimeState {
 		Expr<DeclType> unfolded = PathUtils.unfold(expr, vars);
 		FillValuation.getInstance().fill(unfolded, valuation);
 		return unfolded.eval(valuation);
+	}
+
+	public void assign(AssignStmt<?> stmt) {
+		LitExpr x = evalExpr(stmt.getExpr());
+		updateVariable(stmt.getVarDecl(), x);
+	}
+
+	public RuntimeState doTransition(Transition transition) throws ErrorReachedException {
+		RuntimeState newState = copy();
+		transition.step(newState);
+		return newState;
 	}
 }

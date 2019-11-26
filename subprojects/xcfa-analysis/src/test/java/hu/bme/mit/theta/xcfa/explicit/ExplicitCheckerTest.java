@@ -40,11 +40,10 @@ public class ExplicitCheckerTest {
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		try {
 			ExplicitChecker explicitChecker = new ExplicitChecker(xcfa);
-		} catch (ErrorReachedException rex) { // TODO create dedicated exception
+		} catch (ErrorReachedException rex) {
 			if (shouldWork) {
-				throw new RuntimeException("Error reached, but it shouldn't have been.");
+				throw new RuntimeException("Error reached, but it shouldn't have been.", rex);
 			}
-				;
 			// Otherwise works as expected...
 			return;
 		}

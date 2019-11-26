@@ -40,11 +40,7 @@ public class StmtTransition extends ProcessTransition {
 	@Override
 	public boolean enabled(RuntimeState state) {
 		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-		for (Stmt stmt : edge.getStmts()) {
-			if (stmt.accept(EnabledTransitionVisitor.getInstance(), state)) {
-				return true;
-			}
-		}
-		return false;
+		Stmt stmt = edge.getStmts().get(0);
+		return stmt.accept(EnabledStmtVisitor.getInstance(), state);
 	}
 }

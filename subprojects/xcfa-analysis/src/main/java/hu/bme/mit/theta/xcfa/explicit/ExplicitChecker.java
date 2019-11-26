@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
 
-	// TODO error location reachability should not throw AssertionError or RuntimeException
+// TODO error location reachability should not throw AssertionError or RuntimeException
 public class ExplicitChecker {
 	public ExplicitChecker(XCFA xcfa) throws ErrorReachedException {
 		RuntimeState state = new RuntimeState(xcfa);
@@ -34,9 +34,8 @@ public class ExplicitChecker {
 		}
 
 		private DfsNode child() throws ErrorReachedException {
-			RuntimeState newState = new RuntimeState(state);
-			nextTransition.next().step(newState);
-			return new DfsNode(newState);
+			Transition transition = nextTransition.next();
+			return new DfsNode(state.doTransition(transition));
 		}
 	}
 

@@ -64,7 +64,7 @@ main process mainProcess{
 // gcd(a,b) {
 //   L0: if (b == 0) {
 //   L1:   return a;
-//   }
+//       }
 //   L2: a = a % b;
 //   L3: result := gcd(b,a);
 // }

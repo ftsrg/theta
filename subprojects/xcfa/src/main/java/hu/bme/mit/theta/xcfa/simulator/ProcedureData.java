@@ -7,8 +7,11 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -17,9 +20,19 @@ import java.util.Optional;
  * TODO use this to cache data calculated every time in CallState
  */
 public class ProcedureData {
-	private XCFA.Process.Procedure procedure;
+	private Procedure procedure;
 
-	public ProcedureData(XCFA.Process.Procedure procedure) {
+	private static Map<Procedure, ProcedureData> procedureDataCache;
+
+	public static ProcedureData getInstance(Procedure procedure) {
+		if (procedureDataCache == null)
+			procedureDataCache = new HashMap<>();
+		ProcedureData result = new ProcedureData(procedure);
+		procedureDataCache.put(procedure, result);
+		return result;
+	}
+
+	private ProcedureData(Procedure procedure) {
 		this.procedure = procedure;
 	}
 

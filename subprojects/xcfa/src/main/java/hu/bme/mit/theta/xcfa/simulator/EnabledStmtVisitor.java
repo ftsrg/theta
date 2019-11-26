@@ -5,7 +5,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
-public class EnabledTransitionVisitor implements XcfaStmtVisitor<RuntimeState, Boolean> {
+public class EnabledStmtVisitor implements XcfaStmtVisitor<RuntimeState, Boolean> {
 
 	@Override
 	public Boolean visit(SkipStmt stmt, RuntimeState param) {
@@ -74,13 +74,13 @@ public class EnabledTransitionVisitor implements XcfaStmtVisitor<RuntimeState, B
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
-	private EnabledTransitionVisitor() {
+	private EnabledStmtVisitor() {
 	}
 
-	private static EnabledTransitionVisitor instance;
+	private static EnabledStmtVisitor instance;
 
-	public static EnabledTransitionVisitor getInstance() {
-		if (instance == null) instance = new EnabledTransitionVisitor();
+	public static EnabledStmtVisitor getInstance() {
+		if (instance == null) instance = new EnabledStmtVisitor();
 		return instance;
 	}
 
