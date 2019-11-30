@@ -78,7 +78,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 
