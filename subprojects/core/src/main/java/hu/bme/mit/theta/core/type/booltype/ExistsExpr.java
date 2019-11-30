@@ -74,7 +74,7 @@ public final class ExistsExpr extends QuantifiedExpr {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

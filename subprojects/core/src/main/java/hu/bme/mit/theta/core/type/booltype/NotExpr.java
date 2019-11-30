@@ -79,7 +79,7 @@ public final class NotExpr extends UnaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERAND_LABEL;
 	}
 
