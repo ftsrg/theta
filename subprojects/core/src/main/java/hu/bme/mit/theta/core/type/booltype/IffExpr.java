@@ -91,7 +91,7 @@ public final class IffExpr extends EqExpr<BoolType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

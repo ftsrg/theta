@@ -93,7 +93,7 @@ public final class RatGeqExpr extends GeqExpr<RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 }

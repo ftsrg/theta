@@ -78,7 +78,7 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 
