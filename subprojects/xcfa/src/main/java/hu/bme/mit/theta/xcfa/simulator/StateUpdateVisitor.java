@@ -27,9 +27,6 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<CallState, Void> {
     public Void visit(XcfaCallStmt _stmt, CallState param) {
         Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
         CallStmt stmt = (CallStmt) _stmt;
-        // paraméterek befelé: stmt.getParams()
-        // az, amit hívnak: stmt.getProcedure()
-        // visszatérési értéket stmt.getVar()-ba kell írni
         ProcessState process = param.parent;
         if (stmt.isVoid()) {
             process.push(stmt.getProcedure(), stmt.getParams());
