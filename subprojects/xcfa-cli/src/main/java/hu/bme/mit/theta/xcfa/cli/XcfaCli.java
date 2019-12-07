@@ -30,7 +30,13 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.*;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -42,7 +48,11 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
 /**

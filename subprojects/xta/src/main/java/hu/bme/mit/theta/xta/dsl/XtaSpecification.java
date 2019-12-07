@@ -26,10 +26,22 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ArrayIdContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.FunctionDeclContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InstantiationContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ProcessDeclContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeDeclContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableDeclContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.XtaContext;
 import org.antlr.v4.runtime.Token;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
