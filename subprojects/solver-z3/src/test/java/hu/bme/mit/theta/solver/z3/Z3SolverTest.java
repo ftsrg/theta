@@ -22,7 +22,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
@@ -40,8 +42,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public final class Z3SolverTest {
 
@@ -109,7 +110,7 @@ public final class Z3SolverTest {
 		final Expr<FuncType<IntType, IntType>> val = optVal.get();
 
 		// Assert
-		assertTrue(val.getType().equals(ca.getType()));
+		assertEquals(ca.getType(), val.getType());
 	}
 	
 	@Test
@@ -118,8 +119,8 @@ public final class Z3SolverTest {
 
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
-        solver.add(Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
-        solver.add(Eq(Write(arr.getRef(), Int(1), Int(2)), arr.getRef()));
+        solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
+        solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(1), Int(2)), arr.getRef()));
 
         // Check, the expression should be satisfiable
         SolverStatus status = solver.check();
@@ -128,7 +129,7 @@ public final class Z3SolverTest {
         Valuation valuation = solver.getModel();
         final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
 		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
-		assertTrue(val.getType().equals(arr.getType()));
+		assertEquals(arr.getType(), val.getType());
 	}
 
 }
