@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -106,6 +108,25 @@ public final class Z3SolverTest {
 
 		// Assert
 		assertTrue(val.getType().equals(ca.getType()));
+	}
+	
+	@Test
+	public void testArray() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+
+        solver.add(Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
+        solver.add(Eq(Write(arr.getRef(), Int(1), Int(2)), arr.getRef()));
+
+        // Check, the expression should be satisfiable
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+        
+        Valuation valuation = solver.getModel();
+        final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
+		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
+		assertTrue(val.getType().equals(arr.getType()));
 	}
 
 }

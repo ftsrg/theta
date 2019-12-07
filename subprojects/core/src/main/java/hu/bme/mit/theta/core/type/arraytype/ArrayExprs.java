@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
+import java.util.List;
+
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -30,8 +33,8 @@ public final class ArrayExprs {
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> Array(
-			final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
-		return ArrayLitExpr.of(index, elem);
+			final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final ArrayType<IndexType, ElemType> type) {
+		return ArrayLitExpr.of(elems, type);
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> Read(
