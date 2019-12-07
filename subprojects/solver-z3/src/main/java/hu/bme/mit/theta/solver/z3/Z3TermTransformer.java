@@ -37,9 +37,13 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.ArraySort;
+import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Model;
 
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
@@ -57,6 +61,7 @@ import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -69,7 +74,10 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 
 final class Z3TermTransformer {
 	private static final String PARAM_NAME_FORMAT = "_p%d";
@@ -114,6 +122,47 @@ final class Z3TermTransformer {
 		final Expr<?> funcLitExpr = transformFuncInterp(funcInterp, model, vars);
 		popParams(vars, paramDecls);
 		return funcLitExpr;
+	}
+	
+	public Expr<?> toArrayLitExpr(final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
+		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
+
+		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) funcDecl.getRange();
+
+		return createArrayLitExpr(sort, entryExprs);
+	}
+
+	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
+		switch (sort.getDomain().getSortKind()) {
+			case Z3_BOOL_SORT:
+				return this.createIndexArrayLitExpr(Bool(), sort, entryExprs);
+			case Z3_INT_SORT:
+				return this.<IntType>createIndexArrayLitExpr(Int(), sort, entryExprs);
+			case Z3_REAL_SORT:
+				return this.<RatType>createIndexArrayLitExpr(Rat(), sort, entryExprs);
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	private <I extends Type> Expr<?> createIndexArrayLitExpr(I indexType, ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
+		if (sort.getDomain() instanceof com.microsoft.z3.BoolSort) {
+			return this.createIndexValueArrayLitExpr(indexType, Bool(), entryExprs);
+		} else if (sort.getDomain() instanceof com.microsoft.z3.IntSort) {
+			return this.createIndexValueArrayLitExpr(indexType, Int(), entryExprs);
+		} else if (sort.getDomain() instanceof com.microsoft.z3.RealSort) {
+			return this.createIndexValueArrayLitExpr(indexType, Rat(), entryExprs);
+		} else {
+			throw new AssertionError("Unsupported sort: " + sort);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
+		ParamDecl<ArrayType<I, E>> paramDecl = Param("[" + indexType.toString() + "] -> " + elemType.toString(), Array(indexType, elemType));
+
+		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()), ArrayType.of(indexType, elemType));
 	}
 
 	////////
