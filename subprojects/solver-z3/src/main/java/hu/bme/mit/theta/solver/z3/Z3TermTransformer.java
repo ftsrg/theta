@@ -160,8 +160,6 @@ final class Z3TermTransformer {
 
 	@SuppressWarnings("unchecked")
 	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		ParamDecl<ArrayType<I, E>> paramDecl = Param("[" + indexType.toString() + "] -> " + elemType.toString(), Array(indexType, elemType));
-
 		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()), ArrayType.of(indexType, elemType));
 	}
 

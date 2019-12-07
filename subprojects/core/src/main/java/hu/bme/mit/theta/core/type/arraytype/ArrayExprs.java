@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.type.arraytype;
 import java.util.List;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
