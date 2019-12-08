@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
 
-// TODO error location reachability should not throw AssertionError or RuntimeException
 public class ExplicitChecker {
 	public ExplicitChecker(XCFA xcfa) throws ErrorReachedException {
 		RuntimeState state = new RuntimeState(xcfa);

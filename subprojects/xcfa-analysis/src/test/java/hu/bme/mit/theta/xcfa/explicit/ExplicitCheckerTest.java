@@ -39,7 +39,7 @@ public class ExplicitCheckerTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		try {
-			ExplicitChecker explicitChecker = new ExplicitChecker(xcfa);
+			new ExplicitChecker(xcfa);
 		} catch (ErrorReachedException rex) {
 			if (shouldWork) {
 				throw new RuntimeException("Error reached, but it shouldn't have been.", rex);
