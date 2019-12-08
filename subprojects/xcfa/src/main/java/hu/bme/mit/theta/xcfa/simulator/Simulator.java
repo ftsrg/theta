@@ -1,22 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.IndexedConstDecl;
-import hu.bme.mit.theta.core.stmt.*;
-import hu.bme.mit.theta.core.stmt.xcfa.*;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Checks no deadlock.

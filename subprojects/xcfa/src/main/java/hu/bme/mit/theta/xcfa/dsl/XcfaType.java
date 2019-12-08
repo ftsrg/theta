@@ -17,7 +17,12 @@ package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.*;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ArrayTypeContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.BoolTypeContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IntTypeContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.RatTypeContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SyntheticTypeContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.TypeContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;

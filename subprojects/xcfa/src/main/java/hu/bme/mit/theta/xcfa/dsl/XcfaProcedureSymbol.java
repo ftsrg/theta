@@ -25,7 +25,11 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

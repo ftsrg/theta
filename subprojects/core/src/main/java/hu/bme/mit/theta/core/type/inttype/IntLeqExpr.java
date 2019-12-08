@@ -93,7 +93,7 @@ public final class IntLeqExpr extends LeqExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

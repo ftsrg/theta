@@ -21,7 +21,7 @@ public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
 
 	R visit(XcfaCallStmt stmt, P param);
 
-    R visit(StoreStmt storeStmt, P param);
+	R visit(StoreStmt storeStmt, P param);
 
 	R visit(LoadStmt loadStmt, P param);
 

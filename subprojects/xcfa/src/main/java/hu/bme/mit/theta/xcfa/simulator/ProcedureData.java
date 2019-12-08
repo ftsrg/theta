@@ -1,12 +1,7 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 

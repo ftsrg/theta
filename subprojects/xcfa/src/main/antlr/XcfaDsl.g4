@@ -384,7 +384,7 @@ assignStmt
 	;
 
 storeStmt
-	:	lhs=ID LARROW rhs=ID (atomic=ATOMICTYPE ATSIGN ordering=ID)? 
+	:	lhs=ID RARROW rhs=ID (atomic=ATOMICTYPE ATSIGN ordering=ID)? 
 	;
 
 loadStmt

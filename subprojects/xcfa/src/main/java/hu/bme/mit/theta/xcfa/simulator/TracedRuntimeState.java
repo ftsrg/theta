@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 /**
