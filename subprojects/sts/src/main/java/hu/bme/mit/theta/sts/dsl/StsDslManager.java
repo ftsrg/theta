@@ -15,20 +15,20 @@
  */
 package hu.bme.mit.theta.sts.dsl;
 
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslLexer;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsSpecContext;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.sts.dsl.gen.StsDslLexer;
-import hu.bme.mit.theta.sts.dsl.gen.StsDslParser;
-import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsSpecContext;
 
 public final class StsDslManager {
 
@@ -42,7 +42,7 @@ public final class StsDslManager {
 
 	public static StsSpec createStsSpec(final InputStream inputStream, final List<? extends Expr<?>> args)
 			throws IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
+		final CharStream input = CharStreams.fromStream(inputStream);
 
 		final StsDslLexer lexer = new StsDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);

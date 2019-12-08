@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -48,5 +49,11 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
 		return "havoc " + stmt.getVarDecl().getName();
 	}
+
+	@Override
+	public String visit(XcfaStmt xcfaStmt, Void param) {
+		throw new UnsupportedOperationException("Not yet implemented"); //TODO
+	}
+
 
 }

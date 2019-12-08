@@ -84,7 +84,7 @@ public final class IntAddExpr extends AddExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

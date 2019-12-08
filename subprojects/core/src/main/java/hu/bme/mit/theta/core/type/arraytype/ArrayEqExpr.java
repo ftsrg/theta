@@ -85,7 +85,7 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

@@ -79,6 +79,6 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 
 	protected abstract int getHashSeed();
 
-	protected abstract String getOperatorLabel();
+	public abstract String getOperatorLabel();
 
 }
