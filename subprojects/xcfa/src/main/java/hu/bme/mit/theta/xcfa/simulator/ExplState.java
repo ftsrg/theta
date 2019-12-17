@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.simulator.util.FillValuation;
 
 import java.util.ArrayList;
 import java.util.Collection;

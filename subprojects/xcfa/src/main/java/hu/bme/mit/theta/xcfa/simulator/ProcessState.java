@@ -38,11 +38,11 @@ public final class ProcessState {
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
-		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params, resultVar));
+		callStack.push(new CallState(this, ProcedureData.getInstance(procedure, process), params, resultVar));
 	}
 
 	public void push(XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
-		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params));
+		callStack.push(new CallState(this, ProcedureData.getInstance(procedure, process), params));
 	}
 
 	void collectEnabledTransitions(Collection<Transition> transitions) {

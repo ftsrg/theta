@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.simulator;
+package hu.bme.mit.theta.xcfa.simulator.util;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -22,7 +22,7 @@ public class FillValuation {
 		return instance;
 	}
 
-	<DeclType extends Type> void fill(Expr<DeclType> expr, MutableValuation param) {
+	public <DeclType extends Type> void fill(Expr<DeclType> expr, MutableValuation param) {
 		for (Decl var : DeclarationCollector.getDecls(expr)) {
 			if (!param.getDecls().contains(var)) {
 				param.put(var, IntExprs.Int(0));

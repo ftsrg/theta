@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.simulator;
+package hu.bme.mit.theta.xcfa.simulator.util;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -13,7 +13,6 @@ import java.util.Set;
  * Utility function collection
  * Used for initializing the uninitialized variables in expressions:
  *   this collects all declarations used in an expressions.
- * TODO move to a util package
  */
 public class DeclarationCollector {
 

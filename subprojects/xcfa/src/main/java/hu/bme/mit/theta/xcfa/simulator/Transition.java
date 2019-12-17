@@ -9,7 +9,6 @@ package hu.bme.mit.theta.xcfa.simulator;
  *
  * A transition instance should be independent of ExplStates.
  * Thus, a transition could be cached later.
- * TODO cache these transitions (the same line can get the same instance of transition)
  *
  * 	   For this, a procedure wrapper was created (ProcedureData)
  *
@@ -17,6 +16,7 @@ package hu.bme.mit.theta.xcfa.simulator;
  *   This would solve the AtomicBegin/AtomicEnd pair.
  *   For example, a list of atomic operations could be a (composite) transition
  *
+ * TODO decouple from ExplState? (use a State interface instead)
  */
 public interface Transition {
 

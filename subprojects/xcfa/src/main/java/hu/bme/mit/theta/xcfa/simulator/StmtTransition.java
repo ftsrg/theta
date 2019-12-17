@@ -1,9 +1,7 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 
 /**
  * A transition with an associated edge.
@@ -13,7 +11,6 @@ import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
  *
  * A transition instance should be independent of ExplStates.
  *
- * TODO cache already built transitions, add a wrapper to enable it :)
  * Note: In the future, to be able to cache these transitions, one should not store state of the explicit state in use.
  *
  * Note: Multiple statements on the same edge is not supported.
@@ -22,9 +19,9 @@ import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
  */
 public class StmtTransition extends ProcessTransition {
 
-	private Edge edge;
+	private ProcedureData.EdgeWrapper edge;
 
-	public StmtTransition(XCFA.Process p, Edge edge) {
+	public StmtTransition(XCFA.Process p, ProcedureData.EdgeWrapper edge) {
 		super(p);
 		this.edge = edge;
 	}
@@ -42,18 +39,15 @@ public class StmtTransition extends ProcessTransition {
 		// also, enabledness is hard to determine
 
 		// Because of this, currently only one stmt per edge is enforced:
-		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-		for (Stmt stmt : edge.getStmts()) {
-			CallState callState = state.getProcessState(process).getCallStackPeek();
-			stmt.accept(StateUpdateVisitor.getInstance(), callState);
-			callState.updateLocation(edge.getTarget());
-		}
+
+		CallState callState = state.getProcessState(process).getCallStackPeek();
+		edge.getStmt().accept(StateUpdateVisitor.getInstance(), callState);
+		callState.updateLocation(edge.getTarget());
 	}
 
 	@Override
 	public boolean enabled(ExplState state) {
-		Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-		Stmt stmt = edge.getStmts().get(0);
+		Stmt stmt = edge.getStmt();
 		CallState callState = state.getProcessState(process).getCallStackPeek();
 		return stmt.accept(EnabledStmtVisitor.getInstance(), callState);
 	}

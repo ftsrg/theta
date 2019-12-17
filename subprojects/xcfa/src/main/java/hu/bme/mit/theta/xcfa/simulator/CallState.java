@@ -5,12 +5,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
@@ -51,7 +48,7 @@ public final class CallState implements StmtExecutorInterface {
 	 * Stores the current location of the procedure
 	 * It stores the location to return to if there is a call active.
 	 */
-	private Location currentLocation;
+	private ProcedureData.LocationWrapper currentLocation;
 
 	/**
 	 * The ProcessState the call belongs to
@@ -195,14 +192,11 @@ public final class CallState implements StmtExecutorInterface {
 	 */
 	public void collectEnabledTransitions(Collection<Transition> transitions) {
 		if (currentLocation == procData.getFinalLoc()) {
-			transitions.add(new LeaveTransition(parent.getProcess()));
+			transitions.add(procData.getLeaveTransition());
 			return;
 		}
 		boolean alreadyAddedOne = false;
-		for (XCFA.Process.Procedure.Edge edge : currentLocation.getOutgoingEdges()) {
-			// TODO multiple stmts on an edge is not fully supported
-			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-			StmtTransition tr = new StmtTransition(parent.getProcess(), edge);
+		for (Transition tr : currentLocation.getTransitions()) {
 			if (tr.enabled(getExplState())) {
 				Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
 				alreadyAddedOne = true;
@@ -218,7 +212,7 @@ public final class CallState implements StmtExecutorInterface {
 	 *
 	 * @param target The new location
 	 */
-	void updateLocation(Location target) {
+	void updateLocation(ProcedureData.LocationWrapper target) {
 		currentLocation = target;
 	}
 
@@ -262,5 +256,9 @@ public final class CallState implements StmtExecutorInterface {
 
 	public boolean isSafe() {
 		return currentLocation != procData.getErrorLoc();
+	}
+
+	public ProcedureData getProcedureData() {
+		return procData;
 	}
 }
