@@ -7,13 +7,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 
 /**
- * Three types of variables:
- * global
- * process local
- * procedure local with parameters -> can have multiple active instances (in the stack)
- * procedures shall store how many calls have they made
+ * Utility to fill valuations with uninitialized parameters.
+ * Currently this only fills integer variables with zeroes.
+ * Probably has no use in real usage.
  */
-
 public class FillValuation {
 	private static FillValuation instance;
 

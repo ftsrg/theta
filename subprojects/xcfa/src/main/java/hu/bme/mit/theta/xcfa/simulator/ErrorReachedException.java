@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-/** Reached error location or deadlock */
+/** Reached error location or deadlock.
+ * TODO remove, refactor to a result of execution
+ */
 public class ErrorReachedException extends Exception {
 
 	public ErrorReachedException(String message) {

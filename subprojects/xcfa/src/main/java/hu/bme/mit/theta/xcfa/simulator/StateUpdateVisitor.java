@@ -20,6 +20,7 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 /**
  * Updates state without checking enabledness. Does not update locations.
+ * Uses the StmtExecutorInterface to decouple from CallState (and thus ExplState).
  */
 public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface, Void> {
 
@@ -37,7 +38,7 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 	public Void visit(XcfaCallStmt _stmt, StmtExecutorInterface param) {
 		Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
 		CallStmt stmt = (CallStmt) _stmt;
-		param.call(stmt);
+		param.onCall(stmt);
 		// paraméterek befelé: stmt.getParams()
 		// az, amit hívnak: stmt.getProcedure()
 		// visszatérési értéket stmt.getVar()-ba kell írni
@@ -91,13 +92,13 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 
 	@Override
 	public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, StmtExecutorInterface param) {
-		param.assign(stmt);
+		param.onAssign(stmt);
 		return null;
 	}
 
 	@Override
 	public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt, StmtExecutorInterface param) {
-		param.havoc(stmt);
+		param.onHavoc(stmt);
 		return null;
 	}
 

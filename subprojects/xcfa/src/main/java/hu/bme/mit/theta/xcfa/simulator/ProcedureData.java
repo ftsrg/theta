@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Stores static procedure data needed by CallState
- * Wrapper for XCFA.Procedure
- * TODO use this to cache data calculated every time in CallState
+ * Stores static procedure data needed by CallState.
+ * Wrapper for XCFA.Procedure.
+ * TODO use this wrapper to cache data calculated every time in CallState (e.g. Transitions from StmtTransition)
  */
 public class ProcedureData {
 	private Procedure procedure;
@@ -33,9 +33,9 @@ public class ProcedureData {
 
 	/**
 	 * VarIndexing is used for simulating the stack. This is used when this procedure is called.
-	 * @param state The RuntimeState to be modified
+	 * @param state The ExplState to be modified
 	 */
-	public void pushProcedure(RuntimeState state) {
+	public void pushProcedure(ExplState state) {
 		// result is a variable, it is already pushed here
 		for (VarDecl<?> var: procedure.getVars()) {
 			state.pushVariable(var);
@@ -45,7 +45,7 @@ public class ProcedureData {
 		}
 	}
 
-	public void popProcedure(RuntimeState state) {
+	public void popProcedure(ExplState state) {
 		for (VarDecl<?> var: procedure.getVars()) {
 			state.havocVariable(var);
 			state.popVariable(var);

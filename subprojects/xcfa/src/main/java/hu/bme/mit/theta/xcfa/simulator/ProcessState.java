@@ -8,19 +8,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
+/**
+ * Stores every (static and runtime) structure of a process
+ * A call stack is used for handling recursion.
+ */
 public final class ProcessState {
 	private Stack<CallState> callStack;
 	private XCFA.Process process;
-	private RuntimeState parent;
+	private ExplState parent;
 
-	public ProcessState(RuntimeState parent, XCFA.Process process) {
+	public ProcessState(ExplState parent, XCFA.Process process) {
 		this.parent = parent;
 		callStack = new Stack<>();
 		this.process = process;
 		push(process.getMainProcedure(), new ArrayList<>(), null);
 	}
 
-	public ProcessState(RuntimeState stepParent, ProcessState toCopy) {
+	public ProcessState(ExplState stepParent, ProcessState toCopy) {
 		process = toCopy.process; // no need to copy static structure
 		parent = stepParent;
 		callStack = new Stack<>();
@@ -41,14 +45,14 @@ public final class ProcessState {
 		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params));
 	}
 
-	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
+	public void collectEnabledTransitions(Collection<Transition> transitions) {
 		// process has finished
 		if (callStack.empty())
 			return;
-		callStack.peek().collectEnabledTransitions(x, transitions);
+		callStack.peek().collectEnabledTransitions(transitions);
 	}
 
-	public RuntimeState getRuntimeState() {
+	public ExplState getExplState() {
 		return parent;
 	}
 

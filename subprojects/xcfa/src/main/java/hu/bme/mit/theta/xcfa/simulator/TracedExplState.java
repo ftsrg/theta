@@ -3,14 +3,16 @@ package hu.bme.mit.theta.xcfa.simulator;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 /**
- * A RuntimeState which notes the execution trace (to show on error)
+ * A ExplState which notes down the execution trace (to show on reached error location)
+ *
+ * Has a reference to the previous state and transition to be able to do that.
  *
  * TODO incomplete
  */
-public class TracedRuntimeState extends RuntimeState {
+public class TracedExplState extends ExplState {
 
 	/** Previous state, which should always be one transition behind the current one (as used by ExplicitChecker) */
-	private RuntimeState previousState;
+	private ExplState previousState;
 
 	/**
 	 * The last transition and the previous states' transitions it should determine the trace
@@ -18,18 +20,18 @@ public class TracedRuntimeState extends RuntimeState {
 	 */
 	private Transition lastTransition;
 
-	public TracedRuntimeState(XCFA xcfa) {
+	public TracedExplState(XCFA xcfa) {
 		super(xcfa);
 	}
 
-	protected TracedRuntimeState(TracedRuntimeState toCopy) {
+	protected TracedExplState(TracedExplState toCopy) {
 		super(toCopy);
 		previousState = toCopy.previousState;
 		lastTransition = toCopy.lastTransition;
 	}
 
 	@Override
-	public TracedRuntimeState copy() {
-		return new TracedRuntimeState(this);
+	public TracedExplState copy() {
+		return new TracedExplState(this);
 	}
 }

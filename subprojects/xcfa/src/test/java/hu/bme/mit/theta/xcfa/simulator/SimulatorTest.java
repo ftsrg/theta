@@ -48,7 +48,6 @@ public class SimulatorTest {
 
 	@Test
 	public void test() throws IOException {
-		//final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		Simulator s = new Simulator(xcfa);

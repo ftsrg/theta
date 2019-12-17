@@ -15,74 +15,75 @@ import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
-public class EnabledStmtVisitor implements XcfaStmtVisitor<RuntimeState, Boolean> {
+/**
+ * Used to test if a given edge is active.
+ * Only Wait and Assume can be inactive at a time.
+ */
+public class EnabledStmtVisitor implements XcfaStmtVisitor<StmtExecutorInterface, Boolean> {
 
 	@Override
-	public Boolean visit(SkipStmt stmt, RuntimeState param) {
+	public Boolean visit(SkipStmt stmt, StmtExecutorInterface param) {
 		return true;
 	}
 
 	@Override
-	public Boolean visit(AssumeStmt stmt, RuntimeState state) {
-		BoolLitExpr a = (BoolLitExpr) state.evalExpr(stmt.getCond());
-		return a.getValue();
+	public Boolean visit(AssumeStmt stmt, StmtExecutorInterface state) {
+		return state.onAssume(stmt);
 	}
 
 	@Override
-	public <DeclType extends Type> Boolean visit(AssignStmt<DeclType> stmt, RuntimeState param) {
+	public <DeclType extends Type> Boolean visit(AssignStmt<DeclType> stmt, StmtExecutorInterface param) {
 		return true;
 	}
 
 	@Override
-	public <DeclType extends Type> Boolean visit(HavocStmt<DeclType> stmt, RuntimeState param) {
+	public <DeclType extends Type> Boolean visit(HavocStmt<DeclType> stmt, StmtExecutorInterface param) {
 		return true;
 	}
 
 	@Override
-	public Boolean visit(XcfaStmt xcfaStmt, RuntimeState param) {
-		// TODO is this safe? return xcfaStmt.accept(this, param);
-		return xcfaStmt.accept((XcfaStmtVisitor<RuntimeState, Boolean>) this, param);
+	public Boolean visit(XcfaStmt xcfaStmt, StmtExecutorInterface param) {
+		return xcfaStmt.accept(this, param);
 	}
 
 	@Override
-	public Boolean visit(XcfaCallStmt stmt, RuntimeState param) {
+	public Boolean visit(XcfaCallStmt stmt, StmtExecutorInterface param) {
 		return true;
 	}
 
 	@Override
-	public Boolean visit(StoreStmt storeStmt, RuntimeState param) {
+	public Boolean visit(StoreStmt storeStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(LoadStmt loadStmt, RuntimeState param) {
+	public Boolean visit(LoadStmt loadStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(AtomicBeginStmt atomicBeginStmt, RuntimeState param) {
+	public Boolean visit(AtomicBeginStmt atomicBeginStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(AtomicEndStmt atomicEndStmt, RuntimeState param) {
+	public Boolean visit(AtomicEndStmt atomicEndStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(NotifyAllStmt notifyAllStmt, RuntimeState param) {
+	public Boolean visit(NotifyAllStmt notifyAllStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(NotifyStmt notifyStmt, RuntimeState param) {
+	public Boolean visit(NotifyStmt notifyStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
-	public Boolean visit(WaitStmt waitStmt, RuntimeState param) {
+	public Boolean visit(WaitStmt waitStmt, StmtExecutorInterface param) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 

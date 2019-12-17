@@ -3,10 +3,12 @@ package hu.bme.mit.theta.xcfa.simulator;
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
@@ -19,6 +21,8 @@ import java.util.Optional;
 /**
  * Call state stores data (and is responsible) of one call (not a procedure, rather an instance of it being called)
  * For example, a recursion might have more callstate of the same procedure at a given moment.
+ *
+ * The CallState implements StmtExecutorInterface to be able to update state on execution of transitions.
  *
  * Naming:
  * procedure Caller() {
@@ -44,21 +48,23 @@ public final class CallState implements StmtExecutorInterface {
 	private ProcedureData procData;
 
 	/**
-	 * Stores the current location of the procedure, or the location to return to, when there is a method call inside.
+	 * Stores the current location of the procedure
+	 * It stores the location to return to if there is a call active.
 	 */
 	private Location currentLocation;
 
 	/**
 	 * The ProcessState the call belongs to
 	 *
-	 * The whole state is wrapped up in RuntimeState which consists of multiple ProcessStates,
+	 * The whole state is wrapped up in ExplState which consists of multiple ProcessStates,
 	 * which consists of multiple CallStates in a tree-like structure.
 	 */
 	private ProcessState parent;
 
 	/**
 	 * The variable to be filled with the result when the procedure ends
-	 * null means result is not expected by the caller (e.g. call foo() instead of bar := call foo())
+	 * null means result is not expected by the caller (e.g. `call foo()` instead of `bar := call foo()`)
+	 * VarDecl is used to show that this is not an indexed version of the variable.
 	 */
 	private VarDecl<? extends Type> callerResultVar;
 
@@ -72,7 +78,7 @@ public final class CallState implements StmtExecutorInterface {
 	 * @param callerParameters the parameter variables passed (the caller side, not the function)
 	 * @param callerResultVar the variable to be filled when the procedure ends. If null, a result is not expected
 	 */
-	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters, VarDecl<?> callerResultVar) {
+	CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters, VarDecl<?> callerResultVar) {
 		this.parent = parent;
 		this.procData = procData;
 		this.callerResultVar = callerResultVar;
@@ -88,38 +94,44 @@ public final class CallState implements StmtExecutorInterface {
 	 * @param procData The procedure (independent of state) which is called
 	 * @param callerParameters the parameter variables passed (the caller side, not the function)
 	 */
-	public CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters) {
+	CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters) {
 		this(parent, procData, callerParameters, null);
 	}
 
 	/**
-	 * CPP-style copy constructor. Used by DFS to be able to "revert" a transition
+	 * CPP-style copy constructor.
 	 *
-	 * Used by ProcessState (and indirectly, by RuntimeState) when copying the whole explicit state of a program
+	 * There are no need to deep copy data, but it should, if anything is needed(!)
+	 *
+	 * Used by ProcessState (and indirectly, by ExplState) when copying the whole explicit state of a program
 	 * @param stepParent The already copied parent ProcessState
 	 * @param toCopy The CallState to copy
 	 */
-	public CallState(ProcessState stepParent, CallState toCopy) {
+	CallState(ProcessState stepParent, CallState toCopy) {
 		parent = stepParent;
 		procData = toCopy.procData;
 		currentLocation = toCopy.currentLocation;
 		callerResultVar = toCopy.callerResultVar;
 	}
 
-	private RuntimeState getRuntimeState() {
-		return parent.getRuntimeState();
+	/**
+	 * Fall through
+	 * @return the explicit state the CallState belongs to
+	 */
+	private ExplState getExplState() {
+		return parent.getExplState();
 	}
 
 	/** Evaluates the variable given the stack state and variable valuation */
 	private <DeclType extends Type> Optional<LitExpr<DeclType>> evalVariable(VarDecl<DeclType> variable) {
-		return getRuntimeState().evalVariable(variable);
+		return getExplState().evalVariable(variable);
 	}
 
 	/**
 	 * Called when the procedure gets called.
 	 * Pushes local variable instances.
 	 */
-	public void begin(List<VarDecl<?>> callerParameters) {
+	private void begin(List<VarDecl<?>> callerParameters) {
 
 		/* The order is important:
 		 * 1. Evaluate caller parameter values (it should be enough to remember the indexing at this point)
@@ -131,26 +143,24 @@ public final class CallState implements StmtExecutorInterface {
 		// TODO this could be checked statically...
 		Preconditions.checkArgument(callerParameters.size() == procData.getParamSize(), "Procedure has wrong number of parameters passed.");
 
-		// so it's basically the same as gcd(a',b') { gcd(a':=b,b':=a%b) }
-
 		// evaluate the parameters
 		List<Optional<? extends LitExpr<?>>> callerParamValues = new ArrayList<>();
 		for (VarDecl<?> param: callerParameters) {
 			callerParamValues.add(evalVariable(param));
 		}
 
-		procData.pushProcedure(getRuntimeState());
+		procData.pushProcedure(getExplState());
 
 		// go through all parameters and initialize them
 		for (int i = 0; i < callerParameters.size(); i++) {
 			VarDecl calleeParam = procData.getParam(i);
 			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			callerParamValues.get(i).ifPresent(litExpr -> getRuntimeState().updateVariable(calleeParam, litExpr));
+			callerParamValues.get(i).ifPresent(litExpr -> getExplState().updateVariable(calleeParam, litExpr));
 		}
 	}
 
 	/**
-	 * Called when the function gets returned.
+	 * Called when the function returns.
 	 * Deletes values associated with the current values.
 	 */
 	public void end() {
@@ -165,21 +175,25 @@ public final class CallState implements StmtExecutorInterface {
 			resultValue = evalVariable(procData.getResultVar().get());
 		}
 
-		procData.popProcedure(getRuntimeState());
+		procData.popProcedure(getExplState());
 
 		if (resultValue.isPresent()) {
-			Preconditions.checkState(callerResultVar != null, "Procedure has variable called return, but caller expects none.");
+			Preconditions.checkState(callerResultVar != null, "Procedure has variable called return, but caller expects no return value.");
 
-			getRuntimeState().updateVariable(callerResultVar, (LitExpr)resultValue.get());
+			getExplState().updateVariable(callerResultVar, (LitExpr)resultValue.get());
 		} else {
-			Preconditions.checkState(callerResultVar == null, "Procedure has no variable named return, but caller expects one.");
+			Preconditions.checkState(callerResultVar == null, "Procedure has no variable named return, but caller expects a return value.");
 		}
 
 		// tell parent we are finished
 		parent.pop();
 	}
 
-	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
+	/**
+	 * Collects transitions enabled in the given process. Called only when the call is active (at the top of the stack). Called only when the call is active (at the top of the stack).
+	 * @param transitions The result will be added here
+	 */
+	public void collectEnabledTransitions(Collection<Transition> transitions) {
 		if (currentLocation == procData.getFinalLoc()) {
 			transitions.add(new LeaveTransition(parent.getProcess()));
 			return;
@@ -188,22 +202,30 @@ public final class CallState implements StmtExecutorInterface {
 		for (XCFA.Process.Procedure.Edge edge : currentLocation.getOutgoingEdges()) {
 			// TODO multiple stmts on an edge is not fully supported
 			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-			for (Stmt stmt : edge.getStmts()) {
-				StmtTransition tr = new StmtTransition(parent.getProcess(), edge);
-				if (tr.enabled(getRuntimeState())) {
-					Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
-					alreadyAddedOne = true;
-					transitions.add(tr);
-				}
+			StmtTransition tr = new StmtTransition(parent.getProcess(), edge);
+			if (tr.enabled(getExplState())) {
+				Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
+				alreadyAddedOne = true;
+				transitions.add(tr);
 			}
 		}
 	}
 
+	/**
+	 * Returns whether the state is an error location
+	 */
 	private boolean isErrorLocation() {
 		return currentLocation == procData.getErrorLoc();
 	}
 
-	public void updateLocation(Location target) throws ErrorReachedException {
+	/**
+	 * Updates location.
+	 *
+	 * Used by StmtTransition.
+	 *
+	 * @param target The new location
+	 */
+	void updateLocation(Location target) throws ErrorReachedException {
 		currentLocation = target;
 		if (isErrorLocation()) {
 			// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
@@ -211,7 +233,11 @@ public final class CallState implements StmtExecutorInterface {
 		}
 	}
 
-	public void call(CallStmt stmt) {
+	/**
+	 * Called when this (active) call handles a CallStmt.
+	 */
+	@Override
+	public void onCall(CallStmt stmt) {
 		ProcessState process = parent;
 		if (stmt.isVoid()) {
 			process.push(stmt.getProcedure(), stmt.getParams());
@@ -220,15 +246,28 @@ public final class CallState implements StmtExecutorInterface {
 		}
 	}
 
-	public void assign(AssignStmt<?> stmt) {
-		getRuntimeState().assign(stmt);
+	/**
+	 * Called when this active call handles an assume stmt.
+	 */
+	@Override
+	public boolean onAssume(AssumeStmt stmt) {
+		BoolLitExpr expr = (BoolLitExpr) getExplState().evalExpr(stmt.getCond());
+		return expr.getValue();
 	}
 
-	private void havocVariable(VarDecl<?> var) {
-		getRuntimeState().havocVariable(var);
+	/**
+	 * Called when this active call handles an assignment stmt.
+	 */
+	@Override
+	public <DeclType extends Type> void onAssign(AssignStmt<DeclType> stmt) {
+		getExplState().assign(stmt);
 	}
 
-	public void havoc(HavocStmt<?> stmt) {
-		havocVariable(stmt.getVarDecl());
+	/**
+	 * Called when this active call handles havoc stmt.
+	 */
+	@Override
+	public <DeclType extends Type> void onHavoc(HavocStmt<DeclType> stmt) {
+		getExplState().havocVariable(stmt.getVarDecl());
 	}
 }
