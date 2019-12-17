@@ -29,12 +29,12 @@ import java.util.Optional;
  *
  * (currently only) TracedExplState extends this class, thus it must be able to be copied.
  *
- * Simulating multiple execution orders is copy-and-step: copy, to have the older data,
- * 	  and then step with both RuntimeStates with different transitions.
+ * Simulating multiple execution orders is possible with copy-and-execute: copy, to have the older data,
+ * 	  and then execute different transitions from the 2 ExplStates.
  *
  * Every derived class should override copy() and implementing protected DerivedExplState(DerivedExplState)
  * to be able to copy the exact state with the type.
- * Used to be able to trace execution in TracedExplState and to use copy-and-step.
+ * It will be used to trace execution in TracedExplState and to use copy-and-execute at the same time.
  */
 public class ExplState {
 	private Map<XCFA.Process, ProcessState> processStates;
@@ -139,15 +139,15 @@ public class ExplState {
 	}
 
 	/**
-	 * Merges getEnabledTransitions + doTransition with a Scheduler which chooses a transition from the list given.
-	 * Difference is, doTransition creates a new copy a transition ahead, without `this` changed.
+	 * Merges getEnabledTransitions + executeTransition with a Scheduler which chooses a transition from the list given.
+	 * Difference is, executeTransition creates a new copy a transition ahead, without `this` changed.
 	 * @param sched A Scheduler which chooses between enabled transitions
 	 */
 	public void step(Scheduler sched) {
 		// TODO edge from final location might lead to infinite loop or "deadlock"
 		onChange();
 		Collection<Transition> enabledTransitions = getEnabledTransitions();
-		sched.getNextTransition(enabledTransitions).step(this);
+		sched.getNextTransition(enabledTransitions).execute(this);
 	}
 
 	/** Returns true when every thread has finished successfully,
@@ -233,14 +233,13 @@ public class ExplState {
 
 	/**
 	 * Returns a new state one transition ahead, without changing `this`'s data
-	 * TODO rename doTransition to executeTransition
 	 * @param transition Transition to execute in the new state
 	 * @return A new state one transition ahead.
 	 */
-	public ExplState doTransition(Transition transition) {
+	public ExplState executeTransition(Transition transition) {
 		onChange();
 		ExplState newState = copy();
-		transition.step(newState);
+		transition.execute(newState);
 		return newState;
 	}
 }

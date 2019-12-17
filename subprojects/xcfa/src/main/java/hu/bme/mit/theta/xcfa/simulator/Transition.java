@@ -23,11 +23,9 @@ public interface Transition {
 	/**
 	 * Updates the runtime state by the transition
 	 * Should be called only by ExplState.
-	 *
-	 * // TODO rename to execute
 	 * @param state The ExplState to be updated
 	 */
-	void step(ExplState state);
+	void execute(ExplState state);
 
 	/**
 	 * Checks whether a transition is enabled.

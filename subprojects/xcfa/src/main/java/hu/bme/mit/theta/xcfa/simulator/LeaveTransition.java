@@ -15,7 +15,7 @@ public class LeaveTransition extends ProcessTransition {
 	}
 
 	@Override
-	public void step(ExplState state) {
+	public void execute(ExplState state) {
 		state.getProcessState(process).getCallStackPeek().end();
 	}
 

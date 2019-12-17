@@ -35,7 +35,7 @@ public class ExplicitChecker {
 
 		private DfsNode child() {
 			Transition transition = nextTransition.next();
-			return new DfsNode(state.doTransition(transition));
+			return new DfsNode(state.executeTransition(transition));
 		}
 	}
 
