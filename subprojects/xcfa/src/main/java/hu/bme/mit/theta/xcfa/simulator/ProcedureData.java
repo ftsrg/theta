@@ -8,7 +8,11 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.XCFA.Process;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Stores static procedure data needed by CallState.
@@ -21,10 +25,13 @@ import java.util.*;
  *
  */
 public class ProcedureData {
-	private Procedure procedure;
-	private Process parent;
+	private final Procedure procedure;
+	private final Process parent;
 
-	private Map<Procedure.Location, LocationWrapper> map = new HashMap<>();
+	private final Map<Procedure.Location, LocationWrapper> map = new HashMap<>();
+	private static Map<Procedure, ProcedureData> procedureDataCache;
+
+	private LeaveTransition leaveTransition;
 
 	/** Maps a location (described by an XCFA edge) to a ProcedureData.LocationWrapper */
 	private LocationWrapper getWrappedLocation(Procedure.Location location) {
@@ -34,7 +41,6 @@ public class ProcedureData {
 		return map.get(location);
 	}
 
-	private static Map<Procedure, ProcedureData> procedureDataCache;
 
 	/**
 	 * Transition for leaving a call.
@@ -58,7 +64,6 @@ public class ProcedureData {
 		}
 	}
 
-	private LeaveTransition leaveTransition;
 	Transition getLeaveTransition() {
 		if (leaveTransition == null)
 			leaveTransition = new LeaveTransition(parent);
@@ -66,8 +71,8 @@ public class ProcedureData {
 	}
 
 	public class EdgeWrapper {
-		Stmt stmt;
-		LocationWrapper target;
+		private final Stmt stmt;
+		private final LocationWrapper target;
 
 		private EdgeWrapper(Procedure.Edge edge) {
 			Preconditions.checkArgument(edge.getStmts().size() == 1,
@@ -87,7 +92,7 @@ public class ProcedureData {
 
 	/** Wrapper for XCFA.Procedure.Process.Location, caches list of transitions. Hides XCFA Location. */
 	public class LocationWrapper {
-		Procedure.Location xcfaLocation;
+		final Procedure.Location xcfaLocation;
 
 		Collection<Transition> transitions = null;
 		private LocationWrapper(Procedure.Location xcfaLocation) {

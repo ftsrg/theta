@@ -38,8 +38,8 @@ import java.util.Optional;
  * It will be used to trace execution in TracedExplState and to use copy-and-execute at the same time.
  */
 public class ExplState {
-	private Map<XCFA.Process, ProcessState> processStates;
-	private XCFA xcfa;
+	private final Map<XCFA.Process, ProcessState> processStates;
+	private final XCFA xcfa;
 
 	/** Cached answer for getSafety(). Initialized on first call. */
 	private StateSafety safety = null;
@@ -50,7 +50,7 @@ public class ExplState {
 	/**
 	 * Stores all values for all versions of variables (for every depth in the stack)
 	 */
-	private MutableValuation valuation;
+	private final MutableValuation valuation;
 	/**
 	 * Stores the current depth of every variable.
 	 * TODO use only for procedure-local vars
@@ -83,6 +83,8 @@ public class ExplState {
 		vars = toCopy.vars.transform().build();
 		xcfa = toCopy.xcfa; // no need to copy static structure
 		processStates = new HashMap<>();
+		safety = null;
+		enabledTransitions = null;
 		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
 			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
 		}
@@ -161,7 +163,7 @@ public class ExplState {
 		return true;
 	}
 
-	public boolean isSafe() {
+	private boolean isSafe() {
 		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
 			if (!entry.getValue().isSafe())
 				return false;

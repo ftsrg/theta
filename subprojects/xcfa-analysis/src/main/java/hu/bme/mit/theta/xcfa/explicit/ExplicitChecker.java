@@ -14,8 +14,8 @@ import java.util.Stack;
  */
 public class ExplicitChecker {
 	private static class DfsNode {
-		private ExplState state;
-		private Iterator<Transition> nextTransition;
+		private final ExplState state;
+		private final Iterator<Transition> nextTransition;
 
 		private DfsNode(ExplState state) {
 			this.state = state;
@@ -40,13 +40,13 @@ public class ExplicitChecker {
 	}
 
 	public class SafetyResult {
-		public boolean safe;
-		public String message;
-		public SafetyResult() {
+		public final boolean safe;
+		public final String message;
+		private SafetyResult() {
 			safe = true;
 			message = null;
 		}
-		public SafetyResult(ExplState.StateSafety base) {
+		private SafetyResult(ExplState.StateSafety base) {
 			Preconditions.checkArgument(!base.safe,
 					"SafetyResult should be built from an unsafe StateSafety");
 			safe = base.safe;

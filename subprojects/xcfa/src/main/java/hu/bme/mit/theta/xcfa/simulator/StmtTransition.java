@@ -19,7 +19,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
  */
 public class StmtTransition extends ProcessTransition {
 
-	private ProcedureData.EdgeWrapper edge;
+	private final ProcedureData.EdgeWrapper edge;
 
 	public StmtTransition(XCFA.Process p, ProcedureData.EdgeWrapper edge) {
 		super(p);

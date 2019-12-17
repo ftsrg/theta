@@ -37,12 +37,12 @@ import java.util.Optional;
  *
  * TODO remove implicit type checks
  */
-public final class CallState implements StmtExecutorInterface {
+final class CallState implements StmtExecutorInterface {
 
 	/**
 	 * Stores which procedure is called
 	 */
-	private ProcedureData procData;
+	private final ProcedureData procData;
 
 	/**
 	 * Stores the current location of the procedure
@@ -56,14 +56,14 @@ public final class CallState implements StmtExecutorInterface {
 	 * The whole state is wrapped up in ExplState which consists of multiple ProcessStates,
 	 * which consists of multiple CallStates in a tree-like structure.
 	 */
-	private ProcessState parent;
+	private final ProcessState parent;
 
 	/**
 	 * The variable to be filled with the result when the procedure ends
 	 * null means result is not expected by the caller (e.g. `call foo()` instead of `bar := call foo()`)
 	 * VarDecl is used to show that this is not an indexed version of the variable.
 	 */
-	private VarDecl<? extends Type> callerResultVar;
+	private final VarDecl<? extends Type> callerResultVar;
 
 	/**
 	 * Constructor
@@ -256,9 +256,5 @@ public final class CallState implements StmtExecutorInterface {
 
 	public boolean isSafe() {
 		return currentLocation != procData.getErrorLoc();
-	}
-
-	public ProcedureData getProcedureData() {
-		return procData;
 	}
 }

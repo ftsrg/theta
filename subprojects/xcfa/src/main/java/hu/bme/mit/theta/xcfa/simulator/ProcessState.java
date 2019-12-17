@@ -12,10 +12,10 @@ import java.util.Stack;
  * Stores every (static and runtime) structure of a process
  * A call stack is used for handling recursion.
  */
-public final class ProcessState {
-	private Stack<CallState> callStack;
-	private XCFA.Process process;
-	private ExplState parent;
+final class ProcessState {
+	private final Stack<CallState> callStack;
+	private final XCFA.Process process;
+	private final ExplState parent;
 
 	ProcessState(ExplState parent, XCFA.Process process) {
 		this.parent = parent;
@@ -58,10 +58,6 @@ public final class ProcessState {
 
 	CallState getCallStackPeek() {
 		return callStack.peek();
-	}
-
-	public XCFA.Process getProcess() {
-		return process;
 	}
 
 	public boolean isFinished() {

@@ -12,7 +12,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
  */
 public class Simulator {
 
-	private ExplState state;
+	private final ExplState state;
 	private final Scheduler s;
 
 	public Simulator(XCFA xcfa) {
