@@ -212,25 +212,14 @@ public final class CallState implements StmtExecutorInterface {
 	}
 
 	/**
-	 * Returns whether the state is an error location
-	 */
-	private boolean isErrorLocation() {
-		return currentLocation == procData.getErrorLoc();
-	}
-
-	/**
 	 * Updates location.
 	 *
 	 * Used by StmtTransition.
 	 *
 	 * @param target The new location
 	 */
-	void updateLocation(Location target) throws ErrorReachedException {
+	void updateLocation(Location target) {
 		currentLocation = target;
-		if (isErrorLocation()) {
-			// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-			throw new ErrorReachedException("Error location reached!");
-		}
 	}
 
 	/**
@@ -269,5 +258,9 @@ public final class CallState implements StmtExecutorInterface {
 	@Override
 	public <DeclType extends Type> void onHavoc(HavocStmt<DeclType> stmt) {
 		getExplState().havocVariable(stmt.getVarDecl());
+	}
+
+	public boolean isSafe() {
+		return currentLocation != procData.getErrorLoc();
 	}
 }

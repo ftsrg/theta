@@ -51,13 +51,12 @@ public class SimulatorTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		Simulator s = new Simulator(xcfa);
-		try {
-			while (s.step()) {
-				//
-			}
-		} catch (ErrorReachedException ex) {
-			ex.printStackTrace();
-			System.out.println("Error location reached or deadlock!");
+		ExplState.StateSafety safety = s.step();
+		while (!safety.finished && safety.safe) {
+			safety = s.step();
+		}
+		if (!safety.safe) {
+			throw new AssertionError("Caught program error: " + safety.message);
 		}
 	}
 }

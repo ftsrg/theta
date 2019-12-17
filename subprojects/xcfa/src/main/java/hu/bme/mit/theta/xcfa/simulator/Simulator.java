@@ -25,8 +25,9 @@ public class Simulator {
 		state = new ExplState(xcfa);
 	}
 
-	public boolean step() throws ErrorReachedException {
-		return state.step(s);
+	public ExplState.StateSafety step() {
+		state.step(s);
+		return state.getSafety();
 	}
 
 }

@@ -17,14 +17,14 @@ public final class ProcessState {
 	private XCFA.Process process;
 	private ExplState parent;
 
-	public ProcessState(ExplState parent, XCFA.Process process) {
+	ProcessState(ExplState parent, XCFA.Process process) {
 		this.parent = parent;
 		callStack = new Stack<>();
 		this.process = process;
 		push(process.getMainProcedure(), new ArrayList<>(), null);
 	}
 
-	public ProcessState(ExplState stepParent, ProcessState toCopy) {
+	ProcessState(ExplState stepParent, ProcessState toCopy) {
 		process = toCopy.process; // no need to copy static structure
 		parent = stepParent;
 		callStack = new Stack<>();
@@ -45,18 +45,18 @@ public final class ProcessState {
 		callStack.push(new CallState(this, ProcedureData.getInstance(procedure), params));
 	}
 
-	public void collectEnabledTransitions(Collection<Transition> transitions) {
+	void collectEnabledTransitions(Collection<Transition> transitions) {
 		// process has finished
 		if (callStack.empty())
 			return;
 		callStack.peek().collectEnabledTransitions(transitions);
 	}
 
-	public ExplState getExplState() {
+	ExplState getExplState() {
 		return parent;
 	}
 
-	public CallState getCallStackPeek() {
+	CallState getCallStackPeek() {
 		return callStack.peek();
 	}
 
@@ -66,5 +66,12 @@ public final class ProcessState {
 
 	public boolean isFinished() {
 		return callStack.empty();
+	}
+
+	public boolean isSafe() {
+		// if there is callstack is already empty...
+		if (isFinished())
+			return true;
+		return getCallStackPeek().isSafe();
 	}
 }

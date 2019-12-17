@@ -30,7 +30,7 @@ public class StmtTransition extends ProcessTransition {
 	}
 
 	@Override
-	public void step(ExplState state) throws ErrorReachedException {
+	public void step(ExplState state) {
 		// Multiple statements on the same edge is not supported, because:
 		// some special stmt could mess up everything with multiple statements:
 		// L0 -> L1 {

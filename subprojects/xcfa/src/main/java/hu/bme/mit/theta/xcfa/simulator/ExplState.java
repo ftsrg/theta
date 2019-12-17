@@ -39,6 +39,13 @@ import java.util.Optional;
 public class ExplState {
 	private Map<XCFA.Process, ProcessState> processStates;
 	private XCFA xcfa;
+
+	/** Cached answer for getSafety(). Initialized on first call. */
+	private StateSafety safety = null;
+
+	/** Cached answer for getEnabledTransition(). Initialized on first call. */
+	private Collection<Transition> enabledTransitions = null;
+
 	/**
 	 * Stores all values for all versions of variables (for every depth in the stack)
 	 */
@@ -49,7 +56,7 @@ public class ExplState {
 	 */
 	private VarIndexing vars;
 
-	public ProcessState getProcessState(XCFA.Process process) {
+	ProcessState getProcessState(XCFA.Process process) {
 		return processStates.get(process);
 	}
 
@@ -92,43 +99,70 @@ public class ExplState {
 
 	/**
 	 * Returns the list of enabled transitions.
-	 * TODO cache the answer once collected.
-	 * TODO maybe this should check for deadlock? step() has deadlock detection, but doTransition doesn't right now)
-	 * @return the list of enabled transitions
 	 */
 	public Collection<Transition> getEnabledTransitions() {
-		ArrayList<Transition> enabledTransitions = new ArrayList<>();
+		if (enabledTransitions != null)
+			return enabledTransitions;
+		ArrayList<Transition> result = new ArrayList<>();
 		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
-			entry.getValue().collectEnabledTransitions(enabledTransitions);
+			entry.getValue().collectEnabledTransitions(result);
 		}
-		return enabledTransitions;
+		return enabledTransitions = result;
+	}
+
+	public static class StateSafety {
+		public final boolean safe;
+		public final boolean finished;
+		/** Human readable message in case of unsafety. null if safe */
+		public final String message;
+
+		private StateSafety(boolean safe, boolean finished, String message) {
+			this.safe = safe;
+			this.finished = finished;
+			this.message = message;
+		}
+	}
+
+	public StateSafety getSafety() {
+		if (safety != null)
+			return safety;
+		if (isFinished()) {
+			return safety = new StateSafety(true, true, null);
+		}
+		if (!isSafe()) {
+			return safety = new StateSafety(false, false, "Error location reached.");
+		}
+		if (getEnabledTransitions().isEmpty()) {
+			return safety = new StateSafety(false, false, "Deadlock reached.");
+		}
+		return safety = new StateSafety(true, false, null);
 	}
 
 	/**
 	 * Merges getEnabledTransitions + doTransition with a Scheduler which chooses a transition from the list given.
 	 * Difference is, doTransition creates a new copy a transition ahead, without `this` changed.
 	 * @param sched A Scheduler which chooses between enabled transitions
-	 * @return Returns false when the simulated program has ended.
-	 * @throws ErrorReachedException Throws error when an error location is reached or deadlock is caught.
 	 */
-	public boolean step(Scheduler sched) throws ErrorReachedException {
+	public void step(Scheduler sched) {
 		// TODO edge from final location might lead to infinite loop or "deadlock"
+		onChange();
 		Collection<Transition> enabledTransitions = getEnabledTransitions();
-		if (enabledTransitions.isEmpty()) {
-			if (!isFinished()) {
-				throw new ErrorReachedException("Deadlock");
-			}
-			return false;
-		}
 		sched.getNextTransition(enabledTransitions).step(this);
-		return true;
 	}
 
 	/** Returns true when every thread has finished successfully,
 	 * meaning that every thread has exit its main procedure. */
-	public boolean isFinished() {
+	private boolean isFinished() {
 		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
 			if (!entry.getValue().isFinished())
+				return false;
+		}
+		return true;
+	}
+
+	public boolean isSafe() {
+		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
+			if (!entry.getValue().isSafe())
 				return false;
 		}
 		return true;
@@ -192,13 +226,19 @@ public class ExplState {
 		updateVariable(stmt.getVarDecl(), x);
 	}
 
+	private void onChange() {
+		safety = null;
+		enabledTransitions = null;
+	}
+
 	/**
 	 * Returns a new state one transition ahead, without changing `this`'s data
+	 * TODO rename doTransition to executeTransition
 	 * @param transition Transition to execute in the new state
 	 * @return A new state one transition ahead.
-	 * @throws ErrorReachedException Throws exception when error location is reached.
 	 */
-	public ExplState doTransition(Transition transition) throws ErrorReachedException {
+	public ExplState doTransition(Transition transition) {
+		onChange();
 		ExplState newState = copy();
 		transition.step(newState);
 		return newState;

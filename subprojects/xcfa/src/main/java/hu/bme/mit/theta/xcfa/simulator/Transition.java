@@ -16,15 +16,18 @@ package hu.bme.mit.theta.xcfa.simulator;
  * TODO create AtomicTransition
  *   This would solve the AtomicBegin/AtomicEnd pair.
  *   For example, a list of atomic operations could be a (composite) transition
+ *
  */
 public interface Transition {
+
 	/**
 	 * Updates the runtime state by the transition
-	 * Should be called only by ExplState
+	 * Should be called only by ExplState.
+	 *
+	 * // TODO rename to execute
 	 * @param state The ExplState to be updated
-	 * @throws ErrorReachedException Throws an error if the error location is reached or a deadlock is caught
 	 */
-	void step(ExplState state) throws ErrorReachedException;
+	void step(ExplState state);
 
 	/**
 	 * Checks whether a transition is enabled.

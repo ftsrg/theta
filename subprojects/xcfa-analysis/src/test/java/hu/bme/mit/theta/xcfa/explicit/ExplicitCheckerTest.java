@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xcfa.explicit;
 
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.simulator.ErrorReachedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -38,17 +37,13 @@ public class ExplicitCheckerTest {
 	public void test() throws IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		try {
-			new ExplicitChecker(xcfa);
-		} catch (ErrorReachedException rex) {
-			if (shouldWork) {
-				throw new RuntimeException("Error reached, but it shouldn't have been.", rex);
-			}
-			// Otherwise works as expected...
-			return;
+		ExplicitChecker checker = new ExplicitChecker();
+		ExplicitChecker.SafetyResult result = checker.check(xcfa);
+		if (shouldWork && !result.safe) {
+			throw new RuntimeException("Error reached, but it shouldn't have been. Error: " + result.message);
 		}
-		if (!shouldWork) {
-			throw new RuntimeException("Error is not reached, but it should have been");
+		if (!shouldWork && result.safe) {
+			throw new RuntimeException("Error is not reached, but it should have been.");
 		}
 	}
 
