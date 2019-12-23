@@ -51,4 +51,9 @@ public class StmtTransition extends ProcessTransition {
 		CallState callState = state.getProcessState(process).getCallStackPeek();
 		return stmt.accept(EnabledStmtVisitor.getInstance(), callState);
 	}
+
+	@Override
+	public String toString() {
+		return edge.getStmt().toString();
+	}
 }

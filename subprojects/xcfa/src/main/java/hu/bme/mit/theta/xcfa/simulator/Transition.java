@@ -5,16 +5,12 @@ package hu.bme.mit.theta.xcfa.simulator;
  *
  * This interface is used to update the state.
  *
- * Mostly corresponds to one statement. (Exception: LeaveTransition, in the future: atomics)
+ * Mostly corresponds to one statement. (Exception: LeaveTransition)
  *
  * A transition instance should be independent of ExplStates.
  * Thus, a transition could be cached later.
  *
  * 	   For this, a procedure wrapper was created (ProcedureData)
- *
- * TODO create AtomicTransition
- *   This would solve the AtomicBegin/AtomicEnd pair.
- *   For example, a list of atomic operations could be a (composite) transition
  *
  * TODO decouple from ExplState? (use a State interface instead)
  */

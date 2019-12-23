@@ -16,4 +16,6 @@ public interface StmtExecutorInterface {
 	<DeclType extends Type> void onHavoc(HavocStmt<DeclType> stmt);
 	void onCall(CallStmt stmt);
 	boolean onAssume(AssumeStmt stmt);
+	void onAtomicBegin();
+	void onAtomicEnd();
 }

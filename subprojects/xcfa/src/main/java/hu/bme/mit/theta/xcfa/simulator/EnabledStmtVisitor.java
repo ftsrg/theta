@@ -64,12 +64,12 @@ public class EnabledStmtVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 
 	@Override
 	public Boolean visit(AtomicBeginStmt atomicBeginStmt, StmtExecutorInterface param) {
-		throw new UnsupportedOperationException("Not yet supported");
+		return true;
 	}
 
 	@Override
 	public Boolean visit(AtomicEndStmt atomicEndStmt, StmtExecutorInterface param) {
-		throw new UnsupportedOperationException("Not yet supported");
+		return true;
 	}
 
 	@Override

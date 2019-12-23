@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -47,13 +48,17 @@ public class ExplState {
 	/** Cached answer for getEnabledTransition(). Initialized on first call. */
 	private Collection<Transition> enabledTransitions = null;
 
+	/** If not null, there is only this process, which should be called */
+	private XCFA.Process atomicLock = null;
+
 	/**
 	 * Stores all values for all versions of variables (for every depth in the stack)
 	 */
 	private final MutableValuation valuation;
+
 	/**
 	 * Stores the current depth of every variable.
-	 * TODO use only for procedure-local vars
+	 * TODO use only for procedure-local vars?
 	 */
 	private VarIndexing vars;
 
@@ -85,6 +90,7 @@ public class ExplState {
 		processStates = new HashMap<>();
 		safety = null;
 		enabledTransitions = null;
+		atomicLock = toCopy.atomicLock;
 		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
 			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
 		}
@@ -107,10 +113,28 @@ public class ExplState {
 		if (enabledTransitions != null)
 			return enabledTransitions;
 		ArrayList<Transition> result = new ArrayList<>();
-		for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
-			entry.getValue().collectEnabledTransitions(result);
+		if (atomicLock == null) {
+			for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
+				entry.getValue().collectEnabledTransitions(result);
+			}
+		} else {
+			getProcessState(atomicLock).collectEnabledTransitions(result);
 		}
 		return enabledTransitions = result;
+	}
+
+	/**
+	 * Enabled transitions will only be selected from this process
+	 * @param process which process should start atomic execution
+	 */
+	void beginAtomic(XCFA.Process process) {
+		Preconditions.checkState(atomicLock == null, "Atomic begin in atomic area");
+		atomicLock = process;
+	}
+
+	void endAtomic() {
+		Preconditions.checkState(atomicLock != null, "Atomic end without atomic begin");
+		atomicLock = null;
 	}
 
 	public static class StateSafety {
@@ -124,6 +148,10 @@ public class ExplState {
 			this.finished = finished;
 			this.message = message;
 		}
+	}
+
+	public List<Transition> getTrace() {
+		return null;
 	}
 
 	public StateSafety getSafety() {
@@ -229,6 +257,9 @@ public class ExplState {
 		updateVariable(stmt.getVarDecl(), x);
 	}
 
+	/**
+	 * Called when an mutable there was a mutable call
+	 */
 	private void onChange() {
 		safety = null;
 		enabledTransitions = null;
@@ -240,7 +271,6 @@ public class ExplState {
 	 * @return A new state one transition ahead.
 	 */
 	public ExplState executeTransition(Transition transition) {
-		onChange();
 		ExplState newState = copy();
 		transition.execute(newState);
 		return newState;

@@ -57,12 +57,14 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 
 	@Override
 	public Void visit(AtomicBeginStmt atomicBeginStmt, StmtExecutorInterface param) {
-		throw new UnsupportedOperationException("Not yet supported");
+		param.onAtomicBegin();
+		return null;
 	}
 
 	@Override
 	public Void visit(AtomicEndStmt atomicEndStmt, StmtExecutorInterface param) {
-		throw new UnsupportedOperationException("Not yet supported");
+		param.onAtomicEnd();
+		return null;
 	}
 
 	@Override

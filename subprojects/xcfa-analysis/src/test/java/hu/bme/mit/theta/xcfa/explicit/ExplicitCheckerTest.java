@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.explicit;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import org.junit.Test;
@@ -21,14 +22,19 @@ public class ExplicitCheckerTest {
 	@Parameter(1)
 	public Boolean shouldWork;
 
+	@Parameter(2)
+	public Boolean traced;
+
 	@Parameters()
 	public static Collection<Object[]> data() {
 		return Arrays.asList(
-				new Object[]{"/functions-global-local.xcfa", true},
-				new Object[]{"/fibonacci.xcfa", true},
-				new Object[]{"/simple-test.xcfa", true},
-				new Object[]{"/deadlock.xcfa", false},
-				new Object[]{"/gcd.xcfa", true}
+				new Object[]{"/functions-global-local.xcfa", true, false},
+				new Object[]{"/fibonacci.xcfa", true, false},
+				new Object[]{"/simple-test.xcfa", true, false},
+				new Object[]{"/deadlock.xcfa", false, false},
+				new Object[]{"/deadlock.xcfa", false, true},
+				new Object[]{"/atomic.xcfa", true, true},
+				new Object[]{"/gcd.xcfa", true, true}
 				//, new Object[]{"/very-parallel.xcfa"}
 		);
 	}
@@ -38,11 +44,20 @@ public class ExplicitCheckerTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		ExplicitChecker checker = new ExplicitChecker();
-		ExplicitChecker.SafetyResult result = checker.check(xcfa);
+		ExplicitChecker.SafetyResult result = checker.check(xcfa, traced);
+		if (traced) {
+			Preconditions.checkState(result.safe || result.trace != null, "Tracing does not work");
+		} else {
+			Preconditions.checkState(result.trace == null, "Tracing when we should not");
+		}
+
+		if (!result.safe) {
+			System.err.println("Safety result:");
+			System.err.println(result);
+		}
 		if (shouldWork && !result.safe) {
 			throw new RuntimeException("Error reached, but it shouldn't have been. Error: " + result.message);
-		}
-		if (!shouldWork && result.safe) {
+		} else if (!shouldWork && result.safe) {
 			throw new RuntimeException("Error is not reached, but it should have been.");
 		}
 	}

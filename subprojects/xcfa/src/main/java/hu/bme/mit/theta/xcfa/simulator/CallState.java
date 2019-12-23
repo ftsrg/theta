@@ -238,6 +238,16 @@ final class CallState implements StmtExecutorInterface {
 		return expr.getValue();
 	}
 
+	@Override
+	public void onAtomicBegin() {
+		getExplState().beginAtomic(parent.getProcess());
+	}
+
+	@Override
+	public void onAtomicEnd() {
+		getExplState().endAtomic();
+	}
+
 	/**
 	 * Called when this active call handles an assignment stmt.
 	 */

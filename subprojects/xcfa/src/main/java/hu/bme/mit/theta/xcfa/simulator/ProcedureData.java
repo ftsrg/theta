@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
@@ -61,6 +62,11 @@ public class ProcedureData {
 		@Override
 		public boolean enabled(ExplState state) {
 			return true;
+		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("leaveCall").add(procedure).toString();
 		}
 	}
 

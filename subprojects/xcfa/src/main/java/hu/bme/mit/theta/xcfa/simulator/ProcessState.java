@@ -70,4 +70,8 @@ final class ProcessState {
 			return true;
 		return getCallStackPeek().isSafe();
 	}
+
+	public XCFA.Process getProcess() {
+		return process;
+	}
 }
