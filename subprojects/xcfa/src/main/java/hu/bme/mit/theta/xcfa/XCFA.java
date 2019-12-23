@@ -127,6 +127,7 @@ public final class XCFA {
 		}
 
 		public static final class Procedure {
+			private final String name;
 			private final Type rtype;
 			private final VarDecl<?> result;
 
@@ -151,6 +152,7 @@ public final class XCFA {
 				finalLoc = builder.finalLoc;
 				edges = ImmutableList.copyOf(builder.edges);
 				result = builder.result;
+				name = builder.name;
 			}
 
 			public static Builder builder() {
@@ -191,6 +193,10 @@ public final class XCFA {
 
 			public VarDecl<?> getResult() {
 				return result;
+			}
+
+			public String getName() {
+				return name;
 			}
 
 			public static final class Location {
@@ -259,6 +265,7 @@ public final class XCFA {
 				private final List<Location> locs;
 				private final List<Edge> edges;
 				private boolean built;
+				private String name;
 				private Type rtype;
 				private VarDecl<?> result;
 				private Location initLoc;
@@ -369,6 +376,14 @@ public final class XCFA {
 
 				private void setResult(VarDecl<?> result) {
 					this.result = result;
+				}
+
+				public String getName() {
+					return name;
+				}
+
+				public void setName(String name) {
+					this.name = name;
 				}
 			}
 		}

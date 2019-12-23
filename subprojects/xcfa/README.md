@@ -33,7 +33,27 @@ An example XCFA realizing a two-threaded counter:
 
 ```
 var x : int
-main process counter {
+main process counter1 {
+  main procedure procedure1() {
+    var i : int
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    final loc END
+    error loc ERR
+
+    L0 -> L1 { i <- x atomic @relaxed }
+    L1 -> L2 { assume i < 5 }
+    L1 -> L4 { assume not (i < 5) }
+    L2 -> L3 { i := i + 1 }
+    L3 -> L1 { i -> x atomic @relaxed }
+    L4 -> END { assume i <= 5 }
+    L4 -> ERR { assume not (i <= 5) }
+  }
+}
+main process counter2 {
   main procedure procedure1() {
     var i : int
     init loc L0
