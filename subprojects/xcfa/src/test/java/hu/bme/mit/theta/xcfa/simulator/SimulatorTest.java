@@ -24,7 +24,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -41,6 +40,7 @@ public class SimulatorTest {
 		return Arrays.asList(
 				new Object[]{"/functions-global-local.xcfa"},
 				new Object[]{"/fibonacci.xcfa"},
+				new Object[]{"/havoc-test.xcfa"},
 				new Object[]{"/simple-test.xcfa"},
 				new Object[]{"/gcd.xcfa"}
 		);
@@ -48,12 +48,15 @@ public class SimulatorTest {
 
 	@Test
 	public void test() throws IOException {
-		//final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		Simulator s = new Simulator(xcfa);
-		while (s.step()) {
-			//
+		ExplState.StateSafety safety = s.step();
+		while (!safety.finished && safety.safe) {
+			safety = s.step();
+		}
+		if (!safety.safe) {
+			throw new AssertionError("Caught program error: " + safety.message);
 		}
 	}
 }

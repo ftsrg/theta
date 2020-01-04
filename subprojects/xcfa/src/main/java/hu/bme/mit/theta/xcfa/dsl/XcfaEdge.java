@@ -38,7 +38,7 @@ public class XcfaEdge implements Instantiatable<XCFA.Process.Procedure.Edge> {
 		checkState(opt.isPresent());
 		source = (XcfaLocationSymbol) opt.get();
 		opt = scope.resolve(context.target.getText());
-		checkState(opt.isPresent());
+		checkState(opt.isPresent(), "Could not resolve symbol " + context.target.getText());
 		target = (XcfaLocationSymbol) opt.get();
 
 		stmts = new ArrayList<>();

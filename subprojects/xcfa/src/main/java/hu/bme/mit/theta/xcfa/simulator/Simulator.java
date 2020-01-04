@@ -3,26 +3,31 @@ package hu.bme.mit.theta.xcfa.simulator;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 /**
- * Checks no deadlock.
- * Checks that it ends on final location
+ * Checks for deadlock.
+ * Checks that program ends on final location
  * Assumes no livelock (it would get to an infinite loop)
- * Uninitialised variables only work for ints (and it assigns zero), sorry
- * <p>
- * VarIndexing is used for implementing call stack: every call digs local variables' indices one level deeper
- * <p>
- * XcfaStmtVisitor
+ * Currently uninitialised variables only work for integers (and it assigns zero), sorry (due to ExplState)
+ *
+ * Uses a simple scheduler by default.
  */
 public class Simulator {
 
-	private RuntimeState state;
-    private final Scheduler s = enabledTransitions -> enabledTransitions.iterator().next();
+	private final ExplState state;
+	private final Scheduler s;
 
 	public Simulator(XCFA xcfa) {
-		state = new RuntimeState(this, xcfa);
+		s = enabledTransitions -> enabledTransitions.iterator().next();
+		state = new ExplState(xcfa);
 	}
 
-	boolean step() {
-	    return state.step(s);
-    }
+	public Simulator(XCFA xcfa, Scheduler sched) {
+		s = sched;
+		state = new ExplState(xcfa);
+	}
+
+	public ExplState.StateSafety step() {
+		state.step(s);
+		return state.getSafety();
+	}
 
 }

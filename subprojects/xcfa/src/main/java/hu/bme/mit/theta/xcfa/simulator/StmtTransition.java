@@ -1,50 +1,59 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
+import hu.bme.mit.theta.xcfa.XCFA;
 
+/**
+ * A transition with an associated edge.
+ * Almost every transition is alike, except LeaveTransition, at the moment.
+ * Uses StmtExecutorInterface through EnabledStmtVisitor and StateUpdateVisitor to process statements.
+ * An exception is LeaveTransition, which leaves a call.
+ *
+ * A transition instance should be independent of ExplStates.
+ *
+ * Note: In the future, to be able to cache these transitions, one should not store state of the explicit state in use.
+ *
+ * Note: Multiple statements on the same edge is not supported.
+ *   Enabledness cannot be determined without running previous stmts
+ *   Function calls will mess everything up
+ */
 public class StmtTransition extends ProcessTransition {
 
-    private Edge edge;
+	private final ProcedureData.EdgeWrapper edge;
 
-    StmtTransition(ProcessState p, Edge edge) {
-        super(p);
-        this.edge = edge;
-    }
+	public StmtTransition(XCFA.Process p, ProcedureData.EdgeWrapper edge) {
+		super(p);
+		this.edge = edge;
+	}
 
-    @Override
-    public void step() {
-        // TODO multiple stmts on an edge is not fully supported
-        // some special stmt could mess up everything with multiple statements:
-        // L0 -> L1 {
-        //   call proc()
-        //   a = a + 2
-        // }
-        // this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
+	@Override
+	public void execute(ExplState state) {
+		// Multiple statements on the same edge is not supported, because:
+		// some special stmt could mess up everything with multiple statements:
+		// L0 -> L1 {
+		//   call proc()
+		//   a = a + 2
+		// }
+		// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
 
-        // Because of this, currently only one stmt/edge is enforced:
-        Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-        for (Stmt stmt : edge.getStmts()) {
-            CallState x = processState.callStack.peek();
-            stmt.accept(StateUpdateVisitor.getInstance(), x);
-            x.currentLocation = edge.getTarget();
+		// also, enabledness is hard to determine
 
-            // TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-            // test that the procedure did not get to the error location
-            Preconditions.checkState(x.currentLocation != x.procedure.getErrorLoc(), "Test failed: Reached error location.");
-            // step succeeded
-        }
-    }
+		// Because of this, currently only one stmt per edge is enforced:
 
-    @Override
-    public boolean enabled(RuntimeState state) {
-        Preconditions.checkState(edge.getStmts().size()==1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-        for (Stmt stmt : edge.getStmts()) {
-            if (stmt.accept(EnabledTransitionVisitor.getInstance(), state)) {
-                return true;
-            }
-        }
-        return false;
-    }
+		CallState callState = state.getProcessState(process).getCallStackPeek();
+		edge.getStmt().accept(StateUpdateVisitor.getInstance(), callState);
+		callState.updateLocation(edge.getTarget());
+	}
+
+	@Override
+	public boolean enabled(ExplState state) {
+		Stmt stmt = edge.getStmt();
+		CallState callState = state.getProcessState(process).getCallStackPeek();
+		return stmt.accept(EnabledStmtVisitor.getInstance(), callState);
+	}
+
+	@Override
+	public String toString() {
+		return edge.getStmt().toString();
+	}
 }

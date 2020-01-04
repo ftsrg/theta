@@ -1,181 +1,270 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-class CallState {
-	/**
-	 * current location, or where-to-return (after returning from current call)
-	 */
-	XCFA.Process.Procedure procedure;
-	XCFA.Process.Procedure.Location currentLocation;
-	ProcessState parent;
-	/**
-	 * Where to return the result
-	 */
-	Optional<VarDecl<?>> resultVar;
+/**
+ * Call state stores data (and is responsible) of one call (not a procedure, rather an instance of it being called)
+ * For example, a recursion might have more callstate of the same procedure at a given moment.
+ *
+ * The CallState implements StmtExecutorInterface to be able to update state on execution of transitions.
+ *
+ * Naming:
+ * procedure Caller() {
+ *     L1 -> L2 {
+ *         callerResultVar := call Callee(callerParamVar1, callerParamVar2)
+ *     }
+ * }
+ *
+ * procedure Callee(calleeParam1 : int, calleeParamVar2 : int) {
+ * 	   var result : int // calleeResultVar
+ *     L1 -> L2 {
+ *         result := 123
+ *     }
+ * }
+ *
+ * TODO remove implicit type checks
+ */
+final class CallState implements StmtExecutorInterface {
 
-	public CallState(ProcessState parent, XCFA.Process.Procedure procedure, List<VarDecl<?>> parameters, VarDecl<?> resultVar) {
+	/**
+	 * Stores which procedure is called
+	 */
+	private final ProcedureData procData;
+
+	/**
+	 * Stores the current location of the procedure
+	 * It stores the location to return to if there is a call active.
+	 */
+	private ProcedureData.LocationWrapper currentLocation;
+
+	/**
+	 * The ProcessState the call belongs to
+	 *
+	 * The whole state is wrapped up in ExplState which consists of multiple ProcessStates,
+	 * which consists of multiple CallStates in a tree-like structure.
+	 */
+	private final ProcessState parent;
+
+	/**
+	 * The variable to be filled with the result when the procedure ends
+	 * null means result is not expected by the caller (e.g. `call foo()` instead of `bar := call foo()`)
+	 * VarDecl is used to show that this is not an indexed version of the variable.
+	 */
+	private final VarDecl<? extends Type> callerResultVar;
+
+	/**
+	 * Constructor
+	 *
+	 * The result is not expected, when call foo() is used instead of bar := foo() (callerResultVar is null)
+	 *
+	 * @param parent The ProcessState it belongs to
+	 * @param procData The procedure (independent of state) which is called
+	 * @param callerParameters the parameter variables passed (the caller side, not the function)
+	 * @param callerResultVar the variable to be filled when the procedure ends. If null, a result is not expected
+	 */
+	CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters, VarDecl<?> callerResultVar) {
 		this.parent = parent;
-		this.procedure = procedure;
-		this.resultVar = (resultVar == null ? Optional.empty() : Optional.of(resultVar));
-		currentLocation = procedure.getInitLoc();
-		begin(parameters);
+		this.procData = procData;
+		this.callerResultVar = callerResultVar;
+		currentLocation = procData.getInitLoc();
+		begin(callerParameters);
 	}
 
-	public CallState(ProcessState parent, XCFA.Process.Procedure procedure, List<VarDecl<?>> parameters) {
-		this(parent, procedure, parameters, null);
+	/**
+	 * Shorthand for constructor without expected return value
+	 *
+	 * The result is not expected, when call foo() is used instead of bar := foo() (callerResultVar is null).
+	 * @param parent The ProcessState it belongs to
+	 * @param procData The procedure (independent of state) which is called
+	 * @param callerParameters the parameter variables passed (the caller side, not the function)
+	 */
+	CallState(ProcessState parent, ProcedureData procData, List<VarDecl<?>> callerParameters) {
+		this(parent, procData, callerParameters, null);
+	}
+
+	/**
+	 * CPP-style copy constructor.
+	 *
+	 * There are no need to deep copy data, but it should, if anything is needed(!)
+	 *
+	 * Used by ProcessState (and indirectly, by ExplState) when copying the whole explicit state of a program
+	 * @param stepParent The already copied parent ProcessState
+	 * @param toCopy The CallState to copy
+	 */
+	CallState(ProcessState stepParent, CallState toCopy) {
+		parent = stepParent;
+		procData = toCopy.procData;
+		currentLocation = toCopy.currentLocation;
+		callerResultVar = toCopy.callerResultVar;
+	}
+
+	/**
+	 * Fall through
+	 * @return the explicit state the CallState belongs to
+	 */
+	private ExplState getExplState() {
+		return parent.getExplState();
+	}
+
+	/** Evaluates the variable given the stack state and variable valuation */
+	private <DeclType extends Type> Optional<LitExpr<DeclType>> evalVariable(VarDecl<DeclType> variable) {
+		return getExplState().evalVariable(variable);
 	}
 
 	/**
 	 * Called when the procedure gets called.
 	 * Pushes local variable instances.
 	 */
-	public void begin(List<VarDecl<?>> parameters) {
-		//  map everything *first* to the indexed version, because modifying the numbering can have effect to the variables
-		// for example: gcd(a,b) call to gcd(b,a%b) would change `a`'s meaning first
-		// so it's basically the same as gcd(a',b') { gcd(a':=b,b':=a%b) }
-		List<Decl<?>> callerParamsIndexed = new ArrayList<>(parameters);
-		callerParamsIndexed.replaceAll((a) -> ((VarDecl<?>) a).getConstDecl(parent.parent.vars.get((VarDecl<?>) a)));
+	private void begin(List<VarDecl<?>> callerParameters) {
 
+		/* The order is important:
+		 * 1. Evaluate caller parameter values (it should be enough to remember the indexing at this point)
+		 * 2. "Push" parameters & locals "to stack"
+		 * 3. Copy caller parameter values to callees'
+		 *
+		 * gcd(big,little) call to gcd(little,big%little) must not change little's value
+		 */
 		// TODO this could be checked statically...
-		Preconditions.checkState(callerParamsIndexed.size() == procedure.getParams().size(), "Procedure has wrong number of parameters passed.");
+		Preconditions.checkArgument(callerParameters.size() == procData.getParamSize(), "Procedure has wrong number of parameters passed.");
 
-		// TODO there is an error here in the simulator: evaluating parameters and pushing must be done in two stages
-		// TODO write a test case catching the error (GCD?)
-
-		// go through all parameters, "push stack" with VarIndexing
-		for (int i = 0; i < parameters.size(); i++) {
-			Decl<?> callerParamIndexed = callerParamsIndexed.get(i);
-			Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParamIndexed);
-
-			VarDecl<?> calleeParam = procedure.getParams().get(i);
-
-			parent.parent.vars = parent.parent.vars.inc(calleeParam);
-
-			int calleeParamIndex = parent.parent.vars.get(calleeParam);
-			Decl<?> calleeParamIndexed = calleeParam.getConstDecl(calleeParamIndex);
-
-			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			if (callerParameterValue.isPresent())
-				parent.parent.valuation.put(calleeParamIndexed, callerParameterValue.get());
+		// evaluate the parameters
+		List<Optional<? extends LitExpr<?>>> callerParamValues = new ArrayList<>();
+		for (VarDecl<?> param: callerParameters) {
+			callerParamValues.add(evalVariable(param));
 		}
 
-		// "push" local variables with VarIndexing
-		// result is a variable too, it is pushed here
-		for (VarDecl var : procedure.getVars()) {
-			parent.parent.vars = parent.parent.vars.inc(var);
+		procData.pushProcedure(getExplState());
+
+		// go through all parameters and initialize them
+		for (int i = 0; i < callerParameters.size(); i++) {
+			VarDecl calleeParam = procData.getParam(i);
+			// Uninitialized parameter value means that the callee parameter will be uninitialized too
+			callerParamValues.get(i).ifPresent(litExpr -> getExplState().updateVariable(calleeParam, litExpr));
 		}
 	}
 
 	/**
-	 * Called when the function gets returned.
+	 * Called when the function returns.
 	 * Deletes values associated with the current values.
 	 */
 	public void end() {
-		// All values that must be calculated (result) must be calculated at the start of the function
-		// After, all variables and parameters can be popped and removed from the valuation
-		// Values are removed so a bug does not cause us to use a previous call's return value
-		//  (and for memory efficiency)
-		// AFTER popping the variables, we are in the caller's state, which means we can WRITE the result of the variables
-		// So: calculate with callee's state, pop stack, and write result only then
 
-		// evaluate result
-		Optional<? extends LitExpr<?>> result = Optional.empty();
-		if (procedure.getResult() != null) {
-			int index0 = parent.parent.vars.get(procedure.getResult());
-			result = parent.parent.valuation.eval(procedure.getResult().getConstDecl(index0));
+		/* The order is important:
+		 * 1. Calculate return value from the current context
+		 * 2. Pop parameters & locals "from stack" (also remove now unused values from the valuation)
+		 * 3. Write result to caller's variable
+		 */
+		Optional<? extends LitExpr> resultValue = Optional.empty();
+		if (procData.getResultVar().isPresent()) {
+			resultValue = evalVariable(procData.getResultVar().get());
 		}
 
-		// pop call-stack parameters and local variables
-		for (VarDecl var : procedure.getParams()) {
-			int index = parent.parent.vars.get(var);
-			parent.parent.valuation.remove(var.getConstDecl(index));
-			parent.parent.vars = parent.parent.vars.inc(var, -1);
-		}
+		procData.popProcedure(getExplState());
 
-		// "pop" variables
-		for (VarDecl var : procedure.getVars()) {
-			int index = parent.parent.vars.get(var);
-			parent.parent.valuation.remove(var.getConstDecl(index));
-			parent.parent.vars = parent.parent.vars.inc(var, -1);
-		}
+		if (resultValue.isPresent()) {
+			Preconditions.checkState(callerResultVar != null, "Procedure has variable called return, but caller expects no return value.");
 
-		// write result
-		if (procedure.getResult() != null) {
-			// return variable should have been written to...
-			Preconditions.checkState(result.isPresent(), "Procedure has return value, but nothing is returned.");
-			Preconditions.checkState(resultVar.isPresent(), "Procedure has return value, but nothing is returned.");
-			Decl<? extends Type> resultDecl = resultVar.get().getConstDecl(parent.parent.vars.get(resultVar.get()));
-			parent.parent.valuation.put(resultDecl, result.get());
+			getExplState().updateVariable(callerResultVar, (LitExpr)resultValue.get());
 		} else {
-			Preconditions.checkState(!result.isPresent(), "Procedure has no return value, but something is returned.");
+			Preconditions.checkState(callerResultVar == null, "Procedure has no variable named return, but caller expects a return value.");
 		}
 
 		// tell parent we are finished
 		parent.pop();
 	}
 
-	// returning from a function counts as a step
-	public boolean step() {
-		if (currentLocation == procedure.getFinalLoc()) {
-			end();
-			return true;
-		}
-		for (XCFA.Process.Procedure.Edge edge : currentLocation.getOutgoingEdges()) {
-			// TODO multiple stmts on an edge is not fully supported
-			// some special stmt could mess up everything with multiple statements:
-			// L0 -> L1 {
-			//   call proc()
-			//   a = a + 2
-			// }
-			// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
-
-			// Because of this, currently only one stmt/edge is enforced:
-			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-			for (Stmt stmt : edge.getStmts()) {
-				if (!stmt.accept(EnabledTransitionVisitor.getInstance(), parent.parent))
-					continue;
-				stmt.accept(StateUpdateVisitor.getInstance(), this);
-				currentLocation = edge.getTarget();
-
-				// TODO Rework: now as the Simulator is not part of the test suite, getting to the error location is not an error
-				// test that the procedure did not get to the error location
-				Preconditions.checkState(currentLocation != procedure.getErrorLoc(), "Test failed: Reached error location.");
-				// step succeeded
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void collectEnabledTransitions(RuntimeState x, Collection<Transition> transitions) {
-		// TODO create an end call statement
-		if (currentLocation == procedure.getFinalLoc()) {
-			transitions.add(new LeaveTransition(parent));
+	/**
+	 * Collects transitions enabled in the given process. Called only when the call is active (at the top of the stack). Called only when the call is active (at the top of the stack).
+	 * @param transitions The result will be added here
+	 */
+	public void collectEnabledTransitions(Collection<Transition> transitions) {
+		if (currentLocation == procData.getFinalLoc()) {
+			transitions.add(procData.getLeaveTransition());
 			return;
 		}
 		boolean alreadyAddedOne = false;
-		for (XCFA.Process.Procedure.Edge edge : currentLocation.getOutgoingEdges()) {
-			// TODO multiple stmts on an edge is not fully supported
-			Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-			for (Stmt stmt : edge.getStmts()) {
-				if (stmt.accept(EnabledTransitionVisitor.getInstance(), x)) {
-					Preconditions.checkState(!alreadyAddedOne, "Probably only 1 edge should be active in a given process.");
-					alreadyAddedOne = true;
-					transitions.add(new StmtTransition(parent, edge));
-				}
+		for (Transition tr : currentLocation.getTransitions()) {
+			if (tr.enabled(getExplState())) {
+				Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
+				alreadyAddedOne = true;
+				transitions.add(tr);
 			}
 		}
+	}
+
+	/**
+	 * Updates location.
+	 *
+	 * Used by StmtTransition.
+	 *
+	 * @param target The new location
+	 */
+	void updateLocation(ProcedureData.LocationWrapper target) {
+		currentLocation = target;
+	}
+
+	/**
+	 * Called when this (active) call handles a CallStmt.
+	 */
+	@Override
+	public void onCall(CallStmt stmt) {
+		ProcessState process = parent;
+		if (stmt.isVoid()) {
+			process.push(stmt.getProcedure(), stmt.getParams());
+		} else {
+			process.push(stmt.getProcedure(), stmt.getParams(), stmt.getVar());
+		}
+	}
+
+	/**
+	 * Called when this active call handles an assume stmt.
+	 */
+	@Override
+	public boolean onAssume(AssumeStmt stmt) {
+		BoolLitExpr expr = (BoolLitExpr) getExplState().evalExpr(stmt.getCond());
+		return expr.getValue();
+	}
+
+	@Override
+	public void onAtomicBegin() {
+		getExplState().beginAtomic(parent.getProcess());
+	}
+
+	@Override
+	public void onAtomicEnd() {
+		getExplState().endAtomic();
+	}
+
+	/**
+	 * Called when this active call handles an assignment stmt.
+	 */
+	@Override
+	public <DeclType extends Type> void onAssign(AssignStmt<DeclType> stmt) {
+		getExplState().assign(stmt);
+	}
+
+	/**
+	 * Called when this active call handles havoc stmt.
+	 */
+	@Override
+	public <DeclType extends Type> void onHavoc(HavocStmt<DeclType> stmt) {
+		getExplState().havocVariable(stmt.getVarDecl());
+	}
+
+	public boolean isSafe() {
+		return currentLocation != procData.getErrorLoc();
 	}
 }

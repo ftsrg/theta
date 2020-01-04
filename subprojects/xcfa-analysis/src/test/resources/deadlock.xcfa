@@ -1,0 +1,24 @@
+main process mainProcess{
+
+    procedure alma() {
+        var x: int
+        init loc L0
+        final loc L1
+        L0 -> L1 {
+            x := 1
+        }
+    }
+
+	main procedure mainProcedure(){
+		init loc L0
+		loc L1
+		final loc L2
+
+        L0 -> L1 {
+            call alma()
+        }
+		L1 -> L2 {
+		    assume false
+		}
+	}
+}

@@ -1,5 +1,3 @@
-// Tried to test a problem with passing parameters from the same procedure
-// Error was not caught
 main process mainProcess{
 
 	main procedure mainProcedure(){
@@ -64,7 +62,7 @@ main process mainProcess{
 // gcd(a,b) {
 //   L0: if (b == 0) {
 //   L1:   return a;
-//       }
+//   }
 //   L2: a = a % b;
 //   L3: result := gcd(b,a);
 // }
