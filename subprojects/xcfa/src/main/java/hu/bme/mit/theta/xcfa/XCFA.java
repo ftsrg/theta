@@ -429,7 +429,7 @@ public final class XCFA {
 
 			public void setMainProcedure(final Procedure mainProcedure) {
 				checkNotBuilt();
-				checkArgument(procedures.contains(mainProcedure));
+				checkArgument(procedures.contains(mainProcedure), "Procedures does not contain main procedure");
 				this.mainProcedure = mainProcedure;
 			}
 

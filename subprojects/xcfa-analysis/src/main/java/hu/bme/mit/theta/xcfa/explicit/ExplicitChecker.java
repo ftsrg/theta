@@ -2,19 +2,16 @@ package hu.bme.mit.theta.xcfa.explicit;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.simulator.ExplState;
-import hu.bme.mit.theta.xcfa.simulator.TracedExplState;
-import hu.bme.mit.theta.xcfa.simulator.Transition;
+import hu.bme.mit.theta.xcfa.simulator.*;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * An explicit checker traversing every possible ordering of an XCFA state.
  * Supports only zero-initialized values (because of how ExplState works).
  */
 public class ExplicitChecker {
+
 	private static class DfsNode {
 		private final ExplState state;
 		private final Iterator<Transition> nextTransition;
@@ -27,8 +24,8 @@ public class ExplicitChecker {
 		private boolean hasChild() {
 			return
 					state.getSafety().safe &&
-				    !state.getSafety().finished &&
-				    nextTransition.hasNext();
+							!state.getSafety().finished &&
+							nextTransition.hasNext();
 		}
 
 		private boolean isSafe() {
@@ -41,7 +38,7 @@ public class ExplicitChecker {
 		}
 	}
 
-	public class SafetyResult {
+	public static class SafetyResult {
 		public final boolean safe;
 		public final String message;
 		public final List<Transition> trace;
@@ -82,6 +79,9 @@ public class ExplicitChecker {
 	 * SafetyResult should be always unsafe OR finished.
 	 */
 	public SafetyResult check(XCFA xcfa, boolean traced) {
+		Set<AbstractExplState> exploredStates = new HashSet<>();
+		// will be used in partial order reduction: Set<AbstractExplState> stackedStates = new HashSet<>();
+
 		ExplState initialState;
 		if (traced)
 			initialState = new TracedExplState(xcfa);
@@ -92,7 +92,13 @@ public class ExplicitChecker {
 		while (!dfsStack.empty()) {
 			DfsNode node = dfsStack.peek();
 			if (node.hasChild()) {
-				dfsStack.push(node.child());
+				DfsNode child = node.child();
+				//ImmutableExplState ies = child.state.toImmutableExplState();
+				if (exploredStates.contains(child.state)) {
+					continue;
+				}
+				exploredStates.add(child.state.toImmutableExplState());
+				dfsStack.push(child);
 			} else {
 				if (!node.isSafe()) {
 					return new SafetyResult(node.state.getSafety(), node.state.getTrace());

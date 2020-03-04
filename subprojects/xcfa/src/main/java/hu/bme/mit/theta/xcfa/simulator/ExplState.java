@@ -1,9 +1,12 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -12,13 +15,9 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.simulator.util.FillValuation;
+import org.antlr.v4.misc.OrderedHashMap;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Actual state of execution
@@ -38,7 +37,7 @@ import java.util.Optional;
  * to be able to copy the exact state with the type.
  * It will be used to trace execution in TracedExplState and to use copy-and-execute at the same time.
  */
-public class ExplState {
+public class ExplState extends AbstractExplState {
 	private final Map<XCFA.Process, ProcessState> processStates;
 	private final XCFA xcfa;
 
@@ -74,7 +73,8 @@ public class ExplState {
 		vars = VarIndexing.builder(0).build();
 		this.xcfa = xcfa;
 		List<XCFA.Process> procs = xcfa.getProcesses();
-		processStates = new HashMap<>();
+		// orderedhashmap, because the partial order tests, to be deterministic, has to be ordered
+		processStates = new OrderedHashMap<>();
 		for (XCFA.Process proc : procs) {
 			processStates.put(proc, new ProcessState(this, proc));
 		}
@@ -114,6 +114,7 @@ public class ExplState {
 			return enabledTransitions;
 		ArrayList<Transition> result = new ArrayList<>();
 		if (atomicLock == null) {
+			// the order has to be deterministic, to be able to write deterministic tests for partial ordering
 			for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
 				entry.getValue().collectEnabledTransitions(result);
 			}
@@ -135,6 +136,33 @@ public class ExplState {
 	void endAtomic() {
 		Preconditions.checkState(atomicLock != null, "Atomic end without atomic begin");
 		atomicLock = null;
+	}
+
+	@Override
+	public Valuation getValuation() {
+		return valuation;
+	}
+
+	@Override
+	public ImmutableMap<XCFA.Process, ImmutableProcessState> getLocations() {
+		ImmutableMap.Builder<XCFA.Process, ImmutableProcessState> builder = new ImmutableMap.Builder<>();
+		for (ProcessState ps : processStates.values()) {
+			if (ps.isFinished())
+				builder.put(ps.getProcess(), new ImmutableProcessState(null));
+			else
+				builder.put(ps.getProcess(), new ImmutableProcessState(ps.getCallStackPeek().getLocation()));
+		}
+		return builder.build();
+	}
+
+	public Collection<Transition> getTransitionsOfProcess(XCFA.Process process) {
+		ProcessState processState = processStates.get(process);
+		if (processState.isFinished())
+			return Collections.emptySet();
+		CallState cs = processState.getCallStackPeek();
+		ProcedureData procedureData = ProcedureData.getInstance(cs.getProcedure(), process);
+		ProcedureData.LocationWrapper location = procedureData.getWrappedLocation(cs.getLocation());
+		return location.getTransitions();
 	}
 
 	public static class StateSafety {
@@ -274,5 +302,9 @@ public class ExplState {
 		ExplState newState = copy();
 		transition.execute(newState);
 		return newState;
+	}
+
+	public ImmutableExplState toImmutableExplState() {
+		return new ImmutableExplState(ImmutableValuation.copyOf(valuation), getLocations());
 	}
 }

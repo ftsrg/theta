@@ -34,7 +34,9 @@ public class ExplicitCheckerTest {
 				new Object[]{"/deadlock.xcfa", false, false},
 				new Object[]{"/deadlock.xcfa", false, true},
 				new Object[]{"/atomic.xcfa", true, true},
-				new Object[]{"/gcd.xcfa", true, true}
+				new Object[]{"/gcd.xcfa", true, true},
+				new Object[]{"/partialorder-test.xcfa", false, true},
+				new Object[]{"/infiniteloop.xcfa", true, true}
 				//, new Object[]{"/very-parallel.xcfa"}
 		);
 	}

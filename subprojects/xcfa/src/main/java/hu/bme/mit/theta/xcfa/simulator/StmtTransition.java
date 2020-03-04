@@ -1,7 +1,13 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtDeclCollector;
+import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtNotReadOnlyDeclCollector;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * A transition with an associated edge.
@@ -16,44 +22,24 @@ import hu.bme.mit.theta.xcfa.XCFA;
  * Note: Multiple statements on the same edge is not supported.
  *   Enabledness cannot be determined without running previous stmts
  *   Function calls will mess everything up
+ *
+ * Abstract so I can "mock" it in the tests (without actually using ugly reflection)
  */
-public class StmtTransition extends ProcessTransition {
+public abstract class StmtTransition extends ProcessTransition {
 
-	private final ProcedureData.EdgeWrapper edge;
-
-	public StmtTransition(XCFA.Process p, ProcedureData.EdgeWrapper edge) {
+	public StmtTransition(XCFA.Process p) {
 		super(p);
-		this.edge = edge;
 	}
 
 	@Override
-	public void execute(ExplState state) {
-		// Multiple statements on the same edge is not supported, because:
-		// some special stmt could mess up everything with multiple statements:
-		// L0 -> L1 {
-		//   call proc()
-		//   a = a + 2
-		// }
-		// this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
-
-		// also, enabledness is hard to determine
-
-		// Because of this, currently only one stmt per edge is enforced:
-
-		CallState callState = state.getProcessState(process).getCallStackPeek();
-		edge.getStmt().accept(StateUpdateVisitor.getInstance(), callState);
-		callState.updateLocation(edge.getTarget());
-	}
+	public abstract void execute(ExplState state);
 
 	@Override
-	public boolean enabled(ExplState state) {
-		Stmt stmt = edge.getStmt();
-		CallState callState = state.getProcessState(process).getCallStackPeek();
-		return stmt.accept(EnabledStmtVisitor.getInstance(), callState);
-	}
+	public abstract boolean enabled(ExplState state);
 
-	@Override
-	public String toString() {
-		return edge.getStmt().toString();
-	}
+	// read vars that don't change
+	public abstract Collection<Decl<?>> getRWVars();
+
+	// read vars that do change
+	public abstract Collection<Decl<?>> getWVars();
 }

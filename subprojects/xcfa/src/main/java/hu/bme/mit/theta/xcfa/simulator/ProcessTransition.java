@@ -8,10 +8,13 @@ import hu.bme.mit.theta.xcfa.XCFA;
  */
 abstract public class ProcessTransition implements Transition {
 
-	protected final XCFA.Process process;
+	private final XCFA.Process process;
 
 	public ProcessTransition(XCFA.Process p) {
 		process = p;
 	}
 
+	public XCFA.Process getProcess() {
+		return process;
+	}
 }

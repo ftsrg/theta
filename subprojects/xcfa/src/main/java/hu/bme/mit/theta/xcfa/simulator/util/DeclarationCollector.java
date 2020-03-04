@@ -34,7 +34,7 @@ public class DeclarationCollector {
 	 * @param expr The expression to iterate through
 	 * @return Returns the collection of declarations in expr
 	 */
-	static Collection<Decl<?>> getDecls(Expr<? extends Type> expr) {
+	public static Collection<Decl<?>> getDecls(Expr<? extends Type> expr) {
 		Collection<Decl<?>> x = new HashSet<>();
 		collectDeclarations(expr, x);
 		return x;

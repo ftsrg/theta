@@ -9,11 +9,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.XCFA.Process;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Stores static procedure data needed by CallState.
@@ -35,11 +31,15 @@ public class ProcedureData {
 	private LeaveTransition leaveTransition;
 
 	/** Maps a location (described by an XCFA edge) to a ProcedureData.LocationWrapper */
-	private LocationWrapper getWrappedLocation(Procedure.Location location) {
+	public LocationWrapper getWrappedLocation(Procedure.Location location) {
 		if (!map.containsKey(location)) {
 			map.put(location, new LocationWrapper(location));
 		}
 		return map.get(location);
+	}
+
+	public Procedure getProcedure() {
+		return procedure;
 	}
 
 
@@ -56,7 +56,7 @@ public class ProcedureData {
 
 		@Override
 		public void execute(ExplState state) {
-			state.getProcessState(process).getCallStackPeek().end();
+			state.getProcessState(getProcess()).getCallStackPeek().end();
 		}
 
 		@Override
@@ -68,6 +68,7 @@ public class ProcedureData {
 		public String toString() {
 			return Utils.lispStringBuilder("leaveCall").add(procedure).toString();
 		}
+
 	}
 
 	Transition getLeaveTransition() {
@@ -81,8 +82,6 @@ public class ProcedureData {
 		private final LocationWrapper target;
 
 		private EdgeWrapper(Procedure.Edge edge) {
-			Preconditions.checkArgument(edge.getStmts().size() == 1,
-					"ExplState supports exactly one stmt per edge");
 			stmt = edge.getStmts().get(0);
 			target = getWrappedLocation(edge.getTarget());
 		}
@@ -105,14 +104,25 @@ public class ProcedureData {
 			this.xcfaLocation = xcfaLocation;
 		}
 
-		Collection<Transition> getTransitions() {
+		// aux method for collecting every location or transition
+		public Collection<LocationWrapper> getEndPointLocations() {
+			Collection<LocationWrapper> result = new HashSet<>();
+			for (XCFA.Process.Procedure.Edge edge : xcfaLocation.getOutgoingEdges()) {
+				// TODO multiple stmts on an edge is not fully supported
+				Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
+				result.add(getWrappedLocation(edge.getTarget()));
+			}
+			return result;
+		}
+
+		public Collection<Transition> getTransitions() {
 			if (transitions != null)
 				return transitions;
 			transitions = new HashSet<>();
 			for (XCFA.Process.Procedure.Edge edge : xcfaLocation.getOutgoingEdges()) {
 				// TODO multiple stmts on an edge is not fully supported
 				Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
-				StmtTransition tr = new StmtTransition(parent, new EdgeWrapper(edge));
+				StmtTransition tr = new StmtTransitionImpl(parent, new EdgeWrapper(edge));
 				transitions.add(tr);
 			}
 			return transitions;
@@ -170,6 +180,24 @@ public class ProcedureData {
 
 	public LocationWrapper getInitLoc() {
 		return getWrappedLocation(procedure.getInitLoc());
+	}
+
+	public Collection<LocationWrapper> listAllLocations() {
+		Collection<LocationWrapper> result = new HashSet<>();
+		Queue<LocationWrapper> bfs = new ArrayDeque<>();
+		result.add(getInitLoc());
+		bfs.add(getInitLoc());
+		while (!bfs.isEmpty()) {
+			LocationWrapper a = bfs.remove();
+			for (LocationWrapper b : a.getEndPointLocations()) {
+				if (result.contains(b)) {
+					continue;
+				}
+				bfs.add(b);
+				result.add(b);
+			}
+		}
+		return result;
 	}
 
 	public int getParamSize() {

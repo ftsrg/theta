@@ -8,6 +8,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
@@ -195,11 +197,8 @@ final class CallState implements StmtExecutorInterface {
 			transitions.add(procData.getLeaveTransition());
 			return;
 		}
-		boolean alreadyAddedOne = false;
 		for (Transition tr : currentLocation.getTransitions()) {
 			if (tr.enabled(getExplState())) {
-				Preconditions.checkState(!alreadyAddedOne, "Only 1 edge should be active in a given process.");
-				alreadyAddedOne = true;
 				transitions.add(tr);
 			}
 		}
@@ -238,6 +237,10 @@ final class CallState implements StmtExecutorInterface {
 		return expr.getValue();
 	}
 
+	public Procedure.Location getLocation() {
+		return currentLocation.xcfaLocation;
+	}
+
 	@Override
 	public void onAtomicBegin() {
 		getExplState().beginAtomic(parent.getProcess());
@@ -266,5 +269,9 @@ final class CallState implements StmtExecutorInterface {
 
 	public boolean isSafe() {
 		return currentLocation != procData.getErrorLoc();
+	}
+
+	public Procedure getProcedure() {
+		return procData.getProcedure();
 	}
 }
