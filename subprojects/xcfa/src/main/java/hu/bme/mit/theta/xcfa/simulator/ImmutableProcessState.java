@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Objects;
@@ -8,6 +9,13 @@ public class ImmutableProcessState {
     final XCFA.Process.Procedure.Location loc;
     public ImmutableProcessState(XCFA.Process.Procedure.Location loc) {
         this.loc = loc;
+    }
+
+    @Override
+    public String toString() {
+        if (loc == null)
+            return Utils.lispStringBuilder().add("<null>").toString();
+        return loc.toString();
     }
 
     @Override

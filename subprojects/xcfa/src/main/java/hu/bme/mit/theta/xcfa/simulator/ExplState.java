@@ -11,10 +11,12 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.simulator.util.FillValuation;
 import org.antlr.v4.misc.OrderedHashMap;
 
 import java.util.*;
@@ -36,6 +38,8 @@ import java.util.*;
  * Every derived class should override copy() and implementing protected DerivedExplState(DerivedExplState)
  * to be able to copy the exact state with the type.
  * It will be used to trace execution in TracedExplState and to use copy-and-execute at the same time.
+ *
+ * TODO Every global integer variable is assigned 0, because there are no sync primitives implemented yet.
  */
 public class ExplState extends AbstractExplState {
 	private final Map<XCFA.Process, ProcessState> processStates;
@@ -73,6 +77,12 @@ public class ExplState extends AbstractExplState {
 		vars = VarIndexing.builder(0).build();
 		this.xcfa = xcfa;
 		List<XCFA.Process> procs = xcfa.getProcesses();
+		for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
+			if (globalVar.getType() == IntType.getInstance()) {
+				updateVariable((VarDecl<IntType>)globalVar, IntLitExpr.of(0));
+			}
+
+		}
 		// orderedhashmap, because the partial order tests, to be deterministic, has to be ordered
 		processStates = new OrderedHashMap<>();
 		for (XCFA.Process proc : procs) {
@@ -91,6 +101,7 @@ public class ExplState extends AbstractExplState {
 		safety = null;
 		enabledTransitions = null;
 		atomicLock = toCopy.atomicLock;
+		immutProcessStates = toCopy.immutProcessStates;
 		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
 			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
 		}
@@ -143,16 +154,20 @@ public class ExplState extends AbstractExplState {
 		return valuation;
 	}
 
+	ImmutableMap<XCFA.Process, ImmutableProcessState> immutProcessStates = null;
 	@Override
 	public ImmutableMap<XCFA.Process, ImmutableProcessState> getLocations() {
-		ImmutableMap.Builder<XCFA.Process, ImmutableProcessState> builder = new ImmutableMap.Builder<>();
+		if (immutProcessStates != null)
+			return immutProcessStates;
+		ImmutableMap.Builder<XCFA.Process, ImmutableProcessState> builder =
+				ImmutableMap.builder();
 		for (ProcessState ps : processStates.values()) {
 			if (ps.isFinished())
 				builder.put(ps.getProcess(), new ImmutableProcessState(null));
 			else
 				builder.put(ps.getProcess(), new ImmutableProcessState(ps.getCallStackPeek().getLocation()));
 		}
-		return builder.build();
+		return immutProcessStates = builder.build();
 	}
 
 	public Collection<Transition> getTransitionsOfProcess(XCFA.Process process) {
@@ -273,23 +288,30 @@ public class ExplState extends AbstractExplState {
 	}
 
 	/** Interface used by CallState & ProcessState to update variable storage. */
-	<DeclType extends Type> LitExpr<DeclType> evalExpr(Expr<DeclType> expr) {
+	<DeclType extends Type> Optional<LitExpr<DeclType>> evalExpr(Expr<DeclType> expr) {
 		Expr<DeclType> unfolded = PathUtils.unfold(expr, vars);
-		FillValuation.getInstance().fill(unfolded, valuation);
-		return unfolded.eval(valuation);
+		Expr<DeclType> simplified = ExprUtils.simplify(unfolded, valuation);
+		if (simplified instanceof LitExpr<?>) {
+			return Optional.of((LitExpr<DeclType>) simplified);
+		}
+		return Optional.empty();
 	}
 
 	/** Interface used by CallState & ProcessState to update variable storage. */
 	<DeclType extends Type> void assign(AssignStmt<DeclType> stmt) {
-		LitExpr<DeclType> x = evalExpr(stmt.getExpr());
-		updateVariable(stmt.getVarDecl(), x);
+		var x = evalExpr(stmt.getExpr());
+		if (x.isPresent())
+			updateVariable(stmt.getVarDecl(), x.get());
+		else
+			havocVariable(stmt.getVarDecl());
 	}
 
 	/**
 	 * Called when an mutable there was a mutable call
 	 */
-	private void onChange() {
+	protected void onChange() {
 		safety = null;
+		immutProcessStates = null;
 		enabledTransitions = null;
 	}
 
@@ -300,6 +322,8 @@ public class ExplState extends AbstractExplState {
 	 */
 	public ExplState executeTransition(Transition transition) {
 		ExplState newState = copy();
+		// invalidate cached data
+		newState.onChange();
 		transition.execute(newState);
 		return newState;
 	}

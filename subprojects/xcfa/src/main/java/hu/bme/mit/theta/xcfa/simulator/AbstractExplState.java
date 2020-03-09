@@ -1,13 +1,11 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-
-// TODO find better name
 
 /**
  * The triplet AbstractExplState-ExplState-ImmutableExplState is using the same idea as in
@@ -28,6 +26,22 @@ public abstract class AbstractExplState {
         // https://docs.oracle.com/javase/7/docs/api/java/util/AbstractMap.html
         return getValuation().equals(that.getValuation()) &&
                 getLocations().equals(that.getLocations());
+    }
+
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append("ImmutableExplState{\nvaluation:\n");
+        for (Decl<?> decl : getValuation().getDecls()) {
+            s.append("  ").append(decl).append(" -> ").append(getValuation().eval(decl).get()).append("\n");
+        }
+        s.append("locations:\n");
+        for (var x : getLocations().entrySet()) {
+            s.append("  ").append(x.getKey()).append(" -> ").append(x.getValue()).append("\n");
+        }
+        s.append("}");
+        return s.toString();
     }
 
     @Override

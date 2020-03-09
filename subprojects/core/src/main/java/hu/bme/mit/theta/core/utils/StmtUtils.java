@@ -54,6 +54,12 @@ public final class StmtUtils {
 		return vars;
 	}
 
+	public static Set<VarDecl<?>> getWrittenVars(final Stmt stmt) {
+		final Set<VarDecl<?>> vars = new HashSet<>();
+		stmt.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars);
+		return vars;
+	}
+
 	/**
 	 * Unfold a statement into expressions with a given indexing
 	 *

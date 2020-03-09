@@ -48,9 +48,10 @@ public class ProcedureData {
 	 *
 	 * A transition instance should be independent of ExplStates.
 	 */
-	public class LeaveTransition extends ProcessTransition {
+	public static class LeaveTransition extends ProcessTransition {
 
-		private LeaveTransition(XCFA.Process p) {
+		// public for mocking, etc.
+		public LeaveTransition(XCFA.Process p) {
 			super(p);
 		}
 
@@ -66,9 +67,8 @@ public class ProcedureData {
 
 		@Override
 		public String toString() {
-			return Utils.lispStringBuilder("leaveCall").add(procedure).toString();
+			return Utils.lispStringBuilder("leaveCall").toString();
 		}
-
 	}
 
 	Transition getLeaveTransition() {
@@ -108,8 +108,6 @@ public class ProcedureData {
 		public Collection<LocationWrapper> getEndPointLocations() {
 			Collection<LocationWrapper> result = new HashSet<>();
 			for (XCFA.Process.Procedure.Edge edge : xcfaLocation.getOutgoingEdges()) {
-				// TODO multiple stmts on an edge is not fully supported
-				Preconditions.checkState(edge.getStmts().size() == 1, "Only 1 stmt is supported / edge. Should work in non-special cases, but remove with care!");
 				result.add(getWrappedLocation(edge.getTarget()));
 			}
 			return result;
@@ -151,7 +149,7 @@ public class ProcedureData {
 	 */
 	public void pushProcedure(ExplState state) {
 		// result is a variable, it is already pushed here
-		for (VarDecl<?> var: procedure.getVars()) {
+		for (VarDecl<?> var: procedure.getLocalVars()) {
 			state.pushVariable(var);
 		}
 		for (VarDecl<?> var: procedure.getParams()) {
@@ -160,7 +158,7 @@ public class ProcedureData {
 	}
 
 	public void popProcedure(ExplState state) {
-		for (VarDecl<?> var: procedure.getVars()) {
+		for (VarDecl<?> var: procedure.getLocalVars()) {
 			state.havocVariable(var);
 			state.popVariable(var);
 		}

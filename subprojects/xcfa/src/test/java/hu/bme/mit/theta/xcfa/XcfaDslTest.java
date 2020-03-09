@@ -91,16 +91,16 @@ public final class XcfaDslTest {
 	public void test() throws IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		Assert.assertEquals(globalVarCount, xcfa.getVars().size());
+		Assert.assertEquals(globalVarCount, xcfa.getGlobalVars().size());
 		Assert.assertEquals(processCount, xcfa.getProcesses().size());
 		for (int i = 0; i < xcfa.getProcesses().size(); ++i) {
 			XCFA.Process process = xcfa.getProcesses().get(i);
-			Assert.assertEquals((long) processVarCount[i], process.getVars().size());
+			Assert.assertEquals((long) processVarCount[i], process.getThreadLocalVars().size());
 			Assert.assertEquals((long) processParamCount[i], process.getParams().size());
 			Assert.assertEquals((long) procedureCount[i], process.getProcedures().size());
 			for (int j = 0; j < process.getProcedures().size(); ++j) {
 				XCFA.Process.Procedure procedure = process.getProcedures().get(j);
-				Assert.assertEquals((long) procedureVarCount[i][j], procedure.getVars().size());
+				Assert.assertEquals((long) procedureVarCount[i][j], procedure.getLocalVars().size());
 				Assert.assertEquals((long) procedureParamCount[i][j], procedure.getParams().size());
 				Assert.assertEquals((long) locCount[i][j], procedure.getLocs().size());
 				Assert.assertEquals((long) edgeCount[i][j], procedure.getEdges().size());

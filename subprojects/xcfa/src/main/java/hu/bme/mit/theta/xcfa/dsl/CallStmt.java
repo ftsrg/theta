@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -24,10 +25,14 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO why is this here?
 public class CallStmt extends XcfaCallStmt {
 	private final VarDecl<?> var;
 	private final boolean isVoid;
 	private final List<VarDecl<?>> params;
+	private static final String STMT_LABEL = "call";
+
+	// not final due to circular dependency while building
 	private XCFA.Process.Procedure procedure;
 
 	CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
@@ -56,5 +61,10 @@ public class CallStmt extends XcfaCallStmt {
 	void setProcedure(XCFA.Process.Procedure procedure) {
 		checkState(this.procedure == null);
 		this.procedure = procedure;
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(procedure.getName()).toString();
 	}
 }

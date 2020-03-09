@@ -8,7 +8,6 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -152,9 +151,9 @@ final class CallState implements StmtExecutorInterface {
 
 		// go through all parameters and initialize them
 		for (int i = 0; i < callerParameters.size(); i++) {
-			VarDecl calleeParam = procData.getParam(i);
+			VarDecl<? extends Type> calleeParam = procData.getParam(i);
 			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			callerParamValues.get(i).ifPresent(litExpr -> getExplState().updateVariable(calleeParam, litExpr));
+			callerParamValues.get(i).ifPresent(litExpr -> getExplState().updateVariable((VarDecl)calleeParam, litExpr));
 		}
 	}
 
@@ -169,7 +168,7 @@ final class CallState implements StmtExecutorInterface {
 		 * 2. Pop parameters & locals "from stack" (also remove now unused values from the valuation)
 		 * 3. Write result to caller's variable
 		 */
-		Optional<? extends LitExpr> resultValue = Optional.empty();
+		Optional<? extends LitExpr<? extends Type>> resultValue = Optional.empty();
 		if (procData.getResultVar().isPresent()) {
 			resultValue = evalVariable(procData.getResultVar().get());
 		}
@@ -233,8 +232,8 @@ final class CallState implements StmtExecutorInterface {
 	 */
 	@Override
 	public boolean onAssume(AssumeStmt stmt) {
-		BoolLitExpr expr = (BoolLitExpr) getExplState().evalExpr(stmt.getCond());
-		return expr.getValue();
+		var litExpr = getExplState().evalExpr(stmt.getCond());
+		return litExpr.map(boolTypeLitExpr -> ((BoolLitExpr) boolTypeLitExpr).getValue()).orElse(true);
 	}
 
 	public Procedure.Location getLocation() {

@@ -1,13 +1,11 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtDeclCollector;
-import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtNotReadOnlyDeclCollector;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 public class StmtTransitionImpl extends StmtTransition{
     private final ProcedureData.EdgeWrapper edge;
@@ -44,17 +42,13 @@ public class StmtTransitionImpl extends StmtTransition{
     }
 
     // read vars that don't change
-    public Collection<Decl<?>> getRWVars() {
-        Collection<Decl<?>> x = new HashSet<>();
-        edge.getStmt().accept(StmtDeclCollector.getInstance(), x);
-        return x;
+    public Collection<VarDecl<?>> getRWVars() {
+        return StmtUtils.getVars(edge.getStmt());
     }
 
     // read vars that do change
-    public Collection<Decl<?>> getWVars() {
-        Collection<Decl<?>> x = new HashSet<>();
-        edge.getStmt().accept(StmtNotReadOnlyDeclCollector.getInstance(), x);
-        return x;
+    public Collection<VarDecl<?>> getWVars() {
+        return StmtUtils.getWrittenVars(edge.getStmt());
     }
 
     @Override

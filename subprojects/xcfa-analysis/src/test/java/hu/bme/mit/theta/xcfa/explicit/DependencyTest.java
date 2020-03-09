@@ -2,32 +2,33 @@ package hu.bme.mit.theta.xcfa.explicit;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.simulator.ExplState;
-import hu.bme.mit.theta.xcfa.simulator.ProcessTransition;
+import hu.bme.mit.theta.xcfa.simulator.ProcedureData;
 import hu.bme.mit.theta.xcfa.simulator.StmtTransition;
 import hu.bme.mit.theta.xcfa.simulator.partialorder.DependencyRelation;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class DependencyTest {
 
-    class StmtTransitionMock extends StmtTransition {
+    static class StmtTransitionMock extends StmtTransition {
 
-        private Collection<Decl<?>> rw;
-        private Collection<Decl<?>> w;
+        private Collection<VarDecl<?>> rw;
+        private Collection<VarDecl<?>> w;
 
-        public StmtTransitionMock(XCFA.Process p, Collection<Decl<?>> rw, Collection<Decl<?>> w) {
+        public StmtTransitionMock(XCFA.Process p, Collection<VarDecl<?>> rw, Collection<VarDecl<?>> w) {
             super(p);
             this.rw = rw;
             this.w = w;
 
-            for (Decl<?> x : w) {
+            for (VarDecl<?> x : w) {
                 Preconditions.checkArgument(rw.contains(x), "W vars is not subset of RW vars");
             }
         }
@@ -43,25 +44,18 @@ public class DependencyTest {
         }
 
         @Override
-        public Collection<Decl<?>> getRWVars() {
+        public Collection<VarDecl<?>> getRWVars() {
             return rw;
         }
 
         @Override
-        public Collection<Decl<?>> getWVars() {
+        public Collection<VarDecl<?>> getWVars() {
             return w;
         }
     }
 
     static class TypeMock implements Type {
         private static final TypeMock instance = new TypeMock();
-    }
-
-    static class DeclMock extends Decl<TypeMock> {
-
-        public DeclMock(String name) {
-            super(name, TypeMock.instance);
-        }
     }
 
     private XCFA.Process.Procedure createEmptyProcedure() {
@@ -83,8 +77,8 @@ public class DependencyTest {
         return builder.build();
     }
 
-    private DeclMock a = new DeclMock("a");
-    private DeclMock b = new DeclMock("b");
+    private VarDecl<TypeMock> a = Decls.Var("a", TypeMock.instance);
+    private VarDecl<TypeMock> b = Decls.Var("b", TypeMock.instance);
     private XCFA.Process p0 = createEmptyProcess();
     private XCFA.Process p1 = createEmptyProcess();
 
@@ -137,6 +131,38 @@ public class DependencyTest {
         Preconditions.checkState(DependencyRelation.depends(
                 new StmtTransitionMock(p0, /*rw*/ List.of(a), /*w*/ List.of(a)),
                 new StmtTransitionMock(p1, /*rw*/ List.of(a), /*w*/ List.of(a))
+        ));
+    }
+
+    @Test
+    public void testLeaveDifferentProcess() {
+        Preconditions.checkState(!DependencyRelation.depends(
+                new ProcedureData.LeaveTransition(p0),
+                new ProcedureData.LeaveTransition(p1)
+        ));
+    }
+
+    @Test
+    public void testLeaveSameProcess() {
+        Preconditions.checkState(DependencyRelation.depends(
+                new ProcedureData.LeaveTransition(p0),
+                new ProcedureData.LeaveTransition(p0)
+        ));
+    }
+
+    @Test
+    public void testLeaveDependsStmt() {
+        Preconditions.checkState(!DependencyRelation.depends(
+                new ProcedureData.LeaveTransition(p0),
+                new StmtTransitionMock(p1, Collections.emptyList(), Collections.emptyList())
+        ));
+    }
+
+    @Test
+    public void testLeaveDependsStmtSameProcess() {
+        Preconditions.checkState(DependencyRelation.depends(
+                new ProcedureData.LeaveTransition(p0),
+                new StmtTransitionMock(p0, Collections.emptyList(), Collections.emptyList())
         ));
     }
 }

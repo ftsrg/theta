@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xcfa.explicit;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 import hu.bme.mit.theta.xcfa.explicit.util.ProcessTransitionCollector;
 import hu.bme.mit.theta.xcfa.simulator.*;
 import hu.bme.mit.theta.xcfa.simulator.partialorder.DependencyRelation;
@@ -17,11 +16,9 @@ import java.util.*;
 public class PartialOrderExplicitChecker {
 
     private static class AmpleSetFactory {
-        private final XCFA xcfa;
         // pre(Pi) I think
         private final Map<XCFA.Process, Collection<Transition>> allTransitionsByProcess;
         public AmpleSetFactory(XCFA xcfa) {
-            this.xcfa = xcfa;
             allTransitionsByProcess = new HashMap<>();
             for (XCFA.Process process : xcfa.getProcesses()) {
                 allTransitionsByProcess.put(process, ProcessTransitionCollector.getAllTransitionsByProcess(process));

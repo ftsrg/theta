@@ -28,7 +28,7 @@ public class ExplicitCheckerTest {
 	@Parameters()
 	public static Collection<Object[]> data() {
 		return Arrays.asList(
-				new Object[]{"/functions-global-local.xcfa", true, false},
+				new Object[]{"/functions-global-local.xcfa", true, true},
 				new Object[]{"/fibonacci.xcfa", true, false},
 				new Object[]{"/simple-test.xcfa", true, false},
 				new Object[]{"/deadlock.xcfa", false, false},
@@ -43,6 +43,7 @@ public class ExplicitCheckerTest {
 
 	@Test
 	public void test() throws IOException {
+		System.out.println("Testing " + filepath);
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		ExplicitChecker checker = new ExplicitChecker();
@@ -60,7 +61,7 @@ public class ExplicitCheckerTest {
 		if (shouldWork && !result.safe) {
 			throw new RuntimeException("Error reached, but it shouldn't have been. Error: " + result.message);
 		} else if (!shouldWork && result.safe) {
-			throw new RuntimeException("Error is not reached, but it should have been.");
+			throw new RuntimeException("Error or deadlock is not reached, but it should have been.");
 		}
 	}
 

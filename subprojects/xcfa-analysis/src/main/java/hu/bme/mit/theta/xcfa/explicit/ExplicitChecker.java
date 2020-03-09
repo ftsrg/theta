@@ -75,10 +75,25 @@ public class ExplicitChecker {
 		}
 	}
 
+	public SafetyResult check(XCFA xcfa, boolean traced) {
+		return check(xcfa, traced, false);
+	}
+
+	private static void debugPrint(ExplState s, boolean debug) {
+		if (!debug)
+			return;
+		System.out.println(s);
+		System.out.println("Enabled transitions:");
+		for (var tr : s.getEnabledTransitions()) {
+			System.out.println(tr);
+		}
+		System.out.println();
+	}
+
 	/**
 	 * SafetyResult should be always unsafe OR finished.
 	 */
-	public SafetyResult check(XCFA xcfa, boolean traced) {
+	public SafetyResult check(XCFA xcfa, boolean traced, boolean debug) {
 		Set<AbstractExplState> exploredStates = new HashSet<>();
 		// will be used in partial order reduction: Set<AbstractExplState> stackedStates = new HashSet<>();
 
@@ -89,6 +104,8 @@ public class ExplicitChecker {
 			initialState = new ExplState(xcfa);
 		Stack<DfsNode> dfsStack = new Stack<>();
 		dfsStack.push(new DfsNode(initialState));
+		debugPrint(initialState, debug);
+
 		while (!dfsStack.empty()) {
 			DfsNode node = dfsStack.peek();
 			if (node.hasChild()) {
@@ -99,6 +116,7 @@ public class ExplicitChecker {
 				}
 				exploredStates.add(child.state.toImmutableExplState());
 				dfsStack.push(child);
+				debugPrint(child.state, debug);
 			} else {
 				if (!node.isSafe()) {
 					return new SafetyResult(node.state.getSafety(), node.state.getTrace());

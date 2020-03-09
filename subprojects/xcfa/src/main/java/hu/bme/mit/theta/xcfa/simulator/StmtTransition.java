@@ -1,13 +1,9 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtDeclCollector;
-import hu.bme.mit.theta.xcfa.simulator.partialorder.StmtNotReadOnlyDeclCollector;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * A transition with an associated edge.
@@ -38,8 +34,8 @@ public abstract class StmtTransition extends ProcessTransition {
 	public abstract boolean enabled(ExplState state);
 
 	// read vars that don't change
-	public abstract Collection<Decl<?>> getRWVars();
+	public abstract Collection<VarDecl<?>> getRWVars();
 
 	// read vars that do change
-	public abstract Collection<Decl<?>> getWVars();
+	public abstract Collection<VarDecl<?>> getWVars();
 }

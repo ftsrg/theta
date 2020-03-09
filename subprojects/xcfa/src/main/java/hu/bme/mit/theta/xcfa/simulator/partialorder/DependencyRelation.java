@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator.partialorder;
 
-import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.simulator.ProcedureData.LeaveTransition;
 import hu.bme.mit.theta.xcfa.simulator.ProcessTransition;
 import hu.bme.mit.theta.xcfa.simulator.StmtTransition;
@@ -32,16 +32,16 @@ public class DependencyRelation {
     }
 
     private static boolean stmtDepends(StmtTransition a, StmtTransition b) {
-        Collection<Decl<?>> listARW = a.getRWVars();
-        Collection<Decl<?>> listBRW = b.getRWVars();
-        Collection<Decl<?>> listAW = a.getWVars();
-        Collection<Decl<?>> listBW = b.getWVars();
+        Collection<VarDecl<?>> listBRW = b.getRWVars();
+        Collection<VarDecl<?>> listAW = a.getWVars();
         // only R-W and W-W operations on same var is a problem, R-R are not dependent
         // TODO two increment operations are independent
         boolean hasIntersection = listAW.stream()
                 .anyMatch(listBRW::contains);
         if (hasIntersection)
             return true;
+        Collection<VarDecl<?>> listARW = a.getRWVars();
+        Collection<VarDecl<?>> listBW = b.getWVars();
         hasIntersection = listBW.stream()
                 .anyMatch(listARW::contains);
         return hasIntersection;

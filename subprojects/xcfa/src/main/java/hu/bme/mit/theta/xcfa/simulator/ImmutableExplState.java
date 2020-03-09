@@ -5,7 +5,6 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,32 +33,7 @@ public class ImmutableExplState extends AbstractExplState {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ImmutableExplState that = (ImmutableExplState) o;
-        return valuation.equals(that.valuation) &&
-                locs.equals(that.locs);
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(valuation, locs);
-    }
-
-    public static class Builder {
-        private final ImmutableValuation val;
-        // TODO use immutablemap.Builder instead
-        private final Map<XCFA.Process, ImmutableProcessState> locs;
-        public Builder(ImmutableValuation val) {
-            this.val = val;
-            locs = new HashMap<>();
-        }
-        public void add(XCFA.Process proc, ImmutableProcessState location) {
-            locs.put(proc, location);
-        }
-        public ImmutableExplState build() {
-            return new ImmutableExplState(val, ImmutableMap.copyOf(locs));
-        }
     }
 }

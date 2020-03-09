@@ -54,6 +54,7 @@ public class TracedExplState extends ExplState {
 	public ExplState executeTransition(Transition transition) {
 		TracedExplState newState = copy();
 		transition.execute(newState);
+		newState.onChange();
 		newState.lastTransition = transition;
 		newState.previousState = this;
 		return newState;
