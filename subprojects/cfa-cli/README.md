@@ -17,3 +17,18 @@ The tool also requires the [Z3 SMT solver](../../doc/Build.md).
 The tool can be run with `java -jar theta-cfa-cli.jar [arguments]`.
 If no arguments are given, a help screen is displayed about the arguments and their possible values.
 For example `java -jar theta-cfa-cli.jar --model counter.cfa --loglevel INFO` runs the default analysis with logging on the `counter.cfa` input file.
+
+### Docker (beta)
+
+An experimental Dockerfile is also available under the _docker_ directory in the root of the repository.
+The image can be built using the following command:
+```
+docker build -t theta-cfa-cli -f theta-cfa-cli.Dockerfile .
+```
+
+The script `run-theta-cfa-cli.sh` can be used for running the containerized version on models residing on the host:
+```
+run-theta-cfa-cli.sh model.cfa [OTHER FLAGS]
+```
+The model must be given as the first argument (without `--model`).
+
