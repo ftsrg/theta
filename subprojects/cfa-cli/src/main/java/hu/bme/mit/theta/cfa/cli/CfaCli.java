@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
@@ -97,8 +93,8 @@ public class CfaCli {
 	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = "--cex", description = "Log concrete counterexample")
-	Boolean cexfile = false;
+	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+	String cexfile = null;
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -138,7 +134,7 @@ public class CfaCli {
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
 			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile) {
+			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
@@ -206,6 +202,17 @@ public class CfaCli {
 	private void writeCex(final Unsafe<?, ?> status) {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
-		logger.write(Level.RESULT, "%s", concrTrace);
+		final File file = new File(cexfile);
+		PrintWriter printWriter = null;
+		try {
+			printWriter = new PrintWriter(file);
+			printWriter.write(concrTrace.toString());
+		} catch (final FileNotFoundException e) {
+			printError(e);
+		} finally {
+			if (printWriter != null) {
+				printWriter.close();
+			}
+		}
 	}
 }
