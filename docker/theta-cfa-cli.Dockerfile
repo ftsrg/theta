@@ -6,12 +6,10 @@ RUN apt-get update && \
 RUN git clone https://github.com/FTSRG/theta.git && \
     cd theta && \
     ./gradlew theta-cfa-cli:build && \
-    cd ..
+    cd .. && \
+    mv theta/subprojects/cfa-cli/build/libs/theta-cfa-cli-0.0.1-SNAPSHOT-all.jar ./theta-cfa-cli.jar
 
-RUN mv theta/subprojects/cfa-cli/build/libs/theta-cfa-cli-0.0.1-SNAPSHOT-all.jar ./theta-cfa-cli.jar && \
-    cp theta/lib/*.so .
-
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
 
 ENTRYPOINT ["java", "-jar", "theta-cfa-cli.jar"]
 
