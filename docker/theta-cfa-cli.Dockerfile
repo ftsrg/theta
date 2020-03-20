@@ -1,7 +1,7 @@
-FROM ubuntu:18.04
+FROM openjdk:11.0.6-slim
 
 RUN apt-get update && \
-    apt-get install -y git openjdk-11-jdk libgomp1
+    apt-get install -y git libgomp1
 
 RUN git clone https://github.com/FTSRG/theta.git && \
     cd theta && \
