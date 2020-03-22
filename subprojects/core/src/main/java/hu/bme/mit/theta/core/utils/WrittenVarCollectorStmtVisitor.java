@@ -95,4 +95,17 @@ final class WrittenVarCollectorStmtVisitor implements StmtVisitor<Collection<Var
         xcfaStmt.accept(this, param);
         return null;
     }
+
+    @Override
+    public Void visit(LockStmt lockStmt, Collection<VarDecl<?>> param) {
+        param.add(lockStmt.getSyncVar());
+        return null;
+    }
+
+    @Override
+    public Void visit(UnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
+        // TODO this is really needed here?
+        param.add(unlockStmt.getSyncVar());
+        return null;
+    }
 }

@@ -13,29 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.stmt.xcfa;
+package hu.bme.mit.theta.xcfa.expl;
 
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import java.util.Collection;
 
-public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
-
-	R visit(XcfaCallStmt stmt, P param);
-
-	R visit(StoreStmt storeStmt, P param);
-
-	R visit(LoadStmt loadStmt, P param);
-
-	R visit(AtomicBeginStmt atomicBeginStmt, P param);
-
-	R visit(AtomicEndStmt atomicEndStmt, P param);
-
-	R visit(NotifyAllStmt notifyAllStmt, P param);
-
-	R visit(NotifyStmt notifyStmt, P param);
-
-	R visit(WaitStmt waitStmt, P param);
-
-	R visit(LockStmt lockStmt, P param);
-
-	R visit(UnlockStmt unlockStmt, P param);
+/**
+ * Scheduler selects a transition from enabled transition.
+ * Used by simulator.
+ */
+public interface Scheduler {
+	Transition getNextTransition(Collection<Transition> enabledTransitions);
 }

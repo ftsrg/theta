@@ -161,7 +161,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		int nErrorLocs = 0;
 
 		for (final LocContext locContext : locContexts) {
-			final XcfaLocationSymbol symbol = new XcfaLocationSymbol(locContext);
+			final XcfaLocationSymbol symbol = new XcfaLocationSymbol(this, locContext);
 
 			if (symbol.isInit()) {
 				nInitLocs++;
@@ -193,4 +193,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		return result;
 	}
 
+	public String getCanonicalName() {
+		return scope.getName() + "::" + getName();
+	}
 }

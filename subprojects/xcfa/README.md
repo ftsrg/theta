@@ -24,6 +24,7 @@ Statements can be
   * havocs of the form `havoc v`,
   * boundaries of atomic blocks `AtomicBegin`, `AtomicEnd`,
   * synchronization primitives `Wait`, `Notify`, `NotifyAll`,
+  * mutex primitives `lock` and `unlock` (recursive),
   * memory operation primitives `Load`, `Store` with optional annotation of `atomic @ordering` where `ordering` is a memory ordering primitive,
   * call statements of the form `call proc` where `proc` is a referenced procedure (by name).
 
@@ -74,5 +75,7 @@ main process counter2 {
   }
 }
 ```
+
+Notes: every global integer variable is assigned zero on initialization. TODO add synchronization to solve this.
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.

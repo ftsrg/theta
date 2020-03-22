@@ -13,29 +13,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.stmt.xcfa;
+package hu.bme.mit.theta.xcfa.expl;
 
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.xcfa.XCFA;
 
-public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
+/**
+ * This is used for every transition within only one process.
+ * Exception will (probably) be Wait/Notify/NotifyAll.
+ */
+abstract public class ProcessTransition implements Transition {
 
-	R visit(XcfaCallStmt stmt, P param);
+	private final XCFA.Process process;
 
-	R visit(StoreStmt storeStmt, P param);
+	public ProcessTransition(XCFA.Process p) {
+		process = p;
+	}
 
-	R visit(LoadStmt loadStmt, P param);
-
-	R visit(AtomicBeginStmt atomicBeginStmt, P param);
-
-	R visit(AtomicEndStmt atomicEndStmt, P param);
-
-	R visit(NotifyAllStmt notifyAllStmt, P param);
-
-	R visit(NotifyStmt notifyStmt, P param);
-
-	R visit(WaitStmt waitStmt, P param);
-
-	R visit(LockStmt lockStmt, P param);
-
-	R visit(UnlockStmt unlockStmt, P param);
+	public XCFA.Process getProcess() {
+		return process;
+	}
 }

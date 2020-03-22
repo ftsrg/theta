@@ -373,6 +373,8 @@ stmt:	assignStmt
 	|	waitStmt
 	|	notifyStmt
 	|	notifyAllStmt
+	|	lockStmt
+	|	unlockStmt
 	;
 
 stmtList
@@ -427,6 +429,14 @@ notifyAllStmt
 	: NOTIFYALL LPAREN syncVar=ID RPAREN
 	;
 
+lockStmt
+	: LOCK LPAREN syncVar=ID RPAREN
+	;
+
+unlockStmt
+	: UNLOCK LPAREN syncVar=ID RPAREN
+	;
+
 //
 
 ASSIGN
@@ -465,6 +475,14 @@ NOTIFY
 
 NOTIFYALL
 	:	'notifyAll'
+	;
+
+LOCK
+	:	'lock'
+	;
+
+UNLOCK
+	:	'unlock'
 	;
 
 ATOMICTYPE

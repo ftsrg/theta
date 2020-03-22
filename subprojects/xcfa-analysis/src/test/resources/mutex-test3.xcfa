@@ -1,0 +1,31 @@
+var x : synthetic
+main process valami {
+    main procedure mainProcedure() {
+        init loc L0
+        loc L1
+        loc L2
+        loc L3
+        final loc END
+        error loc ERR
+
+// currently havoc'd statements are assigned the values zero
+        L0 -> L1 { lock(x) }
+        L1 -> L2 { unlock(x) }
+        L2 -> END { lock(x) }
+    }
+}
+process valami2 {
+    main procedure mainProcedure() {
+        init loc L0
+        loc L1
+        loc L2
+        loc L3
+        final loc END
+        error loc ERR
+
+// currently havoc'd statements are assigned the values zero
+        L0 -> L1 { lock(x) }
+        L1 -> L2 { unlock(x) }
+        L2 -> END { unlock(x) }
+    }
+}

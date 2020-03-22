@@ -13,29 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.stmt.xcfa;
+package hu.bme.mit.theta.xcfa.algorithm.util;
 
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.xcfa.expl.ExplState;
+import hu.bme.mit.theta.xcfa.expl.Transition;
 
-public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
+/** An interface enough for getting an execution trace */
+public interface DfsNodeInterface {
+    ExplState getState();
 
-	R visit(XcfaCallStmt stmt, P param);
-
-	R visit(StoreStmt storeStmt, P param);
-
-	R visit(LoadStmt loadStmt, P param);
-
-	R visit(AtomicBeginStmt atomicBeginStmt, P param);
-
-	R visit(AtomicEndStmt atomicEndStmt, P param);
-
-	R visit(NotifyAllStmt notifyAllStmt, P param);
-
-	R visit(NotifyStmt notifyStmt, P param);
-
-	R visit(WaitStmt waitStmt, P param);
-
-	R visit(LockStmt lockStmt, P param);
-
-	R visit(UnlockStmt unlockStmt, P param);
+    Transition getLastTransition();
 }

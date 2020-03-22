@@ -22,9 +22,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -44,7 +46,9 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
@@ -226,6 +230,25 @@ final class XcfaStatement {
 			return new NotifyAllStmt(lhs);
 		}
 
+		@Override
+		public Stmt visitLockStmt(XcfaDslParser.LockStmtContext ctx) {
+			final String lhsId = ctx.syncVar.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			return new LockStmt(lhs);
+		}
+
+		@Override
+		public Stmt visitUnlockStmt(XcfaDslParser.UnlockStmtContext ctx) {
+			final String lhsId = ctx.syncVar.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			return new UnlockStmt(lhs);
+		}
 	}
 
 }

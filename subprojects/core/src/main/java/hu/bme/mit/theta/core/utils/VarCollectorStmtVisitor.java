@@ -78,6 +78,18 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 		return null;
 	}
 
+	@Override
+	public Void visit(LockStmt lockStmt, Collection<VarDecl<?>> param) {
+		param.add(lockStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(UnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
+		param.add(unlockStmt.getSyncVar());
+		return null;
+	}
+
 	private static final class LazyHolder {
 		private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
 	}

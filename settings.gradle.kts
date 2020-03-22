@@ -17,6 +17,7 @@ include(
         "xcfa",
         "xcfa-analysis",
         "xcfa-cli",
+        "xcfa-cli-old",
         "xta",
         "xta-analysis",
         "xta-cli"
