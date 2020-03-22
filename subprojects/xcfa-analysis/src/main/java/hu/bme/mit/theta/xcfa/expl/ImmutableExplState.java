@@ -25,6 +25,8 @@ import java.util.Objects;
 
 /**
  * All the data needed for determining if two states are equal.
+ * The point of this structure is to store only the minimum data.
+ * (E.g. does not have enough data to execute a transition.)
  * TODO Currently does not support nested functions properly.
  */
 public class ImmutableExplState extends AbstractExplState {

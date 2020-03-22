@@ -20,6 +20,10 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Objects;
 
+/**
+ * ImmutableProcessState.
+ * Stores minimal data just enough to determine whether two states are equal (by location).
+ */
 public class ImmutableProcessState {
     final XCFA.Process.Procedure.Location loc;
     public ImmutableProcessState(XCFA.Process.Procedure.Location loc) {

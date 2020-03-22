@@ -29,7 +29,7 @@ import java.util.Stack;
 public class Tracer {
 
     public static class TransitionAction implements Action {
-        Transition t;
+        final Transition t;
         TransitionAction(Transition t) {
             this.t = t;
         }

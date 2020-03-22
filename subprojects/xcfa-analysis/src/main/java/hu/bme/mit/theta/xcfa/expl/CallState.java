@@ -22,11 +22,13 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -142,6 +144,11 @@ final class CallState implements StmtExecutorInterface {
 		return getExplState().evalVariable(variable);
 	}
 
+	private <DeclType extends Type> void updateVariableTyped(VarDecl<? extends Type> variable, LitExpr<DeclType> value) {
+		Preconditions.checkArgument(variable.getType() == value.getType(), "Type mismatch when passing parameters");
+		getExplState().updateVariable((VarDecl<DeclType>)variable, value);
+	}
+
 	/**
 	 * Called when the procedure gets called.
 	 * Pushes local variable instances.
@@ -170,7 +177,7 @@ final class CallState implements StmtExecutorInterface {
 		for (int i = 0; i < callerParameters.size(); i++) {
 			VarDecl<? extends Type> calleeParam = procData.getParam(i);
 			// Uninitialized parameter value means that the callee parameter will be uninitialized too
-			callerParamValues.get(i).ifPresent(litExpr -> getExplState().updateVariable((VarDecl)calleeParam, litExpr));
+			callerParamValues.get(i).ifPresent(litExpr -> updateVariableTyped(calleeParam, litExpr));
 		}
 	}
 
@@ -194,8 +201,7 @@ final class CallState implements StmtExecutorInterface {
 
 		if (resultValue.isPresent()) {
 			Preconditions.checkState(callerResultVar != null, "Procedure has variable called return, but caller expects no return value.");
-
-			getExplState().updateVariable(callerResultVar, (LitExpr)resultValue.get());
+			updateVariableTyped(callerResultVar, resultValue.get());
 		} else {
 			Preconditions.checkState(callerResultVar == null, "Procedure has no variable named return, but caller expects a return value.");
 		}
@@ -269,12 +275,13 @@ final class CallState implements StmtExecutorInterface {
 
 	@Override
 	public boolean canLock(LockStmt lockStmt) {
-		return !getExplState().isLocked(lockStmt.getSyncVar()) || getExplState().isLockedOn(lockStmt.getSyncVar(), parent.getProcess());
+		return !getExplState().isLocked(lockStmt.getSyncVar()) ||
+				getExplState().isLockedOn(lockStmt.getSyncVar(), parent.getProcess());
 	}
 
 	@Override
 	public boolean canUnlock(UnlockStmt unlockStmt) {
-		// returns true even when not locked, so after unlocking, we can state there was an error
+		// returns true even when not locked (leading to error), so after unlocking, we can reach the error state
 		return true;
 	}
 

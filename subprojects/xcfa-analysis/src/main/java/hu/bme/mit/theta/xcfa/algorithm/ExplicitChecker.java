@@ -32,22 +32,10 @@ import java.util.Stack;
  * Supports only zero-initialized values (because of how ExplState works).
  */
 public final class ExplicitChecker {
-
-	private static final class DfsNode extends DfsNodeBase {
-
-		private DfsNode(ExplState state, @Nullable Transition lastTransition) {
-			super(state, lastTransition, state.getEnabledTransitions());
-		}
-
-		@Override
-		public DfsNode child() {
-			Transition t = fetchNextTransition();
-			return new DfsNode(getState().executeTransition(t), t);
-		}
-	}
-
-	private XCFA xcfa;
-	private boolean debug;
+	private final XCFA xcfa;
+	private final boolean debug;
+	private final Set<AbstractExplState> exploredStates = new HashSet<>();
+	private final Stack<DfsNode> dfsStack = new Stack<>();
 
 	public ExplicitChecker(XCFA xcfa) {
 		this(xcfa, false);
@@ -69,9 +57,7 @@ public final class ExplicitChecker {
 		System.out.println();
 	}
 
-	private Set<AbstractExplState> exploredStates = new HashSet<>();
-	private Stack<DfsNode> dfsStack = new Stack<>();
-
+	/** Pushes the node to the stack if not explored before */
 	private void tryPushNode(DfsNode node) {
 		ExplState state = node.getState();
 		if (exploredStates.contains(state)) {
@@ -108,4 +94,16 @@ public final class ExplicitChecker {
 		return Tracer.safe();
 	}
 
+	private static final class DfsNode extends DfsNodeBase {
+
+		private DfsNode(ExplState state, @Nullable Transition lastTransition) {
+			super(state, lastTransition, state.getEnabledTransitions());
+		}
+
+		@Override
+		public DfsNode child() {
+			Transition t = fetchNextTransition();
+			return new DfsNode(getState().executeTransition(t), t);
+		}
+	}
 }
