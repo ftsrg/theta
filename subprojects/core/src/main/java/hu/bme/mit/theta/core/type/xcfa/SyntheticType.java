@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.type;
+package hu.bme.mit.theta.core.type.xcfa;
 
 import hu.bme.mit.theta.core.type.Type;
 

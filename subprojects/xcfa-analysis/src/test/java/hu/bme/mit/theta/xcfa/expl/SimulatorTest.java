@@ -34,17 +34,20 @@ public class SimulatorTest {
 	@Parameter()
 	public String filepath;
 
+	@Parameter(1)
+	public Boolean shouldWork;
+
 	@Parameters()
 	public static Collection<Object[]> data() {
 		return Arrays.asList(
-				new Object[]{"/functions-global-local.xcfa"},
-				new Object[]{"/fibonacci.xcfa"},
-				new Object[]{"/havoc-test.xcfa"},
-				new Object[]{"/mutex-test.xcfa"},
-				//new Object[]{"/mutex-test2.xcfa"}, should not work
-				//new Object[]{"/mutex-test3.xcfa"}, should not work -> deadlock or other problems
-				new Object[]{"/simple-test.xcfa"},
-				new Object[]{"/gcd.xcfa"}
+				new Object[]{"/functions-global-local.xcfa", true},
+				new Object[]{"/fibonacci.xcfa", true},
+				new Object[]{"/havoc-test.xcfa", true},
+				new Object[]{"/mutex-test.xcfa", true},
+				new Object[]{"/mutex-test2.xcfa", false},
+				new Object[]{"/mutex-test3.xcfa", false},
+				new Object[]{"/simple-test.xcfa", true},
+				new Object[]{"/gcd.xcfa", true}
 		);
 	}
 
@@ -53,13 +56,16 @@ public class SimulatorTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		System.out.println("Testing " + filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		Simulator s = new Simulator(xcfa);
-		ExplState.StateSafety safety = s.step();
-		while (!safety.finished && safety.safe) {
-			safety = s.step();
+		ExplState s = new ExplState(xcfa);
+		while (s.getSafety().safe && !s.getSafety().finished) {
+			s = s.executeTransition(s.getEnabledTransitions().iterator().next());
 		}
-		if (!safety.safe) {
-			throw new AssertionError("Caught program error: " + safety.message);
+		if (!s.getSafety().safe && shouldWork) {
+			throw new AssertionError("Caught program error: " + s.getSafety().message);
+		} else if (!s.getSafety().safe && !shouldWork){
+			System.err.println("[OK] Unsafe: " + s.getSafety().message);
+		} else if (s.getSafety().safe && !shouldWork){
+			throw new RuntimeException("Safe, but it should not be!");
 		}
 	}
 }

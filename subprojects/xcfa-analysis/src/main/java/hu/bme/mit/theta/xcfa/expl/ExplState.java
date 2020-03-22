@@ -28,10 +28,12 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.expr.SyntheticLitExpr;
 import org.antlr.v4.misc.OrderedHashMap;
 
 import java.util.ArrayList;
@@ -66,7 +68,7 @@ public final class ExplState extends AbstractExplState {
 	/** Cached answer for getEnabledTransition(). Initialized on first call. */
 	private Collection<Transition> enabledTransitions = null;
 
-	/** If not null, there is only this process, which should be called */
+	/** If not null, we are in an atomic section of the given process */
 	private XCFA.Process atomicLock = null;
 
 	/**
@@ -80,8 +82,6 @@ public final class ExplState extends AbstractExplState {
 	 */
 	private VarIndexing vars;
 
-	private HashMap<VarDecl<?>, SyncVarData> locks;
-
 	ProcessState getProcessState(XCFA.Process process) {
 		return processStates.get(process);
 	}
@@ -92,7 +92,6 @@ public final class ExplState extends AbstractExplState {
 	public ExplState(XCFA xcfa) {
 		valuation = new MutableValuation();
 		vars = VarIndexing.builder(0).build();
-		locks = new HashMap<>();
 		this.xcfa = xcfa;
 		List<XCFA.Process> procs = xcfa.getProcesses();
 		// init global integer vars to 0.
@@ -110,21 +109,24 @@ public final class ExplState extends AbstractExplState {
 	}
 
 	/**
-	 * Used to be clone a state with an inherited type.
+	 * Creates an explicit state from oldState with nextTransition executed.
 	 */
-	protected ExplState(ExplState toCopy) {
-		valuation = MutableValuation.copyOf(toCopy.valuation);
-		vars = toCopy.vars.transform().build();
-		xcfa = toCopy.xcfa; // no need to copy static structure
+	private ExplState(ExplState oldState, Transition nextTransition) {
+		Preconditions.checkArgument(oldState.getEnabledTransitions().contains(nextTransition));
+		valuation = MutableValuation.copyOf(oldState.valuation);
+		vars = oldState.vars.transform().build();
+		xcfa = oldState.xcfa; // no need to copy static structure
+		atomicLock = oldState.atomicLock;
+
 		processStates = new HashMap<>();
-		safety = null;
-		locks = new HashMap<>(toCopy.locks);
-		enabledTransitions = null;
-		atomicLock = toCopy.atomicLock;
-		immutProcessStates = toCopy.immutProcessStates;
-		for (Map.Entry<XCFA.Process, ProcessState> entry : toCopy.processStates.entrySet()) {
+		for (Map.Entry<XCFA.Process, ProcessState> entry : oldState.processStates.entrySet()) {
 			processStates.put(entry.getKey(), new ProcessState(this, entry.getValue()));
 		}
+
+		// these will change, so we do not copy them:
+		safety = null;
+		enabledTransitions = null;
+		nextTransition.execute(this);
 	}
 
 	/**
@@ -133,9 +135,9 @@ public final class ExplState extends AbstractExplState {
 	public Collection<Transition> getEnabledTransitions() {
 		if (enabledTransitions != null)
 			return enabledTransitions;
-		ArrayList<Transition> result = new ArrayList<>();
+		// Tests require deterministic ordering of the transitions.
+		Collection<Transition> result = new ArrayList<>();
 		if (atomicLock == null) {
-			// the order has to be deterministic, to be able to write deterministic tests for partial ordering
 			for (Map.Entry<XCFA.Process, ProcessState> entry : processStates.entrySet()) {
 				entry.getValue().collectEnabledTransitions(result);
 			}
@@ -164,11 +166,8 @@ public final class ExplState extends AbstractExplState {
 		return valuation;
 	}
 
-	ImmutableMap<XCFA.Process, ImmutableProcessState> immutProcessStates = null;
 	@Override
 	public ImmutableMap<XCFA.Process, ImmutableProcessState> getLocations() {
-		//if (immutProcessStates != null)
-		//	return immutProcessStates;
 		ImmutableMap.Builder<XCFA.Process, ImmutableProcessState> builder =
 				ImmutableMap.builder();
 		for (ProcessState ps : processStates.values()) {
@@ -177,7 +176,7 @@ public final class ExplState extends AbstractExplState {
 			else
 				builder.put(ps.getProcess(), new ImmutableProcessState(ps.getCallStackPeek().getLocation()));
 		}
-		return immutProcessStates = builder.build();
+		return builder.build();
 	}
 
 	public Collection<Transition> getTransitionsOfProcess(XCFA.Process process) {
@@ -190,57 +189,32 @@ public final class ExplState extends AbstractExplState {
 		return location.getTransitions();
 	}
 
-	// all data needed for a recursive lock
-	private static class SyncVarData {
-		XCFA.Process process;
-		int num; // num > 0 is always true
-		SyncVarData(XCFA.Process process, int num) {
-			this.process = process;
-			this.num = num;
+	/** Returns the lock or an "unlocked" state. */
+	public SyntheticLitExpr getLock(VarDecl<SyntheticType> syncVar) {
+		return valuation.eval(syncVar).map(litExpr -> (SyntheticLitExpr)litExpr).orElse(SyntheticLitExpr.unlocked());
+	}
+
+	public boolean isLocked(VarDecl<SyntheticType> syncVar) {
+		return getLock(syncVar).isLocked();
+	}
+
+	public boolean isLockedOn(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
+		return isLocked(syncVar) && getLock(syncVar).getProcess() == process;
+	}
+
+	public void lock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
+		SyntheticLitExpr expr = getLock(syncVar).lock(process);
+		Preconditions.checkState(!expr.isInvalid());
+		valuation.put(syncVar, expr);
+	}
+
+	public void unlock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
+		SyntheticLitExpr expr = getLock(syncVar).unlock(process);
+		if (expr.isInvalid()) {
+			safety = new StateSafety(false, false, "Bad unlocking of a mutex");
+			return;
 		}
-	}
-
-	public boolean isLocked(VarDecl<?> syncVar) {
-		return locks.containsKey(syncVar);
-	}
-
-	public boolean isLockedOn(VarDecl<?> syncVar, XCFA.Process process) {
-		return isLocked(syncVar) && locks.get(syncVar).process == process;
-	}
-
-	public void lock(VarDecl<?> syncVar, XCFA.Process process) {
-		if (!locks.containsKey(syncVar))
-			locks.put(syncVar, new SyncVarData(process, 1));
-		else
-			locks.get(syncVar).num += 1;
-	}
-
-	public void unlock(VarDecl<?> syncVar, XCFA.Process process) {
-		if (!locks.containsKey(syncVar)) {
-			// TODO better signalling of safety property?
-			safety = new StateSafety(false, false, "Unlocked an unlocked mutex");
-		} else if (locks.get(syncVar).process != process) {
-			safety = new StateSafety(false, false, "Unlocked a mutex locked in an other process");
-		} else {
-			locks.get(syncVar).num -= 1;
-			if (locks.get(syncVar).num == 0) {
-				locks.remove(syncVar);
-			}
-		}
-	}
-
-
-	public static class StateSafety {
-		public final boolean safe;
-		public final boolean finished;
-		/** Human readable message in case of unsafety. null if safe */
-		public final String message;
-
-		private StateSafety(boolean safe, boolean finished, String message) {
-			this.safe = safe;
-			this.finished = finished;
-			this.message = message;
-		}
+		valuation.put(syncVar, expr);
 	}
 
 	public StateSafety getSafety() {
@@ -256,18 +230,6 @@ public final class ExplState extends AbstractExplState {
 			return safety = new StateSafety(false, false, "Deadlock reached.");
 		}
 		return safety = new StateSafety(true, false, null);
-	}
-
-	/**
-	 * Merges getEnabledTransitions + executeTransition with a Scheduler which chooses a transition from the list given.
-	 * Difference is, executeTransition creates a new copy a transition ahead, without `this` changed.
-	 * @param sched A Scheduler which chooses between enabled transitions
-	 */
-	public void step(Scheduler sched) {
-		// TODO edge from final location might lead to infinite loop or "deadlock"
-		onChange();
-		Collection<Transition> enabledTransitions = getEnabledTransitions();
-		sched.getNextTransition(enabledTransitions).execute(this);
 	}
 
 	/** Returns true when every thread has finished successfully,
@@ -353,28 +315,28 @@ public final class ExplState extends AbstractExplState {
 	}
 
 	/**
-	 * Called when an mutable there was a mutable call
-	 */
-	protected void onChange() {
-		safety = null;
-		immutProcessStates = null;
-		enabledTransitions = null;
-	}
-
-	/**
 	 * Returns a new state one transition ahead, without changing `this`'s data
 	 * @param transition Transition to execute in the new state
 	 * @return A new state one transition ahead.
 	 */
 	public ExplState executeTransition(Transition transition) {
-		ExplState newState = new ExplState(this);
-		// invalidate cached data
-		newState.onChange();
-		transition.execute(newState);
-		return newState;
+		return new ExplState(this, transition);
 	}
 
 	public ImmutableExplState toImmutableExplState() {
 		return new ImmutableExplState(ImmutableValuation.copyOf(valuation), getLocations());
+	}
+
+	public static class StateSafety {
+		public final boolean safe;
+		public final boolean finished;
+		/** Human readable message in case of unsafety. null if safe */
+		public final String message;
+
+		private StateSafety(boolean safe, boolean finished, String message) {
+			this.safe = safe;
+			this.finished = finished;
+			this.message = message;
+		}
 	}
 }

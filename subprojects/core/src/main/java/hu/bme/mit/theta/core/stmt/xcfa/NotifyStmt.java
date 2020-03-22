@@ -16,15 +16,20 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import com.google.common.base.Preconditions;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 public class NotifyStmt extends XcfaStmt {
-	private final VarDecl<?> syncVar;
+	private static final String STMT_LABEL = "notify";
+	private final VarDecl<SyntheticType> syncVar;
 
 	public NotifyStmt(VarDecl<?> lhs) {
-		syncVar = lhs;
+		Preconditions.checkArgument(lhs.getType() == SyntheticType.getInstance(), STMT_LABEL + " stmt should be passed a synthetic");
+		syncVar = (VarDecl<SyntheticType>) lhs;
 	}
 
 	@Override
@@ -37,7 +42,11 @@ public class NotifyStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getSyncVar() {
+	public VarDecl<SyntheticType> getSyncVar() {
 		return syncVar;
+	}
+
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(syncVar.getName()).toString();
 	}
 }
