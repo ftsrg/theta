@@ -23,12 +23,14 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -126,6 +128,9 @@ final class Z3TermTransformer {
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
 
+		} else if (term.isBV()) {
+			return transformBvLit(term);
+
 		} else if (term.isApp()) {
 			return transformApp(term, model, vars);
 
@@ -154,6 +159,25 @@ final class Z3TermTransformer {
 		final int num = ratNum.getNumerator().getInt();
 		final int denom = ratNum.getDenominator().getInt();
 		return Rat(num, denom);
+	}
+
+	private Expr<?> transformBvLit(final com.microsoft.z3.Expr term) {
+		final com.microsoft.z3.BitVecNum bvNum = (com.microsoft.z3.BitVecNum) term;
+		final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) bvNum.getSort();
+
+		BigInteger value = bvNum.getBigInteger();
+		if(value.compareTo(BigInteger.ZERO) < 0) {
+			value = value.add(BigInteger.valueOf(bvSort.getSize()-1).multiply(BigInteger.TWO));
+		}
+
+		String valuesstr = value.toString(2);
+		boolean[] values = new boolean[bvSort.getSize()];
+		for(int i = 0; i < values.length && i < valuesstr.length(); i++) {
+			values[bvSort.getSize() - 1 - i] = valuesstr.charAt(valuesstr.length() - 1 - i) == '1';
+		}
+
+		// At this point signedness is not known. Presuming unsigned
+		return Bv(values, false);
 	}
 
 	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,

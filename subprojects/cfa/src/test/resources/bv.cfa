@@ -1,0 +1,26 @@
+main process cfa {
+    var x : bv[32]
+    /*var y : bitvec[16]
+    var z : sbv[8]
+    var w : sbitvec[3]*/
+
+	init loc L0
+	loc L1
+	error loc ERR
+	final loc L2
+
+	L0 -> L1 {
+	    x := 32'd100
+	    /*y := 16'd65535
+	    z := 8'ds127
+	    w := 3'ds-4*/
+	}
+
+	L1 -> L2 {
+	    assume not (x /= 32'd100)
+	}
+
+	L1 -> ERR {
+	    assume x /= 32'd100
+	}
+}

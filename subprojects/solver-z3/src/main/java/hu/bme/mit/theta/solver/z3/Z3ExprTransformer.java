@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -48,6 +49,9 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -183,6 +187,14 @@ final class Z3ExprTransformer {
 				.addCase(IntLtExpr.class, this::transformIntLt)
 
 				.addCase(IntToRatExpr.class, this::transformIntToRat)
+
+				// Bitvectors
+
+				.addCase(BvLitExpr.class, this::transformBvLit)
+
+				.addCase(BvEqExpr.class, this::transformBvEq)
+
+				.addCase(BvNeqExpr.class, this::transformBvNeq)
 
 				// Functions
 
@@ -485,6 +497,32 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
 		return context.mkInt2Real(opTerm);
 	}
+
+	/*
+	 * Bitvectors
+	 */
+
+	private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
+		BigInteger value = BigInteger.ZERO;
+		for(int i = 0; i < expr.getValue().length; i++) {
+			value = value.multiply(BigInteger.TEN).add(expr.getValue()[i] ? BigInteger.ONE : BigInteger.ZERO);
+		}
+
+		return context.mkBV(value.toString(), expr.getType().getSize());
+	}
+
+	private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkEq(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvNeq(final BvNeqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
+	}
+
 
 	/*
 	 * Arrays

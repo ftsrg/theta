@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
@@ -33,6 +34,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
@@ -106,6 +108,41 @@ public final class Z3SolverTest {
 
 		// Assert
 		assertTrue(val.getType().equals(ca.getType()));
+	}
+
+	@Test
+	public void testBV() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		// Create three bitvectors
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Eq(cy.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Eq(cx.getRef(), cy.getRef()));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		solver.pop();
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Neq(cx.getRef(), cz.getRef()));
+
+		status = solver.check();
+		assertTrue(status.isSat());
+
+		final Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
 	}
 
 }
