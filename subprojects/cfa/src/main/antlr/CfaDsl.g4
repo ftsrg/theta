@@ -80,6 +80,7 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
+	|   bvType
 	;
 
 typeList
@@ -106,6 +107,19 @@ arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
 	;
 
+bvType
+    :   ubvType
+    |   sbvType
+    ;
+
+ubvType
+    :   UBVTYPE LBRACK size=INT RBRACK
+    ;
+
+sbvType
+    :   SBVTYPE LBRACK size=INT RBRACK
+    ;
+
 BOOLTYPE
 	:	'bool'
 	;
@@ -117,6 +131,18 @@ INTTYPE
 RATTYPE
 	:	'rat'
 	;
+
+UBVTYPE
+    :   'bv'
+    |   'bitvec'
+    |   'ubv'
+    |   'ubitvec'
+    ;
+
+SBVTYPE
+    :   'sbv'
+    |   'sbitvec'
+    ;
 
 // E X P R E S S I O N S
 
@@ -225,6 +251,7 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
+	|   bvLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -244,6 +271,10 @@ intLitExpr
 ratLitExpr
 	:	num=INT PERCENT denom=INT
 	;
+
+bvLitExpr
+    :   bv=BV
+    ;
 
 idExpr
 	:	id=ID
@@ -383,6 +414,11 @@ RETURN
 	;
 
 // B A S I C   T O K E N S
+
+BV  :   NAT '\'b' ('s'|'u')? [0-1]+
+    |   NAT '\'d' ('s'|'u')? INT
+    |   NAT '\'x' ('s'|'u')? [0-9a-fA-F]+
+    ;
 
 INT	:	SIGN? NAT
 	;

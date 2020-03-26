@@ -16,12 +16,15 @@
 package hu.bme.mit.theta.cfa.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.IntTypeContext;
@@ -74,6 +77,17 @@ final class CfaType {
 			return Array(indexType, elemType);
 		}
 
+		@Override
+		public Type visitUbvType(final UbvTypeContext ctx) {
+			final int size = Integer.parseInt(ctx.size.getText());
+			return BvType(size, false);
+		}
+
+		@Override
+		public Type visitSbvType(final SbvTypeContext ctx) {
+			final int size = Integer.parseInt(ctx.size.getText());
+			return BvType(size, true);
+		}
 	}
 
 }

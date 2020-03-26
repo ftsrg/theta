@@ -18,6 +18,7 @@ package hu.bme.mit.theta.cfa.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.common.Utils.tail;
@@ -47,6 +48,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
@@ -54,6 +56,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -307,9 +310,9 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-					case CfaDslParser.EQ:
+					case EQ:
 						return Eq(leftOp, rightOp);
-					case CfaDslParser.NEQ:
+					case NEQ:
 						return Neq(leftOp, rightOp);
 					default:
 						throw new AssertionError();
@@ -327,13 +330,13 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-					case CfaDslParser.LT:
+					case LT:
 						return Lt(leftOp, rightOp);
-					case CfaDslParser.LEQ:
+					case LEQ:
 						return Leq(leftOp, rightOp);
-					case CfaDslParser.GT:
+					case GT:
 						return Gt(leftOp, rightOp);
-					case CfaDslParser.GEQ:
+					case GEQ:
 						return Geq(leftOp, rightOp);
 					default:
 						throw new AssertionError();
@@ -383,10 +386,10 @@ final class CfaExpression {
 		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-				case CfaDslParser.PLUS:
+				case PLUS:
 					return createAddExpr(leftOp, rightOp);
 
-				case CfaDslParser.MINUS:
+				case MINUS:
 					return createSubExpr(leftOp, rightOp);
 
 				default:
@@ -449,16 +452,16 @@ final class CfaExpression {
 		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-				case CfaDslParser.MUL:
+				case MUL:
 					return createMulExpr(leftOp, rightOp);
 
-				case CfaDslParser.DIV:
+				case DIV:
 					return createDivExpr(leftOp, rightOp);
 
-				case CfaDslParser.MOD:
+				case MOD:
 					return createModExpr(leftOp, rightOp);
 
-				case CfaDslParser.REM:
+				case REM:
 					return createRemExpr(leftOp, rightOp);
 
 				default:
@@ -590,6 +593,126 @@ final class CfaExpression {
 			final int num = Integer.parseInt(ctx.num.getText());
 			final int denom = Integer.parseInt(ctx.denom.getText());
 			return Rat(num, denom);
+		}
+
+		@Override
+		public Expr<?> visitBvLitExpr(final BvLitExprContext ctx) {
+			final String[] sizeAndContent = ctx.bv.getText().split("'");
+
+			final int size = Integer.parseInt(sizeAndContent[0]);
+			checkArgument(size > 0, "Bitvector must have positive size");
+
+			final boolean[] value;
+			final boolean isSigned;
+			if(sizeAndContent[1].startsWith("bs")) {
+				value = decodeBinaryBvContent(sizeAndContent[1].substring(2));
+				isSigned = true;
+			}
+			else if(sizeAndContent[1].startsWith("ds")) {
+				value = decodeDecimalBvContent(sizeAndContent[1].substring(2), size, true);
+				isSigned = true;
+			}
+			else if(sizeAndContent[1].startsWith("xs")) {
+				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(2));
+				isSigned = true;
+			}
+			else if(sizeAndContent[1].startsWith("bu")) {
+				value = decodeBinaryBvContent(sizeAndContent[1].substring(2));
+				isSigned = false;
+			}
+			else if(sizeAndContent[1].startsWith("du")) {
+				value = decodeDecimalBvContent(sizeAndContent[1].substring(2), size, false);
+				isSigned = false;
+			}
+			else if(sizeAndContent[1].startsWith("xu")) {
+				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(2));
+				isSigned = false;
+			}
+			else if(sizeAndContent[1].startsWith("b")) {
+				value = decodeBinaryBvContent(sizeAndContent[1].substring(1));
+				isSigned = false;
+			}
+			else if(sizeAndContent[1].startsWith("d")) {
+				value = decodeDecimalBvContent(sizeAndContent[1].substring(1), size, false);
+				isSigned = false;
+			}
+			else if(sizeAndContent[1].startsWith("x")) {
+				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(1));
+				isSigned = false;
+			}
+			else {
+				throw new IllegalArgumentException("Invalid bitvector literal");
+			}
+
+			checkArgument(value.length <= size, "The value of the literal cannot be represented on the given amount of bits");
+
+			final boolean[] bvValue = new boolean[size];
+			for(int i = 0; i < value.length; i++) {
+				bvValue[size - 1 - i] = value[value.length - 1 - i];
+			}
+
+			return Bv(bvValue, isSigned);
+		}
+
+		private boolean[] decodeBinaryBvContent(String lit) {
+			final boolean[] value = new boolean[lit.length()];
+			for(int i = 0; i < lit.length(); i++) {
+				switch (lit.toCharArray()[i]) {
+					case '0': value[i] = false; break;
+					case '1': value[i] = true; break;
+					default: throw new IllegalArgumentException("Binary literal can contain only 0 and 1");
+				}
+			}
+			return value;
+		}
+
+		private boolean[] decodeDecimalBvContent(String lit, int size, boolean isSigned) {
+			BigInteger value = new BigInteger(lit);
+			checkArgument(
+				(
+					isSigned &&
+					value.compareTo(BigInteger.TWO.pow(size-1).multiply(BigInteger.valueOf(-1))) >= 0 &&
+					value.compareTo(BigInteger.TWO.pow(size-1)) < 0
+				) ||
+				(
+					!isSigned &&
+					value.compareTo(BigInteger.ZERO) >= 0 &&
+					value.compareTo(BigInteger.TWO.pow(size)) < 0
+				),
+				"Decimal literal is not in range"
+			);
+
+			if(isSigned && value.compareTo(BigInteger.ZERO) < 0) {
+				value = value.add(BigInteger.TWO.pow(size));
+			}
+
+			return decodeBinaryBvContent(value.toString(2));
+		}
+
+		private boolean[] decodeHexadecimalBvContent(String lit) {
+			final StringBuilder builder = new StringBuilder();
+			for(int i = 0; i < lit.length(); i++) {
+				switch (Character.toLowerCase(lit.toCharArray()[i])) {
+					case '0': builder.append("0000"); break;
+					case '1': builder.append("0001"); break;
+					case '2': builder.append("0010"); break;
+					case '3': builder.append("0011"); break;
+					case '4': builder.append("0100"); break;
+					case '5': builder.append("0101"); break;
+					case '6': builder.append("0110"); break;
+					case '7': builder.append("0111"); break;
+					case '8': builder.append("1000"); break;
+					case '9': builder.append("1001"); break;
+					case 'a': builder.append("1010"); break;
+					case 'b': builder.append("1011"); break;
+					case 'c': builder.append("1100"); break;
+					case 'd': builder.append("1101"); break;
+					case 'e': builder.append("1110"); break;
+					case 'f': builder.append("1111"); break;
+					default: throw new IllegalArgumentException("Invalid hexadecimal character");
+				}
+			}
+			return decodeBinaryBvContent(builder.toString());
 		}
 
 		@Override
