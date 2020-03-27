@@ -2,12 +2,11 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public final class BvType implements Additive<BvType>, Equational<BvType> {
+public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Equational<BvType> {
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";
 
@@ -47,6 +46,16 @@ public final class BvType implements Additive<BvType>, Equational<BvType> {
     @Override
     public NegExpr<BvType> Neg(Expr<BvType> op) {
         return BvExprs.Neg(op);
+    }
+
+    @Override
+    public BvMulExpr Mul(final Iterable<? extends Expr<BvType>> ops) {
+        return BvExprs.Mul(ops);
+    }
+
+    @Override
+    public BvDivExpr Div(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvExprs.Div(leftOp, rightOp);
     }
 
     @Override

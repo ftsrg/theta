@@ -203,6 +203,10 @@ final class Z3ExprTransformer {
 
 				.addCase(BvNeqExpr.class, this::transformBvNeq)
 
+				.addCase(BvMulExpr.class, this::transformBvMul)
+
+				.addCase(BvDivExpr.class, this::transformBvDiv)
+
 				// Functions
 
 				.addCase(FuncAppExpr.class, this::transformFuncApp)
@@ -541,6 +545,25 @@ final class Z3ExprTransformer {
 	private com.microsoft.z3.Expr transformBvNeg(final BvNegExpr expr) {
 		final com.microsoft.z3.BitVecExpr opTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getOp());
 		return context.mkBVNeg(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvMul(final BvMulExpr expr) {
+		final com.microsoft.z3.BitVecExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
+				.toArray(com.microsoft.z3.BitVecExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVMul);
+	}
+
+	private com.microsoft.z3.Expr transformBvDiv(final BvDivExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getType().isSigned()) {
+			return context.mkBVSDiv(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVUDiv(leftOpTerm, rightOpTerm);
+		}
 	}
 
 	/*
