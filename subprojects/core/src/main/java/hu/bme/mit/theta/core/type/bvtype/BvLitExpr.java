@@ -52,6 +52,50 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return this;
     }
 
+    public BvLitExpr add(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger sum = BvUtils.bvLitExprToBigInteger(this).add(BvUtils.bvLitExprToBigInteger(that));
+        sum = BvUtils.fitBigIntegerIntoDomain(sum, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(sum, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr sub(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger sub = BvUtils.bvLitExprToBigInteger(this).subtract(BvUtils.bvLitExprToBigInteger(that));
+        sub = BvUtils.fitBigIntegerIntoDomain(sub, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(sub, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr mul(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger prod = BvUtils.bvLitExprToBigInteger(this).multiply(BvUtils.bvLitExprToBigInteger(that));
+        prod = BvUtils.fitBigIntegerIntoDomain(prod, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(prod, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr neg() {
+        BigInteger neg = BvUtils.bvLitExprToBigInteger(this).negate();
+        neg = BvUtils.fitBigIntegerIntoDomain(neg, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(neg, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr div(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger div = BvUtils.bvLitExprToBigInteger(this).divide(BvUtils.bvLitExprToBigInteger(that));
+        div = BvUtils.fitBigIntegerIntoDomain(div, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(div, getType().getSize(), getType().isSigned());
+    }
+
+    public BoolLitExpr eq(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(Arrays.equals(this.getValue(), that.getValue()));
+    }
+
+    public BoolLitExpr neq(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(!Arrays.equals(this.getValue(), that.getValue()));
+    }
+
     @Override
     public int hashCode() {
         int result = hashCode;

@@ -37,13 +37,11 @@ public class BvMulExpr extends MulExpr<BvType> {
 
     @Override
     public BvLitExpr eval(final Valuation val) {
-        BigInteger prod = BigInteger.ONE;
-        for (final Expr<BvType> op : getOps()) {
-            final BvLitExpr opVal = (BvLitExpr) op.eval(val);
-            prod = prod.multiply(BvUtils.bvLitExprToBigInteger(opVal));
-        }
-        prod = BvUtils.fitBigIntegerIntoDomain(prod, getType().getSize(), getType().isSigned());
-        return BvUtils.bigIntegerToBvLitExpr(prod, getType().getSize(), getType().isSigned());
+        return getOps().stream().skip(1).reduce(
+            (BvLitExpr) getOps().get(0).eval(val),
+            (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
+            BvLitExpr::mul
+        );
     }
 
     @Override

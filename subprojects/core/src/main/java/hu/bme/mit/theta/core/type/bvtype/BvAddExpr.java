@@ -40,13 +40,11 @@ public class BvAddExpr extends AddExpr<BvType> {
 
     @Override
     public BvLitExpr eval(final Valuation val) {
-        BigInteger sum = BigInteger.ZERO;
-        for (final Expr<BvType> op : getOps()) {
-            final BvLitExpr opVal = (BvLitExpr) op.eval(val);
-            sum = sum.add(BvUtils.bvLitExprToBigInteger(opVal));
-        }
-        sum = BvUtils.fitBigIntegerIntoDomain(sum, getType().getSize(), getType().isSigned());
-        return BvUtils.bigIntegerToBvLitExpr(sum, getType().getSize(), getType().isSigned());
+        return getOps().stream().skip(1).reduce(
+            (BvLitExpr) getOps().get(0).eval(val),
+            (op1, op2) -> (op1.add((BvLitExpr) op2.eval(val))),
+            BvLitExpr::add
+        );
     }
 
     @Override

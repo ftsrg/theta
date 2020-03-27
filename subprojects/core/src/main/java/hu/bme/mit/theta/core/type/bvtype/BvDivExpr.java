@@ -39,9 +39,7 @@ public class BvDivExpr extends DivExpr<BvType> {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
 
-        BigInteger div = BvUtils.bvLitExprToBigInteger(leftOpVal).divide(BvUtils.bvLitExprToBigInteger(rightOpVal));
-        div = BvUtils.fitBigIntegerIntoDomain(div, getType().getSize(), getType().isSigned());
-        return BvUtils.bigIntegerToBvLitExpr(div, getType().getSize(), getType().isSigned());
+        return leftOpVal.div(rightOpVal);
     }
 
     @Override

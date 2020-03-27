@@ -41,8 +41,7 @@ public class BvNeqExpr extends NeqExpr<BvType> {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
 
-        checkState(leftOpVal.isSigned() == rightOpVal.isSigned(), "Invalid operation");
-        return Bool(!Arrays.equals(leftOpVal.getValue(), rightOpVal.getValue()));
+        return leftOpVal.neq(rightOpVal);
     }
 
     @Override
