@@ -37,9 +37,7 @@ public class BvNegExpr extends NegExpr<BvType> {
     @Override
     public BvLitExpr eval(final Valuation val) {
         final BvLitExpr opVal = (BvLitExpr) getOp().eval(val);
-        BigInteger neg = BvUtils.bvLitExprToBigInteger(opVal).negate();
-        neg = BvUtils.fitBigIntegerIntoDomain(neg, getType().getSize(), getType().isSigned());
-        return BvUtils.bigIntegerToBvLitExpr(neg, getType().getSize(), getType().isSigned());
+        return opVal.neg();
     }
 
     @Override
