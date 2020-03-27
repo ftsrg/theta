@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -63,6 +64,7 @@ public final class CfaDslManagerTest {
 	}
 
 	@Test
+	@Ignore
 	public void test() throws FileNotFoundException, IOException, InterruptedException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final CFA cfa = CfaDslManager.createCfa(inputStream);

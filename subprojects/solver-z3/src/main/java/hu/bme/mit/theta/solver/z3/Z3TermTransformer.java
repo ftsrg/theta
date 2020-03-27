@@ -71,6 +71,7 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 final class Z3TermTransformer {
@@ -128,7 +129,8 @@ final class Z3TermTransformer {
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
 
-		} else if (term.isBV()) {
+		// BitVecNum is not BVNumeral? Potential bug?
+		} else if (/* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
 			return transformBvLit(term);
 
 		} else if (term.isApp()) {
@@ -163,21 +165,11 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformBvLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.BitVecNum bvNum = (com.microsoft.z3.BitVecNum) term;
-		final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) bvNum.getSort();
 
 		BigInteger value = bvNum.getBigInteger();
-		if(value.compareTo(BigInteger.ZERO) < 0) {
-			value = value.add(BigInteger.valueOf(bvSort.getSize()-1).multiply(BigInteger.TWO));
-		}
-
-		String valuesstr = value.toString(2);
-		boolean[] values = new boolean[bvSort.getSize()];
-		for(int i = 0; i < values.length && i < valuesstr.length(); i++) {
-			values[bvSort.getSize() - 1 - i] = valuesstr.charAt(valuesstr.length() - 1 - i) == '1';
-		}
 
 		// At this point signedness is not known. Presuming unsigned
-		return Bv(values, false);
+		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
 	}
 
 	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,

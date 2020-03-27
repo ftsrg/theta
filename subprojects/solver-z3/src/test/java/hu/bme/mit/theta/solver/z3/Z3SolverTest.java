@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
@@ -111,34 +113,107 @@ public final class Z3SolverTest {
 	}
 
 	@Test
-	public void testBV() {
+	public void testBV1() {
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
-		// Create three bitvectors
 		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
 		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
-		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
 
 		solver.push();
 
-		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
-		solver.add(Eq(cy.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false}, true)));
+		solver.add(Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false}, true)));
 		solver.add(Eq(cx.getRef(), cy.getRef()));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
 
 		solver.pop();
+	}
+
+	@Test
+	public void testBV2() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false}, true)));
+		solver.add(Neq(cx.getRef(), cz.getRef()));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV3() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false}, true)));
+		solver.add(Eq(cy.getRef(), BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[] {false, false, false, true}, true)))));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV4() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
 
 		solver.push();
 
 		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
-		solver.add(Neq(cx.getRef(), cz.getRef()));
+		solver.add(Eq(cy.getRef(), BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}, true))));
 
-		status = solver.check();
+		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
 
-		final Valuation model = solver.getModel();
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV5() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
 		assertNotNull(model);
 		assertNotNull(model.toMap());
 

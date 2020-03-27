@@ -3,13 +3,11 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public final class BvType implements Equational<BvType> {
+public final class BvType implements Additive<BvType>, Equational<BvType> {
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";
 
@@ -34,6 +32,21 @@ public final class BvType implements Equational<BvType> {
 
     public boolean isSigned() {
         return isSigned;
+    }
+
+    @Override
+    public BvAddExpr Add(Iterable<? extends Expr<BvType>> ops) {
+        return BvExprs.Add(ops);
+    }
+
+    @Override
+    public SubExpr<BvType> Sub(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvExprs.Sub(leftOp, rightOp);
+    }
+
+    @Override
+    public NegExpr<BvType> Neg(Expr<BvType> op) {
+        return BvExprs.Neg(op);
     }
 
     @Override

@@ -1,26 +1,17 @@
 main process cfa {
-    var x : bv[32]
-    /*var y : bitvec[16]
-    var z : sbv[8]
-    var w : sbitvec[3]*/
+	var x : bv[4]
 
 	init loc L0
-	loc L1
-	error loc ERR
-	final loc L2
+    loc L1
+    loc L2
+    loc L3
+    final loc END
+    error loc ERR
 
-	L0 -> L1 {
-	    x := 32'd100
-	    /*y := 16'd65535
-	    z := 8'ds127
-	    w := 3'ds-4*/
-	}
-
-	L1 -> L2 {
-	    assume not (x /= 32'd100)
-	}
-
-	L1 -> ERR {
-	    assume x /= 32'd100
-	}
+	L0 -> L1 { x := 4'd0 }
+    L1 -> L2 { assume x /= 4'd5 }
+    L1 -> L3 { assume x = 4'd5 }
+    L2 -> L1 { x := x + 4'd1 }
+    L3 -> END { assume x /= 4'd5 }
+    L3 -> ERR { assume not (x /= 4'd5) }
 }
