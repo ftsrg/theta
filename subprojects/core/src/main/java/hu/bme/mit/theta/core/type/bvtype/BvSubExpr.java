@@ -40,7 +40,8 @@ public class BvSubExpr extends SubExpr<BvType> {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
 
-        final BigInteger sub = BvUtils.bvLitExprToBigInteger(leftOpVal).subtract(BvUtils.bvLitExprToBigInteger(rightOpVal));
+        BigInteger sub = BvUtils.bvLitExprToBigInteger(leftOpVal).subtract(BvUtils.bvLitExprToBigInteger(rightOpVal));
+        sub = BvUtils.fitBigIntegerIntoDomain(sub, getType().getSize(), getType().isSigned());
         return BvUtils.bigIntegerToBvLitExpr(sub, getType().getSize(), getType().isSigned());
     }
 

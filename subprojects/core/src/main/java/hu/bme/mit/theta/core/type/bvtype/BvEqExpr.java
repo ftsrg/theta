@@ -6,6 +6,9 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+import java.util.Arrays;
+
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -38,7 +41,9 @@ public class BvEqExpr extends EqExpr<BvType> {
     public BoolLitExpr eval(final Valuation val) {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-        return leftOpVal.eq(rightOpVal);
+
+        checkState(leftOpVal.isSigned() == rightOpVal.isSigned(), "Invalid operation");
+        return Bool(Arrays.equals(leftOpVal.getValue(), rightOpVal.getValue()));
     }
 
     @Override

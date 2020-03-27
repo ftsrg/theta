@@ -54,11 +54,11 @@ public final class CfaDslManagerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 
-				//{"/locking.cfa", 3, 9, 10, 10},
+				{"/locking.cfa", 3, 9, 10, 10},
 
-				//{"/counter5_true.cfa", 1, 6, 6, 6},
+				{"/counter5_true.cfa", 1, 6, 6, 6},
 
-				{"/bv.cfa", 4, 6, 4, 4}
+				{"/bv.cfa", 1, 6, 6, 6}
 
 		});
 	}

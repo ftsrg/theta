@@ -42,6 +42,7 @@ public class BvMulExpr extends MulExpr<BvType> {
             final BvLitExpr opVal = (BvLitExpr) op.eval(val);
             prod = prod.multiply(BvUtils.bvLitExprToBigInteger(opVal));
         }
+        prod = BvUtils.fitBigIntegerIntoDomain(prod, getType().getSize(), getType().isSigned());
         return BvUtils.bigIntegerToBvLitExpr(prod, getType().getSize(), getType().isSigned());
     }
 
