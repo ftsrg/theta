@@ -220,4 +220,26 @@ public final class Z3SolverTest {
 		solver.pop();
 	}
 
+	@Test
+	public void testBV6() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+
+		solver.push();
+
+		solver.add(Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(Eq(cy.getRef(), BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)))));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
 }

@@ -33,6 +33,14 @@ public final class BvExprs {
         return BvNegExpr.of(op);
     }
 
+    public static BvMulExpr Mul(final Iterable<? extends Expr<BvType>> ops) {
+        return BvMulExpr.of(ops);
+    }
+
+    public static BvDivExpr Div(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvDivExpr.of(leftOp, rightOp);
+    }
+
     public static BvEqExpr Eq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvEqExpr.of(leftOp, rightOp);
     }
