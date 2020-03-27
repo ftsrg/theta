@@ -3,6 +3,9 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
+
+import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -34,7 +37,9 @@ public class BvNegExpr extends NegExpr<BvType> {
     @Override
     public BvLitExpr eval(final Valuation val) {
         final BvLitExpr opVal = (BvLitExpr) getOp().eval(val);
-        return opVal.neg();
+        BigInteger neg = BvUtils.bvLitExprToBigInteger(opVal).negate();
+        neg = BvUtils.fitBigIntegerIntoDomain(neg, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(neg, getType().getSize(), getType().isSigned());
     }
 
     @Override

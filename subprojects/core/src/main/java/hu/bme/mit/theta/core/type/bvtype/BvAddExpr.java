@@ -45,6 +45,7 @@ public class BvAddExpr extends AddExpr<BvType> {
             final BvLitExpr opVal = (BvLitExpr) op.eval(val);
             sum = sum.add(BvUtils.bvLitExprToBigInteger(opVal));
         }
+        sum = BvUtils.fitBigIntegerIntoDomain(sum, getType().getSize(), getType().isSigned());
         return BvUtils.bigIntegerToBvLitExpr(sum, getType().getSize(), getType().isSigned());
     }
 

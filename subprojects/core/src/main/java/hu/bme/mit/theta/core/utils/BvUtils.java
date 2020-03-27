@@ -39,4 +39,27 @@ public final class BvUtils {
 
         return Bv(values, isSigned);
     }
+
+    public static BigInteger fitBigIntegerIntoDomain(BigInteger integer, final int size, final boolean isSigned) {
+        if(isSigned) {
+            while(integer.compareTo(BigInteger.TWO.pow(size-1).negate()) < 0) {
+                integer = integer.add(BigInteger.TWO.pow(size));
+            }
+
+            while(integer.compareTo(BigInteger.TWO.pow(size-1)) >= 0) {
+                integer = integer.subtract(BigInteger.TWO.pow(size));
+            }
+        }
+        else {
+            while(integer.compareTo(BigInteger.ZERO) < 0) {
+                integer = integer.add(BigInteger.TWO.pow(size));
+            }
+
+            while(integer.compareTo(BigInteger.TWO.pow(size)) >= 0) {
+                integer = integer.subtract(BigInteger.TWO.pow(size));
+            }
+        }
+
+        return integer;
+    }
 }
