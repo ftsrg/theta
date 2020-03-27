@@ -96,6 +96,26 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return Bool(!Arrays.equals(this.getValue(), that.getValue()));
     }
 
+    public BoolLitExpr lt(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0);
+    }
+
+    public BoolLitExpr leq(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that)) <= 0);
+    }
+
+    public BoolLitExpr gt(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that)) > 0);
+    }
+
+    public BoolLitExpr geq(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return Bool(BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that)) >= 0);
+    }
+
     @Override
     public int hashCode() {
         int result = hashCode;

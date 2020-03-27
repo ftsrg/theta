@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.abstracttype.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Equational<BvType> {
+public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Equational<BvType>, Ordered<BvType> {
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";
 
@@ -66,6 +66,26 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, E
     @Override
     public NeqExpr<BvType> Neq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
         return BvNeqExpr.of(leftOp, rightOp);
+    }
+
+    @Override
+    public LtExpr<BvType> Lt(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvLtExpr.of(leftOp, rightOp);
+    }
+
+    @Override
+    public LeqExpr<BvType> Leq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvLeqExpr.of(leftOp, rightOp);
+    }
+
+    @Override
+    public GtExpr<BvType> Gt(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvGtExpr.of(leftOp, rightOp);
+    }
+
+    @Override
+    public GeqExpr<BvType> Geq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvGeqExpr.of(leftOp, rightOp);
     }
 
     @Override
