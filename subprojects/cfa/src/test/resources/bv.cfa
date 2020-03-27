@@ -8,10 +8,10 @@ main process cfa {
     final loc END
     error loc ERR
 
-	L0 -> L1 { x := 4'd1 }
-    L1 -> L2 { assume x /= 4'd5 }
-    L1 -> L3 { assume x = 4'd5 }
-    L2 -> L1 { x := x * 4'd2 }
-    L3 -> END { assume x /= 4'd5 }
-    L3 -> ERR { assume not (x /= 4'd5) }
+	L0 -> L1 { x := 4'd0 }
+    L1 -> L2 { assume x < 4'd5 }
+    L1 -> L3 { assume not (x < 4'd5) }
+    L2 -> L1 { x := x + 4'd1 }
+    L3 -> END { assume x <= 4'd5 }
+    L3 -> ERR { assume not (x <= 4'd5) }
 }

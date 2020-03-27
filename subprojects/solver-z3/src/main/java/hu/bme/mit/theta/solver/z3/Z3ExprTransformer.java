@@ -199,13 +199,21 @@ final class Z3ExprTransformer {
 
 				.addCase(BvNegExpr.class, this::transformBvNeg)
 
+				.addCase(BvMulExpr.class, this::transformBvMul)
+
+				.addCase(BvDivExpr.class, this::transformBvDiv)
+
 				.addCase(BvEqExpr.class, this::transformBvEq)
 
 				.addCase(BvNeqExpr.class, this::transformBvNeq)
 
-				.addCase(BvMulExpr.class, this::transformBvMul)
+				.addCase(BvGeqExpr.class, this::transformBvGeq)
 
-				.addCase(BvDivExpr.class, this::transformBvDiv)
+				.addCase(BvGtExpr.class, this::transformBvGt)
+
+				.addCase(BvLeqExpr.class, this::transformBvLeq)
+
+				.addCase(BvLtExpr.class, this::transformBvLt)
 
 				// Functions
 
@@ -563,6 +571,54 @@ final class Z3ExprTransformer {
 		}
 		else {
 			return context.mkBVUDiv(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvGeq(final BvGeqExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getLeftOp().getType().isSigned()) {
+			return context.mkBVSGE(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVUGE(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvGt(final BvGtExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getLeftOp().getType().isSigned()) {
+			return context.mkBVSGT(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVUGT(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvLeq(final BvLeqExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getLeftOp().getType().isSigned()) {
+			return context.mkBVSLE(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVULE(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvLt(final BvLtExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getLeftOp().getType().isSigned()) {
+			return context.mkBVSLT(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVULT(leftOpTerm, rightOpTerm);
 		}
 	}
 

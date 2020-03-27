@@ -48,4 +48,20 @@ public final class BvExprs {
     public static BvNeqExpr Neq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvNeqExpr.of(leftOp, rightOp);
     }
+
+    public static BvLtExpr Lt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvLtExpr.of(leftOp, rightOp);
+    }
+
+    public static BvLeqExpr Leq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvLeqExpr.of(leftOp, rightOp);
+    }
+
+    public static BvGtExpr Gt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvGtExpr.of(leftOp, rightOp);
+    }
+
+    public static BvGeqExpr Geq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvGeqExpr.of(leftOp, rightOp);
+    }
 }
