@@ -18,10 +18,12 @@ package hu.bme.mit.theta.solver.z3;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.DispatchTable;
@@ -49,9 +51,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -81,6 +81,7 @@ import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 
 final class Z3ExprTransformer {
 
@@ -191,6 +192,12 @@ final class Z3ExprTransformer {
 				// Bitvectors
 
 				.addCase(BvLitExpr.class, this::transformBvLit)
+
+				.addCase(BvAddExpr.class, this::transformBvAdd)
+
+				.addCase(BvSubExpr.class, this::transformBvSub)
+
+				.addCase(BvNegExpr.class, this::transformBvNeg)
 
 				.addCase(BvEqExpr.class, this::transformBvEq)
 
@@ -503,12 +510,7 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
-		BigInteger value = BigInteger.ZERO;
-		for(int i = 0; i < expr.getValue().length; i++) {
-			value = value.multiply(BigInteger.TEN).add(expr.getValue()[i] ? BigInteger.ONE : BigInteger.ZERO);
-		}
-
-		return context.mkBV(value.toString(), expr.getType().getSize());
+		return context.mkBV(BvUtils.bvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
 	}
 
 	private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {
@@ -523,6 +525,23 @@ final class Z3ExprTransformer {
 		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
 	}
 
+	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {
+		final com.microsoft.z3.BitVecExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
+				.toArray(com.microsoft.z3.BitVecExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAdd);
+	}
+
+	private com.microsoft.z3.Expr transformBvSub(final BvSubExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+		return context.mkBVSub(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvNeg(final BvNegExpr expr) {
+		final com.microsoft.z3.BitVecExpr opTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getOp());
+		return context.mkBVNeg(opTerm);
+	}
 
 	/*
 	 * Arrays
