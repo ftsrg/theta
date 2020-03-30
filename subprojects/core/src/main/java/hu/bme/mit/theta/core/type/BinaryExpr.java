@@ -90,6 +90,6 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
 
 	protected abstract int getHashSeed();
 
-	protected abstract String getOperatorLabel();
+	public abstract String getOperatorLabel();
 
 }

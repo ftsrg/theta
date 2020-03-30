@@ -90,7 +90,7 @@ public final class ModExpr extends BinaryExpr<IntType, IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

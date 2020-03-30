@@ -71,11 +71,11 @@ public class StsCli {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = {"--domain"}, description = "Abstract domain", required = true)
-	Domain domain;
+	@Parameter(names = {"--domain"}, description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
 
-	@Parameter(names = {"--refinement"}, description = "Refinement strategy", required = true)
-	Refinement refinement;
+	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
 
 	@Parameter(names = {"--search"}, description = "Search strategy")
 	Search search = Search.BFS;
@@ -83,7 +83,7 @@ public class StsCli {
 	@Parameter(names = {"--predsplit"}, description = "Predicate splitting")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = {"--model"}, description = "Path of the input model", required = true)
+	@Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
 	String model;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")

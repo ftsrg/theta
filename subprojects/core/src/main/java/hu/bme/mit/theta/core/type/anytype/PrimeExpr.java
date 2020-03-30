@@ -72,7 +72,7 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
 	}
 
 	@Override
-	protected final String getOperatorLabel() {
+	public final String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 
