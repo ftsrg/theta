@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.type.Expr;
@@ -25,6 +23,9 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.CompoundInitialiserContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InitialiserContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SimpleInitialiserContext;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XtaInitialiser {
 
@@ -39,6 +40,7 @@ final class XtaInitialiser {
 	public Expr<?> instantiate(final Type type, final Env env) {
 		final InitialiserInstantiationVisitor visitor = new InitialiserInstantiationVisitor(env);
 		final Expr<?> expr = context.accept(visitor);
+		checkArgument(expr.getType().equals(type));
 		return expr;
 	}
 

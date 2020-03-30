@@ -30,14 +30,16 @@ public final class Label {
 
 	private final String name;
 	private final List<Type> paramTypes;
+	private final boolean broadcast;
 
-	private Label(final String name, final List<? extends Type> paramTypes) {
+	private Label(final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
 		this.name = checkNotNull(name);
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
+		this.broadcast = broadcast;
 	}
 
-	public static Label of(final String name, final List<? extends Type> paramTypes) {
-		return new Label(name, paramTypes);
+	public static Label of(final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
+		return new Label(name, paramTypes, broadcast);
 	}
 
 	public String getName() {
@@ -48,6 +50,8 @@ public final class Label {
 		return paramTypes;
 	}
 
+	public boolean isBroadcast() { return broadcast; }
+
 	@Override
 	public int hashCode() {
 		int result = hashCode;
@@ -55,6 +59,7 @@ public final class Label {
 			result = HASH_SEED;
 			result = 31 * result + name.hashCode();
 			result = 31 * result + paramTypes.hashCode();
+			result = 31 * result + (broadcast ? 1 : 0);
 			hashCode = result;
 		}
 		return result;

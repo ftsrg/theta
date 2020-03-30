@@ -15,14 +15,6 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import java.util.List;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -31,20 +23,18 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ArrayIndexContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.BasicTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.BoolTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ChanTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ClockTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ExpressionIndexContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IdIndexContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IntTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.RangeTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.RefTypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
 import hu.bme.mit.theta.xta.utils.RangeType;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XtaType {
 
@@ -58,7 +48,6 @@ final class XtaType {
 		this.typeContext = checkNotNull(typeContext);
 		this.arrayIndexContexts = checkNotNull(arrayIndexContexts);
 
-		checkArgument(typeContext.fTypePrefix.fBroadcast == null);
 		checkArgument(typeContext.fTypePrefix.fUrgent == null);
 	}
 
@@ -163,9 +152,8 @@ final class XtaType {
 			final Symbol symbol = scope.resolve(ctx.fId.getText()).get();
 			if (symbol instanceof XtaVariableSymbol) {
 				final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
-
 				assert variableSymbol.isConstant();
-				final Object value = env.compute(variableSymbol, v -> v.instantiate("", env));
+				final Object value = env.compute(variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
 
 				final IntLitExpr elemCount = (IntLitExpr) value;
 				final Type result = RangeType.Range(0, elemCount.getValue() - 1);

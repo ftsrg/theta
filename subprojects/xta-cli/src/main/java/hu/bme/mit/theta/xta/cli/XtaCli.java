@@ -46,25 +46,25 @@ public final class XtaCli {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = {"--model"}, description = "Path of the input model", required = true)
+	@Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = {"--discrete"}, description = "Refinement strategy for discrete variables", required = false)
+	@Parameter(names = {"--discrete", "-d"}, description = "Refinement strategy for discrete variables", required = false)
 	DataStrategy dataStrategy = DataStrategy.NONE;
 
-	@Parameter(names = {"--clock"}, description = "Refinement strategy for clock variables", required = true)
+	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = true)
 	ClockStrategy clockStrategy;
 
-	@Parameter(names = {"--search"}, description = "Search strategy", required = true)
+	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = true)
 	SearchStrategy searchStrategy;
 
-	@Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = {"--visualize", "-v"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
-	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
+	@Parameter(names = {"--header", "-h"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
 	public XtaCli(final String[] args) {

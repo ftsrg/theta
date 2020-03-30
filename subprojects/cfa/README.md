@@ -50,8 +50,6 @@ main process counter {
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
 
-### C source to CFA
+### C frontend
 
-An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT.
-The tool can be downloaded [here](http://home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). 
-his tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
+[Gazer](https://github.com/FTSRG/gazer) is an LLVM-based frontend for Theta that can translate C programs into CFAs, run Theta and map the verification results back to the C source level.

@@ -86,7 +86,7 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

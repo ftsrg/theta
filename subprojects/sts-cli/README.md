@@ -16,4 +16,4 @@ The tool also requires the [Z3 SMT solver](../../doc/Build.md).
 
 The tool can be run with `java -jar theta-sts-cli.jar [arguments]`.
 If no arguments are given, a help screen is displayed about the arguments and their possible values.
-For example `java -jar theta-sts-cli.jar --model counter.system --domain EXPL --refinement SEQ_ITP --loglevel INFO`.
+For example `java -jar theta-sts-cli.jar --model counter.system --loglevel INFO` runs the default analysis with logging on the `counter.system` input file.

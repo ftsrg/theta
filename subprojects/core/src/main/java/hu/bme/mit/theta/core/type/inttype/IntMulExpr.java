@@ -84,7 +84,7 @@ public final class IntMulExpr extends MulExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 
