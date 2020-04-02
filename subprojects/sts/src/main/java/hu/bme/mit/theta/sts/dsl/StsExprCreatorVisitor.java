@@ -77,8 +77,8 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslBaseVisitor;
@@ -430,13 +430,13 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		return Div(leftOp, rightOp);
 	}
 
-	private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Mod(leftOp, rightOp);
 	}
 
-	private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntRemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Rem(leftOp, rightOp);

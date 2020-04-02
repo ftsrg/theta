@@ -86,6 +86,50 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return BvUtils.bigIntegerToBvLitExpr(div, getType().getSize(), getType().isSigned());
     }
 
+    public BvLitExpr mod(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        // Always positive semantics:
+        // 5 mod 3 = 2
+        // 5 mod -3 = 2
+        // -5 mod 3 = 1
+        // -5 mod -3 = 1
+        BigInteger result = BvUtils.bvLitExprToBigInteger(this).mod(BvUtils.bvLitExprToBigInteger(that));
+        if (result.compareTo(BigInteger.ZERO) < 0) {
+            result = result.add(BvUtils.bvLitExprToBigInteger(that).abs());
+        }
+        assert result.compareTo(BigInteger.ZERO) >= 0;
+        return BvUtils.bigIntegerToBvLitExpr(result, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr rem(final BvLitExpr that) {
+        // Semantics:
+        // 5 rem 3 = 2
+        // 5 rem -3 = -2
+        // -5 rem 3 = 1
+        // -5 rem -3 = -1
+        BigInteger thisInt = BvUtils.bvLitExprToBigInteger(this);
+        BigInteger thatInt = BvUtils.bvLitExprToBigInteger(that);
+        BigInteger thisAbs = thisInt.abs();
+        BigInteger thatAbs = thatInt.abs();
+        if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
+            BigInteger result = thisAbs.mod(thatAbs);
+            if (result.compareTo(BigInteger.ZERO) != 0) {
+                result = result.subtract(thatAbs);
+            }
+            return BvUtils.bigIntegerToBvLitExpr(result, getType().getSize(), getType().isSigned());
+        } else if (thisInt.compareTo(BigInteger.ZERO) >= 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
+            return BvUtils.bigIntegerToBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize(), getType().isSigned());
+        } else if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) >= 0) {
+            BigInteger result = thisAbs.mod(thatAbs);
+            if (result.compareTo(BigInteger.ZERO) != 0) {
+                result = thatAbs.subtract(result);
+            }
+            return BvUtils.bigIntegerToBvLitExpr(result, getType().getSize(), getType().isSigned());
+        } else {
+            return BvUtils.bigIntegerToBvLitExpr(thisInt.mod(thatInt), getType().getSize(), getType().isSigned());
+        }
+    }
+
     public BoolLitExpr eq(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         return Bool(Arrays.equals(this.getValue(), that.getValue()));
