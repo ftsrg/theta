@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.bvtype;
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -199,6 +200,10 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     public BoolLitExpr geq(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         return Bool(BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that)) >= 0);
+    }
+
+    public IntLitExpr toInt() {
+        return Int(BvUtils.bvLitExprToBigInteger(this).intValue());
     }
 
     @Override

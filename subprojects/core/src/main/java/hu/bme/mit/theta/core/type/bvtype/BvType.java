@@ -2,11 +2,15 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>, Equational<BvType>, Ordered<BvType> {
+public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>, Equational<BvType>, Ordered<BvType>, Castable<BvType> {
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";
 
@@ -97,6 +101,15 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
     @Override
     public GeqExpr<BvType> Geq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
         return BvGeqExpr.of(leftOp, rightOp);
+    }
+
+    @Override
+    public <TargetType extends Type> Expr<TargetType> Cast(final Expr<BvType> op, final TargetType type) {
+        if (type instanceof IntType) {
+            return (Expr<TargetType>) BvExprs.ToInt(op);
+        } else {
+            throw new ClassCastException("Bitvector cannot be cast to " + type);
+        }
     }
 
     @Override
