@@ -3,12 +3,9 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
-import hu.bme.mit.theta.core.utils.BvUtils;
-
-import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public class BvNegExpr extends NegExpr<BvType> {
 
