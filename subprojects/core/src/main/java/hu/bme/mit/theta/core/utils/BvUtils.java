@@ -21,7 +21,7 @@ public final class BvUtils {
         }
 
         if(expr.getType().isSigned() && expr.getValue()[0]) {
-            integer = integer.subtract(BigInteger.TWO.multiply(BigInteger.valueOf(expr.getType().getSize()-1)));
+            integer = integer.subtract(BigInteger.TWO.pow(expr.getType().getSize()));
         }
 
         return integer;
@@ -29,7 +29,7 @@ public final class BvUtils {
 
     public static BvLitExpr bigIntegerToBvLitExpr(BigInteger integer, final int size, final boolean isSigned) {
         if(isSigned && integer.compareTo(BigInteger.ZERO) < 0) {
-            integer = integer.add(BigInteger.TWO.multiply(BigInteger.valueOf(size-1)));
+            integer = integer.add(BigInteger.TWO.pow(size));
         }
 
         boolean[] values = new boolean[size];
