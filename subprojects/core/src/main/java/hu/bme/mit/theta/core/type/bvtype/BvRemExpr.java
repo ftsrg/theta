@@ -5,7 +5,7 @@ import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvRemExpr extends RemExpr<BvType> {
 
@@ -15,6 +15,7 @@ public class BvRemExpr extends RemExpr<BvType> {
 
     private BvRemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvRemExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -22,8 +23,8 @@ public class BvRemExpr extends RemExpr<BvType> {
     }
 
     public static BvRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvRemExpr.of(newLeftOp, newRightOp);
     }
 

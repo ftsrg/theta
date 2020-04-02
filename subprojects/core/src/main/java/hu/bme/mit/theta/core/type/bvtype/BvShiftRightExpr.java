@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 965;
@@ -12,6 +12,7 @@ public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
 
     private BvShiftRightExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvShiftRightExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -19,8 +20,8 @@ public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
     }
 
     public static BvShiftRightExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvShiftRightExpr.of(newLeftOp, newRightOp);
     }
 

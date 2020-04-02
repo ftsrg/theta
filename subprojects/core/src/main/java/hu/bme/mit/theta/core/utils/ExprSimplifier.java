@@ -190,7 +190,6 @@ public final class ExprSimplifier {
 			})
 
 			.build();
-	;
 
 	private ExprSimplifier() {
 	}

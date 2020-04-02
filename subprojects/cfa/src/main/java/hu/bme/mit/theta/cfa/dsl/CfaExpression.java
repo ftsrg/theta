@@ -343,7 +343,7 @@ final class CfaExpression {
 
 				switch (ctx.oper.getType()) {
 					case BITWISE_OR:
-						return BvExprs.Or(leftOp, rightOp);
+						return BvExprs.Or(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
 				}
@@ -361,7 +361,7 @@ final class CfaExpression {
 
 				switch (ctx.oper.getType()) {
 					case BITWISE_XOR:
-						return BvExprs.Xor(leftOp, rightOp);
+						return BvExprs.Xor(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
 				}
@@ -379,7 +379,7 @@ final class CfaExpression {
 
 				switch (ctx.oper.getType()) {
 					case BITWISE_AND:
-						return BvExprs.And(leftOp, rightOp);
+						return BvExprs.And(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
 				}

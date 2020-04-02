@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvGtExpr extends GtExpr<BvType> {
 
@@ -17,6 +17,7 @@ public class BvGtExpr extends GtExpr<BvType> {
 
     private BvGtExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvGtExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -24,8 +25,8 @@ public class BvGtExpr extends GtExpr<BvType> {
     }
 
     public static BvGtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvGtExpr.of(newLeftOp, newRightOp);
     }
 

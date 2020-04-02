@@ -4,14 +4,17 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.math.BigInteger;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvMulExpr extends MulExpr<BvType> {
     private static final int HASH_SEED = 9825;
@@ -19,6 +22,7 @@ public class BvMulExpr extends MulExpr<BvType> {
 
     private BvMulExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);
+        checkAllTypesEqual(ops);
     }
 
     public static BvMulExpr of(final Iterable<? extends Expr<BvType>> ops) {
@@ -26,8 +30,8 @@ public class BvMulExpr extends MulExpr<BvType> {
     }
 
     public static BvMulExpr create(final List<? extends Expr<?>> ops) {
-        checkArgument(!ops.isEmpty());
-        return BvMulExpr.of(ops.stream().map(op -> cast(op, (BvType) ops.get(0).getType())).collect(toImmutableList()));
+        checkNotNull(ops);
+        return BvMulExpr.of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
     }
 
     @Override

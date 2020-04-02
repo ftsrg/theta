@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvSubExpr extends SubExpr<BvType> {
 
@@ -18,6 +18,7 @@ public class BvSubExpr extends SubExpr<BvType> {
 
     private BvSubExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvSubExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -25,8 +26,8 @@ public class BvSubExpr extends SubExpr<BvType> {
     }
 
     public static BvSubExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvSubExpr.of(newLeftOp, newRightOp);
     }
 

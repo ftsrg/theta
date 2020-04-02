@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public class BvNotExpr extends NegExpr<BvType> {
 
@@ -20,7 +21,7 @@ public class BvNotExpr extends NegExpr<BvType> {
     }
 
     public static BvNotExpr create(final Expr<?> op) {
-        final Expr<BvType> newOp = cast(op, (BvType) op.getType());
+        final Expr<BvType> newOp = castBv(op);
         return BvNotExpr.of(newOp);
     }
 

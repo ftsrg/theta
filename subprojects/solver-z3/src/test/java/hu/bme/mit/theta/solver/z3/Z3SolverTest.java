@@ -296,7 +296,7 @@ public final class Z3SolverTest {
 		solver.push();
 
 		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.Or(cx.getRef(), cy.getRef()), Bv(new boolean[] {true, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {true, true, false, false}, false)));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -318,7 +318,7 @@ public final class Z3SolverTest {
 		solver.push();
 
 		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.And(cx.getRef(), cy.getRef()), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false}, false)));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -340,7 +340,7 @@ public final class Z3SolverTest {
 		solver.push();
 
 		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.Xor(cx.getRef(), cy.getRef()), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false}, false)));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());

@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvDivExpr extends DivExpr<BvType> {
     private static final int HASH_SEED = 9832;
@@ -17,6 +17,7 @@ public class BvDivExpr extends DivExpr<BvType> {
 
     private BvDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvDivExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -24,8 +25,8 @@ public class BvDivExpr extends DivExpr<BvType> {
     }
 
     public static BvDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvDivExpr.of(newLeftOp, newRightOp);
     }
 
