@@ -17,14 +17,10 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.Additive;
-import hu.bme.mit.theta.core.type.abstracttype.Castable;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-public final class IntType implements Additive<IntType>, Multiplicative<IntType>, Equational<IntType>, Ordered<IntType>,
+public final class IntType implements Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
 		Castable<IntType> {
 
 	private static final IntType INSTANCE = new IntType();
@@ -81,6 +77,16 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	}
 
 	@Override
+	public ModExpr<IntType> Mod(Expr<IntType> leftOp, Expr<IntType> rightOp) {
+		return IntExprs.Mod(leftOp, rightOp);
+	}
+
+	@Override
+	public RemExpr<IntType> Rem(Expr<IntType> leftOp, Expr<IntType> rightOp) {
+		return IntExprs.Rem(leftOp, rightOp);
+	}
+
+	@Override
 	public IntEqExpr Eq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		return IntExprs.Eq(leftOp, rightOp);
 	}
@@ -119,5 +125,4 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 			throw new ClassCastException("Int cannot be cast to " + type);
 		}
 	}
-
 }

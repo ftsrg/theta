@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -23,7 +22,6 @@ import java.util.stream.Stream;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.DispatchTable;
@@ -67,8 +65,8 @@ import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -171,9 +169,9 @@ final class Z3ExprTransformer {
 
 				.addCase(IntDivExpr.class, this::transformIntDiv)
 
-				.addCase(ModExpr.class, this::transformMod)
+				.addCase(IntModExpr.class, this::transformIntMod)
 
-				.addCase(RemExpr.class, this::transformRem)
+				.addCase(IntRemExpr.class, this::transformIntRem)
 
 				.addCase(IntEqExpr.class, this::transformIntEq)
 
@@ -202,6 +200,10 @@ final class Z3ExprTransformer {
 				.addCase(BvMulExpr.class, this::transformBvMul)
 
 				.addCase(BvDivExpr.class, this::transformBvDiv)
+
+				.addCase(BvModExpr.class, this::transformBvMod)
+
+				.addCase(BvRemExpr.class, this::transformBvRem)
 
 				.addCase(BvEqExpr.class, this::transformBvEq)
 
@@ -464,13 +466,13 @@ final class Z3ExprTransformer {
 		return context.mkDiv(leftOpTerm, rightOpTerm);
 	}
 
-	private com.microsoft.z3.Expr transformMod(final ModExpr expr) {
+	private com.microsoft.z3.Expr transformIntMod(final IntModExpr expr) {
 		final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
 		return context.mkMod(leftOpTerm, rightOpTerm);
 	}
 
-	private com.microsoft.z3.Expr transformRem(final RemExpr expr) {
+	private com.microsoft.z3.Expr transformIntRem(final IntRemExpr expr) {
 		final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
 		return context.mkRem(leftOpTerm, rightOpTerm);
@@ -571,6 +573,30 @@ final class Z3ExprTransformer {
 		}
 		else {
 			return context.mkBVUDiv(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvMod(final BvModExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getType().isSigned()) {
+			return context.mkBVSMod(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVURem(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvRem(final BvRemExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getType().isSigned()) {
+			return context.mkBVSRem(leftOpTerm, rightOpTerm);
+		}
+		else {
+			return context.mkBVURem(leftOpTerm, rightOpTerm);
 		}
 	}
 

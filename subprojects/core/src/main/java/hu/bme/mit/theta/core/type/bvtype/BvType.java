@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.abstracttype.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Equational<BvType>, Ordered<BvType> {
+public final class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>, Equational<BvType>, Ordered<BvType> {
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";
 
@@ -56,6 +56,17 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, E
     @Override
     public BvDivExpr Div(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvExprs.Div(leftOp, rightOp);
+    }
+
+
+    @Override
+    public ModExpr<BvType> Mod(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvExprs.Mod(leftOp, rightOp);
+    }
+
+    @Override
+    public RemExpr<BvType> Rem(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+        return BvExprs.Rem(leftOp, rightOp);
     }
 
     @Override

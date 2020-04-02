@@ -59,7 +59,7 @@ import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -130,7 +130,7 @@ public final class ExprSimplifier {
 
 			.addCase(IntDivExpr.class, ExprSimplifier::simplifyIntDiv)
 
-			.addCase(ModExpr.class, ExprSimplifier::simplifyMod)
+			.addCase(IntModExpr.class, ExprSimplifier::simplifyMod)
 
 			.addCase(IntEqExpr.class, ExprSimplifier::simplifyIntEq)
 
@@ -746,7 +746,7 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
-	private static Expr<IntType> simplifyMod(final ModExpr expr, final Valuation val) {
+	private static Expr<IntType> simplifyMod(final IntModExpr expr, final Valuation val) {
 		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
 		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
 

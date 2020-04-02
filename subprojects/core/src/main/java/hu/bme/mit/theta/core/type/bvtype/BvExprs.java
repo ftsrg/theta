@@ -41,6 +41,14 @@ public final class BvExprs {
         return BvDivExpr.of(leftOp, rightOp);
     }
 
+    public static BvModExpr Mod(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvModExpr.of(leftOp, rightOp);
+    }
+
+    public static BvRemExpr Rem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvRemExpr.of(leftOp, rightOp);
+    }
+
     public static BvEqExpr Eq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvEqExpr.of(leftOp, rightOp);
     }
