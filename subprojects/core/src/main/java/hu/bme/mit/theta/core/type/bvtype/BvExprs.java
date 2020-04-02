@@ -49,6 +49,30 @@ public final class BvExprs {
         return BvRemExpr.of(leftOp, rightOp);
     }
 
+    public static BvOrExpr Or(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvOrExpr.of(leftOp, rightOp);
+    }
+
+    public static BvAndExpr And(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvAndExpr.of(leftOp, rightOp);
+    }
+
+    public static BvXorExpr Xor(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvXorExpr.of(leftOp, rightOp);
+    }
+
+    public static BvNotExpr Not(final Expr<BvType> op) {
+        return BvNotExpr.of(op);
+    }
+
+    public static BvShiftLeftExpr ShiftLeft(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvShiftLeftExpr.of(leftOp, rightOp);
+    }
+
+    public static BvShiftRightExpr ShiftRight(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvShiftRightExpr.of(leftOp, rightOp);
+    }
+
     public static BvEqExpr Eq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvEqExpr.of(leftOp, rightOp);
     }

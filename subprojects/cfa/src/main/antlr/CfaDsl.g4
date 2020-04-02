@@ -203,8 +203,24 @@ equalityExpr
 	;
 
 relationExpr
-	:	leftOp=additiveExpr (oper=(LT | LEQ | GT | GEQ) rightOp=additiveExpr)?
+	:	leftOp=bitwiseOrExpr (oper=(LT | LEQ | GT | GEQ) rightOp=bitwiseOrExpr)?
 	;
+
+bitwiseOrExpr
+    :   leftOp=bitwiseXorExpr (oper=BITWISE_OR rightOp=bitwiseXorExpr)?
+    ;
+
+bitwiseXorExpr
+    :   leftOp=bitwiseAndExpr (oper=BITWISE_XOR rightOp=bitwiseAndExpr)?
+    ;
+
+bitwiseAndExpr
+    :   leftOp=bitwiseShiftExpr (oper=BITWISE_AND rightOp=bitwiseShiftExpr)?
+    ;
+
+bitwiseShiftExpr
+    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_SHIFT_RIGHT) rightOp=additiveExpr)?
+    ;
 
 additiveExpr
 	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS) ops+=multiplicativeExpr)*
@@ -215,9 +231,14 @@ multiplicativeExpr
 	;
 
 negExpr
-	:	accessorExpr
+	:	bitwiseNotExpr
 	|	MINUS op=negExpr
 	;
+
+bitwiseNotExpr
+    :   accessorExpr
+    |   BITWISE_NOT op=bitwiseNotExpr
+    ;
 
 accessorExpr
 	:	op=primaryExpr (accesses+=access)*
@@ -359,6 +380,30 @@ REM	:	'rem'
 PERCENT
 	:	'%'
 	;
+
+BITWISE_OR
+    :   '|'
+    ;
+
+BITWISE_XOR
+    :   '^'
+    ;
+
+BITWISE_AND
+    :   '&'
+    ;
+
+BITWISE_SHIFT_LEFT
+    :   LT LT
+    ;
+
+BITWISE_SHIFT_RIGHT
+    :   GT GT
+    ;
+
+BITWISE_NOT
+    :   '~'
+    ;
 
 TRUE:	'true'
 	;

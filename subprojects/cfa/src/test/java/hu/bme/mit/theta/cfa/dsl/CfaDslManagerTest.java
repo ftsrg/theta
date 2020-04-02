@@ -58,13 +58,14 @@ public final class CfaDslManagerTest {
 
 				{"/counter5_true.cfa", 1, 6, 6, 6},
 
-				{"/bv.cfa", 1, 6, 6, 6}
+				//{"/bv.cfa", 1, 6, 6, 6}
+
+				{"/bv2.cfa", 1, 6, 6, 6}
 
 		});
 	}
 
 	@Test
-	@Ignore
 	public void test() throws FileNotFoundException, IOException, InterruptedException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final CFA cfa = CfaDslManager.createCfa(inputStream);

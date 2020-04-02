@@ -286,4 +286,92 @@ public final class Z3SolverTest {
 		solver.pop();
 	}
 
+	@Test
+	public void testBV9() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+
+		solver.push();
+
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.Or(cx.getRef(), cy.getRef()), Bv(new boolean[] {true, true, false, false}, false)));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV10() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+
+		solver.push();
+
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.And(cx.getRef(), cy.getRef()), Bv(new boolean[] {false, true, false, false}, false)));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV11() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+
+		solver.push();
+
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.Xor(cx.getRef(), cy.getRef()), Bv(new boolean[] {false, true, false, false}, false)));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
+	@Test
+	public void testBV12() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
+		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+
+		solver.push();
+
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(BvExprs.ShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true}, false)), cx.getRef()));
+
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation model = solver.getModel();
+		assertNotNull(model);
+		assertNotNull(model.toMap());
+
+		solver.pop();
+	}
+
 }

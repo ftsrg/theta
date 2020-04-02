@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 
 /**
  * Utility functions related to types.
@@ -84,6 +85,17 @@ public final class TypeUtils {
 			return result;
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type " + type);
+		}
+	}
+
+	public static Expr<BvType> castBv(final Expr<?> expr) {
+		checkNotNull(expr);
+
+		if (expr.getType() instanceof BvType) {
+			@SuppressWarnings("unchecked") final Expr<BvType> result = (Expr<BvType>) expr;
+			return result;
+		} else {
+			throw new ClassCastException("The type of expression " + expr + " is not of type BvType");
 		}
 	}
 
