@@ -4,12 +4,15 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.MultiaryExpr;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvXorExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9457;
@@ -17,6 +20,7 @@ public class BvXorExpr extends MultiaryExpr<BvType, BvType> {
 
     private BvXorExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);
+        checkAllTypesEqual(ops);
     }
 
     public static BvXorExpr of(final Iterable<? extends Expr<BvType>> ops) {
@@ -24,8 +28,8 @@ public class BvXorExpr extends MultiaryExpr<BvType, BvType> {
     }
 
     public static BvXorExpr create(final List<? extends Expr<?>> ops) {
-        checkArgument(!ops.isEmpty());
-        return BvXorExpr.of(ops.stream().map(op -> cast(op, (BvType) ops.get(0).getType())).collect(toImmutableList()));
+        checkNotNull(ops);
+        return BvXorExpr.of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
     }
 
     @Override

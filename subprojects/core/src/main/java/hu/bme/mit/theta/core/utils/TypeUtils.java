@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.Decl;
@@ -22,6 +23,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Utility functions related to types.
@@ -88,6 +92,12 @@ public final class TypeUtils {
 		}
 	}
 
+	/**
+	 * Cast an expression to bitvector type.
+	 *
+	 * @param expr Original expression
+	 * @return Casted expression
+	 */
 	public static Expr<BvType> castBv(final Expr<?> expr) {
 		checkNotNull(expr);
 
@@ -97,6 +107,45 @@ public final class TypeUtils {
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type BvType");
 		}
+	}
+
+	/**
+	 * Check if all the types of the operands equal
+	 *
+	 * @param ops The expressions
+	 */
+	public static void checkAllTypesEqual(final Iterable<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+
+		final Iterator<? extends Expr<?>> iterator = ops.iterator();
+		checkArgument(iterator.hasNext(), "There must be at least one element");
+
+		final Expr<?> first = iterator.next();
+		while (iterator.hasNext()) {
+			final Expr<?> nth = iterator.next();
+			checkArgument(first.getType().equals(nth.getType()), "All types must equal");
+		}
+	}
+
+	/**
+	 * Check if all the types of the operands equal
+	 *
+	 * @param op The expression
+	 */
+	public static void checkAllTypesEqual(final Expr<?> op) {
+		checkNotNull(op);
+	}
+
+	/**
+	 * Check if all the types of the operands equal
+	 *
+	 * @param op1 The expression
+	 * @param op2 The expression
+	 */
+	public static void checkAllTypesEqual(final Expr<?> op1, final Expr<?> op2) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkArgument(op1.getType().equals(op2.getType()), "All types must equal");
 	}
 
 }

@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvEqExpr extends EqExpr<BvType> {
 
@@ -19,6 +19,7 @@ public class BvEqExpr extends EqExpr<BvType> {
 
     private BvEqExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvEqExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -26,9 +27,8 @@ public class BvEqExpr extends EqExpr<BvType> {
     }
 
     public static BvEqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        BvType bvType = (BvType) leftOp.getType();
-        final Expr<BvType> newLeftOp = cast(leftOp, bvType);
-        final Expr<BvType> newRightOp = cast(rightOp, bvType);
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvEqExpr.of(newLeftOp, newRightOp);
     }
 

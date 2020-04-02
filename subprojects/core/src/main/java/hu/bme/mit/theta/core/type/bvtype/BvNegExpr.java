@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvNegExpr extends NegExpr<BvType> {
 
@@ -25,7 +25,7 @@ public class BvNegExpr extends NegExpr<BvType> {
     }
 
     public static BvNegExpr create(final Expr<?> op) {
-        final Expr<BvType> newOp = cast(op, (BvType) op.getType());
+        final Expr<BvType> newOp = castBv(op);
         return BvNegExpr.of(newOp);
     }
 

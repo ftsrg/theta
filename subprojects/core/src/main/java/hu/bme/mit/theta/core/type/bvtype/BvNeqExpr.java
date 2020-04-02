@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public class BvNeqExpr extends NeqExpr<BvType> {
     private static final int HASH_SEED = 2488;
@@ -18,6 +18,7 @@ public class BvNeqExpr extends NeqExpr<BvType> {
 
     private BvNeqExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
     }
 
     public static BvNeqExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
@@ -25,9 +26,8 @@ public class BvNeqExpr extends NeqExpr<BvType> {
     }
 
     public static BvNeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        BvType bvType = (BvType) leftOp.getType();
-        final Expr<BvType> newLeftOp = cast(leftOp, bvType);
-        final Expr<BvType> newRightOp = cast(rightOp, bvType);
+        final Expr<BvType> newLeftOp = castBv(leftOp);
+        final Expr<BvType> newRightOp = castBv(rightOp);
         return BvNeqExpr.of(newLeftOp, newRightOp);
     }
 
