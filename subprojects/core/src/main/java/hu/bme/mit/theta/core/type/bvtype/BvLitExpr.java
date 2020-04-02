@@ -15,7 +15,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType> {
+public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType>, Comparable<BvLitExpr> {
 
     private static final int HASH_SEED = 5624;
     private volatile int hashCode = 0;
@@ -123,7 +123,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         checkArgument(this.getType().equals(that.getType()));
         BigInteger shift = BvUtils.bvLitExprToBigInteger(this);
         for(BigInteger i = BigInteger.ZERO; i.compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
-            shift = shift.multiply(BigInteger.TWO);
+            shift = shift.divide(BigInteger.TWO);
         }
         return BvUtils.bigIntegerToBvLitExpr(shift, getType().getSize(), getType().isSigned());
     }
@@ -238,5 +238,11 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
             .replace("]", "")
             .replace(",", "")
             .replace(" ", "");
+    }
+
+    @Override
+    public int compareTo(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        return BvUtils.bvLitExprToBigInteger(this).compareTo(BvUtils.bvLitExprToBigInteger(that));
     }
 }

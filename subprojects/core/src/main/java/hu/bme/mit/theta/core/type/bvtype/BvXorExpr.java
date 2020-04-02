@@ -3,25 +3,29 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
 
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class BvXorExpr extends BinaryExpr<BvType, BvType> {
+public class BvXorExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9457;
     private static final String OPERATOR_LABEL = "^";
 
-    private BvXorExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        super(leftOp, rightOp);
+    private BvXorExpr(final Iterable<? extends Expr<BvType>> ops) {
+        super(ops);
     }
 
-    public static BvXorExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvXorExpr(leftOp, rightOp);
+    public static BvXorExpr of(final Iterable<? extends Expr<BvType>> ops) {
+        return new BvXorExpr(ops);
     }
 
-    public static BvXorExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
-        return BvXorExpr.of(newLeftOp, newRightOp);
+    public static BvXorExpr create(final List<? extends Expr<?>> ops) {
+        checkArgument(!ops.isEmpty());
+        return BvXorExpr.of(ops.stream().map(op -> cast(op, (BvType) ops.get(0).getType())).collect(toImmutableList()));
     }
 
     @Override
@@ -31,28 +35,20 @@ public class BvXorExpr extends BinaryExpr<BvType, BvType> {
 
     @Override
     public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
-        final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-        return leftOpVal.xor(rightOpVal);
+        return getOps().stream().skip(1).reduce(
+            (BvLitExpr) getOps().get(0).eval(val),
+            (op1, op2) -> (op1.xor((BvLitExpr) op2.eval(val))),
+            BvLitExpr::xor
+        );
     }
 
     @Override
-    public BvXorExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+    public BvXorExpr with(final Iterable<? extends Expr<BvType>> ops) {
+        if (ops == getOps()) {
             return this;
         } else {
-            return BvXorExpr.of(leftOp, rightOp);
+            return BvXorExpr.of(ops);
         }
-    }
-
-    @Override
-    public BvXorExpr withLeftOp(final Expr<BvType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public BvXorExpr withRightOp(final Expr<BvType> rightOp) {
-        return with(getLeftOp(), rightOp);
     }
 
     @Override
@@ -61,7 +57,7 @@ public class BvXorExpr extends BinaryExpr<BvType, BvType> {
             return true;
         } else if (obj instanceof BvXorExpr) {
             final BvXorExpr that = (BvXorExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+            return this.getOps().equals(that.getOps());
         } else {
             return false;
         }
