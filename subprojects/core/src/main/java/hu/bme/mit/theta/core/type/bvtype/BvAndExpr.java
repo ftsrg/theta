@@ -1,27 +1,30 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
 
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class BvAndExpr extends BinaryExpr<BvType, BvType> {
+public class BvAndExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9125;
     private static final String OPERATOR_LABEL = "&";
 
-    private BvAndExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        super(leftOp, rightOp);
+    private BvAndExpr(final Iterable<? extends Expr<BvType>> ops) {
+        super(ops);
     }
 
-    public static BvAndExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvAndExpr(leftOp, rightOp);
+    public static BvAndExpr of(final Iterable<? extends Expr<BvType>> ops) {
+        return new BvAndExpr(ops);
     }
 
-    public static BvAndExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = cast(leftOp, (BvType) leftOp.getType());
-        final Expr<BvType> newRightOp = cast(rightOp, (BvType) leftOp.getType());
-        return BvAndExpr.of(newLeftOp, newRightOp);
+    public static BvAndExpr create(final List<? extends Expr<?>> ops) {
+        checkArgument(!ops.isEmpty());
+        return BvAndExpr.of(ops.stream().map(op -> cast(op, (BvType) ops.get(0).getType())).collect(toImmutableList()));
     }
 
     @Override
@@ -31,28 +34,20 @@ public class BvAndExpr extends BinaryExpr<BvType, BvType> {
 
     @Override
     public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
-        final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-        return leftOpVal.and(rightOpVal);
+        return getOps().stream().skip(1).reduce(
+            (BvLitExpr) getOps().get(0).eval(val),
+            (op1, op2) -> (op1.and((BvLitExpr) op2.eval(val))),
+            BvLitExpr::and
+        );
     }
 
     @Override
-    public BvAndExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+    public BvAndExpr with(final Iterable<? extends Expr<BvType>> ops) {
+        if (ops == getOps()) {
             return this;
         } else {
-            return BvAndExpr.of(leftOp, rightOp);
+            return BvAndExpr.of(ops);
         }
-    }
-
-    @Override
-    public BvAndExpr withLeftOp(final Expr<BvType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public BvAndExpr withRightOp(final Expr<BvType> rightOp) {
-        return with(getLeftOp(), rightOp);
     }
 
     @Override
@@ -61,7 +56,7 @@ public class BvAndExpr extends BinaryExpr<BvType, BvType> {
             return true;
         } else if (obj instanceof BvAndExpr) {
             final BvAndExpr that = (BvAndExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+            return this.getOps().equals(that.getOps());
         } else {
             return false;
         }
