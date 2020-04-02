@@ -58,7 +58,7 @@ public final class CfaDslManagerTest {
 
 				{"/counter5_true.cfa", 1, 6, 6, 6},
 
-				//{"/bv.cfa", 1, 6, 6, 6}
+				{"/bv.cfa", 1, 6, 6, 6},
 
 				{"/bv2.cfa", 1, 6, 6, 6}
 
