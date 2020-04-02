@@ -86,6 +86,47 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return BvUtils.bigIntegerToBvLitExpr(div, getType().getSize(), getType().isSigned());
     }
 
+    public BvLitExpr and(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger and = BvUtils.bvLitExprToBigInteger(this).and(BvUtils.bvLitExprToBigInteger(that));
+        return BvUtils.bigIntegerToBvLitExpr(and, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr or(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger or = BvUtils.bvLitExprToBigInteger(this).or(BvUtils.bvLitExprToBigInteger(that));
+        return BvUtils.bigIntegerToBvLitExpr(or, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr xor(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger xor = BvUtils.bvLitExprToBigInteger(this).xor(BvUtils.bvLitExprToBigInteger(that));
+        return BvUtils.bigIntegerToBvLitExpr(xor, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr not() {
+        BigInteger not = BvUtils.bvLitExprToBigInteger(this).not();
+        return BvUtils.bigIntegerToBvLitExpr(not, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr shiftLeft(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger shift = BvUtils.bvLitExprToBigInteger(this);
+        for(BigInteger i = BigInteger.ZERO; i.compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
+            shift = shift.multiply(BigInteger.TWO);
+        }
+        return BvUtils.bigIntegerToBvLitExpr(shift, getType().getSize(), getType().isSigned());
+    }
+
+    public BvLitExpr shiftRight(final BvLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        BigInteger shift = BvUtils.bvLitExprToBigInteger(this);
+        for(BigInteger i = BigInteger.ZERO; i.compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
+            shift = shift.multiply(BigInteger.TWO);
+        }
+        return BvUtils.bigIntegerToBvLitExpr(shift, getType().getSize(), getType().isSigned());
+    }
+
     public BvLitExpr mod(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         // Always positive semantics:

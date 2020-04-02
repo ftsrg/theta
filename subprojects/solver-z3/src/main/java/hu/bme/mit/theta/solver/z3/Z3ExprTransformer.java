@@ -205,6 +205,18 @@ final class Z3ExprTransformer {
 
 				.addCase(BvRemExpr.class, this::transformBvRem)
 
+				.addCase(BvAndExpr.class, this::transformBvAnd)
+
+				.addCase(BvOrExpr.class, this::transformBvOr)
+
+				.addCase(BvXorExpr.class, this::transformBvXor)
+
+				.addCase(BvNotExpr.class, this::transformBvNot)
+
+				.addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
+
+				.addCase(BvShiftRightExpr.class, this::transformBvShiftRight)
+
 				.addCase(BvEqExpr.class, this::transformBvEq)
 
 				.addCase(BvNeqExpr.class, this::transformBvNeq)
@@ -597,6 +609,51 @@ final class Z3ExprTransformer {
 		}
 		else {
 			return context.mkBVURem(leftOpTerm, rightOpTerm);
+		}
+	}
+
+	private com.microsoft.z3.Expr transformBvAnd(final BvAndExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		return context.mkBVAND(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvOr(final BvOrExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		return context.mkBVOR(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvXor(final BvXorExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		return context.mkBVXOR(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvNot(final BvNotExpr expr) {
+		final com.microsoft.z3.BitVecExpr opTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getOp());
+
+		return context.mkBVNot(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvShiftLeft(final BvShiftLeftExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		return context.mkBVSHL(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvShiftRight(final BvShiftRightExpr expr) {
+		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
+
+		if(expr.getType().isSigned()) {
+			return context.mkBVASHR(leftOpTerm, rightOpTerm);
+		} else {
+			return context.mkBVLSHR(leftOpTerm, rightOpTerm);
 		}
 	}
 

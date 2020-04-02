@@ -41,6 +41,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
 
 import java.math.BigInteger;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
@@ -333,6 +336,82 @@ final class CfaExpression {
 		////
 
 		@Override
+		public Expr<?> visitBitwiseOrExpr(final BitwiseOrExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+				switch (ctx.oper.getType()) {
+					case BITWISE_OR:
+						return BvExprs.Or(leftOp, rightOp);
+					default:
+						throw new AssertionError();
+				}
+
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		@Override
+		public Expr<?> visitBitwiseXorExpr(final BitwiseXorExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+				switch (ctx.oper.getType()) {
+					case BITWISE_XOR:
+						return BvExprs.Xor(leftOp, rightOp);
+					default:
+						throw new AssertionError();
+				}
+
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		@Override
+		public Expr<?> visitBitwiseAndExpr(final BitwiseAndExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+				switch (ctx.oper.getType()) {
+					case BITWISE_AND:
+						return BvExprs.And(leftOp, rightOp);
+					default:
+						throw new AssertionError();
+				}
+
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		@Override
+		public Expr<?> visitBitwiseShiftExpr(final BitwiseShiftExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+				switch (ctx.oper.getType()) {
+					case BITWISE_SHIFT_LEFT:
+						return BvExprs.ShiftLeft(leftOp, rightOp);
+					case BITWISE_SHIFT_RIGHT:
+						return BvExprs.ShiftRight(leftOp, rightOp);
+					default:
+						throw new AssertionError();
+				}
+
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		////
+
+		@Override
 		public Expr<?> visitAdditiveExpr(final AdditiveExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<?>> opStream = ctx.ops.stream().map(op -> op.accept(this));
@@ -482,6 +561,16 @@ final class CfaExpression {
 			if (ctx.op != null) {
 				final Expr<?> op = ctx.op.accept(this);
 				return Neg(op);
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		@Override
+		public Expr<?> visitBitwiseNotExpr(final BitwiseNotExprContext ctx) {
+			if (ctx.op != null) {
+				final Expr<BvType> op = castBv(ctx.op.accept(this));
+				return BvExprs.Not(op);
 			} else {
 				return visitChildren(ctx);
 			}
