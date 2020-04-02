@@ -7,10 +7,9 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvAndExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9125;

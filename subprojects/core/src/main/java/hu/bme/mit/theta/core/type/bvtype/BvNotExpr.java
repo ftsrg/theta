@@ -4,7 +4,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public class BvNotExpr extends NegExpr<BvType> {

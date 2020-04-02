@@ -1,17 +1,14 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.MultiaryExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvXorExpr extends MultiaryExpr<BvType, BvType> {

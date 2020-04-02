@@ -3,24 +3,13 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
-import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
-import static java.util.stream.Collectors.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvAddExpr extends AddExpr<BvType> {
     private static final int HASH_SEED = 6586;

@@ -6,11 +6,9 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-import java.util.Arrays;
-
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class BvEqExpr extends EqExpr<BvType> {
 
