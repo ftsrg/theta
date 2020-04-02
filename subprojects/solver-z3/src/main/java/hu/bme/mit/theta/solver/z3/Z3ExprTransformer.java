@@ -52,21 +52,7 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -187,6 +173,8 @@ final class Z3ExprTransformer {
 
 				.addCase(IntToRatExpr.class, this::transformIntToRat)
 
+				.addCase(IntToBvExpr.class, this::transformIntToBv)
+
 				// Bitvectors
 
 				.addCase(BvLitExpr.class, this::transformBvLit)
@@ -228,6 +216,8 @@ final class Z3ExprTransformer {
 				.addCase(BvLeqExpr.class, this::transformBvLeq)
 
 				.addCase(BvLtExpr.class, this::transformBvLt)
+
+				.addCase(BvToIntExpr.class, this::transformBvToInt)
 
 				// Functions
 
@@ -531,6 +521,11 @@ final class Z3ExprTransformer {
 		return context.mkInt2Real(opTerm);
 	}
 
+	private com.microsoft.z3.Expr transformIntToBv(final IntToBvExpr expr) {
+		final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
+		return context.mkInt2BV(expr.getType().getSize(), opTerm);
+	}
+
 	/*
 	 * Bitvectors
 	 */
@@ -703,6 +698,11 @@ final class Z3ExprTransformer {
 		else {
 			return context.mkBVULT(leftOpTerm, rightOpTerm);
 		}
+	}
+
+	private com.microsoft.z3.Expr transformBvToInt(final BvToIntExpr expr) {
+		final com.microsoft.z3.BitVecExpr opTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getOp());
+		return context.mkBV2Int(opTerm, expr.getOp().getType().isSigned());
 	}
 
 	/*
