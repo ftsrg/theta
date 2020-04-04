@@ -13,27 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.sts.analysis.initprec;
+package hu.bme.mit.theta.sts.aiger.elements;
 
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.sts.STS;
+import java.util.List;
 
 /**
- * An implementation for initial precision that returns initial precisions based
- * on the property.
+ * Represents an AIGER system, which is a collection of @link {@link AigerNode}s
+ * (connected with @link {@link AigerWire}s) and an {@link OutputVar}.
  */
-public class StsPropInitPrec implements StsInitPrec {
+public class AigerSystem {
+	private final List<AigerNode> nodes;
+	private final OutputVar output;
 
-	@Override
-	public ExplPrec createExpl(final STS sts) {
-		return ExplPrec.of(ExprUtils.getVars(sts.getProp()));
+	public AigerSystem(final List<AigerNode> nodes, final OutputVar output) {
+		this.nodes = nodes;
+		this.output = output;
 	}
 
-	@Override
-	public PredPrec createPred(final STS sts) {
-		return PredPrec.of(ExprUtils.getAtoms(sts.getProp()));
+	public List<AigerNode> getNodes() {
+		return nodes;
+	}
+
+	public OutputVar getOutput() {
+		return output;
 	}
 
 }

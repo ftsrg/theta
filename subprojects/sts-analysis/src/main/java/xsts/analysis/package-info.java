@@ -4,4 +4,4 @@
  * obtaining an initial precision (see @link StsInitPrec).
  */
 
-package hu.bme.mit.theta.xsts.analysis;
+package hu.bme.mit.theta.sts.analysis;

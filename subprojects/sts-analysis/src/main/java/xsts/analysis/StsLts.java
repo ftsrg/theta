@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.analysis;
+package hu.bme.mit.theta.sts.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,7 +22,7 @@ import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.xsts.STS;
+import hu.bme.mit.theta.sts.STS;
 
 /**
  * An LTS implementation for the STS formalism. The STS has only one enabled

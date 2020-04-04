@@ -13,11 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.analysis.initprec;
+package hu.bme.mit.theta.sts.analysis.initprec;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
-import hu.bme.mit.theta.xsts.STS;
+import hu.bme.mit.theta.sts.STS;
 
 /**
  * Common interface for inferring initial precision for STSs.

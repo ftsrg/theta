@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.analysis;
+package hu.bme.mit.theta.sts.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.xsts.STS;
+import hu.bme.mit.theta.sts.STS;
 
 public final class StsTraceConcretizer {
 	private StsTraceConcretizer() {
