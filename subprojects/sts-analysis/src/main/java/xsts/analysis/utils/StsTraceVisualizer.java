@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xsts.analysis.utils;
+package hu.bme.mit.theta.sts.analysis.utils;
 
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.xsts.analysis.StsAction;
+import hu.bme.mit.theta.sts.analysis.StsAction;
 
 public final class StsTraceVisualizer {
 

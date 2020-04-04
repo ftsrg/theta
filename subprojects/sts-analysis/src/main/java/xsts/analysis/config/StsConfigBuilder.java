@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.analysis.config;
+package hu.bme.mit.theta.sts.analysis.config;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
@@ -58,12 +58,12 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.xsts.STS;
-import hu.bme.mit.theta.xsts.analysis.StsAction;
-import hu.bme.mit.theta.xsts.analysis.StsLts;
-import hu.bme.mit.theta.xsts.analysis.initprec.StsEmptyInitPrec;
-import hu.bme.mit.theta.xsts.analysis.initprec.StsInitPrec;
-import hu.bme.mit.theta.xsts.analysis.initprec.StsPropInitPrec;
+import hu.bme.mit.theta.sts.STS;
+import hu.bme.mit.theta.sts.analysis.StsAction;
+import hu.bme.mit.theta.sts.analysis.StsLts;
+import hu.bme.mit.theta.sts.analysis.initprec.StsEmptyInitPrec;
+import hu.bme.mit.theta.sts.analysis.initprec.StsInitPrec;
+import hu.bme.mit.theta.sts.analysis.initprec.StsPropInitPrec;
 
 public final class StsConfigBuilder {
 
