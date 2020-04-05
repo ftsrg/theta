@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.expr.SyntheticLitExpr;
+import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 import org.antlr.v4.misc.OrderedHashMap;
 
 import java.util.ArrayList;
@@ -73,6 +73,7 @@ public final class ExplState extends AbstractExplState {
 
 	/**
 	 * Stores all values for all versions of variables (for every depth in the stack)
+	 * TODO maybe split local vars?
 	 */
 	private final MutableValuation valuation;
 
@@ -133,6 +134,8 @@ public final class ExplState extends AbstractExplState {
 	 * Returns the list of enabled transitions.
 	 */
 	public Collection<Transition> getEnabledTransitions() {
+		if (!toExpandOrNotToExpand())
+			return Collections.emptySet();
 		if (enabledTransitions != null)
 			return enabledTransitions;
 		// Tests require deterministic ordering of the transitions.
@@ -202,21 +205,34 @@ public final class ExplState extends AbstractExplState {
 		return isLocked(syncVar) && getLock(syncVar).getProcess() == process;
 	}
 
+	/**
+	 * TODO bad lock usage indicates error by overriding attr. safety.
+	 * This might be bad for copying states */
 	public void lock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
 		SyntheticLitExpr expr = getLock(syncVar).lock(process);
 		Preconditions.checkState(!expr.isInvalid());
 		valuation.put(syncVar, expr);
 	}
 
+	/**
+	 * TODO bad lock usage indicates error by overriding attr. safety.
+	 * This might be bad for copying states */
 	public void unlock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
 		SyntheticLitExpr expr = getLock(syncVar).unlock(process);
 		if (expr.isInvalid()) {
+			// TODO ???
 			safety = new StateSafety(false, false, "Bad unlocking of a mutex");
 			return;
 		}
 		valuation.put(syncVar, expr);
 	}
 
+	/** It's totally useless to expand a node when it is a leaf (finished or unsafe) */
+	private boolean toExpandOrNotToExpand() {
+		return !isFinished() && isSafe();
+	}
+
+	// TODO create flags whether e.g. deadlock is unsafe
 	public StateSafety getSafety() {
 		if (safety != null)
 			return safety;
@@ -319,7 +335,7 @@ public final class ExplState extends AbstractExplState {
 	 * @param transition Transition to execute in the new state
 	 * @return A new state one transition ahead.
 	 */
-	public ExplState executeTransition(Transition transition) {
+	public ExplState withTransitionExecuted(Transition transition) {
 		return new ExplState(this, transition);
 	}
 
@@ -327,6 +343,9 @@ public final class ExplState extends AbstractExplState {
 		return new ImmutableExplState(ImmutableValuation.copyOf(valuation), getLocations());
 	}
 
+	/**
+	 * TODO rework as interface. Implementations are inherited. More data can be accessed this way.
+	 */
 	public static class StateSafety {
 		public final boolean safe;
 		public final boolean finished;

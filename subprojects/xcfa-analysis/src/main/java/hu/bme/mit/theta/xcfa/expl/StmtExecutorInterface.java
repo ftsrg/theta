@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
  * An adapter for XcfaStmtVisitor.
  * The XcfaStmtVisitor is too powerful for such an easy use case.
  * This is a much nicer interface (at least for me).
+ * TODO maybe this is not needed?
  */
 public interface StmtExecutorInterface {
 	<DeclType extends Type> void onAssign(AssignStmt<DeclType> stmt);
@@ -41,7 +42,7 @@ public interface StmtExecutorInterface {
 
 	void onAtomicEnd();
 
-	boolean canLock(LockStmt lockStmt);
+	boolean canLock(LockStmt lockStmt); // TODO
 
 	boolean canUnlock(UnlockStmt unlockStmt);
 

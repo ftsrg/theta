@@ -64,6 +64,7 @@ public class DependencyRelation {
     private static boolean processDepends(ProcessTransition a, ProcessTransition b) {
         if (a.getProcess() == b.getProcess())
             return true;
+        // TODO BAD! LeaveTransition might rewrite a result variable
         if (a instanceof LeaveTransition)
             return false;
         if (b instanceof LeaveTransition)

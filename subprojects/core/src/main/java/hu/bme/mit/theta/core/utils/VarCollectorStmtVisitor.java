@@ -31,6 +31,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
+		// TODO BAD! Passed parameters are touched
 		return null;
 	}
 

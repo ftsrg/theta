@@ -103,7 +103,7 @@ public final class ExplicitChecker {
 		@Override
 		public DfsNode child() {
 			Transition t = fetchNextTransition();
-			return new DfsNode(getState().executeTransition(t), t);
+			return new DfsNode(getState().withTransitionExecuted(t), t);
 		}
 	}
 }

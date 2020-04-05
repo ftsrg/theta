@@ -79,7 +79,6 @@ public final class PartialOrderExplicitChecker {
 			DfsNode node = dfsStack.peek();
 			if (node.hasChild()) {
 				DfsNode child = node.child();
-				//ImmutableExplState ies = child.state.toImmutableExplState();
 				if (stackedStates.contains(child.getState())) {
 					// Cycle. Due to C3, we must expand the node
 					if (!node.isExplicitlyExpanded()) {
@@ -203,7 +202,7 @@ public final class PartialOrderExplicitChecker {
 		@Override
 		public DfsNode child() {
 			Transition t = fetchNextTransition();
-			return new DfsNode(getState().executeTransition(t), t);
+			return new DfsNode(getState().withTransitionExecuted(t), t);
 		}
 	}
 }

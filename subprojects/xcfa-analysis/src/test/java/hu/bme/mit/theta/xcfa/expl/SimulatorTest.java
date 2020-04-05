@@ -58,7 +58,7 @@ public class SimulatorTest {
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		ExplState s = new ExplState(xcfa);
 		while (s.getSafety().safe && !s.getSafety().finished) {
-			s = s.executeTransition(s.getEnabledTransitions().iterator().next());
+			s = s.withTransitionExecuted(s.getEnabledTransitions().iterator().next());
 		}
 		if (!s.getSafety().safe && shouldWork) {
 			throw new AssertionError("Caught program error: " + s.getSafety().message);

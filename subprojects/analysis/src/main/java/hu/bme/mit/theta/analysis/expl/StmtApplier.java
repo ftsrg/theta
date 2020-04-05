@@ -37,6 +37,7 @@ final class StmtApplier {
 	private StmtApplier() {
 	}
 
+	// TODO rewrite to visitor and add xcfa stmts(?)
 	public static ApplyResult apply(final Stmt stmt, final MutableValuation val, final boolean approximate) {
 		if (stmt instanceof AssignStmt) {
 			final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
