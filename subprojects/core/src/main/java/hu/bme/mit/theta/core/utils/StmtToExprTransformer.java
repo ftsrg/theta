@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 
@@ -116,15 +117,21 @@ final class StmtToExprTransformer {
 				indexings.add(result.indexing);
 				jointIndexing=jointIndexing.join(result.indexing);
 			}
+			Set<VarDecl<?>> vars=ExprUtils.getVars(choices);
 			List<Expr<BoolType>> branchExprs=new ArrayList<Expr<BoolType>>();
+			System.out.println(jointIndexing);
 			for(int i=0;i<choices.size();i++){
 				List<Expr<BoolType>> exprs=new ArrayList<Expr<BoolType>>();
 				exprs.add(Eq(choiceVar.getRef(),Int(i)));
 				exprs.add(choices.get(i));
-				for(VarDecl decl: ExprUtils.getVars(choices.get(i))){
+				for(VarDecl decl: vars){
 					int currentBranchIndex=indexings.get(i).get(decl);
-					int jointIndex=indexings.get(i).get(decl);
-					if(currentBranchIndex<jointIndex) exprs.add(Eq(Prime(decl.getRef(),currentBranchIndex),Prime(decl.getRef(),jointIndex)));
+					int jointIndex=jointIndexing.get(decl);
+					System.out.println(decl.getName()+" "+i+" "+currentBranchIndex+" "+jointIndex);
+					if(currentBranchIndex<jointIndex){
+						if(currentBranchIndex>0) exprs.add(Eq(Prime(decl.getRef(),currentBranchIndex),Prime(decl.getRef(),jointIndex)));
+						else exprs.add(Eq(decl.getRef(),Prime(decl.getRef(),jointIndex)));
+					}
 				}
 				branchExprs.add(And(exprs));
 			}

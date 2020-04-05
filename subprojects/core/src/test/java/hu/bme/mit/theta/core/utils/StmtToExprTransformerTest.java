@@ -19,12 +19,15 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,6 +71,17 @@ public class StmtToExprTransformerTest {
 
 	@Test
 	public void test() {
+
+		List<Stmt> stmts=new ArrayList<Stmt>();
+		stmts.add(Stmts.Assume(Geq(VX.getRef(),Int(5))));
+		stmts.add(Stmts.Assign(VX,Int(4)));
+		stmts.add(Stmts.Assign(VX,Int(2)));
+		stmts.add(Stmts.Assume(True()));
+		NonDetStmt nonDetStmt=NonDetStmt.of(stmts);
+		StmtUnfoldResult res=StmtUtils.toExpr(nonDetStmt,VarIndexing.all(0));
+		System.out.println(res.exprs);
+		System.out.println(res.indexing);
+
 		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
 		final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
 		Assert.assertEquals(expectedExprs, actualExprs);
