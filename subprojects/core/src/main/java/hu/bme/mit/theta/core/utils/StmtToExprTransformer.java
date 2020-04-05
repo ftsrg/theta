@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,17 +26,16 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 final class StmtToExprTransformer {
 
@@ -98,6 +99,38 @@ final class StmtToExprTransformer {
 			return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
 		}
 
+		@Override
+		public StmtUnfoldResult visit(SequenceStmt sequenceStmt, VarIndexing indexing) {
+			return toExpr(sequenceStmt.getStmts(),indexing);
+		}
+
+		@Override
+		public StmtUnfoldResult visit(NonDetStmt nonDetStmt, VarIndexing indexing) {
+			final VarDecl<IntType> choiceVar= Decls.Var("choice", Int());
+			List<Expr<BoolType>> choices=new ArrayList<Expr<BoolType>>();
+			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
+			VarIndexing jointIndexing=VarIndexing.all(0);
+			for(Stmt stmt:nonDetStmt.getStmts()){
+				StmtUnfoldResult result=toExpr(stmt,indexing);
+				choices.add(And(result.exprs));
+				indexings.add(result.indexing);
+				jointIndexing=jointIndexing.join(result.indexing);
+			}
+			List<Expr<BoolType>> branchExprs=new ArrayList<Expr<BoolType>>();
+			for(int i=0;i<choices.size();i++){
+				List<Expr<BoolType>> exprs=new ArrayList<Expr<BoolType>>();
+				exprs.add(Eq(choiceVar.getRef(),Int(i)));
+				exprs.add(choices.get(i));
+				for(VarDecl decl: ExprUtils.getVars(choices.get(i))){
+					int currentBranchIndex=indexings.get(i).get(decl);
+					int jointIndex=indexings.get(i).get(decl);
+					if(currentBranchIndex<jointIndex) exprs.add(Eq(Prime(decl.getRef(),currentBranchIndex),Prime(decl.getRef(),jointIndex)));
+				}
+				branchExprs.add(And(exprs));
+			}
+			final Expr<BoolType> expr=Or(branchExprs);
+			return StmtUnfoldResult.of(ImmutableList.of(expr),jointIndexing);
+		}
 	}
 
 }
