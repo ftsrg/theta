@@ -21,12 +21,7 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
@@ -92,6 +87,16 @@ public final class ClockOps {
 		public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt, final Void param) {
 			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
 			return Free(varDecl);
+		}
+
+		@Override
+		public ClockOp visit(SequenceStmt stmt, Void param) {
+			return null;
+		}
+
+		@Override
+		public ClockOp visit(NonDetStmt stmt, Void param) {
+			return null;
 		}
 
 		@Override
