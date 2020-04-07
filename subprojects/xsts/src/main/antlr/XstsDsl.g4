@@ -94,7 +94,7 @@ parenExpr:
 ;
 
 prime:
-    reference | NEXT LPAREN ref=prime RPAREN;
+    ref=reference | NEXT LPAREN inner=prime RPAREN;
 
 variableDeclaration:
     VAR name=ID DP type=typeName (EQUALS initValue=value)?;
