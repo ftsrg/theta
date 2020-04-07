@@ -55,7 +55,7 @@ public class SequenceStmt implements Stmt{
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(STMT_LABEL).add(stmts).toString();
+        return Utils.lispStringBuilder().addAll(stmts).toString();
     }
 
 }
