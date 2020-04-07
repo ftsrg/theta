@@ -9,5 +9,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.sts.cli.XstsCli"
+    mainClassName = "hu.bme.mit.theta.xsts.cli.XstsCli"
 }

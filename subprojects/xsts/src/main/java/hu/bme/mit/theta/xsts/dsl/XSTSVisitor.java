@@ -63,6 +63,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(Stmt stmt: xsts.getTransitions().getStmts()){
             System.out.println(stmt);
         }
+        System.out.println(xsts.getInitAction());
+        System.out.println(xsts.getEnvAction());
         return null;
     }
 
@@ -87,7 +89,6 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(nameToDeclMap.containsKey(ctx.name.getText())){
             System.out.println("Variable ["+ctx.name.getText()+"] already exists.");
         }else {
-            xsts.getVars().add(decl);
             nameToDeclMap.put(decl.getName(), decl);
         }
         return null;

@@ -1,0 +1,95 @@
+type Main_region : { __Inactive__, Normal, Interrupted}
+type Interrupted : { __Inactive__, Black, BlinkingYellow}
+type Normal : { __Inactive__, Green, Red, Yellow}
+var LightCommands_displayNone : boolean = false
+var LightCommands_displayGreen : boolean = false
+var PoliceInterrupt_police : boolean = false
+var LightCommands_displayYellow : boolean = false
+var LightCommands_displayRed : boolean = false
+var Control_toggle : boolean = false
+var main_region : Main_region = __Inactive__
+var interrupted : Interrupted = __Inactive__
+var normal : Normal = __Inactive__
+var BlinkingYellowTimeout3 : integer = 0
+var BlackTimeout4 : integer = 0
+
+choice {
+	assume (((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Green)) && (Control_toggle == true))) && (normal == Green));
+	next(normal) := Yellow;
+	next(LightCommands_displayYellow) := true;
+} or {
+	assume (((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Red)) && (Control_toggle == true))) && (normal == Red));
+	next(normal) := Green;
+	next(LightCommands_displayGreen) := true;
+} or {
+	assume (((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Yellow)) && (Control_toggle == true))) && (normal == Yellow));
+	next(normal) := Red;
+	next(LightCommands_displayRed) := true;
+} or {
+	assume (((!(((main_region == Interrupted) && (PoliceInterrupt_police == true)))) && (((main_region == Interrupted) && (interrupted == Black)) && (500 <= BlackTimeout4))) && (interrupted == Black));
+	next(interrupted) := BlinkingYellow;
+	next(BlinkingYellowTimeout3) := 0;
+	next(LightCommands_displayYellow) := true;
+} or {
+	assume (((!(((main_region == Interrupted) && (PoliceInterrupt_police == true)))) && (((main_region == Interrupted) && (interrupted == BlinkingYellow)) && (500 <= BlinkingYellowTimeout3))) && (interrupted == BlinkingYellow));
+	next(interrupted) := Black;
+	next(BlackTimeout4) := 0;
+	next(LightCommands_displayNone) := true;
+} or {
+	assume ((((main_region == Normal) && (PoliceInterrupt_police == true))) && (main_region == Normal));
+	next(main_region) := Interrupted;
+	next(interrupted) := BlinkingYellow;
+	next(BlinkingYellowTimeout3) := 0;
+	next(LightCommands_displayYellow) := true;
+} or {
+	assume (((((main_region == Interrupted) && (PoliceInterrupt_police == true))) && (main_region == Interrupted)) && (normal == __Inactive__));
+	next(interrupted) := __Inactive__;
+	next(main_region) := Normal;
+	next(normal) := Red;
+	next(LightCommands_displayRed) := true;
+} or {
+	assume ((((((main_region == Interrupted) && (PoliceInterrupt_police == true))) && (main_region == Interrupted)) && !((normal == __Inactive__))) && (normal == Green));
+	next(interrupted) := __Inactive__;
+	next(main_region) := Normal;
+	next(LightCommands_displayGreen) := true;
+} or {
+	assume ((((((main_region == Interrupted) && (PoliceInterrupt_police == true))) && (main_region == Interrupted)) && !((normal == __Inactive__))) && (normal == Red));
+	next(interrupted) := __Inactive__;
+	next(main_region) := Normal;
+	next(LightCommands_displayRed) := true;
+} or {
+	assume ((((((main_region == Interrupted) && (PoliceInterrupt_police == true))) && (main_region == Interrupted)) && !((normal == __Inactive__))) && (normal == Yellow));
+	next(interrupted) := __Inactive__;
+	next(main_region) := Normal;
+	next(LightCommands_displayYellow) := true;
+}
+
+choice {
+	assume true;
+	next(BlinkingYellowTimeout3) := 0;
+	next(BlackTimeout4) := 0;
+	next(interrupted) := __Inactive__;
+	next(PoliceInterrupt_police) := false;
+	next(Control_toggle) := false;
+	next(LightCommands_displayNone) := false;
+	next(LightCommands_displayGreen) := false;
+	next(LightCommands_displayYellow) := false;
+	next(main_region) := Normal;
+	next(normal) := Red;
+	next(LightCommands_displayRed) := true;
+}
+
+choice {
+	PoliceInterrupt_police := true;
+} or {
+	PoliceInterrupt_police := false;
+}
+choice {
+	Control_toggle := true;
+} or {
+	Control_toggle := false;
+}
+LightCommands_displayNone := false;
+LightCommands_displayYellow := false;
+LightCommands_displayRed := false;
+LightCommands_displayGreen := false;
