@@ -4,7 +4,8 @@ xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
     transitions=nonDetAction
-    initAction=nonDetAction;
+    initAction=nonDetAction
+    envAction=sequentialAction;
 
 action:
     assumeAction|
@@ -24,10 +25,7 @@ assumeAction:
     ASSUME cond=implyExpression SEMICOLON;
 
 assignAction:
-    lhs=assignLHS ASSIGN rhs=implyExpression SEMICOLON;
-
-assignLHS:
-    name=ID PRIME*;
+    lhs=prime ASSIGN rhs=implyExpression SEMICOLON;
 
 havocAction:
     HAVOC name=ID SEMICOLON;
@@ -96,7 +94,7 @@ parenExpr:
 ;
 
 prime:
-    reference | ref=prime PRIME;
+    reference | NEXT LPAREN ref=prime RPAREN;
 
 variableDeclaration:
     VAR name=ID DP type=typeName (EQUALS initValue=value)?;
@@ -128,6 +126,7 @@ CHOICE: 'choice';
 NONDET_OR: 'or';
 SEMICOLON: ';';
 ASSUME: 'assume';
+NEXT: 'next';
 AND: '&&';
 OR: '||';
 IMPLIES: '->';
