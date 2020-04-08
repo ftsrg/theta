@@ -85,11 +85,11 @@ choice {
 	PoliceInterrupt_police := false;
 }
 choice {
-	Control_toggle := true;
+ 	Control_toggle := true;
 } or {
-	Control_toggle := false;
+    Control_toggle := false;
 }
-LightCommands_displayNone := false;
+next(next(LightCommands_displayNone)) := false;
 LightCommands_displayYellow := false;
 LightCommands_displayRed := false;
 LightCommands_displayGreen := false;
