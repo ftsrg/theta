@@ -65,6 +65,9 @@ final class StmtToExprTransformer {
 	private static class StmtToExprVisitor implements StmtVisitor<VarIndexing, StmtUnfoldResult> {
 		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
+		final static VarDecl<IntType> choiceVar=Decls.Var("choice", Int());
+
+
 		private StmtToExprVisitor() {
 		}
 
@@ -107,10 +110,10 @@ final class StmtToExprTransformer {
 
 		@Override
 		public StmtUnfoldResult visit(NonDetStmt nonDetStmt, VarIndexing indexing) {
-			final VarDecl<IntType> choiceVar= Decls.Var("choice", Int());
+
 			List<Expr<BoolType>> choices=new ArrayList<Expr<BoolType>>();
 			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
-			VarIndexing jointIndexing=VarIndexing.all(0);
+			VarIndexing jointIndexing=indexing.inc(choiceVar);
 			for(Stmt stmt:nonDetStmt.getStmts()){
 				StmtUnfoldResult result=toExpr(stmt,indexing);
 				choices.add(And(result.exprs));
@@ -122,7 +125,7 @@ final class StmtToExprTransformer {
 			System.out.println(jointIndexing);
 			for(int i=0;i<choices.size();i++){
 				List<Expr<BoolType>> exprs=new ArrayList<Expr<BoolType>>();
-				exprs.add(Eq(choiceVar.getRef(),Int(i)));
+				exprs.add(Eq(ExprUtils.applyPrimes(choiceVar.getRef(),indexing),Int(i)));
 				exprs.add(choices.get(i));
 				for(VarDecl decl: vars){
 					int currentBranchIndex=indexings.get(i).get(decl);

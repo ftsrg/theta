@@ -21,6 +21,7 @@ public class XstsCli {
             visitor.visitXsts(model);
             XSTS xsts=visitor.getXsts();
 
+            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getExprs());
             System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getIndexing());
         } catch (Exception e){
             e.printStackTrace();
