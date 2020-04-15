@@ -85,6 +85,20 @@ choice {
 	PoliceInterrupt_police := false;
 }
 choice {
+    choice{
+         Control_toggle := false;
+         choice{
+              Control_toggle := false;
+         } or {
+              Control_toggle := false;
+         } or {
+              Control_toggle := false;
+         }
+    } or {
+         Control_toggle := false;
+    } or {
+         Control_toggle := false;
+    }
  	Control_toggle := true;
 } or {
     Control_toggle := false;
