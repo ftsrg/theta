@@ -3,9 +3,10 @@ grammar XstsDsl;
 xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
-    transitions=nonDetAction
-    initAction=nonDetAction
-    envAction=sequentialAction;
+    TRAN LBRAC transitions=nonDetAction RBRAC
+    INIT LBRAC initAction=nonDetAction RBRAC
+    ENV LBRAC envAction=sequentialAction RBRAC
+    PROP LBRAC prop=implyExpression RBRAC;
 
 action:
     assumeAction|
@@ -121,6 +122,12 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
+TRAN: 'tran';
+INIT: 'init';
+ENV: 'env';
+PROP: 'prop';
+LBRAC: '[';
+RBRAC: ']';
 HAVOC: 'havoc';
 CHOICE: 'choice';
 NONDET_OR: 'or';

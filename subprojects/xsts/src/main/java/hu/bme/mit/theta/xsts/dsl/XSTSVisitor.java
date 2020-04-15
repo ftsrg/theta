@@ -52,7 +52,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(types, processNonDetAction(ctx.transitions), processNonDetAction(ctx.initAction), processSequentialAction(ctx.envAction));
+        xsts=new XSTS(types, processNonDetAction(ctx.transitions), processNonDetAction(ctx.initAction), processSequentialAction(ctx.envAction), visitImplyExpression(ctx.prop));
         System.out.println(xsts.getVars());
         for(TypeDecl typeDecl:xsts.getTypes()){
             System.out.println(typeDecl);
@@ -63,8 +63,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(Stmt stmt: xsts.getTransitions().getStmts()){
             System.out.println(stmt);
         }
+        System.out.println("init:");
         System.out.println(xsts.getInitAction());
+        System.out.println("env");
         System.out.println(xsts.getEnvAction());
+        System.out.println("prop:");
+        System.out.println(xsts.getProp());
         return null;
     }
 

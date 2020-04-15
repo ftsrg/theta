@@ -19,6 +19,8 @@ public class XstsOrd<S extends ExprState> implements PartialOrd<XstsState<S>> {
 
     @Override
     public boolean isLeq(XstsState<S> state1, XstsState<S> state2) {
-        return state1.isLastActionWasEnv()==state2.isLastActionWasEnv() && partialOrd.isLeq(state1.getState(),state2.getState());
+        return state1.isLastActionWasEnv() == state2.isLastActionWasEnv()
+                && state1.isInitialized() == state2.isInitialized()
+                && partialOrd.isLeq(state1.getState(),state2.getState());
     }
 }
