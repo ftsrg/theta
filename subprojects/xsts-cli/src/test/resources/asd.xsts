@@ -1,0 +1,12 @@
+type Main_region : { __Inactive__, Normal, Interrupted}
+var x : integer = 0
+
+choice {
+	x:=x+2;
+}
+
+x:=0;
+
+x:=x+1;
+
+x == 8

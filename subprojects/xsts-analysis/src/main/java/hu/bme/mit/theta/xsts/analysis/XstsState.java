@@ -12,14 +12,16 @@ public class XstsState<S extends ExprState> implements ExprState {
 
     private final S state;
     private final boolean lastActionWasEnv;
+    private final boolean initialized;
 
-        private XstsState(S state, boolean lastActionWasEnv) {
+        private XstsState(S state, boolean lastActionWasEnv, boolean initialized) {
         this.state = state;
         this.lastActionWasEnv = lastActionWasEnv;
+        this.initialized = initialized;
     }
 
-    public static <S extends ExprState> XstsState<S> of(final S state, final boolean lastActionWasEnv) {
-        return new XstsState<>(state, lastActionWasEnv);
+    public static <S extends ExprState> XstsState<S> of(final S state, final boolean lastActionWasEnv, boolean initialized) {
+        return new XstsState<>(state, lastActionWasEnv, initialized);
     }
 
     public S getState() {
@@ -29,6 +31,8 @@ public class XstsState<S extends ExprState> implements ExprState {
     public boolean isLastActionWasEnv() {
         return lastActionWasEnv;
     }
+
+    public boolean isInitialized() { return initialized; }
 
     @Override
     public Expr<BoolType> toExpr() {
@@ -58,7 +62,7 @@ public class XstsState<S extends ExprState> implements ExprState {
             return true;
         } else if (obj instanceof XstsState) {
             final XstsState<?> that = (XstsState<?>) obj;
-            return this.lastActionWasEnv==that.lastActionWasEnv && this.state.equals(that.state);
+            return this.lastActionWasEnv==that.lastActionWasEnv && this.initialized == that. initialized && this.state.equals(that.state);
         } else {
             return false;
         }
@@ -66,6 +70,6 @@ public class XstsState<S extends ExprState> implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(lastActionWasEnv?"ENV":"INTERNAL").body().add(state).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(initialized?"":"UNINITIALIZED").add(lastActionWasEnv?"ENV":"INTERNAL").body().add(state).toString();
     }
 }

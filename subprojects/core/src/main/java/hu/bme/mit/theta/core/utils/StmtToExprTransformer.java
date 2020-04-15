@@ -119,7 +119,6 @@ final class StmtToExprTransformer {
 			}
 			Set<VarDecl<?>> vars=ExprUtils.getVars(choices);
 			List<Expr<BoolType>> branchExprs=new ArrayList<Expr<BoolType>>();
-			System.out.println(jointIndexing);
 			for(int i=0;i<choices.size();i++){
 				List<Expr<BoolType>> exprs=new ArrayList<Expr<BoolType>>();
 //				exprs.add(Eq(ExprUtils.applyPrimes(choiceVar.getRef(),indexing),Int(i)));
@@ -127,7 +126,6 @@ final class StmtToExprTransformer {
 				for(VarDecl decl: vars){
 					int currentBranchIndex=indexings.get(i).get(decl);
 					int jointIndex=jointIndexing.get(decl);
-					System.out.println(decl.getName()+" "+i+" "+currentBranchIndex+" "+jointIndex);
 					if(currentBranchIndex<jointIndex){
 						if(currentBranchIndex>0) exprs.add(Eq(Prime(decl.getRef(),currentBranchIndex),Prime(decl.getRef(),jointIndex)));
 						else exprs.add(Eq(decl.getRef(),Prime(decl.getRef(),jointIndex)));
