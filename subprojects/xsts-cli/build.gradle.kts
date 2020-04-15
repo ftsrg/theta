@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     compile(project(":theta-xsts"))
+    compile(project(":theta-xsts-analysis"))
     compile(project(":theta-solver-z3"))
 }
 
