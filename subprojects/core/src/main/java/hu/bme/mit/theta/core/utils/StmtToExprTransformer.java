@@ -20,10 +20,7 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
@@ -64,9 +61,6 @@ final class StmtToExprTransformer {
 
 	private static class StmtToExprVisitor implements StmtVisitor<VarIndexing, StmtUnfoldResult> {
 		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
-
-		final static VarDecl<IntType> choiceVar=Decls.Var("choice", Int());
-
 
 		private StmtToExprVisitor() {
 		}
@@ -113,9 +107,12 @@ final class StmtToExprTransformer {
 
 			List<Expr<BoolType>> choices=new ArrayList<Expr<BoolType>>();
 			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
-			VarIndexing jointIndexing=indexing.inc(choiceVar);
+//			VarIndexing jointIndexing=indexing.inc(choiceVar);
+			VarIndexing jointIndexing=indexing;
+			int count=0;
+			VarDecl<IntType> tempVar=VarPool.requestInt();
 			for(Stmt stmt:nonDetStmt.getStmts()){
-				StmtUnfoldResult result=toExpr(stmt,indexing);
+				StmtUnfoldResult result=toExpr(Arrays.asList(Stmts.Assign(tempVar,Int(count++)),stmt),indexing);
 				choices.add(And(result.exprs));
 				indexings.add(result.indexing);
 				jointIndexing=jointIndexing.join(result.indexing);
@@ -125,7 +122,7 @@ final class StmtToExprTransformer {
 			System.out.println(jointIndexing);
 			for(int i=0;i<choices.size();i++){
 				List<Expr<BoolType>> exprs=new ArrayList<Expr<BoolType>>();
-				exprs.add(Eq(ExprUtils.applyPrimes(choiceVar.getRef(),indexing),Int(i)));
+//				exprs.add(Eq(ExprUtils.applyPrimes(choiceVar.getRef(),indexing),Int(i)));
 				exprs.add(choices.get(i));
 				for(VarDecl decl: vars){
 					int currentBranchIndex=indexings.get(i).get(decl);
@@ -139,6 +136,7 @@ final class StmtToExprTransformer {
 				branchExprs.add(And(exprs));
 			}
 			final Expr<BoolType> expr=Or(branchExprs);
+			VarPool.returnInt(tempVar);
 			return StmtUnfoldResult.of(ImmutableList.of(expr),jointIndexing);
 		}
 	}
