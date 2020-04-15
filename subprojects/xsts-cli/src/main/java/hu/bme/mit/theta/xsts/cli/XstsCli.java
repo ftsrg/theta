@@ -1,8 +1,13 @@
 package hu.bme.mit.theta.xsts.cli;
 
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.XstsAction;
+import hu.bme.mit.theta.xsts.analysis.XstsLts;
+import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.dsl.XSTSVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
@@ -21,8 +26,13 @@ public class XstsCli {
             visitor.visitXsts(model);
             XSTS xsts=visitor.getXsts();
 
-            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getExprs());
-            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getIndexing());
+//            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getExprs());
+//            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getIndexing());
+            LTS<XstsState, XstsAction> lts= XstsLts.create(xsts);
+            System.out.println("env:");
+            System.out.println(lts.getEnabledActionsFor(XstsState.of(PredState.of(),false)));
+            System.out.println("tran:");
+            System.out.println(lts.getEnabledActionsFor(XstsState.of(PredState.of(),true)));
         } catch (Exception e){
             e.printStackTrace();
         }
