@@ -98,5 +98,5 @@ env {
 }
 
 prop {
-    Control_toggle == true && LightCommands_displayRed == false && LightCommands_displayGreen == false && LightCommands_displayYellow == false
+    LightCommands_displayRed == true && LightCommands_displayGreen == true
 }

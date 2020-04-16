@@ -127,24 +127,28 @@ final class StmtApplier {
 			if(res==ApplyResult.FAILURE) return ApplyResult.FAILURE;
 			if(res==ApplyResult.SUCCESS){
 				valuations.add(subVal);
-				successIndex=i;
+				if(successIndex==-1)successIndex=i;
 			}
 		}
 		if(valuations.size()==0){
 			return ApplyResult.BOTTOM;
 		} else  if(valuations.size()==1){
 			return apply(stmt.getStmts().get(successIndex),val,approximate);
-		} else {
-			MutableValuation ref=valuations.get(0);
-			for(Decl decl: ref.getDecls()){
+		} else if(approximate){
+			apply(stmt.getStmts().get(successIndex),val,approximate);
+			List<Decl> toRemove=new ArrayList<Decl>();
+			for(Decl decl: val.getDecls()){
 				for(MutableValuation subVal: valuations){
-					if(!ref.eval(decl).equals(subVal.eval(decl))){
-						ref.remove(decl);
+					if(!val.eval(decl).equals(subVal.eval(decl))){
+						toRemove.add(decl);
 						break;
 					}
 				}
 			}
+			for(Decl decl:toRemove) val.remove(decl);
 			return ApplyResult.SUCCESS;
+		} else{
+			return ApplyResult.FAILURE;
 		}
 	}
 
