@@ -3,10 +3,10 @@ grammar XstsDsl;
 xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
-    TRAN LBRAC transitions=nonDetAction RBRAC
-    INIT LBRAC initAction=nonDetAction RBRAC
-    ENV LBRAC envAction=sequentialAction RBRAC
-    PROP LBRAC prop=implyExpression RBRAC;
+    transitions=tran
+    initAction=init
+    envAction=env
+    PROP LCURLY prop=implyExpression RCURLY;
 
 action:
     assumeAction|
@@ -15,8 +15,24 @@ action:
     nonDetAction
     ;
 
+tran:
+    TRAN nonDet
+;
+
+env:
+    ENV nonDet
+;
+
+init:
+    INIT nonDet
+;
+
 nonDetAction:
-    CHOICE LCURLY choices+=sequentialAction RCURLY (NONDET_OR LCURLY choices+=sequentialAction RCURLY)*
+    CHOICE nonDet
+;
+
+nonDet:
+    LCURLY choices+=sequentialAction RCURLY (NONDET_OR LCURLY choices+=sequentialAction RCURLY)*
 ;
 
 sequentialAction:

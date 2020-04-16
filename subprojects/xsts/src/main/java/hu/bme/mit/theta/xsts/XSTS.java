@@ -21,7 +21,7 @@ public final class XSTS {
     private final Collection<TypeDecl> types;
     private final NonDetStmt transitions;
     private final NonDetStmt initAction;
-    private final SequenceStmt envAction;
+    private final NonDetStmt envAction;
     private final Expr<BoolType> prop;
 
     public Collection<VarDecl<?>> getVars() {
@@ -42,11 +42,11 @@ public final class XSTS {
         return initAction;
     }
 
-    public SequenceStmt getEnvAction() {
+    public NonDetStmt getEnvAction() {
         return envAction;
     }
 
-    public XSTS(final Collection<TypeDecl> types, final NonDetStmt transitions, final NonDetStmt initAction, final SequenceStmt envAction, final Expr<BoolType> prop) {
+    public XSTS(final Collection<TypeDecl> types, final NonDetStmt transitions, final NonDetStmt initAction, final NonDetStmt envAction, final Expr<BoolType> prop) {
         this.transitions = checkNotNull(transitions);
         this.initAction = checkNotNull(initAction);
         this.envAction = checkNotNull(envAction);

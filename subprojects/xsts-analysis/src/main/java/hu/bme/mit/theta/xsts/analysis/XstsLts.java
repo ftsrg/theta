@@ -15,7 +15,7 @@ public class XstsLts implements LTS<XstsState, XstsAction> {
 
     private XstsLts(final XSTS xsts){
         internalActions=xsts.getTransitions().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
-        externalActions=ImmutableList.of(XstsAction.create(xsts.getEnvAction()));
+        externalActions=xsts.getEnvAction().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
         initActions=xsts.getInitAction().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
     }
 
