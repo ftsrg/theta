@@ -49,7 +49,7 @@ public class XstsCli {
             Logger logger = NullLogger.getInstance();
 
             final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis
-                    .create(ExplAnalysis.create(solver, True()));
+                    .create(ExplStmtAnalysis.create(solver, True()));
             final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
                     analysis, s -> ExprUtils.simplify(xsts.getProp(),s.getState().getVal()).equals(True()), true);
             final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor
