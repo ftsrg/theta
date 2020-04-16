@@ -1,12 +1,24 @@
 type Main_region : { __Inactive__, Normal, Interrupted}
 var x : integer = 0
 
+tran[
 choice {
-	x:=x+2;
+	x:=x+1;
+} or {
+    x:= x-1;
 }
+]
 
+init[
+choice{
 x:=0;
+}
+]
 
-x:=x+1;
+env[
+assume true
+]
 
-x == 8
+prop[
+x == 9
+]

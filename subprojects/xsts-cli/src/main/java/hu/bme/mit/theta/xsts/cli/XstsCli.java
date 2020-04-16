@@ -54,8 +54,8 @@ public class XstsCli {
                     analysis, s -> ExprUtils.simplify(xsts.getProp(),s.getState().getVal()).equals(True()), true);
             final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor
                     .builder(argBuilder)
-                    .waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())))
-                    .stopCriterion(StopCriterions.fullExploration()).logger(logger).build();
+                    .waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs())))
+                    .logger(logger).build();
 
             Refiner<XstsState<ExplState>, XstsAction, ExplPrec> refiner = null;
             refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),

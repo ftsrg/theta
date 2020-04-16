@@ -13,8 +13,8 @@ var normal : Normal = __Inactive__
 var BlinkingYellowTimeout3 : integer = 0
 var BlackTimeout4 : integer = 0
 
-tran[
-choice {
+
+tran {
 	assume (((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Green)) && (Control_toggle == true))) && (normal == Green));
 	next(normal) := Yellow;
 	next(LightCommands_displayYellow) := true;
@@ -64,10 +64,8 @@ choice {
 	next(main_region) := Normal;
 	next(LightCommands_displayYellow) := true;
 }
-]
 
-init[
-choice {
+init {
 	assume true;
 	next(BlinkingYellowTimeout3) := 0;
 	next(BlackTimeout4) := 0;
@@ -81,25 +79,24 @@ choice {
 	next(normal) := Red;
 	next(LightCommands_displayRed) := true;
 }
-]
 
-env[
-choice {
-	PoliceInterrupt_police := true;
-} or {
-	PoliceInterrupt_police := false;
+env {
+    choice {
+        PoliceInterrupt_police := true;
+    } or {
+        PoliceInterrupt_police := false;
+    }
+    choice {
+        Control_toggle := true;
+    } or {
+        Control_toggle := false;
+    }
+    next(next(LightCommands_displayNone)) := false;
+    LightCommands_displayYellow := false;
+    LightCommands_displayRed := false;
+    LightCommands_displayGreen := false;
 }
-choice {
- 	Control_toggle := true;
-} or {
-    Control_toggle := false;
-}
-next(next(LightCommands_displayNone)) := false;
-LightCommands_displayYellow := false;
-LightCommands_displayRed := false;
-LightCommands_displayGreen := false;
-]
 
-prop[
-LightCommands_displayGreen == true
-]
+prop {
+    Control_toggle == true && LightCommands_displayRed == false && LightCommands_displayGreen == false && LightCommands_displayYellow == false
+}

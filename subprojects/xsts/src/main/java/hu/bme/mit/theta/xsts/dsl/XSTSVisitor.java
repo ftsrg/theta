@@ -52,7 +52,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(types, processNonDetAction(ctx.transitions), processNonDetAction(ctx.initAction), processSequentialAction(ctx.envAction), visitImplyExpression(ctx.prop));
+        xsts=new XSTS(types, processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.envAction.nonDet()), visitImplyExpression(ctx.prop));
         System.out.println(xsts.getVars());
         for(TypeDecl typeDecl:xsts.getTypes()){
             System.out.println(typeDecl);
@@ -60,13 +60,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 System.out.println(literal+" "+literalToIntMap.get(literal));
             }
         }
-        for(Stmt stmt: xsts.getTransitions().getStmts()){
-            System.out.println(stmt);
-        }
+        System.out.println("tran:");
+        xsts.getTransitions().getStmts().stream().forEach(System.out::println);
         System.out.println("init:");
-        System.out.println(xsts.getInitAction());
+        xsts.getInitAction().getStmts().stream().forEach(System.out::println);
         System.out.println("env");
-        System.out.println(xsts.getEnvAction());
+        xsts.getEnvAction().getStmts().stream().forEach(System.out::println);
         System.out.println("prop:");
         System.out.println(xsts.getProp());
         return null;
@@ -251,10 +250,10 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.assignAction()!=null) return processAssignAction(ctx.assignAction());
         else if(ctx.assumeAction()!=null) return processAssumeAction(ctx.assumeAction());
         else if(ctx.havocAction()!=null) return processHavocAction(ctx.havocAction());
-        else return processNonDetAction(ctx.nonDetAction());
+        else return processNonDet(ctx.nonDetAction().nonDet());
     }
 
-    public NonDetStmt processNonDetAction(XstsDslParser.NonDetActionContext ctx) {
+    public NonDetStmt processNonDet(XstsDslParser.NonDetContext ctx) {
         List<Stmt> choices=new ArrayList<Stmt>();
         for(XstsDslParser.SequentialActionContext seq:ctx.choices){
             choices.add(processSequentialAction(seq));
