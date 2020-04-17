@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.common.Utils;
@@ -25,10 +24,8 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-// TODO why is this here?
 public class CallStmt extends XcfaCallStmt {
 	private final VarDecl<?> var;
-	private final boolean isVoid;
 	private final List<VarDecl<?>> params;
 	private static final String STMT_LABEL = "call";
 
@@ -37,16 +34,15 @@ public class CallStmt extends XcfaCallStmt {
 
 	CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
 		this.var = var;
-		isVoid = var == null;
 		this.procedure = procedure;
 		this.params = params;
 	}
 
 	public boolean isVoid() {
-		return isVoid;
+		return var == null;
 	}
 
-	public VarDecl<?> getVar() {
+	public VarDecl<?> getResultVar() {
 		return var;
 	}
 

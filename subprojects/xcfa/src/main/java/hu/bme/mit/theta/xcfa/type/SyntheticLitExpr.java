@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.type;
 
 import com.google.common.base.Preconditions;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
@@ -63,6 +64,10 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 
 	public XCFA.Process getProcess() {
 		return lockedOn;
+	}
+
+	public boolean isValid() {
+		return !isInvalid();
 	}
 
 	private static class LazyHolder {
@@ -119,5 +124,14 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	@Override
 	public int hashCode() {
 		return Objects.hash(lockedOn, num);
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder("SyntheticLitExpr").add(
+				Utils.lispStringBuilder("LockedOn").add(lockedOn!=null ? lockedOn : "None")
+		).add(
+				Utils.lispStringBuilder("Times").add(num)
+		).toString();
 	}
 }

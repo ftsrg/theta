@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public final class XCFA {
 
-	private final List<VarDecl<?>> globalVars;
+	private final List<VarDecl<? extends Type>> globalVars;
 
 	private final List<Process> processes;
 	private final Process mainProcess;
@@ -78,7 +79,7 @@ public final class XCFA {
 		return builder.build();
 	}
 
-	public List<VarDecl<?>> getGlobalVars() {
+	public List<VarDecl<? extends Type>> getGlobalVars() {
 		return Collections.unmodifiableList(globalVars);
 	}
 
@@ -138,10 +139,10 @@ public final class XCFA {
 			return Utils.lispStringBuilder().add(LABEL).add(name).toString();
 		}
 
-		public static final class Procedure {
+        public static final class Procedure {
 			private final String name;
 			private final Type rtype;
-			private final VarDecl<?> result;
+			private final VarDecl<? extends Type> result;
 
 			private final List<VarDecl<?>> params;
 
@@ -203,11 +204,16 @@ public final class XCFA {
 				return Collections.unmodifiableList(edges);
 			}
 
-			public VarDecl<?> getResult() {
+			public VarDecl<? extends Type> getResult() {
 				return result;
 			}
 
 			public String getName() {
+				return name;
+			}
+
+			@Override
+			public String toString() {
 				return name;
 			}
 
@@ -272,6 +278,17 @@ public final class XCFA {
 
 				public List<Stmt> getStmts() {
 					return Collections.unmodifiableList(stmts);
+				}
+
+				@Override
+				public String toString() {
+					return Utils.lispStringBuilder("Edge").add(
+							Utils.lispStringBuilder("Source").add(source)
+					).add(
+							Utils.lispStringBuilder("Target").add(target)
+					).add(
+							Utils.lispStringBuilder("Stmts").addAll(stmts)
+					).toString();
 				}
 			}
 
