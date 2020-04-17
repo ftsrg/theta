@@ -21,6 +21,7 @@ import java.util.Set;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Type;
 
 /**
  * Utility functions related to statements.
@@ -36,7 +37,7 @@ public final class StmtUtils {
 	 * @param stmt Statement
 	 * @return Variables
 	 */
-	public static Set<VarDecl<?>> getVars(final Stmt stmt) {
+	public static Set<VarDecl<? extends Type>> getVars(final Stmt stmt) {
 		final Set<VarDecl<?>> vars = new HashSet<>();
 		stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		return vars;
@@ -48,13 +49,13 @@ public final class StmtUtils {
 	 * @param stmts Statements
 	 * @return Variables
 	 */
-	public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
+	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Stmt> stmts) {
 		final Set<VarDecl<?>> vars = new HashSet<>();
 		stmts.forEach(s -> s.accept(VarCollectorStmtVisitor.getInstance(), vars));
 		return vars;
 	}
 
-	public static Set<VarDecl<?>> getWrittenVars(final Stmt stmt) {
+	public static Set<VarDecl<? extends Type>> getWrittenVars(final Stmt stmt) {
 		final Set<VarDecl<?>> vars = new HashSet<>();
 		stmt.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars);
 		return vars;

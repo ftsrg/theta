@@ -24,6 +24,8 @@ final class WrittenVarCollectorStmtVisitor implements StmtVisitor<Collection<Var
 
     @Override
     public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
+        // TODO the procedure's local variables are not added.
+        // This is not a problem for xcfa-analysis, as they are not global vars.
         return null;
     }
 
@@ -104,7 +106,7 @@ final class WrittenVarCollectorStmtVisitor implements StmtVisitor<Collection<Var
 
     @Override
     public Void visit(UnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
-        // TODO this is really needed here?
+        // TODO is this needed here?
         param.add(unlockStmt.getSyncVar());
         return null;
     }

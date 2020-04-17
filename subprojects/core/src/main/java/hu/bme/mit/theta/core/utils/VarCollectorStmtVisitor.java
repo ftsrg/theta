@@ -31,7 +31,10 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
-		// TODO BAD! Passed parameters are touched
+		// TODO this only lists the passed parameters, not \
+		// the variables where the procedure stores them.
+		// This is not a problem for xcfa-analysis, because only globals are returned.
+		param.addAll(stmt.getParams());
 		return null;
 	}
 
@@ -52,13 +55,13 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	@Override
 	public Void visit(AtomicBeginStmt atomicBeginStmt, Collection<VarDecl<?>> param) {
 		// TODO return list of all variables touched by any stmt that can be accessed from here?
-		return null;
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override
 	public Void visit(AtomicEndStmt atomicEndStmt, Collection<VarDecl<?>> param) {
 		// TODO return list of all variables touched by any stmt that can be accessed from here?
-		return null;
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override

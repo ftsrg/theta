@@ -16,10 +16,13 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
-public class XcfaCallStmt extends XcfaStmt {
+import java.util.List;
+
+public abstract class XcfaCallStmt extends XcfaStmt {
 	@Override
 	public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param) {
 		return visitor.visit(this, param);
@@ -29,4 +32,7 @@ public class XcfaCallStmt extends XcfaStmt {
 	public <P, R> R accept(XcfaStmtVisitor<? super P, ? extends R> visitor, P param) {
 		return visitor.visit(this, param);
 	}
+
+	// needed for core.utils.VarCollector
+	public abstract List<VarDecl<?>> getParams();
 }
