@@ -4,7 +4,6 @@ main process valami {
         init loc L0
         loc L1
         loc L2
-        loc L3
         final loc END
         error loc ERR
 

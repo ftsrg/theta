@@ -3,12 +3,12 @@ var x : int
 // process1:
 // switch:
 // [] b: if (x == 1) { E: x = 2; }
-// [] d: (semmi)
+// [] d: (nothing)
 
 // process2:
 // C: x = 1; assert(x!=2);
 
-// el kell failelnie
+// the program has to fail
 
 main process process1 {
 

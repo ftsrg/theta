@@ -52,7 +52,8 @@ public class ExplicitCheckerTest {
 				new Object[]{"/infiniteloop.xcfa", true},
 				new Object[]{"/mutex-test.xcfa", true},
 				new Object[]{"/mutex-test2.xcfa", false},
-				new Object[]{"/mutex-test3.xcfa", false}
+				new Object[]{"/mutex-test3.xcfa", false},
+				new Object[]{"/mutex-test4.xcfa", true}
 				//, new Object[]{"/very-parallel.xcfa", true}
 		);
 	}

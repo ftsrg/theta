@@ -54,7 +54,8 @@ public class PartialOrderExplicitCheckerTest {
                 new Object[]{"/very-parallel.xcfa", true},
                 new Object[]{"/mutex-test.xcfa", true},
                 new Object[]{"/mutex-test2.xcfa", false},
-                new Object[]{"/mutex-test3.xcfa", false}
+                new Object[]{"/mutex-test3.xcfa", false},
+                new Object[]{"/mutex-test4.xcfa", true}
         );
     }
 

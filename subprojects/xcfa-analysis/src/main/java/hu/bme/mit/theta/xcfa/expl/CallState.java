@@ -22,13 +22,11 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
-import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -246,7 +244,7 @@ final class CallState implements StmtExecutorInterface {
 		if (stmt.isVoid()) {
 			process.push(stmt.getProcedure(), stmt.getParams());
 		} else {
-			process.push(stmt.getProcedure(), stmt.getParams(), stmt.getVar());
+			process.push(stmt.getProcedure(), stmt.getParams(), stmt.getResultVar());
 		}
 	}
 
