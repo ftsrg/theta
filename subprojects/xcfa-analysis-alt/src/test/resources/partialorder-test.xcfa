@@ -44,7 +44,7 @@ process Q {
         }
 
         QGate -> QFin {
-            assume global = 1
+            assume true
         }
 
         QGate -> QErr {

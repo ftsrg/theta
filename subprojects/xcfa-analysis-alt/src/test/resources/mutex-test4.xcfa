@@ -1,21 +1,29 @@
+var y : int
 var x : synthetic
 main process valami {
     main procedure mainProcedure() {
         init loc L0
         loc L1
+        loc L2
+        loc L3
         final loc END
 
         L0 -> L1 { lock(x) }
-        L1 -> END { unlock(x) }
+        L1 -> L2 { y := 1 }
+        L2 -> L3 { y := 0 }
+        L3 -> END { unlock(x) }
     }
 }
 process valami2 {
     main procedure mainProcedure() {
         init loc L0
         loc L1
+        loc L2
         final loc END
+        error loc ERR
 
         L0 -> L1 { lock(x) }
         L1 -> END { unlock(x) }
+        L1 -> ERR { assume y = 1 }
     }
 }
