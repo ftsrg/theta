@@ -110,4 +110,16 @@ final class WrittenVarCollectorStmtVisitor implements StmtVisitor<Collection<Var
         param.add(unlockStmt.getSyncVar());
         return null;
     }
+
+    @Override
+    public Void visit(ExitWaitStmt exitWaitStmt, Collection<VarDecl<?>> param) {
+        param.add(exitWaitStmt.getSyncVar());
+        return null;
+    }
+
+    @Override
+    public Void visit(EnterWaitStmt enterWaitStmt, Collection<VarDecl<?>> param) {
+        param.add(enterWaitStmt.getSyncVar());
+        return null;
+    }
 }
