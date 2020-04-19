@@ -48,8 +48,8 @@ public class DynamicPOCheckerTest {
                 new Object[]{"/deadlock.xcfa", false},
                 //new Object[]{"/atomic.xcfa", true}, does not support atomic statements
                 new Object[]{"/gcd.xcfa", true},
-                // new Object[]{"/partialorder-test.xcfa", false}, TODO Currently not working
-
+                new Object[]{"/partialorder-test.xcfa", false},
+                new Object[]{"/partialorder-min-test.xcfa", false},
                 //new Object[]{"/infiniteloop.xcfa", true}, does not support loops (in explicit state graph)
                 new Object[]{"/mutex-test.xcfa", true},
                 new Object[]{"/mutex-test2.xcfa", false},
