@@ -1,54 +1,54 @@
-var x : int
+var global : int
 
-// process1:
+// P:
 // switch:
-// [] b: if (x == 1) { E: x = 2; }
+// [] b: if (global == 1) { E: global = 2; }
 // [] d: (nothing)
 
-// process2:
-// C: x = 1; assert(x!=2);
+// Q:
+// C: global = 1; assert(global!=2);
 
 // the program has to fail
 
-main process process1 {
+main process P {
 
-	main procedure mainProcedure(){
-		init loc L0
-		loc L1
-		final loc L2
-		var y : int
+	main procedure m(){
+		init loc PGate
+		loc PSet
+		final loc PFin
+		var local : int
 
-        L0 -> L1 { // b
-            assume x = 1
+        PGate -> PSet { // b
+            assume global = 1
         }
-        L1 -> L2 {
-            x := 2
+        PSet -> PFin {
+            global := 2
         }
-        L0 -> L2 { // d
-            y := y
+        PGate -> PFin { // d
+            local := local
         }
 	}
 }
 
-process process2 {
+process Q {
 
-	main procedure mainProcedure(){
-		init loc L0
-		loc L1
+	main procedure m(){
+		init loc QSet
+		loc QGate
 
-		final loc L2
-		error loc LE
+		final loc QFin
+		error loc QErr
 
-        L0 -> L1 {
-            x := 1
+        QSet -> QGate {
+            global := 1
         }
 
-        L1 -> L2 {
-            assume x = 1
+        QGate -> QFin {
+            assume global = 1
         }
 
-        L1 -> LE {
-            assume x = 2
+        QGate -> QErr {
+            assume global = 2
         }
 	}
 }
