@@ -103,7 +103,7 @@ public final class ExplicitChecker {
         private static Collection<ExecutableTransitionForImmutableExplState> oneLocalOrEveryTransition(ImmutableExplState state) {
             var p = LocalityUtils.findAnyEnabledLocalTransition(state);
             if (p.isPresent()) {
-                var t = p.get().enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableSet());
+                var t = p.get().enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableList());
                 assert !t.isEmpty();
                 return t;
             }

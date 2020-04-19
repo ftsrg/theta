@@ -64,7 +64,7 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         return ExecutableTransitionUtils.getExecutableTransitions(this)
                 .map(
                         x->new ExecutableTransitionForMutableExplState(MutableExplState.this, x, version)
-                ).collect(Collectors.toUnmodifiableSet());
+                ).collect(Collectors.toUnmodifiableList());
     }
 
     public static MutableExplState copyOf(ExplState x) {

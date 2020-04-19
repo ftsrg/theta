@@ -99,7 +99,7 @@ public final class ImmutableExplState extends ExplState {
     public Collection<ExecutableTransitionForImmutableExplState> getEnabledTransitions() {
         return ExecutableTransitionUtils.getExecutableTransitions(this)
                 .map(this::transitionFrom)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override

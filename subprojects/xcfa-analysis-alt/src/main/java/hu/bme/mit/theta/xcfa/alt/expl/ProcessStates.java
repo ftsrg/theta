@@ -15,14 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 final class ProcessStates {
 
@@ -42,29 +40,22 @@ final class ProcessStates {
     }
 
     public static ProcessStates copyOf(ProcessStates old, ExplState.Factory0 factory) {
-        ImmutableMap.Builder<XCFA.Process, ProcessState> result = ImmutableMap.builder();
-        for (var entry : old.getStates().entrySet()) {
-            result.put(entry.getKey(), ProcessState.copyOf(entry.getValue(), factory));
-        }
         return new ProcessStates(
-                old.getStates().entrySet().stream().collect(
-                        Collectors.toUnmodifiableMap(
+                old.getStates().entrySet().stream()
+                        .collect(MapCollector.collector(
                                 Map.Entry::getKey,
-                                process->ProcessState.copyOf(process.getValue(), factory)
-                        )
-                )
+                                p->ProcessState.copyOf(p.getValue(), factory)
+                        ))
         );
     }
 
     static ProcessStates buildInitial(XCFA xcfa, ExplState.Factory0 factory) {
-        // TODO this is in bad place
         return new ProcessStates(
-                xcfa.getProcesses().stream().collect(
-                        Collectors.toUnmodifiableMap(
-                                process->process,
-                                process->ProcessState.initial(process, factory)
-                        )
-                )
+                xcfa.getProcesses().stream()
+                        .collect(MapCollector.collector(
+                                p->p,
+                                p->ProcessState.initial(p, factory)
+                        ))
         );
     }
 

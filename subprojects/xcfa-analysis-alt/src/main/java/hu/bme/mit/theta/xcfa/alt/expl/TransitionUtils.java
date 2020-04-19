@@ -35,9 +35,9 @@ public final class TransitionUtils {
         return state.getProcessStates().getStates().entrySet().stream()
                 .map(
                         process -> new ProcessTransitions(state, process.getKey(),
-                                getTransitionsInternal(process.getKey(), process.getValue()).collect(Collectors.toUnmodifiableSet())
+                                getTransitionsInternal(process.getKey(), process.getValue()).collect(Collectors.toUnmodifiableList())
                         )
-                ).collect(Collectors.toUnmodifiableSet());
+                ).collect(Collectors.toUnmodifiableList());
     }
 
     public static Stream<Transition> getTransitions(ExplState state) {

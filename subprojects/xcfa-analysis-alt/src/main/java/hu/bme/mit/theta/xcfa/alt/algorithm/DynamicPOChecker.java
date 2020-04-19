@@ -84,7 +84,6 @@ public class DynamicPOChecker {
         dfsStack.push(node);
 
         backtrack(node);
-
     }
 
     private void popNode(DfsNode s0) {
