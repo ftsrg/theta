@@ -22,7 +22,6 @@ import hu.bme.mit.theta.xcfa.alt.algorithm.util.DfsNodeInterface;
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransition;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionForImmutableExplState;
-import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionUtils;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.LocalityUtils;
@@ -34,11 +33,11 @@ import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** TODO Currently not working */
 public class DynamicPOChecker {
@@ -76,15 +75,16 @@ public class DynamicPOChecker {
             throw new UnsupportedOperationException("Dynamic partial order checker does not support infinite loops.");
         }
         if (exploredStates.contains(state)) {
-            return;
+            //return;
         }
-
-        backtrack(node);
 
         debugPrint(state, debug);
         stackedStates.add(state);
         exploredStates.add(state);
         dfsStack.push(node);
+
+        backtrack(node);
+
     }
 
     private void popNode(DfsNode s0) {
@@ -114,54 +114,64 @@ public class DynamicPOChecker {
         return Tracer.safe();
     }
 
+    /**
+     * This is a utility for converting between indexing in the paper and indexing here.
+     * The paper uses an other indexing than what we use.
+     */
     private class IndexingUtil {
 
         int minIndex() {
             return 1;
         }
 
-        /** The current state is not needed to be processed by backtracking */
         int maxIndex() {
-            return dfsStack.size()-2; // TODO ?
+            // The current state is not needed to be processed by backtracking
+            return dfsStack.size()-2;
         }
 
-        ExecutableTransition getTransition(int idx) {
+        ProcessTransitions getProcessTransition(int idx) {
             Preconditions.checkArgument(minIndex() <= idx && idx <= maxIndex());
-            return dfsStack.get(idx+1).lastTransition;
+            Transition t = dfsStack.get(idx+1).lastTransition;
+            return get(idx).all.stream().filter(x->x.getProcess() == t.getProcess()).findAny().get();
         }
 
+        /** get(i).lastTransition should probably not be used */
         DfsNode get(int idx) {
+            Preconditions.checkArgument(minIndex() <= idx && idx <= maxIndex());
             return dfsStack.get(idx);
         }
 
-        boolean isInteresting(int idx) {
-            return !get(idx).localProcessTransition;
+        /** Returns whether the transition is local, and we optimized on that fact,
+         * meaning that we should not try to backtrack or find dependency.
+         */
+        boolean isLocalTransitionOptimization(int idx) {
+            return get(idx).localProcessTransition;
         }
     }
 
-    public boolean happensBefore(Transition tr1, int i, Transition tr2, int j) {
-        Preconditions.checkArgument(indexing.getTransition(i) == tr1);
-        Preconditions.checkArgument(indexing.getTransition(j) == tr2);
+    public boolean happensBefore( int i, int j) {
+        ProcessTransitions tr1 = indexing.getProcessTransition(i);
+        ProcessTransitions tr2 = indexing.getProcessTransition(j);
         Preconditions.checkArgument(i <= j);
         if (i == j)
             return true;
         if (DependencyUtils.depends(tr1, tr2))
             return true;
         for (int k = i+1; k < j; k++) {
-            if (happensBefore(tr1, i, indexing.getTransition(k), k) &&
-                    happensBefore(indexing.getTransition(k), k, tr2, j))
+            if (happensBefore(i, k) &&
+                    happensBefore(k, j))
                 return true;
         }
         return false;
 
     }
-    public boolean happensBefore(Transition tr, int i, ProcessTransitions pt) {
-        Preconditions.checkArgument(indexing.getTransition(i) == tr);
-        if (tr.getProcess() == pt.process)
+    public boolean happensBefore(int i, ProcessTransitions pt) {
+        ProcessTransitions tr = indexing.getProcessTransition(i);
+        if (tr.getProcess() == pt.getProcess())
             return true;
         for (int k = i+1; k <= indexing.maxIndex(); k++) {
-            if (happensBefore(tr, i, indexing.getTransition(k), k)
-                    && indexing.getTransition(k).getProcess() == pt.process)
+            if (happensBefore(i, k)
+                    && indexing.getProcessTransition(k).getProcess() == pt.getProcess())
                 return true;
         }
         return false;
@@ -169,55 +179,53 @@ public class DynamicPOChecker {
 
     private final IndexingUtil indexing = new IndexingUtil();
 
+    OptionalInt findLastDependentCoenabled(ProcessTransitions p) {
+        for (int i = indexing.maxIndex(); i >= indexing.minIndex(); i--) {
+            if (indexing.isLocalTransitionOptimization(i))
+                continue;
+            ProcessTransitions t = indexing.getProcessTransition(i);
+            if (DependencyUtils.depends(p, t) && CoenabledUtils.coenabled(p, t) &&
+                    !happensBefore(i, p))
+                return OptionalInt.of(i);
+        }
+        return OptionalInt.empty();
+    }
+
+    boolean checkProcessWithEnabledTransitionHappeningBefore(ProcessTransitions q, int i, ProcessTransitions p) {
+        if (p.getProcess() == q.getProcess())
+            return true;
+        for (int j = i+1; j < indexing.maxIndex(); j++) {
+            if (indexing.isLocalTransitionOptimization(j))
+                continue;
+            if (q.getProcess() != indexing.getProcessTransition(j).getProcess())
+                continue;
+            if (happensBefore(j, p))
+                return true;
+        }
+        return false;
+    }
+
     void backtrack(DfsNode lastNode) {
         // fill backtrack of older transitions...
-        for (var currentProcess : lastNode.all) { // p in the paper
-            // transition i
-            int i;
-            boolean found = false;
-            for (i = indexing.maxIndex(); i >= indexing.minIndex(); i--) {
-                if (!indexing.isInteresting(i))
-                    continue;
-                Transition tr = indexing.getTransition(i);
-                if (DependencyUtils.depends(currentProcess, tr) &&
-                        CoenabledUtils.coenabled(currentProcess, tr) &&
-                        happensBefore(tr, i, currentProcess)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
+        for (var p : lastNode.all) {
+            if (p.transitionStream().findAny().isEmpty())
                 continue;
-            }
+            var opti = findLastDependentCoenabled(p);
+            if (opti.isEmpty())
+                continue;
+            int i = opti.getAsInt();
             // E is enabled transitions in
             Collection<ProcessTransitions> E = new HashSet<>();
             DfsNode oldState = indexing.get(i);
-            for (var oldProcess: oldState.all) { // q in the paper
-                // q is enabled in the old state
-                if (oldProcess.enabledStream().findAny().isEmpty()) {
+            for (var q: oldState.all) {
+                // q must be enabled in the old state
+                if (!q.hasAnyEnabledTransition()) {
                     continue;
                 }
-                // q=p
-                found = false;
-                if (oldProcess.process == currentProcess.process) {
-                    E.add(oldProcess);
-                    found = true;
-                }
 
-                // or there exists a transition which depend on those i and p
-
-                for (int j = i+1; !found && j <= indexing.maxIndex(); j++) {
-                    if (!indexing.isInteresting(j))
-                        continue;
-                    ExecutableTransition t = indexing.getTransition(j);
-                    if (t.getProcess() == oldProcess.process &&
-                            happensBefore(t, j, currentProcess)
-                    ) {
-                        found = true;
-                    }
+                if (checkProcessWithEnabledTransitionHappeningBefore(q, i, p)) {
+                    E.add(q);
                 }
-                if (found)
-                    E.add(oldProcess);
             }
             if (!E.isEmpty()) {
                 E.forEach(oldState::push);
@@ -235,62 +243,68 @@ public class DynamicPOChecker {
      * If there is no local pt, then we need to select a pt of our choice.
      * If there is a dependent transition later, we need to add that to the backtrack set.
      */
-    private static final class DfsNode implements DfsNodeInterface {
+    private final class DfsNode implements DfsNodeInterface {
 
-        /** Transitions that need to be processed. */
+        /** Transitions that need to be processed. Contains backtrack\completed */
         private final Queue<ExecutableTransitionForImmutableExplState> todo;
+        /** Transitions grouped by the process in which they belong. */
         private final Collection<ProcessTransitions> all;
 
+        /** The set of processes that need to be processed. Can change while traversing
+         * the explicit state graph. */
         private final Set<ProcessTransitions> backtrack = new HashSet<>();
         private final ImmutableExplState state;
         private final ExecutableTransition lastTransition;
+
+        /**
+         * Stores whether a local transition is executed next
+         * (and hence no later backtracking will be needed).
+         * */
         private final boolean localProcessTransition;
 
-        private Optional<Collection<ExecutableTransitionForImmutableExplState>> localProcessTransition(ImmutableExplState state) {
-            var p = LocalityUtils.findAnyEnabledLocalTransition(state);
-            return p.map(enabledTransitions ->
-                    enabledTransitions.stream()
-                            .map(state::transitionFrom)
-                            .collect(Collectors.toUnmodifiableSet()));
+        private void pushExecutableTransitions(Stream<ExecutableTransition> transitionStream) {
+            transitionStream.map(state::transitionFrom).forEach(todo::add);
         }
 
+        /**
+         * Adds a process to the backtrack set.
+         * @param pt The process to be added to the backtrack set.
+         */
         private void push(ProcessTransitions pt) {
             Preconditions.checkState(!localProcessTransition);
             if (backtrack.contains(pt))
                 return;
             backtrack.add(pt);
-            ExecutableTransitionUtils.streamExecutableTransitions(state, pt.stream())
-                    .map(state::transitionFrom).forEach(todo::add);
+            pushExecutableTransitions(pt.enabledStream());
         }
 
         private DfsNode(ImmutableExplState state, @Nullable ExecutableTransition lastTransition) {
             this.state = state;
             this.lastTransition = lastTransition;
             all = TransitionUtils.getProcessTransitions(state);
-            var local = localProcessTransition(state);
+            var local = LocalityUtils.findAnyEnabledLocalTransition(state);
             todo = new ArrayDeque<>();
             if (local.isPresent()) {
+                // if a local transition set was found at a process ->
+                // no backtracking, etc. is needed.
                 localProcessTransition = true;
-                todo.addAll(local.get());
+                pushExecutableTransitions(local.get().enabledStream());
             } else {
                 localProcessTransition = false;
-                // There could be no transitions, we are in a deadlock or final location
                 var y = all.stream().filter( // has an enabled transition
-                        pt -> pt.enabledStream().findAny().isPresent()
+                        ProcessTransitions::hasAnyEnabledTransition
                 ).findAny(); // any enabled will do
                 y.ifPresent(this::push);
                 assert y.isEmpty() == todo.isEmpty();
+                // if empty, we are in final location or deadlock, but it's not a problem.
             }
 
         }
 
-        /** fully expand */
+        /** fully expand node. */
         private void expand() {
-            for (var processTransitions : all) {
-                if (processTransitions.enabledStream().findAny().isEmpty())
-                    continue;
-                push(processTransitions);
-            }
+            all.stream().filter(ProcessTransitions::hasAnyEnabledTransition)
+                    .forEach(this::push);
         }
 
         public DfsNode child() {
