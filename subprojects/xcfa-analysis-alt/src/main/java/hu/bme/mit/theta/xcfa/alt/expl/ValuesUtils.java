@@ -104,4 +104,8 @@ final class ValuesUtils {
         return VarIndexing.all(0);
     }
 
+    public static boolean canExitWait(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
+        Preconditions.checkState(x.isPresent(), "Every sync/synthetic var should be initialised");
+        return ((SyntheticLitExpr)x.get()).exitWait(process).isValid();
+    }
 }

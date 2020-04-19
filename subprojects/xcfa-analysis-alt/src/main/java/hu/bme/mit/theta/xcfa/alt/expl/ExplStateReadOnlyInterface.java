@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Optional;
@@ -40,4 +42,6 @@ interface ExplStateReadOnlyInterface {
      * @return the process of the transition.
      */
     XCFA.Process getTransitionProcess();
+
+    boolean canExitWait(VarDecl<SyntheticType> syncVar);
 }

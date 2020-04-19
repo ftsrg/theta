@@ -58,4 +58,10 @@ interface ExplStateMutatorInterface {
     void unlock(VarDecl<SyntheticType> syncVar, XCFA.Process process);
 
     void modifyIndexing(XCFA.Process.Procedure oldProcedure, int modifier);
+
+    void exitWait(VarDecl<SyntheticType> syncVar, XCFA.Process process);
+
+    void enterWait(VarDecl<SyntheticType> syncVar, XCFA.Process process);
+
+    void signalAll(VarDecl<SyntheticType> syncVar);
 }

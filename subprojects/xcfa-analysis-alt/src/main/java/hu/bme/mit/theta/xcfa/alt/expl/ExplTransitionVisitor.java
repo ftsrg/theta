@@ -15,9 +15,26 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import hu.bme.mit.theta.core.stmt.*;
-import hu.bme.mit.theta.core.stmt.xcfa.*;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.Optional;
@@ -57,21 +74,43 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(AtomicBeginStmt atomicBeginStmt, ExplStateReadOnlyInterface readOnlyState) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
         return Optional.of(
-                state -> StmtHelper.atomicBegin(state, readOnlyState.getTransitionProcess())
+                state -> StmtHelper.atomicBegin(state, process)
         );
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(AtomicEndStmt atomicEndStmt, ExplStateReadOnlyInterface readOnlyState) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
         return Optional.of(
-                state -> StmtHelper.atomicEnd(state, readOnlyState.getTransitionProcess())
+                state -> StmtHelper.atomicEnd(state, process)
         );
     }
 
     @Override
+    public Optional<TransitionExecutorInterface> visit(EnterWaitStmt stmt, ExplStateReadOnlyInterface readOnlyState) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
+        return Optional.of(
+                state -> state.enterWait(stmt.getSyncVar(), process)
+        );
+    }
+
+    @Override
+    public Optional<TransitionExecutorInterface> visit(ExitWaitStmt stmt, ExplStateReadOnlyInterface readOnlyState) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
+        if (readOnlyState.canExitWait(stmt.getSyncVar()))
+            return Optional.of(
+                    state -> state.exitWait(stmt.getSyncVar(), process)
+            );
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<TransitionExecutorInterface> visit(NotifyAllStmt notifyAllStmt, ExplStateReadOnlyInterface readOnlyState) {
-        throw new UnsupportedOperationException("Operation not supported!");
+        return Optional.of(
+                state -> state.signalAll(notifyAllStmt.getSyncVar())
+        );
     }
 
     @Override
@@ -81,19 +120,22 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(WaitStmt waitStmt, ExplStateReadOnlyInterface readOnlyState) {
-        throw new UnsupportedOperationException("Operation not supported!");
+        throw new UnsupportedOperationException("Operation not supported! Use DefaultTransformation to split wait into" +
+                "two parts, needed here).");
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(LockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
         if (ValuesUtils.lockable(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getTransitionProcess()))
-            return Optional.of(state -> StmtHelper.lock(state, readOnlyState.getTransitionProcess(), lockStmt));
+            return Optional.of(state -> StmtHelper.lock(state, process, lockStmt));
         return Optional.empty();
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(UnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
-        return Optional.of(state -> StmtHelper.unlock(state, readOnlyState.getTransitionProcess(), unlockStmt));
+        XCFA.Process process = readOnlyState.getTransitionProcess();
+        return Optional.of(state -> StmtHelper.unlock(state, process, unlockStmt));
     }
 
     @Override
