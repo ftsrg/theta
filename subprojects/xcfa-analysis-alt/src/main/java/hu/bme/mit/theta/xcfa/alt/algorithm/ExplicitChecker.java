@@ -101,11 +101,12 @@ public final class ExplicitChecker {
     private static final class DfsNode extends DfsNodeBase {
 
         private static Collection<ExecutableTransitionForImmutableExplState> oneLocalOrEveryTransition(ImmutableExplState state) {
-            var p = LocalityUtils.findAnyEnabledLocalTransition(state);
-            if (p.isPresent()) {
-                var t = p.get().enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableList());
-                assert !t.isEmpty();
-                return t;
+            var t = LocalityUtils.findAnyEnabledLocalTransition(state).map(
+                    p->p.enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableList())
+            );
+            if (t.isPresent()) {
+                assert !t.get().isEmpty();
+                return t.get();
             }
             return state.getEnabledTransitions();
         }
