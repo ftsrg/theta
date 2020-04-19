@@ -56,15 +56,31 @@ public class DynamicPOChecker {
         this.debug = debug;
     }
 
-    private static void debugPrint(ImmutableExplState s, boolean debug) {
+    private static String debugIndentLevel = "";
+    private static void pushDebug(DfsNode s, boolean debug) {
         if (!debug)
             return;
-        System.out.println(s);
-        System.out.println("Enabled transitions:");
-        for (var tr : s.getEnabledTransitions()) {
-            System.out.println(tr);
+        nodeDebug(s);
+        debugIndentLevel = debugIndentLevel + "  ";
+    }
+
+    private static void popDebug(DfsNode s, boolean debug) {
+        if (!debug)
+            return;
+        debugIndentLevel = debugIndentLevel.substring(2);
+        nodeDebug(s);
+    }
+
+    private static void nodeDebug(DfsNode s) {
+        System.out.println(debugIndentLevel + "From:");
+        System.out.println(debugIndentLevel + s.lastTransition);
+        System.out.println(debugIndentLevel + "State:");
+        System.out.println(debugIndentLevel + s.state.getProcessStates());
+        System.out.println(debugIndentLevel + "Enabled transitions:");
+        for (var tr : s.state.getEnabledTransitions()) {
+            System.out.println(debugIndentLevel + tr);
         }
-        System.out.println();
+        System.out.println(debugIndentLevel);
     }
 
     /** Pushes the node to the stack if not explored before */
@@ -75,10 +91,9 @@ public class DynamicPOChecker {
             throw new UnsupportedOperationException("Dynamic partial order checker does not support infinite loops.");
         }
         if (exploredStates.contains(state)) {
-            //return;
+            // TODO return;
         }
 
-        debugPrint(state, debug);
         stackedStates.add(state);
         exploredStates.add(state);
         dfsStack.push(node);
@@ -89,6 +104,7 @@ public class DynamicPOChecker {
     private void popNode(DfsNode s0) {
         ExplState state = dfsStack.pop().getState();
         stackedStates.remove(state);
+        popDebug(s0, debug);
         assert(state.equals(s0.getState()));
     }
 
@@ -96,6 +112,7 @@ public class DynamicPOChecker {
      * SafetyResult should be always unsafe OR finished.
      */
     public SafetyResult<ExplState, Transition> check() {
+        debugIndentLevel = "";
 
         tryPushNode(new DfsNode(ImmutableExplState.initialState(xcfa), null));
 
@@ -131,6 +148,7 @@ public class DynamicPOChecker {
         ProcessTransitions getProcessTransition(int idx) {
             Preconditions.checkArgument(minIndex() <= idx && idx <= maxIndex());
             Transition t = dfsStack.get(idx+1).lastTransition;
+            //noinspection OptionalGetWithoutIsPresent
             return get(idx).all.stream().filter(x->x.getProcess() == t.getProcess()).findAny().get();
         }
 
@@ -262,7 +280,20 @@ public class DynamicPOChecker {
         private final boolean localProcessTransition;
 
         private void pushExecutableTransitions(Stream<ExecutableTransition> transitionStream) {
-            transitionStream.map(state::transitionFrom).forEach(todo::add);
+            if (debug) {
+                System.out.println(debugIndentLevel + "From state ");
+                System.out.println(debugIndentLevel + state.getProcessStates());
+            }
+            transitionStream.map(state::transitionFrom).forEach(
+                    p -> {
+                        todo.add(p);
+                        if (debug) {
+                            System.out.println(debugIndentLevel + "Adding transition " + p);
+                            System.out.println();
+                        }
+                    }
+            );
+
         }
 
         /**
@@ -273,6 +304,7 @@ public class DynamicPOChecker {
             Preconditions.checkState(!localProcessTransition);
             if (backtrack.contains(pt))
                 return;
+
             backtrack.add(pt);
             pushExecutableTransitions(pt.enabledStream());
         }
@@ -280,6 +312,9 @@ public class DynamicPOChecker {
         private DfsNode(ImmutableExplState state, @Nullable ExecutableTransition lastTransition) {
             this.state = state;
             this.lastTransition = lastTransition;
+
+            pushDebug(this, debug);
+
             all = TransitionUtils.getProcessTransitions(state);
             var local = LocalityUtils.findAnyEnabledLocalTransition(state);
             todo = new ArrayDeque<>();
