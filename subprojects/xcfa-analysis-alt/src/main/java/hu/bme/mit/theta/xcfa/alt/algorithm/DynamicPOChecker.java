@@ -120,7 +120,7 @@ public class DynamicPOChecker {
     private class IndexingUtil {
 
         int minIndex() {
-            return 1;
+            return 0;
         }
 
         int maxIndex() {
