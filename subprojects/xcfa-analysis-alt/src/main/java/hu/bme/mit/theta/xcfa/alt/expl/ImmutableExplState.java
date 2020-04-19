@@ -88,6 +88,10 @@ public final class ImmutableExplState extends ExplState {
         return ExplState.initialState(xcfa, Factory.getInstance());
     }
 
+    /**
+     * Creates an executable transition with quick straight-forward usage
+     * for immutable explicit state.
+     */
     public ExecutableTransitionForImmutableExplState transitionFrom(ExecutableTransition transition) {
         return new ExecutableTransitionForImmutableExplState(this, transition);
     }

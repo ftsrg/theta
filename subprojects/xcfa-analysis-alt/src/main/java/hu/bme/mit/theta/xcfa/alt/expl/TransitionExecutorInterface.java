@@ -15,6 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+/**
+ * Mutates the given state with a transition.
+ * Assumes that the transition is enabled and the state that generated the instance
+ * is equivalent to the one passed here.
+ * Used for co-locating the enabledness test with the state mutation itself in the source code.
+ * Should only be called internally.
+ */
 @FunctionalInterface
 public interface TransitionExecutorInterface {
     void executeInternal(ExplStateMutatorInterface state);

@@ -29,13 +29,25 @@ interface ExplStateMutatorInterface {
 
     void updateLocation(XCFA.Process process, XCFA.Process.Procedure.Location location);
 
+    /** Stores new value of the variable. If procedure-local, the call depth is handled.
+     *
+     * @param varDecl The variable to assign
+     * @param litExpr The value to be assigned. If empty, variable is havoc'd.
+     * @param <DeclType> The type of the variable
+     */
     <DeclType extends Type>void putValue(VarDecl<DeclType> varDecl, Optional<LitExpr<DeclType>> litExpr);
 
-    <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Expr<DeclType> ref);
+    /**
+     * Returns the value of the variable.
+     * @param expr The expression to evaluate
+     * @param <DeclType> The type of the variable
+     * @return The current value of the expression. If empty, there are havoc'd variables in the statement.
+     */
+    <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Expr<DeclType> expr);
 
-    void begin(XCFA.Process process);
+    void atomicBegin(XCFA.Process process);
 
-    void end(XCFA.Process process);
+    void atomicEnd(XCFA.Process process);
 
     void call(XCFA.Process process, CallStmt stmt);
 

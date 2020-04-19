@@ -21,7 +21,11 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+/**
+ * An enabled transition with the matching transition.
+ */
 public class ExecutableTransition implements Transition, TransitionExecutorInterface {
     private final Transition transition;
     private final TransitionExecutorInterface executor;
@@ -36,39 +40,53 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
         this.executor = executor;
     }
 
+    /**
+     * Creates an ExecutableTransition if the transition is enabled.
+     * Should only be called by {@link ExecutableTransitionUtils}.
+      */
     static Optional<ExecutableTransition> from(ExplState state, Transition transition) {
-        return transition.enabled(
-                new ExplStateReadOnlyInterfaceImpl(transition.getProcess(), state)
-        ).map(
+        return transition.enabled(state).map(
                 t->new ExecutableTransition(transition, t)
         );
     }
 
+    /** Probably you won't use this. */
     @Override
-    public Optional<TransitionExecutorInterface> enabled(ExplStateReadOnlyInterface state) {
+    public Optional<TransitionExecutorInterface> enabled(ExplState state) {
+        // The problem is we cannot check whether the same state was passed here as the time
+        // where this.executor was created.
+        Logger.getLogger(getClass().getName()).warning("Probably bad usage calling " +
+                "ExecutableTransition::enabled. Proceed with caution.");
         return Optional.of(executor);
     }
 
+    /** Fall-through */
     @Override
     public Collection<VarDecl<? extends Type>> getWVars() {
         return transition.getWVars();
     }
 
+    /** Fall-through */
     @Override
     public Collection<VarDecl<? extends Type>> getRWVars() {
         return transition.getRWVars();
     }
 
+    /** Fall-through */
     @Override
     public XCFA.Process getProcess() {
         return transition.getProcess();
     }
 
+    /** Fall-through */
     @Override
     public boolean isLocal() {
         return transition.isLocal();
     }
 
+    /** Fall-through.
+     * This should only be used by ExecutableTransitionFor(Imm|M)utableExplState
+     * or inside an {@link ExplStateMutatorInterface}. */
     @Override
     public void executeInternal(ExplStateMutatorInterface state) {
         executor.executeInternal(state);

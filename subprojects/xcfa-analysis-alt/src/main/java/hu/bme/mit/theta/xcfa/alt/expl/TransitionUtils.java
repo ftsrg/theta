@@ -23,6 +23,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Functions for gathering list of transitions from a given process, state, etc.
+ * Every function is global as everything is safe to use.
+ * Uses Java 8 Streams to optimize based on usage.
+ * (I hope filter.filter.map.filter.blah.blah.findAny is optimized, for example)
+ */
 public final class TransitionUtils {
 
     public static Collection<ProcessTransitions> getProcessTransitions(ExplState state) {
@@ -39,11 +45,6 @@ public final class TransitionUtils {
                 .flatMap(TransitionUtils::getTransitionsInternal);
     }
 
-    public static Stream<Stream<Transition>> getTransitionsMap(ExplState state) {
-        return state.getProcessStates().getStates().entrySet().stream()
-                .map(TransitionUtils::getTransitionsInternal);
-    }
-
     public static Stream<Transition> getTransitions(ExplState readOnlyState, XCFA.Process process) {
         return getTransitionsInternal(process, readOnlyState.getProcess(process));
     }
@@ -54,11 +55,11 @@ public final class TransitionUtils {
 
     private static Stream<Transition> getTransitionsInternal(XCFA.Process process,
                                                              ProcessState processState) {
-        return getTransitions(process, processState.getActiveCallState(),
-                processState.getCallStackSize() == 1);
+        return getTransitionsInternal(process, processState.getActiveCallState(),
+                processState.isOutmostCall());
     }
 
-    private static Stream<Transition> getTransitions(
+    private static Stream<Transition> getTransitionsInternal(
             XCFA.Process process, CallState callState, boolean outmostCall) {
         // for every edge, create an edge transition
         return Stream.concat(

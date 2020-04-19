@@ -22,6 +22,9 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Optional;
 
+/**
+ *
+ */
 final class ExplStateReadOnlyInterfaceImpl implements ExplStateReadOnlyInterface {
     private final ExplState readOnlyState;
     private final XCFA.Process process;
@@ -37,7 +40,7 @@ final class ExplStateReadOnlyInterfaceImpl implements ExplStateReadOnlyInterface
     }
 
     @Override
-    public XCFA.Process getProcess() {
+    public XCFA.Process getTransitionProcess() {
         return process;
     }
 }

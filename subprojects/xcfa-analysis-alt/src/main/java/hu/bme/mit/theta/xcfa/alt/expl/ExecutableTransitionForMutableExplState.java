@@ -17,6 +17,10 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
+ * The important function is the execute() which returns a new ImmutableExplState command.
+ */
 public final class ExecutableTransitionForMutableExplState extends ExecutableTransition {
     private final MutableExplState state;
     private final int xVersion;

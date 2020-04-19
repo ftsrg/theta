@@ -19,14 +19,24 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-/** Checks whether a transition is local or has effects among multiple threads.
- *  If a read or write occurs on a global variable, then it must be local.
+/**
+ * An optimization to shared memory checker algorithms is to determine if a state change is local.
+ *
+ * Local transition means that it does not access any global variables that might interfere with
+ * the execution of the transition.
+ * Any execution path is equivalent to one with the local transition executed first, if there is at least one.
+ *
+ * Note: If the execution path has some special property (not e.g. state reachability or deadlock checks),
+ * then this might not be true.
+ *
+ * Note: To be more precise, if there is a local and a non-local transition in the same process,
+ * then this will not hold. This is handled here, because XCFA does not enforce this property
+ * (however a C code will not translate to this special case).
+ * This also stands if the non-local transition is disabled(!)
  */
 public final class LocalityUtils {
 
@@ -49,23 +59,24 @@ public final class LocalityUtils {
         return vars.stream().allMatch(LocalityUtils::isLocal);
     }
 
+    /** Returns whether every transition from the same process is local */
+    private static boolean isLocal(ProcessTransitions processTransitions) {
+        return processTransitions.transitionStream()
+                .allMatch(LocalityUtils::isLocal);
+    }
     /**
      * Find any process with all transitions local with at least one enabled transition, and pick one enabled
-     * transition, if any
+     * transition, if any.
+     * This is for the core optimization of determining if a transition is local.
+     * Look at the notes of {@link LocalityUtils} for notes on corner cases.
      * @param state state
      * @return an enabled transition, with all other transitions from the process being local
      */
-    public static Optional<Collection<ExecutableTransition>> findAnyEnabledLocalTransition(ExplState state) {
-        return TransitionUtils.getTransitionsMap(state) // find a process
-                .map(inner->inner.collect(Collectors.toUnmodifiableSet()))
-                .filter(inner->inner.stream().allMatch(LocalityUtils::isLocal)) // with all transitions local
-                .map(   // filter enabled entries
-                        processTransitions -> ExecutableTransitionUtils.streamExecutableTransitions(state, processTransitions.stream())
-                ).map( // collect
-                        processTransitions -> processTransitions.collect(Collectors.toUnmodifiableSet())
-                ).filter( // we need to have at least one enabled transition
-                        processTransitions -> !processTransitions.isEmpty()
-                ).findAny() // any processTransition does it
-                .map(x->x);
+    public static Optional<ProcessTransitions> findAnyEnabledLocalTransition(ExplState state) {
+        return TransitionUtils.getProcessTransitions(state).stream()
+                .filter(ProcessTransitions::hasAnyEnabledTransition)
+                .filter(LocalityUtils::isLocal)
+                .findAny();
     }
+
 }

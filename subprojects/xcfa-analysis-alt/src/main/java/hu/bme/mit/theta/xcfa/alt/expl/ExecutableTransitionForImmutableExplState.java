@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+/**
+ * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
+ * The execute() method should be used, which returns a new ImmutableExplState instance
+ * with the transition executed.
+ */
 public final class ExecutableTransitionForImmutableExplState extends ExecutableTransition {
     private final ImmutableExplState immutableExplState;
     ExecutableTransitionForImmutableExplState(ImmutableExplState immutableExplState, ExecutableTransition transition) {
@@ -22,6 +27,9 @@ public final class ExecutableTransitionForImmutableExplState extends ExecutableT
         this.immutableExplState = immutableExplState;
     }
 
+    /**
+     * @return Returns a new ImmutableExplState with the transition executed.
+     */
     public final ImmutableExplState execute() {
         return new ImmutableExplState.Builder(immutableExplState).execute(this).build();
     }

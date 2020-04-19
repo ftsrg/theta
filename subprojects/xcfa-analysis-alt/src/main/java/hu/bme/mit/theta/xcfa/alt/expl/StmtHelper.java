@@ -29,11 +29,11 @@ import java.util.Optional;
 
 final class StmtHelper {
     public static void atomicBegin(ExplStateMutatorInterface state, XCFA.Process process) {
-        state.begin(process);
+        state.atomicBegin(process);
     }
 
     public static void atomicEnd(ExplStateMutatorInterface state, XCFA.Process process) {
-        state.end(process);
+        state.atomicEnd(process);
     }
 
     public static <DeclType extends Type> void assign(ExplStateMutatorInterface state, AssignStmt<DeclType> assignStmt) {

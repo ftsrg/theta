@@ -57,8 +57,8 @@ final class ProcessState {
         callStack.pop();
     }
 
-    public int getCallStackSize() {
-        return callStack.size();
+    public boolean isOutmostCall() {
+        return callStack.size() == 1;
     }
 
     @Override

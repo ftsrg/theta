@@ -17,6 +17,9 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * Functions for querying/determining whether safety properties were satisfied in a specific state.
+ */
 final class SafetyUtils {
     public static Safety getSafety(ExplState state) {
         if (!state.getInternalSafety().isSafe()) {
@@ -59,7 +62,7 @@ final class SafetyUtils {
         return b;
     }
 
-    public static Safety getSafety(ProcessStates processStates) {
+    private static Safety getSafety(ProcessStates processStates) {
         return processStates.getStates().values().stream().map(SafetyUtils::getSafety).reduce(null, SafetyUtils::mergeAllProcessSafety);
     }
 
@@ -67,12 +70,12 @@ final class SafetyUtils {
         var safety = getSafety(processState.getActiveCallState());
         if (!safety.isSafe())
             return safety;
-        if (processState.getCallStackSize() == 1 && safety.isFinished())
+        if (processState.isOutmostCall() && safety.isFinished())
             return Safety.finished();
         return Safety.safe();
     }
 
-    public static Safety getSafety(CallState callState) {
+    private static Safety getSafety(CallState callState) {
         if (callState.isError())
             return Safety.unsafe("Error location reached");
         if (callState.isFinal())

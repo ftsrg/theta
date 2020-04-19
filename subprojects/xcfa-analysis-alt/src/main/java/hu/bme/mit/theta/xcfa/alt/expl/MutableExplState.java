@@ -107,12 +107,12 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     }
 
     @Override
-    public final void begin(XCFA.Process process) {
+    public final void atomicBegin(XCFA.Process process) {
         AtomicUtils.begin(this, process);
     }
 
     @Override
-    public final void end(XCFA.Process process) {
+    public final void atomicEnd(XCFA.Process process) {
         AtomicUtils.end(this, process);
     }
 

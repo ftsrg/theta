@@ -23,6 +23,10 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
+/**
+ * Represents all the data of a given call.
+ * Used by ProcessState to handle and store one procedure call data.
+ */
 abstract class CallState {
 
     private final XCFA.Process process;
@@ -33,30 +37,35 @@ abstract class CallState {
     private final VarDecl<? extends Type> callerResultVar;
 
     /**
-     * Determined by the last call. It is not a state of the call.
-     * We need to remember this value to execute a statement.
+     * The variable to write the value to when returning from the procedure.
+     * We need this data only to continue execution from the given state.
      */
     @Nullable
     public final VarDecl<? extends Type> getCallerResultVar() {
         return callerResultVar;
     }
 
+    /** The process the called procedure belongs to. */
     public final XCFA.Process getProcess() {
         return process;
     }
 
+    /** The procedure the call belongs to. */
     public final XCFA.Process.Procedure getProcedure() {
         return procedure;
     }
 
     public abstract XCFA.Process.Procedure.Location getLocation();
 
+    /** Set the current location. Might be unimplemented (by ImmutableCallState). */
     public abstract void updateLocation(XCFA.Process.Procedure.Location target);
 
+    /** Returns whether the final location is reached. */
     public final boolean isFinal() {
         return getProcedure().getFinalLoc() == getLocation();
     }
 
+    /** Returns whether the error location is reached. */
     public final boolean isError() {
         return getProcedure().getErrorLoc() == getLocation();
     }

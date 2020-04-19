@@ -34,6 +34,10 @@ import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 import java.util.Optional;
 import java.util.function.Function;
 
+/**
+ * Contains functions related to valuations.
+ * More specifically, evaluating expressions and updating values.
+ */
 final class ValuesUtils {
 
     public static boolean lockable(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {

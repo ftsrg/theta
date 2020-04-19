@@ -23,10 +23,12 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import java.util.Optional;
 
 /**
- * ExplStateMutatorInterface parameter must be only used to determine the enabledness.
- * For modifying the state, the enabledTransition's parameter must be used!
- * This is because readOnlyState can be an ImmutableExplStateMutatorInterface, and when executing the state,
- * a MutableExplStateMutatorInterface is created that is passed as a parameter to the EnabledTransition::execute method.
+ * Creates an executor interface from a statement and a state.
+ * The parameter (of type {@link ExplStateReadOnlyInterface}) must be only used to determine the enabledness
+ * of the transition.
+ * For modifying the state, the {@link TransitionExecutorInterface}'s parameter must be used!
+ * The former one might be immutable (hence the name), or we do not want to have it mutated.
+ * The latter, however is guaranteed to represent the exact same state (and maybe reference-equal).
  */
 final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyInterface, Optional<TransitionExecutorInterface>> {
 
@@ -40,7 +42,7 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(XcfaCallStmt stmt, ExplStateReadOnlyInterface readOnlyState) {
-        return Optional.of(state -> state.call(readOnlyState.getProcess(), (CallStmt)stmt));
+        return Optional.of(state -> state.call(readOnlyState.getTransitionProcess(), (CallStmt)stmt));
     }
 
     @Override
@@ -56,14 +58,14 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     @Override
     public Optional<TransitionExecutorInterface> visit(AtomicBeginStmt atomicBeginStmt, ExplStateReadOnlyInterface readOnlyState) {
         return Optional.of(
-                state -> StmtHelper.atomicBegin(state, readOnlyState.getProcess())
+                state -> StmtHelper.atomicBegin(state, readOnlyState.getTransitionProcess())
         );
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(AtomicEndStmt atomicEndStmt, ExplStateReadOnlyInterface readOnlyState) {
         return Optional.of(
-                state -> StmtHelper.atomicEnd(state, readOnlyState.getProcess())
+                state -> StmtHelper.atomicEnd(state, readOnlyState.getTransitionProcess())
         );
     }
 
@@ -84,14 +86,14 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(LockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
-        if (ValuesUtils.lockable(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getProcess()))
-            return Optional.of(state -> StmtHelper.lock(state, readOnlyState.getProcess(), lockStmt));
+        if (ValuesUtils.lockable(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getTransitionProcess()))
+            return Optional.of(state -> StmtHelper.lock(state, readOnlyState.getTransitionProcess(), lockStmt));
         return Optional.empty();
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(UnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
-        return Optional.of(state -> StmtHelper.unlock(state, readOnlyState.getProcess(), unlockStmt));
+        return Optional.of(state -> StmtHelper.unlock(state, readOnlyState.getTransitionProcess(), unlockStmt));
     }
 
     @Override

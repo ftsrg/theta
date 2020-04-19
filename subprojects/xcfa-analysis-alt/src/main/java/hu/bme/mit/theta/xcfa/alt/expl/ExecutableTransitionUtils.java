@@ -18,20 +18,36 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * Functions for handling executable transitions.
+ */
 public final class ExecutableTransitionUtils {
 
-    private static Optional<ExecutableTransition> optExecutableTransition(ExplState state, Transition transition) {
-        return ExecutableTransition.from(state, transition);
-    }
-
+    /**
+     * Filters the transitions so that only enabled transitions are passed.
+     * Type is changed to reflect enabledness.
+     * This is the function responsible for checking whether an atomic lock is in place, so
+     * every transition -> executableTransition translation should use this function.
+     * @param state The state the executableTransition
+     * @param transitionStream The transitions to process
+     * @return returns a stream of enabled transitions
+     */
     public static Stream<ExecutableTransition> streamExecutableTransitions(ExplState state, Stream<Transition> transitionStream) {
-        return transitionStream
-                .map(
-                        transitionEntry-> optExecutableTransition(state, transitionEntry)
+        var stream = transitionStream;
+        if (state.getAtomicLock() != null) {
+            stream = stream.filter(t -> t.getProcess() == state.getAtomicLock());
+        }
+        return stream.map(
+                        transitionEntry -> ExecutableTransition.from(state, transitionEntry)
                 ).filter(Optional::isPresent)
                 .map(Optional::get);
     }
 
+    /**
+     * Returns the list of enabled transitions.
+     * @param state The state of execution
+     * @return The stream of executable transitions.
+     */
     public static Stream<ExecutableTransition> getExecutableTransitions(ExplState state) {
         if (state.getAtomicLock() == null) {
             return streamExecutableTransitions(state, TransitionUtils.getTransitions(state));

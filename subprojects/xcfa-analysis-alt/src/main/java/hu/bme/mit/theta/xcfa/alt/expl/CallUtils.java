@@ -27,22 +27,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Useful functions for handling calling and returning from calls.
+ * Has many unsafe methods.
+ */
 final class CallUtils {
 
     public static void push(ExplStateMutatorInterface state, XCFA.Process process, ProcessState processState, CallStmt stmt, ExplState.Factory0 factory) {
+        // extra care is needed to read and write the correct version of the variables.
+        // evaluate parameters *before* incrementing the depth of recursion on the indexing.
+        // write local parameter copies *after* that.
         XCFA.Process.Procedure procedure = stmt.getProcedure();
 
         Preconditions.checkState(procedure.getParams().size() == stmt.getParams().size());
-        // pass parameters...
+        // save parameter values
         List<Optional<LitExpr<? extends Type>>> callerParameters = evalParams(state, stmt);
 
+        // create new callstate, increment depth of call.
         processState.push(factory.createCallState(process, procedure, procedure.getInitLoc(), stmt.getResultVar()));
         state.modifyIndexing(procedure, 1);
 
+        // write local copies of the parameters.
         putParameterValues(state, procedure, callerParameters);
     }
 
     public static void pop(ProcessState processState, ExplStateMutatorInterface state) {
+        // similarly to push, extra care is needed to handle the correct version of the variables.
         XCFA.Process.Procedure oldProcedure = processState.getActiveCallState().getProcedure();
         VarDecl<? extends Type> whereToSaveResultUnindexed = processState.getActiveCallState().getCallerResultVar();
 

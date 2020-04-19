@@ -22,9 +22,9 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public final class ProcessTransitions {
-    public final XCFA.Process process;
-    public final Collection<Transition> transitions;
-    public final ExplState state;
+    private final XCFA.Process process;
+    private final Collection<Transition> transitions;
+    private final ExplState state;
 
     public ProcessTransitions(ExplState state, XCFA.Process process, Collection<Transition> transitions) {
         this.process = process;
@@ -32,12 +32,16 @@ public final class ProcessTransitions {
         this.state = state;
     }
 
-    public Stream<Transition> stream() {
+    public Stream<Transition> transitionStream() {
         return transitions.stream();
     }
 
     public Stream<ExecutableTransition> enabledStream() {
-        return ExecutableTransitionUtils.streamExecutableTransitions(state, stream());
+        return ExecutableTransitionUtils.streamExecutableTransitions(state, transitionStream());
+    }
+
+    public boolean hasAnyEnabledTransition() {
+        return enabledStream().findAny().isPresent();
     }
 
     @Override
@@ -51,5 +55,9 @@ public final class ProcessTransitions {
     @Override
     public int hashCode() {
         return Objects.hash(process);
+    }
+
+    public XCFA.Process getProcess() {
+        return process;
     }
 }

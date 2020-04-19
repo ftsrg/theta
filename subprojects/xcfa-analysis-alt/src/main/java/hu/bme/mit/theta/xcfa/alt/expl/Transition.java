@@ -23,11 +23,59 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import java.util.Collection;
 import java.util.Optional;
 
+/**
+ * Represents a state change.
+ * Main method is enabled(), which returns an executable interface, when the transition is enabled.
+ * It is assumed that a Transition only chenges state of globals and exactly one process.
+ * TODO probably this means that monitor.wait will be split to two edges.
+ *     One edge is registering the process/synthetic to a waiting state (and exits the monitor).
+ *     The other is only enabled when the synthetic state is reset (and enters the monitor).
+ */
 public interface Transition extends Action {
-    Optional<TransitionExecutorInterface> enabled(ExplStateReadOnlyInterface state);
+    /**
+     * Returns an executorInterface that mutates the state.
+     * The passed state does not have to be mutable.
+     * The executorInterface has to be passed a state that is mutable (and equivalent in
+     * every way to the state passed here).
+     * So care must be taken to couple these two calls.
+     * @param state A state which is not mutated(!).
+     * @return Returns empty when disabled, otherwise an executor interface to mutate the state.
+     */
+    Optional<TransitionExecutorInterface> enabled(ExplState state);
+
+    /**
+     * Auxiliary method for checking dependency of two transitions.
+     * We are interested only in global variables.
+     * Must be a subset of getRWVars()
+     * @return The list of modified variables. Might contain local variables too.
+     */
     Collection<VarDecl<? extends Type>> getWVars();
+
+    /**
+     * Auxiliary method for checking dependency of two transitions.
+     * We are interested only in global variables.
+     * Must be a superset of getWVars()
+     * @return The list of accessed variables. Might contain local variables too.
+     */
     Collection<VarDecl<? extends Type>> getRWVars();
+
+    /**
+     * The one process whose local variables and location is accessed (aside from global vars).
+     * **Note** that there must be only one such process due to many reasons
+     * laid down in multiple parts of the code.
+     * When needed, a synchronized transition could be split in such a way
+     * that they are equivalent to the original one, but only one process is accessed
+     * at a time.
+     * @return returns the single process that is accessed.
+     */
     XCFA.Process getProcess();
 
+    /**
+     * Auxiliary function for checking states that do not change global variables.
+     * Simplified version: local transitions can always be executed before
+     * any other state.
+     * LocalityUtils provides a more complete and more correct explanation.
+     * @return Returns true when the transition does not access global variables.
+     */
     boolean isLocal();
 }

@@ -83,6 +83,6 @@ final class ProcessStates {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder().addAll(states.values()).toString();
+        return Utils.lispStringBuilder().addAll(states.values().stream().map(x->x.getActiveCallState().getLocation())).toString();
     }
 }

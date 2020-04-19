@@ -24,11 +24,14 @@ import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 
 import java.util.Collection;
 import java.util.Optional;
-
+/**
+ * A transition wrapping an edge with a statement.
+ */
 final class EdgeTransition implements Transition {
     private final Edge edge;
     private final Transition innerTransition;
     private final XCFA.Process process;
+
     public EdgeTransition(XCFA.Process process, Edge edge) {
         Preconditions.checkArgument(edge.getStmts().size() == 1, "Edge should contain only 1 stmt!");
         innerTransition = new StmtTransition(edge.getStmts().get(0), process);
@@ -36,11 +39,17 @@ final class EdgeTransition implements Transition {
         this.process = process;
     }
 
+    /**
+     * The transition is enabled only when the internal transition is enabled.
+     * When executed, also updates the location of the state.
+     */
     @Override
-    public Optional<TransitionExecutorInterface> enabled(ExplStateReadOnlyInterface state0) {
+    public Optional<TransitionExecutorInterface> enabled(ExplState state0) {
         return innerTransition.enabled(state0).map(
                 enabledTransition -> (
                         state -> {
+                            // Order is important, when a call is made.
+                            // Call changes the current active call, used by updateLocation.
                             state.updateLocation(process, edge.getTarget());
                             enabledTransition.executeInternal(state);
                         }
@@ -73,6 +82,6 @@ final class EdgeTransition implements Transition {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder("EnabledTransition").add(edge).toString();
+        return Utils.lispStringBuilder("Transition").add(edge).toString();
     }
 }

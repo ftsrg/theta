@@ -22,7 +22,8 @@ import hu.bme.mit.theta.xcfa.XCFA;
 final class MutableCallState extends CallState {
     private XCFA.Process.Procedure.Location location;
 
-    MutableCallState(XCFA.Process process, XCFA.Process.Procedure procedure, XCFA.Process.Procedure.Location location, VarDecl<? extends Type> callerResultVar) {
+    MutableCallState(XCFA.Process process, XCFA.Process.Procedure procedure,
+                     XCFA.Process.Procedure.Location location, VarDecl<? extends Type> callerResultVar) {
         super(process, procedure, callerResultVar);
         this.location = location;
     }

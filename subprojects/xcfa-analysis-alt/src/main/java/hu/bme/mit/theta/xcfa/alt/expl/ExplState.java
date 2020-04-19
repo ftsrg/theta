@@ -26,10 +26,18 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 
 public abstract class ExplState implements State {
+    /** Stores the values of the variables */
     public abstract Valuation getValuation();
+    /** Stores the current depth of recursion for the procedure-local variables */
     public abstract VarIndexing getIndexing();
+    /** Stores the per-process states */
     public abstract ProcessStates getProcessStates();
+    /** Stores whether special safety properties have been violated
+     * (e.g. bad locking) */
     public abstract Safety getInternalSafety();
+    /** On non-null, there is a pending atomic statement on the given process.
+     * Only one process is enabled.
+     */
     public abstract XCFA.Process getAtomicLock();
 
     @Override
@@ -45,19 +53,23 @@ public abstract class ExplState implements State {
         return a.equals(b);
     }
 
+    /** These factories are used to reduce duplicated code in MutableExplState and ImmutableExplState.
+     * CallState can be mutable or non-mutable, that's why we need to differentiate.
+     */
     interface Factory0 {
         CallState createCallState(XCFA.Process process, XCFA.Process.Procedure procedure,
                                   XCFA.Process.Procedure.Location location,
                                   @Nullable VarDecl<? extends Type> callerResultVar);
     }
-    interface Factory<R> extends Factory0 {
+    /** These factories are used to reduce duplicated code in MutableExplState and ImmutableExplState. */
+    interface Factory<R extends ExplState> extends Factory0 {
         R create(
                 Valuation valuation, VarIndexing indexing, ProcessStates states,
                 Safety safety, XCFA.Process atomicLock
         );
     }
 
-    protected static <R> R initialState(XCFA xcfa, Factory<R> factory) {
+    protected static <R extends ExplState> R initialState(XCFA xcfa, Factory<R> factory) {
         LocalityUtils.init(xcfa);
         return factory.create(
                 ValuesUtils.getInitialValuation(xcfa),
@@ -67,7 +79,7 @@ public abstract class ExplState implements State {
                 null);
     }
 
-    protected static <R> R copyOf(ExplState x, Factory<R> factory) {
+    protected static <R extends ExplState> R copyOf(ExplState x, Factory<R> factory) {
         return factory.create(
                 x.getValuation(),
                 x.getIndexing(),
@@ -99,6 +111,7 @@ public abstract class ExplState implements State {
         );
     }
 
+    /** Short-hand for usage of getProcessStates() */
     public final ProcessState getProcess(XCFA.Process process) {
         return getProcessStates().getStateOf(process);
     }

@@ -35,18 +35,19 @@ final class StmtTransition implements Transition {
     }
 
     @Override
-    public Optional<TransitionExecutorInterface> enabled(ExplStateReadOnlyInterface state) {
-        return stmt.accept(ExplTransitionVisitor.getInstance(), state);
+    public Optional<TransitionExecutorInterface> enabled(ExplState state) {
+        return stmt.accept(ExplTransitionVisitor.getInstance(),
+                new ExplStateReadOnlyInterfaceImpl(getProcess(), state));
     }
 
     @Override
     public Collection<VarDecl<? extends Type>> getWVars() {
-        return StmtUtils.getVars(stmt);
+        return StmtUtils.getWrittenVars(stmt);
     }
 
     @Override
     public Collection<VarDecl<? extends Type>> getRWVars() {
-        return StmtUtils.getWrittenVars(stmt);
+        return StmtUtils.getVars(stmt);
     }
 
     @Override

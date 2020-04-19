@@ -34,7 +34,7 @@ public final class LeaveTransition implements Transition {
         this.callState = callState;
     }
     @Override
-    public Optional<TransitionExecutorInterface> enabled(ExplStateReadOnlyInterface state0) {
+    public Optional<TransitionExecutorInterface> enabled(ExplState state0) {
         return Optional.of(
                 state -> state.leave(callState.getProcess())
         );

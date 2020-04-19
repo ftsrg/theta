@@ -22,7 +22,22 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Optional;
 
+/**
+ * The interface for an ExplicitState and a Transition needed to determine
+ * whether the transition is enabled or not.
+ */
 interface ExplStateReadOnlyInterface {
-    <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Expr<DeclType> ref);
-    XCFA.Process getProcess();
+    /**
+     * Returns the value of the variable.
+     * @param expr The expression to evaluate
+     * @param <DeclType> The type of the variable
+     * @return The current value of the expression. If empty, there are havoc'd variables in the statement.
+     */
+    <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Expr<DeclType> expr);
+
+    /**
+     * Returns the process of the transition.
+     * @return the process of the transition.
+     */
+    XCFA.Process getTransitionProcess();
 }

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import javax.annotation.Nullable;
 
+/** Represents a call state that cannot change */
 final class ImmutableCallState extends CallState {
 
     private final XCFA.Process.Procedure.Location location;
