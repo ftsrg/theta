@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.type;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -32,6 +33,7 @@ import java.util.Objects;
 public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implements LitExpr<SyntheticType> {
 
 	private final XCFA.Process lockedOn;
+	private final ImmutableSet<XCFA.Process> blockedProcesses;
 	/**
 	 * num == -1 -> invalid state, error reached
 	 * num == 0 -> valid state, unlocked
@@ -44,12 +46,13 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		Preconditions.checkState(num != 0 || lockedOn == null);
 		Preconditions.checkState(num <= 0 || lockedOn != null);
 	}
-	private SyntheticLitExpr(XCFA.Process lockedOn, int num) {
+	private SyntheticLitExpr(XCFA.Process lockedOn, int num, ImmutableSet<XCFA.Process> blockedProcesses) {
 		if (num > 0)
 			this.lockedOn = lockedOn;
 		else
 			this.lockedOn = null;
 		this.num = num;
+		this.blockedProcesses = blockedProcesses;
 		checkState();
 	}
 
@@ -70,9 +73,34 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return !isInvalid();
 	}
 
+	/** Releases lock, adds process to waitSet */
+	public SyntheticLitExpr enterWait(XCFA.Process process) {
+		Preconditions.checkState(num == 1, "Wait/notify should only be used with non-reentrant" +
+				" usage of locks.");
+		return new SyntheticLitExpr(null, num,
+				ImmutableSet.<XCFA.Process>builder()
+						.addAll(blockedProcesses)
+						.add(process).build()
+		);
+	}
+
+	/** Regrabs lock */
+	public SyntheticLitExpr exitWait(XCFA.Process process) {
+		if (blockedProcesses.contains(process)) {
+			return LazyHolder.BOTTOM;
+		}
+		Preconditions.checkState(!isLocked(), "Exit wait when locked. This should never happen." +
+				"Bad XCFA loading (from file to memory) could be the cause.");
+		return new SyntheticLitExpr(process, 1, blockedProcesses);
+	}
+
+	public SyntheticLitExpr signalAll() {
+		return new SyntheticLitExpr(lockedOn, num, ImmutableSet.of());
+	}
+
 	private static class LazyHolder {
-		private static final SyntheticLitExpr BOTTOM = new SyntheticLitExpr(null, -1);
-		private static final SyntheticLitExpr INSTANCE = new SyntheticLitExpr(null, 0);
+		private static final SyntheticLitExpr BOTTOM = new SyntheticLitExpr(null, -1, ImmutableSet.of());
+		private static final SyntheticLitExpr INSTANCE = new SyntheticLitExpr(null, 0, ImmutableSet.of());
 	}
 
 	/** Means an invalid usage of locks */
@@ -86,9 +114,9 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 
 	public SyntheticLitExpr lock(XCFA.Process lockOn) {
 		if (lockedOn == null) {
-			return new SyntheticLitExpr(lockOn, 1);
+			return new SyntheticLitExpr(lockOn, 1, blockedProcesses);
 		} else if (lockOn == lockedOn) {
-			return new SyntheticLitExpr(lockedOn, num+1);
+			return new SyntheticLitExpr(lockedOn, num+1, blockedProcesses);
 		}
 		return bottom();
 	}
@@ -97,7 +125,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		if (lockedOn == null) {
 			return bottom();
 		} else if (unlockOn == lockedOn) {
-			return new SyntheticLitExpr(lockedOn, num-1);
+			return new SyntheticLitExpr(lockedOn, num-1, blockedProcesses);
 		}
 		return bottom();
 	}
