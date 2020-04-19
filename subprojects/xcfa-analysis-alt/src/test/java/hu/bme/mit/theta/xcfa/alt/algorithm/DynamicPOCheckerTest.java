@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,7 @@ public class DynamicPOCheckerTest {
                 //new Object[]{"/atomic.xcfa", true}, does not support atomic statements
                 new Object[]{"/gcd.xcfa", true},
                 new Object[]{"/partialorder-test.xcfa", false},
+                new Object[]{"/partialorder-test4.xcfa", false},
                 new Object[]{"/partialorder-min-test.xcfa", false},
                 //new Object[]{"/infiniteloop.xcfa", true}, does not support loops (in explicit state graph)
                 new Object[]{"/mutex-test.xcfa", true},
@@ -87,7 +89,7 @@ public class DynamicPOCheckerTest {
         System.out.println("Testing " + filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        DynamicPOChecker checker = new DynamicPOChecker(xcfa);
+        DynamicPOChecker checker = new DynamicPOChecker(new DefaultTransformation(xcfa).build());
         SafetyResult<? extends State, ? extends Action> result = checker.check();
         checkResult(result, shouldWork);
     }
