@@ -16,14 +16,16 @@
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
-import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 
+/**
+ * Dynamic partial ordering has a notion of co-enabledness, which tries to capture usage of locking.
+ */
 public class CoenabledUtils {
     /** returns whether there is a possibility
      * that the two transitions are co-enabled */
-    public static boolean coenabled(ProcessTransitions pt, Transition tr) {
-        // over-approximations
-        // TODO what exactly is this when the process contains two transitions?
+    public static boolean coenabled(ProcessTransitions pt, ProcessTransitions tr) {
+        // TODO what exactly needs to be returned when the process contains two transitions?
+        // over-approximation
         return true;
     }
 }

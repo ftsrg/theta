@@ -20,6 +20,24 @@ import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 
 import java.util.Collection;
 
+/**
+ * Checks whether two transitions are dependent.
+ * Two transitions are independent by definition, if
+ * 1) One cannot disable the other
+ * 2) Executing them in reverse order does not change the output
+ *
+ * Dependency can always be over-approximated.
+ * We use the following fact:
+ * Two transitions can only be dependent, if
+ * 1) they are on the same process (hence can disable one another)
+ * 2) one writes a variable the other accesses
+ *
+ * Note that two reads of the same variable are independent.
+ *
+ * Defining the dependency relation between two transition is easy:
+ * If any depends on any transition, then they are dependent.
+ * For two transition sets, any depends any -> dependent
+ */
 public class DependencyUtils {
 
     private static <T> boolean hasCommon(Collection<T> c1, Collection<T> c2) {
@@ -34,6 +52,10 @@ public class DependencyUtils {
     }
 
     public static boolean depends(ProcessTransitions pt, Transition tr) {
-        return pt.transitions.stream().anyMatch(t->depends(t, tr));
+        return pt.transitionStream().anyMatch(t->depends(t, tr));
+    }
+
+    public static boolean depends(ProcessTransitions pt, ProcessTransitions tr) {
+        return pt.transitionStream().anyMatch(t->depends(tr, t));
     }
 }
