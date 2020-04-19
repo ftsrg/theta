@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkState;
  * create a new instance.
  *
  * TODO type checks around parameters and return value passing
- * TODO are types a hierarchy?
+ *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
 public final class XCFA {
 
