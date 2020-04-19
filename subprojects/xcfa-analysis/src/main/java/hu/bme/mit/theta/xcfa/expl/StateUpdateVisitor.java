@@ -21,17 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -109,6 +99,16 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 	public Void visit(UnlockStmt unlockStmt, StmtExecutorInterface param) {
 		param.unlock(unlockStmt);
 		return null;
+	}
+
+	@Override
+	public Void visit(ExitWaitStmt exitWaitStmt, StmtExecutorInterface param) {
+		throw new UnsupportedOperationException("Not yet supported");
+	}
+
+	@Override
+	public Void visit(EnterWaitStmt enterWaitStmt, StmtExecutorInterface param) {
+		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 	@Override
