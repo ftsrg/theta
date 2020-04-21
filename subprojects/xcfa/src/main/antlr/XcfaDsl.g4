@@ -370,9 +370,12 @@ stmt:	assignStmt
 	|	procCallStmt
 	|   atomicBegin
 	|	atomicEnd
+	|	legacyWaitStmt
 	|	waitStmt
 	|	notifyStmt
 	|	notifyAllStmt
+	|   mtxLock
+	|   mtxUnlock
 	;
 
 stmtList
@@ -416,6 +419,10 @@ atomicEnd
 	;
 
 waitStmt
+	: WAIT LPAREN syncVar=ID COMMA mtxVar=ID RPAREN
+	;
+
+legacyWaitStmt
 	: WAIT LPAREN syncVar=ID RPAREN
 	;
 	
@@ -426,6 +433,14 @@ notifyStmt
 notifyAllStmt
 	: NOTIFYALL LPAREN syncVar=ID RPAREN
 	;
+
+mtxLock
+    : LOCK LPAREN mtxVar=ID RPAREN
+    ;
+
+mtxUnlock
+    : UNLOCK LPAREN mtxVar=ID RPAREN
+    ;
 
 //
 
@@ -466,6 +481,14 @@ NOTIFY
 NOTIFYALL
 	:	'notifyAll'
 	;
+
+LOCK
+    :   'lock'
+    ;
+
+UNLOCK
+    :   'unlock'
+    ;
 
 ATOMICTYPE
 	:	'atomic'
