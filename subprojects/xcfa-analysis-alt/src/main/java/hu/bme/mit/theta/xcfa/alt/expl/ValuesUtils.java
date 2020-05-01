@@ -40,10 +40,10 @@ import java.util.function.Function;
  */
 final class ValuesUtils {
 
-    public static boolean lockable(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
+    public static boolean canLock(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
         Preconditions.checkState(x.isPresent(), "Every sync/synthetic var should be initialised");
         SyntheticLitExpr expr = (SyntheticLitExpr) x.get();
-        return expr.lock(process).isValid();
+        return expr.lock(process).isPresent();
     }
 
     public static <DeclType extends Type> Optional<LitExpr<DeclType>> eval(ExplState state, Expr<DeclType> expr) {
@@ -106,6 +106,6 @@ final class ValuesUtils {
 
     public static boolean canExitWait(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
         Preconditions.checkState(x.isPresent(), "Every sync/synthetic var should be initialised");
-        return ((SyntheticLitExpr)x.get()).exitWait(process).isValid();
+        return ((SyntheticLitExpr)x.get()).exitWait(process).isPresent();
     }
 }

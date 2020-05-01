@@ -25,10 +25,19 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Uses a recursive mutex
- * TODO implement wait/notify
+ * Uses a recursive mutex.
+ * Return values are always Optional<SyntheticLitExpr>.
+ * 	 Empty is returned when the transition cannot be done, but it isn't an error.
+ * 	 	For example locking the mutex when locked on another process returns empty.
+ * 	 invalid() is returned when the transition is due to bad usage of locks.
+ * 	 	It may means an error of the system under verification.
+ * 	   Unlocking an unlocked mutex is such an example.
+ * 	 Precondition checks are only used when the order of operations cannot happen
+ * 	    under any circumstances, it means an error in the verifier.
+ * 	   Currently the only error could be when there is something between an enterWait and exitWait.
  */
 public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implements LitExpr<SyntheticType> {
 
@@ -42,9 +51,14 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	private final int num;
 
 	private void checkState() {
-		Preconditions.checkState(num != -1 || lockedOn == null);
-		Preconditions.checkState(num != 0 || lockedOn == null);
-		Preconditions.checkState(num <= 0 || lockedOn != null);
+		if (num == -1)
+			Preconditions.checkState(lockedOn == null);
+		if (num == 0)
+			Preconditions.checkState(lockedOn == null);
+		if (num > 0)
+			Preconditions.checkState(lockedOn != null);
+		if (lockedOn != null)
+			Preconditions.checkState(!blockedProcesses.contains(lockedOn));
 	}
 	private SyntheticLitExpr(XCFA.Process lockedOn, int num, ImmutableSet<XCFA.Process> blockedProcesses) {
 		if (num > 0)
@@ -65,7 +79,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return lockedOn != null;
 	}
 
-	public XCFA.Process getProcess() {
+	public XCFA.Process getOwnerProcess() {
 		return lockedOn;
 	}
 
@@ -74,28 +88,45 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	}
 
 	/** Releases lock, adds process to waitSet */
-	public SyntheticLitExpr enterWait(XCFA.Process process) {
-		Preconditions.checkState(num == 1, "Wait/notify should only be used with non-reentrant" +
-				" usage of locks.");
-		return new SyntheticLitExpr(null, num,
+	public Optional<SyntheticLitExpr> enterWait(XCFA.Process waitOn) {
+		if (!isLocked()) {
+			// wait should be called when locked on the mutex.
+			return invalid();
+		}
+		if (getOwnerProcess() != waitOn) {
+			// wait() without lock()
+			return invalid();
+		}
+		// TODO this is more of an exception where we cannot check consistency
+		//   it would be both reentrant and use wait/signal, which is not supported.
+		Preconditions.checkState(num == 1, "Wait/notify with non-reentrant" +
+				" usage of locks is not supported .");
+		return Optional.of(new SyntheticLitExpr(null, 0,
 				ImmutableSet.<XCFA.Process>builder()
 						.addAll(blockedProcesses)
-						.add(process).build()
-		);
+						.add(waitOn).build()
+		));
 	}
 
-	/** Regrabs lock */
-	public SyntheticLitExpr exitWait(XCFA.Process process) {
-		if (blockedProcesses.contains(process)) {
-			return LazyHolder.BOTTOM;
+	/** Regrabs lock.
+	 * Optional.empty() means the transition is disabled.
+	 * Bottom is on bad lock usage.
+	 */
+	public Optional<SyntheticLitExpr> exitWait(XCFA.Process waitOn) {
+		if (blockedProcesses.contains(waitOn)) {
+			return Optional.empty();
 		}
-		Preconditions.checkState(!isLocked(), "Exit wait when locked. This should never happen." +
-				"Bad XCFA loading (from file to memory) could be the cause.");
-		return new SyntheticLitExpr(process, 1, blockedProcesses);
+		if (isLocked()) {
+			Preconditions.checkState(getOwnerProcess() != waitOn,
+					"Exit wait in locked state. This should never happen." +
+					"Bad XCFA loading (from file to memory) could be the cause.");
+			return Optional.empty();
+		}
+		return Optional.of(new SyntheticLitExpr(waitOn, num+1, blockedProcesses));
 	}
 
-	public SyntheticLitExpr signalAll() {
-		return new SyntheticLitExpr(lockedOn, num, ImmutableSet.of());
+	public Optional<SyntheticLitExpr> signalAll() {
+		return Optional.of(new SyntheticLitExpr(lockedOn, num, ImmutableSet.of()));
 	}
 
 	private static class LazyHolder {
@@ -104,30 +135,36 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	}
 
 	/** Means an invalid usage of locks */
-	private static SyntheticLitExpr bottom() {
-		return LazyHolder.BOTTOM;
+	private static Optional<SyntheticLitExpr> invalid() {
+		return Optional.of(LazyHolder.BOTTOM);
 	}
 
 	public static SyntheticLitExpr unlocked() {
 		return LazyHolder.INSTANCE;
 	}
 
-	public SyntheticLitExpr lock(XCFA.Process lockOn) {
+	public Optional<SyntheticLitExpr> lock(XCFA.Process lockOn) {
+		Preconditions.checkState(!blockedProcesses.contains(lockOn),
+				"Error! Probably a lock stmt between enterWait and exitWait on the same process.");
 		if (lockedOn == null) {
-			return new SyntheticLitExpr(lockOn, 1, blockedProcesses);
+			return Optional.of(new SyntheticLitExpr(lockOn, 1, blockedProcesses));
 		} else if (lockOn == lockedOn) {
-			return new SyntheticLitExpr(lockedOn, num+1, blockedProcesses);
+			return Optional.of(new SyntheticLitExpr(lockedOn, num+1, blockedProcesses));
 		}
-		return bottom();
+		return Optional.empty();
 	}
 
-	public SyntheticLitExpr unlock(XCFA.Process unlockOn) {
+	public Optional<SyntheticLitExpr> unlock(XCFA.Process unlockOn) {
+		Preconditions.checkState(!blockedProcesses.contains(unlockOn),
+				"Error! Probably an unlock stmt between enterWait and exitWait on the same process.");
 		if (lockedOn == null) {
-			return bottom();
+			// unlocking when already unlocked -> bad locking
+			return invalid();
 		} else if (unlockOn == lockedOn) {
-			return new SyntheticLitExpr(lockedOn, num-1, blockedProcesses);
+			return Optional.of(new SyntheticLitExpr(lockedOn, num-1, blockedProcesses));
 		}
-		return bottom();
+		// unlocking when locked... But somehow on an other process?
+		return invalid();
 	}
 
 	@Override

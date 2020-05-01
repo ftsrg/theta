@@ -202,14 +202,14 @@ public final class ExplState extends AbstractExplState {
 	}
 
 	public boolean isLockedOn(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-		return isLocked(syncVar) && getLock(syncVar).getProcess() == process;
+		return isLocked(syncVar) && getLock(syncVar).getOwnerProcess() == process;
 	}
 
 	/**
 	 * TODO bad lock usage indicates error by overriding attr. safety.
 	 * This might be bad for copying states */
 	public void lock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-		SyntheticLitExpr expr = getLock(syncVar).lock(process);
+		SyntheticLitExpr expr = getLock(syncVar).lock(process).get();
 		Preconditions.checkState(!expr.isInvalid());
 		valuation.put(syncVar, expr);
 	}
@@ -218,7 +218,7 @@ public final class ExplState extends AbstractExplState {
 	 * TODO bad lock usage indicates error by overriding attr. safety.
 	 * This might be bad for copying states */
 	public void unlock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-		SyntheticLitExpr expr = getLock(syncVar).unlock(process);
+		SyntheticLitExpr expr = getLock(syncVar).unlock(process).get();
 		if (expr.isInvalid()) {
 			// TODO ???
 			safety = new StateSafety(false, false, "Bad unlocking of a mutex");

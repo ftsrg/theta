@@ -127,7 +127,7 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     @Override
     public Optional<TransitionExecutorInterface> visit(LockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
         XCFA.Process process = readOnlyState.getTransitionProcess();
-        if (ValuesUtils.lockable(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getTransitionProcess()))
+        if (ValuesUtils.canLock(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getTransitionProcess()))
             return Optional.of(state -> StmtHelper.lock(state, process, lockStmt));
         return Optional.empty();
     }

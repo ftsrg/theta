@@ -61,12 +61,12 @@ abstract class CallState {
     public abstract void updateLocation(XCFA.Process.Procedure.Location target);
 
     /** Returns whether the final location is reached. */
-    public final boolean isFinal() {
+    public boolean isFinal() {
         return getProcedure().getFinalLoc() == getLocation();
     }
 
     /** Returns whether the error location is reached. */
-    public final boolean isError() {
+    public boolean isError() {
         return getProcedure().getErrorLoc() == getLocation();
     }
 
