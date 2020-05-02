@@ -118,8 +118,8 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		}
 		if (isLocked()) {
 			Preconditions.checkState(getOwnerProcess() != waitOn,
-					"Exit wait in locked state. This should never happen." +
-					"Bad XCFA loading (from file to memory) could be the cause.");
+					"Found exitWait when locked on the owner process. This should never happen." +
+					"Bad XCFA could be the cause.");
 			return Optional.empty();
 		}
 		return Optional.of(new SyntheticLitExpr(waitOn, num+1, blockedProcesses));

@@ -4,7 +4,6 @@ main process valami {
         init loc L0
         loc L1
         loc L2
-        loc L3
         final loc END
         error loc ERR
 
@@ -14,7 +13,7 @@ main process valami {
     }
 }
 
-main process valamimas {
+process valamimas {
     main procedure mainProcedure() {
         init loc L0
         loc L1
@@ -24,7 +23,7 @@ main process valamimas {
         error loc ERR
 
         L0 -> L1 { lock(x) }
-        L1 -> L2 { notify(x) }
+        L1 -> L2 { notifyAll(x) }
         L2 -> END { unlock(x) }
     }
 }

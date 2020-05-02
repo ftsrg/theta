@@ -103,7 +103,7 @@ class EmptyTransformation {
         if (val.getErrorLoc() != null)
             builder.setErrorLoc(transformed(builder, val.getErrorLoc()));
         builder.setFinalLoc(transformed(builder, val.getFinalLoc()));
-        builder.setName(builder.getName());
+        builder.setName(val.getName());
         return builder.build();
     }
 

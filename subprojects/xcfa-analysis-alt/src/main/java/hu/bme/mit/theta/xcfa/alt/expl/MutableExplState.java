@@ -103,12 +103,12 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
 
     @Override
     public void exitWait(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.enterWait(process).get());
+        ValuesUtils.executeLockOperation(this, syncVar, x->x.exitWait(process).get());
     }
 
     @Override
     public void enterWait(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.exitWait(process).get());
+        ValuesUtils.executeLockOperation(this, syncVar, x->x.enterWait(process).get());
     }
 
     @Override
