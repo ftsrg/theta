@@ -23,7 +23,7 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 public final class ExecutableTransitionForImmutableExplState extends ExecutableTransition {
     private final ImmutableExplState immutableExplState;
     ExecutableTransitionForImmutableExplState(ImmutableExplState immutableExplState, ExecutableTransition transition) {
-        super(transition);
+        super(transition, immutableExplState);
         this.immutableExplState = immutableExplState;
     }
 

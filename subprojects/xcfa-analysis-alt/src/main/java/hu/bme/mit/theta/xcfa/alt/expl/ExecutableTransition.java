@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -29,15 +30,19 @@ import java.util.logging.Logger;
 public class ExecutableTransition implements Transition, TransitionExecutorInterface {
     private final Transition transition;
     private final TransitionExecutorInterface executor;
+    // TODO Only used for checking whether the usage of ExecutableTransition is good.
+    private final ExplState stateFrom;
 
-    protected ExecutableTransition(ExecutableTransition et) {
+    protected ExecutableTransition(ExecutableTransition et, ExplState stateFrom) {
         this.transition = et.transition;
         this.executor = et.executor;
+        this.stateFrom = stateFrom;
     }
 
-    private ExecutableTransition(Transition transition, TransitionExecutorInterface executor) {
+    private ExecutableTransition(Transition transition, TransitionExecutorInterface executor, ExplState stateFrom) {
         this.transition = transition;
         this.executor = executor;
+        this.stateFrom = stateFrom;
     }
 
     /**
@@ -46,7 +51,7 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
       */
     static Optional<ExecutableTransition> from(ExplState state, Transition transition) {
         return transition.enabled(state).map(
-                t->new ExecutableTransition(transition, t)
+                t->new ExecutableTransition(transition, t, state)
         );
     }
 
@@ -55,7 +60,7 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
     public Optional<TransitionExecutorInterface> enabled(ExplState state) {
         // The problem is we cannot check whether the same state was passed here as the time
         // where this.executor was created.
-        Logger.getLogger(getClass().getName()).warning("Probably bad usage calling " +
+        Logger.getLogger(getClass().getName()).warning("Probably bad usage: calling " +
                 "ExecutableTransition::enabled. Proceed with caution.");
         return Optional.of(executor);
     }
@@ -89,6 +94,7 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
      * or inside an {@link ExplStateMutatorInterface}. */
     @Override
     public void executeInternal(ExplStateMutatorInterface state) {
+        Preconditions.checkArgument(state.equals(stateFrom));
         executor.executeInternal(state);
     }
 

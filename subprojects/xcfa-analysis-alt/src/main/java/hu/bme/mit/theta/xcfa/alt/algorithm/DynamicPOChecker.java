@@ -91,7 +91,8 @@ public class DynamicPOChecker {
             throw new UnsupportedOperationException("Dynamic partial order checker does not support infinite loops.");
         }
         if (exploredStates.contains(state)) {
-            // TODO return;
+            // TODO
+            // return;
         }
 
         stackedStates.add(state);

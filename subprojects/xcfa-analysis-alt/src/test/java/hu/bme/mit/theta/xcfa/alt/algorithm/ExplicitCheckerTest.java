@@ -59,29 +59,6 @@ public class ExplicitCheckerTest {
 		);
 	}
 
-	public static void checkResult(SafetyResult<? extends State, ? extends Action> result, boolean shouldWork) {
-		System.err.println("Safety result: " + (result.isSafe() ? "Safe" : "Unsafe"));
-		if (!result.isSafe()) {
-			for (Action t: result.asUnsafe().getTrace().getActions()) {
-				System.err.println(t);
-			}
-			/*try {
-				GraphvizWriter.getInstance().writeFile(
-						TraceVisualizer.getDefault().visualize(result.asUnsafe().getTrace()),
-						"." + filepath + ".svg",
-						GraphvizWriter.Format.SVG
-				);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}*/
-		}
-		if (shouldWork && !result.isSafe()) {
-			throw new RuntimeException("Error reached, but it shouldn't have been. Error: " + result);
-		} else if (!shouldWork && result.isSafe()) {
-			throw new RuntimeException("Error or deadlock is not reached, but it should have been.");
-		}
-	}
-
 	@Test
 	public void test() throws IOException {
 		System.out.println("Testing " + filepath);
@@ -89,7 +66,7 @@ public class ExplicitCheckerTest {
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 		ExplicitChecker checker = new ExplicitChecker(new DefaultTransformation(xcfa).build());
 		SafetyResult<? extends State, ? extends Action> result = checker.check();
-		checkResult(result, shouldWork);
+		Helper.checkResult(result, shouldWork);
 	}
 
 }

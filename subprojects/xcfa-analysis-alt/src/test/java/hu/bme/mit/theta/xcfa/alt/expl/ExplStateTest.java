@@ -23,6 +23,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static org.junit.Assert.assertEquals;
+
 public class ExplStateTest {
 
     static XCFA xcfa;
@@ -35,8 +37,9 @@ public class ExplStateTest {
 
     @Test
     public void testEquality() {
-        org.junit.Assert.assertEquals(ImmutableExplState.initialState(xcfa), ImmutableExplState.initialState(xcfa));
-        org.junit.Assert.assertEquals(ImmutableExplState.initialState(xcfa), MutableExplState.initialState(xcfa));
+        assertEquals(ImmutableExplState.initialState(xcfa), ImmutableExplState.initialState(xcfa));
+        //noinspection AssertEqualsBetweenInconvertibleTypes
+        assertEquals(ImmutableExplState.initialState(xcfa), MutableExplState.initialState(xcfa));
     }
 
     @Test
@@ -46,6 +49,7 @@ public class ExplStateTest {
             System.err.println(state);
             state = state.getEnabledTransitions().iterator().next().execute();
         }
+        // should not get into infinite loop
     }
 
     @Test
@@ -55,5 +59,6 @@ public class ExplStateTest {
             System.err.println(state);
             state.getEnabledTransitions().iterator().next().execute();
         }
+        // should not get into infinite loop
     }
 }

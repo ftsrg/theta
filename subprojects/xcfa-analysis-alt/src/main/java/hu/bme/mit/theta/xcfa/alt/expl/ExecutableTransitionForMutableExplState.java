@@ -26,7 +26,7 @@ public final class ExecutableTransitionForMutableExplState extends ExecutableTra
     private final int xVersion;
     public ExecutableTransitionForMutableExplState(MutableExplState state, ExecutableTransition transition,
                                                    int paramVersion) {
-        super(transition);
+        super(transition, state);
         this.state = state;
         this.xVersion = paramVersion;
     }

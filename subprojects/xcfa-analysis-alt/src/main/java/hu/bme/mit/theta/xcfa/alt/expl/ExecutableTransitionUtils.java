@@ -25,7 +25,7 @@ public final class ExecutableTransitionUtils {
 
     /**
      * Filters the transitions so that only enabled transitions are passed.
-     * Type is changed to reflect enabledness.
+     * Different type than Transition, so it's harder to activate a disabled edge.
      * This is the function responsible for checking whether an atomic lock is in place, so
      * every transition -> executableTransition translation should use this function.
      * @param state The state the executableTransition

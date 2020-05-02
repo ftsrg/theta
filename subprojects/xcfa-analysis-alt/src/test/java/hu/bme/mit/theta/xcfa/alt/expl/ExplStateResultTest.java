@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -53,6 +54,17 @@ public class ExplStateResultTest {
         );
     }
 
+    private static String getTrace(List<ExplState> states, List<ExecutableTransitionForMutableExplState> transitions) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Trace:\n");
+        for (int i = 0; i < transitions.size(); i++) {
+            builder.append(states.get(i)).append("\n");
+            builder.append(transitions.get(i)).append("\n");
+        }
+        builder.append(states.get(states.size() - 1)).append("\n");
+        return builder.toString();
+    }
+
     @Test
     public void test() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
@@ -68,18 +80,10 @@ public class ExplStateResultTest {
             nextTransition.execute();
             states.add(ImmutableExplState.copyOf(s));
         }
-        if (!s.getSafety().isSafe() && shouldWork) {
-            System.err.println("Trace:");
-            for (int i = 0; i < transitions.size(); i++) {
-                System.err.println(states.get(i));
-                System.err.println(transitions.get(i));
-            }
-            System.err.println(states.get(transitions.size()));
-            throw new RuntimeException("Caught program error: " + s.getSafety());
-        } else if (!s.getSafety().isSafe() && !shouldWork){
+        Assert.assertFalse(getTrace(states, transitions), !s.getSafety().isSafe() && shouldWork);
+        Assert.assertFalse("Safe, but it should not be!", s.getSafety().isSafe() && !shouldWork);
+        if (!s.getSafety().isSafe() && !shouldWork){
             System.err.println("[OK] Unsafe: " + s.getSafety());
-        } else if (s.getSafety().isSafe() && !shouldWork){
-            throw new RuntimeException("Safe, but it should not be!");
         }
     }
 }
