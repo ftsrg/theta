@@ -69,10 +69,9 @@ public final class LocalityUtils {
      * transition, if any.
      * This is for the core optimization of determining if a transition is local.
      * Look at the notes of {@link LocalityUtils} for notes on corner cases.
-     * @param state state
      * @return an enabled transition, with all other transitions from the process being local
      */
-    public static Optional<ProcessTransitions> findAnyEnabledLocalTransition(ExplState state) {
+    public static Optional<ProcessTransitions> findAnyEnabledLocalProcessTransition(ExplState state) {
         return TransitionUtils.getProcessTransitions(state).stream()
                 .filter(ProcessTransitions::hasAnyEnabledTransition)
                 .filter(LocalityUtils::isLocal)
