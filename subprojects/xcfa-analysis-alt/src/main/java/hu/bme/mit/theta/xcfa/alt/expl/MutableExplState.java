@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -39,6 +40,30 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     private XCFA.Process atomicLock;
 
     /**
+     * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
+     * The important function is the execute() which returns a new ImmutableExplState command.
+     */
+    public static final class ExecutableTransition extends ExecutableTransitionBase {
+        private final MutableExplState state;
+        private final int xVersion;
+        public ExecutableTransition(MutableExplState state, ExecutableTransitionBase transition,
+                                                       int paramVersion) {
+            super(transition, state);
+            this.state = state;
+            this.xVersion = paramVersion;
+        }
+
+        public void execute() {
+            Preconditions.checkState(xVersion == state.getVersion(),
+                    "Mutable explicit state was modified before executing an enabled state. " +
+                            "You can only execute one transition from the enabled set, then query " +
+                            "the enabled transitions again.");
+            executeInternal(state);
+            state.changeVersion();
+        }
+    }
+
+    /**
      * Checks that the time of checking if a transition is enabled is the same as the time of executing the transition
      * Must not be checked by equals or included in hashCode!
      */
@@ -60,10 +85,10 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         internalSafety = Safety.unsafe(message);
     }
 
-    public final Collection<ExecutableTransitionForMutableExplState> getEnabledTransitions() {
+    public final Collection<ExecutableTransition> getEnabledTransitions() {
         return ExecutableTransitionUtils.getExecutableTransitions(this)
                 .map(
-                        x->new ExecutableTransitionForMutableExplState(MutableExplState.this, x, version)
+                        x->new ExecutableTransition(MutableExplState.this, x, version)
                 ).collect(Collectors.toUnmodifiableList());
     }
 

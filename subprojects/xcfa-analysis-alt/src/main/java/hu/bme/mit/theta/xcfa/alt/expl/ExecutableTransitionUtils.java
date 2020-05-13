@@ -32,13 +32,13 @@ public final class ExecutableTransitionUtils {
      * @param transitionStream The transitions to process
      * @return returns a stream of enabled transitions
      */
-    public static Stream<ExecutableTransition> streamExecutableTransitions(ExplState state, Stream<Transition> transitionStream) {
+    public static Stream<ExecutableTransitionBase> streamExecutableTransitions(ExplState state, Stream<Transition> transitionStream) {
         var stream = transitionStream;
         if (state.getAtomicLock() != null) {
             stream = stream.filter(t -> t.getProcess() == state.getAtomicLock());
         }
         return stream.map(
-                        transitionEntry -> ExecutableTransition.from(state, transitionEntry)
+                        transitionEntry -> ExecutableTransitionBase.from(state, transitionEntry)
                 ).filter(Optional::isPresent)
                 .map(Optional::get);
     }
@@ -48,7 +48,7 @@ public final class ExecutableTransitionUtils {
      * @param state The state of execution
      * @return The stream of executable transitions.
      */
-    public static Stream<ExecutableTransition> getExecutableTransitions(ExplState state) {
+    public static Stream<ExecutableTransitionBase> getExecutableTransitions(ExplState state) {
         if (state.getAtomicLock() == null) {
             return streamExecutableTransitions(state, TransitionUtils.getTransitions(state));
         } else {

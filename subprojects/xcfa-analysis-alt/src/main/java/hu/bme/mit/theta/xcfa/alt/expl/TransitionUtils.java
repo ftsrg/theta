@@ -31,6 +31,8 @@ import java.util.stream.Stream;
  */
 public final class TransitionUtils {
 
+    private TransitionUtils() { }
+
     public static Collection<ProcessTransitions> getProcessTransitions(ExplState state) {
         return state.getProcessStates().getStates().entrySet().stream()
                 .map(
@@ -75,5 +77,15 @@ public final class TransitionUtils {
         if (!outmostCall && callState.isFinal())
             return Optional.of(new LeaveTransition(process, callState));
         return Optional.empty();
+    }
+
+    public static boolean equals(Transition a, Transition b) {
+        while (a instanceof ExecutableTransitionBase) {
+            a = ((ExecutableTransitionBase) a).getInternalTransition();
+        }
+        while (b instanceof ExecutableTransitionBase) {
+            b = ((ExecutableTransitionBase) b).getInternalTransition();
+        }
+        return a.equals(b);
     }
 }

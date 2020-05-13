@@ -36,7 +36,7 @@ public final class ProcessTransitions {
         return transitions.stream();
     }
 
-    public Stream<ExecutableTransition> enabledStream() {
+    public Stream<ExecutableTransitionBase> enabledStream() {
         return ExecutableTransitionUtils.streamExecutableTransitions(state, transitionStream());
     }
 

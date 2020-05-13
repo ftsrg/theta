@@ -28,6 +28,26 @@ import java.util.stream.Collectors;
 
 public final class ImmutableExplState extends ExplState {
 
+    /**
+     * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
+     * The execute() method should be used, which returns a new ImmutableExplState instance
+     * with the transition executed.
+     */
+    public static final class ExecutableTransition extends ExecutableTransitionBase {
+        private final ImmutableExplState immutableExplState;
+        ExecutableTransition(ImmutableExplState immutableExplState, ExecutableTransitionBase transition) {
+            super(transition, immutableExplState);
+            this.immutableExplState = immutableExplState;
+        }
+
+        /**
+         * @return Returns a new ImmutableExplState with the transition executed.
+         */
+        public final ImmutableExplState execute() {
+            return new ImmutableExplState.Builder(immutableExplState).execute(this).build();
+        }
+    }
+
     private final ImmutableValuation valuation;
 
     private final VarIndexing indexing;
@@ -92,11 +112,11 @@ public final class ImmutableExplState extends ExplState {
      * Creates an executable transition with quick straight-forward usage
      * for immutable explicit state.
      */
-    public ExecutableTransitionForImmutableExplState transitionFrom(ExecutableTransition transition) {
-        return new ExecutableTransitionForImmutableExplState(this, transition);
+    public ExecutableTransition transitionFrom(ExecutableTransitionBase transition) {
+        return new ExecutableTransition(this, transition);
     }
 
-    public Collection<ExecutableTransitionForImmutableExplState> getEnabledTransitions() {
+    public Collection<ExecutableTransition> getEnabledTransitions() {
         return ExecutableTransitionUtils.getExecutableTransitions(this)
                 .map(this::transitionFrom)
                 .collect(Collectors.toUnmodifiableList());

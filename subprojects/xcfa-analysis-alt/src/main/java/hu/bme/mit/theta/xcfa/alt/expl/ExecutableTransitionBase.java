@@ -20,26 +20,27 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
  * An enabled transition with the matching transition.
  */
-public class ExecutableTransition implements Transition, TransitionExecutorInterface {
+public class ExecutableTransitionBase implements Transition, TransitionExecutorInterface {
     private final Transition transition;
     private final TransitionExecutorInterface executor;
-    // TODO Only used for checking whether the usage of ExecutableTransition is good.
+    // Only used for checking whether the instance is used properly
     private final ExplState stateFrom;
 
-    protected ExecutableTransition(ExecutableTransition et, ExplState stateFrom) {
+    protected ExecutableTransitionBase(ExecutableTransitionBase et, ExplState stateFrom) {
         this.transition = et.transition;
         this.executor = et.executor;
         this.stateFrom = stateFrom;
     }
 
-    private ExecutableTransition(Transition transition, TransitionExecutorInterface executor, ExplState stateFrom) {
+    private ExecutableTransitionBase(Transition transition, TransitionExecutorInterface executor, ExplState stateFrom) {
         this.transition = transition;
         this.executor = executor;
         this.stateFrom = stateFrom;
@@ -49,9 +50,9 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
      * Creates an ExecutableTransition if the transition is enabled.
      * Should only be called by {@link ExecutableTransitionUtils}.
       */
-    static Optional<ExecutableTransition> from(ExplState state, Transition transition) {
+    static Optional<ExecutableTransitionBase> from(ExplState state, Transition transition) {
         return transition.enabled(state).map(
-                t->new ExecutableTransition(transition, t, state)
+                t->new ExecutableTransitionBase(transition, t, state)
         );
     }
 
@@ -67,13 +68,13 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
 
     /** Fall-through */
     @Override
-    public Collection<VarDecl<? extends Type>> getWVars() {
+    public Set<VarDecl<? extends Type>> getWVars() {
         return transition.getWVars();
     }
 
     /** Fall-through */
     @Override
-    public Collection<VarDecl<? extends Type>> getRWVars() {
+    public Set<VarDecl<? extends Type>> getRWVars() {
         return transition.getRWVars();
     }
 
@@ -101,5 +102,9 @@ public class ExecutableTransition implements Transition, TransitionExecutorInter
     @Override
     public String toString() {
         return transition.toString();
+    }
+
+    Transition getInternalTransition() {
+        return transition;
     }
 }
