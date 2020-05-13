@@ -40,7 +40,18 @@ import java.util.Collection;
  */
 public class DependencyUtils {
 
+    /**
+     * Returns whether the two collections have elements in common.
+     * null parameter means whole set.
+     * @param c1 First collection. When null, means a "whole" set.
+     * @param c2 Second collection. When null, means a "whole" set.
+     * @param <T> type of objects
+     * @return whether the two collections have any elements in common.
+     */
     private static <T> boolean hasCommon(Collection<T> c1, Collection<T> c2) {
+        if (c1 == null || c2 == null) {
+            return true;
+        }
         return c1.stream().anyMatch(c2::contains);
     }
 
