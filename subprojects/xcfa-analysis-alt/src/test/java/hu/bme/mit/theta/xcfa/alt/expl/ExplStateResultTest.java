@@ -54,7 +54,7 @@ public class ExplStateResultTest {
         );
     }
 
-    private static String getTrace(List<ExplState> states, List<ExecutableTransitionForMutableExplState> transitions) {
+    private static String getTrace(List<ExplState> states, List<MutableExplState.ExecutableTransition> transitions) {
         StringBuilder builder = new StringBuilder();
         builder.append("Trace:\n");
         for (int i = 0; i < transitions.size(); i++) {
@@ -72,7 +72,7 @@ public class ExplStateResultTest {
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
         MutableExplState s = MutableExplState.initialState(xcfa);
         List<ExplState> states = new ArrayList<>();
-        List<ExecutableTransitionForMutableExplState> transitions = new ArrayList<>();
+        List<MutableExplState.ExecutableTransition> transitions = new ArrayList<>();
         states.add(ImmutableExplState.copyOf(s));
         while (!s.getSafety().isFinished()) {
             var nextTransition = s.getEnabledTransitions().iterator().next();

@@ -16,7 +16,7 @@ public class TransformTest {
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
 
         XCFA xcfa2 = new DefaultTransformation(xcfa).build();
-        ExplicitChecker checker = new ExplicitChecker(xcfa2, true);
+        ExplicitChecker checker = new ExplicitChecker(xcfa2);
         assert checker.check().isSafe();
     }
 }
