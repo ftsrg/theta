@@ -29,7 +29,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
@@ -42,22 +41,7 @@ public class ExplicitCheckerTest {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		return Arrays.asList(
-				new Object[]{"/functions-global-local.xcfa", true},
-				new Object[]{"/fibonacci.xcfa", true},
-				new Object[]{"/simple-test.xcfa", true},
-				new Object[]{"/deadlock.xcfa", false},
-				//new Object[]{"/atomic.xcfa", true},
-				new Object[]{"/gcd.xcfa", true},
-				new Object[]{"/partialorder-test.xcfa", false},
-				new Object[]{"/infiniteloop.xcfa", true},
-				new Object[]{"/mutex-test.xcfa", true},
-				new Object[]{"/mutex-test2.xcfa", false},
-				new Object[]{"/mutex-test3.xcfa", false},
-				new Object[]{"/mutex-test4.xcfa", true},
-				new Object[]{"/very-parallel.xcfa", true},
-				new Object[]{"/waitnotify.xcfa", true}
-		);
+		return FileListHelper.tests("All");
 	}
 
 	@Test
@@ -65,7 +49,9 @@ public class ExplicitCheckerTest {
 		System.out.println("Testing " + filepath);
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		ExplicitChecker checker = new ExplicitChecker(new DefaultTransformation(xcfa).build());
+		Config config = new Config();
+		config.optimizeLocals = true;
+		ExplicitChecker checker = new ExplicitChecker(new DefaultTransformation(xcfa).build(), config);
 		SafetyResult<? extends State, ? extends Action> result = checker.check();
 		Helper.checkResult(result, shouldWork);
 	}

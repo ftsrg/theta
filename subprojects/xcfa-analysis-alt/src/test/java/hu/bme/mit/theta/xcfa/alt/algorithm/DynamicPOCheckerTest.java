@@ -29,7 +29,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
@@ -42,23 +41,7 @@ public class DynamicPOCheckerTest {
 
     @Parameters()
     public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{"/functions-global-local.xcfa", true},
-                new Object[]{"/fibonacci.xcfa", true},
-                new Object[]{"/simple-test.xcfa", true},
-                new Object[]{"/deadlock.xcfa", false},
-                //new Object[]{"/atomic.xcfa", true}, does not support atomic statements
-                new Object[]{"/gcd.xcfa", true},
-                new Object[]{"/partialorder-test.xcfa", false},
-                new Object[]{"/partialorder-test4.xcfa", false},
-                new Object[]{"/partialorder-min-test.xcfa", false},
-                //new Object[]{"/infiniteloop.xcfa", true}, does not support loops (in explicit state graph)
-                new Object[]{"/mutex-test.xcfa", true},
-                new Object[]{"/mutex-test2.xcfa", false},
-                new Object[]{"/mutex-test3.xcfa", false},
-                new Object[]{"/mutex-test4.xcfa", true},
-                new Object[]{"/very-parallel.xcfa", true}
-        );
+        return FileListHelper.tests("All");
     }
 
     @Test
