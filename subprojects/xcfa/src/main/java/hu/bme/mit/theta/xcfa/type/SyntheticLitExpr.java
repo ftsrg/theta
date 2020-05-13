@@ -125,7 +125,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return Optional.of(new SyntheticLitExpr(waitOn, num+1, blockedProcesses));
 	}
 
-	public Optional<SyntheticLitExpr> signalAll() {
+	public Optional<SyntheticLitExpr> signalAll(XCFA.Process calledFrom) {
 		return Optional.of(new SyntheticLitExpr(lockedOn, num, ImmutableSet.of()));
 	}
 

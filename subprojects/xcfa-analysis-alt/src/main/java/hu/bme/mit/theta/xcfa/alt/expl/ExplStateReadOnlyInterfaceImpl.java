@@ -46,9 +46,4 @@ final class ExplStateReadOnlyInterfaceImpl implements ExplStateReadOnlyInterface
     public XCFA.Process getTransitionProcess() {
         return process;
     }
-
-    @Override
-    public boolean canExitWait(VarDecl<SyntheticType> syncVar) {
-        return ValuesUtils.canExitWait(eval(syncVar.getRef()), process);
-    }
 }

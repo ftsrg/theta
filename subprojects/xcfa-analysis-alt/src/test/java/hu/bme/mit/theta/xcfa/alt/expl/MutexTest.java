@@ -103,7 +103,7 @@ public class MutexTest {
         lock1 = lock1.lock(process1).get();
         lock1 = lock1.enterWait(process1).get();
 
-        lock1 = lock1.signalAll().get();
+        lock1 = lock1.signalAll(process1).get();
 
         Assert.assertFalse(lock1.isLocked());
         Assert.assertTrue(lock1.isValid());

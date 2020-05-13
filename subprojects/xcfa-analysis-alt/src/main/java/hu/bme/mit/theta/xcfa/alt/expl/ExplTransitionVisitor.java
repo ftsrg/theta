@@ -36,6 +36,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
+import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
 import java.util.Optional;
 
@@ -90,27 +91,17 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(EnterWaitStmt stmt, ExplStateReadOnlyInterface readOnlyState) {
-        XCFA.Process process = readOnlyState.getTransitionProcess();
-        return Optional.of(
-                state -> state.enterWait(stmt.getSyncVar(), process)
-        );
+        return StmtHelper.executeLockOperation(stmt.getSyncVar(), readOnlyState, SyntheticLitExpr::enterWait);
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(ExitWaitStmt stmt, ExplStateReadOnlyInterface readOnlyState) {
-        XCFA.Process process = readOnlyState.getTransitionProcess();
-        if (readOnlyState.canExitWait(stmt.getSyncVar()))
-            return Optional.of(
-                    state -> state.exitWait(stmt.getSyncVar(), process)
-            );
-        return Optional.empty();
+        return StmtHelper.executeLockOperation(stmt.getSyncVar(), readOnlyState, SyntheticLitExpr::exitWait);
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(NotifyAllStmt notifyAllStmt, ExplStateReadOnlyInterface readOnlyState) {
-        return Optional.of(
-                state -> state.signalAll(notifyAllStmt.getSyncVar())
-        );
+        return StmtHelper.executeLockOperation(notifyAllStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::signalAll);
     }
 
     @Override
@@ -126,16 +117,12 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(LockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
-        XCFA.Process process = readOnlyState.getTransitionProcess();
-        if (ValuesUtils.canLock(readOnlyState.eval(lockStmt.getSyncVar().getRef()), readOnlyState.getTransitionProcess()))
-            return Optional.of(state -> StmtHelper.lock(state, process, lockStmt));
-        return Optional.empty();
+        return StmtHelper.executeLockOperation(lockStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::lock);
     }
 
     @Override
     public Optional<TransitionExecutorInterface> visit(UnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
-        XCFA.Process process = readOnlyState.getTransitionProcess();
-        return Optional.of(state -> StmtHelper.unlock(state, process, unlockStmt));
+        return StmtHelper.executeLockOperation(unlockStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::unlock);
     }
 
     @Override

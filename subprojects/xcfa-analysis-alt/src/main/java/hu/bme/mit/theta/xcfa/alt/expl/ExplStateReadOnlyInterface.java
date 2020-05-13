@@ -42,6 +42,4 @@ interface ExplStateReadOnlyInterface {
      * @return the process of the transition.
      */
     XCFA.Process getTransitionProcess();
-
-    boolean canExitWait(VarDecl<SyntheticType> syncVar);
 }

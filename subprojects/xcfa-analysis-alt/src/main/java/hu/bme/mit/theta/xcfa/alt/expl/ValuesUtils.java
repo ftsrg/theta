@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Contains functions related to valuations.
@@ -40,29 +41,12 @@ import java.util.function.Function;
  */
 final class ValuesUtils {
 
-    public static boolean canLock(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
-        Preconditions.checkState(x.isPresent(), "Every sync/synthetic var should be initialised");
-        SyntheticLitExpr expr = (SyntheticLitExpr) x.get();
-        return expr.lock(process).isPresent();
-    }
-
     public static <DeclType extends Type> Optional<LitExpr<DeclType>> eval(ExplState state, Expr<DeclType> expr) {
         Expr<DeclType> simplified = ExprUtils.simplify(PathUtils.unfold(expr, state.getIndexing()), state.getValuation());
         if (simplified instanceof LitExpr<?>) {
             return Optional.of((LitExpr<DeclType>)simplified);
         }
         return Optional.empty();
-    }
-
-    public static void executeLockOperation(MutableExplState state, VarDecl<SyntheticType> syncVar, Function<SyntheticLitExpr, SyntheticLitExpr> lockOperation) {
-        var optValue = eval(state, syncVar.getRef());
-        Preconditions.checkState(optValue.isPresent());
-        SyntheticLitExpr sync = (SyntheticLitExpr) optValue.get();
-        sync = lockOperation.apply(sync);
-        if (sync.isInvalid()) {
-            state.setUnsafe("Bad locking");
-        }
-        state.putValue(syncVar, Optional.of(sync));
     }
 
     public static <DeclType extends Type> void putValue(MutableExplState state, VarDecl<DeclType> var, Optional<LitExpr<DeclType>> expr) {
@@ -102,10 +86,5 @@ final class ValuesUtils {
 
     protected static VarIndexing getInitialIndexing() {
         return VarIndexing.all(0);
-    }
-
-    public static boolean canExitWait(Optional<LitExpr<SyntheticType>> x, XCFA.Process process) {
-        Preconditions.checkState(x.isPresent(), "Every sync/synthetic var should be initialised");
-        return ((SyntheticLitExpr)x.get()).exitWait(process).isPresent();
     }
 }

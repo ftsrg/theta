@@ -81,7 +81,8 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         return ExplState.initialState(xcfa, Factory.getInstance());
     }
 
-    final void setUnsafe(String message) {
+    @Override
+    public void setUnsafe(String message) {
         internalSafety = Safety.unsafe(message);
     }
 
@@ -127,21 +128,6 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     }
 
     @Override
-    public void exitWait(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.exitWait(process).get());
-    }
-
-    @Override
-    public void enterWait(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.enterWait(process).get());
-    }
-
-    @Override
-    public void signalAll(VarDecl<SyntheticType> syncVar) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.signalAll().get());
-    }
-
-    @Override
     public final <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Expr<DeclType> ref) {
         return ValuesUtils.eval(this, ref);
     }
@@ -154,16 +140,6 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     @Override
     public final void atomicEnd(XCFA.Process process) {
         AtomicUtils.end(this, process);
-    }
-
-    @Override
-    public final void lock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.lock(process).get());
-    }
-
-    @Override
-    public final void unlock(VarDecl<SyntheticType> syncVar, XCFA.Process process) {
-        ValuesUtils.executeLockOperation(this, syncVar, x->x.unlock(process).get());
     }
 
     @Override

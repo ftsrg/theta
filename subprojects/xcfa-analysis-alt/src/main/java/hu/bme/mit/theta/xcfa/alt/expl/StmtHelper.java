@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import com.google.common.base.Preconditions;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -22,10 +24,14 @@ import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
+import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 final class StmtHelper {
     public static void atomicBegin(ExplStateMutatorInterface state, XCFA.Process process) {
@@ -52,12 +58,21 @@ final class StmtHelper {
         return ((BoolLitExpr)readOnlyState.eval(assumeStmt.getCond()).orElse(BoolLitExpr.of(true))).getValue();
     }
 
-    public static void lock(ExplStateMutatorInterface state, XCFA.Process process, LockStmt lockStmt) {
-        state.lock(lockStmt.getSyncVar(), process);
-    }
+    public static Optional<TransitionExecutorInterface> executeLockOperation(VarDecl<SyntheticType> syncVar, ExplStateReadOnlyInterface readOnlyState,
+                                                                             BiFunction<SyntheticLitExpr, XCFA.Process, Optional<SyntheticLitExpr>> operation) {
+        XCFA.Process process = readOnlyState.getTransitionProcess();
 
-    public static void unlock(ExplStateMutatorInterface state, XCFA.Process process, UnlockStmt unlockStmt) {
-        state.unlock(unlockStmt.getSyncVar(), process);
+        var optValue = readOnlyState.eval(syncVar.getRef());
+        Preconditions.checkState(optValue.isPresent());
+        SyntheticLitExpr sync0 = (SyntheticLitExpr) optValue.get();
+        var syncOpt = operation.apply(sync0, readOnlyState.getTransitionProcess());
+        return syncOpt.map(
+                sync -> state -> {
+                    if (sync.isInvalid()) {
+                        state.setUnsafe("Bad locking");
+                    }
+                    state.putValue(syncVar, Optional.of(sync));
+                }
+        );
     }
-
 }
