@@ -20,8 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.DfsNodeInterface;
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
-import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransition;
-import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionForImmutableExplState;
+import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.LocalityUtils;
@@ -39,21 +38,24 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Stream;
 
-/** TODO Currently not working */
-public class DynamicPOChecker {
-    private final XCFA xcfa;
-    private final boolean debug;
-    private final Set<ExplState> exploredStates = new HashSet<>();
+public class DynamicPOChecker extends XcfaChecker {
     private final Set<ExplState> stackedStates = new HashSet<>();
     private final Stack<DfsNode> dfsStack = new Stack<>();
 
-    public DynamicPOChecker(XCFA xcfa) {
-        this(xcfa, false);
+    private static Config defaultConfig() {
+        Config defaultConfig = new Config();
+        defaultConfig.optimizeLocals = true;
+        return defaultConfig;
     }
 
-    public DynamicPOChecker(XCFA xcfa, boolean debug) {
-        this.xcfa = xcfa;
-        this.debug = debug;
+    public DynamicPOChecker(XCFA xcfa) {
+        this(xcfa, defaultConfig());
+    }
+
+    public DynamicPOChecker(XCFA xcfa, Config config) {
+        super(xcfa, config);
+        Preconditions.checkArgument(config.optimizeLocals, "Optimizing locals cannot be turned off " +
+                "for DPOR (yet)");
     }
 
     private static String debugIndentLevel = "";
@@ -87,16 +89,13 @@ public class DynamicPOChecker {
     private void tryPushNode(DfsNode node) {
 
         ImmutableExplState state = node.getState();
-        if (stackedStates.contains(state)) {
-            throw new UnsupportedOperationException("Dynamic partial order checker does not support infinite loops.");
-        }
-        if (exploredStates.contains(state)) {
-            // TODO
-            // return;
-        }
+        // A state cannot be discarded when an equivalent state was already processed.
+        // The path to finding the state is important
+        // there are some tests, see DynamicPOCheckerCompletenessTest checking partialorder-test4.xcfa.
+        //if (exploredStates.contains(state)) return;
+        //exploredStates.add(state);
 
         stackedStates.add(state);
-        exploredStates.add(state);
         dfsStack.push(node);
 
         backtrack(node);
@@ -105,7 +104,7 @@ public class DynamicPOChecker {
     private void popNode(DfsNode s0) {
         ExplState state = dfsStack.pop().getState();
         stackedStates.remove(state);
-        popDebug(s0, debug);
+        popDebug(s0, config.debug);
         assert(state.equals(s0.getState()));
     }
 
@@ -120,8 +119,15 @@ public class DynamicPOChecker {
         while (!dfsStack.empty()) {
             DfsNode node = dfsStack.peek();
             if (node.hasChild()) {
-                tryPushNode(node.child());
+                var child = node.child();
+                if (stackedStates.contains(child.getState())) {
+                    node.expand();
+                } else {
+                    tryPushNode(child);
+                }
             } else {
+                if (node.isFinished())
+                    onFinished(dfsStack);
                 if (!node.isSafe()) {
                     return Tracer.unsafe(dfsStack);
                 }
@@ -264,7 +270,7 @@ public class DynamicPOChecker {
     private final class DfsNode implements DfsNodeInterface {
 
         /** Transitions that need to be processed. Contains backtrack\completed */
-        private final Queue<ExecutableTransitionForImmutableExplState> todo;
+        private final Queue<ImmutableExplState.ExecutableTransition> todo;
         /** Transitions grouped by the process in which they belong. */
         private final Collection<ProcessTransitions> all;
 
@@ -272,23 +278,23 @@ public class DynamicPOChecker {
          * the explicit state graph. */
         private final Set<ProcessTransitions> backtrack = new HashSet<>();
         private final ImmutableExplState state;
-        private final ExecutableTransition lastTransition;
+        private final ExecutableTransitionBase lastTransition;
 
         /**
          * Stores whether a local transition is executed next
          * (and hence no later backtracking will be needed).
          * */
-        private final boolean localProcessTransition;
+        private boolean localProcessTransition;
 
-        private void pushExecutableTransitions(Stream<ExecutableTransition> transitionStream) {
-            if (debug) {
+        private void pushExecutableTransitions(Stream<ExecutableTransitionBase> transitionStream) {
+            if (config.debug) {
                 System.out.println(debugIndentLevel + "From state ");
                 System.out.println(debugIndentLevel + state.getProcessStates());
             }
             transitionStream.map(state::transitionFrom).forEach(
                     p -> {
                         todo.add(p);
-                        if (debug) {
+                        if (config.debug) {
                             System.out.println(debugIndentLevel + "Adding transition " + p);
                             System.out.println();
                         }
@@ -310,14 +316,14 @@ public class DynamicPOChecker {
             pushExecutableTransitions(pt.enabledStream());
         }
 
-        private DfsNode(ImmutableExplState state, @Nullable ExecutableTransition lastTransition) {
+        private DfsNode(ImmutableExplState state, @Nullable ExecutableTransitionBase lastTransition) {
             this.state = state;
             this.lastTransition = lastTransition;
 
-            pushDebug(this, debug);
+            pushDebug(this, config.debug);
 
             all = TransitionUtils.getProcessTransitions(state);
-            var local = LocalityUtils.findAnyEnabledLocalTransition(state);
+            var local = LocalityUtils.findAnyEnabledLocalProcessTransition(state);
             todo = new ArrayDeque<>();
             if (local.isPresent()) {
                 // if a local transition set was found at a process ->
@@ -338,16 +344,17 @@ public class DynamicPOChecker {
 
         /** fully expand node. */
         private void expand() {
+            localProcessTransition = false;
             all.stream().filter(ProcessTransitions::hasAnyEnabledTransition)
                     .forEach(this::push);
         }
 
         public DfsNode child() {
-            ExecutableTransition t = fetchNextTransition();
-            return new DfsNode(((ExecutableTransitionForImmutableExplState)t).execute(), t);
+            ExecutableTransitionBase t = fetchNextTransition();
+            return new DfsNode(((ImmutableExplState.ExecutableTransition)t).execute(), t);
         }
 
-        private ExecutableTransition fetchNextTransition() {
+        private ExecutableTransitionBase fetchNextTransition() {
             return todo.poll();
         }
 
@@ -367,6 +374,10 @@ public class DynamicPOChecker {
 
         public boolean hasChild() {
             return !todo.isEmpty();
+        }
+
+        public boolean isFinished() {
+            return state.getSafety().isFinished();
         }
     }
 }

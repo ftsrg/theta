@@ -18,18 +18,19 @@ package hu.bme.mit.theta.xcfa.alt.algorithm;
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.DfsNodeInterface;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
-import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionForImmutableExplState;
-
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 abstract class DfsNodeBase implements DfsNodeInterface {
     private final ImmutableExplState state;
     private final Transition lastTransition;
-    private Iterator<ExecutableTransitionForImmutableExplState> nextTransition;
+    private Iterator<ImmutableExplState.ExecutableTransition> nextTransition;
+    private final Set<ImmutableExplState.ExecutableTransition> processedTransitions = new HashSet<>();
     protected DfsNodeBase(ImmutableExplState state, @Nullable Transition lastTransition,
-                          Collection<ExecutableTransitionForImmutableExplState> outgoingTransitions) {
+                          Collection<ImmutableExplState.ExecutableTransition> outgoingTransitions) {
         this.state = state;
         this.lastTransition = lastTransition;
         nextTransition = outgoingTransitions.iterator();
@@ -43,7 +44,9 @@ abstract class DfsNodeBase implements DfsNodeInterface {
         return lastTransition;
     }
 
-    protected void resetWithTransitions(Collection<ExecutableTransitionForImmutableExplState> newOutgoingTransitions) {
+    protected void resetWithTransitions(Collection<ImmutableExplState.ExecutableTransition> newOutgoingTransitions) {
+        newOutgoingTransitions = new HashSet<>(newOutgoingTransitions);
+        newOutgoingTransitions.removeAll(processedTransitions);
         nextTransition = newOutgoingTransitions.iterator();
     }
 
@@ -56,8 +59,10 @@ abstract class DfsNodeBase implements DfsNodeInterface {
         return state.getSafety().isSafe();
     }
 
-    protected final ExecutableTransitionForImmutableExplState fetchNextTransition() {
-        return nextTransition.next();
+    protected final ImmutableExplState.ExecutableTransition fetchNextTransition() {
+        var p = nextTransition.next();
+        processedTransitions.add(p);
+        return p;
     }
 
     public abstract DfsNodeBase child();
@@ -68,5 +73,9 @@ abstract class DfsNodeBase implements DfsNodeInterface {
                 "state=" + state +
                 ", lastTransition=" + lastTransition +
                 '}';
+    }
+
+    public boolean isFinished() {
+        return state.getSafety().isFinished();
     }
 }

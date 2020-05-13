@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.alt.algorithm;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
-import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionForImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.LocalityUtils;
@@ -27,6 +26,8 @@ import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -35,45 +36,32 @@ import java.util.stream.Collectors;
  * An explicit checker traversing every possible ordering of an XCFA state.
  * Supports only zero-initialized values (because of how ExplState works).
  */
-public final class ExplicitChecker {
-    private final XCFA xcfa;
-    private final boolean debug;
+public final class ExplicitChecker extends XcfaChecker{
     private final Set<ExplState> exploredStates = new HashSet<>();
+    private final Set<ExplState> stackedStates = new HashSet<>();
     private final Stack<DfsNode> dfsStack = new Stack<>();
 
     public ExplicitChecker(XCFA xcfa) {
-        this(xcfa, false);
+        this(xcfa, new Config());
     }
 
-    public ExplicitChecker(XCFA xcfa, boolean debug) {
-        this.xcfa = xcfa;
-        this.debug = debug;
+    public ExplicitChecker(XCFA xcfa, Config config) {
+        super(xcfa,config);
     }
 
-    private static void debugPrint(ImmutableExplState s, boolean debug) {
-        if (!debug)
-            return;
-        System.out.println(s);
-        System.out.println("Enabled transitions:");
-        for (var tr : s.getEnabledTransitions()) {
-            System.out.println(tr);
-        }
-        System.out.println();
-    }
 
     /** Pushes the node to the stack if not explored before */
     private void tryPushNode(DfsNode node) {
         ImmutableExplState state = node.getState();
-        if (exploredStates.contains(state)) {
-            return;
-        }
-        debugPrint(state, debug);
+        debugPrint(state);
         exploredStates.add(state);
+        stackedStates.add(state);
         dfsStack.push(node);
     }
 
     private void popNode(DfsNode s0) {
         ExplState state = dfsStack.pop().getState();
+        stackedStates.remove(state);
         assert(state.equals(s0.getState()));
     }
 
@@ -87,8 +75,17 @@ public final class ExplicitChecker {
         while (!dfsStack.empty()) {
             DfsNode node = dfsStack.peek();
             if (node.hasChild()) {
-                tryPushNode(node.child());
+                var child = node.child();
+                if (stackedStates.contains(child.getState())) {
+                    node.expand();
+                } else {
+                    tryPushNode(child);
+                }
             } else {
+
+                if (node.isFinished())
+                    onFinished(dfsStack);
+
                 if (!node.isSafe()) {
                     return Tracer.unsafe(dfsStack);
                 }
@@ -98,28 +95,47 @@ public final class ExplicitChecker {
         return Tracer.safe();
     }
 
-    private static final class DfsNode extends DfsNodeBase {
+    private final class DfsNode extends DfsNodeBase {
 
-        private static Collection<ExecutableTransitionForImmutableExplState> oneLocalOrEveryTransition(ImmutableExplState state) {
-            var t = LocalityUtils.findAnyEnabledLocalTransition(state).map(
+        boolean local = false;
+
+        /**
+         * Returns a process with only local transitions or every transition
+         */
+        private Collection<ImmutableExplState.ExecutableTransition> oneLocalOrEveryTransition(ImmutableExplState state) {
+            if (!config.optimizeLocals)
+                return null;
+            Optional<List<ImmutableExplState.ExecutableTransition>> t = LocalityUtils.findAnyEnabledLocalProcessTransition(state).map(
                     p->p.enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableList())
             );
             if (t.isPresent()) {
                 assert !t.get().isEmpty();
                 return t.get();
             }
-            return state.getEnabledTransitions();
+            return null;
         }
 
         private DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
-            super(state, lastTransition, oneLocalOrEveryTransition(state));
+            super(state, lastTransition, state.getEnabledTransitions());
+            var l = oneLocalOrEveryTransition(state);
+            if (l != null) {
+                local = true;
+                resetWithTransitions(l);
+            }
         }
 
         @Override
         public DfsNode child() {
             // TODO do not copy to new immutable state when there is only one transition?
-            ExecutableTransitionForImmutableExplState t = fetchNextTransition();
+            var t = fetchNextTransition();
             return new DfsNode(t.execute(), t);
+        }
+
+        public void expand() {
+            if (local) {
+                local = false;
+                resetWithTransitions(getState().getEnabledTransitions());
+            }
         }
     }
 }
