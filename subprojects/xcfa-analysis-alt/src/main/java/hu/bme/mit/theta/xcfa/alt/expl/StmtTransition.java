@@ -21,10 +21,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
-final class StmtTransition implements Transition {
+public final class StmtTransition implements Transition {
 
     private final Stmt stmt;
     private final XCFA.Process process;
@@ -41,22 +41,39 @@ final class StmtTransition implements Transition {
     }
 
     @Override
-    public Collection<VarDecl<? extends Type>> getWVars() {
-        return StmtUtils.getWrittenVars(stmt);
+    public Set<VarDecl<? extends Type>> getWVars() {
+        try {
+            return StmtUtils.getWrittenVars(stmt);
+        } catch (UnsupportedOperationException ex) {
+            // if we cannot collect the variables, then turn off optimization
+            return null;
+        }
     }
 
     @Override
-    public Collection<VarDecl<? extends Type>> getRWVars() {
-        return StmtUtils.getVars(stmt);
+    public Set<VarDecl<? extends Type>> getRWVars() {
+        try {
+            return StmtUtils.getVars(stmt);
+        } catch (UnsupportedOperationException ex) {
+            // if we cannot collect the variables, then turn off optimization
+            return null;
+        }
     }
 
     @Override
     public boolean isLocal() {
-        return LocalityUtils.isLocal(StmtUtils.getVars(stmt));
+        var vars = getRWVars();
+        if (vars == null)
+            return false;
+        return LocalityUtils.isLocal(vars);
     }
 
     @Override
     public XCFA.Process getProcess() {
         return process;
+    }
+
+    public Stmt getStmt() {
+        return stmt;
     }
 }

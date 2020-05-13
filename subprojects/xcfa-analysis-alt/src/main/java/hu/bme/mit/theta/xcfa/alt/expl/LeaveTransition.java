@@ -20,9 +20,10 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public final class LeaveTransition implements Transition {
 
@@ -40,11 +41,11 @@ public final class LeaveTransition implements Transition {
         );
     }
 
-    public Collection<VarDecl<? extends Type>> getWVars() {
+    public Set<VarDecl<? extends Type>> getWVars() {
         return Collections.singleton(callState.getCallerResultVar());
     }
 
-    public Collection<VarDecl<? extends Type>> getRWVars() {
+    public Set<VarDecl<? extends Type>> getRWVars() {
         // the procedure-local variable 'return' is read, but it is not a global, hence we do not need it
         return Collections.singleton(callState.getCallerResultVar());
     }
@@ -61,5 +62,18 @@ public final class LeaveTransition implements Transition {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("LeaveCall").add(callState.getProcedure()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LeaveTransition that = (LeaveTransition) o;
+        return Objects.equals(getProcess(), that.getProcess());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getProcess());
     }
 }

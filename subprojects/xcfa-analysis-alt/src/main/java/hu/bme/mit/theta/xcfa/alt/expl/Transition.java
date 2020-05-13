@@ -20,16 +20,13 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Represents a state change.
  * Main method is enabled(), which returns an executable interface, when the transition is enabled.
- * It is assumed that a Transition only chenges state of globals and exactly one process.
- * TODO probably this means that monitor.wait will be split to two edges.
- *     One edge is registering the process/synthetic to a waiting state (and exits the monitor).
- *     The other is only enabled when the synthetic state is reset (and enters the monitor).
+ * It is assumed that a Transition only changes state of globals and exactly one process.
  */
 public interface Transition extends Action {
     /**
@@ -46,18 +43,22 @@ public interface Transition extends Action {
     /**
      * Auxiliary method for checking dependency of two transitions.
      * We are interested only in global variables.
-     * Must be a subset of getRWVars()
-     * @return The list of modified variables. Might contain local variables too.
+     * Must be a subset of getRWVars().
+     * Might return null if the list of variables cannot be determined.
+     *   When null is returned, optimisations based on variables must be turned off.
+     * @return The list of modified variables. Might contain local variables too. Null if it cannot be determined.
      */
-    Collection<VarDecl<? extends Type>> getWVars();
+    Set<VarDecl<? extends Type>> getWVars();
 
     /**
      * Auxiliary method for checking dependency of two transitions.
      * We are interested only in global variables.
-     * Must be a superset of getWVars()
-     * @return The list of accessed variables. Might contain local variables too.
+     * Must be a superset of getWVars().
+     * Might return null if the list of variables cannot be determined.
+     *   When null is returned, optimisations based on variables must be turned off.
+     * @return The list of accessed variables. Might contain local variables too. Null if it cannot be determined.
      */
-    Collection<VarDecl<? extends Type>> getRWVars();
+    Set<VarDecl<? extends Type>> getRWVars();
 
     /**
      * The one process whose local variables and location is accessed (aside from global vars).

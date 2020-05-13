@@ -102,7 +102,7 @@ public abstract class ExplState implements State {
     }
 
     public final String toString() {
-        return String.format("ImmutableExplStateImpl{valuation=%s\n indexing=%s\n processStates=%s\n internalSafety=%s\n atomicLock=%s\n}",
+        return String.format("ImmutableExplStateImpl{valuation=%s%n indexing=%s%n processStates=%s%n internalSafety=%s%n atomicLock=%s%n}",
                 getValuation(),
                 getIndexing(),
                 getProcessStates(),

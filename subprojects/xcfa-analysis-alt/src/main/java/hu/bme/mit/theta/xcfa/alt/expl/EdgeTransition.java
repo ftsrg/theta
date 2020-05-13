@@ -22,12 +22,14 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 
-import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+
 /**
  * A transition wrapping an edge with a statement.
  */
-final class EdgeTransition implements Transition {
+public final class EdgeTransition implements Transition {
     private final Edge edge;
     private final Transition innerTransition;
     private final XCFA.Process process;
@@ -59,13 +61,13 @@ final class EdgeTransition implements Transition {
 
     /** Fall through */
     @Override
-    public Collection<VarDecl<? extends Type>> getWVars() {
+    public Set<VarDecl<? extends Type>> getWVars() {
         return innerTransition.getWVars();
     }
 
     /** Fall through */
     @Override
-    public Collection<VarDecl<? extends Type>> getRWVars() {
+    public Set<VarDecl<? extends Type>> getRWVars() {
         return innerTransition.getRWVars();
     }
 
@@ -80,8 +82,25 @@ final class EdgeTransition implements Transition {
         return innerTransition.isLocal();
     }
 
+    public Transition getInnerTransition() {
+        return innerTransition;
+    }
+
     @Override
     public String toString() {
         return Utils.lispStringBuilder("Transition").add(edge).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EdgeTransition that = (EdgeTransition) o;
+        return Objects.equals(edge, that.edge);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(edge);
     }
 }

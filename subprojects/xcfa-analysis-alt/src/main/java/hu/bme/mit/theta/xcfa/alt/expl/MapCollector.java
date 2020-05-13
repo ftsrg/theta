@@ -7,7 +7,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public final class MapCollector {
-    public final static boolean DETERMINISTIC = true;
+    public static final boolean DETERMINISTIC = true;
 
     public static <K,V, T> Collector<T, ?, Map<K,V>> normalCollector(Function<T,K> kk, Function<T, V> vv) {
         return Collectors.toUnmodifiableMap(kk, vv);
