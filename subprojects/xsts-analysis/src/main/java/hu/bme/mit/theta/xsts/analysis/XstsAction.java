@@ -25,6 +25,18 @@ public class XstsAction extends StmtAction{
     }
 
     @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof XstsAction) {
+            final XstsAction that = (XstsAction) obj;
+            return this.stmt.equals(that.stmt);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(stmt).toString();
     }
