@@ -44,29 +44,29 @@ public class XstsState<S extends ExprState> implements ExprState {
         return state.isBottom();
     }
 
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + (lastActionWasEnv?0:1);
-            result = 31 * result + state.hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj instanceof XstsState) {
-            final XstsState<?> that = (XstsState<?>) obj;
-            return this.lastActionWasEnv==that.lastActionWasEnv && this.initialized == that. initialized && this.state.equals(that.state);
-        } else {
-            return false;
-        }
-    }
+//    @Override
+//    public int hashCode() {
+//        int result = hashCode;
+//        if (result == 0) {
+//            result = HASH_SEED;
+//            result = 31 * result + (lastActionWasEnv?0:1);
+//            result = 31 * result + state.hashCode();
+//            hashCode = result;
+//        }
+//        return result;
+//    }
+//
+//    @Override
+//    public boolean equals(final Object obj) {
+//        if (this == obj) {
+//            return true;
+//        } else if (obj instanceof XstsState) {
+//            final XstsState<?> that = (XstsState<?>) obj;
+//            return this.lastActionWasEnv==that.lastActionWasEnv && this.initialized == that. initialized && this.state.equals(that.state);
+//        } else {
+//            return false;
+//        }
+//    }
 
     @Override
     public String toString() {
