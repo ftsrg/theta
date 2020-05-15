@@ -53,8 +53,8 @@ public class DynamicPOCheckerCompletenessTest {
     @Parameters()
     public static Collection<Object[]> data() {
         // TODO create inverse filter
-        // everything except unsafe and big
-        return FileListHelper.tests("atomic, mutex, function, loop, threads, safe");
+        // everything except big
+        return FileListHelper.tests("atomic, mutex, function, loop, threads, safe, unsafe");
     }
 
     @Test
@@ -66,23 +66,16 @@ public class DynamicPOCheckerCompletenessTest {
         referenceConfig.rememberTraces = true;
         referenceConfig.optimizeLocals = false;
         referenceConfig.discardAlreadyExplored = false;
+        referenceConfig.forceIterate = true;
 
         var sutConfig = XcfaChecker.getSimpleDPOR();
         sutConfig.rememberTraces = true;
+        sutConfig.forceIterate = true;
 
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
         xcfa = new DefaultTransformation(xcfa).build();
         var reference = XcfaChecker.createChecker(xcfa, referenceConfig.build());
         var sut = XcfaChecker.createChecker(xcfa, sutConfig.build());
-
-        if (reference.check().isUnsafe()) {
-            // probably bad shouldWork :)
-            Assert.fail("ExplicitChecker says input is unsafe. Check the configuration in FileListHelper!");
-        }
-        if (sut.check().isUnsafe()) {
-            Assert.fail("DynamicPOChecker says input is unsafe. Probably input is well configured, but DPOR doesn't work.");
-        }
-
 
         var ref = reference.getTraces();
         var result = sut.getTraces();
@@ -124,36 +117,36 @@ public class DynamicPOCheckerCompletenessTest {
      * (Checking dependency uses over-approximation)
       */
     private boolean equivalent(Trace<ExplState, Transition> trace1, Trace<ExplState, Transition> trace2) {
-        List<Transition> path1 = trace1.getActions();
-        List<Transition> path2 = trace2.getActions();
-        if (path1.size() != path2.size()) {
+        List<Transition> goalPath = trace1.getActions();
+        List<Transition> path = trace2.getActions();
+        if (goalPath.size() != path.size()) {
             return false;
         }
-        // try to order path2 as it was in path1
+        // try to order path as it was in goalPath
         // copy to prevent any nasty side effects within the trace
-        path2 = new ArrayList<>(path2);
-        for (int goalIdx = 0; goalIdx < path1.size(); goalIdx++) {
-            Transition t = path1.get(goalIdx);
+        path = new ArrayList<>(path);
+        for (int goalIdx = 0; goalIdx < goalPath.size(); goalIdx++) {
+            Transition t = goalPath.get(goalIdx);
             int idx;
-            for (idx = goalIdx; idx < path2.size(); idx++) {
-                if (TransitionUtils.equals(t, path2.get(idx))) {
+            for (idx = goalIdx; idx < path.size(); idx++) {
+                if (TransitionUtils.equals(t, path.get(idx))) {
                     break;
                 }
             }
-            if (idx == path2.size()) // not found
+            if (idx == path.size()) // not found
                 return false;
             Preconditions.checkState(goalIdx <= idx);
-            // bubble path2[idx] to path2[goalIdx]
+            // bubble path[idx] to path[goalIdx]
             for (int j = idx; j > goalIdx; j--) {
-                // swap path2[j] and path2[j-1] if they are independent
+                // swap path[j] and path[j-1] if they are independent
 
-                Transition t1 = path2.get(j-1);
-                Transition t2 = path2.get(j);
+                Transition t1 = path.get(j-1);
+                Transition t2 = path.get(j);
                 if (DependencyUtils.depends(t1, t2)) {
                     return false;
                 }
-                path2.set(j, t1);
-                path2.set(j-1, t2);
+                path.set(j, t1);
+                path.set(j-1, t2);
             }
         }
         return true;

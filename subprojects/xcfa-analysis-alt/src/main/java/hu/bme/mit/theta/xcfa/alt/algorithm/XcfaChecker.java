@@ -70,6 +70,7 @@ public abstract class XcfaChecker {
         config.discardAlreadyExplored = false;
         config.rememberTraces = false;
         config.debug = false;
+        config.forceIterate = false;
         return config;
     }
 
@@ -80,10 +81,18 @@ public abstract class XcfaChecker {
         config.discardAlreadyExplored = true;
         config.rememberTraces = false;
         config.debug = false;
+        config.forceIterate = false;
         return config;
     }
 
     public static XcfaChecker createChecker(XCFA xcfa, Config config) {
+        if (config.forceIterate() && !config.rememberTraces()) {
+            System.err.println("Warning! Probably bad configuration");
+        }
+        if (!config.forceIterate() && config.rememberTraces()) {
+            System.err.println("Warning! Probably bad configuration: not all traces will be stored, because program" +
+                    "might stop DFS when finding an unsafe property.");
+        }
         if (config.isPartialOrder()) {
             return new DynamicPOChecker(xcfa, config);
         } else {

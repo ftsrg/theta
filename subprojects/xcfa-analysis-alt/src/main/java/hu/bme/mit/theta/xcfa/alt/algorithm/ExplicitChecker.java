@@ -89,6 +89,8 @@ final class ExplicitChecker extends XcfaChecker{
 
         tryPushNode(new DfsNode(ImmutableExplState.initialState(xcfa), null));
 
+        SafetyResult<ExplState, Transition> result = Tracer.safe();
+
         while (!dfsStack.empty()) {
             DfsNode node = dfsStack.peek();
             if (node.hasChild()) {
@@ -106,12 +108,17 @@ final class ExplicitChecker extends XcfaChecker{
                     onFinished(dfsStack);
 
                 if (!node.isSafe()) {
-                    return Tracer.unsafe(dfsStack);
+                    // catch first unsafe property found
+                    if (config.forceIterate() && result.isSafe()) {
+                        result = Tracer.unsafe(dfsStack);
+                    } else {
+                        return Tracer.unsafe(dfsStack);
+                    }
                 }
                 popNode(node);
             }
         }
-        return Tracer.safe();
+        return result;
     }
 
     private final class DfsNode extends DfsNodeBase {
