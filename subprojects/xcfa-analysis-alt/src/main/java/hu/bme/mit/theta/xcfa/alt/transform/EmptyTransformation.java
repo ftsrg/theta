@@ -14,6 +14,8 @@ import java.util.Optional;
 class EmptyTransformation {
     private final XCFA old;
 
+    private Map<Object, Object> cache = new HashMap<>();
+
     EmptyTransformation(XCFA old) {
         this.old = old;
     }
@@ -27,8 +29,6 @@ class EmptyTransformation {
         old.getGlobalVars().forEach(builder::createVar);
         return builder.build();
     }
-
-    Map<Object, Object> cache = new HashMap<>();
 
     public final <R> Optional<R> cached(R r) {
         if (cache.containsKey(r))

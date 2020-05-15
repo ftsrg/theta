@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.alt.algorithm.util;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 
+// TODO move to other package
 /** An interface enough for getting an execution trace */
 public interface DfsNodeInterface {
     ExplState getState();

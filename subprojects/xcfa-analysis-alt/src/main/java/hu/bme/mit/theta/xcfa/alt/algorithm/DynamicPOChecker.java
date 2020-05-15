@@ -38,15 +38,12 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Stream;
 
-public class DynamicPOChecker extends XcfaChecker {
+final class DynamicPOChecker extends XcfaChecker {
     private final Set<ExplState> stackedStates = new HashSet<>();
     private final Stack<DfsNode> dfsStack = new Stack<>();
 
-    private static Config defaultConfig() {
-        var defaultConfig = new Config.Builder();
-        defaultConfig.optimizeLocals = true;
-        return defaultConfig.build();
-    }
+    private final IndexingUtil indexing = new IndexingUtil();
+    private static String debugIndentLevel = "";
 
     DynamicPOChecker(XCFA xcfa, Config config) {
         super(xcfa, config);
@@ -57,7 +54,6 @@ public class DynamicPOChecker extends XcfaChecker {
                 "discarded when using Dynamic Partial Order Reduction.");
     }
 
-    private static String debugIndentLevel = "";
     private static void pushDebug(DfsNode s, boolean debug) {
         if (!debug)
             return;
@@ -167,12 +163,12 @@ public class DynamicPOChecker extends XcfaChecker {
         /** Returns whether the transition is local, and we optimized on that fact,
          * meaning that we should not try to backtrack or find dependency.
          */
-        boolean isLocalTransitionOptimization(int idx) {
+        private boolean isLocalTransitionOptimization(int idx) {
             return get(idx).localProcessTransition;
         }
     }
 
-    public boolean happensBefore( int i, int j) {
+    private boolean happensBefore( int i, int j) {
         ProcessTransitions tr1 = indexing.getProcessTransition(i);
         ProcessTransitions tr2 = indexing.getProcessTransition(j);
         Preconditions.checkArgument(i <= j);
@@ -186,9 +182,9 @@ public class DynamicPOChecker extends XcfaChecker {
                 return true;
         }
         return false;
-
     }
-    public boolean happensBefore(int i, ProcessTransitions pt) {
+
+    private boolean happensBefore(int i, ProcessTransitions pt) {
         ProcessTransitions tr = indexing.getProcessTransition(i);
         if (tr.getProcess() == pt.getProcess())
             return true;
@@ -200,9 +196,7 @@ public class DynamicPOChecker extends XcfaChecker {
         return false;
     }
 
-    private final IndexingUtil indexing = new IndexingUtil();
-
-    OptionalInt findLastDependentCoenabled(ProcessTransitions p) {
+    private OptionalInt findLastDependentCoenabled(ProcessTransitions p) {
         for (int i = indexing.maxIndex(); i >= indexing.minIndex(); i--) {
             if (indexing.isLocalTransitionOptimization(i))
                 continue;
@@ -214,7 +208,7 @@ public class DynamicPOChecker extends XcfaChecker {
         return OptionalInt.empty();
     }
 
-    boolean checkProcessWithEnabledTransitionHappeningBefore(ProcessTransitions q, int i, ProcessTransitions p) {
+    private boolean checkProcessWithEnabledTransitionHappeningBefore(ProcessTransitions q, int i, ProcessTransitions p) {
         if (p.getProcess() == q.getProcess())
             return true;
         for (int j = i+1; j < indexing.maxIndex(); j++) {
@@ -228,7 +222,8 @@ public class DynamicPOChecker extends XcfaChecker {
         return false;
     }
 
-    void backtrack(DfsNode lastNode) {
+    private void backtrack(DfsNode lastNode) {
+        // TODO rework loop logic
         // fill backtrack of older transitions...
         for (var p : lastNode.all) {
             if (p.transitionStream().findAny().isEmpty())

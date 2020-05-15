@@ -40,7 +40,14 @@ public class FileListHelper {
 
     private static final class ConfigImpl implements Config {
 
-        private final boolean atomic, mutex, function, loop, threads, safe, unsafe, big;
+        private final boolean atomic;
+        private final boolean mutex;
+        private final boolean function;
+        private final boolean loop;
+        private final boolean threads;
+        private final boolean safe;
+        private final boolean unsafe;
+        private final boolean big;
 
         /**
          * Usage: Atomic, Mutex, function, loop
@@ -48,7 +55,7 @@ public class FileListHelper {
          */
         private ConfigImpl(String configString) {
             configString = configString.toLowerCase();
-            if (configString.equals("all")) {
+            if ("all".equals(configString)) {
                 atomic = mutex = function = loop = threads = safe = unsafe = big = true;
             } else {
                 atomic = configString.contains("atomic");

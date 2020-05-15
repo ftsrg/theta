@@ -39,6 +39,12 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     private XCFA.Process atomicLock;
 
     /**
+     * Checks that the time of checking if a transition is enabled is the same as the time of executing the transition
+     * Must not be checked by equals or included in hashCode!
+     */
+    private int version=0;
+
+    /**
      * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
      * The important function is the execute() which returns a new ImmutableExplState command.
      */
@@ -61,12 +67,6 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
             state.changeVersion();
         }
     }
-
-    /**
-     * Checks that the time of checking if a transition is enabled is the same as the time of executing the transition
-     * Must not be checked by equals or included in hashCode!
-     */
-    private int version=0;
 
     private MutableExplState(MutableValuation valuation, VarIndexing indexing, ProcessStates processStates, Safety internalSafety, XCFA.Process atomicLock) {
         this.valuation = valuation;
@@ -161,15 +161,15 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         getProcess(process).getActiveCallState().updateLocation(location);
     }
 
-    final int getVersion() {
+    int getVersion() {
         return version;
     }
 
-    final void changeVersion() {
+    void changeVersion() {
         version++;
     }
 
-    final void setAtomicLock(XCFA.Process process) {
+    void setAtomicLock(XCFA.Process process) {
         atomicLock = process;
     }
 
@@ -178,8 +178,6 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     }
 
     private static class Factory implements ExplState.Factory<MutableExplState> {
-
-        private Factory() { }
 
         private static class LazyHolder {
             private static final Factory instance = new Factory();

@@ -30,12 +30,30 @@ public class CoenabledUtils {
 
     private CoenabledUtils() { }
 
+    private static boolean coenabled(StmtTransition a, StmtTransition b) {
+        Stmt sa = a.getStmt();
+        Stmt sb = b.getStmt();
+
+        if (sa instanceof UnlockStmt && sb instanceof LockStmt) {
+            if (((UnlockStmt) sa).getSyncVar() == ((LockStmt) sb).getSyncVar())
+                return false;
+        }
+        if (sa instanceof LockStmt && sb instanceof UnlockStmt) {
+            if (((LockStmt) sa).getSyncVar() == ((UnlockStmt) sb).getSyncVar())
+                return false;
+        }
+        return true;
+
+    }
+
     /** returns whether there is a possibility
      * that the two transitions are co-enabled */
     public static boolean coenabled(ProcessTransitions p1, ProcessTransitions p2) {
         // TODO what exactly needs to be returned when the process contains two transitions?
         if (p1.transitionStream().count() == 1 && p2.transitionStream().count() == 1) {
+            @SuppressWarnings("OptionalGetWithoutIsPresent")
             Transition a = p1.transitionStream().findAny().get();
+            @SuppressWarnings("OptionalGetWithoutIsPresent")
             Transition b = p1.transitionStream().findAny().get();
             if (a instanceof EdgeTransition) {
                 a = ((EdgeTransition) a).getInnerTransition();
@@ -49,17 +67,8 @@ public class CoenabledUtils {
             if (!(b instanceof StmtTransition)) {
                 return true;
             }
-            Stmt sa = ((StmtTransition) a).getStmt();
-            Stmt sb = ((StmtTransition) b).getStmt();
 
-            if (sa instanceof UnlockStmt && sb instanceof LockStmt) {
-                if (((UnlockStmt) sa).getSyncVar() == ((LockStmt) sb).getSyncVar())
-                    return false;
-            }
-            if (sa instanceof LockStmt && sb instanceof UnlockStmt) {
-                if (((LockStmt) sa).getSyncVar() == ((UnlockStmt) sb).getSyncVar())
-                    return false;
-            }
+            return coenabled((StmtTransition)a, (StmtTransition)b);
         }
         // over-approximation
         return true;

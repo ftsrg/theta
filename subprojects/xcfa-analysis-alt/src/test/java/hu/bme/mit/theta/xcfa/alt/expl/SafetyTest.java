@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Stack;
@@ -58,7 +57,7 @@ public class SafetyTest {
         var result = SafetyUtils.getSafety(proc);
 
         verify(top).isError();
-        Assert.assertFalse(result.isSafe());
+        assertFalse(result.isSafe());
     }
 
     @Test

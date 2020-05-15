@@ -11,8 +11,11 @@ public interface Config {
     boolean isPartialOrder();
 
     class ImmutableConfig implements Config {
-        private final boolean rememberTraces, debug, optimizeLocals, discardAlreadyExplored,
-            partialOrder;
+        private final boolean rememberTraces;
+        private final boolean debug;
+        private final boolean optimizeLocals;
+        private final boolean discardAlreadyExplored;
+        private final boolean partialOrder;
 
         private ImmutableConfig(boolean rememberTraces, boolean debug, boolean optimizeLocals, boolean discardAlreadyExplored, boolean partialOrder) {
             this.rememberTraces = rememberTraces;

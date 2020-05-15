@@ -28,6 +28,16 @@ import java.util.stream.Collectors;
 
 public final class ImmutableExplState extends ExplState {
 
+    private final ImmutableValuation valuation;
+
+    private final VarIndexing indexing;
+
+    private final ProcessStates processStates;
+
+    private final Safety internalSafety;
+
+    private final XCFA.Process atomicLock;
+
     /**
      * A wrapper of ExecutableTransition for straight-forward usage in ImmutableExplState.
      * The execute() method should be used, which returns a new ImmutableExplState instance
@@ -47,16 +57,6 @@ public final class ImmutableExplState extends ExplState {
             return new ImmutableExplState.Builder(immutableExplState).execute(this).build();
         }
     }
-
-    private final ImmutableValuation valuation;
-
-    private final VarIndexing indexing;
-
-    private final ProcessStates processStates;
-
-    private final Safety internalSafety;
-
-    private final XCFA.Process atomicLock;
 
     public static ImmutableExplState copyOf(ExplState x) {
         if (x instanceof ImmutableExplState)
@@ -86,8 +86,6 @@ public final class ImmutableExplState extends ExplState {
                             this
                     ), safety, atomicLock);
         }
-
-        private Factory() { }
 
         private static class LazyHolder {
             private static final Factory instance = new Factory();

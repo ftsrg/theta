@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * An explicit checker traversing every possible ordering of an XCFA state.
  * Supports only zero-initialized values (because of how ExplState works).
  */
-public final class ExplicitChecker extends XcfaChecker{
+final class ExplicitChecker extends XcfaChecker{
     private final Set<ExplState> exploredStates = new HashSet<>();
     private final Set<ExplState> stackedStates = new HashSet<>();
     private final Stack<DfsNode> dfsStack = new Stack<>();
@@ -121,7 +121,7 @@ public final class ExplicitChecker extends XcfaChecker{
         /**
          * Returns a process with only local transitions or every transition
          */
-        private Collection<ImmutableExplState.ExecutableTransition> oneLocalOrEveryTransition(ImmutableExplState state) {
+        Collection<ImmutableExplState.ExecutableTransition> oneLocalOrEveryTransition(ImmutableExplState state) {
             if (!config.optimizeLocals())
                 return null;
             Optional<List<ImmutableExplState.ExecutableTransition>> t = LocalityUtils.findAnyEnabledLocalProcessTransition(state).map(
@@ -134,7 +134,7 @@ public final class ExplicitChecker extends XcfaChecker{
             return null;
         }
 
-        private DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
+        DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
             super(state, lastTransition, state.getEnabledTransitions());
             var l = oneLocalOrEveryTransition(state);
             if (l != null) {
@@ -150,7 +150,7 @@ public final class ExplicitChecker extends XcfaChecker{
             return new DfsNode(t.execute(), t);
         }
 
-        public void expand() {
+        void expand() {
             if (local) {
                 local = false;
                 resetWithTransitions(getState().getEnabledTransitions());

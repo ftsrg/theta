@@ -12,11 +12,11 @@ import java.util.Map;
 public class MutexTest {
 
     // processes does not have a state, so it can be initialized once for all tests.
-    static XCFA.Process process1;
-    static XCFA.Process process2;
+    private static XCFA.Process process1;
+    private static XCFA.Process process2;
 
-    SyntheticLitExpr lock1;
-    SyntheticLitExpr lock2;
+    private SyntheticLitExpr lock1;
+    private SyntheticLitExpr lock2;
 
     // TODO there was a helper function.
     private static XCFA.Process createProcess() {

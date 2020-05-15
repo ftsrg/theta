@@ -21,7 +21,6 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
 import java.util.Collections;

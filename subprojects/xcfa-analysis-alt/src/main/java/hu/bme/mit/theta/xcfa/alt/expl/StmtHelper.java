@@ -20,8 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
@@ -31,7 +29,6 @@ import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 final class StmtHelper {
     public static void atomicBegin(ExplStateMutatorInterface state, XCFA.Process process) {

@@ -25,7 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+// TODO rename
 public class Tracer {
+
+    private Tracer() { }
+
+    private static final ARG<ExplState, Transition> arg = ARG.create(Object::equals);
 
     public static Trace<ExplState, Transition> createTrace(Stack<? extends DfsNodeInterface> dfsStack) {
 
@@ -40,8 +45,6 @@ public class Tracer {
         }
         return Trace.of(states, actions);
     }
-
-    private static final ARG<ExplState, Transition> arg = ARG.create(Object::equals);
 
     public static SafetyResult.Safe<ExplState, Transition> safe() {
         return SafetyResult.safe(arg);
