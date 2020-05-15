@@ -35,11 +35,12 @@ public class FileListHelper {
         boolean multiThreadSupported();
         boolean safeSupported();
         boolean unsafeSupported();
+        boolean bigSupported();
     }
 
     private static final class ConfigImpl implements Config {
 
-        private final boolean atomic, mutex, function, loop, threads, safe, unsafe;
+        private final boolean atomic, mutex, function, loop, threads, safe, unsafe, big;
 
         /**
          * Usage: Atomic, Mutex, function, loop
@@ -48,7 +49,7 @@ public class FileListHelper {
         private ConfigImpl(String configString) {
             configString = configString.toLowerCase();
             if (configString.equals("all")) {
-                atomic = mutex = function = loop = threads = safe = unsafe = true;
+                atomic = mutex = function = loop = threads = safe = unsafe = big = true;
             } else {
                 atomic = configString.contains("atomic");
                 mutex = configString.contains("mutex");
@@ -57,6 +58,7 @@ public class FileListHelper {
                 threads = configString.contains("threads");
                 safe = configString.contains("safe");
                 unsafe = configString.contains("unsafe");
+                big = configString.contains("big");
             }
             Preconditions.checkArgument(safe || unsafe, "At least one of safe or unsafe should be added!");
         }
@@ -94,6 +96,11 @@ public class FileListHelper {
         @Override
         public boolean unsafeSupported() {
             return unsafe;
+        }
+
+        @Override
+        public boolean bigSupported() {
+            return big;
         }
     }
 
@@ -145,9 +152,12 @@ public class FileListHelper {
                     new Object[]{"/partialorder-test2.xcfa", false},
                     new Object[]{"/partialorder-test3.xcfa", false},
                     new Object[]{"/partialorder-test4.xcfa", false},
-                    new Object[]{"/partialorder-min-test.xcfa", false},
-                    new Object[]{"/very-parallel.xcfa", true}
+                    new Object[]{"/partialorder-min-test.xcfa", false}
                     ));
+            if (c.bigSupported()) {
+                result.add(new Object[]{"/very-parallel.xcfa", true});
+
+            }
         }
         result.addAll(Arrays.asList(
                 new Object[]{"/simple-test.xcfa", true},
@@ -156,12 +166,12 @@ public class FileListHelper {
 
         if (!c.safeSupported()) {
             result = result.stream().filter(t ->
-                    (Boolean) t[1] != true // remove safe
+                    !((Boolean) t[1]) // remove safe
             ).collect(Collectors.toCollection(ArrayList::new));
         }
         if (!c.unsafeSupported()) {
             result = result.stream().filter(t ->
-                    (Boolean) t[1] != false // remove unsafe
+                    (Boolean) t[1] // remove unsafe
             ).collect(Collectors.toCollection(ArrayList::new));
         }
         return result;
