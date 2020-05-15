@@ -21,6 +21,9 @@ import com.google.common.base.Preconditions;
  * Functions for querying/determining whether safety properties were satisfied in a specific state.
  */
 final class SafetyUtils {
+
+    private SafetyUtils() { }
+
     public static Safety getSafety(ExplState state) {
         if (!state.getInternalSafety().isSafe()) {
             return state.getInternalSafety();

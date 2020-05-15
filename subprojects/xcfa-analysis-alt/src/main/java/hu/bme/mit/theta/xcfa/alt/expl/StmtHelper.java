@@ -60,8 +60,6 @@ final class StmtHelper {
 
     public static Optional<TransitionExecutorInterface> executeLockOperation(VarDecl<SyntheticType> syncVar, ExplStateReadOnlyInterface readOnlyState,
                                                                              BiFunction<SyntheticLitExpr, XCFA.Process, Optional<SyntheticLitExpr>> operation) {
-        XCFA.Process process = readOnlyState.getTransitionProcess();
-
         var optValue = readOnlyState.eval(syncVar.getRef());
         Preconditions.checkState(optValue.isPresent());
         SyntheticLitExpr sync0 = (SyntheticLitExpr) optValue.get();

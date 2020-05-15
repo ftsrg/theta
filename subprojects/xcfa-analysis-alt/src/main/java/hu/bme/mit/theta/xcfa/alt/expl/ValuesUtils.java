@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -32,14 +31,14 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 /**
  * Contains functions related to valuations.
  * More specifically, evaluating expressions and updating values.
  */
 final class ValuesUtils {
+
+    private ValuesUtils() { }
 
     public static <DeclType extends Type> Optional<LitExpr<DeclType>> eval(ExplState state, Expr<DeclType> expr) {
         Expr<DeclType> simplified = ExprUtils.simplify(PathUtils.unfold(expr, state.getIndexing()), state.getValuation());
@@ -48,7 +47,6 @@ final class ValuesUtils {
         }
         return Optional.empty();
     }
-
     public static <DeclType extends Type> void putValue(MutableExplState state, VarDecl<DeclType> var, Optional<LitExpr<DeclType>> expr) {
         if (expr.isPresent())
             state.getValuation().put(var.getConstDecl(state.getIndexing().get(var)), expr.get());
