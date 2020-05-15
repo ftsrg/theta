@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Transforms empty edges to edge with skip stmt.
- * Transforms wait stmt's to two separate stmts. TODO finish
+ * Transforms wait stmt's to two separate stmts.
  */
 public class DefaultTransformation extends EmptyTransformation {
 
@@ -22,7 +22,7 @@ public class DefaultTransformation extends EmptyTransformation {
 
     @Override
     protected XCFA.Process.Procedure.Edge copy(Object _builder, XCFA.Process.Procedure.Edge edge) {
-        if (edge.getStmts().size() == 0) {
+        if (edge.getStmts().isEmpty()) {
             // create skip stmt
             var source = transformed(_builder, edge.getSource());
             var target = transformed(_builder, edge.getTarget());
