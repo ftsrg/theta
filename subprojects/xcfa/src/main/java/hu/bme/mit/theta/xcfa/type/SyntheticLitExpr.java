@@ -183,7 +183,8 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		if (o == null || getClass() != o.getClass()) return false;
 		SyntheticLitExpr that = (SyntheticLitExpr) o;
 		return num == that.num &&
-				Objects.equals(lockedOn, that.lockedOn);
+				Objects.equals(lockedOn, that.lockedOn)
+				&& Objects.equals(blockedProcesses, that.blockedProcesses);
 	}
 
 	@Override
