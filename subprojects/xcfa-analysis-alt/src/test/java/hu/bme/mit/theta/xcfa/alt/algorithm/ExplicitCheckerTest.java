@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -49,9 +50,11 @@ public class ExplicitCheckerTest {
 		System.out.println("Testing " + filepath);
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		Config config = new Config();
-		config.optimizeLocals = true;
-		ExplicitChecker checker = new ExplicitChecker(new DefaultTransformation(xcfa).build(), config);
+//		var checker = XcfaChecker.createChecker(new DefaultTransformation(xcfa).build(), XcfaChecker.getSimpleExplicit().build());
+var config = XcfaChecker.getSimpleExplicit();
+config.debug = true;
+		var checker = XcfaChecker.createChecker(new DefaultTransformation(xcfa).build(), config.build());
+		Assert.assertTrue(checker instanceof ExplicitChecker);
 		SafetyResult<? extends State, ? extends Action> result = checker.check();
 		Helper.checkResult(result, shouldWork);
 	}

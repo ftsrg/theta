@@ -41,27 +41,44 @@ public final class ExplicitChecker extends XcfaChecker{
     private final Set<ExplState> stackedStates = new HashSet<>();
     private final Stack<DfsNode> dfsStack = new Stack<>();
 
-    public ExplicitChecker(XCFA xcfa) {
-        this(xcfa, new Config());
+    private boolean discardAlreadyExploredStates() {
+        return config.discardAlreadyExplored();
     }
 
-    public ExplicitChecker(XCFA xcfa, Config config) {
+    /**
+     * Checking whether a state is checked is needed for detecting cylces,
+     * these are needed by some algorithms.
+     * Also, for checking infinite loops!
+     */
+    private boolean rememberStackedStates() {
+        return true;
+    }
+
+    ExplicitChecker(XCFA xcfa, Config config) {
         super(xcfa,config);
     }
-
 
     /** Pushes the node to the stack if not explored before */
     private void tryPushNode(DfsNode node) {
         ImmutableExplState state = node.getState();
         debugPrint(state);
-        exploredStates.add(state);
-        stackedStates.add(state);
+        if (discardAlreadyExploredStates()) {
+            if (exploredStates.contains(state)) {
+                return;
+            }
+            exploredStates.add(state);
+        }
+        if (rememberStackedStates()) {
+            stackedStates.add(state);
+        }
         dfsStack.push(node);
     }
 
     private void popNode(DfsNode s0) {
         ExplState state = dfsStack.pop().getState();
-        stackedStates.remove(state);
+        if (rememberStackedStates()) {
+            stackedStates.remove(state);
+        }
         assert(state.equals(s0.getState()));
     }
 
@@ -76,8 +93,10 @@ public final class ExplicitChecker extends XcfaChecker{
             DfsNode node = dfsStack.peek();
             if (node.hasChild()) {
                 var child = node.child();
-                if (stackedStates.contains(child.getState())) {
+                // first check for cycles, then check for explored states
+                if (rememberStackedStates() && stackedStates.contains(child.getState())) {
                     node.expand();
+                    // expand, do not remove, and retry
                 } else {
                     tryPushNode(child);
                 }
@@ -103,7 +122,7 @@ public final class ExplicitChecker extends XcfaChecker{
          * Returns a process with only local transitions or every transition
          */
         private Collection<ImmutableExplState.ExecutableTransition> oneLocalOrEveryTransition(ImmutableExplState state) {
-            if (!config.optimizeLocals)
+            if (!config.optimizeLocals())
                 return null;
             Optional<List<ImmutableExplState.ExecutableTransition>> t = LocalityUtils.findAnyEnabledLocalProcessTransition(state).map(
                     p->p.enabledStream().map(state::transitionFrom).collect(Collectors.toUnmodifiableList())

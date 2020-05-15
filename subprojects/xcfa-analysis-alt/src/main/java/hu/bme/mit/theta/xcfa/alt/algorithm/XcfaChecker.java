@@ -39,7 +39,7 @@ public abstract class XcfaChecker {
     }
 
     protected void debugPrint(ImmutableExplState s) {
-        if (!config.debug)
+        if (!config.debug())
             return;
         System.out.println(s);
         System.out.println("Enabled transitions:");
@@ -50,7 +50,7 @@ public abstract class XcfaChecker {
     }
 
     protected void onFinished(Stack<? extends DfsNodeInterface> dfsStack) {
-        if (config.rememberTraces) {
+        if (config.rememberTraces()) {
             finishedTraces.add(Tracer.createTrace(dfsStack));
         }
     }
@@ -58,8 +58,36 @@ public abstract class XcfaChecker {
     protected XcfaChecker(XCFA xcfa, Config config) {
         this.xcfa = xcfa;
         this.config = config;
-        if (config.rememberTraces) {
+        if (config.rememberTraces()) {
             finishedTraces = new ArrayList<>();
+        }
+    }
+
+    public static Config.Builder getSimpleDPOR() {
+        var config = new Config.Builder();
+        config.optimizeLocals = true;
+        config.partialOrder = true;
+        config.discardAlreadyExplored = false;
+        config.rememberTraces = false;
+        config.debug = false;
+        return config;
+    }
+
+    public static Config.Builder getSimpleExplicit() {
+        var config = new Config.Builder();
+        config.optimizeLocals = true;
+        config.partialOrder = false;
+        config.discardAlreadyExplored = true;
+        config.rememberTraces = false;
+        config.debug = false;
+        return config;
+    }
+
+    public static XcfaChecker createChecker(XCFA xcfa, Config config) {
+        if (config.isPartialOrder()) {
+            return new DynamicPOChecker(xcfa, config);
+        } else {
+            return new ExplicitChecker(xcfa, config);
         }
     }
 

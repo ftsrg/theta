@@ -53,7 +53,7 @@ public class DynamicPOCheckerCompletenessTest {
     @Parameters()
     public static Collection<Object[]> data() {
         // TODO create inverse filter
-        // everything except unsafe
+        // everything except unsafe and big
         return FileListHelper.tests("atomic, mutex, function, loop, threads, safe");
     }
 
@@ -62,17 +62,18 @@ public class DynamicPOCheckerCompletenessTest {
         System.out.println("Testing " + filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
 
-        Config referenceConfig = new Config();
+        var referenceConfig = XcfaChecker.getSimpleExplicit();
         referenceConfig.rememberTraces = true;
+        referenceConfig.optimizeLocals = false;
+        referenceConfig.discardAlreadyExplored = false;
 
-        Config sutConfig = new Config();
+        var sutConfig = XcfaChecker.getSimpleDPOR();
         sutConfig.rememberTraces = true;
-        sutConfig.optimizeLocals = true;
 
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        XCFA xxcfa = new DefaultTransformation(xcfa).build();
-        ExplicitChecker reference = new ExplicitChecker(xxcfa, sutConfig);
-        DynamicPOChecker sut = new DynamicPOChecker(xxcfa, sutConfig);
+        xcfa = new DefaultTransformation(xcfa).build();
+        var reference = XcfaChecker.createChecker(xcfa, referenceConfig.build());
+        var sut = XcfaChecker.createChecker(xcfa, sutConfig.build());
 
         if (reference.check().isUnsafe()) {
             // probably bad shouldWork :)

@@ -43,19 +43,18 @@ public class DynamicPOChecker extends XcfaChecker {
     private final Stack<DfsNode> dfsStack = new Stack<>();
 
     private static Config defaultConfig() {
-        Config defaultConfig = new Config();
+        var defaultConfig = new Config.Builder();
         defaultConfig.optimizeLocals = true;
-        return defaultConfig;
+        return defaultConfig.build();
     }
 
-    public DynamicPOChecker(XCFA xcfa) {
-        this(xcfa, defaultConfig());
-    }
-
-    public DynamicPOChecker(XCFA xcfa, Config config) {
+    DynamicPOChecker(XCFA xcfa, Config config) {
         super(xcfa, config);
-        Preconditions.checkArgument(config.optimizeLocals, "Optimizing locals cannot be turned off " +
+        Preconditions.checkArgument(config.isPartialOrder(), "Partial order reduction but no partial order flag");
+        Preconditions.checkArgument(config.optimizeLocals(), "Optimizing locals cannot be turned off " +
                 "for DPOR (yet)");
+        Preconditions.checkArgument(!config.discardAlreadyExplored(), "Already explored states cannot be " +
+                "discarded when using Dynamic Partial Order Reduction.");
     }
 
     private static String debugIndentLevel = "";
@@ -104,7 +103,7 @@ public class DynamicPOChecker extends XcfaChecker {
     private void popNode(DfsNode s0) {
         ExplState state = dfsStack.pop().getState();
         stackedStates.remove(state);
-        popDebug(s0, config.debug);
+        popDebug(s0, config.debug());
         assert(state.equals(s0.getState()));
     }
 
@@ -287,14 +286,14 @@ public class DynamicPOChecker extends XcfaChecker {
         private boolean localProcessTransition;
 
         private void pushExecutableTransitions(Stream<ExecutableTransitionBase> transitionStream) {
-            if (config.debug) {
+            if (config.debug()) {
                 System.out.println(debugIndentLevel + "From state ");
                 System.out.println(debugIndentLevel + state.getProcessStates());
             }
             transitionStream.map(state::transitionFrom).forEach(
                     p -> {
                         todo.add(p);
-                        if (config.debug) {
+                        if (config.debug()) {
                             System.out.println(debugIndentLevel + "Adding transition " + p);
                             System.out.println();
                         }
@@ -320,7 +319,7 @@ public class DynamicPOChecker extends XcfaChecker {
             this.state = state;
             this.lastTransition = lastTransition;
 
-            pushDebug(this, config.debug);
+            pushDebug(this, config.debug());
 
             all = TransitionUtils.getProcessTransitions(state);
             var local = LocalityUtils.findAnyEnabledLocalProcessTransition(state);
