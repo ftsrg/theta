@@ -53,21 +53,21 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             visitVariableDeclaration(varDecl);
         }
         xsts=new XSTS(types, processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.envAction.nonDet()), visitImplyExpression(ctx.prop));
-        System.out.println(xsts.getVars());
+//        System.out.println(xsts.getVars());
         for(TypeDecl typeDecl:xsts.getTypes()){
-            System.out.println(typeDecl);
+//            System.out.println(typeDecl);
             for(String literal:typeDecl.getLiterals()){
-                System.out.println(literal+" "+literalToIntMap.get(literal));
+//                System.out.println(literal+" "+literalToIntMap.get(literal));
             }
         }
-        System.out.println("tran:");
-        xsts.getTransitions().getStmts().stream().forEach(System.out::println);
-        System.out.println("init:");
-        xsts.getInitAction().getStmts().stream().forEach(System.out::println);
-        System.out.println("env");
-        xsts.getEnvAction().getStmts().stream().forEach(System.out::println);
-        System.out.println("prop:");
-        System.out.println(xsts.getProp());
+//        System.out.println("tran:");
+//        xsts.getTransitions().getStmts().stream().forEach(System.out::println);
+//        System.out.println("init:");
+//        xsts.getInitAction().getStmts().stream().forEach(System.out::println);
+//        System.out.println("env");
+//        xsts.getEnvAction().getStmts().stream().forEach(System.out::println);
+//        System.out.println("prop:");
+//        System.out.println(xsts.getProp());
         return null;
     }
 

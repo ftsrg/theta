@@ -138,7 +138,7 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
-TRAN: 'tran';
+TRAN: 'trans';
 INIT: 'init';
 ENV: 'env';
 PROP: 'prop';
