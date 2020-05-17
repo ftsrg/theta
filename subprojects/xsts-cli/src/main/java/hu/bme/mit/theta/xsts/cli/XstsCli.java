@@ -1,112 +1,187 @@
 package hu.bme.mit.theta.xsts.cli;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.LTS;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.algorithm.cegar.*;
 import hu.bme.mit.theta.analysis.expl.*;
-import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.*;
-import hu.bme.mit.theta.analysis.pred.*;
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.common.table.BasicTableWriter;
+import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
-import hu.bme.mit.theta.xsts.dsl.XSTSVisitor;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
+import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class XstsCli {
 
-    public static void main(String[] args){
+    private static final String JAR_NAME = "theta-xsts-cli.jar";
+    private final SolverFactory solverFactory = Z3SolverFactory.getInstace();
+    private final String[] args;
+    private final TableWriter writer;
+
+    @Parameter(names = "--domain", description = "Abstract domain")
+    Domain domain = Domain.PRED_CART;
+
+    @Parameter(names = "--refinement", description = "Refinement strategy")
+    Refinement refinement = Refinement.SEQ_ITP;
+
+    @Parameter(names = "--search", description = "Search strategy")
+    Search search = Search.BFS;
+
+    @Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+    PredSplit predSplit = PredSplit.WHOLE;
+
+    @Parameter(names = "--model", description = "Path of the input CFA model", required = true)
+    String model;
+
+    @Parameter(names = "--precgranularity", description = "Precision granularity")
+    PrecGranularity precGranularity = PrecGranularity.GLOBAL;
+
+    @Parameter(names = "--encoding", description = "Block encoding")
+    Encoding encoding = Encoding.LBE;
+
+    @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+    Integer maxEnum = 0;
+
+    @Parameter(names = "--initprec", description = "Initial precision of abstraction")
+    InitPrec initPrec = InitPrec.EMPTY;
+
+    @Parameter(names = "--loglevel", description = "Detailedness of logging")
+    Logger.Level logLevel = Logger.Level.SUBSTEP;
+
+    @Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
+    Boolean benchmarkMode = false;
+
+    @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+    String cexfile = null;
+
+    @Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
+    boolean headerOnly = false;
+
+    private Logger logger;
+
+    public XstsCli(final String[] args) {
+        this.args = args;
+        writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+    }
+
+    public static void main(final String[] args) {
+        final XstsCli mainApp = new XstsCli(args);
+        mainApp.run();
+    }
+
+    private void run() {
         try {
-            XstsDslLexer lexer=new XstsDslLexer(CharStreams.fromFileName("src/test/resources/trafficlight.xsts"));
-            CommonTokenStream tokenStream=new CommonTokenStream(lexer);
-            XstsDslParser parser=new XstsDslParser(tokenStream);
-            XstsDslParser.XstsContext model =parser.xsts();
-            XSTSVisitor visitor=new XSTSVisitor();
-            visitor.visitXsts(model);
-            XSTS xsts=visitor.getXsts();
-
-//            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getExprs());
-//            System.out.println(StmtUtils.toExpr(xsts.getEnvAction(), VarIndexing.all(0)).getIndexing());
-            LTS<XstsState, XstsAction> lts= XstsLts.create(xsts);
-
-            final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
-            Logger logger = NullLogger.getInstance();
-
-//            final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis
-//                    .create(ExplStmtAnalysis.create(solver, True()));
-//            final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
-//                    analysis, s -> ExprUtils.simplify(xsts.getProp(),s.getState().getVal()).equals(True()), true);
-//            final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor
-//                    .builder(argBuilder)
-//                    .waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs())))
-//                    .logger(logger).build();
-//
-//            Refiner<XstsState<ExplState>, XstsAction, ExplPrec> refiner = null;
-//            refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-//                    JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
-//
-//
-//            final SafetyChecker<XstsState<ExplState>, XstsAction, ExplPrec> checker = CegarChecker
-//                    .create(abstractor, refiner, logger);
-//
-//            final ExplPrec prec = ExplPrec.of(xsts.getVars());
-//            System.out.println(prec.getVars());
-//
-//            SafetyResult res=checker.check(prec);
-//            if(res.isUnsafe()){
-//                System.out.println(res.asUnsafe().getTrace());
-//            }
-////            res.getArg().getNodes().forEach(System.out::println);
-//            System.out.println(res.isSafe());
-
-            PredAbstractors.PredAbstractor predAbstractor  = PredAbstractors.booleanAbstractor(solver);
-            final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis
-                    .create(PredAnalysis.create(solver, predAbstractor, True()));
-            final ArgBuilder<XstsState<PredState>, XstsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
-                    analysis, new XstsStatePredicate<ExprStatePredicate,PredState>(new ExprStatePredicate(xsts.getProp(), solver)), true);
-            final Abstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor = BasicAbstractor
-                    .builder(argBuilder)
-                    .stopCriterion(StopCriterions.firstCex()).logger(logger).build();
-
-            ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), xsts.getProp(), solver);
-
-            Refiner<XstsState<PredState>, XstsAction, PredPrec> refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-                        JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.whole())), logger);
-
-            final SafetyChecker<XstsState<PredState>, XstsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
-                    logger);
-
-            final PredPrec prec = PredPrec.of();
-            SafetyResult res=checker.check(prec);
-            if(res.isUnsafe()){
-                System.out.println(res.asUnsafe().getTrace());
-            }
-//            res.getArg().getNodes().forEach(System.out::println);
-            System.out.println(res.isSafe());
-
-            
-        } catch (Exception e){
-            e.printStackTrace();
+            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+        } catch (final ParameterException ex) {
+            System.out.println("Invalid parameters, details:");
+            System.out.println(ex.getMessage());
+            ex.usage();
+            return;
         }
 
+        if (headerOnly) {
+            printHeader();
+            return;
+        }
+
+        try {
+            final Stopwatch sw = Stopwatch.createStarted();
+            final CFA xsts = loadModel();
+            final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+            final SafetyResult<?, ?> status = configuration.check();
+            sw.stop();
+            printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(status.asUnsafe());
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+        }
+        if (benchmarkMode) {
+            writer.newRow();
+        }
+    }
+
+    private void printHeader() {
+        final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
+        for (final String str : header) {
+            writer.cell(str);
+        }
+        writer.newRow();
+    }
+
+    private CFA loadModel() throws IOException {
+        try (InputStream inputStream = new FileInputStream(model)) {
+            final CFA xsts = XstsDslManager.createXsts(inputStream);
+            return xsts;
+        }
+    }
+
+    private XstsConfig<?, ?, ?> buildConfiguration(final CFA xsts) {
+        return new XstsConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+                .predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(xsts);
+    }
+
+    private void printResult(final SafetyResult<?, ?> status, final CFA xsts, final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(stats.getAlgorithmTimeMs());
+            writer.cell(stats.getAbstractorTimeMs());
+            writer.cell(stats.getRefinerTimeMs());
+            writer.cell(stats.getIterations());
+            writer.cell(status.getArg().size());
+            writer.cell(status.getArg().getDepth());
+            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getTrace().length() + "");
+            } else {
+                writer.cell("");
+            }
+        }
+    }
+
+    private void printError(final Throwable ex) {
+        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+        if (benchmarkMode) {
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+        } else {
+            logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
+            logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
+            final StringWriter errors = new StringWriter();
+            ex.printStackTrace(new PrintWriter(errors));
+            logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+        }
+    }
+
+    private void writeCex(final SafetyResult.Unsafe<?, ?> status) {
+        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
+        final Trace<XstsState<ExplState>, XstsAction> concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory);
+        final File file = new File(cexfile);
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+            printWriter.write(concrTrace.toString());
+        } catch (final FileNotFoundException e) {
+            printError(e);
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
     }
 
 }
