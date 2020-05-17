@@ -41,7 +41,6 @@ public class XstsTransFunc <S extends ExprState, P extends Prec> implements Tran
             final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv, true);
             succStates.add(succState);
         }
-//        System.out.println(succStates);
         return succStates;
     }
 }

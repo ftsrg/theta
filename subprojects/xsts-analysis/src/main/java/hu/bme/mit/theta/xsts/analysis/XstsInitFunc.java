@@ -25,7 +25,6 @@ public class XstsInitFunc<S extends ExprState, P extends Prec> implements InitFu
         for(final S subInitState: initFunc.getInitStates(prec)){
             initStates.add(XstsState.of(subInitState,false, false));
         }
-        System.out.println("init:"+initStates);
         return initStates;
     }
 }
