@@ -4,19 +4,33 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
-import hu.bme.mit.theta.analysis.expl.*;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xsts.analysis.*;
-
+import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
+import hu.bme.mit.theta.xsts.dsl.XSTSVisitor;
+import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
+import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
@@ -28,43 +42,34 @@ public class XstsCli {
     private final String[] args;
     private final TableWriter writer;
 
-    @Parameter(names = "--domain", description = "Abstract domain")
+    @Parameter(names = {"--domain"}, description = "Abstract domain")
     Domain domain = Domain.PRED_CART;
 
-    @Parameter(names = "--refinement", description = "Refinement strategy")
+    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
 
-    @Parameter(names = "--search", description = "Search strategy")
+    @Parameter(names = {"--search"}, description = "Search strategy")
     Search search = Search.BFS;
 
-    @Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+    @Parameter(names = {"--predsplit"}, description = "Predicate splitting")
     PredSplit predSplit = PredSplit.WHOLE;
 
-    @Parameter(names = "--model", description = "Path of the input CFA model", required = true)
+    @Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
     String model;
 
-    @Parameter(names = "--precgranularity", description = "Precision granularity")
-    PrecGranularity precGranularity = PrecGranularity.GLOBAL;
-
-    @Parameter(names = "--encoding", description = "Block encoding")
-    Encoding encoding = Encoding.LBE;
-
-    @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-    Integer maxEnum = 0;
-
-    @Parameter(names = "--initprec", description = "Initial precision of abstraction")
+    @Parameter(names = {"--initprec"}, description = "Initial precision")
     InitPrec initPrec = InitPrec.EMPTY;
 
-    @Parameter(names = "--loglevel", description = "Detailedness of logging")
+    @Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
     Logger.Level logLevel = Logger.Level.SUBSTEP;
 
-    @Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
+    @Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
     Boolean benchmarkMode = false;
 
-    @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
-    String cexfile = null;
+    @Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
+    String dotfile = null;
 
-    @Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
+    @Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
     private Logger logger;
@@ -97,13 +102,13 @@ public class XstsCli {
 
         try {
             final Stopwatch sw = Stopwatch.createStarted();
-            final CFA xsts = loadModel();
+            final XSTS xsts = loadModel();
             final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
             final SafetyResult<?, ?> status = configuration.check();
             sw.stop();
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile != null) {
-                writeCex(status.asUnsafe());
+            if (dotfile != null) {
+                writeVisualStatus(status, dotfile);
             }
         } catch (final Throwable ex) {
             printError(ex);
@@ -115,26 +120,40 @@ public class XstsCli {
 
     private void printHeader() {
         final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"};
         for (final String str : header) {
             writer.cell(str);
         }
         writer.newRow();
     }
 
-    private CFA loadModel() throws IOException {
-        try (InputStream inputStream = new FileInputStream(model)) {
-            final CFA xsts = XstsDslManager.createXsts(inputStream);
-            return xsts;
+    private XSTS loadModel() throws IOException {
+        if (model.endsWith(".xsts")) {
+            try (InputStream inputStream = new FileInputStream(model)) {
+                XstsDslLexer lexer=new XstsDslLexer(CharStreams.fromStream(inputStream));
+                CommonTokenStream tokenStream=new CommonTokenStream(lexer);
+                XstsDslParser parser=new XstsDslParser(tokenStream);
+                XstsDslParser.XstsContext model =parser.xsts();
+                XSTSVisitor visitor=new XSTSVisitor();
+                visitor.visitXsts(model);
+                return visitor.getXsts();
+//                final XstsSpec spec = XstsDslManager.createXstsSpec(inputStream);
+//                if (spec.getAllXsts().size() != 1) {
+//                    throw new UnsupportedOperationException("STS contains multiple properties.");
+//                }
+//                return XstsUtils.eliminateIte(Utils.singleElementOf(spec.getAllXsts()));
+            }
+        } else {
+            throw new IOException("Unknown format");
         }
     }
 
-    private XstsConfig<?, ?, ?> buildConfiguration(final CFA xsts) {
-        return new XstsConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-                .predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(xsts);
+    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) {
+        return new XstsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+                .predSplit(predSplit).logger(logger).build(xsts);
     }
 
-    private void printResult(final SafetyResult<?, ?> status, final CFA xsts, final long totalTimeMs) {
+    private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics) status.getStats().get();
         if (benchmarkMode) {
             writer.cell(status.isSafe());
@@ -151,6 +170,7 @@ public class XstsCli {
             } else {
                 writer.cell("");
             }
+            writer.cell(sts.getVars().size());
         }
     }
 
@@ -167,21 +187,12 @@ public class XstsCli {
         }
     }
 
-    private void writeCex(final SafetyResult.Unsafe<?, ?> status) {
-        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final Trace<XstsState<ExplState>, XstsAction> concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory);
-        final File file = new File(cexfile);
-        PrintWriter printWriter = null;
-        try {
-            printWriter = new PrintWriter(file);
-            printWriter.write(concrTrace.toString());
-        } catch (final FileNotFoundException e) {
-            printError(e);
-        } finally {
-            if (printWriter != null) {
-                printWriter.close();
-            }
-        }
+    private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+            throws FileNotFoundException {
+        final Graph graph = status.isSafe()
+                ? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
+                : new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
+        GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 
 }
