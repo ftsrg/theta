@@ -195,7 +195,7 @@ public class XstsConfigBuilder {
                 default:
                     throw new UnsupportedOperationException(domain + " domain is not supported.");
             }
-            final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
+            final Predicate<XstsState<PredState>> target = new XstsStatePredicate<ExprStatePredicate, PredState>(new ExprStatePredicate(negProp, solver));
             final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis.create(PredAnalysis.create(solver, predAbstractor,
                     True()));
             final ArgBuilder<XstsState<PredState>, XstsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
