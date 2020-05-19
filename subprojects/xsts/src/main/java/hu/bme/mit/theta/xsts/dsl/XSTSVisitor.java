@@ -250,7 +250,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.assignAction()!=null) return processAssignAction(ctx.assignAction());
         else if(ctx.assumeAction()!=null) return processAssumeAction(ctx.assumeAction());
         else if(ctx.havocAction()!=null) return processHavocAction(ctx.havocAction());
-        else return processNonDet(ctx.nonDetAction().nonDet());
+        else if(ctx.nonDetAction()!=null) return processNonDet(ctx.nonDetAction().nonDet());
+        else return SkipStmt.getInstance();
     }
 
     public NonDetStmt processNonDet(XstsDslParser.NonDetContext ctx) {

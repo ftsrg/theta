@@ -36,7 +36,7 @@ nonDet:
 ;
 
 sequentialAction:
-    actions+=action (actions+=action)*;
+    (actions+=action)*;
 
 assumeAction:
     ASSUME cond=implyExpression SEMICOLON;
