@@ -15,6 +15,7 @@ public class SequenceStmt implements Stmt{
 
     private SequenceStmt(List<Stmt> stmts){
         this.stmts=stmts;
+        if(stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
     }
 
     public static SequenceStmt of(List<Stmt> stmts){

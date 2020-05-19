@@ -15,6 +15,7 @@ public class NonDetStmt implements Stmt {
 
     private NonDetStmt(List<Stmt> stmts){
         this.stmts=stmts;
+        if(stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
     }
 
     public static NonDetStmt of(List<Stmt> stmts){
