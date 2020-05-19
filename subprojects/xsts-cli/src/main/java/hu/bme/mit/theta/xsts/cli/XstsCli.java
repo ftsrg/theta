@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XSTSVisitor;
+import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -133,18 +134,7 @@ public class XstsCli {
     private XSTS loadModel() throws IOException {
         if (model.endsWith(".xsts") && property.endsWith(".prop")) {
             try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model),new FileInputStream(property))) {
-                XstsDslLexer lexer=new XstsDslLexer(CharStreams.fromStream(inputStream));
-                CommonTokenStream tokenStream=new CommonTokenStream(lexer);
-                XstsDslParser parser=new XstsDslParser(tokenStream);
-                XstsDslParser.XstsContext model =parser.xsts();
-                XSTSVisitor visitor=new XSTSVisitor();
-                visitor.visitXsts(model);
-                return visitor.getXsts();
-//                final XstsSpec spec = XstsDslManager.createXstsSpec(inputStream);
-//                if (spec.getAllXsts().size() != 1) {
-//                    throw new UnsupportedOperationException("STS contains multiple properties.");
-//                }
-//                return XstsUtils.eliminateIte(Utils.singleElementOf(spec.getAllXsts()));
+                return XstsDslManager.createXsts(inputStream);
             }
         } else {
             throw new IOException("Unknown format");

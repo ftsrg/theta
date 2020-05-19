@@ -14,7 +14,7 @@ var BlinkingYellowTimeout3 : integer = 0
 var BlackTimeout4 : integer = 0
 
 
-tran {
+trans {
 	assume (((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Green)) && (Control_toggle == true))) && (normal == Green));
 	normal := Yellow;
 	LightCommands_displayYellow := true;
@@ -40,7 +40,7 @@ tran {
 	assume ((((main_region == Normal) && (PoliceInterrupt_police == true))) && (main_region == Normal));
 	main_region := Interrupted;
 	interrupted := BlinkingYellow;
-	BlinkingYellowTimeout) := 0;
+	BlinkingYellowTimeout3 := 0;
 	LightCommands_displayYellow := true;
 } or {
 	assume (((((main_region == Interrupted) && (PoliceInterrupt_police == true))) && (main_region == Interrupted)) && (normal == __Inactive__));
