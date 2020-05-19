@@ -57,6 +57,9 @@ public class XstsCli {
     @Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
     String model;
 
+    @Parameter(names = {"--property"}, description = "Path of the input property", required = true)
+    String property;
+
     @Parameter(names = {"--initprec"}, description = "Initial precision")
     InitPrec initPrec = InitPrec.EMPTY;
 
@@ -128,8 +131,8 @@ public class XstsCli {
     }
 
     private XSTS loadModel() throws IOException {
-        if (model.endsWith(".xsts")) {
-            try (InputStream inputStream = new FileInputStream(model)) {
+        if (model.endsWith(".xsts") && property.endsWith(".prop")) {
+            try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model),new FileInputStream(property))) {
                 XstsDslLexer lexer=new XstsDslLexer(CharStreams.fromStream(inputStream));
                 CommonTokenStream tokenStream=new CommonTokenStream(lexer);
                 XstsDslParser parser=new XstsDslParser(tokenStream);

@@ -97,6 +97,3 @@ env {
     LightCommands_displayGreen := false;
 }
 
-prop{
-    LightCommands_displayRed == true && LightCommands_displayGreen == true
-}

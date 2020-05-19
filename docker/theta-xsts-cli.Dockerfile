@@ -8,7 +8,7 @@ RUN git clone https://github.com/mondokm/theta.git && \
     git checkout xsts && \
     ./gradlew theta-xsts-cli:build && \
     cd .. && \
-    mv theta/subprojects/cfa-cli/build/libs/theta-xsts-cli-0.0.1-SNAPSHOT-all.jar ./theta-xsts-cli.jar
+    mv theta/subprojects/xsts-cli/build/libs/theta-xsts-cli-0.0.1-SNAPSHOT-all.jar ./theta-xsts-cli.jar
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
 
