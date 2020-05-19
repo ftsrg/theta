@@ -15,9 +15,6 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
@@ -26,37 +23,16 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.function.Predicate;
-
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.*;
-import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -73,11 +49,16 @@ public class XstsExplTest {
 	@Parameterized.Parameter(value = 2)
 	public boolean safe;
 
+	@Parameterized.Parameter(value = 3)
+	public XstsConfigBuilder.Domain domain;
+
 	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ "src/test/resources/trafficlight.xsts", "src/test/resources/green_and_red.prop", true }
+				{ "src/test/resources/trafficlight.xsts", "src/test/resources/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/trafficlight.xsts", "src/test/resources/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART}
 
 		});
 	}
@@ -95,7 +76,7 @@ public class XstsExplTest {
 			e.printStackTrace();
 		}
 
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(XstsConfigBuilder.Domain.EXPL, XstsConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
 		final SafetyResult<?, ?> status = configuration.check();
 		if (safe) {
 			assertTrue(status.isSafe());
