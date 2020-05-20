@@ -1,14 +1,14 @@
 var x: integer
+var y: integer
 
 trans {
-    assume x<5;
+    y:=y+1;
     x:=x+1;
-} or {
-    x:=x;
 }
 
 init {
-    x:=0;
+    x:=1;
+    y:=0;
 }
 
 env {}
