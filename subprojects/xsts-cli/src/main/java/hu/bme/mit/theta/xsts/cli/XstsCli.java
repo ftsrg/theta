@@ -26,12 +26,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
-import hu.bme.mit.theta.xsts.dsl.XSTSVisitor;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
