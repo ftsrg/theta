@@ -60,6 +60,10 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
+				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
@@ -68,7 +72,9 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART}
+				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART}
 
 		});
 	}
@@ -76,22 +82,28 @@ public class XstsExplTest {
 	@Test
 	public void test() throws IOException {
 
-		final Logger logger = new ConsoleLogger(Level.VERBOSE);
+		try {
 
-		XSTS xsts=null;
+			final Logger logger = new ConsoleLogger(Level.VERBOSE);
 
-		try(InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))){
-			xsts = XstsDslManager.createXsts(inputStream);
+			XSTS xsts = null;
+
+			try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
+				xsts = XstsDslManager.createXsts(inputStream);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
+			final SafetyResult<?, ?> status = configuration.check();
+			if (safe) {
+				assertTrue(status.isSafe());
+			} else {
+				assertTrue(status.isUnsafe());
+			}
+
 		} catch (Exception e){
 			e.printStackTrace();
-		}
-
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
-		final SafetyResult<?, ?> status = configuration.check();
-		if (safe) {
-			assertTrue(status.isSafe());
-		} else {
-			assertTrue(status.isUnsafe());
 		}
 
 	}
