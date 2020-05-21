@@ -1,4 +1,4 @@
-var x: integer
+var x: integer = 0
 
 trans {
     assume x<5;
@@ -7,8 +7,6 @@ trans {
     x:=x;
 }
 
-init {
-    x=0
-}
+init {}
 
 env {}

@@ -27,7 +27,7 @@ Algorithms are usually interested in proving that the property holds for every r
 An example XSTS realizing a counter:
 
 ```
-var x: integer
+var x: integer = 0
 
 trans {
     assume x<5;
@@ -36,9 +36,7 @@ trans {
     x:=x;
 }
 
-init {
-    x=0
-}
+init {}
 
 env {}
 ```

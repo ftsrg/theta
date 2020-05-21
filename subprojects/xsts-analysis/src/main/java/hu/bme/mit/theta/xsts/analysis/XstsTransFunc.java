@@ -35,7 +35,7 @@ public class XstsTransFunc <S extends ExprState, P extends Prec> implements Tran
 
         final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action, prec);
         for (final S subSuccState : subSuccStates) {
-            final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv);
+            final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv, true);
             succStates.add(succState);
         }
         return succStates;
