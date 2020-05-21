@@ -10,10 +10,12 @@ public class XstsLts implements LTS<XstsState, XstsAction> {
 
     private final Collection<XstsAction> internalActions;
     private final Collection<XstsAction> externalActions;
+    private final Collection<XstsAction> initActions;
 
     private XstsLts(final XSTS xsts){
         internalActions=xsts.getTransitions().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
         externalActions=xsts.getEnvAction().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
+        initActions=xsts.getInitAction().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
     }
 
     public static LTS<XstsState, XstsAction> create(final XSTS xsts){
@@ -22,7 +24,8 @@ public class XstsLts implements LTS<XstsState, XstsAction> {
 
     @Override
     public Collection<XstsAction> getEnabledActionsFor(XstsState state) {
-        if(state.lastActionWasEnv()) return internalActions;
+        if(!state.isInitialized()) return initActions;
+        else if(state.lastActionWasEnv()) return internalActions;
         else return externalActions;
     }
 }

@@ -40,6 +40,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     private HashSet<TypeDecl> types=new HashSet<TypeDecl>();
 
+    private HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
+
     @Override
     public Expr visitXsts(XstsDslParser.XstsContext ctx) {
 
@@ -52,7 +54,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(types, processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), visitImplyExpression(ctx.initFormula), visitImplyExpression(ctx.prop));
+        System.out.println(initExprs);
+        xsts=new XSTS(types, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
 
         return null;
     }
@@ -81,6 +84,9 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             throw new RuntimeException("["+ctx.name.getText()+"] is a type literal, cannot declare variable with this name.");
         } else {
             nameToDeclMap.put(decl.getName(), decl);
+            if(ctx.initValue!=null){
+                initExprs.add(Eq(decl.getRef(),visitValue(ctx.initValue)));
+            }
         }
         return null;
     }
@@ -230,7 +236,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     public Expr visitReference(XstsDslParser.ReferenceContext ctx) {
         if(literalToIntMap.containsKey(ctx.name.getText())) return Int(literalToIntMap.get(ctx.name.getText()));
         else if(nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
-        else throw new RuntimeException("Reference "+ctx.name.getText()+" could not be resolved.");
+        else throw new RuntimeException("Literal or reference "+ctx.name.getText()+" could not be resolved.");
 
     }
 

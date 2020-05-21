@@ -4,7 +4,7 @@ xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
     transitions=tran
-    INIT LCURLY initFormula=implyExpression RCURLY
+    initAction=init
     envAction=env
     PROP LCURLY prop=implyExpression RCURLY;
 
@@ -21,6 +21,10 @@ tran:
 
 env:
     ENV nonDet
+;
+
+init:
+    INIT nonDet
 ;
 
 nonDetAction:
@@ -110,7 +114,7 @@ prime:
     ref=reference | NEXT LPAREN inner=prime RPAREN;
 
 variableDeclaration:
-    VAR name=ID DP type=typeName;
+    VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
 
 value:
     literal|reference;
@@ -148,7 +152,7 @@ AND: '&&';
 OR: '||';
 IMPLIES: '->';
 NOT: '!';
-EQ: '==' | '=';
+EQ: '==';
 NEQ: '!=';
 LT: '<';
 GT: '>';
@@ -163,6 +167,7 @@ LPAREN: '(';
 RPAREN: ')';
 PRIME: '\'';
 ASSIGN: ':=';
+EQUALS: '=';
 VAR: 'var';
 INT: 'integer';
 BOOL: 'boolean';

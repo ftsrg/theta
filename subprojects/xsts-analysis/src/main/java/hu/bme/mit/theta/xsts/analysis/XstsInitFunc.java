@@ -27,7 +27,7 @@ public class XstsInitFunc<S extends ExprState, P extends Prec> implements InitFu
     public Collection<? extends XstsState<S>> getInitStates(final P prec) {
         final Collection<XstsState<S>> initStates = new ArrayList<>();
         for(final S subInitState: initFunc.getInitStates(prec)) {
-            initStates.add(XstsState.of(subInitState, false));
+            initStates.add(XstsState.of(subInitState, true, false));
         }
         return initStates;
     }
