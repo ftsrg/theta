@@ -12,7 +12,7 @@ This project contains the Extended Symbolic Transition System (XSTS) formalism. 
 
 ## XSTS Formalism
 
-STSs consist of
+XSTSs consist of
 
 * Variables,
 * an initial expression describing the initial states,
