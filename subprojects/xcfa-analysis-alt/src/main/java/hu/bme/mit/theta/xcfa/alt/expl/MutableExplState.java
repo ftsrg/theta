@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 public final class MutableExplState extends ExplState implements ExplStateMutatorInterface {
     private final MutableValuation valuation;
     private final ProcessStates processStates;
-    private VarIndexing indexing;
+    private final VarDoubleIndexing indexing;
     private Safety internalSafety;
     private XCFA.Process atomicLock;
 
@@ -68,7 +67,7 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         }
     }
 
-    private MutableExplState(MutableValuation valuation, VarIndexing indexing, ProcessStates processStates, Safety internalSafety, XCFA.Process atomicLock) {
+    private MutableExplState(MutableValuation valuation, VarDoubleIndexing indexing, ProcessStates processStates, Safety internalSafety, XCFA.Process atomicLock) {
         this.valuation = valuation;
         this.indexing = indexing;
         this.processStates = processStates;
@@ -102,7 +101,7 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     }
 
     @Override
-    public final VarIndexing getIndexing() {
+    public final VarDoubleIndexing getIndexing() {
         return indexing;
     }
 
@@ -173,10 +172,6 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         atomicLock = process;
     }
 
-    void setIndexing(VarIndexing newIndexing) {
-        indexing = newIndexing;
-    }
-
     private static class Factory implements ExplState.Factory<MutableExplState> {
 
         private static class LazyHolder {
@@ -188,7 +183,7 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
         }
 
         @Override
-        public MutableExplState create(Valuation valuation, VarIndexing indexing, ProcessStates states, Safety safety, XCFA.Process atomicLock) {
+        public MutableExplState create(Valuation valuation, VarDoubleIndexing indexing, ProcessStates states, Safety safety, XCFA.Process atomicLock) {
             return new MutableExplState(MutableValuation.copyOf(valuation), indexing, ProcessStates.copyOf(states, this), safety, atomicLock);
         }
 

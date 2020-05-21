@@ -30,7 +30,7 @@ public final class ImmutableExplState extends ExplState {
 
     private final ImmutableValuation valuation;
 
-    private final VarIndexing indexing;
+    private final VarDoubleIndexing indexing;
 
     private final ProcessStates processStates;
 
@@ -64,7 +64,7 @@ public final class ImmutableExplState extends ExplState {
         return ExplState.copyOf(x, Factory.getInstance());
     }
 
-    private ImmutableExplState(ImmutableValuation valuation, VarIndexing indexing, ProcessStates states, Safety internalSafety,
+    private ImmutableExplState(ImmutableValuation valuation, VarDoubleIndexing indexing, ProcessStates states, Safety internalSafety,
                                XCFA.Process atomicLock) {
         this.valuation = valuation;
         this.indexing = indexing;
@@ -77,7 +77,7 @@ public final class ImmutableExplState extends ExplState {
 
         @Override
         public ImmutableExplState create(
-                Valuation valuation, VarIndexing indexing, ProcessStates states,
+                Valuation valuation, VarDoubleIndexing indexing, ProcessStates states,
                 Safety safety, XCFA.Process atomicLock
         ) {
             return new ImmutableExplState(ImmutableValuation.copyOf(valuation), indexing,
@@ -126,7 +126,7 @@ public final class ImmutableExplState extends ExplState {
     }
 
     @Override
-    public VarIndexing getIndexing() {
+    public VarDoubleIndexing getIndexing() {
         return indexing;
     }
 

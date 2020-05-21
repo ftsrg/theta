@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import javax.annotation.Nullable;
@@ -28,8 +27,8 @@ import java.util.Objects;
 public abstract class ExplState implements State {
     /** Stores the values of the variables */
     public abstract Valuation getValuation();
-    /** Stores the current depth of recursion for the procedure-local variables */
-    public abstract VarIndexing getIndexing();
+    /** Stores the current depth of recursion for the procedure-local variables. */
+    public abstract VarDoubleIndexing getIndexing();
     /** Stores the per-process states */
     public abstract ProcessStates getProcessStates();
     /** Stores whether special safety properties have been violated
@@ -42,7 +41,7 @@ public abstract class ExplState implements State {
 
     @Override
     public final int hashCode() {
-        return Objects.hash(getValuation(), getProcessStates(), getIndexing(), getInternalSafety(), getAtomicLock());
+        return Objects.hash(getValuation(), getProcessStates(), getInternalSafety(), getAtomicLock());
     }
 
     private static boolean nullableEquals(Object a, Object b) {
@@ -64,7 +63,7 @@ public abstract class ExplState implements State {
     /** These factories are used to reduce duplicated code in MutableExplState and ImmutableExplState. */
     interface Factory<R extends ExplState> extends Factory0 {
         R create(
-                Valuation valuation, VarIndexing indexing, ProcessStates states,
+                Valuation valuation, VarDoubleIndexing indexing, ProcessStates states,
                 Safety safety, XCFA.Process atomicLock
         );
     }
@@ -96,7 +95,6 @@ public abstract class ExplState implements State {
         ExplState that = (ExplState) o;
         return getValuation().equals(that.getValuation()) &&
                 getProcessStates().equals(that.getProcessStates()) &&
-                getIndexing().equals(that.getIndexing()) &&
                 nullableEquals(getAtomicLock(), that.getAtomicLock()) &&
                 getInternalSafety().equals(that.getInternalSafety());
     }

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -41,7 +42,7 @@ final class ValuesUtils {
     private ValuesUtils() { }
 
     public static <DeclType extends Type> Optional<LitExpr<DeclType>> eval(ExplState state, Expr<DeclType> expr) {
-        Expr<DeclType> simplified = ExprUtils.simplify(PathUtils.unfold(expr, state.getIndexing()), state.getValuation());
+        Expr<DeclType> simplified = ExprUtils.simplify(state.getIndexing().unfold(expr), state.getValuation());
         if (simplified instanceof LitExpr<?>) {
             return Optional.of((LitExpr<DeclType>)simplified);
         }
@@ -55,14 +56,12 @@ final class ValuesUtils {
     }
 
     public static void modifyIndexing(MutableExplState state, XCFA.Process.Procedure procedure, int modifier) {
-        VarIndexing.Builder builder = state.getIndexing().transform();
-        for (var x: procedure.getLocalVars()) {
-            builder.inc(x, modifier);
+        Preconditions.checkArgument(modifier == 1 || modifier == -1);
+        if (modifier == 1) {
+            state.getIndexing().pushProcedure(procedure);
+        } else {
+            state.getIndexing().popProcedure();
         }
-        for (var x: procedure.getParams()) {
-            builder.inc(x, modifier);
-        }
-        state.setIndexing(builder.build());
     }
 
     /**
@@ -82,7 +81,7 @@ final class ValuesUtils {
         return builder.build();
     }
 
-    protected static VarIndexing getInitialIndexing() {
-        return VarIndexing.all(0);
+    protected static VarDoubleIndexing getInitialIndexing() {
+        return new VarDoubleIndexing();
     }
 }
