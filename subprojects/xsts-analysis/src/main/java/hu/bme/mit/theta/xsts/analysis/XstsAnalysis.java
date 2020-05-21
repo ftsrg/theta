@@ -2,6 +2,9 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -15,8 +18,8 @@ public class XstsAnalysis<S extends ExprState, P extends Prec>
     private XstsAnalysis(final Analysis<S, ? super XstsAction, ? super P> analysis) {
         checkNotNull(analysis);
         partialOrd = XstsOrd.create(analysis.getPartialOrd());
-        initFunc = XstsInitFunc.create(analysis.getInitFunc());
         transFunc = XstsTransFunc.create(analysis.getTransFunc());
+        initFunc = XstsInitFunc.create(analysis.getInitFunc());
     }
 
     public static <S extends ExprState, P extends Prec> XstsAnalysis<S, P> create(final Analysis<S, ? super XstsAction, ? super P> analysis) {

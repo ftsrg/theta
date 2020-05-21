@@ -1,17 +1,17 @@
 type Main_region : { __Inactive__, Normal, Interrupted}
 type Interrupted : { __Inactive__, Black, BlinkingYellow}
 type Normal : { __Inactive__, Green, Red, Yellow}
-var LightCommands_displayNone : boolean = false
-var LightCommands_displayGreen : boolean = false
-var PoliceInterrupt_police : boolean = false
-var LightCommands_displayYellow : boolean = false
-var LightCommands_displayRed : boolean = false
-var Control_toggle : boolean = false
-var main_region : Main_region = __Inactive__
-var interrupted : Interrupted = __Inactive__
-var normal : Normal = __Inactive__
-var BlinkingYellowTimeout3 : integer = 0
-var BlackTimeout4 : integer = 0
+var LightCommands_displayNone : boolean
+var LightCommands_displayGreen : boolean
+var PoliceInterrupt_police : boolean
+var LightCommands_displayYellow : boolean
+var LightCommands_displayRed : boolean
+var Control_toggle : boolean
+var main_region : Main_region
+var interrupted : Interrupted
+var normal : Normal
+var BlinkingYellowTimeout3 : integer
+var BlackTimeout4 : integer
 
 
 trans {
@@ -66,18 +66,17 @@ trans {
 }
 
 init {
-	assume true;
-	BlinkingYellowTimeout3 := 0;
-	BlackTimeout4 := 0;
-	interrupted := __Inactive__;
-	PoliceInterrupt_police := false;
-	Control_toggle := false;
-	LightCommands_displayNone := false;
-	LightCommands_displayGreen := false;
-	LightCommands_displayYellow := false;
-	main_region := Normal;
-	normal := Red;
-	LightCommands_displayRed := true;
+	BlinkingYellowTimeout3 = 0 &&
+	BlackTimeout4 = 0 &&
+	interrupted = __Inactive__ &&
+	PoliceInterrupt_police = false &&
+	Control_toggle = false &&
+	LightCommands_displayNone = false &&
+	LightCommands_displayGreen = false &&
+	LightCommands_displayYellow = false &&
+	main_region = Normal &&
+	normal = Red &&
+	LightCommands_displayRed = true
 }
 
 env {

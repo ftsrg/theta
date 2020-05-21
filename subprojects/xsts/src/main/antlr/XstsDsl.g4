@@ -4,7 +4,7 @@ xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
     transitions=tran
-    initAction=init
+    INIT LCURLY initFormula=implyExpression RCURLY
     envAction=env
     PROP LCURLY prop=implyExpression RCURLY;
 
@@ -23,10 +23,6 @@ env:
     ENV nonDet
 ;
 
-init:
-    INIT nonDet
-;
-
 nonDetAction:
     CHOICE nonDet
 ;
@@ -42,7 +38,7 @@ assumeAction:
     ASSUME cond=implyExpression SEMICOLON;
 
 assignAction:
-    lhs=prime ASSIGN rhs=implyExpression SEMICOLON;
+    lhs=ID ASSIGN rhs=implyExpression SEMICOLON;
 
 havocAction:
     HAVOC name=ID SEMICOLON;
@@ -114,7 +110,7 @@ prime:
     ref=reference | NEXT LPAREN inner=prime RPAREN;
 
 variableDeclaration:
-    VAR name=ID DP type=typeName (EQUALS initValue=value)?;
+    VAR name=ID DP type=typeName;
 
 value:
     literal|reference;
@@ -142,8 +138,6 @@ TRAN: 'trans';
 INIT: 'init';
 ENV: 'env';
 PROP: 'prop';
-LBRAC: '[';
-RBRAC: ']';
 HAVOC: 'havoc';
 CHOICE: 'choice';
 NONDET_OR: 'or';
@@ -154,7 +148,7 @@ AND: '&&';
 OR: '||';
 IMPLIES: '->';
 NOT: '!';
-EQ: '==';
+EQ: '==' | '=';
 NEQ: '!=';
 LT: '<';
 GT: '>';
@@ -169,7 +163,6 @@ LPAREN: '(';
 RPAREN: ')';
 PRIME: '\'';
 ASSIGN: ':=';
-EQUALS: '=';
 VAR: 'var';
 INT: 'integer';
 BOOL: 'boolean';
