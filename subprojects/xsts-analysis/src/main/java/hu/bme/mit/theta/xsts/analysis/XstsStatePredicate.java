@@ -18,6 +18,6 @@ public class XstsStatePredicate<P extends Predicate, S extends ExprState> implem
 
     @Override
     public boolean test(XstsState<S> state) {
-        return state.isInitialized() && pred.test(state.getState());
+        return pred.test(state.getState());
     }
 }

@@ -52,22 +52,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(types, processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.envAction.nonDet()), visitImplyExpression(ctx.prop));
-//        System.out.println(xsts.getVars());
-        for(TypeDecl typeDecl:xsts.getTypes()){
-//            System.out.println(typeDecl);
-            for(String literal:typeDecl.getLiterals()){
-//                System.out.println(literal+" "+literalToIntMap.get(literal));
-            }
-        }
-//        System.out.println("tran:");
-//        xsts.getTransitions().getStmts().stream().forEach(System.out::println);
-//        System.out.println("init:");
-//        xsts.getInitAction().getStmts().stream().forEach(System.out::println);
-//        System.out.println("env");
-//        xsts.getEnvAction().getStmts().stream().forEach(System.out::println);
-//        System.out.println("prop:");
-//        System.out.println(xsts.getProp());
+        xsts=new XSTS(types, processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), visitImplyExpression(ctx.initFormula), visitImplyExpression(ctx.prop));
+
         return null;
     }
 
@@ -90,8 +76,10 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         else type=IntType.getInstance();
         VarDecl decl=Decls.Var(ctx.name.getText(),type);
         if(nameToDeclMap.containsKey(ctx.name.getText())){
-            System.out.println("Variable ["+ctx.name.getText()+"] already exists.");
-        }else {
+            throw new RuntimeException("Variable ["+ctx.name.getText()+"] already exists.");
+        } else if(literalToIntMap.containsKey(ctx.name.getText())){
+            throw new RuntimeException("["+ctx.name.getText()+"] is a type literal, cannot declare variable with this name.");
+        } else {
             nameToDeclMap.put(decl.getName(), decl);
         }
         return null;
@@ -152,7 +140,9 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 return Geq(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
             }else if(ctx.oper.LT()!=null){
                 return Lt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
-            }else return Gt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
+            }else if(ctx.oper.GT()!=null){
+                return Gt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
+            } else throw new UnsupportedOperationException("Unsupported operation "+ctx.oper.getText());
         }else return visitAdditiveExpr(ctx.ops.get(0));
     }
 
@@ -188,8 +178,10 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 res=Div(res,visitNegExpr(ctx.ops.get(i)));
             }else if(ctx.opers.get(i-1).MOD()!=null){
                 res=Mod(res,visitNegExpr(ctx.ops.get(i)));
-            }else{
+            }else if(ctx.opers.get(i-1).MUL()!=null){
                 res=Mul(res,visitNegExpr(ctx.ops.get(i)));
+            } else{
+                throw new UnsupportedOperationException("Unsupported operation "+ctx.opers.get(i-1).getText());
             }
         }
         return res;
@@ -229,21 +221,24 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     public Expr visitLiteral(XstsDslParser.LiteralContext ctx) {
         if(ctx.BOOLLIT()!=null){
             if(ctx.BOOLLIT().getText().equals("true")) return True(); else return False();
-        }else{
+        }else if(ctx.INTLIT()!=null){
             return Int(Integer.parseInt(ctx.INTLIT().getText()));
-        }
+        }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type.");
     }
 
     @Override
     public Expr visitReference(XstsDslParser.ReferenceContext ctx) {
         if(literalToIntMap.containsKey(ctx.name.getText())) return Int(literalToIntMap.get(ctx.name.getText()));
-        else return nameToDeclMap.get(ctx.name.getText()).getRef();
+        else if(nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
+        else throw new RuntimeException("Reference "+ctx.name.getText()+" could not be resolved.");
+
     }
 
     @Override
     public Expr visitPrime(XstsDslParser.PrimeContext ctx) {
         if(ctx.reference()!=null) return visitReference(ctx.reference());
-        else return Prime(visitPrime(ctx.prime()));
+        else throw new UnsupportedOperationException("Prime expressions are not supported.");
+//            return Prime(visitPrime(ctx.prime()));
     }
 
     public Stmt processAction(XstsDslParser.ActionContext ctx) {
@@ -275,16 +270,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     }
 
     public AssignStmt processAssignAction(XstsDslParser.AssignActionContext ctx) {
-        return Stmts.Assign(processAssignLHS(ctx.lhs),visitImplyExpression(ctx.rhs));
+        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText());
+        return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitImplyExpression(ctx.rhs));
     }
 
     public HavocStmt processHavocAction(XstsDslParser.HavocActionContext ctx){
+        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText());
         return Stmts.Havoc(nameToDeclMap.get(ctx.name.getText()));
-    }
-
-    public VarDecl processAssignLHS(XstsDslParser.PrimeContext ctx){
-        XstsDslParser.PrimeContext running=ctx;
-        while(running.inner!=null) running=running.inner;
-        return nameToDeclMap.get(running.ref.name.getText());
     }
 }

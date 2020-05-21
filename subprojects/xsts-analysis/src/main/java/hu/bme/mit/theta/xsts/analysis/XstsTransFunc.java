@@ -31,14 +31,11 @@ public class XstsTransFunc <S extends ExprState, P extends Prec> implements Tran
 
         final Collection<XstsState<S>> succStates = new ArrayList<>();
         final S subState = state.getState();
-        final boolean succWasLastEnv;
-        if(state.isInitialized()) succWasLastEnv= !state.isLastActionWasEnv();
-        else succWasLastEnv=false;
-
+        final boolean succWasLastEnv = !state.lastActionWasEnv();
 
         final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action, prec);
         for (final S subSuccState : subSuccStates) {
-            final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv, true);
+            final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv);
             succStates.add(succState);
         }
         return succStates;

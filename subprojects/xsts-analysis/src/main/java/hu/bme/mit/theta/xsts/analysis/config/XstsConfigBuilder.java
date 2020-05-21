@@ -138,7 +138,7 @@ public class XstsConfigBuilder {
 
         if (domain == Domain.EXPL) {
             final Predicate<XstsState<ExplState>> target = new XstsStatePredicate<ExplStatePredicate, ExplState>(new ExplStatePredicate(negProp,solver));
-            final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplAnalysis.create(solver, True()));
+            final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplAnalysis.create(solver, xsts.getInitFormula()));
             final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
                     true);
             final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
@@ -151,23 +151,23 @@ public class XstsConfigBuilder {
 
             switch (refinement) {
                 case FW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), negProp, solver),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
                             JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
                     break;
                 case BW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), negProp, solver),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
                             JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
                     break;
                 case SEQ_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), negProp, solver),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
                             JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
                     break;
                 case MULTI_SEQ:
-                    refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), negProp, solver),
+                    refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
                             JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
                     break;
                 case UNSAT_CORE:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), negProp, solver),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp, solver),
                             JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
                     break;
                 default:
@@ -197,7 +197,7 @@ public class XstsConfigBuilder {
             }
             final Predicate<XstsState<PredState>> target = new XstsStatePredicate<ExprStatePredicate, PredState>(new ExprStatePredicate(negProp, solver));
             final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis.create(PredAnalysis.create(solver, predAbstractor,
-                    True()));
+                    xsts.getInitFormula()));
             final ArgBuilder<XstsState<PredState>, XstsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
                     true);
             final Abstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
@@ -209,16 +209,16 @@ public class XstsConfigBuilder {
             ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
             switch (refinement) {
                 case FW_BIN_ITP:
-                    exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), negProp, solver);
+                    exprTraceChecker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver);
                     break;
                 case BW_BIN_ITP:
-                    exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), negProp, solver);
+                    exprTraceChecker = ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver);
                     break;
                 case SEQ_ITP:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), negProp, solver);
+                    exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver);
                     break;
                 case MULTI_SEQ:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), negProp, solver);
+                    exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver);
                     break;
                 default:
                     throw new UnsupportedOperationException(

@@ -20,8 +20,8 @@ public final class XSTS {
     private final Collection<VarDecl<?>> vars;
     private final Collection<TypeDecl> types;
     private final NonDetStmt transitions;
-    private final NonDetStmt initAction;
     private final NonDetStmt envAction;
+    private final Expr<BoolType> initFormula;
     private final Expr<BoolType> prop;
 
     public Collection<VarDecl<?>> getVars() {
@@ -38,24 +38,22 @@ public final class XSTS {
         return transitions;
     }
 
-    public NonDetStmt getInitAction() {
-        return initAction;
-    }
+    public Expr<BoolType> getInitFormula() { return initFormula; }
 
     public NonDetStmt getEnvAction() {
         return envAction;
     }
 
-    public XSTS(final Collection<TypeDecl> types, final NonDetStmt transitions, final NonDetStmt initAction, final NonDetStmt envAction, final Expr<BoolType> prop) {
+    public XSTS(final Collection<TypeDecl> types, final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
         this.transitions = checkNotNull(transitions);
-        this.initAction = checkNotNull(initAction);
+        this.initFormula = checkNotNull(initFormula);
         this.envAction = checkNotNull(envAction);
         this.prop = checkNotNull(prop);
         this.types=types;
         final Set<VarDecl<?>> tmpVars = new HashSet<>();
         tmpVars.addAll(StmtUtils.getVars(transitions));
-        tmpVars.addAll(StmtUtils.getVars(initAction));
         tmpVars.addAll(StmtUtils.getVars(envAction));
+        tmpVars.addAll(ExprUtils.getVars(initFormula));
         tmpVars.addAll(ExprUtils.getVars(prop));
         this.vars = Collections.unmodifiableCollection(tmpVars);
     }

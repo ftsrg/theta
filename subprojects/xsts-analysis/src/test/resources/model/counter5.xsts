@@ -8,7 +8,7 @@ trans {
 }
 
 init {
-    x:=0;
+    x=0
 }
 
 env {}
