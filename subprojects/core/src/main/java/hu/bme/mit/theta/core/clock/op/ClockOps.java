@@ -91,12 +91,12 @@ public final class ClockOps {
 
 		@Override
 		public ClockOp visit(SequenceStmt stmt, Void param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public ClockOp visit(NonDetStmt stmt, Void param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

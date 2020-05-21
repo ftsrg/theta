@@ -47,12 +47,12 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 
 	@Override
 	public String visit(SequenceStmt stmt, Void param) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String visit(NonDetStmt stmt, Void param) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 }
