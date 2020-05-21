@@ -142,12 +142,12 @@ public final class WpState {
 
 		@Override
 		public WpState visit(SequenceStmt stmt, WpState param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public WpState visit(NonDetStmt stmt, WpState param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -188,12 +188,12 @@ public final class WpState {
 
 		@Override
 		public WpState visit(SequenceStmt stmt, WpState param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public WpState visit(NonDetStmt stmt, WpState param) {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
