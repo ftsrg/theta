@@ -42,3 +42,11 @@ init {
 
 env {}
 ```
+
+An example property stating that the value of x will always be greater than or equal to 0:
+
+```
+prop{
+    x>=0
+}
+```
