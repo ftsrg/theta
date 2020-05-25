@@ -134,30 +134,9 @@ final class Z3TermTransformer {
 	}
 
 	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		switch (sort.getDomain().getSortKind()) {
-			case Z3_BOOL_SORT:
-				return this.createIndexArrayLitExpr(Bool(), sort, entryExprs);
-			case Z3_INT_SORT:
-				return this.<IntType>createIndexArrayLitExpr(Int(), sort, entryExprs);
-			case Z3_REAL_SORT:
-				return this.<RatType>createIndexArrayLitExpr(Rat(), sort, entryExprs);
-			default:
-				throw new UnsupportedOperationException();
-		}
+		return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()), transformSort(sort.getRange()), entryExprs);
 	}
-
-	private <I extends Type> Expr<?> createIndexArrayLitExpr(I indexType, ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		if (sort.getRange() instanceof com.microsoft.z3.BoolSort) {
-			return this.createIndexValueArrayLitExpr(indexType, Bool(), entryExprs);
-		} else if (sort.getRange() instanceof com.microsoft.z3.IntSort) {
-			return this.createIndexValueArrayLitExpr(indexType, Int(), entryExprs);
-		} else if (sort.getRange() instanceof com.microsoft.z3.RealSort) {
-			return this.createIndexValueArrayLitExpr(indexType, Rat(), entryExprs);
-		} else {
-			throw new AssertionError("Unsupported sort: " + sort);
-		}
-	}
-
+	
 	@SuppressWarnings("unchecked")
 	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
 		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()), ArrayType.of(indexType, elemType));
