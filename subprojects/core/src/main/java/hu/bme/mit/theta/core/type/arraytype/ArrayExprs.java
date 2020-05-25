@@ -32,8 +32,9 @@ public final class ArrayExprs {
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> Array(
-			final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final ArrayType<IndexType, ElemType> type) {
-		return ArrayLitExpr.of(elems, type);
+			final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final Expr<ElemType> elseElem,
+			final ArrayType<IndexType, ElemType> type) {
+		return ArrayLitExpr.of(elems, elseElem, type);
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> Read(
