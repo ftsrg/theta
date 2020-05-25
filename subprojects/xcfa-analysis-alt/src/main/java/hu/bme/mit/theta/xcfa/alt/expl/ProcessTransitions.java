@@ -40,6 +40,10 @@ public final class ProcessTransitions {
         return ExecutableTransitionUtils.streamExecutableTransitions(state, transitionStream());
     }
 
+    public Stream<Transition> disabledStream() {
+        return ExecutableTransitionUtils.streamDisabledTransitions(state, transitionStream());
+    }
+
     public boolean hasAnyEnabledTransition() {
         return enabledStream().findAny().isPresent();
     }

@@ -1,0 +1,236 @@
+/*
+ *  Copyright 2017 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.alt.algorithm;
+
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
+import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
+import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionUtils;
+import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
+import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
+import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState.ExecutableTransition;
+import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
+import hu.bme.mit.theta.xcfa.alt.expl.Transition;
+import hu.bme.mit.theta.xcfa.alt.expl.TransitionUtils;
+
+import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
+import java.util.stream.Collectors;
+
+public class POChecker extends XcfaChecker {
+
+    private final Set<ExplState> exploredStates = new HashSet<>();
+    private final Set<ExplState> stackedStates = new HashSet<>();
+    private final Stack<DfsNode> dfsStack = new Stack<>();
+
+
+    private static class AmpleSetFactory {
+        // pre(Pi)
+        private final Collection<ProcessTransitions> allTransitionsByProcess;
+
+        public AmpleSetFactory(XCFA xcfa) {
+            allTransitionsByProcess = TransitionUtils.getProcessTransitions(xcfa);
+        }
+
+        private void collectDependingProcesses(ProcessTransitions t, Collection<XCFA.Process> alreadyProcessed,
+                                               Collection<XCFA.Process> result) {
+            t.transitionStream().forEach(tr->collectDependingProcesses(tr, alreadyProcessed, result));
+        }
+
+        private void collectDependingProcesses(Transition t, Collection<XCFA.Process> alreadyProcessed,
+                                               Collection<XCFA.Process> result) {
+            for (var x : allTransitionsByProcess) {
+                if (alreadyProcessed.contains(x.getProcess())) {
+                    continue;
+                }
+                if (result.contains(x.getProcess())) {
+                    continue;
+                }
+                if (x.getProcess() == t.getProcess()) {
+                    continue;
+                }
+                if (DependencyUtils.depends(x, t)) {
+                    result.add(x.getProcess());
+                }
+            }
+        }
+
+        // input is a non empty set of enabled transitions
+        private Collection<XCFA.Process> collectAmpleSet(ImmutableExplState state) {
+            HashSet<XCFA.Process> ampleSet = new HashSet<>();
+            HashSet<XCFA.Process> notYetProcessed = new HashSet<>();
+
+            Collection<ProcessTransitions> enabledProcesses = TransitionUtils.getProcessTransitions(state).stream()
+                    .filter(ProcessTransitions::hasAnyEnabledTransition)
+                    .collect(Collectors.toUnmodifiableList());
+
+            // add a transition
+            ProcessTransitions first = enabledProcesses.iterator().next();
+            notYetProcessed.add(first.getProcess());
+
+            // add dependencies transitively
+            while (!notYetProcessed.isEmpty()) {
+                XCFA.Process toBeProcessed = notYetProcessed.iterator().next();
+                ampleSet.add(toBeProcessed);
+
+                notYetProcessed.remove(toBeProcessed);
+                for (ProcessTransitions enabledProcess : enabledProcesses) {
+                    collectDependingProcesses(enabledProcess, ampleSet, notYetProcessed);
+                }
+
+                // Add disabled transitions' dependencies, which may activate the transition.
+                // More precisely: all processes' transitions that may enable this disabled transition.
+                // Look at partialorder-test.xcfa for more information
+                for (ProcessTransitions enabledProcess : enabledProcesses) {
+                    enabledProcess.disabledStream()
+                            .forEach(
+                                tr -> collectDependingProcesses(tr, ampleSet, notYetProcessed)
+                            );
+                }
+            }
+            return ampleSet;
+        }
+
+        // Does not contain the logic of C3 about cycles, they are handled in the DFS
+        public Collection<XCFA.Process> returnAmpleSet(ImmutableExplState expl) {
+            Collection<ExecutableTransitionBase> enabled = ExecutableTransitionUtils.getExecutableTransitions(expl)
+                    .collect(Collectors.toUnmodifiableList());
+            if (enabled.isEmpty()) {
+                return Collections.emptySet();
+            }
+            return collectAmpleSet(expl);
+        }
+    }
+
+    private boolean discardAlreadyExploredStates() {
+        return config.discardAlreadyExplored();
+    }
+
+    /**
+     * Checking whether a state is checked is needed for detecting cylces,
+     * these are needed by some algorithms.
+     * Also, for checking infinite loops!
+     */
+    private boolean rememberStackedStates() {
+        return true;
+    }
+
+    POChecker(XCFA xcfa, Config config) {
+        super(xcfa,config);
+    }
+
+    /** Pushes the node to the stack if not explored before */
+    private void tryPushNode(DfsNode node) {
+        ImmutableExplState state = node.getState();
+        debugPrint(state);
+        if (discardAlreadyExploredStates()) {
+            if (exploredStates.contains(state)) {
+                return;
+            }
+            exploredStates.add(state);
+        }
+        if (rememberStackedStates()) {
+            stackedStates.add(state);
+        }
+        dfsStack.push(node);
+    }
+
+    private void popNode(DfsNode s0) {
+        ExplState state = dfsStack.pop().getState();
+        if (rememberStackedStates()) {
+            stackedStates.remove(state);
+        }
+        assert(state.equals(s0.getState()));
+    }
+
+    /**
+     * SafetyResult should be always unsafe OR finished.
+     */
+    public SafetyResult<ExplState, Transition> check() {
+
+        tryPushNode(new DfsNode(ImmutableExplState.initialState(xcfa), null));
+
+        SafetyResult<ExplState, Transition> result = Tracer.safe();
+
+        while (!dfsStack.empty()) {
+            DfsNode node = dfsStack.peek();
+            if (node.hasChild()) {
+                var child = node.child();
+                // first check for cycles, then check for explored states
+                if (rememberStackedStates() && stackedStates.contains(child.getState())) {
+                    node.expand();
+                    // expand, do not remove, and retry
+                } else {
+                    tryPushNode(child);
+                }
+            } else {
+
+                if (node.isFinished())
+                    onFinished(dfsStack);
+
+                if (!node.isSafe()) {
+                    // catch first unsafe property found
+                    if (config.forceIterate() && result.isSafe()) {
+                        result = Tracer.unsafe(dfsStack);
+                    } else {
+                        return Tracer.unsafe(dfsStack);
+                    }
+                }
+                popNode(node);
+            }
+        }
+        return result;
+    }
+
+    private static Collection<ExecutableTransition> collectTransitions(ImmutableExplState state, Collection<XCFA.Process> processes) {
+        return state.getEnabledTransitions().stream()
+                .filter(x->processes.contains(x.getProcess()))
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    private final class DfsNode extends DfsNodeBase {
+
+        boolean optimized = true;
+
+        DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
+            super(state, lastTransition,
+                    collectTransitions(state,
+                            new AmpleSetFactory(xcfa).returnAmpleSet(state)
+                    )
+            );
+        }
+
+        @Override
+        public DfsNode child() {
+            // TODO do not copy to new immutable state when there is only one transition?
+            var t = fetchNextTransition();
+            return new DfsNode(t.execute(), t);
+        }
+
+        void expand() {
+            if (optimized) {
+                optimized = false;
+                resetWithTransitions(getState().getEnabledTransitions());
+            }
+        }
+    }
+
+}

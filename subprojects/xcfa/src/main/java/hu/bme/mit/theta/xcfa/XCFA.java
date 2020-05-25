@@ -530,6 +530,10 @@ public final class XCFA {
 			built = true;
 			return xcfa;
 		}
+
+		public List<VarDecl<? extends Type>> getGlobalVars() {
+			return globalVars;
+		}
 	}
 
 }

@@ -63,6 +63,18 @@ public abstract class XcfaChecker {
         }
     }
 
+    public static Config.Builder getSimplePOR() {
+        var config = new Config.Builder();
+        config.optimizeLocals = true;
+        config.partialOrder = true;
+        config.ampleSet = true;
+        config.discardAlreadyExplored = false;
+        config.rememberTraces = false;
+        config.debug = false;
+        config.forceIterate = false;
+        return config;
+    }
+
     public static Config.Builder getSimpleDPOR() {
         var config = new Config.Builder();
         config.optimizeLocals = true;
@@ -93,7 +105,9 @@ public abstract class XcfaChecker {
             System.err.println("Warning! Probably bad configuration: not all traces will be stored, because program" +
                     "might stop DFS when finding an unsafe property.");
         }
-        if (config.isPartialOrder()) {
+        if (config.isAmpleSet()) {
+            return new POChecker(xcfa, config);
+        } else if (config.isPartialOrder()) {
             return new DynamicPOChecker(xcfa, config);
         } else {
             return new ExplicitChecker(xcfa, config);
@@ -101,8 +115,6 @@ public abstract class XcfaChecker {
     }
 
     /**
-     * TODO this could be merged with extractFinishedTraces with something like Python yield
-     *   This can be done in Java by starting a new thread and using wait/notify to sync results
      * Returns whether the given XCFA is safe.
      */
     public abstract SafetyResult<ExplState, Transition> check();

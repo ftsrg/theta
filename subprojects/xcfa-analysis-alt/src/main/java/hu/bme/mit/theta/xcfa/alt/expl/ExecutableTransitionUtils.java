@@ -20,14 +20,20 @@ import java.util.stream.Stream;
 
 /**
  * Functions for handling executable transitions.
+ * Only a few methods are public, and it is intentional.
+ * To know exactly which transitions are executable, knowing everything about one process is not enough.
+ * For example, AtomicLock is only known to the ExplState itself, and it is crucial for determining
+ * which transitions are enabled.
  */
 public final class ExecutableTransitionUtils {
 
+    private ExecutableTransitionUtils() {
+        //
+    }
+
     /**
-     * Filters the transitions so that only enabled transitions are passed.
+     * Filters the transitions so that only enabled transitions pass.
      * Different type than Transition, so it's harder to activate a disabled edge.
-     * This is the function responsible for checking whether an atomic lock is in place, so
-     * every transition -> executableTransition translation should use this function.
      * @param state The state the executableTransition
      * @param transitionStream The transitions to process
      * @return returns a stream of enabled transitions
@@ -38,9 +44,27 @@ public final class ExecutableTransitionUtils {
             stream = stream.filter(t -> t.getProcess() == state.getAtomicLock());
         }
         return stream.map(
-                        transitionEntry -> ExecutableTransitionBase.from(state, transitionEntry)
-                ).filter(Optional::isPresent)
+                transitionEntry -> ExecutableTransitionBase.from(state, transitionEntry)
+        ).filter(Optional::isPresent)
                 .map(Optional::get);
+    }
+
+    /**
+     * Filters the transitions so that only disabled transitions pass.
+     * This is the function responsible for checking whether an atomic lock is in place, so
+     * every transition -> executableTransition translation should use this function.
+     * @param state The state the executableTransition
+     * @param transitionStream The transitions to process
+     * @return returns a stream of enabled transitions
+     */
+    public static Stream<Transition> streamDisabledTransitions(ExplState state, Stream<Transition> transitionStream) {
+        var stream = transitionStream;
+        if (state.getAtomicLock() != null) {
+            stream = stream.filter(t -> t.getProcess() == state.getAtomicLock());
+        }
+        return stream.filter(
+                transitionEntry -> ExecutableTransitionBase.from(state, transitionEntry).isEmpty()
+        );
     }
 
     /**
