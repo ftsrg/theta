@@ -46,7 +46,7 @@ public class VarDoubleIndexing {
         for (var x: procedure.getParams()) {
             builder.inc(x, +1);
         }
-        indexingStack.push(peek);
+        indexingStack.push(builder.build());
     }
 
     void popProcedure() {
