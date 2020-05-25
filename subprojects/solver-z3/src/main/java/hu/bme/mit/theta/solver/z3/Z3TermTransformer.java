@@ -256,8 +256,8 @@ final class Z3TermTransformer {
 		final ImmutableList.Builder<Tuple2<Expr<?>, Expr<?>>> builder = ImmutableList.builder();
 		for (final com.microsoft.z3.FuncInterp.Entry entry : funcInterp.getEntries()) {
 			checkArgument(entry.getArgs().length == 1);
-			final com.microsoft.z3.Expr term1 = entry.getValue();
-			final com.microsoft.z3.Expr term2 = entry.getArgs()[0];
+			final com.microsoft.z3.Expr term1 = entry.getArgs()[0];
+			final com.microsoft.z3.Expr term2 = entry.getValue();
 			final Expr<?> expr1 = transform(term1, model, vars);
 			final Expr<?> expr2 = transform(term2, model, vars);
 			builder.add(Tuple2.of(expr1, expr2));
