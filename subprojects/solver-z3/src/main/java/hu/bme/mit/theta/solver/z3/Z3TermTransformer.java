@@ -127,19 +127,22 @@ final class Z3TermTransformer {
 	public Expr<?> toArrayLitExpr(final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
+		final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
 		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) funcDecl.getRange();
 
-		return createArrayLitExpr(sort, entryExprs);
+		return createArrayLitExpr(sort, entryExprs, elseExpr);
 	}
 
-	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()), transformSort(sort.getRange()), entryExprs);
+	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
+		return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()), transformSort(sort.getRange()), entryExprs, elseExpr);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()), ArrayType.of(indexType, elemType));
+	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
+		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()),
+				(Expr<E>)elseExpr,
+				ArrayType.of(indexType, elemType));
 	}
 
 	////////

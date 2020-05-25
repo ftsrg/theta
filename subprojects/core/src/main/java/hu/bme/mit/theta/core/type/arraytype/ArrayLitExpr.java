@@ -23,18 +23,27 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
 	private final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems;
 
+	private final Expr<ElemType> elseElem;
+
 	private volatile int hashCode;
 
-	private ArrayLitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final ArrayType<IndexType, ElemType> type) {
+	private ArrayLitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+						 final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
 		this.type = checkNotNull(type);
+		this.elseElem = checkNotNull(elseElem);
 		this.elems = checkNotNull(elems);
 	}
 
-	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> of(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final ArrayType<IndexType, ElemType> type) {
-		return new ArrayLitExpr<>(elems, type);
+	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> of(
+			final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+			final Expr<ElemType> elseElem,
+			final ArrayType<IndexType, ElemType> type) {
+		return new ArrayLitExpr<>(elems, elseElem, type);
 	}
 
 	public List<Tuple2<Expr<IndexType>, Expr<ElemType>>> getElements() { return ImmutableList.copyOf(elems); }
+
+	public Expr<ElemType> getElseElem() { return elseElem; }
 
 	@Override
 	public ArrayType<IndexType, ElemType> getType() {
@@ -75,7 +84,10 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 	@Override
 	public String toString() {
 		final String indexString = String.format("([%s]->%s)", type.getIndexType(), type.getElemType());
-		return Utils.lispStringBuilder(OPERATOR_LABEL).add(indexString).add("(").addAll(elems.stream().map(elem -> String.format("([%s]->%s)", elem.get1(), elem.get2()))).add(")").toString();
+		return Utils.lispStringBuilder(OPERATOR_LABEL).add(indexString).add("(")
+				.addAll(elems.stream().map(elem -> String.format("([%s]->%s)", elem.get1(), elem.get2()))).add(")")
+				.add((String.format("[]->%s", elseElem)))
+				.toString();
 	}
 
 }
