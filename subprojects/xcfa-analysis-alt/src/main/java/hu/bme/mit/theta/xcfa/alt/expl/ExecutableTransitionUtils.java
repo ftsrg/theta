@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import java.util.*;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**

@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.type.Type;
  * Used to test if a given edge is active.
  * Only Wait and Assume can be inactive at a time.
  */
-public class EnabledStmtVisitor implements XcfaStmtVisitor<StmtExecutorInterface, Boolean> {
+public class EnabledStmtVisitor extends XcfaStmtVisitorBase<StmtExecutorInterface, Boolean> {
 
 	@Override
 	public Boolean visit(SkipStmt stmt, StmtExecutorInterface param) {

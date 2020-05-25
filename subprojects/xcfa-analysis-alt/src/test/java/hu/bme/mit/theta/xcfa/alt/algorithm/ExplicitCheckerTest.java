@@ -50,7 +50,7 @@ public class ExplicitCheckerTest {
 		System.out.println("Testing " + filepath);
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-		var checker = XcfaChecker.createChecker(new DefaultTransformation(xcfa).build(), XcfaChecker.getSimpleExplicit().build());
+		var checker = XcfaChecker.createChecker(xcfa, XcfaChecker.getSimpleExplicit().build());
 		Assert.assertTrue(checker instanceof ExplicitChecker);
 		SafetyResult<? extends State, ? extends Action> result = checker.check();
 		Helper.checkResult(result, shouldWork);

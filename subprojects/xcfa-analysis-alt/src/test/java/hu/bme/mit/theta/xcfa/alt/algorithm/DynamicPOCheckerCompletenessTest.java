@@ -73,7 +73,6 @@ public class DynamicPOCheckerCompletenessTest {
         sutConfig.forceIterate = true;
 
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        xcfa = new DefaultTransformation(xcfa).build();
         var reference = XcfaChecker.createChecker(xcfa, referenceConfig.build());
         var sut = XcfaChecker.createChecker(xcfa, sutConfig.build());
 

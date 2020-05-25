@@ -50,7 +50,7 @@ public class DynamicPOCheckerTest {
         System.out.println("Testing " + filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        var checker = XcfaChecker.createChecker(new DefaultTransformation(xcfa).build(), XcfaChecker.getSimpleDPOR().build());
+        var checker = XcfaChecker.createChecker(xcfa, XcfaChecker.getSimpleDPOR().build());
         Assert.assertTrue(checker instanceof DynamicPOChecker);
 
         SafetyResult<? extends State, ? extends Action> result = checker.check();

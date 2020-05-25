@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 class EmptyTransformation {
-    private final XCFA old;
+    protected final XCFA old;
 
     private Map<Object, Object> cache = new HashMap<>();
 
@@ -27,7 +27,14 @@ class EmptyTransformation {
         );
         builder.setMainProcess(transformed(builder, old.getMainProcess()));
         old.getGlobalVars().forEach(builder::createVar);
-        return builder.build();
+        beforeBuild(builder);
+        var result = builder.build();
+        afterBuild(result);
+        return result;
+    }
+
+    protected void afterBuild(XCFA xcfa) {
+        //
     }
 
     public final <R> Optional<R> cached(R r) {
@@ -43,13 +50,13 @@ class EmptyTransformation {
         }
         Object result = null;
         if (val instanceof XCFA.Process)
-            result = copy(builder, (XCFA.Process) val);
+            result = copy((XCFA.Builder)builder, (XCFA.Process) val);
         else if (val instanceof XCFA.Process.Procedure)
-            result = copy(builder, (XCFA.Process.Procedure) val);
+            result = copy((XCFA.Process.Builder)builder, (XCFA.Process.Procedure) val);
         else if (val instanceof XCFA.Process.Procedure.Location)
-            result = copy(builder, (XCFA.Process.Procedure.Location) val);
+            result = copy((XCFA.Process.Procedure.Builder)builder, (XCFA.Process.Procedure.Location) val);
         else if (val instanceof XCFA.Process.Procedure.Edge)
-            result = copy(builder, (XCFA.Process.Procedure.Edge) val);
+            result = copy((XCFA.Process.Procedure.Builder)builder, (XCFA.Process.Procedure.Edge) val);
         else if (val instanceof VarDecl)
             result = copy(builder, (VarDecl<? extends Type>) val);
         else {
@@ -60,7 +67,7 @@ class EmptyTransformation {
         return (R) result;
     }
 
-    protected XCFA.Process.Procedure.Edge copy(Object builder, XCFA.Process.Procedure.Edge val) {
+    protected XCFA.Process.Procedure.Edge copy(XCFA.Process.Procedure.Builder builder, XCFA.Process.Procedure.Edge val) {
         return new XCFA.Process.Procedure.Edge(
                 transformed(builder, val.getSource()),
                 transformed(builder, val.getTarget()),
@@ -68,11 +75,11 @@ class EmptyTransformation {
         );
     }
 
-    protected XCFA.Process.Procedure.Location copy(Object x, XCFA.Process.Procedure.Location val) {
+    protected XCFA.Process.Procedure.Location copy(XCFA.Process.Procedure.Builder builder, XCFA.Process.Procedure.Location val) {
         return new XCFA.Process.Procedure.Location(val.getName(), val.getDictionary());
     }
 
-    protected XCFA.Process copy(Object x, XCFA.Process val) {
+    protected XCFA.Process copy(XCFA.Builder _builder, XCFA.Process val) {
         var builder = XCFA.Process.builder();
         val.getProcedures().forEach(
                 p -> builder.addProcedure(transformed(builder, p))
@@ -86,7 +93,7 @@ class EmptyTransformation {
         return builder.build();
     }
 
-    protected XCFA.Process.Procedure copy(Object x, XCFA.Process.Procedure val) {
+    protected XCFA.Process.Procedure copy(XCFA.Process.Builder _builder, XCFA.Process.Procedure val) {
         var builder = XCFA.Process.Procedure.builder();
         val.getLocs().forEach(
                 p -> builder.addLoc(transformed(builder, p))
@@ -107,7 +114,15 @@ class EmptyTransformation {
         return builder.build();
     }
 
-    protected <TypeDecl extends Type> VarDecl<TypeDecl> copy(Object x, VarDecl<TypeDecl> val) {
+    protected <TypeDecl extends Type> VarDecl<TypeDecl> copy(Object builder, VarDecl<TypeDecl> val) {
         return Decls.Var(val.getName(), val.getType());
+    }
+
+    /**
+     * For post-processing a build. For example, adding new processes
+     * @param builder
+     */
+    protected void beforeBuild(XCFA.Builder builder) {
+
     }
 }

@@ -29,7 +29,7 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
  * Updates state without checking enabledness. Does not update locations.
  * Uses the StmtExecutorInterface to decouple from CallState (and thus ExplState).
  */
-public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface, Void> {
+public class StateUpdateVisitor extends XcfaStmtVisitorBase<StmtExecutorInterface, Void> {
 
 	private StateUpdateVisitor() {
 	}

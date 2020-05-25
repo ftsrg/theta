@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
+import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,7 +98,7 @@ public abstract class XcfaChecker {
         return config;
     }
 
-    public static XcfaChecker createChecker(XCFA xcfa, Config config) {
+    public static XcfaChecker createChecker(XCFA _xcfa, Config config) {
         if (config.forceIterate() && !config.rememberTraces()) {
             System.err.println("Warning! Probably bad configuration");
         }
@@ -105,6 +106,7 @@ public abstract class XcfaChecker {
             System.err.println("Warning! Probably bad configuration: not all traces will be stored, because program" +
                     "might stop DFS when finding an unsafe property.");
         }
+        var xcfa = new DefaultTransformation(_xcfa, config).build();
         if (config.isAmpleSet()) {
             return new POChecker(xcfa, config);
         } else if (config.isPartialOrder()) {

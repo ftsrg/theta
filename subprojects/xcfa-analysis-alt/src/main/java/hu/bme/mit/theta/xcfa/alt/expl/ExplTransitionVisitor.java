@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
@@ -48,7 +48,7 @@ import java.util.Optional;
  * The former one might be immutable (hence the name), or we do not want to have it mutated.
  * The latter, however is guaranteed to represent the exact same state (and maybe reference-equal).
  */
-final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyInterface, Optional<TransitionExecutorInterface>> {
+final class ExplTransitionVisitor extends XcfaStmtVisitorBase<ExplStateReadOnlyInterface, Optional<TransitionExecutorInterface>> {
 
     private static class LazyHolder {
         private static final ExplTransitionVisitor instance = new ExplTransitionVisitor();

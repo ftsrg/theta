@@ -44,6 +44,11 @@ public interface Config {
      */
     boolean isAmpleSet();
 
+    /**
+     * Spurious wake-up calls are enabled
+     */
+    boolean spuriousWakeUp();
+
     class ImmutableConfig implements Config {
         private final boolean rememberTraces;
         private final boolean debug;
@@ -52,8 +57,9 @@ public interface Config {
         private final boolean partialOrder;
         private final boolean forceIterate;
         private final boolean ampleSet;
+        private final boolean spuriousWakeUp;
 
-        private ImmutableConfig(boolean rememberTraces, boolean debug, boolean optimizeLocals, boolean discardAlreadyExplored, boolean partialOrder, boolean forceIterate, boolean ampleSet) {
+        private ImmutableConfig(boolean rememberTraces, boolean debug, boolean optimizeLocals, boolean discardAlreadyExplored, boolean partialOrder, boolean forceIterate, boolean ampleSet, boolean spuriousWakeUp) {
             this.rememberTraces = rememberTraces;
             this.debug = debug;
             this.optimizeLocals = optimizeLocals;
@@ -61,6 +67,7 @@ public interface Config {
             this.partialOrder = partialOrder;
             this.forceIterate = forceIterate;
             this.ampleSet = ampleSet;
+            this.spuriousWakeUp = spuriousWakeUp;
         }
 
         @Override
@@ -97,6 +104,11 @@ public interface Config {
         public boolean isAmpleSet() {
             return ampleSet;
         }
+
+        @Override
+        public boolean spuriousWakeUp() {
+            return spuriousWakeUp;
+        }
     }
 
     public class Builder {
@@ -107,9 +119,10 @@ public interface Config {
         public boolean partialOrder = false;
         public boolean forceIterate = false;
         public boolean ampleSet = false;
+        public boolean spuriousWakeup = false;
 
         public Config build() {
-            return new ImmutableConfig(rememberTraces, debug, optimizeLocals, discardAlreadyExplored, partialOrder, forceIterate, ampleSet);
+            return new ImmutableConfig(rememberTraces, debug, optimizeLocals, discardAlreadyExplored, partialOrder, forceIterate, ampleSet, spuriousWakeup);
         }
     }
 }
