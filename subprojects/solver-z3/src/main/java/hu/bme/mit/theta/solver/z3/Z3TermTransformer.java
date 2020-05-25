@@ -147,11 +147,11 @@ final class Z3TermTransformer {
 	}
 
 	private <I extends Type> Expr<?> createIndexArrayLitExpr(I indexType, ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs) {
-		if (sort.getDomain() instanceof com.microsoft.z3.BoolSort) {
+		if (sort.getRange() instanceof com.microsoft.z3.BoolSort) {
 			return this.createIndexValueArrayLitExpr(indexType, Bool(), entryExprs);
-		} else if (sort.getDomain() instanceof com.microsoft.z3.IntSort) {
+		} else if (sort.getRange() instanceof com.microsoft.z3.IntSort) {
 			return this.createIndexValueArrayLitExpr(indexType, Int(), entryExprs);
-		} else if (sort.getDomain() instanceof com.microsoft.z3.RealSort) {
+		} else if (sort.getRange() instanceof com.microsoft.z3.RealSort) {
 			return this.createIndexValueArrayLitExpr(indexType, Rat(), entryExprs);
 		} else {
 			throw new AssertionError("Unsupported sort: " + sort);
