@@ -16,34 +16,21 @@
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.alt.algorithm.util.DfsNodeInterface;
-import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
-import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.LocalityUtils;
 import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
-import hu.bme.mit.theta.xcfa.alt.expl.TransitionUtils;
 
 import javax.annotation.Nullable;
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.OptionalInt;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
-import java.util.stream.Stream;
 
 final class DynamicPOChecker extends XcfaChecker {
-    private final Set<ExplState> stackedStates = new HashSet<>();
-    private final Stack<DfsNode> dfsStack = new Stack<>();
 
     private final IndexingUtil indexing = new IndexingUtil();
-    private static String debugIndentLevel = "";
 
     DynamicPOChecker(XCFA xcfa, Config config) {
         super(xcfa, config);
@@ -54,89 +41,14 @@ final class DynamicPOChecker extends XcfaChecker {
                 "discarded when using Dynamic Partial Order Reduction.");
     }
 
-    private static void pushDebug(DfsNode s, boolean debug) {
-        if (!debug)
-            return;
-        nodeDebug(s);
-        debugIndentLevel = debugIndentLevel + "  ";
+    @Override
+    protected void onNodePushed(DfsNodeBase node) {
+        backtrack((DfsNode)node);
     }
 
-    private static void popDebug(DfsNode s, boolean debug) {
-        if (!debug)
-            return;
-        debugIndentLevel = debugIndentLevel.substring(2);
-        nodeDebug(s);
-    }
-
-    private static void nodeDebug(DfsNode s) {
-        System.out.println(debugIndentLevel + "From:");
-        System.out.println(debugIndentLevel + s.lastTransition);
-        System.out.println(debugIndentLevel + "State:");
-        System.out.println(debugIndentLevel + s.state.getProcessStates());
-        System.out.println(debugIndentLevel + "Enabled transitions:");
-        for (var tr : s.state.getEnabledTransitions()) {
-            System.out.println(debugIndentLevel + tr);
-        }
-        System.out.println(debugIndentLevel);
-    }
-
-    /** Pushes the node to the stack if not explored before */
-    private void tryPushNode(DfsNode node) {
-
-        ImmutableExplState state = node.getState();
-        // A state cannot be discarded when an equivalent state was already processed.
-        // The path to finding the state is important
-        // there are some tests, see DynamicPOCheckerCompletenessTest checking partialorder-test4.xcfa.
-        //if (exploredStates.contains(state)) return;
-        //exploredStates.add(state);
-
-        stackedStates.add(state);
-        dfsStack.push(node);
-
-        backtrack(node);
-    }
-
-    private void popNode(DfsNode s0) {
-        ExplState state = dfsStack.pop().getState();
-        stackedStates.remove(state);
-        popDebug(s0, config.debug());
-        assert(state.equals(s0.getState()));
-    }
-
-    /**
-     * SafetyResult should be always unsafe OR finished.
-     */
-    public SafetyResult<ExplState, Transition> check() {
-        debugIndentLevel = "";
-
-        tryPushNode(new DfsNode(ImmutableExplState.initialState(xcfa), null));
-
-        SafetyResult<ExplState, Transition> result = Tracer.safe();
-
-        while (!dfsStack.empty()) {
-            DfsNode node = dfsStack.peek();
-            if (node.hasChild()) {
-                var child = node.child();
-                if (stackedStates.contains(child.getState())) {
-                    node.expand();
-                } else {
-                    tryPushNode(child);
-                }
-            } else {
-                if (node.isFinished())
-                    onFinished(dfsStack);
-                if (!node.isSafe()) {
-                    // catch first unsafe property found
-                    if (config.forceIterate() && result.isSafe()) {
-                        result = Tracer.unsafe(dfsStack);
-                    } else {
-                        return Tracer.unsafe(dfsStack);
-                    }
-                }
-                popNode(node);
-            }
-        }
-        return result;
+    @Override
+    protected DfsNodeBase initialNode(ImmutableExplState state) {
+        return new DfsNode(state, null);
     }
 
     /**
@@ -156,22 +68,23 @@ final class DynamicPOChecker extends XcfaChecker {
 
         ProcessTransitions getProcessTransition(int idx) {
             Preconditions.checkArgument(minIndex() <= idx && idx <= maxIndex());
-            Transition t = dfsStack.get(idx+1).lastTransition;
+            Transition t = dfsStack.get(idx+1).getLastTransition();
+            // TODO
             //noinspection OptionalGetWithoutIsPresent
-            return get(idx).all.stream().filter(x->x.getProcess() == t.getProcess()).findAny().get();
+            return get(idx).getAll().stream().filter(x->x.getProcess() == t.getProcess()).findAny().get();
         }
 
         /** get(i).lastTransition should probably not be used */
         DfsNode get(int idx) {
             Preconditions.checkArgument(minIndex() <= idx && idx <= maxIndex());
-            return dfsStack.get(idx);
+            return (DfsNode) dfsStack.get(idx);
         }
 
         /** Returns whether the transition is local, and we optimized on that fact,
          * meaning that we should not try to backtrack or find dependency.
          */
         private boolean isLocalTransitionOptimization(int idx) {
-            return get(idx).localProcessTransition;
+            return get(idx).isLocalOptimization();
         }
     }
 
@@ -232,7 +145,7 @@ final class DynamicPOChecker extends XcfaChecker {
     private void backtrack(DfsNode lastNode) {
         // TODO rework loop logic
         // fill backtrack of older transitions...
-        for (var p : lastNode.all) {
+        for (var p : lastNode.getAll()) {
             if (p.transitionStream().findAny().isEmpty())
                 continue;
             var opti = findLastDependentCoenabled(p);
@@ -242,7 +155,7 @@ final class DynamicPOChecker extends XcfaChecker {
             // E is enabled transitions in
             Collection<ProcessTransitions> E = new HashSet<>();
             DfsNode oldState = indexing.get(i);
-            for (var q: oldState.all) {
+            for (var q: oldState.getAll()) {
                 // q must be enabled in the old state
                 if (!q.hasAnyEnabledTransition()) {
                     continue;
@@ -268,117 +181,40 @@ final class DynamicPOChecker extends XcfaChecker {
      * If there is no local pt, then we need to select a pt of our choice.
      * If there is a dependent transition later, we need to add that to the backtrack set.
      */
-    private final class DfsNode implements DfsNodeInterface {
-
-        /** Transitions that need to be processed. Contains backtrack\completed */
-        private final Queue<ImmutableExplState.ExecutableTransition> todo;
-        /** Transitions grouped by the process in which they belong. */
-        private final Collection<ProcessTransitions> all;
-
-        /** The set of processes that need to be processed. Can change while traversing
-         * the explicit state graph. */
-        private final Set<ProcessTransitions> backtrack = new HashSet<>();
-        private final ImmutableExplState state;
-        private final ExecutableTransitionBase lastTransition;
+    private static final class DfsNode extends DfsNodeBase {
 
         /**
-         * Stores whether a local transition is executed next
-         * (and hence no later backtracking will be needed).
-         * */
-        private boolean localProcessTransition;
-
-        private void pushExecutableTransitions(Stream<ExecutableTransitionBase> transitionStream) {
-            if (config.debug()) {
-                System.out.println(debugIndentLevel + "From state ");
-                System.out.println(debugIndentLevel + state.getProcessStates());
-            }
-            transitionStream.map(state::transitionFrom).forEach(
-                    p -> {
-                        todo.add(p);
-                        if (config.debug()) {
-                            System.out.println(debugIndentLevel + "Adding transition " + p);
-                            System.out.println();
-                        }
-                    }
-            );
-
-        }
-
-        /**
-         * Adds a process to the backtrack set.
-         * @param pt The process to be added to the backtrack set.
+         * Is it *initialized* with localOptimization?
+         * This can change, however.
          */
-        private void push(ProcessTransitions pt) {
-            Preconditions.checkState(!localProcessTransition);
-            if (backtrack.contains(pt))
-                return;
-
-            backtrack.add(pt);
-            pushExecutableTransitions(pt.enabledStream());
-        }
+        private final boolean initedLocalOptimization;
 
         private DfsNode(ImmutableExplState state, @Nullable ExecutableTransitionBase lastTransition) {
-            this.state = state;
-            this.lastTransition = lastTransition;
+            super(state, lastTransition);
 
-            pushDebug(this, config.debug());
-
-            all = TransitionUtils.getProcessTransitions(state);
             var local = LocalityUtils.findAnyEnabledLocalProcessTransition(state);
-            todo = new ArrayDeque<>();
             if (local.isPresent()) {
                 // if a local transition set was found at a process ->
                 // no backtracking, etc. is needed.
-                localProcessTransition = true;
-                pushExecutableTransitions(local.get().enabledStream());
+                initedLocalOptimization = true;
+                push(local.get());
             } else {
-                localProcessTransition = false;
-                var y = all.stream().filter( // has an enabled transition
+                initedLocalOptimization = false;
+                var y = getAll().stream().filter( // has an enabled transition
                         ProcessTransitions::hasAnyEnabledTransition
                 ).findAny(); // any enabled will do
                 y.ifPresent(this::push);
-                assert y.isEmpty() == todo.isEmpty();
                 // if empty, we are in final location or deadlock, but it's not a problem.
             }
-
         }
 
-        /** fully expand node. */
-        private void expand() {
-            localProcessTransition = false;
-            all.stream().filter(ProcessTransitions::hasAnyEnabledTransition)
-                    .forEach(this::push);
-        }
-
-        public DfsNode child() {
-            ExecutableTransitionBase t = fetchNextTransition();
-            return new DfsNode(((ImmutableExplState.ExecutableTransition)t).execute(), t);
-        }
-
-        private ExecutableTransitionBase fetchNextTransition() {
-            return todo.poll();
+        boolean isLocalOptimization() {
+            return initedLocalOptimization && !isExpanded();
         }
 
         @Override
-        public ImmutableExplState getState() {
-            return state;
-        }
-
-        @Override
-        public Transition getLastTransition() {
-            return lastTransition;
-        }
-
-        public boolean isSafe() {
-            return state.getSafety().isSafe();
-        }
-
-        public boolean hasChild() {
-            return !todo.isEmpty();
-        }
-
-        public boolean isFinished() {
-            return state.getSafety().isFinished();
+        public DfsNodeBase nodeFrom(ImmutableExplState state, ExecutableTransitionBase lastTransition) {
+            return new DfsNode(state, lastTransition);
         }
     }
 }

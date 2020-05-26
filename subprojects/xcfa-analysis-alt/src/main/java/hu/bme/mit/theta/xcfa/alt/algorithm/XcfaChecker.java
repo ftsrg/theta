@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -27,27 +28,21 @@ import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 public abstract class XcfaChecker {
 
     protected XCFA xcfa;
     protected Config config;
-    private Collection<Trace<ExplState, Transition>> finishedTraces = null;
+    private final Collection<Trace<ExplState, Transition>> finishedTraces;
+    protected final Stack<DfsNodeBase> dfsStack = new Stack<>();
+    private final Set<ExplState> stackedStates;
+    private final Set<ExplState> exploredStates;
 
     public Collection<Trace<ExplState, Transition>> getTraces() {
         return finishedTraces;
-    }
-
-    protected void debugPrint(ImmutableExplState s) {
-        if (!config.debug())
-            return;
-        System.out.println(s);
-        System.out.println("Enabled transitions:");
-        for (var tr : s.getEnabledTransitions()) {
-            System.out.println(tr);
-        }
-        System.out.println();
     }
 
     protected void onFinished(Stack<? extends DfsNodeInterface> dfsStack) {
@@ -61,6 +56,19 @@ public abstract class XcfaChecker {
         this.config = config;
         if (config.rememberTraces()) {
             finishedTraces = new ArrayList<>();
+        } else {
+            finishedTraces = null;
+        }
+        if (rememberStackedStates()) {
+            stackedStates = new HashSet<>();
+        } else {
+            stackedStates = null;
+        }
+        // TODO rework to rememberExploredStates
+        if (discardAlreadyExploredStates()) {
+            exploredStates = null;
+        } else {
+            exploredStates = new HashSet<>();
         }
     }
 
@@ -116,8 +124,85 @@ public abstract class XcfaChecker {
         }
     }
 
+    private boolean discardAlreadyExploredStates() {
+        return config.discardAlreadyExplored();
+    }
+
+    protected abstract void onNodePushed(DfsNodeBase node);
+
+    /** Pushes the node to the stack if not explored before */
+    private void tryPushNode(DfsNodeBase node) {
+        ImmutableExplState state = node.getState();
+        if (!discardAlreadyExploredStates()) {
+            if (exploredStates.contains(state)) {
+                // do not process node
+                return;
+            }
+            exploredStates.add(state);
+        }
+        if (rememberStackedStates()) {
+            stackedStates.add(state);
+        }
+        dfsStack.push(node);
+
+        onNodePushed(node);
+    }
+
+    private void popNode(DfsNodeBase s0) {
+        ExplState state = dfsStack.pop().getState();
+        if (rememberStackedStates()) {
+            stackedStates.remove(state);
+        }
+        Preconditions.checkState(state.equals(s0.getState()));
+
+    }
+
+
+    protected abstract DfsNodeBase initialNode(ImmutableExplState state);
+
+    private boolean rememberStackedStates() {
+        // TODO create config item for loops
+        return true;
+    }
+
     /**
      * Returns whether the given XCFA is safe.
      */
-    public abstract SafetyResult<ExplState, Transition> check();
+    public final SafetyResult<ExplState, Transition> check() {
+
+        tryPushNode(initialNode(ImmutableExplState.initialState(xcfa)));
+
+        SafetyResult<ExplState, Transition> result = Tracer.safe();
+
+        while (!dfsStack.empty()) {
+            DfsNodeBase node = dfsStack.peek();
+            if (node.hasChild()) {
+                var child = node.child();
+                // first check for cycles, then check for explored states
+                if (rememberStackedStates() && stackedStates.contains(child.getState())) {
+                    node.expand();
+                    // expand, do not remove, and retry
+                } else {
+                    tryPushNode(child);
+                }
+            } else {
+
+                if (node.isFinished())
+                    onFinished(dfsStack);
+
+                if (!node.isSafe()) {
+                    // catch first unsafe property found
+                    if (config.forceIterate() && result.isSafe()) {
+                        result = Tracer.unsafe(dfsStack);
+                    } else {
+                        return Tracer.unsafe(dfsStack);
+                    }
+                }
+                popNode(node);
+            }
+        }
+        return result;
+    }
+
+
 }

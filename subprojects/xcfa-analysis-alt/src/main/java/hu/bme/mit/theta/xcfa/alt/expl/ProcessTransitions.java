@@ -21,6 +21,10 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+/**
+ * Transitions grouped by a given process.
+ * Equality is based solely on the process it operates on.
+ */
 public final class ProcessTransitions {
     private final XCFA.Process process;
     private final Collection<Transition> transitions;

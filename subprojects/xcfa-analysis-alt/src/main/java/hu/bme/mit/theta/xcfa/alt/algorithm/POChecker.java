@@ -17,12 +17,9 @@ package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.alt.algorithm.util.Tracer;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionUtils;
-import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
-import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState.ExecutableTransition;
 import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 import hu.bme.mit.theta.xcfa.alt.expl.TransitionUtils;
@@ -31,16 +28,10 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class POChecker extends XcfaChecker {
-
-    private final Set<ExplState> exploredStates = new HashSet<>();
-    private final Set<ExplState> stackedStates = new HashSet<>();
-    private final Stack<DfsNode> dfsStack = new Stack<>();
-
 
     private static class AmpleSetFactory {
         // pre(Pi)
@@ -120,116 +111,39 @@ public class POChecker extends XcfaChecker {
         }
     }
 
-    private boolean discardAlreadyExploredStates() {
-        return config.discardAlreadyExplored();
-    }
-
-    /**
-     * Checking whether a state is checked is needed for detecting cylces,
-     * these are needed by some algorithms.
-     * Also, for checking infinite loops!
-     */
-    private boolean rememberStackedStates() {
-        return true;
-    }
-
     POChecker(XCFA xcfa, Config config) {
         super(xcfa,config);
     }
 
-    /** Pushes the node to the stack if not explored before */
-    private void tryPushNode(DfsNode node) {
-        ImmutableExplState state = node.getState();
-        debugPrint(state);
-        if (discardAlreadyExploredStates()) {
-            if (exploredStates.contains(state)) {
-                return;
-            }
-            exploredStates.add(state);
-        }
-        if (rememberStackedStates()) {
-            stackedStates.add(state);
-        }
-        dfsStack.push(node);
+    @Override
+    protected void onNodePushed(DfsNodeBase node) {
+        //
     }
 
-    private void popNode(DfsNode s0) {
-        ExplState state = dfsStack.pop().getState();
-        if (rememberStackedStates()) {
-            stackedStates.remove(state);
-        }
-        assert(state.equals(s0.getState()));
-    }
-
-    /**
-     * SafetyResult should be always unsafe OR finished.
-     */
-    public SafetyResult<ExplState, Transition> check() {
-
-        tryPushNode(new DfsNode(ImmutableExplState.initialState(xcfa), null));
-
-        SafetyResult<ExplState, Transition> result = Tracer.safe();
-
-        while (!dfsStack.empty()) {
-            DfsNode node = dfsStack.peek();
-            if (node.hasChild()) {
-                var child = node.child();
-                // first check for cycles, then check for explored states
-                if (rememberStackedStates() && stackedStates.contains(child.getState())) {
-                    node.expand();
-                    // expand, do not remove, and retry
-                } else {
-                    tryPushNode(child);
-                }
-            } else {
-
-                if (node.isFinished())
-                    onFinished(dfsStack);
-
-                if (!node.isSafe()) {
-                    // catch first unsafe property found
-                    if (config.forceIterate() && result.isSafe()) {
-                        result = Tracer.unsafe(dfsStack);
-                    } else {
-                        return Tracer.unsafe(dfsStack);
-                    }
-                }
-                popNode(node);
-            }
-        }
-        return result;
-    }
-
-    private static Collection<ExecutableTransition> collectTransitions(ImmutableExplState state, Collection<XCFA.Process> processes) {
-        return state.getEnabledTransitions().stream()
-                .filter(x->processes.contains(x.getProcess()))
-                .collect(Collectors.toUnmodifiableList());
+    @Override
+    protected DfsNodeBase initialNode(ImmutableExplState state) {
+        return new DfsNode(state, null);
     }
 
     private final class DfsNode extends DfsNodeBase {
 
         boolean optimized = true;
 
+        private Stream<ProcessTransitions> collectTransitions(ImmutableExplState state, Collection<XCFA.Process> processes) {
+            return TransitionUtils.getProcessTransitions(state).stream()
+                    .filter(x->processes.contains(x.getProcess()));
+        }
+
         DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
-            super(state, lastTransition,
-                    collectTransitions(state,
-                            new AmpleSetFactory(xcfa).returnAmpleSet(state)
-                    )
-            );
+            super(state, lastTransition);
+            collectTransitions(state,
+                    new AmpleSetFactory(xcfa).returnAmpleSet(state)
+            ).forEach(this::push);
         }
 
         @Override
-        public DfsNode child() {
-            // TODO do not copy to new immutable state when there is only one transition?
-            var t = fetchNextTransition();
-            return new DfsNode(t.execute(), t);
-        }
-
-        void expand() {
-            if (optimized) {
-                optimized = false;
-                resetWithTransitions(getState().getEnabledTransitions());
-            }
+        public DfsNodeBase nodeFrom(ImmutableExplState state, ExecutableTransitionBase lastTransition) {
+            return new DfsNode(state, lastTransition);
         }
     }
 
