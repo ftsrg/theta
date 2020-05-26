@@ -54,7 +54,7 @@ public class InternalNotifyStmt extends XcfaInternalNotifyStmt {
         return syncVar;
     }
 
-    public XCFA.Process getProcess() {
+    public XCFA.Process getProcessToWake() {
         return process;
     }
 
