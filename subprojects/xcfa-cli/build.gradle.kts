@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     compile(project(":theta-xcfa"))
-    compile(project(":theta-xcfa-analysis"))
+    compile(project(":theta-xcfa-analysis-alt"))
 }
 
 application {

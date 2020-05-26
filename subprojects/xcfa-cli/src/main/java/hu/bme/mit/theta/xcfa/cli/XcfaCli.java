@@ -27,9 +27,9 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.algorithm.PartialOrderExplicitChecker;
+import hu.bme.mit.theta.xcfa.alt.algorithm.Config;
+import hu.bme.mit.theta.xcfa.alt.algorithm.XcfaChecker;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.algorithm.ExplicitChecker;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -93,14 +93,12 @@ public class XcfaCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final XCFA xcfa = loadModel();
 
-            final SafetyResult<?, ?> status;
-            if (partialOrder) {
-                final PartialOrderExplicitChecker checker = new PartialOrderExplicitChecker(xcfa);
-                status = checker.check();
-            } else {
-                final ExplicitChecker checker = new ExplicitChecker(xcfa);
-                status = checker.check();
-            }
+            final var config =
+                    partialOrder
+                    ? XcfaChecker.getSimpleDPOR()
+                    : XcfaChecker.getSimpleExplicit();
+            var checker = XcfaChecker.createChecker(xcfa, config.build());
+            final SafetyResult<?, ?> status = checker.check();
             sw.stop();
             printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile) {
