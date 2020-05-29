@@ -39,7 +39,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         return xsts;
     }
 
-    private HashSet<TypeDecl> types=new HashSet<TypeDecl>();
+    private HashMap<String,TypeDecl> nameToTypeMap=new HashMap<>();
 
     private HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
 
@@ -51,13 +51,13 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.TypeDeclarationContext typeDecl: ctx.typeDeclarations){
             visitTypeDeclaration(typeDecl);
         }
-        for(TypeDecl decl:types){
+        for(TypeDecl decl:nameToTypeMap.values()){
             for(int i=0;i<decl.getLiterals().size();i++) if(!literalToIntMap.containsKey(decl.getLiterals().get(i)))literalToIntMap.put(decl.getLiterals().get(i),i);
         }
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(types, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
+        xsts=new XSTS(nameToTypeMap.values(), processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
 
         return null;
     }
@@ -68,6 +68,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     @Override
     public Expr visitTypeDeclaration(XstsDslParser.TypeDeclarationContext ctx) {
+        checkIfTempVar(ctx.name.getText());
+        if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!");
         List<String> literals=new ArrayList<String>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
             checkIfTempVar(literal.name.getText());
@@ -75,9 +77,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             literals.add(literal.name.getText());
         }
         TypeDecl decl=new TypeDecl(ctx.name.getText(),literals);
-        checkIfTempVar(ctx.name.getText());
-        if(types.contains(decl) || decl.getName().equals("integer") || decl.getName().equals("boolean")) throw new RuntimeException("Type "+decl.getName()+" already exists!");
-        types.add(decl);
+        nameToTypeMap.put(decl.getName(),decl);
         return null;
     }
 
@@ -86,7 +86,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         Type type;
         if(ctx.type.BOOL()!=null) type= BoolType.getInstance();
         else if(ctx.type.INT()!=null) type= IntType.getInstance();
-        else type=IntType.getInstance();
+        else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())) type=IntType.getInstance();
+        else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText());
         checkIfTempVar(ctx.name.getText());
         VarDecl decl=Decls.Var(ctx.name.getText(),type);
         if(nameToDeclMap.containsKey(ctx.name.getText())){
