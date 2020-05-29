@@ -41,7 +41,7 @@ Variables can be declared the following way:
 
 `var <name> : <type>`
 
-Variables can have initial values assigned to them the following way:
+Variables can also have initial values assigned to them, these values will be used to construct the formula that describes the initial states of the system. Assigning initial values is optional, but please note that for accurate model checking results all initial states described by the formula must be valid states of the system. Initial values can be assigned during variable declaration the following way: 
 
 `var <name> : <type> = <value> `
 
@@ -53,7 +53,7 @@ var b : boolean = false
 var c : Color = RED
 ```
 
-Please note that all variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
+All variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
 
 ### Textual Representation (DSL)
 
