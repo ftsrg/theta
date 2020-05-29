@@ -57,7 +57,33 @@ All variable names matching the pattern `temp([0-9])+` are reserved for use by t
 
 ### Transitions
 
-The behaviour of XSTSs can be described using transitions. A transition is an atomic sequence of statements.
+The behaviour of XSTSs can be described using transitions. A transition is an atomic sequence of statements. Statements can be:
+* atomic statements (atomic statements always end with semicolons):
+    * assignments of the form `<varname> := <expr>`, where `<varname>` is the name of a variable and `<expr>` is an expression of the same type
+    * assumptions of the form `assume <expr>`, where `<expr>` is a boolean expression
+    * havocs of the form `havoc <varname>`
+* composite statements:
+    * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 2 or more branches
+    * sequences of the form `<statement> <statement> <statement>`
+
+Example:
+
+```
+x := 1;
+choice {
+    assume y<2;
+    x := x+y;
+} or {
+    choice {
+        assume true;
+    } or {
+        havoc y;
+    }
+    x := x-1;
+}
+y := y * 2;
+```
+
 An XSTS contains 3 sets of transitions, each having different semantics.
 
 
@@ -81,7 +107,7 @@ Each branch is interpreted as a separate transition.
 
 #### Environmental transitions
 
-Environmental transitions are used to describe the system's interactions with its environment, for example incoming and outgoing events.
+Environmental transitions are used to describe the environment's effect on the system, for example incoming and outgoing events.
 
 ```
 env {
