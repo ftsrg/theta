@@ -46,6 +46,6 @@ public class XstsState<S extends ExprState> implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(initialized?"POST-INIT":"PRE-INIT").add(lastActionWasEnv?"LAST_ENV":"LAST_INTERNAL").body().add(state).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(initialized?"post_init":"pre_init").add(lastActionWasEnv?"last_env":"last_internal").body().add(state).toString();
     }
 }
