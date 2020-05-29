@@ -31,4 +31,6 @@ public interface StmtVisitor<P, R> {
 
 	R visit(NonDetStmt stmt, P param);
 
+	R visit(OrthStmt stmt, P param);
+
 }

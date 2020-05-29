@@ -100,6 +100,9 @@ public final class ClockOps {
 		}
 
 		@Override
+		public ClockOp visit(OrthStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+		@Override
 		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {
 
 			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());

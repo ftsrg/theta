@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.clock.op.ClockOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
@@ -151,6 +152,9 @@ public final class WpState {
 		}
 
 		@Override
+		public WpState visit(OrthStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
 			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
 			final int constCount = state.constCount;
@@ -195,6 +199,9 @@ public final class WpState {
 		public WpState visit(NonDetStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public WpState visit(OrthStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {

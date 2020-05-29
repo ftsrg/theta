@@ -5,8 +5,10 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -19,6 +21,9 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.XstsAction;
+import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.XstsTraceConcretizer;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
@@ -68,6 +73,9 @@ public class XstsCli {
     @Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
     String dotfile = null;
 
+    @Parameter(names = {"--cex"}, description = "Write concrete counterexample to a file")
+    String cexfile = null;
+
     @Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
@@ -106,6 +114,9 @@ public class XstsCli {
             final SafetyResult<?, ?> status = configuration.check();
             sw.stop();
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(status.asUnsafe(),xsts);
+            }
             if (dotfile != null) {
                 writeVisualStatus(status, dotfile);
             }
@@ -181,6 +192,23 @@ public class XstsCli {
                 ? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
                 : new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
         GraphvizWriter.getInstance().writeFile(graph, filename);
+    }
+
+    private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
+        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
+        final Trace<XstsState<ExplState>, XstsAction> concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory, xsts);
+        final File file = new File(cexfile);
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+            printWriter.write(concrTrace.toString());
+        } catch (final FileNotFoundException e) {
+            printError(e);
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
     }
 
 }

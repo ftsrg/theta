@@ -26,8 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,8 +38,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -83,9 +80,9 @@ public class StmtToExprTransformerTest {
 		stmts.add(Stmts.Assume(True()));
 		stmts.add(Stmts.Assign(VX,Int(2)));
 		stmts.add(Stmts.Assign(VY, Int(3)));
-		NonDetStmt nonDetStmt=NonDetStmt.of(stmts);
-		StmtUnfoldResult res=StmtUtils.toExpr(nonDetStmt,VarIndexing.all(0));
-		System.out.println(nonDetStmt);
+		OrthStmt orthStmt=OrthStmt.of(stmts);
+		StmtUnfoldResult res=StmtUtils.toExpr(orthStmt,VarIndexing.all(0));
+		System.out.println(orthStmt);
 		System.out.println(res.exprs);
 		System.out.println(res.indexing);
 
