@@ -289,12 +289,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     }
 
     public AssignStmt processAssignAction(XstsDslParser.AssignActionContext ctx) {
-        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText()+" On line "+ctx.start.getLine());
+        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText()+" on line "+ctx.start.getLine());
         return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitImplyExpression(ctx.rhs));
     }
 
     public HavocStmt processHavocAction(XstsDslParser.HavocActionContext ctx){
-        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText()+" On line "+ctx.start.getLine());
+        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText()+" on line "+ctx.start.getLine());
         return Stmts.Havoc(nameToDeclMap.get(ctx.name.getText()));
     }
 }
