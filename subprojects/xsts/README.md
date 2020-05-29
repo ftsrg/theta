@@ -63,10 +63,10 @@ The behaviour of XSTSs can be described using transitions. A transition is an at
     * assumptions of the form `assume <expr>`, where `<expr>` is a boolean expression
     * havocs of the form `havoc <varname>`
 * composite statements:
-    * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 2 or more branches
+    * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 1 or more branches
     * sequences of the form `<statement> <statement> <statement>`
     
-Only those branches of a choice are considered for execution, of which all contained assumptions evaluate to true.
+Only those branches of a choice statement are considered for execution, of which all contained assumptions evaluate to true.
 
 Example:
 
@@ -153,6 +153,18 @@ init {
 
 If you do not wish to use environmental transitions in your system, then leave the brackets empty: `init {}` This will result in a skip statement, which does nothing.
 
+### Property expression
+
+The invariant that holds in every state of a correct model can be described the following way, where `<expr>` is a boolean expression:
+
+```
+prop {
+    <expr>
+}
+```
+
+If a state in which this expression does not hold is reachable from any of the initial states, then the model is unsafe.
+
 ### Textual Representation (DSL)
 
 An example XSTS realizing a counter:
@@ -175,7 +187,59 @@ env {}
 An example property stating that the value of x will always be greater than or equal to 0:
 
 ```
-prop{
+prop {
     x>=0
 }
 ```
+
+A different example:
+
+```
+type Main_region : { __Inactive__, Normal, Error}
+var signal_alert_Out : boolean = false
+var signal_step_In : boolean = false
+var main_region : Main_region = __Inactive__
+
+trans {
+	choice {
+		assume (((main_region == Normal) && (signal_step_In == true)));
+		assume (main_region == Normal);
+		main_region := Error;
+		assume (main_region == Error);
+		signal_alert_Out := true;
+	} or {
+		assume (((main_region == Error) && (signal_step_In == true)));
+		assume (main_region == Error);
+		main_region := Normal;
+		assume (main_region == Normal);
+	} or {
+		assume (!((main_region == __Inactive__)) && !(((((main_region == Normal) && (signal_step_In == true))) || (((main_region == Error) && (signal_step_In == true))))));
+	}
+}
+
+init {
+	main_region := __Inactive__;
+	signal_step_In := false;
+	signal_alert_Out := false;
+	main_region := Normal;
+	choice {
+		assume (main_region == Normal);
+	} or {
+		assume (main_region == Error);
+		signal_alert_Out := true;
+	}
+}
+
+env {
+	choice {
+		signal_step_In := true;
+	} or {
+		signal_step_In := false;
+	}
+	signal_alert_Out := false;
+}
+```
+
+This is equivalent to the following state machine:
+
+![State machine](state_machine.png)
