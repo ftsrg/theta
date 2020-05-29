@@ -23,7 +23,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
-import hu.bme.mit.theta.xsts.analysis.XstsTraceConcretizer;
+import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizer;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
@@ -195,6 +195,8 @@ public class XstsCli {
     }
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
+        //TODO remove temp vars, replace int values with literals
+
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
         final Trace<XstsState<ExplState>, XstsAction> concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory, xsts);
         final File file = new File(cexfile);

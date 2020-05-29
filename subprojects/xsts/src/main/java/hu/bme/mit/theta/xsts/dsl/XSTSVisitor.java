@@ -51,8 +51,9 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         for(XstsDslParser.TypeDeclarationContext typeDecl: ctx.typeDeclarations){
             visitTypeDeclaration(typeDecl);
         }
+        int cnt=0;
         for(TypeDecl decl:nameToTypeMap.values()){
-            for(int i=0;i<decl.getLiterals().size();i++) if(!literalToIntMap.containsKey(decl.getLiterals().get(i)))literalToIntMap.put(decl.getLiterals().get(i),i);
+            for(int i=0;i<decl.getLiterals().size();i++) if(!literalToIntMap.containsKey(decl.getLiterals().get(i)))literalToIntMap.put(decl.getLiterals().get(i),cnt++);
         }
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
