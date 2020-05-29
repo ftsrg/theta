@@ -28,7 +28,7 @@ Algorithms are usually interested in proving that the property holds for every r
 
 Custom types can be declared the following way:
 
-`type <name> : { <literal_1>, . . . , <literal_n> }`
+`type <name> : { <literal>, . . . , <literal> }`
 
 Example:
 
@@ -36,12 +36,12 @@ Example:
 
 ### Variable declarations
 
-XSTS contains the following built-in types: `integer`, `boolean`. Previously declared custom types can also be used in variable declarations.
+The XSTS formalism contains the following built-in types: `integer`, `boolean`. Previously declared custom types can also be used in variable declarations.
 Variables can be declared the following way:
 
 `var <name> : <type>`
 
-Variables can also have initial values assigned to them, these values will be used to construct the formula that describes the initial states of the system. Assigning initial values is optional, but please note that for accurate model checking results all initial states described by the formula must be valid states of the system. Initial values can be assigned during variable declaration the following way: 
+Variables can and in most cases should have initial values assigned to them, these values will be used to construct the formula that describes the initial states of the system. Assigning initial values is optional, but please note that for accurate model checking results all initial states described by the formula must be valid states of the system. Initial values can be assigned during variable declaration the following way: 
 
 `var <name> : <type> = <value> `
 
@@ -54,6 +54,52 @@ var c : Color = RED
 ```
 
 All variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
+
+### Transitions
+
+The behaviour of XSTSs can be described using transitions. A transition is an atomic sequence of statements.
+An XSTS contains 3 sets of transitions, each having different semantics.
+
+
+#### Inner transitions
+
+Inner transitions describe the behaviour of the system. The set of inner transitions can be declared the following way:
+
+```
+trans {
+    <statement>
+    ... 
+    <statement>
+} or {
+    <statment>
+    ...
+    <statement>
+}
+```
+
+Each branch is interpreted as a separate transition.
+
+#### Environmental transitions
+
+Environmental transitions are used to describe the system's interactions with its environment, for example incoming and outgoing events.
+
+```
+env {
+    <statement>
+    ... 
+    <statement>
+} or {
+    <statment>
+    ...
+    <statement>
+}
+```
+
+If you do not wish to use environmental transitions in your system, then leave the brackets empty: `env {}` This will result in a skip statement, which does nothing.
+
+#### Init transitions
+
+
 
 ### Textual Representation (DSL)
 
