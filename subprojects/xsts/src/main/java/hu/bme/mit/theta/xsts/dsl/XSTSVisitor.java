@@ -69,7 +69,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     @Override
     public Expr visitTypeDeclaration(XstsDslParser.TypeDeclarationContext ctx) {
         checkIfTempVar(ctx.name.getText());
-        if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!");
+        if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!"+" On line "+ctx.start.getLine());
         List<String> literals=new ArrayList<String>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
             checkIfTempVar(literal.name.getText());
@@ -87,7 +87,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.type.BOOL()!=null) type= BoolType.getInstance();
         else if(ctx.type.INT()!=null) type= IntType.getInstance();
         else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())) type=IntType.getInstance();
-        else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText());
+        else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
         checkIfTempVar(ctx.name.getText());
         VarDecl decl=Decls.Var(ctx.name.getText(),type);
         if(nameToDeclMap.containsKey(ctx.name.getText())){
@@ -160,7 +160,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 return Lt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
             }else if(ctx.oper.GT()!=null){
                 return Gt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
-            } else throw new UnsupportedOperationException("Unsupported operation "+ctx.oper.getText());
+            } else throw new UnsupportedOperationException("Unsupported operation "+ctx.oper.getText()+" on line "+ctx.start.getLine());
         }else return visitAdditiveExpr(ctx.ops.get(0));
     }
 
@@ -199,7 +199,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             }else if(ctx.opers.get(i-1).MUL()!=null){
                 res=Mul(res,visitNegExpr(ctx.ops.get(i)));
             } else{
-                throw new UnsupportedOperationException("Unsupported operation "+ctx.opers.get(i-1).getText());
+                throw new UnsupportedOperationException("Unsupported operation "+ctx.opers.get(i-1).getText()+" on line "+ctx.start.getLine());
             }
         }
         return res;
@@ -241,7 +241,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             if(ctx.BOOLLIT().getText().equals("true")) return True(); else return False();
         }else if(ctx.INTLIT()!=null){
             return Int(Integer.parseInt(ctx.INTLIT().getText()));
-        }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type.");
+        }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type."+" On line "+ctx.start.getLine());
     }
 
     @Override
@@ -249,14 +249,14 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         checkIfTempVar(ctx.name.getText());
         if(literalToIntMap.containsKey(ctx.name.getText())) return Int(literalToIntMap.get(ctx.name.getText()));
         else if(nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
-        else throw new RuntimeException("Literal or reference "+ctx.name.getText()+" could not be resolved.");
+        else throw new RuntimeException("Literal or reference "+ctx.name.getText()+" could not be resolved."+" On line "+ctx.start.getLine());
 
     }
 
     @Override
     public Expr visitPrime(XstsDslParser.PrimeContext ctx) {
         if(ctx.reference()!=null) return visitReference(ctx.reference());
-        else throw new UnsupportedOperationException("Prime expressions are not supported.");
+        else throw new UnsupportedOperationException("Prime expressions are not supported."+" On line "+ctx.start.getLine());
 //            return Prime(visitPrime(ctx.prime()));
     }
 
@@ -289,12 +289,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     }
 
     public AssignStmt processAssignAction(XstsDslParser.AssignActionContext ctx) {
-        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText());
+        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText()+" On line "+ctx.start.getLine());
         return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitImplyExpression(ctx.rhs));
     }
 
     public HavocStmt processHavocAction(XstsDslParser.HavocActionContext ctx){
-        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText());
+        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText()+" On line "+ctx.start.getLine());
         return Stmts.Havoc(nameToDeclMap.get(ctx.name.getText()));
     }
 }
