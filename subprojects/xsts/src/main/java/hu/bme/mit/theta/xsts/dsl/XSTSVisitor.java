@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
@@ -42,6 +43,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     private HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
 
+    private Pattern tempVarPattern=Pattern.compile("temp([0-9])+");
+
     @Override
     public Expr visitXsts(XstsDslParser.XstsContext ctx) {
 
@@ -59,13 +62,21 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         return null;
     }
 
+    private void checkIfTempVar(String name){
+        if(tempVarPattern.matcher(name).matches()) throw new RuntimeException(name+" is reserved!");
+    }
+
     @Override
     public Expr visitTypeDeclaration(XstsDslParser.TypeDeclarationContext ctx) {
         List<String> literals=new ArrayList<String>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
+            checkIfTempVar(literal.name.getText());
+            if(literals.contains(literal.name.getText())) throw new RuntimeException("Literal "+literal.name.getText()+" already exists!");
             literals.add(literal.name.getText());
         }
         TypeDecl decl=new TypeDecl(ctx.name.getText(),literals);
+        checkIfTempVar(ctx.name.getText());
+        if(types.contains(decl) || decl.getName().equals("integer") || decl.getName().equals("boolean")) throw new RuntimeException("Type "+decl.getName()+" already exists!");
         types.add(decl);
         return null;
     }
@@ -76,6 +87,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.type.BOOL()!=null) type= BoolType.getInstance();
         else if(ctx.type.INT()!=null) type= IntType.getInstance();
         else type=IntType.getInstance();
+        checkIfTempVar(ctx.name.getText());
         VarDecl decl=Decls.Var(ctx.name.getText(),type);
         if(nameToDeclMap.containsKey(ctx.name.getText())){
             throw new RuntimeException("Variable ["+ctx.name.getText()+"] already exists.");
@@ -233,6 +245,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     @Override
     public Expr visitReference(XstsDslParser.ReferenceContext ctx) {
+        checkIfTempVar(ctx.name.getText());
         if(literalToIntMap.containsKey(ctx.name.getText())) return Int(literalToIntMap.get(ctx.name.getText()));
         else if(nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
         else throw new RuntimeException("Literal or reference "+ctx.name.getText()+" could not be resolved.");
