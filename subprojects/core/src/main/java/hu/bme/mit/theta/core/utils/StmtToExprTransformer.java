@@ -137,6 +137,40 @@ final class StmtToExprTransformer {
 			VarPool.returnInt(tempVar);
 			return StmtUnfoldResult.of(ImmutableList.of(expr),jointIndexing);
 		}
+
+		@Override
+		public StmtUnfoldResult visit(OrthStmt orthStmt, VarIndexing indexing) {
+
+			List<Expr<BoolType>> branches=new ArrayList<Expr<BoolType>>();
+			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
+			Set<VarDecl<?>> allVars=new HashSet<>();
+			VarIndexing running=indexing;
+			for(Stmt stmt: orthStmt.getStmts()){
+				List<Expr<BoolType>> exprs=new ArrayList<>();
+				running=running.transform().incAll().build();
+				Set<VarDecl<?>> vars=StmtUtils.getVars(stmt);
+				allVars.addAll(vars);
+				for(VarDecl decl:vars){
+					if(indexing.get(decl)>0) exprs.add(Eq(Prime(decl.getRef(),indexing.get(decl)),Prime(decl.getRef(),running.get(decl))));
+					else exprs.add(Eq(decl.getRef(),Prime(decl.getRef(),running.get(decl))));
+				}
+				StmtUnfoldResult result=toExpr(stmt,running);
+				exprs.addAll(result.getExprs());
+				running=result.getIndexing();
+
+				indexings.add(running);
+				branches.add(And(exprs));
+				System.out.println(running);
+			}
+
+			for(VarDecl decl: allVars){
+				for(VarIndexing branchIndexing: indexings){
+				}
+			}
+
+			System.out.println(branches);
+			throw new UnsupportedOperationException();
+		}
 	}
 
 }
