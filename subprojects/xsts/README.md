@@ -200,34 +200,21 @@ var signal_alert_Out : boolean = false
 var signal_step_In : boolean = false
 var main_region : Main_region = __Inactive__
 
+
 trans {
-	choice {
-		assume (((main_region == Normal) && (signal_step_In == true)));
-		assume (main_region == Normal);
-		main_region := Error;
-		assume (main_region == Error);
-		signal_alert_Out := true;
-	} or {
-		assume (((main_region == Error) && (signal_step_In == true)));
-		assume (main_region == Error);
-		main_region := Normal;
-		assume (main_region == Normal);
-	} or {
-		assume (!((main_region == __Inactive__)) && !(((((main_region == Normal) && (signal_step_In == true))) || (((main_region == Error) && (signal_step_In == true))))));
-	}
+    assume (main_region == Normal && signal_step_In == true);
+    main_region := Error;
+    signal_alert_Out := true;
+} or {
+    assume (main_region == Error && signal_step_In == true);
+    main_region := Normal;
+} or {
+    assume (!(main_region == __Inactive__) && !((main_region == Normal && signal_step_In == true) || (main_region == Error && signal_step_In == true)));
 }
 
+
 init {
-	main_region := __Inactive__;
-	signal_step_In := false;
-	signal_alert_Out := false;
 	main_region := Normal;
-	choice {
-		assume (main_region == Normal);
-	} or {
-		assume (main_region == Error);
-		signal_alert_Out := true;
-	}
 }
 
 env {
@@ -243,3 +230,5 @@ env {
 This is equivalent to the following state machine:
 
 ![State machine](state_machine.png)
+
+Note how incoming and outgoing events are described as boolean variables and handled in environmental transitions.
