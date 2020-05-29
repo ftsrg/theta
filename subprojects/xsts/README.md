@@ -32,7 +32,28 @@ Custom types can be declared the following way:
 
 Example:
 
-`type color : { RED, GREEN, BLUE }`
+`type Color : { RED, GREEN, BLUE }`
+
+### Variable declarations
+
+XSTS contains the following built-in types: `integer`, `boolean`. Previously declared custom types can also be used in variable declarations.
+Variables can be declared the following way:
+
+`var <name> : <type>`
+
+Variables can have initial values assigned to them the following way:
+
+`var <name> : <type> = <value> `
+
+Examples:
+
+```
+var a : integer
+var b : boolean = false
+var c : Color = RED
+```
+
+Please note that all variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
 
 ### Textual Representation (DSL)
 
