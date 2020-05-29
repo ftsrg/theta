@@ -14,13 +14,25 @@ This project contains the Extended Symbolic Transition System (XSTS) formalism. 
 
 XSTSs consist of
 
-* Variables,
-* an initial expression describing the initial states,
-* a set of atomic transitions
-* a set of atomic environmental actions
+* type declarations (optional)
+* variables
+* an initial formula describing the initial states
+* a set of atomic inner transitions
+* a set of atomic environmental transitions (optional)
+* a set of atomic init transitions (optional)
 * a property expression.
 
 Algorithms are usually interested in proving that the property holds for every reachable state (safety property).
+
+### Type declarations
+
+Custom types can be declared the following way:
+
+`type <name> : { <literal_1>, . . . , <literal_n> }`
+
+Example:
+
+`type color : { RED, GREEN, BLUE }`
 
 ### Textual Representation (DSL)
 
