@@ -65,6 +65,8 @@ The behaviour of XSTSs can be described using transitions. A transition is an at
 * composite statements:
     * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 2 or more branches
     * sequences of the form `<statement> <statement> <statement>`
+    
+Only those branches of a choice are considered for execution, of which all contained assumptions evaluate to true.
 
 Example:
 
@@ -84,8 +86,18 @@ choice {
 y := y * 2;
 ```
 
-An XSTS contains 3 sets of transitions, each having different semantics.
-
+An XSTS contains 3 sets of transitions, each having different semantics. During the operation of the system the transitions to be executed are selected from the sets of inner and environmental transitions in an alternating manner. Transitions from the set of inner transitions are only selected for execution once, at the beginning.
+This means that the transitions of the system will fire in the following order:
+```
+<init>
+<env>
+<inner>
+<env>
+<inner>
+<env>
+...
+```
+Where `<init>`, `<env>` and `<inner>` refer to transitions selected from the corresponding sets.
 
 #### Inner transitions
 
@@ -125,7 +137,21 @@ If you do not wish to use environmental transitions in your system, then leave t
 
 #### Init transitions
 
+Init transitions are used to express more complex initialization steps that cannot be expressed using the initial values assigned in variable declarations. Please note that init transitions alone are not sufficient to express the initial states of a system, the initial values of the variable declarations alone have to describe a valid state of the system. 
 
+```
+init {
+    <statement>
+    ... 
+    <statement>
+} or {
+    <statment>
+    ...
+    <statement>
+}
+```
+
+If you do not wish to use environmental transitions in your system, then leave the brackets empty: `init {}` This will result in a skip statement, which does nothing.
 
 ### Textual Representation (DSL)
 
