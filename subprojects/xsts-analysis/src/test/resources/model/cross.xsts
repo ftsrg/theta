@@ -84,8 +84,6 @@ trans {
 		choice {
 			assume (operating_controller == __Inactive__);
 			operating_controller := Init;
-		}  or {
-			assume !(operating_controller == __Inactive__);
 		} or {
 			assume !(operating_controller == __Inactive__);
 		}
@@ -94,7 +92,7 @@ trans {
 			assume (operating_controller == Init);
 			PriorityTimeout3_controller := 0;
 			Control_toggle_In_prior := true;
-		} or {
+		} or  {
 			assume (operating_controller == Priority);
 			PriorityTimeout3_controller := 0;
 			Control_toggle_In_prior := true;
@@ -112,12 +110,13 @@ trans {
 			assume (operating_controller == SecondaryPrepares);
 			PriorityTimeout3_controller := 0;
 			Control_toggle_In_second := true;
-		} or {
+		} or  {
 			assume !(((operating_controller == Init) || (operating_controller == Priority) || (operating_controller == PriorityPrepares) || (operating_controller == Secondary) || (operating_controller == SecondaryPrepares)));
 		}
 	} or {
 		assume !((((!(((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))) && (((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= PriorityTimeout3_controller))) || ((!(((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))) && (((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= PriorityTimeout3_controller))) || ((!(((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))) && (((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= PriorityTimeout3_controller))) || ((!(((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))) && (((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= PriorityTimeout3_controller) && (true != false)))) || ((!(((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))) && (((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= PriorityTimeout3_controller))) || (((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)))));
 	}
+
 	PoliceInterrupt_police_In_controller := false;
 	BlackTimeout3_prior := (BlackTimeout3_prior + 2000);
 	choice {
@@ -164,8 +163,6 @@ trans {
 			normal_prior := Red;
 		} or {
 			assume !((normal_prior == __Inactive__));
-		} or {
-			assume !(((normal_prior == __Inactive__)));
 		}
 		assume (main_region_prior == Normal);
 		choice {
@@ -286,8 +283,6 @@ trans {
 			normal_second := Red;
 		} or {
 			assume !((normal_second == __Inactive__));
-		} or {
-			assume !(((normal_second == __Inactive__)));
 		}
 		assume (main_region_second == Normal);
 		choice {

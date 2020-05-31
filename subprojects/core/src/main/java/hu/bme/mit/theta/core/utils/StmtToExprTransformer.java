@@ -99,7 +99,10 @@ final class StmtToExprTransformer {
 
 		@Override
 		public StmtUnfoldResult visit(SequenceStmt sequenceStmt, VarIndexing indexing) {
-			return toExpr(sequenceStmt.getStmts(),indexing);
+			final Collection<Expr<BoolType>> resultExprs = new ArrayList<>();
+			StmtUnfoldResult result = toExpr(sequenceStmt.getStmts(),indexing);
+
+			return StmtUnfoldResult.of(ImmutableList.of(And(result.getExprs())),result.getIndexing());
 		}
 
 		@Override
@@ -112,8 +115,9 @@ final class StmtToExprTransformer {
 			int count=0;
 			VarDecl<IntType> tempVar=VarPool.requestInt();
 			for(Stmt stmt:nonDetStmt.getStmts()){
-				StmtUnfoldResult result=toExpr(Arrays.asList(Stmts.Assign(tempVar,Int(count++)),stmt),indexing);
-				choices.add(And(result.exprs));
+				Expr<BoolType> tempExpr=Eq(ExprUtils.applyPrimes(tempVar.getRef(),indexing),Int(count++));
+				StmtUnfoldResult result=toExpr(stmt,indexing.inc(tempVar));
+				choices.add(And(tempExpr,And(result.exprs)));
 				indexings.add(result.indexing);
 				jointIndexing=jointIndexing.join(result.indexing);
 			}

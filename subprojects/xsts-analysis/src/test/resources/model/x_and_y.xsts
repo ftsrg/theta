@@ -1,6 +1,6 @@
 var x: integer = 0
 var y: integer = 0
-var a: asd
+var a: boolean
 
 trans {
     y:=y+1;
