@@ -76,9 +76,11 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART}
+				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL}
+				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART}
 
 		});
 	}
@@ -98,7 +100,7 @@ public class XstsExplTest {
 				e.printStackTrace();
 			}
 
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
+			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
 			final SafetyResult<?, ?> status = configuration.check();
 			if (safe) {
 				assertTrue(status.isSafe());
