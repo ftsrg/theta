@@ -50,6 +50,8 @@ main process counter {
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
 
+Bitvectors are now supported. Check out the [details](doc/bitvectors.md).
+
 ### C frontend
 
 [Gazer](https://github.com/FTSRG/gazer) is an LLVM-based frontend for Theta that can translate C programs into CFAs, run Theta and map the verification results back to the C source level.
