@@ -74,7 +74,11 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART}
+				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART}
+
+//				{ "src/test/resources/model/cross.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL}
 
 		});
 	}
@@ -84,7 +88,7 @@ public class XstsExplTest {
 
 		try {
 
-			final Logger logger = new ConsoleLogger(Level.VERBOSE);
+			final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
 			XSTS xsts = null;
 
