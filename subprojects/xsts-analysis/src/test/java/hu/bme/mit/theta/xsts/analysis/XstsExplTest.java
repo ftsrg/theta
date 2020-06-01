@@ -82,7 +82,11 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL}
+				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL}
 
 		});
 	}
