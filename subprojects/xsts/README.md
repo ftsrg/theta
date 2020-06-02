@@ -2,7 +2,7 @@
 
 This project contains the Extended Symbolic Transition System (XSTS) formalism. The project includes:
 
-* Classes to represent STSs.
+* Classes to represent XSTSs.
 * A domain specific language (DSL) to parse XSTSs from a textual representation.
 
 ### Related projects
