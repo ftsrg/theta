@@ -214,16 +214,16 @@ trans {
 
 
 init {
-	main_region := Normal;
+    main_region := Normal;
 }
 
 env {
-	choice {
-		signal_step_In := true;
-	} or {
-		signal_step_In := false;
-	}
-	signal_alert_Out := false;
+    choice {
+    	signal_step_In := true;
+    } or {
+    	signal_step_In := false;
+    }
+    signal_alert_Out := false;
 }
 ```
 
