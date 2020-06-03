@@ -58,11 +58,10 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             visitTypeDeclaration(typeDecl);
         }
 
-        System.out.println(literalToIntMap);
-
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
+
         xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
 
         return null;
