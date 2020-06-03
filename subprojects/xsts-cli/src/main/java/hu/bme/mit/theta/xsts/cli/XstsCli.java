@@ -23,6 +23,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizer;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
@@ -55,7 +56,7 @@ public class XstsCli {
     @Parameter(names = {"--predsplit"}, description = "Predicate splitting")
     PredSplit predSplit = PredSplit.WHOLE;
 
-    @Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
+    @Parameter(names = {"--model"}, description = "Path of the input XSTS model", required = true)
     String model;
 
     @Parameter(names = {"--property"}, description = "Path of the input property", required = true)
@@ -198,7 +199,7 @@ public class XstsCli {
         //TODO remove temp vars, replace int values with literals
 
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final Trace<XstsState<ExplState>, XstsAction> concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory, xsts);
+        final XstsStateSequence concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory, xsts);
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

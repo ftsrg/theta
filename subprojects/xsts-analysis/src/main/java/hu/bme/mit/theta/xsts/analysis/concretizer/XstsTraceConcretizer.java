@@ -24,7 +24,7 @@ public class XstsTraceConcretizer {
 	private XstsTraceConcretizer() {
 	}
 
-	public static Trace<XstsState<ExplState>, XstsAction> concretize(
+	public static XstsStateSequence concretize(
 			final Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
 
 		final VarFilter varFilter=VarFilter.of(xsts);
@@ -41,6 +41,6 @@ public class XstsTraceConcretizer {
 			xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))),trace.getState(i).lastActionWasEnv(),trace.getState(i).isInitialized()));
 		}
 
-		return Trace.of(xstsStates, trace.getActions());
+		return XstsStateSequence.of(xstsStates, xsts);
 	}
 }

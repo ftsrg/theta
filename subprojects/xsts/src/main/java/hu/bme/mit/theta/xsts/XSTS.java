@@ -9,16 +9,15 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xsts.dsl.TypeDecl;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
     private final Collection<VarDecl<?>> vars;
     private final Collection<TypeDecl> types;
+    private final HashMap<VarDecl<?>,TypeDecl> varToType;
+
     private final NonDetStmt transitions;
     private final NonDetStmt envAction;
     private final NonDetStmt initAction;
@@ -36,6 +35,8 @@ public final class XSTS {
         return types;
     }
 
+    public HashMap<VarDecl<?>,TypeDecl> getVarToType() { return varToType; }
+
     public Expr<BoolType> getProp() { return prop; }
 
     public NonDetStmt getTransitions() {
@@ -48,14 +49,16 @@ public final class XSTS {
         return envAction;
     }
 
-    public XSTS(final Collection<TypeDecl> types, final NonDetStmt initAction,final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+    public XSTS(final Collection<TypeDecl> types, final HashMap<VarDecl<?>,TypeDecl> varToType, final NonDetStmt initAction,final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
         this.transitions = checkNotNull(transitions);
         this.initFormula = checkNotNull(initFormula);
         this.envAction = checkNotNull(envAction);
         this.prop = checkNotNull(prop);
         this.initAction = checkNotNull(initAction);
         this.types=types;
+        this.varToType=varToType;
         final Set<VarDecl<?>> tmpVars = new HashSet<>();
+        tmpVars.addAll(varToType.keySet());
         tmpVars.addAll(StmtUtils.getVars(transitions));
         tmpVars.addAll(StmtUtils.getVars(envAction));
         tmpVars.addAll(StmtUtils.getVars(initAction));

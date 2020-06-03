@@ -27,13 +27,15 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     XSTS xsts;
-    HashMap<String,Integer> literalToIntMap=new HashMap<String,Integer>();
+    private HashMap<String,Integer> literalToIntMap=new HashMap<String,Integer>();
 
     public HashMap<String, Integer> getLiteralToIntMap() {
         return literalToIntMap;
     }
 
-    HashMap<String,VarDecl> nameToDeclMap=new HashMap<String, VarDecl>();
+    private HashMap<String,VarDecl<?>> nameToDeclMap=new HashMap<String, VarDecl<?>>();
+
+    private HashMap<VarDecl<?>, TypeDecl> varToTypeMap=new HashMap<>();
 
     public XSTS getXsts(){
         return xsts;
@@ -45,20 +47,23 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     private Pattern tempVarPattern=Pattern.compile("temp([0-9])+");
 
+    private int counter;
+
     @Override
     public Expr visitXsts(XstsDslParser.XstsContext ctx) {
+
+        counter=0;
 
         for(XstsDslParser.TypeDeclarationContext typeDecl: ctx.typeDeclarations){
             visitTypeDeclaration(typeDecl);
         }
-        int cnt=0;
-        for(TypeDecl decl:nameToTypeMap.values()){
-            for(int i=0;i<decl.getLiterals().size();i++) if(!literalToIntMap.containsKey(decl.getLiterals().get(i)))literalToIntMap.put(decl.getLiterals().get(i),cnt++);
-        }
+
+        System.out.println(literalToIntMap);
+
         for(XstsDslParser.VariableDeclarationContext varDecl: ctx.variableDeclarations){
             visitVariableDeclaration(varDecl);
         }
-        xsts=new XSTS(nameToTypeMap.values(), processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
+        xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
 
         return null;
     }
@@ -71,35 +76,45 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     public Expr visitTypeDeclaration(XstsDslParser.TypeDeclarationContext ctx) {
         checkIfTempVar(ctx.name.getText());
         if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!"+" On line "+ctx.start.getLine());
-        List<String> literals=new ArrayList<String>();
+        List<String> literals=new ArrayList<>();
+        List<Integer> intValues=new ArrayList<>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
             checkIfTempVar(literal.name.getText());
-            if(literals.contains(literal.name.getText())) throw new RuntimeException("Literal "+literal.name.getText()+" already exists!");
+            if(literals.contains(literal.name.getText())) throw new RuntimeException("Duplicate literal "+literal.name.getText()+" in type "+ctx.name.getText());
+            if(literalToIntMap.containsKey(literal.name.getText())) {
+                intValues.add(literalToIntMap.get(literal.name.getText()));
+            } else {
+                int val=counter++;
+                intValues.add(val);
+                literalToIntMap.put(literal.name.getText(),val);
+            }
             literals.add(literal.name.getText());
         }
-        TypeDecl decl=new TypeDecl(ctx.name.getText(),literals);
+        TypeDecl decl=TypeDecl.of(ctx.name.getText(),literals, intValues);
         nameToTypeMap.put(decl.getName(),decl);
         return null;
     }
 
     @Override
     public Expr visitVariableDeclaration(XstsDslParser.VariableDeclarationContext ctx) {
-        Type type;
-        if(ctx.type.BOOL()!=null) type= BoolType.getInstance();
-        else if(ctx.type.INT()!=null) type= IntType.getInstance();
-        else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())) type=IntType.getInstance();
-        else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
         checkIfTempVar(ctx.name.getText());
-        VarDecl decl=Decls.Var(ctx.name.getText(),type);
         if(nameToDeclMap.containsKey(ctx.name.getText())){
             throw new RuntimeException("Variable ["+ctx.name.getText()+"] already exists.");
         } else if(literalToIntMap.containsKey(ctx.name.getText())){
             throw new RuntimeException("["+ctx.name.getText()+"] is a type literal, cannot declare variable with this name.");
-        } else {
-            nameToDeclMap.put(decl.getName(), decl);
-            if(ctx.initValue!=null){
-                initExprs.add(Eq(decl.getRef(),visitValue(ctx.initValue)));
-            }
+        }
+
+        VarDecl decl;
+        if(ctx.type.BOOL()!=null) decl=Decls.Var(ctx.name.getText(),BoolType.getInstance());
+        else if(ctx.type.INT()!=null) decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
+        else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())) {
+            decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
+            varToTypeMap.put(decl,nameToTypeMap.get(ctx.type.customType().name.getText()));
+        } else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
+
+        nameToDeclMap.put(decl.getName(), decl);
+        if(ctx.initValue!=null){
+            initExprs.add(Eq(decl.getRef(),visitValue(ctx.initValue)));
         }
         return null;
     }
