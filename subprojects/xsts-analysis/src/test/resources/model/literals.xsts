@@ -1,0 +1,11 @@
+type first : { A, B, C, D }
+type second : { D, C, B, A }
+
+var f : first = A
+var s : second = A
+
+trans {}
+
+init {}
+
+env {}

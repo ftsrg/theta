@@ -52,42 +52,49 @@ public class XstsExplTest {
 	@Parameterized.Parameter(value = 3)
 	public XstsConfigBuilder.Domain domain;
 
-	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
+	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+//				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL},
+//
+//				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
-
-				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
-
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
-
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
-
-				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
-
-				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-
-				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL}
-
+				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL}
 		});
 	}
 
@@ -106,7 +113,7 @@ public class XstsExplTest {
 				e.printStackTrace();
 			}
 
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.MULTI_SEQ, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
+			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
 			final SafetyResult<?, ?> status = configuration.check();
 			if (safe) {
 				assertTrue(status.isSafe());

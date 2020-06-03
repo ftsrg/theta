@@ -145,6 +145,8 @@ final class StmtToExprTransformer {
 		@Override
 		public StmtUnfoldResult visit(OrthStmt orthStmt, VarIndexing indexing) {
 
+			//TODO finish
+
 			List<Expr<BoolType>> branches=new ArrayList<Expr<BoolType>>();
 			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
 			Set<VarDecl<?>> allVars=new HashSet<>();

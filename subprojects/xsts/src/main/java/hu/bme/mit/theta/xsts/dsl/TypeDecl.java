@@ -3,14 +3,23 @@ package hu.bme.mit.theta.xsts.dsl;
 import java.util.List;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class TypeDecl {
 
-    private String name;
-    private List<String> literals;
+    private final String name;
+    private final List<String> literals;
+    private final List<Integer> intValues;
 
-    public TypeDecl(String name, List<String> literals) {
+    private TypeDecl(final String name, final List<String> literals, final List<Integer> intValues) {
         this.name = name;
+        checkArgument(literals.size()==intValues.size());
         this.literals = literals;
+        this.intValues = intValues;
+    }
+
+    public static TypeDecl of(final String name, final List<String> literals, final List<Integer> intValues){
+        return new TypeDecl(name, literals, intValues);
     }
 
     @Override
@@ -37,6 +46,8 @@ public class TypeDecl {
     public List<String> getLiterals() {
         return literals;
     }
+
+    public List<Integer> getIntValues() { return intValues; }
 
     @Override
     public String toString() {
