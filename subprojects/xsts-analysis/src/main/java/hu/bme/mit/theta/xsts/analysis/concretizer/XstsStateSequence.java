@@ -88,7 +88,6 @@ public class XstsStateSequence {
 					IntLitExpr intValue=(IntLitExpr) val.get();
 					int index=type.getIntValues().indexOf(intValue.getValue());
 					assert index!=-1;
-					System.out.println(val.get()+" "+intValue+" "+index+" "+type+" "+type.getIntValues());
 					sb.add(String.format("(%s %s)",decl.getName(),type.getLiterals().get(index)));
 				} else {
 					sb.add(String.format("(%s %s)",decl.getName(),val.get()));
