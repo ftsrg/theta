@@ -6,7 +6,7 @@ xsts:
     transitions=tran
     initAction=init
     envAction=env
-    PROP LCURLY prop=implyExpression RCURLY;
+    PROP LCURLY prop=expr RCURLY;
 
 action:
     assumeAction|
@@ -39,13 +39,22 @@ sequentialAction:
     (actions+=action)*;
 
 assumeAction:
-    ASSUME cond=implyExpression SEMICOLON;
+    ASSUME cond=expr SEMICOLON;
 
 assignAction:
-    lhs=ID ASSIGN rhs=implyExpression SEMICOLON;
+    lhs=ID ASSIGN rhs=expr SEMICOLON;
 
 havocAction:
     HAVOC name=ID SEMICOLON;
+
+expr:
+    iteExpression
+;
+
+iteExpression:
+    implyExpression |
+    IF cond=expr THEN then=expr ELSE elze=expr
+;
 
 implyExpression:
 	ops+=orExpr (IMPLIES ops+=orExpr)?
@@ -107,7 +116,7 @@ primaryExpr:
 ;
 
 parenExpr:
-	LPAREN ops+=implyExpression RPAREN | prime
+	LPAREN ops+=expr RPAREN | prime
 ;
 
 prime:
@@ -138,6 +147,9 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
+IF: 'if';
+THEN: 'then';
+ELSE: 'else';
 TRAN: 'trans';
 INIT: 'init';
 ENV: 'env';
