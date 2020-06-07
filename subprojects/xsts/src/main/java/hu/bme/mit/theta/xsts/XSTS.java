@@ -64,6 +64,7 @@ public final class XSTS {
         tmpVars.addAll(StmtUtils.getVars(initAction));
         tmpVars.addAll(ExprUtils.getVars(initFormula));
         tmpVars.addAll(ExprUtils.getVars(prop));
+        System.out.println(prop);
         this.vars = Collections.unmodifiableCollection(tmpVars);
     }
 

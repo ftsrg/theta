@@ -62,7 +62,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             visitVariableDeclaration(varDecl);
         }
 
-        xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitImplyExpression(ctx.prop));
+        xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitExpr(ctx.prop));
 
         return null;
     }
@@ -116,6 +116,23 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             initExprs.add(Eq(decl.getRef(),visitValue(ctx.initValue)));
         }
         return null;
+    }
+
+    @Override
+    public Expr visitExpr(XstsDslParser.ExprContext ctx) {
+        if(ctx.iteExpression()==null) throw new RuntimeException("Invalid expression on line "+ctx.start.getLine());
+        return visitIteExpression(ctx.iteExpression());
+    }
+
+    @Override
+    public Expr visitIteExpression(XstsDslParser.IteExpressionContext ctx) {
+        if(ctx.cond != null){
+            if(ctx.then == null || ctx.elze == null) throw new RuntimeException("Invalid if-then-else expression on line "+ctx.start.getLine());
+            return Ite(visitExpr(ctx.cond),visitExpr(ctx.then),visitExpr(ctx.elze));
+        } else {
+            if(ctx.implyExpression()==null) throw new RuntimeException("Invalid expression on line "+ctx.start.getLine());
+            return visitImplyExpression(ctx.implyExpression());
+        }
     }
 
     @Override
@@ -241,7 +258,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     @Override
     public Expr visitParenExpr(XstsDslParser.ParenExprContext ctx) {
         if(ctx.prime()!=null) return visitPrime(ctx.prime());
-        else return visitImplyExpression(ctx.ops.get(0));
+        else return visitExpr(ctx.ops.get(0));
     }
 
     @Override
@@ -300,12 +317,12 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     }
 
     public AssumeStmt processAssumeAction(XstsDslParser.AssumeActionContext ctx) {
-        return Stmts.Assume(visitImplyExpression(ctx.cond));
+        return Stmts.Assume(visitExpr(ctx.cond));
     }
 
     public AssignStmt processAssignAction(XstsDslParser.AssignActionContext ctx) {
         if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText()+" on line "+ctx.start.getLine());
-        return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitImplyExpression(ctx.rhs));
+        return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitExpr(ctx.rhs));
     }
 
     public HavocStmt processHavocAction(XstsDslParser.HavocActionContext ctx){
