@@ -25,19 +25,32 @@ import hu.bme.mit.theta.common.Utils;
 
 import java.util.Collection;
 
+/**
+ * Implementations for different stop criterions.
+ */
 public final class StopCriterions {
 
 	private StopCriterions() {
 	}
 
+	/**
+	 * @return Criterion that stops at the first counterexample
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> firstCex() {
 		return new FirstCex<>();
 	}
 
+	/**
+	 * @return Criterion that explores the whole state space
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
 		return new FullExploration<>();
 	}
 
+	/**
+	 * @param n Number of counterexamples to collect
+	 * @return Criterion that stops after a given number of counterexamples
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> atLeastNCexs(final int n) {
 		return new AtLeastNCexs<>(n);
 	}
