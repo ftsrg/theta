@@ -1,0 +1,15 @@
+name: Build cfa-cli dockerfile
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  cfa-cli-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build CFA Docker image
+      run: docker build -t theta-cfa-cli -f docker/theta-cfa-cli.Dockerfile .
