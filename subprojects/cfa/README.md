@@ -38,7 +38,7 @@ Variables of the CFA can have the following types.
 - `bool`: Booleans.
 - `int`: Mathematical, unbounded SMT integers.
 - `rat`: Rational numbers (implemented as SMT reals).
-- `[K] -> V`: Arrays
+- `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 
 Expressions of the CFA include the following.
 - Identifiers (variables).
