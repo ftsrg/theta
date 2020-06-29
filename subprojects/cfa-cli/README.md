@@ -39,7 +39,7 @@ All arguments are optional, except `--model`.
 
 - `--model`: Path of the input CFA model (mandatory).
 - `--cex`: Output file where the counterexample is written (if the result is unsafe).
-`--loglevel`: Detailedness of logging.
+- `--loglevel`: Detailedness of logging.
   - Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP`, `INFO`, `DETAIL`, `VERBOSE`
 - `--domain`: Domain of the abstraction, possible values:
   - `PRED_CART`: Cartesian predicate abstraction.
