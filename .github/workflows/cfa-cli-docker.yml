@@ -13,3 +13,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build CFA Docker image
       run: docker build -t theta-cfa-cli -f docker/theta-cfa-cli.Dockerfile .
+    - name: Run docker on example
+      run: ./docker/run-theta-cfa-cli.sh subprojects/cfa/src/test/resources/counter5_true.cfa
