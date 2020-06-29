@@ -19,6 +19,20 @@ The runnable jar file will appear under _build/libs/_ with the name _theta-sts-c
     More information can also be found below.
     - For example `java -jar theta-sts-cli.jar --model counter.system --loglevel INFO` runs the default analysis with logging on the `counter.system` input file.
 
+### Docker (beta)
+
+An experimental Dockerfile is also available under the _docker_ directory in the root of the repository.
+The image can be built using the following command:
+```
+docker build -t theta-sts-cli -f theta-sts-cli.Dockerfile .
+```
+
+The script `run-theta-sts-cli.sh` can be used for running the containerized version on models residing on the host:
+```
+run-theta-sts-cli.sh model.sts [OTHER FLAGS]
+```
+Note that the model must be given as the first positional argument (without `--model`).
+
 ## Arguments
 
 All arguments are optional, except `--model`.
