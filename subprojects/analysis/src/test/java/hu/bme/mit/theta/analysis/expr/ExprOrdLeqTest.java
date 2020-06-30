@@ -72,7 +72,7 @@ public final class ExprOrdLeqTest {
 
 	@Test
 	public void testIsTop() {
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 		final PartialOrd<ExprState> ord = ExprOrd.create(solver);
 		assertEquals(ord.isLeq(state1, state2), leq);
 	}
