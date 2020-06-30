@@ -29,7 +29,7 @@ docker build -t theta-sts-cli -f theta-sts-cli.Dockerfile .
 
 The script `run-theta-sts-cli.sh` can be used for running the containerized version on models residing on the host:
 ```
-run-theta-sts-cli.sh model.sts [OTHER FLAGS]
+./run-theta-sts-cli.sh model.sts [OTHER FLAGS]
 ```
 Note that the model must be given as the first positional argument (without `--model`).
 
