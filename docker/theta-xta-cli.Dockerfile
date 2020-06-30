@@ -7,7 +7,7 @@ RUN git clone https://github.com/FTSRG/theta.git && \
     cd theta && \
     ./gradlew theta-xta-cli:build && \
     cd .. && \
-    mv theta/subprojects/xta-cli/build/libs/theta-xta-cli-0.0.1-SNAPSHOT-all.jar ./theta-xta-cli.jar
+    mv theta/subprojects/xta-cli/build/libs/theta-xta-cli-*-all.jar ./theta-xta-cli.jar
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
 
