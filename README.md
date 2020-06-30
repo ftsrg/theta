@@ -55,8 +55,8 @@ Each project contains a README.md in its root directory describing its purpose i
 |  | Common | CFA | STS | XTA |
 |--|--|--|--|--|
 | **Tools** |  | [`cfa-cli`](subprojects/cfa-cli), [`cfa-metrics`](subprojects/cfa-metrics), [`cfa2dot`](subprojects/cfa2dot) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) |
+| **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) |
 | **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) |
-| **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis)                      | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) |
 | **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3) |
 
 ## Read more
