@@ -41,6 +41,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
+import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -48,6 +49,8 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.z3.*;
 
@@ -99,6 +102,9 @@ public class CfaCli {
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
+	@Parameter(names = "--visualize", description = "Visualize CFA to this file without running the algorithm")
+	String visualize = null;
+
 	private Logger logger;
 
 	public CfaCli(final String[] args) {
@@ -119,6 +125,11 @@ public class CfaCli {
 			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
 			ex.usage();
+			return;
+		}
+
+		if (visualize != null) {
+			visualize();
 			return;
 		}
 
@@ -143,6 +154,36 @@ public class CfaCli {
 		if (benchmarkMode) {
 			writer.newRow();
 		}
+	}
+
+	private void visualize() {
+		try {
+			final CFA cfa = loadModel();
+			final Graph graph = CfaVisualizer.visualize(cfa);
+			String ext = getFileExtension(visualize.toLowerCase());
+			switch(ext) {
+				case "pdf":
+					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PDF);
+					break;
+				case "png":
+					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PNG);
+					break;
+				case "svg":
+					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.SVG);
+					break;
+				default:
+					GraphvizWriter.getInstance().writeFile(graph, visualize);
+					break;
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+		}
+	}
+
+	private String getFileExtension(String name) {
+		int lastIndexOf = name.lastIndexOf(".");
+		if (lastIndexOf == -1) return "";
+		return name.substring(lastIndexOf + 1);
 	}
 
 	private void printHeader() {
