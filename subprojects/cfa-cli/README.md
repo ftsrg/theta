@@ -75,8 +75,11 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
   - `CONJUNCTS`: Split predicates into conjuncts.
   - `ATOMS`: Split predicates into atoms.
 - `--precgranularity`: Granularity of the precision, possible values:
-  - `GLOBAL`: the same precision is applied in each location of the CFA.
-  - `LOCAL`: each location can have a possibly different precision.
+  - `GLOBAL`: The same precision is applied in each location of the CFA.
+  - `LOCAL`: Each location can have a possibly different precision.
+- `--visualize`: Visualize the CFA without running the algorithm.
+If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../doc/Build.md) has to be available on `PATH`.
+Otherwise, the output is simply in `dot` format.
 
 ### For developer usage
 
