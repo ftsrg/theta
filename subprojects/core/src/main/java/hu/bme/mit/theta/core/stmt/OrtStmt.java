@@ -4,7 +4,7 @@ import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
 
-public class OrthStmt implements Stmt {
+public class OrtStmt implements Stmt {
 
 	private List<Stmt> stmts;
 
@@ -13,13 +13,13 @@ public class OrthStmt implements Stmt {
 
 	private volatile int hashCode = 0;
 
-	private OrthStmt(List<Stmt> stmts) {
+	private OrtStmt(List<Stmt> stmts) {
 		this.stmts = stmts;
 		if (stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
 	}
 
-	public static OrthStmt of(List<Stmt> stmts) {
-		return new OrthStmt(stmts);
+	public static OrtStmt of(List<Stmt> stmts) {
+		return new OrtStmt(stmts);
 	}
 
 	public List<Stmt> getStmts() {
@@ -46,8 +46,8 @@ public class OrthStmt implements Stmt {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof OrthStmt) {
-			final OrthStmt that = (OrthStmt) obj;
+		} else if (obj instanceof OrtStmt) {
+			final OrtStmt that = (OrtStmt) obj;
 			return this.getStmts().equals(that.getStmts());
 		} else {
 			return false;
@@ -56,7 +56,7 @@ public class OrthStmt implements Stmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder().addAll(stmts).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).addAll(stmts).toString();
 	}
 
 }

@@ -75,7 +75,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	}
 
 	@Override
-	public Void visit(OrthStmt stmt, Collection<VarDecl<?>> vars) {
+	public Void visit(OrtStmt stmt, Collection<VarDecl<?>> vars) {
 		for(Stmt subStmt: stmt.getStmts()){
 			subStmt.accept(VarCollectorStmtVisitor.getInstance(),vars);
 		}

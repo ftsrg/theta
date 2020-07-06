@@ -1,0 +1,14 @@
+var x: integer = 0
+var y: integer = 0
+
+trans {
+    ort {
+        x:=1;
+    } {
+        y:=1;
+    }
+}
+
+init {}
+
+env {}

@@ -12,7 +12,8 @@ action:
     assumeAction|
     assignAction|
     havocAction|
-    nonDetAction
+    nonDetAction|
+    ortAction
     ;
 
 tran:
@@ -25,6 +26,10 @@ env:
 
 init:
     INIT nonDet
+;
+
+ortAction:
+    ORT LCURLY branches+=sequentialAction RCURLY (LCURLY branches+=sequentialAction RCURLY)*
 ;
 
 nonDetAction:
@@ -147,6 +152,7 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
+ORT: 'ort';
 IF: 'if';
 THEN: 'then';
 ELSE: 'else';
