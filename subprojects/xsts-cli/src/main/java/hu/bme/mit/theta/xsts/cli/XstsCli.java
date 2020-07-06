@@ -62,6 +62,9 @@ public class XstsCli {
     @Parameter(names = {"--property"}, description = "Path of the input property", required = true)
     String property;
 
+    @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+    Integer maxEnum = 0;
+
     @Parameter(names = {"--initprec"}, description = "Initial precision")
     InitPrec initPrec = InitPrec.EMPTY;
 
@@ -149,7 +152,7 @@ public class XstsCli {
     }
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) {
-        return new XstsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+        return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec).search(search)
                 .predSplit(predSplit).logger(logger).build(xsts);
     }
 
