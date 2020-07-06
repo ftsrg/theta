@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 public class XstsCli {
 
     private static final String JAR_NAME = "theta-xsts-cli.jar";
-    private final SolverFactory solverFactory = Z3SolverFactory.getInstace();
+    private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
     private final String[] args;
     private final TableWriter writer;
 
