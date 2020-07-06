@@ -120,7 +120,7 @@ public class XstsExplTest {
 				e.printStackTrace();
 			}
 
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstace()).logger(logger).build(xsts);
+			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).logger(logger).build(xsts);
 			final SafetyResult<?, ?> status = configuration.check();
 			if (safe) {
 				assertTrue(status.isSafe());
