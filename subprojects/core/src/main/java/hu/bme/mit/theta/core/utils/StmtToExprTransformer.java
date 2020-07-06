@@ -24,15 +24,12 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 final class StmtToExprTransformer {
@@ -143,18 +140,21 @@ final class StmtToExprTransformer {
 		}
 
 		@Override
-		public StmtUnfoldResult visit(OrthStmt orthStmt, VarIndexing indexing) {
-
-			//TODO finish
+		public StmtUnfoldResult visit(OrtStmt ortStmt, VarIndexing indexing) {
 
 			List<Expr<BoolType>> branches=new ArrayList<Expr<BoolType>>();
 			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
 			Set<VarDecl<?>> allVars=new HashSet<>();
 			VarIndexing running=indexing;
-			for(Stmt stmt: orthStmt.getStmts()){
+			List<Set<VarDecl>> branchVarsChanged=new ArrayList<>();
+			Set<VarDecl> globalVarsChanged=new HashSet<>();
+			for(Stmt stmt: ortStmt.getStmts()){
 				List<Expr<BoolType>> exprs=new ArrayList<>();
-				running=running.transform().incAll().build();
 				Set<VarDecl<?>> vars=StmtUtils.getVars(stmt);
+				System.out.println(stmt+" vars: "+vars);
+				for(VarDecl decl: vars){
+					running=running.inc(decl);
+				}
 				allVars.addAll(vars);
 				for(VarDecl decl:vars){
 					if(indexing.get(decl)>0) exprs.add(Eq(Prime(decl.getRef(),indexing.get(decl)),Prime(decl.getRef(),running.get(decl))));
@@ -162,20 +162,42 @@ final class StmtToExprTransformer {
 				}
 				StmtUnfoldResult result=toExpr(stmt,running);
 				exprs.addAll(result.getExprs());
+				Set<VarDecl> varsChanged=new HashSet<>();
+				for(VarDecl decl:vars){
+					if(running.get(decl)<result.getIndexing().get(decl))varsChanged.add(decl);
+				}
+				branchVarsChanged.add(varsChanged);
+				globalVarsChanged.addAll(varsChanged);
 				running=result.getIndexing();
 
 				indexings.add(running);
 				branches.add(And(exprs));
 				System.out.println(running);
 			}
+			System.out.println(branchVarsChanged);
 
+			VarIndexing resultIndexing = running.transform().build();
+			for(VarDecl decl: globalVarsChanged){
+				resultIndexing=resultIndexing.inc(decl);
+			}
+			System.out.println(running);
+			System.out.println(resultIndexing);
+
+			List<Expr<BoolType>> endEqExprs=new ArrayList<>();
 			for(VarDecl decl: allVars){
-				for(VarIndexing branchIndexing: indexings){
+				for(int i=0; i<branches.size();i++){
+					if(branchVarsChanged.get(i).contains(decl)) {
+						if(running.get(decl)>0) endEqExprs.add(Eq(Prime(decl.getRef(),indexings.get(i).get(decl)),Prime(decl.getRef(),resultIndexing.get(decl))));
+						else endEqExprs.add(Eq(decl.getRef(),Prime(decl.getRef(),resultIndexing.get(decl))));
+					}
 				}
 			}
 
-			System.out.println(branches);
-			throw new UnsupportedOperationException();
+			List<Expr<BoolType>> resultExprs = new ArrayList<>();
+			resultExprs.addAll(branches);
+			resultExprs.addAll(endEqExprs);
+
+			return StmtUnfoldResult.of(resultExprs,resultIndexing);
 		}
 	}
 

@@ -297,7 +297,16 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         else if(ctx.assumeAction()!=null) return processAssumeAction(ctx.assumeAction());
         else if(ctx.havocAction()!=null) return processHavocAction(ctx.havocAction());
         else if(ctx.nonDetAction()!=null) return processNonDet(ctx.nonDetAction().nonDet());
+        else if(ctx.ortAction()!=null) return processOrt(ctx.ortAction());
         else return SkipStmt.getInstance();
+    }
+
+    public OrtStmt processOrt(XstsDslParser.OrtActionContext ctx) {
+        List<Stmt> branches=new ArrayList<>();
+        for(XstsDslParser.SequentialActionContext seq:ctx.branches){
+            branches.add(processSequentialAction(seq));
+        }
+        return OrtStmt.of(branches);
     }
 
     public NonDetStmt processNonDet(XstsDslParser.NonDetContext ctx) {

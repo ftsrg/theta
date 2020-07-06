@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.core.dsl.impl;
 
-import hu.bme.mit.theta.core.clock.op.ClockOp;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -57,6 +56,6 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	}
 
 	@Override
-	public String visit(OrthStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+	public String visit(OrtStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
 }
