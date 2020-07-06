@@ -23,6 +23,12 @@ import java.util.Map;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * Represents a variable declaration. Variables cannot be directly passed to the SMT solver,
+ * they must be replaced with constants for a given index ({@link IndexedConstDecl}).
+ * See also {@link hu.bme.mit.theta.core.utils.PathUtils}.
+ * @param <DeclType>
+ */
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "var";
 

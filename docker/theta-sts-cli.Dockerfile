@@ -5,11 +5,10 @@ RUN apt-get update && \
 
 RUN git clone https://github.com/FTSRG/theta.git && \
     cd theta && \
-    ./gradlew theta-cfa-cli:build && \
+    ./gradlew theta-sts-cli:build && \
     cd .. && \
-    mv theta/subprojects/cfa-cli/build/libs/theta-cfa-cli-*-all.jar ./theta-cfa-cli.jar
+    mv theta/subprojects/sts-cli/build/libs/theta-sts-cli-*-all.jar ./theta-sts-cli.jar
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
 
-ENTRYPOINT ["java", "-jar", "theta-cfa-cli.jar"]
-
+ENTRYPOINT ["java", "-jar", "theta-sts-cli.jar"]

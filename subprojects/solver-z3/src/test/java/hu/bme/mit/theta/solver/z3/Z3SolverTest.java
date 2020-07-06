@@ -43,7 +43,7 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testSimple() {
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 		// Create two integer constants x and y
 		final ConstDecl<IntType> cx = Const("x", Int());
@@ -66,7 +66,7 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testTrack() {
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 		final ConstDecl<BoolType> ca = Const("a", Bool());
 		final Expr<BoolType> expr = And(ca.getRef(), True());
@@ -88,7 +88,7 @@ public final class Z3SolverTest {
 	@Test
 	public void testFunc() {
 		// Arrange
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 		final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
 		final Expr<FuncType<IntType, IntType>> a = ca.getRef();
 		final ParamDecl<IntType> px = Param("x", Int());

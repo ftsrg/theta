@@ -70,7 +70,7 @@ import hu.bme.mit.theta.sts.STS.Builder;
 
 public class StsPredTest {
 	final Logger logger = new ConsoleLogger(Level.VERBOSE);
-	final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
+	final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
 	STS sts = null;
 
 	@Before

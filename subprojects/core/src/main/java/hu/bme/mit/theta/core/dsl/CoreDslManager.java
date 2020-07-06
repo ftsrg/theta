@@ -34,6 +34,9 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * Utility class for parsing types, expressions and statements.
+ */
 public final class CoreDslManager {
 
 	private final BasicScope scope;
@@ -64,7 +67,7 @@ public final class CoreDslManager {
 	public Stmt parseStmt(final String string) {
 		checkNotNull(string);
 		final CoreDslParser parser = createParserForString(string);
-		final ParseTree tree = parser.expr();
+		final ParseTree tree = parser.stmt();
 		return tree.accept(new StmtCreatorVisitor(scope));
 	}
 
