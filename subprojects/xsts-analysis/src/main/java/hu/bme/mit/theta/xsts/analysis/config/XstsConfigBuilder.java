@@ -99,6 +99,7 @@ public class XstsConfigBuilder {
     private final Refinement refinement;
     private Search search = Search.BFS;
     private PredSplit predSplit = PredSplit.WHOLE;
+    private int maxEnum = 0;
     private InitPrec initPrec = InitPrec.EMPTY;
 
     public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
@@ -122,6 +123,11 @@ public class XstsConfigBuilder {
         return this;
     }
 
+    public XstsConfigBuilder maxEnum(final int maxEnum) {
+        this.maxEnum = maxEnum;
+        return this;
+    }
+
     public XstsConfigBuilder initPrec(final InitPrec initPrec) {
         this.initPrec = initPrec;
         return this;
@@ -138,7 +144,7 @@ public class XstsConfigBuilder {
 
         if (domain == Domain.EXPL) {
             final Predicate<XstsState<ExplState>> target = new XstsStatePredicate<ExplStatePredicate, ExplState>(new ExplStatePredicate(negProp,solver));
-            final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver, xsts.getInitFormula(),250));
+            final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver, xsts.getInitFormula(),maxEnum));
             final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
                     true);
             final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
