@@ -225,6 +225,7 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
+	|   arrLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -244,6 +245,10 @@ intLitExpr
 ratLitExpr
 	:	num=INT PERCENT denom=INT
 	;
+
+arrLitExpr
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ DEFAULT LARROW elseExpr=expr RBRACK
+    ;
 
 idExpr
 	:	id=ID
@@ -335,6 +340,10 @@ TRUE:	'true'
 FALSE
 	:	'false'
 	;
+
+DEFAULT
+    :   'default'
+    ;
 
 // S T A T E M E N T S
 

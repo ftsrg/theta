@@ -18,6 +18,7 @@ package hu.bme.mit.theta.cfa.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.common.Utils.tail;
@@ -35,8 +36,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -57,8 +57,12 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.google.common.collect.MoreCollectors;
+import hu.bme.mit.theta.common.Tuple2;
 import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
@@ -307,9 +311,9 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-					case CfaDslParser.EQ:
+					case EQ:
 						return Eq(leftOp, rightOp);
-					case CfaDslParser.NEQ:
+					case NEQ:
 						return Neq(leftOp, rightOp);
 					default:
 						throw new AssertionError();
@@ -327,13 +331,13 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-					case CfaDslParser.LT:
+					case LT:
 						return Lt(leftOp, rightOp);
-					case CfaDslParser.LEQ:
+					case LEQ:
 						return Leq(leftOp, rightOp);
-					case CfaDslParser.GT:
+					case GT:
 						return Gt(leftOp, rightOp);
-					case CfaDslParser.GEQ:
+					case GEQ:
 						return Geq(leftOp, rightOp);
 					default:
 						throw new AssertionError();
@@ -383,10 +387,10 @@ final class CfaExpression {
 		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-				case CfaDslParser.PLUS:
+				case PLUS:
 					return createAddExpr(leftOp, rightOp);
 
-				case CfaDslParser.MINUS:
+				case MINUS:
 					return createSubExpr(leftOp, rightOp);
 
 				default:
@@ -449,16 +453,16 @@ final class CfaExpression {
 		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-				case CfaDslParser.MUL:
+				case MUL:
 					return createMulExpr(leftOp, rightOp);
 
-				case CfaDslParser.DIV:
+				case DIV:
 					return createDivExpr(leftOp, rightOp);
 
-				case CfaDslParser.MOD:
+				case MOD:
 					return createModExpr(leftOp, rightOp);
 
-				case CfaDslParser.REM:
+				case REM:
 					return createRemExpr(leftOp, rightOp);
 
 				default:
@@ -590,6 +594,31 @@ final class CfaExpression {
 			final int num = Integer.parseInt(ctx.num.getText());
 			final int denom = Integer.parseInt(ctx.denom.getText());
 			return Rat(num, denom);
+		}
+
+		@Override
+		public Expr<?> visitArrLitExpr(final ArrLitExprContext ctx) {
+			return createArrayLitExpr(ctx);
+		}
+
+		private <T1 extends Type, T2 extends Type> Expr<?> createArrayLitExpr(final ArrLitExprContext ctx) {
+			checkArgument(ctx.indexExpr.size() > 0);
+			checkArgument(ctx.valueExpr.size() > 0);
+			checkNotNull(ctx.elseExpr);
+
+			@SuppressWarnings("unchecked") final T1 indexType = (T1) ctx.indexExpr.get(0).accept(this).getType();
+			@SuppressWarnings("unchecked") final T2 valueType = (T2) ctx.valueExpr.get(0).accept(this).getType();
+
+			final List<Tuple2<Expr<T1>, Expr<T2>>> elems = IntStream
+				.range(0, ctx.indexExpr.size())
+				.mapToObj(i -> Tuple2.of(
+					cast(ctx.indexExpr.get(i).accept(this), indexType),
+					cast(ctx.valueExpr.get(i).accept(this), valueType)
+				))
+				.collect(Collectors.toUnmodifiableList());
+
+			final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
+			return Array(elems, elseExpr, ArrayType.of(indexType, valueType));
 		}
 
 		@Override
