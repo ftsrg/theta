@@ -24,18 +24,18 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class Z3SolverFactory implements SolverFactory {
 
-	private static final Z3SolverFactory INSTACE;
+	private static final Z3SolverFactory INSTANCE;
 
 	static {
 		loadLibraries();
-		INSTACE = new Z3SolverFactory();
+		INSTANCE = new Z3SolverFactory();
 	}
 
 	private Z3SolverFactory() {
 	}
 
-	public static Z3SolverFactory getInstace() {
-		return INSTACE;
+	public static Z3SolverFactory getInstance() {
+		return INSTANCE;
 	}
 
 	private static void loadLibraries() {

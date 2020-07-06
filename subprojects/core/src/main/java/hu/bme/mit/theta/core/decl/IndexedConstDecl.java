@@ -19,6 +19,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * A constant declaration that belongs to a variable ({@link VarDecl} declaration
+ * for a given index. For example, when unfolding a path, each variable will have
+ * a new constant for each step of the path.
+ * @param <DeclType>
+ */
 public final class IndexedConstDecl<DeclType extends Type> extends ConstDecl<DeclType> {
 	private static final String NAME_FORMAT = "_%s:%d";
 

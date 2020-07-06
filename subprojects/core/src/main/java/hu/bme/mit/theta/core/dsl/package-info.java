@@ -1,8 +1,6 @@
 /**
  * This package contains the domain specific language (DSL) and the parser for
- * expressions.
- *
- * @see hu.bme.mit.theta.core.dsl.CoreDslManager
+ * expressions. Use {@link hu.bme.mit.theta.core.dsl.CoreDslManager} as the entry point.
  */
 
 package hu.bme.mit.theta.core.dsl;

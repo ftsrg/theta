@@ -93,7 +93,7 @@ public class StsExplTest {
 
 		final STS sts = builder.build();
 
-		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
+		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
 
 		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
