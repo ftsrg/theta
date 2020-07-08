@@ -69,23 +69,6 @@ public class StmtToExprTransformerTest {
 	@Test
 	public void test() {
 
-		VarDecl<IntType> VY=Decls.Var("y",Int());
-
-		List<Stmt> stmts=new ArrayList<Stmt>();
-		List<Stmt> list1=new ArrayList<Stmt>();
-		list1.add(Stmts.Assume(Geq(VX.getRef(),Int(5))));
-		list1.add(Stmts.Assign(VX,Int(4)));
-		list1.add(Stmts.Assign(VX,Int(2)));
-		stmts.add(SequenceStmt.of(list1));
-		stmts.add(Stmts.Assume(True()));
-		stmts.add(Stmts.Assign(VX,Int(2)));
-		stmts.add(Stmts.Assign(VY, Int(3)));
-		OrtStmt ortStmt = OrtStmt.of(stmts);
-		System.out.println(ortStmt);
-		StmtUnfoldResult res=StmtUtils.toExpr(ortStmt,VarIndexing.all(0));
-		System.out.println(res.exprs);
-		System.out.println(res.indexing);
-
 		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
 		final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
 		Assert.assertEquals(expectedExprs, actualExprs);
