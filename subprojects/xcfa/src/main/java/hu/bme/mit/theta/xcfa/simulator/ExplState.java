@@ -1,6 +1,14 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.base.Preconditions;
+
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -12,13 +20,6 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.simulator.util.FillValuation;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Actual state of execution
@@ -176,8 +177,8 @@ public class ExplState {
 	 */
 	public void step(Scheduler sched) {
 		// TODO edge from final location might lead to infinite loop or "deadlock"
-		onChange();
 		Collection<Transition> enabledTransitions = getEnabledTransitions();
+		onChange();
 		sched.getNextTransition(enabledTransitions).execute(this);
 	}
 
