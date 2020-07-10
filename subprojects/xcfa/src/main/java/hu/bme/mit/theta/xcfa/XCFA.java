@@ -15,18 +15,19 @@
  */
 package hu.bme.mit.theta.xcfa;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Type;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
+
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Type;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
@@ -374,7 +375,7 @@ public final class XCFA {
 					return new Procedure(this);
 				}
 
-				private void setResult(VarDecl<?> result) {
+				public void setResult(VarDecl<?> result) {
 					this.result = result;
 				}
 
