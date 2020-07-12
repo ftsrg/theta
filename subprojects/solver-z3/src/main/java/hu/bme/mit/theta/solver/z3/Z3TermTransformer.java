@@ -29,10 +29,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -45,6 +42,7 @@ import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
 
+import com.microsoft.z3.enumerations.Z3_ast_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -155,6 +153,9 @@ final class Z3TermTransformer {
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
 
+		} else if (term.isConstantArray()) {
+			return transformArrLit(term, model, vars);
+
 		} else if (term.isApp()) {
 			return transformApp(term, model, vars);
 
@@ -183,6 +184,13 @@ final class Z3TermTransformer {
 		final int num = ratNum.getNumerator().getInt();
 		final int denom = ratNum.getDenominator().getInt();
 		return Rat(num, denom);
+	}
+
+	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+									final List<Decl<?>> vars) {
+		final com.microsoft.z3.ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
+		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) arrayExpr.getSort();
+		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}
 
 	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
