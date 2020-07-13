@@ -47,12 +47,15 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.tocfa.Xcfa2Cfa;
+import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,7 +63,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstace();
+	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -76,7 +79,7 @@ public class XcfaCli {
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
+	@Parameter(names = "--model", description = "Path of the input XCFA models, separated by comma", required = true)
 	String model;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
@@ -159,10 +162,33 @@ public class XcfaCli {
 	}
 
 	private CFA loadModel() throws IOException {
-		try (InputStream inputStream = new FileInputStream(model)) {
-			final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-			final CFA cfa = xcfa.createCFA();
+		String[] models = model.split(",");
+		int N = models.length;
+		
+		if (N == 1) {
+			try (InputStream inputStream = new FileInputStream(model)) {
+				final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+				final CFA cfa = xcfa.createCFA();
+				return cfa;
+			}
+		}
+
+		ArrayList<InputStream> streams = new ArrayList<>(N);
+
+		try {
+			for (int i = 0; i < N; i++) {
+				streams.add(new FileInputStream(models[i]));
+			}
+			final XCFA _xcfa = XcfaDslManager.createXcfa(streams);
+			var xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
+			var cfa = Xcfa2Cfa.toCfa(xcfa);
 			return cfa;
+		} finally {
+			for (int i = 0; i < N; N++) {
+				if (streams.get(i) != null) {
+					streams.get(i).close();
+				}
+			}
 		}
 	}
 

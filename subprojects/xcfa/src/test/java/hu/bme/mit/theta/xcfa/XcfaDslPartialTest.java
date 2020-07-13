@@ -27,7 +27,9 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import hu.bme.mit.theta.cfa.dsl.CfaWriter;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.tocfa.Xcfa2Cfa;
 import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 
 @RunWith(Parameterized.class)
@@ -40,8 +42,11 @@ public final class XcfaDslPartialTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 				{
-					new String[] {"/partial/rteapi_stub.xcfa", "/partial/ruOk.xcfa"}
+					new String[] {"/partial/rteapi_stub.xcfa", "/partial/ruOk.xcfa"},
 				},
+				{
+					new String[] {"/partial/rteapi_stub.xcfa", "/partial/ruOkDouble.xcfa"}
+				}
 		});
 	}
 
@@ -52,16 +57,9 @@ public final class XcfaDslPartialTest {
 			streams.add(getClass().getResourceAsStream(path));
 		}
 		XCFA _xcfa = XcfaDslManager.createXcfa(streams);
-		
-		for (var ps: _xcfa.getProcesses()) {
-			for (var pc : ps.getProcedures()) {
-				for (var loc : pc.getLocs()) {
-					System.out.println(String.format("%s::%s::%s", ps.getName(), pc.getName(), loc.getName()));
-				}
-			}
-		}
-		
 		var xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
+		var cfa = Xcfa2Cfa.toCfa(xcfa);
+		CfaWriter.write(cfa, System.out);
 	}
 
 }
