@@ -17,6 +17,8 @@ package hu.bme.mit.theta.core.expr;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
@@ -54,6 +56,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static org.junit.Assert.assertEquals;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -63,6 +67,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class EvaluationTest {
 
@@ -331,6 +339,19 @@ public class EvaluationTest {
 	public void testRatSub() {
 		assertEquals(Rat(1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 2))));
 		assertEquals(Rat(-1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 1))));
+	}
+
+	// arraytype
+
+	@Test
+	public void testRead() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		elems.add(Tuple2.of(Int(1), Int(2)));
+		var arr = Array(elems, Int(100), ArrayExprs.Array(Int(), Int()));
+		assertEquals(Int(1), evaluate(Read(arr, Int(0))));
+		assertEquals(Int(2), evaluate(Read(arr, Int(1))));
+		assertEquals(Int(100), evaluate(Read(arr, Int(5))));
 	}
 
 	// anytype
