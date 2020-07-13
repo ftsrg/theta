@@ -67,7 +67,7 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
  */
 public class StsCli {
 	private static final String JAR_NAME = "theta-sts-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstace();
+	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 

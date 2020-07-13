@@ -31,8 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 /**
- * Interface for a valuation, which is a mapping from declarations to literal
- * expressions.
+ * Interface for a valuation, which is a mapping from declarations to literal expressions.
  */
 public abstract class Valuation implements Substitution {
 	private static final int HASH_SEED = 2141;
@@ -42,6 +41,11 @@ public abstract class Valuation implements Substitution {
 
 	public abstract Map<Decl<?>, LitExpr<?>> toMap();
 
+	/**
+	 * Convert a valuation into an expression. For example if the valuation assigns
+	 * 1 to x and 2 to y, the expression is (x == 1 and y == 2).
+	 * @return
+	 */
 	public Expr<BoolType> toExpr() {
 		final List<Expr<BoolType>> exprs = new ArrayList<>();
 		for (final Decl<?> decl : getDecls()) {
@@ -51,6 +55,13 @@ public abstract class Valuation implements Substitution {
 		return SmartBoolExprs.And(exprs);
 	}
 
+	/**
+	 * Checks if an other valuation is more general than the current one. This holds
+	 * if the other valuation has the same or less declarations, and for each declaration,
+	 * the assigned value is the same.
+	 * @param that
+	 * @return
+	 */
 	public boolean isLeq(final Valuation that) {
 		if (that.getDecls().size() > this.getDecls().size()) {
 			return false;

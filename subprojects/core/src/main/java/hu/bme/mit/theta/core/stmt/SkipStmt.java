@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
+/**
+ * A skip statement is a placeholder that does not perform any operation.
+ */
 public final class SkipStmt implements Stmt {
 
 	private static final int HASH_CODE = 1310147;
