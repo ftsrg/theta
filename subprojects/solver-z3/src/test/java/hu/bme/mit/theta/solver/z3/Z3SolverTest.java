@@ -115,7 +115,7 @@ public final class Z3SolverTest {
 	
 	@Test
 	public void testArray() {
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
