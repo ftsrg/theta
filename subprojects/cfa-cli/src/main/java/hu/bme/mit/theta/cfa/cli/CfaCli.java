@@ -61,7 +61,7 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
