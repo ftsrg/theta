@@ -30,7 +30,7 @@ public class CallStmt extends XcfaCallStmt {
 	private final List<VarDecl<?>> params;
 	private XCFA.Process.Procedure procedure;
 
-	CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
+	public CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
 		this.var = var;
 		isVoid = var == null;
 		this.procedure = procedure;
@@ -53,7 +53,7 @@ public class CallStmt extends XcfaCallStmt {
 		return procedure;
 	}
 
-	void setProcedure(XCFA.Process.Procedure procedure) {
+	public void setProcedure(XCFA.Process.Procedure procedure) {
 		checkState(this.procedure == null);
 		this.procedure = procedure;
 	}

@@ -430,6 +430,7 @@ public final class XCFA {
 
 			public void setMainProcedure(final Procedure mainProcedure) {
 				checkNotBuilt();
+				checkArgument(this.mainProcedure == null, "Main procedure is already assigned in process.");
 				checkArgument(procedures.contains(mainProcedure));
 				this.mainProcedure = mainProcedure;
 			}
@@ -484,6 +485,7 @@ public final class XCFA {
 
 		public void setMainProcess(final Process mainProcess) {
 			checkNotBuilt();
+			checkArgument(this.mainProcess == null, "Main process is already assigned.");
 			checkArgument(processes.contains(mainProcess), "Invalid main process.");
 			this.mainProcess = mainProcess;
 		}
