@@ -50,4 +50,26 @@ public final class XcfaDslManager {
 		return specification.instantiate();
 	}
 
+	/**
+	 * Reads Xcfa from multiple input streams.
+	 * Processes with the same name are merged.
+	 * TODO Can variables, procedures merged?
+	 */
+	public static XCFA createXcfa(final Collection<InputStream> inputStreams) throws IOException {
+		var specs = new PartialXcfaManager();
+		// first add all symbols
+		for (var inputStream : inputStreams) {
+			final CharStream input = CharStreams.fromStream(inputStream);
+
+			final XcfaDslLexer lexer = new XcfaDslLexer(input);
+			final CommonTokenStream tokens = new CommonTokenStream(lexer);
+			final XcfaDslParser parser = new XcfaDslParser(tokens);
+
+			final SpecContext context = parser.spec();
+			specs.addContext(context);
+		}
+
+		return specs.instantiate();
+	}
+
 }
