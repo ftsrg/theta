@@ -15,7 +15,13 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
