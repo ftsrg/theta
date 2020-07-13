@@ -24,8 +24,12 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 final class StmtApplier {
@@ -81,6 +85,8 @@ final class StmtApplier {
 			} else {
 				return ApplyResult.BOTTOM;
 			}
+		} else if (checkAssumeVarEqualsLit(cond, val)) {
+			return ApplyResult.SUCCESS;
 		} else {
 			if (approximate) {
 				return ApplyResult.SUCCESS;
@@ -88,6 +94,50 @@ final class StmtApplier {
 				return ApplyResult.FAILURE;
 			}
 		}
+	}
+
+	// Helper function to evaluate assumptions of form [x = 1] or [not x != 1]
+	private static boolean checkAssumeVarEqualsLit(final Expr<BoolType> cond, final MutableValuation val) {
+		RefExpr<?> ref = null;
+		LitExpr<?> lit = null;
+
+		if (cond instanceof EqExpr<?>) {
+			final EqExpr<?> condEq = (EqExpr<?>) cond;
+
+			if (condEq.getLeftOp() instanceof RefExpr<?> && condEq.getRightOp() instanceof LitExpr<?>) {
+				ref = (RefExpr<?>) condEq.getLeftOp();
+				lit = (LitExpr<?>) condEq.getRightOp();
+			}
+
+			if (condEq.getRightOp() instanceof RefExpr<?> && condEq.getLeftOp() instanceof LitExpr<?>) {
+				ref = (RefExpr<?>) condEq.getRightOp();
+				lit = (LitExpr<?>) condEq.getLeftOp();
+			}
+		}
+
+		if (cond instanceof NotExpr) {
+			final NotExpr condNE = (NotExpr) cond;
+			if (condNE.getOp() instanceof NeqExpr<?>) {
+				final NeqExpr<?> condNeq = (NeqExpr<?>) condNE.getOp();
+
+				if (condNeq.getLeftOp() instanceof RefExpr<?> && condNeq.getRightOp() instanceof LitExpr<?>) {
+					ref = (RefExpr<?>) condNeq.getLeftOp();
+					lit = (LitExpr<?>) condNeq.getRightOp();
+				}
+
+				if (condNeq.getRightOp() instanceof RefExpr<?> && condNeq.getLeftOp() instanceof LitExpr<?>) {
+					ref = (RefExpr<?>) condNeq.getRightOp();
+					lit = (LitExpr<?>) condNeq.getLeftOp();
+				}
+			}
+		}
+
+		if (ref != null && lit != null){
+			val.put(ref.getDecl(), lit);
+			return true;
+		}
+
+		return false;
 	}
 
 	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,

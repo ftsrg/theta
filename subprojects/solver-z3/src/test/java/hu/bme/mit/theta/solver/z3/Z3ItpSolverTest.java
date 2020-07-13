@@ -59,7 +59,7 @@ public final class Z3ItpSolverTest {
 
 	@Before
 	public void initialize() {
-		solver = Z3SolverFactory.getInstace().createItpSolver();
+		solver = Z3SolverFactory.getInstance().createItpSolver();
 
 		final ConstDecl<IntType> ad = Const("a", Int());
 		final ConstDecl<IntType> bd = Const("b", Int());

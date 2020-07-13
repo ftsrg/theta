@@ -36,7 +36,7 @@ public class SolverUtilsTest {
 	@Test
 	public void testModels() {
 		// Arrange
-		final SolverFactory factory = Z3SolverFactory.getInstace();
+		final SolverFactory factory = Z3SolverFactory.getInstance();
 
 		final ConstDecl<IntType> cx = Const("x", Int());
 		final ConstDecl<IntType> cy = Const("y", Int());
