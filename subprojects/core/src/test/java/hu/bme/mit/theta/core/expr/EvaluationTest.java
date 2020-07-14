@@ -68,8 +68,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class EvaluationTest {
 
@@ -347,7 +345,7 @@ public class EvaluationTest {
 		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
-		var arr = Array(elems, Int(100), ArrayExprs.Array(Int(), Int()));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
 		assertEquals(Int(1), evaluate(Read(arr, Int(0))));
 		assertEquals(Int(2), evaluate(Read(arr, Int(1))));
 		assertEquals(Int(100), evaluate(Read(arr, Int(5))));
@@ -358,7 +356,7 @@ public class EvaluationTest {
 		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
-		var arr = Array(elems, Int(100), ArrayExprs.Array(Int(), Int()));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
 
 		var arr1 = Write(arr, Int(0), Int(34));
 		assertEquals(Int(34), evaluate(Read(arr1, Int(0))));
