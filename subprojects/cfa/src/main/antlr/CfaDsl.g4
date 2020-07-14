@@ -247,7 +247,8 @@ ratLitExpr
 	;
 
 arrLitExpr
-    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ DEFAULT LARROW elseExpr=expr RBRACK
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=type GT)? DEFAULT LARROW elseExpr=expr RBRACK
+    |   LBRACK LT indexType=type GT DEFAULT LARROW elseExpr=expr RBRACK
     ;
 
 idExpr
