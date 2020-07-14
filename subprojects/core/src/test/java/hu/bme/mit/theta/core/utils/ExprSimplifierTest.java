@@ -363,7 +363,7 @@ public class ExprSimplifierTest {
 		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
-		var arr = Array(elems, Int(100), ArrayExprs.Array(Int(), Int()));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
 		assertEquals(Int(1), simplify(Read(arr, Int(0))));
 		assertEquals(Int(2), simplify(Read(arr, Int(1))));
 		assertEquals(Int(100), simplify(Read(arr, Int(182))));
@@ -373,7 +373,7 @@ public class ExprSimplifierTest {
 	public void testArrayWrite() {
 		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
-		var arr = Array(elems, Int(100), ArrayExprs.Array(Int(), Int()));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
 		var newArr = simplify(Write(arr, Int(5), Int(6)));
 		assertTrue(newArr instanceof ArrayLitExpr);
 		assertEquals(Int(6), Read(newArr, Int(5)).eval(ImmutableValuation.empty()));
