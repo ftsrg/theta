@@ -1,4 +1,0 @@
-image:
-  file: .gitpod.Dockerfile
-tasks:
-  - before: /home/gitpod/.sdkman/bin/sdkman-init.sh
