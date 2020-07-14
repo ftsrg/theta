@@ -35,11 +35,15 @@ import hu.bme.mit.theta.xcfa.tocfa.utils.VarMapperStmtVisitor;
  */
 public class Xcfa2Cfa {
 	private final XCFA xcfa;
-	private Loc errorLoc;
-	private Queue<Job> jobs;
+	private final Loc errorLoc;
+	private final Queue<ProcedureBuildData> procQueue;
+	private final CFA.Builder builder;
 	
 	private Xcfa2Cfa(XCFA xcfa) {
 		this.xcfa = xcfa;
+		builder = CFA.builder();
+		procQueue = new ArrayDeque<>();
+		errorLoc = builder.createLoc("EL");
 	}
 	
 	/**
@@ -47,14 +51,14 @@ public class Xcfa2Cfa {
 	 * @author laszlo.radnai
 	 *
 	 */
-	private static class Job {
+	private static class ProcedureBuildData {
 		public final String locPrefix;
 		public final Procedure procedure;
 		public final Loc initLoc;
 		public final Loc finalLoc;
 		public final List<VarDecl<?>> passedParams;
 		public final VarDecl<?> resultVar;
-		public Job(String prefix, Procedure proc, Loc i, Loc f, List<VarDecl<?>> params, VarDecl<?> resVar) {
+		public ProcedureBuildData(String prefix, Procedure proc, Loc i, Loc f, List<VarDecl<?>> params, VarDecl<?> resVar) {
 			locPrefix = prefix;
 			procedure = proc;
 			initLoc = i;
@@ -64,73 +68,111 @@ public class Xcfa2Cfa {
 		}
 	}
 	
-	private void buildProcedure(CFA.Builder builder, Job j) {
-		Map<VarDecl<?>, VarDecl<?>> varMapping = new HashMap<>();
-		// create new instances of local variables
-		for (var vari : j.procedure.getVars()) {
-			// use prefix to avoid collisions
-			varMapping.put(vari, Decls.Var(j.locPrefix + "_" + vari, vari.getType()));
-		}
-		Map<VarDecl<?>, VarDecl<?>> paramMapping = new HashMap<>();
-		// reuse passed parameters
-		for (var i = 0; i < j.passedParams.size(); i++) {
-			var oldVar = j.procedure.getParams().get(i);
-			var newVar = Decls.Var(j.locPrefix + "_" + oldVar, oldVar.getType());
-			paramMapping.put(j.passedParams.get(i), newVar);
-			varMapping.put(oldVar, newVar);
-		}
-		// XCFA.Loc to Loc 
-		Map<Location, Loc> mapping = new HashMap<>();
-		for (Location xcfaLoc : j.procedure.getLocs()) {
-			Loc loc;
-			if (xcfaLoc == j.procedure.getErrorLoc()) {
-				loc = errorLoc;
-			} else {
-				loc = builder.createLoc(j.locPrefix + xcfaLoc.getName());
-			}
-			mapping.put(xcfaLoc, loc);
-		}
-		builder.createEdge(j.initLoc, mapping.get(j.procedure.getInitLoc()), Stmts.Skip());
-		builder.createEdge(mapping.get(j.procedure.getFinalLoc()), j.finalLoc, Stmts.Skip());
-		// avoid naming collisions
-		int callCtr = 0;
+	private static class ProcedureBuilder {
+		final Map<VarDecl<?>, VarDecl<?>> varMapping = new HashMap<>();
+		VarDecl<?> resultVar = null;
+		final Map<VarDecl<?>, VarDecl<?>> paramMapping = new HashMap<>();
+		final ProcedureBuildData j;
+		final Map<Location, Loc> locationMapping = new HashMap<>();
+		final CFA.Builder builder;
+		final Loc errorLoc;
+		final Queue<ProcedureBuildData> procQueue;
 		
-		for (Edge e: j.procedure.getEdges()) {
-			var src = mapping.get(e.getSource());
-			var trg = mapping.get(e.getTarget());
-			var stmts = e.getStmts();
-			Preconditions.checkState(stmts.size() <= 1, "XCFA must contain at most 1 stmt");
-			if (stmts.isEmpty()) {
-				builder.createEdge(src, trg, Stmts.Skip());
-			} else {
-				var stmt = stmts.get(0);
-				if (stmt instanceof CallStmt) {
-					var proc = ((CallStmt) stmt).getProcedure();
-					var params = ((CallStmt) stmt).getParams();
-					var res = ((CallStmt) stmt).getVar();
-					jobs.add(new Job(j.locPrefix + "_" + callCtr + proc.getName(), proc, src, trg, params, res));
-					callCtr++;
-				} else {
-					Stmt applied = stmts.get(0).accept(VarMapperStmtVisitor.getInstance(), varMapping);
-					builder.createEdge(src, trg, stmts.get(0));
+		private ProcedureBuilder(Xcfa2Cfa parent, ProcedureBuildData j) {
+			errorLoc=parent.errorLoc;
+			this.j = j;
+			this.builder = parent.builder;
+			procQueue = parent.procQueue;
+		}
+		
+		void process() {
+			collectVars();
+			collectParams();
+			collectLocations();
+			linkInitFinal();
+			collectEdges();
+		}
+		
+		private void collectVars() {
+			// create new instances of local variables
+			for (var vari : j.procedure.getVars()) {
+				// use prefix to avoid collisions
+				varMapping.put(vari, Decls.Var(j.locPrefix + "_" + vari, vari.getType()));
+				if ("result".equals(vari.getName())) {
+					resultVar = vari;
 				}
 			}
+		}
+		
+		private void collectParams() {
+			// parameters are copied by value
+			// TODO pass by reference could be achieved, but we cannot express it in XCFA
+			for (var i = 0; i < j.passedParams.size(); i++) {
+				var oldVar = j.procedure.getParams().get(i);
+				var newVar = Decls.Var(j.locPrefix + "_" + oldVar, oldVar.getType());
+				paramMapping.put(j.passedParams.get(i), newVar);
+				varMapping.put(oldVar, newVar);
+			}
+		}
+		
+		private void collectLocations() {
+			// XCFA.Loc to Loc 
+			for (Location xcfaLoc : j.procedure.getLocs()) {
+				Loc loc;
+				if (xcfaLoc == j.procedure.getErrorLoc()) {
+					loc = errorLoc;
+				} else {
+					loc = builder.createLoc(j.locPrefix + xcfaLoc.getName());
+				}
+				locationMapping.put(xcfaLoc, loc);
+			}
+		}
+		
+		private void linkInitFinal() {
+			builder.createEdge(j.initLoc, locationMapping.get(j.procedure.getInitLoc()), Stmts.Skip()); // TODO here params must be initialized (instead of skip)
+			builder.createEdge(locationMapping.get(j.procedure.getFinalLoc()), j.finalLoc, Stmts.Skip()); // TODO here result (if present) must be set (instead of skip)
+		}
+		
+		private void collectEdges() {
+			int callCtr = 0;
+			for (Edge e: j.procedure.getEdges()) {
+				var src = locationMapping.get(e.getSource());
+				var trg = locationMapping.get(e.getTarget());
+				var stmts = e.getStmts();
+				Preconditions.checkState(stmts.size() <= 1, "XCFA must contain at most 1 stmt");
+				if (stmts.isEmpty()) {
+					builder.createEdge(src, trg, Stmts.Skip());
+				} else {
+					var stmt = stmts.get(0);
+					if (stmt instanceof CallStmt) {
+						var proc = ((CallStmt) stmt).getProcedure();
+						var params = ((CallStmt) stmt).getParams();
+						var res = ((CallStmt) stmt).getVar();
+						procQueue.add(new ProcedureBuildData(j.locPrefix + "_" + callCtr + proc.getName(), proc, src, trg, params, res));
+						callCtr++;
+					} else {
+						Stmt applied = stmts.get(0).accept(VarMapperStmtVisitor.getInstance(), varMapping);
+						builder.createEdge(src, trg, stmts.get(0));
+					}
+				}
+			}
+		}
+		
+		public static void process(Xcfa2Cfa parent, ProcedureBuildData p) {
+			new ProcedureBuilder(parent, p).process();
 		}
 	}
 	
 	private CFA transform() {
 		// CFA can only contain: Havoc, Assign, Assume and Skip
-		CFA.Builder builder = CFA.builder();
 		var initLoc = builder.createLoc("IL");
 		var finalLoc = builder.createLoc("FL");
-		errorLoc = builder.createLoc("EL");
 		builder.setInitLoc(initLoc);
 		builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
-		jobs = new ArrayDeque<>();
-		jobs.add(new Job("", xcfa.getMainProcess().getMainProcedure(), initLoc, finalLoc, List.of(), null));
-		while (!jobs.isEmpty()) {
-			buildProcedure(builder, jobs.poll());
+		procQueue.add(new ProcedureBuildData("", xcfa.getMainProcess().getMainProcedure(), initLoc, finalLoc, List.of(), null));
+		while (!procQueue.isEmpty()) {
+			ProcedureBuilder.process(this, procQueue.poll());
 		}
 		
 		return builder.build();

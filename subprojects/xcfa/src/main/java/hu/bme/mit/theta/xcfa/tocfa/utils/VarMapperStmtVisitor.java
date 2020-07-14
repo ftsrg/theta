@@ -22,27 +22,6 @@ import hu.bme.mit.theta.core.type.Type;
 
 public class VarMapperStmtVisitor implements StmtVisitor<Map<VarDecl<?>, VarDecl<?>>, Stmt> {
 	
-	private class VarSubstitution implements Substitution{
-		private final Map<VarDecl<?>, VarDecl<?>> varMapping;
-		public VarSubstitution(Map<VarDecl<?>, VarDecl<?>> varMapping) {
-			this.varMapping = varMapping;
-		}
-		
-		@Override
-		public Collection<? extends Decl<?>> getDecls() {
-			return varMapping.keySet();
-		}
-		
-		@Override
-		public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(Decl<DeclType> decl) {
-			if (decl instanceof VarDecl) {
-				var v = (VarDecl<DeclType>)varMapping.get((VarDecl<DeclType>)decl);
-				return Optional.ofNullable(v).map(t -> t.getRef());
-			}
-			return Optional.empty();
-		}
-	}
-
 	@Override
 	public Stmt visit(SkipStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
 		return stmt;
@@ -53,10 +32,6 @@ public class VarMapperStmtVisitor implements StmtVisitor<Map<VarDecl<?>, VarDecl
 		return Stmts.Assume(new VarSubstitution(param).apply(stmt.getCond()));
 	}
 	
-	<T extends Type> VarDecl<T> unsafeCast(VarDecl<?> a, final T type) {
-		return (VarDecl<T>)a;
-	}
-
 	@Override
 	public <DeclType extends Type> Stmt visit(AssignStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
 		var expr = new VarSubstitution(param).apply(stmt.getExpr());
@@ -85,4 +60,29 @@ public class VarMapperStmtVisitor implements StmtVisitor<Map<VarDecl<?>, VarDecl
 		return LazyHolder.INSTANCE;
 	}
 	
+	private class VarSubstitution implements Substitution{
+		private final Map<VarDecl<?>, VarDecl<?>> varMapping;
+		public VarSubstitution(Map<VarDecl<?>, VarDecl<?>> varMapping) {
+			this.varMapping = varMapping;
+		}
+		
+		@Override
+		public Collection<? extends Decl<?>> getDecls() {
+			return varMapping.keySet();
+		}
+		
+		@Override
+		public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(Decl<DeclType> decl) {
+			if (decl instanceof VarDecl) {
+				var v = (VarDecl<DeclType>)varMapping.get((VarDecl<DeclType>)decl);
+				return Optional.ofNullable(v).map(t -> t.getRef());
+			}
+			return Optional.empty();
+		}
+	}
+
+	<T extends Type> VarDecl<T> unsafeCast(VarDecl<?> a, final T type) {
+		return (VarDecl<T>)a;
+	}
+
 }
