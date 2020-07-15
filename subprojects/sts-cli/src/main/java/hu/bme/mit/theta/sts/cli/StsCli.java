@@ -31,6 +31,7 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.Utils;
@@ -88,6 +89,9 @@ public class StsCli {
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
+
+	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
 	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
 	Logger.Level logLevel = Level.SUBSTEP;
@@ -176,7 +180,7 @@ public class StsCli {
 
 	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) {
 		return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
-				.predSplit(predSplit).logger(logger).build(sts);
+				.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
