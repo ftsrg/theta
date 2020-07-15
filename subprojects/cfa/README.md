@@ -43,7 +43,7 @@ Variables of the CFA can have the following types.
 Expressions of the CFA include the following.
 - Identifiers (variables).
 - Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
-  - Array literals can be given by listing the index-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the index type has to be given before the default element, e.g., `[<int>default <- 75]`.
+  - Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
 - Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
 - Boolean operators, e.g., `and`, `or`, `not`, `imply`, `iff`.
 - Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
