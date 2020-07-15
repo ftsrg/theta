@@ -64,6 +64,9 @@ All arguments are optional, except `--model`.
   - `WHOLE`: Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
   - `CONJUNCTS`: Split predicates into conjuncts.
   - `ATOMS`: Split predicates into atoms.
+- `--prunestrategy`: Pruning strategy during refinement, possible values:
+  - `FULL`: The whole ARG is pruned and abstraction is completely restarted with the new precision.
+  - `LAZY`: The ARG is only pruned back to the first point where refinement was applied.
 
 ### For developer usage
 
