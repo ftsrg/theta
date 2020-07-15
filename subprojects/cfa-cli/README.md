@@ -77,6 +77,9 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 - `--precgranularity`: Granularity of the precision, possible values:
   - `GLOBAL`: The same precision is applied in each location of the CFA.
   - `LOCAL`: Each location can have a possibly different precision.
+- `--prunestrategy`: Pruning strategy during refinement, possible values:
+  - `FULL`: The whole ARG is pruned and abstraction is completely restarted with the new precision.
+  - `LAZY`: The ARG is only pruned back to the first point where refinement was applied.
 - `--metrics`: Print metrics about the CFA without running the algorithm.
 - `--visualize`: Visualize the CFA without running the algorithm.
 If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../doc/Build.md) has to be available on `PATH`.
