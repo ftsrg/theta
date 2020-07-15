@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply<ApplicationPlugin>()
 apply<ShadowPlugin>()
@@ -14,4 +15,10 @@ tasks {
 
     named("run", JavaExec::class).configure { setupEnvironment() }
     named("runShadow", JavaExec::class).configure { setupEnvironment() }
+}
+
+tasks.withType<ShadowJar>() {
+    manifest {
+        attributes["Implementation-Version"] = version
+    }
 }
