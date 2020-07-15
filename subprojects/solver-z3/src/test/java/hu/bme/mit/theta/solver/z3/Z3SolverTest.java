@@ -17,14 +17,16 @@ package hu.bme.mit.theta.solver.z3;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
@@ -129,7 +131,11 @@ public final class Z3SolverTest {
         Valuation valuation = solver.getModel();
         final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
 		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
-		assertEquals(arr.getType(), val.getType());
+		assertTrue(val instanceof ArrayLitExpr);
+		var valLit = (ArrayLitExpr<IntType, IntType>)val;
+		assertEquals(2, valLit.getElements().size());
+		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
 	}
 
 }
