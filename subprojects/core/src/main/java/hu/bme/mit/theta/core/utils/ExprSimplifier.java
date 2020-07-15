@@ -35,6 +35,9 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -144,6 +147,12 @@ public final class ExprSimplifier {
 
 			.addCase(IntLtExpr.class, ExprSimplifier::simplifyIntLt)
 
+			// Array
+
+			.addCase(ArrayReadExpr.class, ExprSimplifier::simplifyArrayRead)
+
+			.addCase(ArrayWriteExpr.class, ExprSimplifier::simplifyArrayWrite)
+
 			// General
 
 			.addCase(RefExpr.class, ExprSimplifier::simplifyRef)
@@ -158,7 +167,6 @@ public final class ExprSimplifier {
 			})
 
 			.build();
-	;
 
 	private ExprSimplifier() {
 	}
@@ -211,6 +219,35 @@ public final class ExprSimplifier {
 		final Expr<ExprType> elze = simplify(expr.getElse(), val);
 
 		return expr.with(cond, then, elze);
+	}
+
+	private static Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {
+		return simplifyGenericArrayRead(expr, val);
+	}
+
+	private static <IT extends Type, ET extends Type> Expr<ET>
+		simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
+		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
+		Expr<IT> index = simplify(expr.getIndex(), val);
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>){
+			return (LitExpr<ET>)expr.eval(val);
+		}
+		return expr.with(arr, index);
+	}
+
+	private static Expr<?> simplifyArrayWrite(final ArrayWriteExpr<?, ?> expr, final Valuation val) {
+		return simplifyGenericArrayWrite(expr, val);
+	}
+
+	private static <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
+	simplifyGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr, final Valuation val) {
+		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
+		Expr<IT> index = simplify(expr.getIndex(), val);
+		Expr<ET> elem = simplify(expr.getElem(), val);
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof  LitExpr<?>){
+			return expr.eval(val);
+		}
+		return expr.with(arr, index, elem);
 	}
 
 	/*

@@ -29,17 +29,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.ArraySort;
+import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Model;
 
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
@@ -57,6 +58,7 @@ import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -70,6 +72,7 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 
 final class Z3TermTransformer {
 	private static final String PARAM_NAME_FORMAT = "_p%d";
@@ -115,6 +118,27 @@ final class Z3TermTransformer {
 		popParams(vars, paramDecls);
 		return funcLitExpr;
 	}
+	
+	public Expr<?> toArrayLitExpr(final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
+		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
+		final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
+
+		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) funcDecl.getRange();
+
+		return createArrayLitExpr(sort, entryExprs, elseExpr);
+	}
+
+	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
+		return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()), transformSort(sort.getRange()), entryExprs, elseExpr);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
+		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()),
+				(Expr<E>)elseExpr,
+				ArrayType.of(indexType, elemType));
+	}
 
 	////////
 
@@ -125,6 +149,9 @@ final class Z3TermTransformer {
 
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
+
+		} else if (term.isConstantArray()) {
+			return transformArrLit(term, model, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term, model, vars);
@@ -154,6 +181,13 @@ final class Z3TermTransformer {
 		final int num = ratNum.getNumerator().getInt();
 		final int denom = ratNum.getDenominator().getInt();
 		return Rat(num, denom);
+	}
+
+	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+									final List<Decl<?>> vars) {
+		final com.microsoft.z3.ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
+		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) arrayExpr.getSort();
+		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}
 
 	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
@@ -209,8 +243,8 @@ final class Z3TermTransformer {
 		final ImmutableList.Builder<Tuple2<Expr<?>, Expr<?>>> builder = ImmutableList.builder();
 		for (final com.microsoft.z3.FuncInterp.Entry entry : funcInterp.getEntries()) {
 			checkArgument(entry.getArgs().length == 1);
-			final com.microsoft.z3.Expr term1 = entry.getValue();
-			final com.microsoft.z3.Expr term2 = entry.getArgs()[0];
+			final com.microsoft.z3.Expr term1 = entry.getArgs()[0];
+			final com.microsoft.z3.Expr term2 = entry.getValue();
 			final Expr<?> expr1 = transform(term1, model, vars);
 			final Expr<?> expr2 = transform(term2, model, vars);
 			builder.add(Tuple2.of(expr1, expr2));
