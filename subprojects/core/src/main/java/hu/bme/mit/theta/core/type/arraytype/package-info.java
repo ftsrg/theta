@@ -4,7 +4,7 @@
  *
  * - {@link hu.bme.mit.theta.core.type.arraytype.ArrayType}: the actual array type
  *
- * - {@link hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr}: array literal
+ * - {@link hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr}: array literal, e.g., [0 <- 182, 1 <- 41, default <- 75]
  *
  * - {@link hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr}: read array at an index, e.g., a[i]
  * - {@link hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr}: write array at an index, e.g., a[i <- v],
