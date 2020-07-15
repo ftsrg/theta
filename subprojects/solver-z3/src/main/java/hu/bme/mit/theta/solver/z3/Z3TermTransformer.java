@@ -78,7 +78,7 @@ final class Z3TermTransformer {
 	private static final String PARAM_NAME_FORMAT = "_p%d";
 
 	private final Z3SymbolTable symbolTable;
-	private final Map<String, TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>>> environment;
+	private final Map<String, TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>>> environment;
 
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
@@ -109,7 +109,7 @@ final class Z3TermTransformer {
 		return transform(term, null, new ArrayList<>());
 	}
 
-	public Expr<?> toFuncLitExpr(final com.microsoft.z3.FuncDecl funcDecl, final com.microsoft.z3.Model model,
+	public Expr<?> toFuncLitExpr(final com.microsoft.z3.FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
@@ -124,7 +124,7 @@ final class Z3TermTransformer {
 		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
 		final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
-		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) funcDecl.getRange();
+		final ArraySort sort = (ArraySort) funcDecl.getRange();
 
 		return createArrayLitExpr(sort, entryExprs, elseExpr);
 	}
@@ -142,7 +142,7 @@ final class Z3TermTransformer {
 
 	////////
 
-	private Expr<?> transform(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transform(final com.microsoft.z3.Expr term, final Model model,
 							  final List<Decl<?>> vars) {
 		if (term.isIntNum()) {
 			return transformIntLit(term);
@@ -183,14 +183,14 @@ final class Z3TermTransformer {
 		return Rat(num, denom);
 	}
 
-	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
 		final com.microsoft.z3.ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
-		final com.microsoft.z3.ArraySort sort = (com.microsoft.z3.ArraySort) arrayExpr.getSort();
+		final com.microsoft.z3.ArraySort sort = (ArraySort) arrayExpr.getSort();
 		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}
 
-	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model,
 									   final List<Decl<?>> vars) {
 
 		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();
@@ -210,7 +210,7 @@ final class Z3TermTransformer {
 	}
 
 	private Expr<?> transformFuncInterp(final com.microsoft.z3.FuncInterp funcInterp,
-										final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
+										final Model model, final List<Decl<?>> vars) {
 		checkArgument(funcInterp.getArity() == 1);
 		final ParamDecl<?> paramDecl = (ParamDecl<?>) vars.get(vars.size() - 1);
 		final Expr<?> op = createFuncLitExprBody(paramDecl, funcInterp, model, vars);
@@ -218,7 +218,7 @@ final class Z3TermTransformer {
 	}
 
 	private Expr<?> createFuncLitExprBody(final ParamDecl<?> paramDecl, final com.microsoft.z3.FuncInterp funcInterp,
-										  final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
+										  final Model model, final List<Decl<?>> vars) {
 		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
 		final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 		return createNestedIteExpr(paramDecl, entryExprs, elseExpr);
@@ -239,7 +239,7 @@ final class Z3TermTransformer {
 	}
 
 	private List<Tuple2<Expr<?>, Expr<?>>> createEntryExprs(final com.microsoft.z3.FuncInterp funcInterp,
-															final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
+															final Model model, final List<Decl<?>> vars) {
 		final ImmutableList.Builder<Tuple2<Expr<?>, Expr<?>>> builder = ImmutableList.builder();
 		for (final com.microsoft.z3.FuncInterp.Entry entry : funcInterp.getEntries()) {
 			checkArgument(entry.getArgs().length == 1);
@@ -252,7 +252,7 @@ final class Z3TermTransformer {
 		return builder.build();
 	}
 
-	private Expr<?> transformQuantifier(final com.microsoft.z3.Quantifier term, final com.microsoft.z3.Model model,
+	private Expr<?> transformQuantifier(final com.microsoft.z3.Quantifier term, final Model model,
 										final List<Decl<?>> vars) {
 		if (term.isUniversal()) {
 			return transformForall(term, model, vars);
@@ -272,7 +272,7 @@ final class Z3TermTransformer {
 	}
 
 	private <P extends Type, R extends Type> Expr<?> transformFuncApp(final Expr<?> expr,
-																	  final com.microsoft.z3.Expr[] argTerms, final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
+																	  final com.microsoft.z3.Expr[] argTerms, final Model model, final List<Decl<?>> vars) {
 		Expr<?> result = expr;
 		for (final com.microsoft.z3.Expr term : argTerms) {
 			@SuppressWarnings("unchecked") final Expr<FuncType<P, R>> func = (Expr<FuncType<P, R>>) result;
@@ -284,7 +284,7 @@ final class Z3TermTransformer {
 
 	////
 
-	private Expr<?> transformForall(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transformForall(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
 		final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
 		final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
@@ -298,7 +298,7 @@ final class Z3TermTransformer {
 		return Forall(paramDecls, op);
 	}
 
-	private Expr<?> transformExists(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transformExists(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
 		final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
 		final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
@@ -350,14 +350,14 @@ final class Z3TermTransformer {
 		}
 	}
 
-	private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final Model model,
 										 final List<Decl<?>> vars) {
 		throw new UnsupportedOperationException("Unsupported term: " + term);
 	}
 
 	////
 
-	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprNullaryOperator(
+	private TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>> exprNullaryOperator(
 			final Supplier<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
@@ -366,7 +366,7 @@ final class Z3TermTransformer {
 		};
 	}
 
-	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprUnaryOperator(
+	private TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>> exprUnaryOperator(
 			final UnaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
@@ -376,7 +376,7 @@ final class Z3TermTransformer {
 		};
 	}
 
-	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprBinaryOperator(
+	private TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>> exprBinaryOperator(
 			final BinaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
@@ -387,7 +387,7 @@ final class Z3TermTransformer {
 		};
 	}
 
-	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprTernaryOperator(
+	private TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>> exprTernaryOperator(
 			final TernaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
@@ -399,7 +399,7 @@ final class Z3TermTransformer {
 		};
 	}
 
-	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprMultiaryOperator(
+	private TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>> exprMultiaryOperator(
 			final Function<List<Expr<?>>, Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
