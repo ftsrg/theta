@@ -264,7 +264,7 @@ public class CfaConfigBuilder {
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
@@ -330,7 +330,7 @@ public class CfaConfigBuilder {
 
 			if (refinement == Refinement.MULTI_SEQ) {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-						precGranularity.createRefiner(refToPrec), logger);
+						precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
 						precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
