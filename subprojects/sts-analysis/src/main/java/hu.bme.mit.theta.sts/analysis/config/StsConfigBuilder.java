@@ -187,7 +187,7 @@ public final class StsConfigBuilder {
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
@@ -250,7 +250,7 @@ public final class StsConfigBuilder {
 			Refiner<PredState, StsAction, PredPrec> refiner;
 			if (refinement == Refinement.MULTI_SEQ) {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
 						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
