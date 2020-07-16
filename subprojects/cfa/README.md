@@ -45,7 +45,7 @@ Expressions of the CFA include the following.
 - Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
   - Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
 - Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
-- Boolean operators, e.g., `and`, `or`, `not`, `imply`, `iff`.
+- Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
 - Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
 - Conditional: `if . then . else .`
 - Array read (`a[i]`) and write (`a[i <- v]`).

@@ -160,7 +160,11 @@ existsExpr
 	;
 
 orExpr
-	:	ops+=andExpr (OR ops+=andExpr)*
+	:	ops+=xorExpr (OR ops+=xorExpr)*
+	;
+
+xorExpr
+	:	leftOp=andExpr (XOR rightOp=xorExpr)?
 	;
 
 andExpr
@@ -225,7 +229,7 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
-	|   arrLitExpr
+	|	arrLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -289,6 +293,9 @@ OR	:	'or'
 	;
 
 AND	:	'and'
+	;
+
+XOR	:	'xor'
 	;
 
 NOT	:	'not'
