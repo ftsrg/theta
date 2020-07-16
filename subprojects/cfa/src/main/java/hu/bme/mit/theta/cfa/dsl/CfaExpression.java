@@ -227,6 +227,17 @@ final class CfaExpression {
 		}
 
 		@Override
+		public Expr<?> visitXorExpr(final XorExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				return Xor(leftOp, rightOp);
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		@Override
 		public Expr<?> visitAndExpr(final AndExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
