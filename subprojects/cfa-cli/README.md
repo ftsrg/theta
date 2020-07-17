@@ -64,7 +64,7 @@ If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain.
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 - `--refinement`: Refinement strategy, possible values:
-  - `FW_BIN_ITP`: Forward binary interpolation, only a reference implementation, does not perform well.
+  - `FW_BIN_ITP`: Forward binary interpolation, only performs well if `--prunestrategy` is `FULL`.
   - `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information.
   - `SEQ_ITP`: Sequence interpolation.
   - `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
