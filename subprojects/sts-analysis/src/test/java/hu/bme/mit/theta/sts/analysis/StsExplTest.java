@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collections;
 import java.util.function.Predicate;
 
+import hu.bme.mit.theta.analysis.expr.refinement.*;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Analysis;
@@ -51,11 +52,6 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -111,7 +107,7 @@ public class StsExplTest {
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
+				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), PruneStrategy.LAZY, logger);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner, logger);
 
