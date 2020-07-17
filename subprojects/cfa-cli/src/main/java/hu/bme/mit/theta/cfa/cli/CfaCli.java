@@ -32,6 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
@@ -98,6 +99,9 @@ public class CfaCli {
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
+
+	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
 	Logger.Level logLevel = Level.SUBSTEP;
@@ -262,7 +266,8 @@ public class CfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+				.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {

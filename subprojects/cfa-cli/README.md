@@ -64,7 +64,7 @@ If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain.
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 - `--refinement`: Refinement strategy, possible values:
-  - `FW_BIN_ITP`: Forward binary interpolation, only a reference implementation, does not perform well.
+  - `FW_BIN_ITP`: Forward binary interpolation, only performs well if `--prunestrategy` is `FULL`.
   - `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information.
   - `SEQ_ITP`: Sequence interpolation.
   - `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
@@ -77,6 +77,9 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 - `--precgranularity`: Granularity of the precision, possible values:
   - `GLOBAL`: The same precision is applied in each location of the CFA.
   - `LOCAL`: Each location can have a possibly different precision.
+- `--prunestrategy`: Pruning strategy during refinement, possible values:
+  - `FULL`: The whole ARG is pruned and abstraction is completely restarted with the new precision.
+  - `LAZY`: The ARG is only pruned back to the first point where refinement was applied.
 - `--metrics`: Print metrics about the CFA without running the algorithm.
 - `--visualize`: Visualize the CFA without running the algorithm.
 If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../doc/Build.md) has to be available on `PATH`.
