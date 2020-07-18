@@ -27,6 +27,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -62,6 +63,7 @@ public final class StmtApplierTest {
 	private static final Stmt HAVOC_X = Havoc(X);
 	private static final Stmt ASSUME_GT_X_0 = Assume(Gt(X.getRef(), Int(0)));
 	private static final Stmt ASSUME_LEQ_X_0 = Assume(Leq(X.getRef(), Int(0)));
+	private static final Stmt ASSUME_EQ_X_1 = Assume(Eq(X.getRef(), Int(1)));
 	private static final Stmt ASSUME_LEQ_X_Y = Assume(Leq(X.getRef(), Y.getRef()));
 	private static final Stmt ASSIGN_X_1 = Assign(X, Int(1));
 	private static final Stmt ASSIGN_X_2 = Assign(X, Int(2));
@@ -137,6 +139,8 @@ public final class StmtApplierTest {
 				{ASSIGN_X_Y, of(Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2)},
 
 				{SKIP, of(X_IS_1), false, SUCCESS, of(X_IS_1)},
+
+				{ASSUME_EQ_X_1, of(), false, SUCCESS, of(X_IS_1)},
 
 		});
 	}

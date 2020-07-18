@@ -186,7 +186,11 @@ existsExpr
 	;
 
 orExpr
-	:	ops+=andExpr (OR ops+=andExpr)*
+	:	ops+=xorExpr (OR ops+=xorExpr)*
+	;
+
+xorExpr
+	:	leftOp=andExpr (XOR rightOp=xorExpr)?
 	;
 
 andExpr
@@ -272,6 +276,7 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
+	|	arrLitExpr
 	|   bvLitExpr
 	|	idExpr
 	|	parenExpr
@@ -292,6 +297,11 @@ intLitExpr
 ratLitExpr
 	:	num=INT PERCENT denom=INT
 	;
+
+arrLitExpr
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=type GT)? DEFAULT LARROW elseExpr=expr RBRACK
+    |   LBRACK LT indexType=type GT DEFAULT LARROW elseExpr=expr RBRACK
+    ;
 
 bvLitExpr
     :   bv=BV
@@ -335,6 +345,9 @@ OR	:	'or'
 	;
 
 AND	:	'and'
+	;
+
+XOR	:	'xor'
 	;
 
 NOT	:	'not'
@@ -411,6 +424,10 @@ TRUE:	'true'
 FALSE
 	:	'false'
 	;
+
+DEFAULT
+    :   'default'
+    ;
 
 // S T A T E M E N T S
 

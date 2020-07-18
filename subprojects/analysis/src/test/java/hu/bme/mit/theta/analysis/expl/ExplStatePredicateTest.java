@@ -44,7 +44,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class ExplStatePredicateTest {
 
 	private static final VarDecl<IntType> x = Var("x", Int());
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 	@Parameter(value = 0)
 	public Expr<BoolType> expr;

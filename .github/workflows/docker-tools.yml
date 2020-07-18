@@ -1,0 +1,35 @@
+name: Build dockerfiles
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  cfa-cli-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build CFA Docker image
+      run: docker build -t theta-cfa-cli -f docker/theta-cfa-cli.Dockerfile .
+    - name: Run CFA docker on example
+      run: ./docker/run-theta-cfa-cli.sh subprojects/cfa/src/test/resources/counter5_true.cfa
+
+  sts-cli-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build sts Docker image
+      run: docker build -t theta-sts-cli -f docker/theta-sts-cli.Dockerfile .
+    - name: Run STS docker on example
+      run: ./docker/run-theta-sts-cli.sh subprojects/sts/src/test/resources/simple1.system
+
+  xta-cli-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build XTA Docker image
+      run: docker build -t theta-xta-cli -f docker/theta-xta-cli.Dockerfile .
+    - name: Run XTA docker on example
+      run: ./docker/run-theta-xta-cli.sh subprojects/xta/src/test/resources/csma-2.xta -c LU -s BFS
