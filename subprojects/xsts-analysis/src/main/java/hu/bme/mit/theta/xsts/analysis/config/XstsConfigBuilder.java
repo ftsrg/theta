@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.ItpRefToProd2ExplPredPrec;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -33,6 +34,7 @@ import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsInitPrec;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -256,7 +258,8 @@ public class XstsConfigBuilder {
             final Analysis<XstsState<Prod2State<ExplState,PredState>>, XstsAction, Prod2Prec<ExplPrec,PredPrec>> analysis
                     = XstsAnalysis.create(Prod2Analysis.create(
                             ExplStmtAnalysis.create(solver, xsts.getInitFormula(),maxEnum),
-                            PredAnalysis.create(solver, predAbstractor, xsts.getInitFormula())));
+                            PredAnalysis.create(solver, predAbstractor, xsts.getInitFormula()),
+                            Prod2ExplPredStrengtheningOperator.create(solver)));
             final ArgBuilder<XstsState<Prod2State<ExplState,PredState>>, XstsAction, Prod2Prec<ExplPrec,PredPrec>> argBuilder = ArgBuilder.create(lts, analysis, target,
                     true);
             final Abstractor<XstsState<Prod2State<ExplState,PredState>>, XstsAction, Prod2Prec<ExplPrec,PredPrec>> abstractor = BasicAbstractor.builder(argBuilder)
@@ -267,23 +270,23 @@ public class XstsConfigBuilder {
 
             Refiner<XstsState<Prod2State<ExplState,PredState>>, XstsAction, Prod2Prec<ExplPrec,PredPrec>> refiner = null;
 
-            HashSet<VarDecl> preferredVars = new HashSet<>();
+            final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
             switch (refinement) {
                 case FW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(preferredVars)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
                     break;
                 case BW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(preferredVars)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
                     break;
                 case SEQ_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(preferredVars)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
                     break;
                 case MULTI_SEQ:
                     refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(preferredVars)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
                     break;
                 default:
                     throw new UnsupportedOperationException(
