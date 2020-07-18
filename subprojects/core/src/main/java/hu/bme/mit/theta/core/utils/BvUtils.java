@@ -27,6 +27,10 @@ public final class BvUtils {
         return integer;
     }
 
+    public static int bvLitExprToInt(final BvLitExpr expr) {
+        return bvLitExprToBigInteger(expr).intValue();
+    }
+
     public static BvLitExpr bigIntegerToBvLitExpr(BigInteger integer, final int size, final boolean isSigned) {
         if(isSigned && integer.compareTo(BigInteger.ZERO) < 0) {
             integer = integer.add(BigInteger.TWO.pow(size));
@@ -38,6 +42,26 @@ public final class BvUtils {
         }
 
         return Bv(values, isSigned);
+    }
+
+    public static BvLitExpr intToBvLitExpr(final int integer, final int size, final boolean isSigned) {
+        return bigIntegerToBvLitExpr(BigInteger.valueOf(integer), size, isSigned);
+    }
+
+    public static BvLitExpr uint32ToBvLitExpr(final int integer) {
+        return intToBvLitExpr(integer, 32, false);
+    }
+
+    public static BvLitExpr sint32ToBvLitExpr(final int integer) {
+        return intToBvLitExpr(integer, 32, true);
+    }
+
+    public static BvLitExpr uint16ToBvLitExpr(final int integer) {
+        return intToBvLitExpr(integer, 16, false);
+    }
+
+    public static BvLitExpr sint16ToBvLitExpr(final int integer) {
+        return intToBvLitExpr(integer, 16, true);
     }
 
     public static BigInteger fitBigIntegerIntoDomain(BigInteger integer, final int size, final boolean isSigned) {

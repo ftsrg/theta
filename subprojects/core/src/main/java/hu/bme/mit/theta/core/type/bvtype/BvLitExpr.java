@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
@@ -13,7 +14,9 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType>, Comparable<BvLitExpr> {
 
@@ -112,20 +115,29 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     public BvLitExpr shiftLeft(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger shift = BvUtils.bvLitExprToBigInteger(this);
+
+        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
         for(BigInteger i = BigInteger.ZERO; i.compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
-            shift = shift.multiply(BigInteger.TWO);
+            for(int j = 0; j < shifted.length - 1; j++) {
+                shifted[j] = shifted[j + 1];
+            }
+            shifted[shifted.length - 1] = false;
         }
-        return BvUtils.bigIntegerToBvLitExpr(shift, getType().getSize(), getType().isSigned());
+        return Bv(shifted, getType().isSigned());
     }
 
     public BvLitExpr shiftRight(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger shift = BvUtils.bvLitExprToBigInteger(this);
+
+        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
+        boolean insert = shifted[0];
         for(BigInteger i = BigInteger.ZERO; i.compareTo(BvUtils.bvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
-            shift = shift.divide(BigInteger.TWO);
+            for(int j = shifted.length - 1; j > 0; j--) {
+                shifted[j] = shifted[j - 1];
+            }
+            shifted[0] = insert;
         }
-        return BvUtils.bigIntegerToBvLitExpr(shift, getType().getSize(), getType().isSigned());
+        return Bv(shifted, getType().isSigned());
     }
 
     public BvLitExpr mod(final BvLitExpr that) {
