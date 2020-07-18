@@ -128,7 +128,7 @@ prime:
     ref=reference | NEXT LPAREN inner=prime RPAREN;
 
 variableDeclaration:
-    VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
+    CTRL? VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
 
 value:
     literal|reference;
@@ -152,6 +152,7 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
+CTRL: 'ctrl';
 ORT: 'ort';
 IF: 'if';
 THEN: 'then';

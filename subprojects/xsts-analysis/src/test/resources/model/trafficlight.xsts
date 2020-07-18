@@ -7,11 +7,11 @@ var PoliceInterrupt_police : boolean = false
 var LightCommands_displayYellow : boolean = false
 var LightCommands_displayRed : boolean = false
 var Control_toggle : boolean = false
-var main_region : Main_region = __Inactive__
-var interrupted : Interrupted = __Inactive__
-var normal : Normal = __Inactive__
-var BlinkingYellowTimeout3 : integer = 500
-var BlackTimeout4 : integer = 500
+ctrl var main_region : Main_region = __Inactive__
+ctrl var interrupted : Interrupted = __Inactive__
+ctrl var normal : Normal = __Inactive__
+ctrl var BlinkingYellowTimeout3 : integer = 500
+ctrl var BlackTimeout4 : integer = 500
 
 
 trans {

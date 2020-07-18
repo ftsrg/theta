@@ -45,6 +45,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     private HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
 
+    private HashSet<VarDecl<?>> ctrlVars=new HashSet<>();
+
     private Pattern tempVarPattern=Pattern.compile("temp([0-9])+");
 
     private int counter;
@@ -62,7 +64,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             visitVariableDeclaration(varDecl);
         }
 
-        xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitExpr(ctx.prop));
+        xsts=new XSTS(nameToTypeMap.values(), varToTypeMap, ctrlVars, processNonDet(ctx.initAction.nonDet()), processNonDet(ctx.transitions.nonDet()), processNonDet(ctx.envAction.nonDet()), And(initExprs), visitExpr(ctx.prop));
 
         return null;
     }
@@ -104,13 +106,20 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         }
 
         VarDecl decl;
-        if(ctx.type.BOOL()!=null) decl=Decls.Var(ctx.name.getText(),BoolType.getInstance());
-        else if(ctx.type.INT()!=null) decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
-        else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())) {
+        if(ctx.type.BOOL()!=null) {
+            decl=Decls.Var(ctx.name.getText(),BoolType.getInstance());
+        }
+        else if(ctx.type.INT()!=null){
+            decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
+        }
+        else if(nameToTypeMap.containsKey(ctx.type.customType().name.getText())){
             decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
             varToTypeMap.put(decl,nameToTypeMap.get(ctx.type.customType().name.getText()));
-        } else throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
+        } else {
+            throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
+        }
 
+        if(ctx.CTRL()!=null) ctrlVars.add(decl);
         nameToDeclMap.put(decl.getName(), decl);
         if(ctx.initValue!=null){
             initExprs.add(Eq(decl.getRef(),visitValue(ctx.initValue)));
