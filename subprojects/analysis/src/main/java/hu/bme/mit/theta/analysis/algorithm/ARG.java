@@ -150,7 +150,14 @@ public final class ARG<S extends State, A extends Action> {
 		}
 		node.descendants().forEach(ArgNode::unsetCoveringNode);
 		node.descendants().forEach(ArgNode::clearCoveredNodes);
+	}
 
+	/**
+	 * Prune the whole ARG, making it uninitialized.
+	 */
+	public void pruneAll() {
+		initNodes.clear();
+		this.initialized = false;
 	}
 
 	public void minimize() {

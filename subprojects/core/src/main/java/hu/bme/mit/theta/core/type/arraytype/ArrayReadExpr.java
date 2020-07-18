@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -74,8 +75,14 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 
 	@Override
 	public LitExpr<ElemType> eval(final Valuation val) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>)array.eval(val);
+		LitExpr<IndexType> indexVal = index.eval(val);
+		for (Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+			if (elem.get1().equals(indexVal)){
+				return (LitExpr<ElemType>)elem.get2();
+			}
+		}
+		return (LitExpr<ElemType>)arrayVal.getElseElem();
 	}
 
 	@Override

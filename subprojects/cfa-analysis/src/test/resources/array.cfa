@@ -1,0 +1,25 @@
+main process cfa {
+    var arr: [int]->int
+
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    final loc END
+    error loc ERR
+
+    L0 -> L1 { arr := [ 0 <- 1, 1 <- 2, default <- 0 ] }
+
+    L1 -> L2 { assume arr[0] = 1 and arr[1] = 2 and arr[34] = 0 }
+    L1 -> ERR { assume not (arr[0] = 1 and arr[1] = 2 and arr[34] = 0) }
+
+    L2 -> L3 { assume arr = [ 0 <- 1, 1 <- 2, default <- 0 ] }
+    L2 -> ERR { assume not (arr = [ 0 <- 1, 1 <- 2, default <- 0 ]) }
+
+    L3 -> L4 { assume arr /= [ 1 <- 2, default <- 0 ] }
+    L3 -> ERR { assume not (arr /= [ 1 <- 2, default <- 0 ]) }
+
+    L4 -> END { assume arr /= [ <int>default <- 0 ] }
+    L4 -> ERR { assume not (arr /= [ <int>default <- 0 ]) }
+}
