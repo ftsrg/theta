@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -54,7 +55,11 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -64,6 +69,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.ArrayList;
 
 public class ExprSimplifierTest {
 
@@ -348,6 +355,30 @@ public class ExprSimplifierTest {
 		assertEquals(a, simplify(Ite(True(), a, b)));
 		assertEquals(b, simplify(Ite(False(), a, b)));
 		assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
+	}
+
+	// Array
+	@Test
+	public void testArrayRead() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		elems.add(Tuple2.of(Int(1), Int(2)));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
+		assertEquals(Int(1), simplify(Read(arr, Int(0))));
+		assertEquals(Int(2), simplify(Read(arr, Int(1))));
+		assertEquals(Int(100), simplify(Read(arr, Int(182))));
+	}
+
+	@Test
+	public void testArrayWrite() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
+		var newArr = simplify(Write(arr, Int(5), Int(6)));
+		assertTrue(newArr instanceof ArrayLitExpr);
+		assertEquals(Int(6), Read(newArr, Int(5)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(1), Read(newArr, Int(0)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(100), Read(newArr, Int(182)).eval(ImmutableValuation.empty()));
 	}
 
 	@Test

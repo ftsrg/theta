@@ -20,10 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -84,8 +86,19 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public LitExpr<ArrayType<IndexType, ElemType>> eval(final Valuation val) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>)array.eval(val);
+		LitExpr<IndexType> indexVal = index.eval(val);
+		LitExpr<ElemType> elemVal = elem.eval(val);
+
+		List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elemList = new ArrayList<>();
+		for(Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+			if(!elem.get1().equals(indexVal)) {
+				elemList.add(elem);
+			}
+		}
+		elemList.add(Tuple2.of(indexVal, elemVal));
+
+		return Array(elemList, arrayVal.getElseElem(), arrayVal.getType());
 	}
 
 	@Override

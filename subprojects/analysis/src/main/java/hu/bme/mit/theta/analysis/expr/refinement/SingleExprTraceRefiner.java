@@ -39,19 +39,22 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
 	private final ExprTraceChecker<R> exprTraceChecker;
 	private final PrecRefiner<S, A, P, R> precRefiner;
+	private final PruneStrategy pruneStrategy;
 	private final Logger logger;
 
 	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-								   final PrecRefiner<S, A, P, R> precRefiner, final Logger logger) {
+								   final PrecRefiner<S, A, P, R> precRefiner,
+								   final PruneStrategy pruneStrategy, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 		this.precRefiner = checkNotNull(precRefiner);
+		this.pruneStrategy = checkNotNull(pruneStrategy);
 		this.logger = checkNotNull(logger);
 	}
 
 	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
 			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
-			final Logger logger) {
-		return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, logger);
+			final PruneStrategy pruneStrategy, final Logger logger) {
+		return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
 	}
 
 	@Override
@@ -81,9 +84,19 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-			logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
-			final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
-			arg.prune(nodeToPrune);
+			switch (pruneStrategy){
+				case LAZY:
+					logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
+					final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
+					arg.prune(nodeToPrune);
+					break;
+				case FULL:
+					logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
+					arg.pruneAll();
+					break;
+				default:
+					throw new UnsupportedOperationException("Unsupported pruning strategy");
+			}
 			logger.write(Level.SUBSTEP, "done%n");
 
 			return RefinerResult.spurious(refinedPrec);
