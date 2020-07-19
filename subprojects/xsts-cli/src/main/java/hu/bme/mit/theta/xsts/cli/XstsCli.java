@@ -9,6 +9,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -67,6 +68,9 @@ public class XstsCli {
 
     @Parameter(names = {"--initprec"}, description = "Initial precision")
     InitPrec initPrec = InitPrec.EMPTY;
+
+    @Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+    PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
     @Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
     Logger.Level logLevel = Logger.Level.SUBSTEP;
@@ -152,7 +156,7 @@ public class XstsCli {
     }
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) {
-        return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec).search(search)
+        return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy).search(search)
                 .predSplit(predSplit).logger(logger).build(xsts);
     }
 
