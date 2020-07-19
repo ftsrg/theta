@@ -109,6 +109,7 @@ public class XstsConfigBuilder {
     private PredSplit predSplit = PredSplit.WHOLE;
     private int maxEnum = 0;
     private InitPrec initPrec = InitPrec.EMPTY;
+    private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
     public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
         this.domain = domain;
@@ -141,8 +142,9 @@ public class XstsConfigBuilder {
         return this;
     }
 
-    public InitPrec getInitPrec() {
-        return initPrec;
+    public XstsConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
+        this.pruneStrategy = pruneStrategy;
+        return this;
     }
 
     public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
@@ -166,23 +168,23 @@ public class XstsConfigBuilder {
             switch (refinement) {
                 case FW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
                     break;
                 case BW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
                     break;
                 case SEQ_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
                     break;
                 case MULTI_SEQ:
                     refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+                            JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
                     break;
                 case UNSAT_CORE:
                     refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
+                            JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
                     break;
                 default:
                     throw new UnsupportedOperationException(
@@ -241,10 +243,10 @@ public class XstsConfigBuilder {
             Refiner<XstsState<PredState>, XstsAction, PredPrec> refiner;
             if (refinement == Refinement.MULTI_SEQ) {
                 refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-                        JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+                        JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
             } else {
                 refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-                        JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+                        JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
             }
 
             final SafetyChecker<XstsState<PredState>, XstsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
@@ -274,19 +276,19 @@ public class XstsConfigBuilder {
             switch (refinement) {
                 case FW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
                     break;
                 case BW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
                     break;
                 case SEQ_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
                     break;
                 case MULTI_SEQ:
                     refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), logger);
+                            JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
                     break;
                 default:
                     throw new UnsupportedOperationException(
