@@ -24,12 +24,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.IntTypeContext;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.RatTypeContext;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.TypeContext;
 import hu.bme.mit.theta.core.type.Type;
 
 final class CfaType {

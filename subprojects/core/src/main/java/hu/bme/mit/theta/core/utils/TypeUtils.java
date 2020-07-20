@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Utility functions related to types.

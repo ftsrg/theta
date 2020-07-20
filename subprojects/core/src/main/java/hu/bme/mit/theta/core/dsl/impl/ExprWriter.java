@@ -68,7 +68,7 @@ public final class ExprWriter {
 	private final DispatchTable<String> table;
 
 	private static class LazyHolder {
-		private static ExprWriter INSTANCE = new ExprWriter();
+		private static final ExprWriter INSTANCE = new ExprWriter();
 	}
 
 	public static ExprWriter instance() {
