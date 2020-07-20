@@ -23,7 +23,6 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -31,10 +30,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -210,7 +205,7 @@ final class Z3TermTransformer {
 		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
 	}
 
-	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
+	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
 									   final List<Decl<?>> vars) {
 
 		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();

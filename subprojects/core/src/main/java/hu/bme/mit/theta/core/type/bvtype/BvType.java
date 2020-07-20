@@ -101,6 +101,7 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
         return BvGeqExpr.of(leftOp, rightOp);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TargetType extends Type> Expr<TargetType> Cast(final Expr<BvType> op, final TargetType type) {
         if (type instanceof IntType) {

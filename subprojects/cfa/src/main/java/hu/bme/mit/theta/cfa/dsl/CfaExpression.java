@@ -17,7 +17,6 @@ package hu.bme.mit.theta.cfa.dsl;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.BasicScope;
 import hu.bme.mit.theta.common.dsl.Env;
