@@ -91,6 +91,7 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(TYPE_LABEL).add(indexType).add(elemType).toString();
+		final String indexString = String.format("([%s] -> %s)", indexType, elemType);
+		return Utils.lispStringBuilder(TYPE_LABEL).add(indexString).toString();
 	}
 }

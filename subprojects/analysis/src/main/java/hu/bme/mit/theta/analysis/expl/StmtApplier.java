@@ -165,10 +165,13 @@ final class StmtApplier {
 
 	private static ApplyResult applySequence(final SequenceStmt stmt, final MutableValuation val,
 											 final boolean approximate) {
+		MutableValuation copy = MutableValuation.copyOf(val);
 		for(Stmt subStmt: stmt.getStmts()){
-			ApplyResult res=apply(subStmt,val,approximate);
+			ApplyResult res=apply(subStmt,copy,approximate);
 			if(res==ApplyResult.BOTTOM || res==ApplyResult.FAILURE) return res;
 		}
+		val.clear();
+		val.putAll(copy);
 		return ApplyResult.SUCCESS;
 	}
 

@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.function.Predicate;
 
+import hu.bme.mit.theta.analysis.expr.refinement.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,11 +47,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors;
@@ -109,7 +105,7 @@ public class StsPredTest {
 
 		final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
-						logger);
+						PruneStrategy.LAZY, logger);
 
 		final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner, logger);
 

@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -197,6 +198,8 @@ final class Z3ExprTransformer {
 				.addCase(ArrayEqExpr.class, this::transformArrayEq)
 
 				.addCase(ArrayNeqExpr.class, this::transformArrayNeq)
+
+				.addCase(ArrayLitExpr.class, this::transformArrayLit)
 
 				.build();
 	}
@@ -513,6 +516,14 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
+	}
+
+	private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
+		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getElseElem().getType()), toTerm(expr.getElseElem()));
+		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+		}
+		return running;
 	}
 
 	/*

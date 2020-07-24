@@ -280,8 +280,8 @@ final class Z3Solver implements Solver {
 		}
 
 		private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+			final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model, new ArrayList<>());
+			return (LitExpr<?>) expr;
 		}
 
 		private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
