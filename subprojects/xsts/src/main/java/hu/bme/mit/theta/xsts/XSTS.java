@@ -16,7 +16,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class XSTS {
     private final Collection<VarDecl<?>> vars;
     private final Collection<TypeDecl> types;
-    private final HashMap<VarDecl<?>,TypeDecl> varToType;
+    private final Map<VarDecl<?>,TypeDecl> varToType;
+    private final Set<VarDecl<?>> ctrlVars;
 
     private final NonDetStmt transitions;
     private final NonDetStmt envAction;
@@ -35,7 +36,7 @@ public final class XSTS {
         return types;
     }
 
-    public HashMap<VarDecl<?>,TypeDecl> getVarToType() { return varToType; }
+    public Map<VarDecl<?>,TypeDecl> getVarToType() { return varToType; }
 
     public Expr<BoolType> getProp() { return prop; }
 
@@ -49,7 +50,9 @@ public final class XSTS {
         return envAction;
     }
 
-    public XSTS(final Collection<TypeDecl> types, final HashMap<VarDecl<?>,TypeDecl> varToType, final NonDetStmt initAction,final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+    public Set<VarDecl<?>> getCtrlVars() { return ctrlVars; }
+
+    public XSTS(final Collection<TypeDecl> types, final Map<VarDecl<?>,TypeDecl> varToType, final Set<VarDecl<?>> ctrlVars, final NonDetStmt initAction,final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
         this.transitions = checkNotNull(transitions);
         this.initFormula = checkNotNull(initFormula);
         this.envAction = checkNotNull(envAction);
@@ -57,6 +60,7 @@ public final class XSTS {
         this.initAction = checkNotNull(initAction);
         this.types=types;
         this.varToType=varToType;
+        this.ctrlVars=ctrlVars;
         final Set<VarDecl<?>> tmpVars = new HashSet<>();
         tmpVars.addAll(varToType.keySet());
         tmpVars.addAll(StmtUtils.getVars(transitions));
@@ -65,6 +69,7 @@ public final class XSTS {
         tmpVars.addAll(ExprUtils.getVars(initFormula));
         tmpVars.addAll(ExprUtils.getVars(prop));
         this.vars = Collections.unmodifiableCollection(tmpVars);
+        System.out.println(ctrlVars);
     }
 
 }

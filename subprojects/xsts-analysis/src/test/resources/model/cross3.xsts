@@ -4,8 +4,8 @@ type Main_region_TrafficLightCtrl : { __Inactive__, Interrupted, Normal}
 type Interrupted_TrafficLightCtrl : { __Inactive__, BlinkingYellow, Black}
 type Normal_TrafficLightCtrl : { __Inactive__, Green, Yellow, Red}
 var PoliceInterrupt_police_In_controller : boolean = false
-var main_region_controller : Main_region_Controller = __Inactive__
-var operating_controller : Operating_Controller = __Inactive__
+ctrl var main_region_controller : Main_region_Controller = __Inactive__
+ctrl var operating_controller : Operating_Controller = __Inactive__
 var PriorityTimeout3_controller : integer = 0
 var Control_toggle_In_prior : boolean = false
 var LightCommands_displayNone_Out_prior : boolean = false
@@ -13,9 +13,9 @@ var LightCommands_displayYellow_Out_prior : boolean = false
 var LightCommands_displayGreen_Out_prior : boolean = false
 var LightCommands_displayRed_Out_prior : boolean = false
 var PoliceInterrupt_police_In_prior : boolean = false
-var main_region_prior : Main_region_TrafficLightCtrl = __Inactive__
-var interrupted_prior : Interrupted_TrafficLightCtrl = __Inactive__
-var normal_prior : Normal_TrafficLightCtrl = __Inactive__
+ctrl var main_region_prior : Main_region_TrafficLightCtrl = __Inactive__
+ctrl var interrupted_prior : Interrupted_TrafficLightCtrl = __Inactive__
+ctrl var normal_prior : Normal_TrafficLightCtrl = __Inactive__
 var BlackTimeout3_prior : integer = 0
 var a_prior : boolean = false
 var b_prior : integer = 0
@@ -27,9 +27,9 @@ var LightCommands_displayGreen_Out_second : boolean = false
 var LightCommands_displayRed_Out_second : boolean = false
 var LightCommands_displayNone_Out_second : boolean = false
 var PoliceInterrupt_police_In_second : boolean = false
-var main_region_second : Main_region_TrafficLightCtrl = __Inactive__
-var interrupted_second : Interrupted_TrafficLightCtrl = __Inactive__
-var normal_second : Normal_TrafficLightCtrl = __Inactive__
+ctrl var main_region_second : Main_region_TrafficLightCtrl = __Inactive__
+ctrl var interrupted_second : Interrupted_TrafficLightCtrl = __Inactive__
+ctrl var normal_second : Normal_TrafficLightCtrl = __Inactive__
 var BlackTimeout3_second : integer = 0
 var c_second : integer = 0
 var asd_second : integer = 0
