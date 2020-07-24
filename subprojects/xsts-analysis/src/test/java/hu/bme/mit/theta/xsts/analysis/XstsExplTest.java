@@ -56,94 +56,98 @@ public class XstsExplTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-//				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.EXPL},
-//
-//				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-//
-//				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL},
+				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL}
+				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.EXPL}
 
 //				{ "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
-
+//
 //				{ "src/test/resources/model/ort2.xsts", "src/test/resources/property/ort2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
-
+//
 //				{ "src/test/resources/model/crossroad_composite.xsts", "src/test/resources/property/both_green.prop", true, XstsConfigBuilder.Domain.EXPL}
 
 		});
