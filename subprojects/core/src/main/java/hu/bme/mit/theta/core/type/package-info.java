@@ -9,6 +9,7 @@
  * - {@link hu.bme.mit.theta.core.type.anytype} and {@link hu.bme.mit.theta.core.type.abstracttype}
  *   are expressions for multiple types (e.g., conditional).
  * - {@link hu.bme.mit.theta.core.type.booltype} contains the Boolean type and expressions (e.g., and, or).
+ * - {@link hu.bme.mit.theta.core.type.bvtype} contains the (SMT) bitvector type and expressions (e.g., bitwise and, shifts).
  * - {@link hu.bme.mit.theta.core.type.inttype} contains the mathematical (SMT) integer type and expressions
  *   (e.g., add, multiply).
  * - {@link hu.bme.mit.theta.core.type.rattype} contains the rational type and expression (e.g., division).
