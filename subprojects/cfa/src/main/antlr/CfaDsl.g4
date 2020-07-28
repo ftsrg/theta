@@ -80,7 +80,7 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
-	|   bvType
+	|	bvType
 	;
 
 typeList
@@ -277,7 +277,7 @@ primaryExpr
 	|	intLitExpr
 	|	ratLitExpr
 	|	arrLitExpr
-	|   bvLitExpr
+	|	bvLitExpr
 	|	idExpr
 	|	parenExpr
 	;
