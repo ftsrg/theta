@@ -1,0 +1,90 @@
+main process mainProcess{
+
+    // variable clashing is tested in another test.
+    // for testing, I renamed variables to show which function/process has it
+	main procedure mainProcedure(){
+		init loc LMainInit
+		loc LMainPrepare
+		loc LMainFibCalled
+		loc LMainMid
+		final loc LMainOK
+		error loc LE
+		var mainParam : int
+		var mainResult : int
+
+		LMainInit -> LMainPrepare {
+			mainParam := 4
+		}
+
+		LMainPrepare -> LMainFibCalled {
+			mainResult := call fibonacci(mainParam)
+		}
+
+		LMainFibCalled -> LE {
+		    assume not (mainParam = 4)
+		}
+
+		LMainFibCalled -> LMainMid {
+		    assume mainParam = 4
+		}
+
+		LMainMid -> LMainOK {
+		    // f(0)=f(1)=1, f(2)=2, f(3)=3, f(4)=5
+		    assume mainResult = 5
+		}
+
+		LMainMid -> LE {
+		    assume not (mainResult = 5)
+		}
+	}
+
+	int procedure fibonacci ( n : int ) {
+	    var param1 : int
+	    var param2 : int
+	    var result1 : int
+	    var result2 : int
+
+        // result is a special var. It means the return value for the function (Pascal-style)
+	    var result : int
+
+		init loc LFibInit
+		loc LFibRecursive
+		loc LFibDefault
+		loc LFibPrepare1
+		loc LFibCalled1
+		loc LFibPrepare2
+		loc LFibCalled2
+		final loc LFibOK
+
+		LFibInit -> LFibRecursive {
+		    assume n >= 2
+		}
+		LFibInit -> LFibDefault {
+		    assume not (n >= 2)
+		}
+		LFibDefault -> LFibOK {
+		    result := 1
+		}
+		LFibRecursive -> LFibPrepare1 {
+		    // y is used as parameter. Because it is not used elsewhere, we can define it
+		    // not just a hack, tests whether this can be done well ;)
+		    param1 := n - 1
+		}
+
+		LFibPrepare1 -> LFibCalled1 {
+		    result1 := call fibonacci(param1)
+		}
+
+		LFibCalled1 -> LFibPrepare2 {
+		    param2 := n - 2
+		}
+
+		LFibPrepare2 -> LFibCalled2 {
+		    result2 := call fibonacci(param2)
+		}
+
+		LFibCalled2 -> LFibOK {
+		    result := result1 + result2
+		}
+	}
+}

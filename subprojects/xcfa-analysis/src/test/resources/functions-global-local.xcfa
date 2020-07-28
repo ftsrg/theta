@@ -1,0 +1,179 @@
+var global: int
+
+main process mainProcess{
+
+    var threadLocal : int
+
+	int procedure localProcedure() {
+		var local : int
+		var result : int
+
+		init loc L0
+		loc L1
+		loc L2
+		loc L3
+		final loc L4
+
+		L0 -> L1 {
+            local := 2
+        }
+		L1 -> L2 {
+            threadLocal := 2
+        }
+		L2 -> L3 {
+            global := 2
+        }
+		L3 -> L4 {
+            result := 42
+		}
+	}
+
+	main procedure mainProcedure(){
+
+		var local : int
+		var tmp : int
+
+		init loc L0
+		loc L0a
+		loc L0b
+		loc L1
+		loc L2
+		loc L3
+		loc L4
+		loc L5
+		loc L6
+		loc L6a
+		loc L7
+		loc L8
+		loc L9
+		final loc L10
+		error loc ERR
+
+		L0 -> L0a {
+			local := 1
+		}
+		L0a -> L0b {
+			threadLocal := 1
+		}
+		L0b -> L1 {
+			global := 1
+		}
+
+		L1 -> L2 {
+			tmp := call localProcedure()
+		}
+
+		L2 -> L3 {
+			assume tmp = 42
+		}
+		L3 -> L4 {
+			assume local = 1
+		}
+		L4 -> L5 {
+			assume threadLocal = 2
+		}
+		L5 -> L6 {
+			assume global = 2
+		}
+
+	    L2 -> ERR {
+	        assume tmp /= 42
+	    }
+	    L3 -> ERR {
+	        assume local /= 1
+	    }
+	    L4 -> ERR {
+	        assume threadLocal /= 2
+	    }
+	    L5 -> ERR {
+	        assume global /= 2
+	    }
+
+	    L6 -> L6a {
+	        local := 3
+	    }
+	    L6a -> L7 {
+	        global := 3
+	    }
+
+	    L7 -> L8 {
+	        assume global = 4
+	    }
+
+	    L8 -> L9 {
+	        assume local = 3
+	    }
+
+	    L8 -> ERR {
+	        assume local /= 3
+	    }
+
+	    L9 -> L10 {
+	        assume threadLocal = 2
+	    }
+
+	    L9 -> ERR {
+	        assume threadLocal /= 2
+	    }
+	}
+}
+
+process otherProcess {
+    var threadLocal : int
+
+	main procedure mainProcedure(){
+		var local : int
+		init loc L0
+		loc L1
+		loc L1a
+		loc L1b
+		final loc L2
+
+		L0 -> L1 {
+            assume global = 3
+        }
+        L1 -> L1a {
+            local := 4
+        }
+        L1a -> L1b {
+            global := 4
+        }
+        L1b -> L2 {
+            threadLocal := 2
+        }
+    }
+}
+
+// something like this: (I've rewritten it, but the idea is: check variables are local and threadlocal not joint
+//    across procedures/threads. Check edge activation of the simulator)
+// localProcedure() -> int {
+//   local = 2
+//   threadLocal = 2
+//   global = 2
+//   result = 42
+// }
+
+// mainProcedure() {
+//   // TEST local: local variable is not shared
+//   // TEST thread-local: thread-local is shared
+//   // TEST global: it is shared
+//   local = 1
+//   threadLocal = 1
+//   global = 1
+//   localProcedure()
+//   assert(local == 1)
+//   assert(threadLocal == 2)
+//   assert(global == 2)
+
+//   // test minimal multi-threading (no wait, notify yet)
+//   local = 3
+//   global = 3
+//   waitFor (global == 4)
+//   assert(local == 3)
+// }
+
+// otherProcess::mainProcedure() {
+//   waitFor (global == 3);
+//   local = 4
+//   global = 4
+// }

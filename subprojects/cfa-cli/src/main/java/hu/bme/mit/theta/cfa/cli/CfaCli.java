@@ -60,7 +60,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.*;
 
 /**
