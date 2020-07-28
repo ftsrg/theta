@@ -20,7 +20,19 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.*;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
 
 /**
@@ -95,12 +107,12 @@ public class EnabledStmtVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 	}
 
 	@Override
-	public Boolean visit(LockStmt lockStmt, StmtExecutorInterface param) {
+	public Boolean visit(MtxLockStmt lockStmt, StmtExecutorInterface param) {
 		return param.canLock(lockStmt);
 	}
 
 	@Override
-	public Boolean visit(UnlockStmt unlockStmt, StmtExecutorInterface param) {
+	public Boolean visit(MtxUnlockStmt unlockStmt, StmtExecutorInterface param) {
 		return param.canUnlock(unlockStmt);
 	}
 

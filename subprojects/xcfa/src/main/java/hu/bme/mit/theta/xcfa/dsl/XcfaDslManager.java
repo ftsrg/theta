@@ -15,18 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SpecContext;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SpecContext;
 
 public final class XcfaDslManager {
 

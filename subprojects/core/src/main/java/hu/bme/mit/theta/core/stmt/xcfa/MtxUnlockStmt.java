@@ -16,15 +16,19 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import com.google.common.base.Preconditions;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
-public class MtxLock extends XcfaStmt {
-	private final VarDecl<?> syncVar;
+public class MtxUnlockStmt extends XcfaStmt {
+	private final VarDecl<SyntheticType> syncVar;
 
-	public MtxLock(VarDecl<?> lhs) {
-		syncVar = lhs;
+	public MtxUnlockStmt(VarDecl<?> lhs) {
+		Preconditions.checkArgument(lhs.getType() == SyntheticType.getInstance());
+		syncVar = (VarDecl<SyntheticType>)lhs;
 	}
 
 	@Override
@@ -37,7 +41,7 @@ public class MtxLock extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getSyncVar() {
+	public VarDecl<SyntheticType> getSyncVar() {
 		return syncVar;
 	}
 }

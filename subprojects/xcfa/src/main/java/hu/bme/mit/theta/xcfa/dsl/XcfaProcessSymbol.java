@@ -15,19 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
 
 final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> implements Scope {
 
-	private final XcfaSymbol scope;
+	private final Scope scope;
 	private final String name;
 	private final boolean isMain;
 	private final List<XcfaParamSymbol> params;
@@ -36,7 +37,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 	private final SymbolTable symbolTable;
 	private XCFA.Process process = null;
 
-	XcfaProcessSymbol(final XcfaSymbol scope, final XcfaDslParser.ProcessDeclContext context) {
+	XcfaProcessSymbol(final Scope scope, final XcfaDslParser.ProcessDeclContext context) {
 		this.scope = scope;
 		name = context.id.getText();
 		isMain = context.main != null;
@@ -69,13 +70,37 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 		}
 	}
 
+	public void addContext(ProcessDeclContext context) {
+		if (context.paramDecls != null) {
+			context.paramDecls.decls.forEach(declContext -> {
+				XcfaParamSymbol paramSymbol;
+				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+				params.add(paramSymbol);
+			});
+		}
+		if (context.varDecls != null) {
+			context.varDecls.forEach(varDeclContext -> {
+				XcfaVariableSymbol variableSymbol;
+				symbolTable.add(variableSymbol = new XcfaVariableSymbol(varDeclContext));
+				vars.add(variableSymbol);
+			});
+		}
+		if (context.procedureDecls != null) {
+			context.procedureDecls.forEach(procedureDeclContext -> {
+				XcfaProcedureSymbol procedureSymbol;
+				symbolTable.add(procedureSymbol = new XcfaProcedureSymbol(this, procedureDeclContext));
+				procedures.add(procedureSymbol);
+			});
+		}
+	}
+
 	@Override
 	public String getName() {
 		return name;
 	}
 
 	@Override
-	public Optional<XcfaSymbol> enclosingScope() {
+	public Optional<Scope> enclosingScope() {
 		return Optional.of(scope);
 	}
 

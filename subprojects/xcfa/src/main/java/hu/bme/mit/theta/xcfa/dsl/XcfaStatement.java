@@ -15,6 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -22,12 +33,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLock;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlock;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -40,17 +50,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
 
@@ -252,7 +251,7 @@ final class XcfaStatement {
 			checkState(opt.isPresent());
 			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxLock(lhs);
+			return new MtxLockStmt(lhs);
 		}
 
 		@Override
@@ -262,7 +261,7 @@ final class XcfaStatement {
 			checkState(opt.isPresent());
 			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxUnlock(lhs);
+			return new MtxUnlockStmt(lhs);
 		}
 
 	}

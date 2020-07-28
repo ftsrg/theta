@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import java.util.Optional;
+
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -25,11 +27,11 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
@@ -37,8 +39,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
-
-import java.util.Optional;
 
 /**
  * Creates an executor interface from a statement and a state.
@@ -116,12 +116,12 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     }
 
     @Override
-    public Optional<TransitionExecutorInterface> visit(LockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
+    public Optional<TransitionExecutorInterface> visit(MtxLockStmt lockStmt, ExplStateReadOnlyInterface readOnlyState) {
         return StmtHelper.executeLockOperation(lockStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::lock);
     }
 
     @Override
-    public Optional<TransitionExecutorInterface> visit(UnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
+    public Optional<TransitionExecutorInterface> visit(MtxUnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
         return StmtHelper.executeLockOperation(unlockStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::unlock);
     }
 

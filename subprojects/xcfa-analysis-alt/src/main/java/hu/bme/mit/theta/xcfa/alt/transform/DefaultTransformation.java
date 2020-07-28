@@ -1,14 +1,15 @@
 package hu.bme.mit.theta.xcfa.alt.transform;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.base.Preconditions;
+
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.xcfa.XCFA;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Transforms empty edges to edge with skip stmt.
@@ -38,10 +39,10 @@ public class DefaultTransformation extends EmptyTransformation {
             var mid = new XCFA.Process.Procedure.Location(source.getName() + "_midwait",
                     Map.of());
             var e1 = new XCFA.Process.Procedure.Edge(source, mid, List.of(
-                    new EnterWaitStmt(stmt.getSyncVar())
+                    new EnterWaitStmt(stmt.getCndSyncVar())
             ));
             var e2 = new XCFA.Process.Procedure.Edge(mid, target, List.of(
-                    new ExitWaitStmt(stmt.getSyncVar())
+                    new ExitWaitStmt(stmt.getCndSyncVar()) // TODO add Mtx capability
             ));
 
             var builder = (XCFA.Process.Procedure.Builder)_builder;

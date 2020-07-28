@@ -15,6 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import com.google.common.base.Preconditions;
+
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -24,15 +35,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Procedure> implements Scope {
 
@@ -107,7 +109,13 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		});
 		edges.forEach(xcfaEdgeDefinition -> builder.addEdge(xcfaEdgeDefinition.instantiate()));
 		procedure = builder.build();
-		incompleteInstantiations.forEach(callStmt -> callStmt.setProcedure(procedure));
+		incompleteInstantiations.forEach(callStmt -> {
+			Preconditions.checkState(procedure.getParams().size() == callStmt.getParams().size());
+			for (int i = 0; i < procedure.getParams().size(); i++) {
+				Preconditions.checkState(procedure.getParams().get(i).getType() == callStmt.getParams().get(i).getType());
+			}
+			callStmt.setProcedure(procedure);
+		});
 		incompleteInstantiations = null;
 		return procedure;
 	}

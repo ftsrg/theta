@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.xcfa.alt.expl.EdgeTransition;
 import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
 import hu.bme.mit.theta.xcfa.alt.expl.StmtTransition;
@@ -34,12 +34,12 @@ public class CoenabledUtils {
         Stmt sa = a.getStmt();
         Stmt sb = b.getStmt();
 
-        if (sa instanceof UnlockStmt && sb instanceof LockStmt) {
-            if (((UnlockStmt) sa).getSyncVar() == ((LockStmt) sb).getSyncVar())
+        if (sa instanceof MtxUnlockStmt && sb instanceof MtxLockStmt) {
+            if (((MtxUnlockStmt) sa).getSyncVar() == ((MtxLockStmt) sb).getSyncVar())
                 return false;
         }
-        if (sa instanceof LockStmt && sb instanceof UnlockStmt) {
-            if (((LockStmt) sa).getSyncVar() == ((UnlockStmt) sb).getSyncVar())
+        if (sa instanceof MtxLockStmt && sb instanceof MtxUnlockStmt) {
+            if (((MtxLockStmt) sa).getSyncVar() == ((MtxUnlockStmt) sb).getSyncVar())
                 return false;
         }
         return true;

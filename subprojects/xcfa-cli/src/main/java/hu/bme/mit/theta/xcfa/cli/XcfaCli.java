@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.xcfa.cli;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -36,16 +35,11 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.algorithm.PartialOrderExplicitChecker;
+import hu.bme.mit.theta.xcfa.alt.algorithm.Config;
+import hu.bme.mit.theta.xcfa.alt.algorithm.XcfaChecker;
+import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.algorithm.ExplicitChecker;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
+import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 
 public class XcfaCli {
     private static final String JAR_NAME = "theta-xcfa-cli.jar";
@@ -84,7 +78,10 @@ public class XcfaCli {
 
     private void run() {
         try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+            // XXX accept unknown options for interfacing with Gazer (without too much modification)
+            var commander = JCommander.newBuilder().addObject(this).programName(JAR_NAME).build();
+            commander.setAcceptUnknownOptions(true);
+            commander.parse(args);
             logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
@@ -103,13 +100,14 @@ public class XcfaCli {
             final XCFA xcfa = loadModel();
 
             final SafetyResult<?, ?> status;
+            final Config config;
             if (partialOrder) {
-                final PartialOrderExplicitChecker checker = new PartialOrderExplicitChecker(xcfa);
-                status = checker.check();
+                config = XcfaChecker.getSimpleDPOR().build();
             } else {
-                final ExplicitChecker checker = new ExplicitChecker(xcfa);
-                status = checker.check();
+                config = XcfaChecker.getSimpleExplicit().build();
             }
+            final XcfaChecker checker = XcfaChecker.createChecker(xcfa, config);
+            status = checker.check();
             sw.stop();
             printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile) {
@@ -134,7 +132,9 @@ public class XcfaCli {
 
     private XCFA loadModel() throws IOException {
         try (InputStream inputStream = new FileInputStream(model)) {
-            return XcfaDslManager.createXcfa(inputStream);
+            var multiStmtXcfa = XcfaDslManager.createXcfa(inputStream);
+            var splitEdgeXcfa = XcfaEdgeSplitterTransformation.transform(multiStmtXcfa);
+            return new DefaultTransformation(splitEdgeXcfa).build();
         }
     }
 

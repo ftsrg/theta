@@ -15,23 +15,24 @@
  */
 package hu.bme.mit.theta.xcfa.expl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
 import com.google.common.base.Preconditions;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Call state stores data (and is responsible) of one call (not a procedure, rather an instance of it being called)
@@ -272,25 +273,25 @@ final class CallState implements StmtExecutorInterface {
 	}
 
 	@Override
-	public boolean canLock(LockStmt lockStmt) {
+	public boolean canLock(MtxLockStmt lockStmt) {
 		return !getExplState().isLocked(lockStmt.getSyncVar()) ||
 				getExplState().isLockedOn(lockStmt.getSyncVar(), parent.getProcess());
 	}
 
 	@Override
-	public boolean canUnlock(UnlockStmt unlockStmt) {
+	public boolean canUnlock(MtxUnlockStmt unlockStmt) {
 		// returns true even when not locked (leading to error), so after unlocking, we can reach the error state
 		return true;
 	}
 
 	@Override
-	public void lock(LockStmt lockStmt) {
+	public void lock(MtxLockStmt lockStmt) {
 		Preconditions.checkState(canLock(lockStmt), "Trying to run a disabled stmt!");
 		getExplState().lock(lockStmt.getSyncVar(), parent.getProcess());
 	}
 
 	@Override
-	public void unlock(UnlockStmt unlockStmt) {
+	public void unlock(MtxUnlockStmt unlockStmt) {
 		Preconditions.checkState(canUnlock(unlockStmt), "Trying to run a disabled stmt!");
 		getExplState().unlock(unlockStmt.getSyncVar(), parent.getProcess());
 	}

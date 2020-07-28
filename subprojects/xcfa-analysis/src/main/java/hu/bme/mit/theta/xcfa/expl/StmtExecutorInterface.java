@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.expl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -42,11 +42,11 @@ public interface StmtExecutorInterface {
 
 	void onAtomicEnd();
 
-	boolean canLock(LockStmt lockStmt); // TODO
+	boolean canLock(MtxLockStmt lockStmt); // TODO
 
-	boolean canUnlock(UnlockStmt unlockStmt);
+	boolean canUnlock(MtxUnlockStmt unlockStmt);
 
-	void lock(LockStmt lockStmt);
+	void lock(MtxLockStmt lockStmt);
 
-	void unlock(UnlockStmt unlockStmt);
+	void unlock(MtxUnlockStmt unlockStmt);
 }

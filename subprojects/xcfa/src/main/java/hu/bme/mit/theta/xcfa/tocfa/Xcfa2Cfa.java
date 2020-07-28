@@ -112,7 +112,7 @@ public class Xcfa2Cfa {
 
 		private void collectVars() {
 			// create new instances of local variables
-			for (var vari : j.procedure.getVars()) {
+			for (var vari : j.procedure.getLocalVars()) {
 				// use prefix to avoid collisions
 				varMapping.put(vari, Decls.Var(j.locPrefix + "_" + vari, vari.getType()));
 				if ("result".equals(vari.getName())) {
@@ -184,7 +184,7 @@ public class Xcfa2Cfa {
 				if (stmt instanceof CallStmt) {
 					var proc = ((CallStmt) stmt).getProcedure();
 					var params = ((CallStmt) stmt).getParams();
-					var res = ((CallStmt) stmt).getVar();
+					var res = ((CallStmt) stmt).getResultVar();
 					procQueue.add(new ProcedureBuildData(j.locPrefix + "_" + callCtr + proc.getName(), proc, src, trg, params, res));
 					callCtr++;
 				} else {
