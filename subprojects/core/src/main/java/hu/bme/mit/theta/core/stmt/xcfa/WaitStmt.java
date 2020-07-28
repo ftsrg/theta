@@ -17,15 +17,20 @@
 package hu.bme.mit.theta.core.stmt.xcfa;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 public class WaitStmt extends XcfaStmt {
+	private static final String STMT_LABEL = "wait";
 	private final VarDecl<?> cndSyncVar;
 	private final Optional<VarDecl<?>> mtxSyncVar;
 
 	public WaitStmt(VarDecl<?> cnd, VarDecl<?> mtx) {
+		Preconditions.checkArgument(lhs.getType() == SyntheticType.getInstance(), STMT_LABEL + " stmt should be passed a synthetic");
 		cndSyncVar = cnd;
 		mtxSyncVar = Optional.fromNullable(mtx);
 	}
@@ -48,5 +53,9 @@ public class WaitStmt extends XcfaStmt {
 	}
 	public Optional<VarDecl<?>> getMtxSyncVar() {
 		return mtxSyncVar;
+	}
+
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(syncVar.getName()).toString();
 	}
 }

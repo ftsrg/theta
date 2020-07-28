@@ -374,8 +374,8 @@ stmt:	assignStmt
 	|	waitStmt
 	|	notifyStmt
 	|	notifyAllStmt
-	|   mtxLock
-	|   mtxUnlock
+	|	mtxLock
+	|	mtxUnlock
 	;
 
 stmtList
@@ -435,12 +435,12 @@ notifyAllStmt
 	;
 
 mtxLock
-    : LOCK LPAREN mtxVar=ID RPAREN
-    ;
+	: LOCK LPAREN mtxVar=ID RPAREN
+	;
 
 mtxUnlock
-    : UNLOCK LPAREN mtxVar=ID RPAREN
-    ;
+	: UNLOCK LPAREN mtxVar=ID RPAREN
+	;
 
 //
 
@@ -483,12 +483,12 @@ NOTIFYALL
 	;
 
 LOCK
-    :   'lock'
-    ;
+	:	'lock'
+	;
 
 UNLOCK
-    :   'unlock'
-    ;
+	:	'unlock'
+	;
 
 ATOMICTYPE
 	:	'atomic'

@@ -34,4 +34,12 @@ public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
 	R visit(NotifyStmt notifyStmt, P param);
 
 	R visit(WaitStmt waitStmt, P param);
+
+	R visit(LockStmt lockStmt, P param);
+
+	R visit(UnlockStmt unlockStmt, P param);
+
+	R visit(ExitWaitStmt exitWaitStmt, P param);
+
+	R visit(EnterWaitStmt enterWaitStmt, P param);
 }

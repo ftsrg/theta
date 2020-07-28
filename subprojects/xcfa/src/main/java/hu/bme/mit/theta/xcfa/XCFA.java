@@ -15,33 +15,38 @@
  */
 package hu.bme.mit.theta.xcfa;
 
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Type;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Type;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
+ *
+ * TODO type checks around parameters and return value passing
+ *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
 public final class XCFA {
 
-	private final List<VarDecl<?>> vars;
+	private final List<VarDecl<? extends Type>> globalVars;
 
 	private final List<Process> processes;
 	private final Process mainProcess;
 
 	private XCFA(Builder builder) {
-		vars = ImmutableList.copyOf(builder.vars);
+		globalVars = ImmutableList.copyOf(builder.globalVars);
 		processes = ImmutableList.copyOf(builder.processes);
 		mainProcess = builder.mainProcess;
 	}
@@ -73,8 +78,8 @@ public final class XCFA {
 		return builder.build();
 	}
 
-	public List<VarDecl<?>> getVars() {
-		return Collections.unmodifiableList(vars);
+	public List<VarDecl<? extends Type>> getGlobalVars() {
+		return Collections.unmodifiableList(globalVars);
 	}
 
 	public List<Process> getProcesses() {
@@ -88,16 +93,17 @@ public final class XCFA {
 	public static final class Process {
 		private final List<VarDecl<?>> params;
 
-		private final List<VarDecl<?>> vars;
+		private final List<VarDecl<?>> threadLocalVars;
 
 		private final List<Procedure> procedures;
 		private final Procedure mainProcedure;
+		private static final String LABEL = "process";
 
 		private final String name;
 
 		private Process(final Builder builder) {
 			params = ImmutableList.copyOf(builder.params);
-			vars = ImmutableList.copyOf(builder.vars);
+			threadLocalVars = ImmutableList.copyOf(builder.threadLocalVars);
 			procedures = ImmutableList.copyOf(builder.procedures);
 			mainProcedure = builder.mainProcedure;
 			name = builder.name;
@@ -111,8 +117,8 @@ public final class XCFA {
 			return Collections.unmodifiableList(params);
 		}
 
-		public List<VarDecl<?>> getVars() {
-			return Collections.unmodifiableList(vars);
+		public List<VarDecl<?>> getThreadLocalVars() {
+			return Collections.unmodifiableList(threadLocalVars);
 		}
 
 		public List<Procedure> getProcedures() {
@@ -127,14 +133,19 @@ public final class XCFA {
 			return name;
 		}
 
-		public static final class Procedure {
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder().add(LABEL).add(name).toString();
+		}
+
+        public static final class Procedure {
 			private final String name;
 			private final Type rtype;
-			private final VarDecl<?> result;
+			private final VarDecl<? extends Type> result;
 
 			private final List<VarDecl<?>> params;
 
-			private final List<VarDecl<?>> vars;
+			private final List<VarDecl<?>> localVars;
 
 			private final List<Location> locs;
 			private final Location initLoc;
@@ -146,7 +157,7 @@ public final class XCFA {
 			private Procedure(final Builder builder) {
 				rtype = builder.rtype;
 				params = ImmutableList.copyOf(builder.params);
-				vars = ImmutableList.copyOf(builder.vars);
+				localVars = ImmutableList.copyOf(builder.localVars);
 				locs = ImmutableList.copyOf(builder.locs);
 				initLoc = builder.initLoc;
 				errorLoc = builder.errorLoc;
@@ -168,8 +179,8 @@ public final class XCFA {
 				return Collections.unmodifiableList(params);
 			}
 
-			public List<VarDecl<?>> getVars() {
-				return Collections.unmodifiableList(vars);
+			public List<VarDecl<?>> getLocalVars() {
+				return Collections.unmodifiableList(localVars);
 			}
 
 			public List<Location> getLocs() {
@@ -192,11 +203,16 @@ public final class XCFA {
 				return Collections.unmodifiableList(edges);
 			}
 
-			public VarDecl<?> getResult() {
+			public VarDecl<? extends Type> getResult() {
 				return result;
 			}
 
 			public String getName() {
+				return name;
+			}
+
+			@Override
+			public String toString() {
 				return name;
 			}
 
@@ -230,6 +246,11 @@ public final class XCFA {
 				public List<Edge> getOutgoingEdges() {
 					return Collections.unmodifiableList(outgoingEdges);
 				}
+
+				@Override
+				public String toString() {
+					return name;
+				}
 			}
 
 			public static final class Edge {
@@ -257,12 +278,26 @@ public final class XCFA {
 				public List<Stmt> getStmts() {
 					return Collections.unmodifiableList(stmts);
 				}
+
+				@Override
+				public String toString() {
+					return Utils.lispStringBuilder("Edge").add(
+							Utils.lispStringBuilder("Source").add(source)
+					).add(
+							Utils.lispStringBuilder("Target").add(target)
+					).add(
+							Utils.lispStringBuilder("Stmts").addAll(stmts)
+					).toString();
+				}
 			}
 
 			public static final class Builder {
+				/* result is a special variable name, which contains the value that
+				 * will be returned to the caller function.
+				 */
 				private static final String RESULT_NAME = "result";
 				private final List<VarDecl<?>> params;
-				private final List<VarDecl<?>> vars;
+				private final List<VarDecl<?>> localVars;
 				private final List<Location> locs;
 				private final List<Edge> edges;
 				private boolean built;
@@ -275,7 +310,7 @@ public final class XCFA {
 
 				private Builder() {
 					params = new ArrayList<>();
-					vars = new ArrayList<>();
+					localVars = new ArrayList<>();
 					locs = new ArrayList<>();
 					edges = new ArrayList<>();
 					built = false;
@@ -289,7 +324,7 @@ public final class XCFA {
 				public void createVar(final VarDecl<?> var) {
 					checkNotBuilt();
 					if (var.getName().equals(RESULT_NAME)) setResult(var);
-					vars.add(var);
+					localVars.add(var);
 				}
 
 				public Location addLoc(Location loc) {
@@ -321,8 +356,8 @@ public final class XCFA {
 					return Collections.unmodifiableList(params);
 				}
 
-				public List<VarDecl<?>> getVars() {
-					return Collections.unmodifiableList(vars);
+				public List<VarDecl<?>> getLocalVars() {
+					return Collections.unmodifiableList(localVars);
 				}
 
 				public List<Location> getLocs() {
@@ -391,7 +426,7 @@ public final class XCFA {
 
 		public static final class Builder {
 			private final List<VarDecl<?>> params;
-			private final List<VarDecl<?>> vars;
+			private final List<VarDecl<?>> threadLocalVars;
 			private final List<Procedure> procedures;
 			private boolean built;
 			private Procedure mainProcedure;
@@ -401,7 +436,7 @@ public final class XCFA {
 			private Builder() {
 				built = false;
 				params = new ArrayList<>();
-				vars = new ArrayList<>();
+				threadLocalVars = new ArrayList<>();
 				procedures = new ArrayList<>();
 			}
 
@@ -416,7 +451,7 @@ public final class XCFA {
 
 			public void createVar(final VarDecl<?> var) {
 				checkNotBuilt();
-				vars.add(var);
+				threadLocalVars.add(var);
 			}
 
 			public void addProcedure(final Procedure procedure) {
@@ -431,7 +466,7 @@ public final class XCFA {
 			public void setMainProcedure(final Procedure mainProcedure) {
 				checkNotBuilt();
 				checkArgument(this.mainProcedure == null, "Main procedure is already assigned in process.");
-				checkArgument(procedures.contains(mainProcedure));
+				checkArgument(procedures.contains(mainProcedure), "Procedures does not contain main procedure");
 				this.mainProcedure = mainProcedure;
 			}
 
@@ -455,13 +490,13 @@ public final class XCFA {
 	}
 
 	public static final class Builder {
-		private final List<VarDecl<?>> vars;
+		private final List<VarDecl<?>> globalVars;
 		private final List<XCFA.Process> processes;
 		private boolean built;
 		private XCFA.Process mainProcess;
 
 		private Builder() {
-			vars = new ArrayList<>();
+			globalVars = new ArrayList<>();
 			processes = new ArrayList<>();
 		}
 
@@ -471,7 +506,7 @@ public final class XCFA {
 
 		public void createVar(final VarDecl<?> var) {
 			checkNotBuilt();
-			vars.add(var);
+			globalVars.add(var);
 		}
 
 		public void addProcess(final Process process) {

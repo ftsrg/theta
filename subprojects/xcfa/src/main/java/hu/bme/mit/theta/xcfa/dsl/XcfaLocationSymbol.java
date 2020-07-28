@@ -28,16 +28,20 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 	private final boolean init;
 	private final boolean finall;
 	private final boolean error;
+	/** Name passed to Location to uniquely identify the location */
+	private final String canonicalName;
+	/** Name used for location resolution */
 	private final String name;
 	private final Map<String, String> dictionary;
 	private XCFA.Process.Procedure.Location loc = null;
 
-	XcfaLocationSymbol(final LocContext context) {
+	XcfaLocationSymbol(final XcfaProcedureSymbol parent, final LocContext context) {
 		checkNotNull(context);
 		init = (context.init != null);
 		finall = (context.finall != null);
 		error = (context.error != null);
 		name = context.id.getText();
+		canonicalName = parent.getCanonicalName() + "::" + name;
 		dictionary = new HashMap<>();
 	}
 
@@ -60,7 +64,7 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 
 	public XCFA.Process.Procedure.Location instantiate() {
 		if (loc != null) return loc;
-		return loc = new XCFA.Process.Procedure.Location(name, dictionary);
+		return loc = new XCFA.Process.Procedure.Location(canonicalName, dictionary);
 	}
 
 	void addDictionaryEntry(final String key, final String value) {

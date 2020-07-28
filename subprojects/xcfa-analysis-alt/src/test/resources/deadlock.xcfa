@@ -1,0 +1,8 @@
+main process mainProcess{
+
+	main procedure mainProcedure(){
+		init loc L0
+		loc L1
+		final loc L2
+	}
+}

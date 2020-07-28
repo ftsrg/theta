@@ -1,0 +1,61 @@
+var x : int
+
+// process1:
+// if (x == 1) { E: x = 2; }
+
+// process2:
+// C: x = 1; assert(x!=2);
+
+// x=1; assume(x==1); assume(x!=2); (x = 2;)
+//  q        p             q           p
+//i 0        1             2          (3)
+
+// x=1; assume(x!=2); assume(x==1); (x = 2;)
+//  q        q             p           p
+//i 0        1             2          (3)
+
+// x=1; assume(x==1); (x = 2;)
+//  q        p           p
+//  0        1          (2)
+// the program is unsafe
+
+main process process1 {
+
+	main procedure mainProcedure(){
+		init loc Pgate
+		loc Pset
+		final loc Pfin
+		var y : int
+
+        Pgate -> Pset { // b
+            assume x = 1
+        }
+        Pset -> Pfin {
+            x := 2
+        }
+	}
+}
+
+process process2 {
+
+	main procedure mainProcedure(){
+		init loc Qset
+		loc Qgate
+
+		final loc Qfin
+		error loc QErr
+
+        Qset -> Qgate {
+            x := 1
+        }
+
+        Qgate -> Qfin {
+            assume true
+        }
+
+        Qgate -> QErr {
+            assume x = 2
+        }
+	}
+}
+

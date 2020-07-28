@@ -1,0 +1,21 @@
+var x : synthetic
+main process valami {
+    main procedure mainProcedure() {
+        init loc L0
+        loc L1
+        final loc END
+
+        L0 -> L1 { lock(x) }
+        L1 -> END { unlock(x) }
+    }
+}
+process valami2 {
+    main procedure mainProcedure() {
+        init loc L0
+        loc L1
+        final loc END
+
+        L0 -> L1 { lock(x) }
+        L1 -> END { unlock(x) }
+    }
+}

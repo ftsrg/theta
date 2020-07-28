@@ -22,11 +22,89 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.Collection;
 
-final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
+final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void>, XcfaStmtVisitor<Collection<VarDecl<?>>, Void> {
+
+	@Override
+	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
+		// TODO this only lists the passed parameters, not \
+		// the variables where the procedure stores them.
+		// This is not a problem for xcfa-analysis, because only globals are returned.
+		param.addAll(stmt.getParams());
+		return null;
+	}
+
+	@Override
+	public Void visit(StoreStmt storeStmt, Collection<VarDecl<?>> param) {
+		param.add(storeStmt.getLhs());
+		param.add(storeStmt.getRhs());
+		return null;
+	}
+
+	@Override
+	public Void visit(LoadStmt loadStmt, Collection<VarDecl<?>> param) {
+		param.add(loadStmt.getLhs());
+		param.add(loadStmt.getRhs());
+		return null;
+	}
+
+	@Override
+	public Void visit(AtomicBeginStmt atomicBeginStmt, Collection<VarDecl<?>> param) {
+		// TODO return list of all variables touched by any stmt that can be accessed from here?
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public Void visit(AtomicEndStmt atomicEndStmt, Collection<VarDecl<?>> param) {
+		// TODO return list of all variables touched by any stmt that can be accessed from here?
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public Void visit(NotifyAllStmt notifyAllStmt, Collection<VarDecl<?>> param) {
+		param.add(notifyAllStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(NotifyStmt notifyStmt, Collection<VarDecl<?>> param) {
+		param.add(notifyStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(WaitStmt waitStmt, Collection<VarDecl<?>> param) {
+		param.add(waitStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(LockStmt lockStmt, Collection<VarDecl<?>> param) {
+		param.add(lockStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(UnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
+		param.add(unlockStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(ExitWaitStmt exitWaitStmt, Collection<VarDecl<?>> param) {
+		param.add(exitWaitStmt.getSyncVar());
+		return null;
+	}
+
+	@Override
+	public Void visit(EnterWaitStmt enterWaitStmt, Collection<VarDecl<?>> param) {
+		param.add(enterWaitStmt.getSyncVar());
+		return null;
+	}
 
 	private static final class LazyHolder {
 		private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
@@ -65,7 +143,8 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(XcfaStmt xcfaStmt, Collection<VarDecl<?>> param) {
-		throw new UnsupportedOperationException("Not yet implemented"); //TODO
+		xcfaStmt.accept(this, param);
+		return null;
 	}
 
 }
