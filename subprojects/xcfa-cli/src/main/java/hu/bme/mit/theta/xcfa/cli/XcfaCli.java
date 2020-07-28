@@ -15,10 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.cli;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
@@ -49,14 +59,6 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.tocfa.Xcfa2Cfa;
 import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA compatible XCFA.
@@ -101,7 +103,7 @@ public class XcfaCli {
 	Boolean benchmarkMode = false;
 
 	@Parameter(names = "--cex", description = "Log concrete counterexample")
-	Boolean cexfile = false;
+	String cexfile = null; // TODO basic change...
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -141,8 +143,8 @@ public class XcfaCli {
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
 			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile) {
-				writeCex(status.asUnsafe());
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(cexfile, status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -165,13 +167,13 @@ public class XcfaCli {
 		String[] models = model.split(",");
 		int N = models.length;
 		
-		if (N == 1) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-				final CFA cfa = xcfa.createCFA();
-				return cfa;
-			}
-		}
+		//if (N == 1) {
+		//	try (InputStream inputStream = new FileInputStream(model)) {
+		//		final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+		//		final CFA cfa = xcfa.createCFA();
+		//		return cfa;
+		//	}
+		//}
 
 		ArrayList<InputStream> streams = new ArrayList<>(N);
 
@@ -184,7 +186,7 @@ public class XcfaCli {
 			var cfa = Xcfa2Cfa.toCfa(xcfa);
 			return cfa;
 		} finally {
-			for (int i = 0; i < N; N++) {
+			for (int i = 0; i < N; i++) {
 				if (streams.get(i) != null) {
 					streams.get(i).close();
 				}
@@ -230,9 +232,16 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeCex(final Unsafe<?, ?> status) {
+	private void writeCex(String cexFile, final Unsafe<?, ?> status) {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
-		logger.write(Level.RESULT, "%s", concrTrace);
+		try {
+			var c = new PrintWriter(new File(cexFile));
+			c.print(concrTrace);
+			c.close();
+		} catch (IOException ex) {
+			// XXX
+		}
+//		logger.write(Level.RESULT, "%s", concrTrace);
 	}
 }
