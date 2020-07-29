@@ -19,26 +19,26 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 
-public final class ModExpr extends BinaryExpr<IntType, IntType> {
+public final class IntModExpr extends ModExpr<IntType> {
 
 	private static final int HASH_SEED = 109;
 	private static final String OPERATOR_LABEL = "mod";
 
-	private ModExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntModExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
-	public static ModExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return new ModExpr(leftOp, rightOp);
+	public static IntModExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntModExpr(leftOp, rightOp);
 	}
 
-	public static ModExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+	public static IntModExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Expr<IntType> newLeftOp = cast(leftOp, Int());
 		final Expr<IntType> newRightOp = cast(rightOp, Int());
-		return ModExpr.of(newLeftOp, newRightOp);
+		return IntModExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -54,21 +54,21 @@ public final class ModExpr extends BinaryExpr<IntType, IntType> {
 	}
 
 	@Override
-	public ModExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public IntModExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return ModExpr.of(leftOp, rightOp);
+			return IntModExpr.of(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public ModExpr withLeftOp(final Expr<IntType> leftOp) {
+	public IntModExpr withLeftOp(final Expr<IntType> leftOp) {
 		return with(leftOp, getRightOp());
 	}
 
 	@Override
-	public ModExpr withRightOp(final Expr<IntType> rightOp) {
+	public IntModExpr withRightOp(final Expr<IntType> rightOp) {
 		return with(getLeftOp(), rightOp);
 	}
 
@@ -76,8 +76,8 @@ public final class ModExpr extends BinaryExpr<IntType, IntType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ModExpr) {
-			final ModExpr that = (ModExpr) obj;
+		} else if (obj instanceof IntModExpr) {
+			final IntModExpr that = (IntModExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;
