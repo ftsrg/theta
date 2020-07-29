@@ -22,9 +22,9 @@ The runnable jar file will appear under _build/libs/_ with the name _theta-sts-c
 ### Docker (beta)
 
 An experimental Dockerfile is also available under the _docker_ directory in the root of the repository.
-The image can be built using the following command:
+The image can be built using the following command (from the root of the repository):
 ```
-docker build -t theta-sts-cli -f theta-sts-cli.Dockerfile .
+docker build -t theta-sts-cli -f docker/theta-sts-cli.Dockerfile .
 ```
 
 The script `run-theta-sts-cli.sh` can be used for running the containerized version on models residing on the host:
