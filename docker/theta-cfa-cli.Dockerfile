@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y libgomp1
 
 RUN mkdir theta
-COPY .. theta
+COPY . theta
 RUN cd theta && \
     ./gradlew theta-cfa-cli:build && \
     cd .. && \
