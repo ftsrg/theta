@@ -32,6 +32,7 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
+	|   bvType
 	;
 
 typeList
@@ -58,6 +59,19 @@ arrayType
 	:	LBRACK indexTypes=typeList RBRACK RARROW elemType=type
 	;
 
+bvType
+    :   ubvType
+    |   sbvType
+    ;
+
+ubvType
+    :   UBVTYPE LBRACK size=INT RBRACK
+    ;
+
+sbvType
+    :   SBVTYPE LBRACK size=INT RBRACK
+    ;
+
 BOOLTYPE
 	:	'bool'
 	;
@@ -69,6 +83,18 @@ INTTYPE
 RATTYPE
 	:	'rat'
 	;
+
+UBVTYPE
+    :   'bv'
+    |   'bitvec'
+    |   'ubv'
+    |   'ubitvec'
+    ;
+
+SBVTYPE
+    :   'sbv'
+    |   'sbitvec'
+    ;
 
 // E X P R E S S I O N S
 
@@ -129,8 +155,24 @@ equalityExpr
 	;
 
 relationExpr
-	:	leftOp=additiveExpr (oper=(LT | LEQ | GT | GEQ) rightOp=additiveExpr)?
+	:	leftOp=bitwiseOrExpr (oper=(LT | LEQ | GT | GEQ) rightOp=bitwiseOrExpr)?
 	;
+
+bitwiseOrExpr
+    :   leftOp=bitwiseXorExpr (oper=BITWISE_OR rightOp=bitwiseXorExpr)?
+    ;
+
+bitwiseXorExpr
+    :   leftOp=bitwiseAndExpr (oper=BITWISE_XOR rightOp=bitwiseAndExpr)?
+    ;
+
+bitwiseAndExpr
+    :   leftOp=bitwiseShiftExpr (oper=BITWISE_AND rightOp=bitwiseShiftExpr)?
+    ;
+
+bitwiseShiftExpr
+    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_SHIFT_RIGHT) rightOp=additiveExpr)?
+    ;
 
 additiveExpr
 	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS) ops+=multiplicativeExpr)*
@@ -141,9 +183,14 @@ multiplicativeExpr
 	;
 
 negExpr
-	:	accessorExpr
+	:	bitwiseNotExpr
 	|	MINUS op=negExpr
 	;
+
+bitwiseNotExpr
+    :   accessorExpr
+    |   BITWISE_NOT op=bitwiseNotExpr
+    ;
 
 accessorExpr
 	:	op=primaryExpr (accesses+=access)*
@@ -172,6 +219,7 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
+	|   bvLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -191,6 +239,10 @@ intLitExpr
 ratLitExpr
 	:	num=INT PERCENT denom=INT
 	;
+
+bvLitExpr
+    :   bv=BV
+    ;
 
 idExpr
 	:	id=ID
@@ -276,6 +328,30 @@ PERCENT
 	:	'%'
 	;
 
+BITWISE_OR
+    :   '|'
+    ;
+
+BITWISE_XOR
+    :   '^'
+    ;
+
+BITWISE_AND
+    :   '&'
+    ;
+
+BITWISE_SHIFT_LEFT
+    :   LT LT
+    ;
+
+BITWISE_SHIFT_RIGHT
+    :   GT GT
+    ;
+
+BITWISE_NOT
+    :   '~'
+    ;
+
 TRUE:	'true'
 	;
 	
@@ -321,6 +397,11 @@ ASSUME
 	;
 
 // B A S I C   T O K E N S
+
+BV  :   NAT '\'b' ('s'|'u')? [0-1]+
+    |   NAT '\'d' ('s'|'u')? INT
+    |   NAT '\'x' ('s'|'u')? [0-9a-fA-F]+
+    ;
 
 INT	:	SIGN? NAT
 	;

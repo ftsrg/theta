@@ -12,8 +12,8 @@
  * - {@link hu.bme.mit.theta.core.type.inttype.IntSubExpr}: subtraction
  * - {@link hu.bme.mit.theta.core.type.inttype.IntMulExpr}: multiplication
  * - {@link hu.bme.mit.theta.core.type.inttype.IntDivExpr}: integer division
- * - {@link hu.bme.mit.theta.core.type.inttype.ModExpr}: modulus
- * - {@link hu.bme.mit.theta.core.type.inttype.RemExpr}: remainder
+ * - {@link hu.bme.mit.theta.core.type.inttype.IntModExpr}: modulus
+ * - {@link hu.bme.mit.theta.core.type.inttype.IntRemExpr}: remainder
  *
  * - {@link hu.bme.mit.theta.core.type.inttype.IntEqExpr}: equal
  * - {@link hu.bme.mit.theta.core.type.inttype.IntNegExpr}: not equal

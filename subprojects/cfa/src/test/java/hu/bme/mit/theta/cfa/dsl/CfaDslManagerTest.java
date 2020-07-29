@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,7 +56,11 @@ public final class CfaDslManagerTest {
 
 				{"/locking.cfa", 3, 9, 10, 10},
 
-				{"/counter5_true.cfa", 1, 6, 6, 6}
+				{"/counter5_true.cfa", 1, 6, 6, 6},
+
+				{"/bv.cfa", 1, 6, 6, 6},
+
+				{"/bv2.cfa", 1, 6, 6, 6}
 
 		});
 	}

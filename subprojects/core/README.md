@@ -1,7 +1,7 @@
 This project provides classes and utilities to build and manipulate first order logic (FOL) expressions, statements and related concepts, which serve as a basis for the formalisms and analyses.
 
 Classes include
-* types (e.g., Boolean, integer, rational, array),
+* types (e.g., Boolean, integer, rational, array, bitvector),
 see the [`package-info.java`](src/main/java/hu/bme/mit/theta/core/type/package-info.java) for more details,
 * declarations (e.g., constants, variables),
 see the [`package-info.java`](src/main/java/hu/bme/mit/theta/core/decl/package-info.java) for more details,

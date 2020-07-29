@@ -19,27 +19,27 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 
-public final class RemExpr extends BinaryExpr<IntType, IntType> {
+public final class IntRemExpr extends RemExpr<IntType> {
 
 	private static final int HASH_SEED = 199;
 
 	private static final String OPERATOR_LABEL = "rem";
 
-	private RemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntRemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
-	public static RemExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return new RemExpr(leftOp, rightOp);
+	public static IntRemExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntRemExpr(leftOp, rightOp);
 	}
 
-	public static RemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+	public static IntRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Expr<IntType> newLeftOp = cast(leftOp, Int());
 		final Expr<IntType> newRightOp = cast(rightOp, Int());
-		return RemExpr.of(newLeftOp, newRightOp);
+		return IntRemExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -55,21 +55,21 @@ public final class RemExpr extends BinaryExpr<IntType, IntType> {
 	}
 
 	@Override
-	public RemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public IntRemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return RemExpr.of(leftOp, rightOp);
+			return IntRemExpr.of(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public RemExpr withLeftOp(final Expr<IntType> leftOp) {
+	public IntRemExpr withLeftOp(final Expr<IntType> leftOp) {
 		return with(leftOp, getRightOp());
 	}
 
 	@Override
-	public RemExpr withRightOp(final Expr<IntType> rightOp) {
+	public IntRemExpr withRightOp(final Expr<IntType> rightOp) {
 		return with(getLeftOp(), rightOp);
 	}
 
@@ -77,8 +77,8 @@ public final class RemExpr extends BinaryExpr<IntType, IntType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof RemExpr) {
-			final RemExpr that = (RemExpr) obj;
+		} else if (obj instanceof IntRemExpr) {
+			final IntRemExpr that = (IntRemExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;

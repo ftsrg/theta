@@ -48,8 +48,8 @@ import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -68,7 +68,7 @@ public final class ExprWriter {
 	private final DispatchTable<String> table;
 
 	private static class LazyHolder {
-		private static ExprWriter INSTANCE = new ExprWriter();
+		private static final ExprWriter INSTANCE = new ExprWriter();
 	}
 
 	public static ExprWriter instance() {
@@ -112,9 +112,9 @@ public final class ExprWriter {
 
 				.addCase(IntDivExpr.class, e -> infixBinary(e, " / "))
 
-				.addCase(ModExpr.class, e -> infixBinary(e, " mod "))
+				.addCase(IntModExpr.class, e -> infixBinary(e, " mod "))
 
-				.addCase(RemExpr.class, e -> infixBinary(e, " rem "))
+				.addCase(IntRemExpr.class, e -> infixBinary(e, " rem "))
 
 				.addCase(IntEqExpr.class, e -> infixBinary(e, " = "))
 
