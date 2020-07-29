@@ -1,10 +1,11 @@
 FROM openjdk:11.0.6-slim
 
 RUN apt-get update && \
-    apt-get install -y git libgomp1
+    apt-get install -y libgomp1
 
-RUN git clone https://github.com/FTSRG/theta.git && \
-    cd theta && \
+RUN mkdir theta
+COPY .. theta
+RUN cd theta && \
     ./gradlew theta-cfa-cli:build && \
     cd .. && \
     mv theta/subprojects/cfa-cli/build/libs/theta-cfa-cli-*-all.jar ./theta-cfa-cli.jar
