@@ -1,0 +1,17 @@
+main process cfa {
+    var x : bv[4]
+
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    final loc END
+    error loc ERR
+
+	L0 -> L1 { x := 4'b0001 ~>> 4'd1 }
+    L1 -> L2 { assume x = 4'b1000 }
+    L1 -> ERR { assume not (x = 4'b1000) }
+    L2 -> L3 { x := (x >> 4'd1) >>> 4'd1 }
+    L3 -> END { assume x = 4'b0110 }
+    L3 -> ERR { assume not (x = 4'b0110) }
+}

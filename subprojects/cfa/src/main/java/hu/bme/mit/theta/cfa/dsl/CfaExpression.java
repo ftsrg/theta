@@ -366,8 +366,14 @@ final class CfaExpression {
 				switch (ctx.oper.getType()) {
 					case BITWISE_SHIFT_LEFT:
 						return BvExprs.ShiftLeft(leftOp, rightOp);
-					case BITWISE_SHIFT_RIGHT:
-						return BvExprs.ShiftRight(leftOp, rightOp);
+					case BITWISE_ARITH_SHIFT_RIGHT:
+						return BvExprs.ArithShiftRight(leftOp, rightOp);
+					case BITWISE_LOGIC_SHIFT_RIGHT:
+						return BvExprs.LogicShiftRight(leftOp, rightOp);
+					case BITWISE_ROTATE_LEFT:
+						return BvExprs.RotateLeft(leftOp, rightOp);
+					case BITWISE_ROTATE_RIGHT:
+						return BvExprs.RotateRight(leftOp, rightOp);
 					default:
 						throw new AssertionError();
 				}

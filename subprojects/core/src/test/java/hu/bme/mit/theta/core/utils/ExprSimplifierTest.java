@@ -63,7 +63,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import org.junit.Test;
 
@@ -583,7 +582,7 @@ public class ExprSimplifierTest {
 
 		assertEquals(
 			Bv(new boolean[] {false, false, false, true}, true),
-			simplify(BvExprs.ShiftRight(
+			simplify(BvExprs.ArithShiftRight(
 				Bv(new boolean[] {false, true, false, false}, true),
 				Bv(new boolean[] {false, false, true, false}, true)
 			))
@@ -591,7 +590,7 @@ public class ExprSimplifierTest {
 
 		assertEquals(
 			Bv(new boolean[] {true, true, true, false}, true),
-			simplify(BvExprs.ShiftRight(
+			simplify(BvExprs.ArithShiftRight(
 				Bv(new boolean[] {true, true, false, false}, true),
 				Bv(new boolean[] {false, false, false, true}, true)
 			))

@@ -66,8 +66,20 @@ public final class BvExprs {
         return BvShiftLeftExpr.of(leftOp, rightOp);
     }
 
-    public static BvShiftRightExpr ShiftRight(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvShiftRightExpr.of(leftOp, rightOp);
+    public static BvArithShiftRightExpr ArithShiftRight(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvArithShiftRightExpr.of(leftOp, rightOp);
+    }
+
+    public static BvLogicShiftRightExpr LogicShiftRight(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvLogicShiftRightExpr.of(leftOp, rightOp);
+    }
+
+    public static BvRotateLeftExpr RotateLeft(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvRotateLeftExpr.of(leftOp, rightOp);
+    }
+
+    public static BvRotateRightExpr RotateRight(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvRotateRightExpr.of(leftOp, rightOp);
     }
 
     public static BvEqExpr Eq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {

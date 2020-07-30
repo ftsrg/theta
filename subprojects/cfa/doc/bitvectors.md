@@ -81,8 +81,11 @@ These operations are specific to bitvectors only. These operations require that 
 - **Bitwise and**: Ands two bitvectors; `a & b`
 - **Bitwise or**: Ors two bitvectors; `a | b`
 - **Bitwise xor**: XORs two bitvectors; `a ^ b`
-- **Bitwise shift left**: Shifts a to left with b; `a << b`
-- **Bitwise shift right**: Shifts a to right with b; `a >> b`
+- **Bitwise shift left**: Shifts *a* to the left with *b*; `a << b`
+- **Bitwise arithmetic shift right**: Shifts *a* arithmetically to the right with *b*; `a >> b`
+- **Bitwise logical shift right**: Shifts *a* logically to the right with *b*; `a >>> b`
+- **Bitwise rotate left**: Rotates *a* to the left with *b*; `a <<~ b`
+- **Bitwise rotate right**: Rotates *a* to the right with *b*; `a ~>> b`
 - **Bitwise not:** Negates all the bits in bitvectors; `~a`
 
 ### Relational operations
