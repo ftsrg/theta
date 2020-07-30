@@ -32,16 +32,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
@@ -107,6 +98,7 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.ParenExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RatLitExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RelationExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TrueExprContext;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.XorExprContext;
 
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
@@ -225,6 +217,17 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Stream<Expr<BoolType>> opStream = ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
 			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return Or(ops);
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	@Override
+	public Expr<?> visitXorExpr(final XorExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+			return Xor(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
 		}
