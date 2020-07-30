@@ -400,7 +400,7 @@ public final class Z3SolverTest {
 		solver.push();
 
 		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.ShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true}, false)), cx.getRef()));
+		solver.add(BvExprs.Eq(BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true}, false)), cx.getRef()));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
