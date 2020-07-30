@@ -34,7 +34,7 @@ Expressions of the STS include the following.
 - Primed expressions (only in transition expression) to represent the next state, e.g., `x'`.
 - Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
 - Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
-- Boolean operators, e.g., `and`, `or`, `not`, `imply`, `iff`.
+- Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
 - Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
 - Conditional: `if . then . else .`
 - Array read (`a[i]`) and write (`a[i <- v]`).
