@@ -6,23 +6,23 @@ import hu.bme.mit.theta.core.type.Expr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
-public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
+public class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 965;
     private static final String OPERATOR_LABEL = ">>";
 
-    private BvShiftRightExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    private BvArithShiftRightExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
         checkAllTypesEqual(leftOp, rightOp);
     }
 
-    public static BvShiftRightExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvShiftRightExpr(leftOp, rightOp);
+    public static BvArithShiftRightExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return new BvArithShiftRightExpr(leftOp, rightOp);
     }
 
-    public static BvShiftRightExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+    public static BvArithShiftRightExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
         final Expr<BvType> newLeftOp = castBv(leftOp);
         final Expr<BvType> newRightOp = castBv(rightOp);
-        return BvShiftRightExpr.of(newLeftOp, newRightOp);
+        return BvArithShiftRightExpr.of(newLeftOp, newRightOp);
     }
 
     @Override
@@ -34,25 +34,25 @@ public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
     public BvLitExpr eval(final Valuation val) {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-        return leftOpVal.shiftRight(rightOpVal);
+        return leftOpVal.arithShiftRight(rightOpVal);
     }
 
     @Override
-    public BvShiftRightExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    public BvArithShiftRightExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
-            return BvShiftRightExpr.of(leftOp, rightOp);
+            return BvArithShiftRightExpr.of(leftOp, rightOp);
         }
     }
 
     @Override
-    public BvShiftRightExpr withLeftOp(final Expr<BvType> leftOp) {
+    public BvArithShiftRightExpr withLeftOp(final Expr<BvType> leftOp) {
         return with(leftOp, getRightOp());
     }
 
     @Override
-    public BvShiftRightExpr withRightOp(final Expr<BvType> rightOp) {
+    public BvArithShiftRightExpr withRightOp(final Expr<BvType> rightOp) {
         return with(getLeftOp(), rightOp);
     }
 
@@ -60,8 +60,8 @@ public class BvShiftRightExpr extends BinaryExpr<BvType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvShiftRightExpr) {
-            final BvShiftRightExpr that = (BvShiftRightExpr) obj;
+        } else if (obj instanceof BvArithShiftRightExpr) {
+            final BvArithShiftRightExpr that = (BvArithShiftRightExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
