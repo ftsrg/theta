@@ -51,7 +51,7 @@ Expressions of the CFA include the following.
 - Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
 - Conditional: `if . then . else .`
 - Array read (`a[i]`) and write (`a[i <- v]`).
-- Bitvector specific operators, e.g., `&`, `|`, `^`, `<<`, `>>`, `~`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+- Bitvector specific operators, e.g., `&`, `|`, `^`, `<<`, `>>`, `>>>`, `<<~`, `~>>`, `~`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
 
 ### Textual representation (DSL)
 
