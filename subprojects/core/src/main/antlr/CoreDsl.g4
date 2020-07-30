@@ -171,7 +171,7 @@ bitwiseAndExpr
     ;
 
 bitwiseShiftExpr
-    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_SHIFT_RIGHT) rightOp=additiveExpr)?
+    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_ARITH_SHIFT_RIGHT | BITWISE_LOGIC_SHIFT_RIGHT | BITWISE_ROTATE_LEFT | BITWISE_ROTATE_RIGHT) rightOp=additiveExpr)?
     ;
 
 additiveExpr
@@ -344,8 +344,20 @@ BITWISE_SHIFT_LEFT
     :   LT LT
     ;
 
-BITWISE_SHIFT_RIGHT
+BITWISE_ARITH_SHIFT_RIGHT
     :   GT GT
+    ;
+
+BITWISE_LOGIC_SHIFT_RIGHT
+   :   GT GT GT
+   ;
+
+BITWISE_ROTATE_LEFT
+    :   LT LT BITWISE_NOT
+    ;
+
+BITWISE_ROTATE_RIGHT
+    :   BITWISE_NOT GT GT
     ;
 
 BITWISE_NOT

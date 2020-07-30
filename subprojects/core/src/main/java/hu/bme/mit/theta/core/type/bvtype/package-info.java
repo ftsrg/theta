@@ -20,7 +20,10 @@
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvOrExpr}: bitwise or
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvXorExpr}: bitwise xor
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr}: shift left
- * - {@link hu.bme.mit.theta.core.type.bvtype.BvShiftRightExpr}: shift right
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr}: arithmetic shift right
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr}: logical shift right
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr}: rotate left
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr}: rotate right
  *
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvEqExpr}: equal
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvNeqExpr}: not equal

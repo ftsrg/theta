@@ -169,7 +169,13 @@ public final class ExprSimplifier {
 
 			.addCase(BvShiftLeftExpr.class, ExprSimplifier::simplifyBvShiftLeft)
 
-			.addCase(BvShiftRightExpr.class, ExprSimplifier::simplifyBvShiftRight)
+			.addCase(BvArithShiftRightExpr.class, ExprSimplifier::simplifyBvArithShiftRight)
+
+			.addCase(BvLogicShiftRightExpr.class, ExprSimplifier::simplifyBvLogicShiftRight)
+
+			.addCase(BvRotateLeftExpr.class, ExprSimplifier::simplifyBvRotateLeft)
+
+			.addCase(BvRotateRightExpr.class, ExprSimplifier::simplifyBvRotateRight)
 
 			.addCase(BvEqExpr.class, ExprSimplifier::simplifyBvEq)
 
@@ -1264,14 +1270,53 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
-	private static Expr<BvType> simplifyBvShiftRight(final BvShiftRightExpr expr, final Valuation val) {
+	private static Expr<BvType> simplifyBvArithShiftRight(final BvArithShiftRightExpr expr, final Valuation val) {
 		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
 		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
 		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
 			final BvLitExpr leftLit = (BvLitExpr) leftOp;
 			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.shiftRight(rightLit);
+			return leftLit.arithShiftRight(rightLit);
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BvType> simplifyBvLogicShiftRight(final BvLogicShiftRightExpr expr, final Valuation val) {
+		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+			final BvLitExpr leftLit = (BvLitExpr) leftOp;
+			final BvLitExpr rightLit = (BvLitExpr) rightOp;
+			return leftLit.logicShiftRight(rightLit);
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BvType> simplifyBvRotateLeft(final BvRotateLeftExpr expr, final Valuation val) {
+		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+			final BvLitExpr leftLit = (BvLitExpr) leftOp;
+			final BvLitExpr rightLit = (BvLitExpr) rightOp;
+			return leftLit.rotateLeft(rightLit);
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BvType> simplifyBvRotateRight(final BvRotateRightExpr expr, final Valuation val) {
+		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+			final BvLitExpr leftLit = (BvLitExpr) leftOp;
+			final BvLitExpr rightLit = (BvLitExpr) rightOp;
+			return leftLit.rotateRight(rightLit);
 		}
 
 		return expr.with(leftOp, rightOp);
