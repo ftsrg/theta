@@ -294,6 +294,8 @@ public final class XCFA {
 			public static final class Builder {
 				/* result is a special variable name, which contains the value that
 				 * will be returned to the caller function.
+				 * Currently *_RES_VAR is understood as a result variable.
+				 * This is because Gazer uses this too.
 				 */
 				private static final String RESULT_NAME = "result";
 				private final List<VarDecl<?>> params;
@@ -307,6 +309,11 @@ public final class XCFA {
 				private Location initLoc;
 				private Location errorLoc;
 				private Location finalLoc;
+
+				private boolean isResultVariable(String varName) {
+					// the first is for Gazer
+					return varName.endsWith("RES_VAR") || varName.equals(RESULT_NAME);
+				}
 
 				private Builder() {
 					params = new ArrayList<>();
@@ -323,7 +330,7 @@ public final class XCFA {
 
 				public void createVar(final VarDecl<?> var) {
 					checkNotBuilt();
-					if (var.getName().equals(RESULT_NAME)) setResult(var);
+					if (isResultVariable(var.getName())) setResult(var);
 					localVars.add(var);
 				}
 
