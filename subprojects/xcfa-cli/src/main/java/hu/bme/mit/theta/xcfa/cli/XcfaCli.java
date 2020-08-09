@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.algorithm.Config;
 import hu.bme.mit.theta.xcfa.alt.algorithm.XcfaChecker;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -91,7 +92,8 @@ public class XcfaCli {
 
         try {
             final Stopwatch sw = Stopwatch.createStarted();
-            final XCFA xcfa = loadModel();
+            final XCFA _xcfa = loadModel();
+            final XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
 
             final var config =
                     partialOrder
