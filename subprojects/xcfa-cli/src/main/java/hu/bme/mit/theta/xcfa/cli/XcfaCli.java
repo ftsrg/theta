@@ -130,6 +130,11 @@ public class XcfaCli {
     }
 
     private void printResult(final SafetyResult<?, ?> status, final XCFA xcfa, final long totalTimeMs) {
+        if (status.isSafe()) {
+            System.out.println("(SafetyResult Safe)");
+        } else {
+            System.out.println("(SafetyResult Unsafe)");
+        }
         if (benchmarkMode) {
             final CegarStatistics stats = (CegarStatistics) status.getStats().get();
             writer.cell(status.isSafe());
