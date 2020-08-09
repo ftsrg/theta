@@ -44,7 +44,7 @@ public final class XcfaEdgeSplitterTransformation {
 				for (var origParam : origPc.getParams()) {
 					builderPc.createParam(origParam);
 				}
-				for (var origVar : origPc.getVars()) {
+				for (var origVar : origPc.getLocalVars()) {
 					builderPc.createVar(origVar);
 				}
 				builderPc.setRtype(origPc.getRtype());
@@ -56,7 +56,7 @@ public final class XcfaEdgeSplitterTransformation {
 					builderPs.setMainProcedure(pc);
 				}
 			}
-			for (var origVar : origPs.getVars()) {
+			for (var origVar : origPs.getThreadLocalVars()) {
 				builderPs.createVar(origVar);
 			}
 			var ps = builderPs.build();
@@ -65,7 +65,7 @@ public final class XcfaEdgeSplitterTransformation {
 				builder.setMainProcess(ps);
 			}
 		}
-		for (var origVar : original.getVars()) {
+		for (var origVar : original.getGlobalVars()) {
 			builder.createVar(origVar);
 		}
 		for (var q : postBuildData) {
@@ -123,7 +123,7 @@ public final class XcfaEdgeSplitterTransformation {
 	private Stmt copyStmt(Stmt stmt) {
 		if (stmt instanceof CallStmt) {
 			// We cannot yet fill the *new* procedure, because it might not have been built yet.
-			var cc = new CallStmt(((CallStmt) stmt).getVar(), null, ((CallStmt) stmt).getParams());
+			var cc = new CallStmt(((CallStmt) stmt).getResultVar(), null, ((CallStmt) stmt).getParams());
 			postBuildData.add(new CallStmtWithOldProcedure(cc, ((CallStmt) stmt).getProcedure()));
 			return cc;
 		} else {

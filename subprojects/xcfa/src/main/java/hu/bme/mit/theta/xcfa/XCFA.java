@@ -417,7 +417,7 @@ public final class XCFA {
 					return new Procedure(this);
 				}
 
-				private void setResult(VarDecl<?> result) {
+				public void setResult(VarDecl<?> result) {
 					this.result = result;
 				}
 
