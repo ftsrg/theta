@@ -76,7 +76,7 @@ public class XcfaCli {
 
     private void run() {
         try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+            JCommander.newBuilder().addObject(this).programName(JAR_NAME).acceptUnknownOptions(true).build().parse(args);
             logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
         } catch (final ParameterException ex) {
             System.out.println("Invalid parameters, details:");
