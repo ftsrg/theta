@@ -580,7 +580,7 @@ final class XcfaExpression {
 		@Override
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
 			Optional<? extends Symbol> opt = currentScope.resolve(ctx.id.getText());
-			checkState(opt.isPresent());
+			checkState(opt.isPresent(), "No variable named " + ctx.id.getText());
 			final InstantiatableSymbol symbol = (InstantiatableSymbol) opt.get();
 			final Decl<?> decl = (Decl<?>) symbol.instantiate();
 			return decl.getRef();

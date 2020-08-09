@@ -132,7 +132,7 @@ final class XcfaStatement {
 			} else var = null;
 
 			Optional<? extends Symbol> opt = scope.resolve(callee);
-			checkState(opt.isPresent());
+			checkState(opt.isPresent(), "Callee not found: " + callee);
 			final InstantiatableSymbol calleeSymbol = (InstantiatableSymbol) opt.get();
 			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
 			XCFA.Process.Procedure procedure = (XCFA.Process.Procedure) calleeSymbol.instantiate();
