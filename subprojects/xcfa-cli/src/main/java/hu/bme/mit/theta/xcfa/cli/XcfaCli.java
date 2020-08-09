@@ -57,7 +57,7 @@ public class XcfaCli {
     Boolean benchmarkMode = false;
 
     @Parameter(names = "--cex", description = "Log concrete counterexample")
-    Boolean cexfile = false;
+    String cexfile = null;
 
     @Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
@@ -103,8 +103,8 @@ public class XcfaCli {
             final SafetyResult<?, ?> status = checker.check();
             sw.stop();
             printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile) {
-                writeCex(status.asUnsafe());
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(status.asUnsafe(), cexfile);
             }
         } catch (final Throwable ex) {
             printError(ex);
@@ -162,7 +162,11 @@ public class XcfaCli {
         }
     }
 
-    private void writeCex(final SafetyResult.Unsafe<?, ?> status) {
-        logger.write(Logger.Level.RESULT, "%s", status.getTrace());
+    private void writeCex(final SafetyResult.Unsafe<?, ?> status, String cexfile) {
+        try (var writer = new PrintWriter(cexfile)) {
+            writer.print(status.getTrace());
+        } catch (IOException ex) {
+            logger.write(Logger.Level.RESULT, "Failed to write counter-example!");
+        }
     }
 }
