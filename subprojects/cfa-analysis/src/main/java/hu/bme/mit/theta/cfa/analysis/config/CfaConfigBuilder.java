@@ -280,6 +280,7 @@ public class CfaConfigBuilder {
 			switch (initPrec){
 				case EMPTY:
 					prec = precGranularity.createPrec(ExplPrec.empty());
+					break;
 				case ALLVARS:
 					prec = precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
 					break;
@@ -352,6 +353,7 @@ public class CfaConfigBuilder {
 			switch (initPrec){
 				case EMPTY:
 					prec = precGranularity.createPrec(PredPrec.of());
+					break;
 				case ALLASSUMES:
 					switch (precGranularity){
 						case LOCAL:
