@@ -48,10 +48,6 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.*;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaAllAssumesInitPrec;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaAllVarsInitPrec;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaEmptyInitPrec;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaInitPrec;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
@@ -62,8 +58,14 @@ import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
+
+import java.util.*;
 
 public class CfaConfigBuilder {
 	public enum Domain {
@@ -166,13 +168,7 @@ public class CfaConfigBuilder {
 	}
 
 	public enum InitPrec {
-		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec()), ALLASSUMES(new CfaAllAssumesInitPrec());
-
-		public final CfaInitPrec builder;
-
-		private InitPrec(final CfaInitPrec builder) {
-			this.builder = builder;
-		}
+		EMPTY, ALLVARS, ALLASSUMES;
 	}
 
 	private Logger logger = NullLogger.getInstance();
@@ -279,7 +275,18 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(initPrec.builder.createExpl(cfa));
+			CfaPrec<ExplPrec> prec;
+
+			switch (initPrec){
+				case EMPTY:
+					prec = precGranularity.createPrec(ExplPrec.empty());
+				case ALLVARS:
+					prec = precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
+					break;
+				default:
+					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
+							domain + " domain");
+			}
 
 			return CfaConfig.create(checker, prec);
 
@@ -340,7 +347,49 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<PredPrec> prec = precGranularity.createPrec(initPrec.builder.createPred(cfa));
+			CfaPrec<PredPrec> prec;
+
+			switch (initPrec){
+				case EMPTY:
+					prec = precGranularity.createPrec(PredPrec.of());
+				case ALLASSUMES:
+					switch (precGranularity){
+						case LOCAL:
+							Map<CFA.Loc, Set<Expr<BoolType>>> exprs = new HashMap<>();
+							for (CFA.Edge e : cfa.getEdges()) {
+								if (e.getStmt() instanceof AssumeStmt) {
+									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
+									Expr<BoolType> cond = assumeStmt.getCond();
+									if (!exprs.containsKey(e.getTarget()))
+										exprs.put(e.getTarget(), new HashSet<>());
+									exprs.get(e.getTarget()).add(ExprUtils.ponate(cond));
+								}
+							}
+							Map<CFA.Loc, PredPrec> precs = new HashMap<>();
+							for (Map.Entry<CFA.Loc, Set<Expr<BoolType>>> entry : exprs.entrySet())
+								precs.put(entry.getKey(), PredPrec.of(entry.getValue()));
+							prec = LocalCfaPrec.create(precs, PredPrec.of());
+							break;
+						case GLOBAL:
+							Set<Expr<BoolType>> assumes = new HashSet<>();
+							for (CFA.Edge e : cfa.getEdges()) {
+								if (e.getStmt() instanceof AssumeStmt) {
+									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
+									Expr<BoolType> cond = assumeStmt.getCond();
+									assumes.add(ExprUtils.ponate(cond));
+								}
+							}
+							prec = GlobalCfaPrec.create(PredPrec.of(assumes));
+							break;
+						default:
+							throw new UnsupportedOperationException(precGranularity +
+									" precision granularity is not supported with " + domain + " domain");
+					}
+					break;
+				default:
+					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
+							domain + " domain");
+			}
 
 			return CfaConfig.create(checker, prec);
 
