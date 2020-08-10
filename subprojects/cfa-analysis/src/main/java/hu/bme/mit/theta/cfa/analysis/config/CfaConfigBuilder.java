@@ -48,6 +48,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.*;
+import hu.bme.mit.theta.cfa.analysis.initprec.CfaAllAssumesInitPrec;
 import hu.bme.mit.theta.cfa.analysis.initprec.CfaAllVarsInitPrec;
 import hu.bme.mit.theta.cfa.analysis.initprec.CfaEmptyInitPrec;
 import hu.bme.mit.theta.cfa.analysis.initprec.CfaInitPrec;
@@ -165,7 +166,7 @@ public class CfaConfigBuilder {
 	}
 
 	public enum InitPrec {
-		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec());
+		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec()), ALLASSUMES(new CfaAllAssumesInitPrec());
 
 		public final CfaInitPrec builder;
 
