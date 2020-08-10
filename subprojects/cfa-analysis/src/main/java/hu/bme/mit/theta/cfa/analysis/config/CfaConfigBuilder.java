@@ -244,7 +244,7 @@ public class CfaConfigBuilder {
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
-			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
+			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner;
 
 			switch (refinement) {
 				case FW_BIN_ITP:
@@ -292,7 +292,7 @@ public class CfaConfigBuilder {
 			return CfaConfig.create(checker, prec);
 
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
-			PredAbstractor predAbstractor = null;
+			PredAbstractor predAbstractor;
 			switch (domain) {
 				case PRED_BOOL:
 					predAbstractor = PredAbstractors.booleanAbstractor(solver);
@@ -316,7 +316,7 @@ public class CfaConfigBuilder {
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
-			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
+			ExprTraceChecker<ItpRefutation> exprTraceChecker;
 			switch (refinement) {
 				case FW_BIN_ITP:
 					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
