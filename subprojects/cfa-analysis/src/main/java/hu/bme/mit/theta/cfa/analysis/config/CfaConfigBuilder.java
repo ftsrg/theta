@@ -357,19 +357,15 @@ public class CfaConfigBuilder {
 				case ALLASSUMES:
 					switch (precGranularity){
 						case LOCAL:
-							Map<CFA.Loc, Set<Expr<BoolType>>> exprs = new HashMap<>();
-							for (CFA.Edge e : cfa.getEdges()) {
-								if (e.getStmt() instanceof AssumeStmt) {
-									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
-									Expr<BoolType> cond = assumeStmt.getCond();
-									if (!exprs.containsKey(e.getTarget()))
-										exprs.put(e.getTarget(), new HashSet<>());
-									exprs.get(e.getTarget()).add(ExprUtils.ponate(cond));
-								}
-							}
 							Map<CFA.Loc, PredPrec> precs = new HashMap<>();
-							for (Map.Entry<CFA.Loc, Set<Expr<BoolType>>> entry : exprs.entrySet())
-								precs.put(entry.getKey(), PredPrec.of(entry.getValue()));
+							for (CFA.Loc l : cfa.getLocs()) {
+								Set<Expr<BoolType>> exprs = new HashSet<>();
+								for (CFA.Edge e : l.getInEdges()) {
+									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
+									exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
+								}
+								precs.put(l, PredPrec.of(exprs));
+							}
 							prec = LocalCfaPrec.create(precs, PredPrec.of());
 							break;
 						case GLOBAL:
@@ -377,8 +373,7 @@ public class CfaConfigBuilder {
 							for (CFA.Edge e : cfa.getEdges()) {
 								if (e.getStmt() instanceof AssumeStmt) {
 									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
-									Expr<BoolType> cond = assumeStmt.getCond();
-									assumes.add(ExprUtils.ponate(cond));
+									assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
 								}
 							}
 							prec = GlobalCfaPrec.create(PredPrec.of(assumes));
