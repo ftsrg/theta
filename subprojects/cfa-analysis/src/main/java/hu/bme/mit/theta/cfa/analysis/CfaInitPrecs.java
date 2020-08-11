@@ -26,8 +26,10 @@ public final class CfaInitPrecs {
             for (CFA.Edge e : l.getInEdges()) {
                 CFA.Edge running = e;
                 while (running != null) {
-                    AssumeStmt assumeStmt = (AssumeStmt) running.getStmt();
-                    exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
+                    if (running.getStmt() instanceof AssumeStmt) {
+                        AssumeStmt assumeStmt = (AssumeStmt) running.getStmt();
+                        exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
+                    }
                     CFA.Loc source = running.getSource();
                     running = null;
                     if (source.getInEdges().size() == 1 && source.getOutEdges().size() == 1)
