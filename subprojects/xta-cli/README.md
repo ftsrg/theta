@@ -17,9 +17,9 @@ The runnable jar file will appear under _build/libs/_ with the name _theta-xta-c
     - If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
 
-### Docker (beta)
+### Docker
 
-An experimental Dockerfile is also available under the _docker_ directory in the root of the repository.
+A Dockerfile is also available under the _docker_ directory in the root of the repository.
 The image can be built using the following command (from the root of the repository):
 ```
 docker build -t theta-xta-cli -f docker/theta-xta-cli.Dockerfile .
