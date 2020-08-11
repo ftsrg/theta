@@ -5,12 +5,12 @@ RUN apt-get update && \
 
 RUN mkdir theta
 COPY . theta
-RUN cd theta && \
+WORKDIR /theta
+RUN ./gradlew clean && \
     ./gradlew theta-xta-cli:build && \
-    cd .. && \
-    mv theta/subprojects/xta-cli/build/libs/theta-xta-cli-*-all.jar ./theta-xta-cli.jar
+    mv subprojects/xta-cli/build/libs/theta-xta-cli-*-all.jar /theta-xta-cli.jar
+WORKDIR /
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
-
 ENTRYPOINT ["java", "-jar", "theta-xta-cli.jar"]
 

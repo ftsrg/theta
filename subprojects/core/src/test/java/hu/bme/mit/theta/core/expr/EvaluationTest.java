@@ -56,7 +56,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static org.junit.Assert.assertEquals;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
