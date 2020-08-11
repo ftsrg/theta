@@ -51,7 +51,8 @@ All arguments are optional, except `--model`.
   More information on the abstract domains can be found in [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf), Sections 2.2.1 and 3.1.3._
 - `--initprec`: Initial precision of the abstraction.
   - `EMPTY`: Start with an empty initial precision.
-  - `ALLVARS`: Track all variables by default (only applicable if `--domain` is `EXPL`).
+  - `ALLVARS`: Track all variables by default. Only applicable if `--domain` is `EXPL`.
+  - `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable if `--domain` is `PRED_*`.
 - `--search`: Search strategy in the abstract state space, possible values:
   - `BFS`, `DFS`: Standard breadth- and depth-first search.
   - `ERR`: Guide the search based on the sytactical distance from the error location (see Section 3.1.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).

@@ -56,17 +56,10 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrecRefiner;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-
-import java.util.*;
 
 public class CfaConfigBuilder {
 	public enum Domain {
@@ -112,7 +105,7 @@ public class CfaConfigBuilder {
 
 		public final ExprSplitter splitter;
 
-		private PredSplit(final ExprSplitter splitter) {
+		PredSplit(final ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
 	}
@@ -358,33 +351,10 @@ public class CfaConfigBuilder {
 				case ALLASSUMES:
 					switch (precGranularity){
 						case LOCAL:
-							Map<CFA.Loc, PredPrec> precs = new HashMap<>();
-							for (CFA.Loc l : cfa.getLocs()) {
-								Set<Expr<BoolType>> exprs = new HashSet<>();
-								for (CFA.Edge e : l.getInEdges()) {
-									CFA.Edge running = e;
-									while (running != null) {
-										AssumeStmt assumeStmt = (AssumeStmt) running.getStmt();
-										exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
-										CFA.Loc source = running.getSource();
-										running = null;
-										if (source.getInEdges().size() == 1 && source.getOutEdges().size() == 1)
-											running = Utils.singleElementOf(source.getInEdges());
-									}
-								}
-								precs.put(l, PredPrec.of(exprs));
-							}
-							prec = LocalCfaPrec.create(precs, PredPrec.of());
+							prec = CfaInitPrecs.collectAssumesLocal(cfa);
 							break;
 						case GLOBAL:
-							Set<Expr<BoolType>> assumes = new HashSet<>();
-							for (CFA.Edge e : cfa.getEdges()) {
-								if (e.getStmt() instanceof AssumeStmt) {
-									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
-									assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
-								}
-							}
-							prec = GlobalCfaPrec.create(PredPrec.of(assumes));
+							prec = CfaInitPrecs.collectAssumesGlobal(cfa);
 							break;
 						default:
 							throw new UnsupportedOperationException(precGranularity +
