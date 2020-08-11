@@ -773,7 +773,7 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
-		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getElseElem().getType()), toTerm(expr.getElseElem()));
+		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
 		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
 			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
 		}
