@@ -30,7 +30,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class CfaTraceConcretizer {
 
