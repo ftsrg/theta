@@ -7,7 +7,7 @@ RUN mkdir theta
 COPY . theta
 WORKDIR theta
 RUN ./gradlew theta-sts-cli:build && \
-    mv theta/subprojects/sts-cli/build/libs/theta-sts-cli-*-all.jar ../theta-sts-cli.jar
+    mv subprojects/sts-cli/build/libs/theta-sts-cli-*-all.jar ../theta-sts-cli.jar
 WORKDIR ..
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"

@@ -6,8 +6,8 @@ RUN apt-get update && \
 RUN mkdir theta
 COPY . theta
 WORKDIR theta
-    ./gradlew theta-xta-cli:build && \
-    mv theta/subprojects/xta-cli/build/libs/theta-xta-cli-*-all.jar ../theta-xta-cli.jar
+RUN ./gradlew theta-xta-cli:build && \
+    mv subprojects/xta-cli/build/libs/theta-xta-cli-*-all.jar ../theta-xta-cli.jar
 WORKDIR ..
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
