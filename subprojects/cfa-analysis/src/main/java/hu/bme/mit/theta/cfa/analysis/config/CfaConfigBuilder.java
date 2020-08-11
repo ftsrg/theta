@@ -56,6 +56,7 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrecRefiner;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -361,8 +362,15 @@ public class CfaConfigBuilder {
 							for (CFA.Loc l : cfa.getLocs()) {
 								Set<Expr<BoolType>> exprs = new HashSet<>();
 								for (CFA.Edge e : l.getInEdges()) {
-									AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();
-									exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
+									CFA.Edge running = e;
+									while (running != null) {
+										AssumeStmt assumeStmt = (AssumeStmt) running.getStmt();
+										exprs.add(ExprUtils.ponate(assumeStmt.getCond()));
+										CFA.Loc source = running.getSource();
+										running = null;
+										if (source.getInEdges().size() == 1 && source.getOutEdges().size() == 1)
+											running = Utils.singleElementOf(source.getInEdges());
+									}
 								}
 								precs.put(l, PredPrec.of(exprs));
 							}
