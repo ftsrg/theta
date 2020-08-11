@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build sts Docker image
+    - name: Build STS Docker image
       run: docker build -t theta-sts-cli -f docker/theta-sts-cli.Dockerfile .
     - name: Run STS docker on example
       run: ./docker/run-theta-sts-cli.sh subprojects/sts/src/test/resources/simple1.system
