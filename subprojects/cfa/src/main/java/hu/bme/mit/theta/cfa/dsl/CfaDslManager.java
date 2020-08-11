@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import hu.bme.mit.theta.cfa.CFA;
@@ -39,7 +41,7 @@ public final class CfaDslManager {
 	}
 
 	public static CFA createCfa(final InputStream inputStream) throws IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
+		final CharStream input = CharStreams.fromStream(inputStream);
 
 		final CfaDslLexer lexer = new CfaDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
