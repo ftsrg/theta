@@ -1,7 +1,7 @@
 FROM openjdk:11.0.6-slim
 
 RUN apt-get update && \
-    apt-get install -y libgomp1
+    apt-get install -y --no-install-recommends libgomp1
 
 RUN mkdir theta
 COPY . theta
