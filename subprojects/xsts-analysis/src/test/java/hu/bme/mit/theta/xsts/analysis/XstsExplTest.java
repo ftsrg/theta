@@ -179,7 +179,7 @@ public class XstsExplTest {
 
 				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-//				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PROD}
+				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PROD}
 
 //				{ "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
