@@ -15,10 +15,12 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.pred.*;
+import hu.bme.mit.theta.analysis.prod2.DefaultPreStrengtheningOperator;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.ItpRefToProd2ExplPredPrec;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -261,6 +263,7 @@ public class XstsConfigBuilder {
                     = XstsAnalysis.create(Prod2Analysis.create(
                             ExplStmtAnalysis.create(solver, xsts.getInitFormula(),maxEnum),
                             PredAnalysis.create(solver, predAbstractor, xsts.getInitFormula()),
+                            Prod2ExplPredPreStrengtheningOperator.create(),
                             Prod2ExplPredStrengtheningOperator.create(solver)));
             final ArgBuilder<XstsState<Prod2State<ExplState,PredState>>, XstsAction, Prod2Prec<ExplPrec,PredPrec>> argBuilder = ArgBuilder.create(lts, analysis, target,
                     true);
