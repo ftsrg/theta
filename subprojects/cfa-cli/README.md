@@ -74,6 +74,7 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
   - `SEQ_ITP` (default): Sequence interpolation.
   - `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
   - `UNSAT_CORE`: Unsat cores, only available if `--domain` is `EXPL`.
+  - `UCB`: Unsat core based predicates as per [M. Leuckner et al.](https://www.researchgate.net/publication/300250376_A_New_Refinement_Strategy_for_CEGAR-Based_Industrial_Model_Checking). This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver).
   - _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
 - `--predsplit`: Splitting applied to predicates during refinement, possible values:
   - `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
