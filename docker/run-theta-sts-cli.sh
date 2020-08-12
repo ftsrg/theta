@@ -14,4 +14,4 @@ DIR=$(dirname "$ABSPATH")
 FILE=/host/$(basename "$ABSPATH")
 shift
 
-docker run $DOCKER_RUN_OPTIONS --mount type=bind,source="$DIR",target=/host theta-sts-cli:latest --model "$FILE" $@
+docker run $DOCKER_RUN_OPTIONS --mount type=bind,source="$DIR",target=/host theta-sts-cli:latest --model "$FILE" "$@"
