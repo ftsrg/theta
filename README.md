@@ -20,12 +20,12 @@ Tools are concrete instantiations of the framework to solve a certain problem us
 Currently, the following 3 tools are available.
 Follow the links for more information about each tool.
 
-* [`theta-cfa-cli`](subprojects/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
-  * [Gazer](https://github.com/FTSRG/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli.
-  * [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
-* [`theta-sts-cli`](subprojects/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
-  * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
-* [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
+  * [`theta-cfa-cli`](subprojects/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
+    * [Gazer](https://github.com/FTSRG/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli.
+    * [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
+  * [`theta-sts-cli`](subprojects/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
+    * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
+  * [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
 
 ## Extend Theta
 
@@ -86,10 +86,10 @@ To cite Theta, please use the following paper.
 ## Acknowledgements
 Supporters of the Theta project are listed below.
 
-* [MTA-BME Lendület Cyber-Physical Systems Research Group](http://lendulet.inf.mit.bme.hu/)
-* [Fault Tolerant Systems Research Group](https://inf.mit.bme.hu/en), [Department of Measurement and Information Systems](https://www.mit.bme.hu/eng/), [Budapest University of Technology and Economics](http://www.bme.hu/?language=en)
-* [Gedeon Richter’s](https://www.richter.hu/en-US/Pages/default.aspx) Talentum Foundation
-* Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2016](http://www.emet.gov.hu/felhivasok/nemzeti_tehetseg_program212/) (NTP-NFTÖ-16)
-* Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2018](http://www.emet.gov.hu/felhivasok/felhivas46/) (NTP-NFTÖ-18)
-* [CECRIS project](http://www.cecris-project.eu/)
-* [R5-COP project](http://www.r5-cop.eu/)
+  * [MTA-BME Lendület Cyber-Physical Systems Research Group](http://lendulet.inf.mit.bme.hu/)
+  * [Fault Tolerant Systems Research Group](https://inf.mit.bme.hu/en), [Department of Measurement and Information Systems](https://www.mit.bme.hu/eng/), [Budapest University of Technology and Economics](http://www.bme.hu/?language=en)
+  * [Gedeon Richter’s](https://www.richter.hu/en-US/Pages/default.aspx) Talentum Foundation
+  * Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2016](http://www.emet.gov.hu/felhivasok/nemzeti_tehetseg_program212/) (NTP-NFTÖ-16)
+  * Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2018](http://www.emet.gov.hu/felhivasok/felhivas46/) (NTP-NFTÖ-18)
+  * [CECRIS project](http://www.cecris-project.eu/)
+  * [R5-COP project](http://www.r5-cop.eu/)
