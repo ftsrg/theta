@@ -47,52 +47,52 @@ All arguments are optional, except `--model`.
 * `--model`: Path of the input CFA model (mandatory).
 * `--cex`: Output file where the counterexample is written (if the result is unsafe). If the argument is not given (default) the counterexample is not printed.
 * `--loglevel`: Detailedness of logging.
-  * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
+    * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
 * `--domain`: Domain of the abstraction, possible values:
-  * `PRED_CART`: Cartesian predicate abstraction (default).
-  * `PRED_BOOL`: Boolean predicate abstraction.
-  * `PRED_SPLIT`: Boolean predicate abstraction with splitting.
-  * `EXPL`: Explicit-value abstraction.
-  * _Remark: Predicate abstraction tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
+    * `PRED_CART`: Cartesian predicate abstraction (default).
+    * `PRED_BOOL`: Boolean predicate abstraction.
+    * `PRED_SPLIT`: Boolean predicate abstraction with splitting.
+    * `EXPL`: Explicit-value abstraction.
+    * _Remark: Predicate abstraction tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
   Explicit-values keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
   Cartesian predicate abstraction only uses conjunctions (more efficient) while Boolean allows arbitrary formulas (more expressive).
   Boolean predicate abstraction often gives predicates in a disjunctive normal form (DNF).
   In `PRED_BOOL` this DNF formula is treated as a single state, while in `PRED_SPLIT` each operand of the disjunction is a separate state._
-  * _Remark: It is recommended to try Cartesian first and fall back to Boolean if there is no refinement progress (seemingly infinite iterations with the same counterexample).
+    * _Remark: It is recommended to try Cartesian first and fall back to Boolean if there is no refinement progress (seemingly infinite iterations with the same counterexample).
   Splitting rarely resulted in better performance._
-  * _More information on the abstract domains can be found in [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf), Sections 2.2.1 and 3.1.3._
+    * _More information on the abstract domains can be found in [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf), Sections 2.2.1 and 3.1.3._
 * `--initprec`: Initial precision of the abstraction.
-  * `EMPTY`: Start with an empty initial precision (default).
-  * `ALLVARS`: Track all variables by default (only applicable if `--domain` is `EXPL`).
-  * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable if `--domain` is `PRED_*`.
+    * `EMPTY`: Start with an empty initial precision (default).
+    * `ALLVARS`: Track all variables by default (only applicable if `--domain` is `EXPL`).
+    * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable if `--domain` is `PRED_*`.
 * `--search`: Search strategy in the abstract state space, possible values:
-  * `BFS` (default), `DFS`: Standard breadth- and depth-first search.
-  * `ERR`: Guide the search based on the syntactical distance from the error location (see Section 3.1.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
+    * `BFS` (default), `DFS`: Standard breadth- and depth-first search.
+    * `ERR`: Guide the search based on the syntactical distance from the error location (see Section 3.1.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 * `--encoding`: Encoding of the CFA during abstraction, possible values:
-  * `SBE`: Single-block encoding, where abstraction is performed at each edge.
+    * `SBE`: Single-block encoding, where abstraction is performed at each edge.
   This is just a reference implementation, `LBE` is always more efficient.
-  * `LBE` (default): Large-block encoding, where sequential paths are treated as a single step for abstraction.
+    * `LBE` (default): Large-block encoding, where sequential paths are treated as a single step for abstraction.
 * `--maxenum`: Maximal number of states to be enumerated when performing explicit-value analysis (`--domain EXPL`) and an expression cannot be deterministically evaluated.
 If the limit is exceeded, unknown values are propagated.
 As a special (and default) case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain.
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 * `--refinement`: Refinement strategy, possible values:
-  * `FW_BIN_ITP`: Forward binary interpolation, only performs well if `--prunestrategy` is `FULL`.
-  * `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
-  * `SEQ_ITP` (default): Sequence interpolation.
-  * `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
-  * `UNSAT_CORE`: Unsat cores, only available if `--domain` is `EXPL`.
-  * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
+    * `FW_BIN_ITP`: Forward binary interpolation, only performs well if `--prunestrategy` is `FULL`.
+    * `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
+    * `SEQ_ITP` (default): Sequence interpolation.
+    * `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
+    * `UNSAT_CORE`: Unsat cores, only available if `--domain` is `EXPL`.
+    * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
 * `--predsplit`: Splitting applied to predicates during refinement, possible values:
-  * `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
-  * `CONJUNCTS`: Split predicates into conjuncts.
-  * `ATOMS`: Split predicates into atoms.
+    * `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
+    * `CONJUNCTS`: Split predicates into conjuncts.
+    * `ATOMS`: Split predicates into atoms.
 * `--precgranularity`: Granularity of the precision, possible values:
-  * `GLOBAL` (default): The same precision is applied in each location of the CFA.
-  * `LOCAL`: Each location can have a possibly different precision.
+    * `GLOBAL` (default): The same precision is applied in each location of the CFA.
+    * `LOCAL`: Each location can have a possibly different precision.
 * `--prunestrategy`: Pruning strategy during refinement, possible values:
-  * `FULL`: The whole ARG is pruned and abstraction is completely restarted with the new precision.
-  * `LAZY`(default): The ARG is only pruned back to the first point where refinement was applied.
+    * `FULL`: The whole ARG is pruned and abstraction is completely restarted with the new precision.
+    * `LAZY`(default): The ARG is only pruned back to the first point where refinement was applied.
 * `--metrics`: Print metrics about the CFA without running the algorithm.
 * `--visualize`: Visualize the CFA without running the algorithm.
 If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../doc/Build.md) has to be available on `PATH`.
