@@ -8,13 +8,20 @@ For more information about the CFA formalism and its supported language elements
 * [`cfa`](../cfa/README.md): Classes to represent CFAs and a domain specific language (DSL) to parse CFAs from a textual representation.
 * [`cfa-analysis`](../cfa-analysis/README.md): CFA specific analysis modules enabling the algorithms to operate on them.
 
+### Frontends
+
+* [Gazer](https://github.com/FTSRG/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli as a backend.
+* [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
+
 ## Using the tool
 
-1. [Build](../../doc/Build.md) the projects.
-The runnable jar file will appear under _build/libs/_ with the name _theta-cfa-cli-\<VERSION\>-all.jar_.
-2. You can simply rename it to _theta-cfa-cli.jar_.
-3. The tool also requires the [Z3 SMT solver](../../doc/Build.md) to be available on `PATH`.
-4. The tool can be executed with `java -jar theta-cfa-cli.jar [arguments]`.
+1. First, get the tool.
+    - The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
+    - You can also [build](../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-cfa-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-cfa-cli.jar_.
+    - Alternatively, you can use our docker image (see below).
+2. Running the tool requires Java (JRE) 11.
+3. The tool also requires the [Z3 SMT solver libraries](../../doc/Build.md) to be available on `PATH`.
+4. The tool can be executed with `java -jar theta-cfa-cli.jar [ARGUMENTS]`.
     - If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
     - For example `java -jar theta-cfa-cli.jar --model counter.cfa --loglevel INFO` runs the default analysis with logging on the `counter.cfa` input file.
@@ -29,7 +36,7 @@ docker build -t theta-cfa-cli -f docker/theta-cfa-cli.Dockerfile .
 
 The script `run-theta-cfa-cli.sh` can be used for running the containerized version on models residing on the host:
 ```
-./run-theta-cfa-cli.sh model.cfa [OTHER FLAGS]
+./run-theta-cfa-cli.sh model.cfa [OTHER ARGUMENTS]
 ```
 Note that the model must be given as the first positional argument (without `--model`).
 
