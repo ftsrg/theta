@@ -70,7 +70,7 @@ public class CfaConfigBuilder {
 	}
 
 	public enum Refinement {
-		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB
 	}
 
 	public enum Search {
@@ -270,6 +270,10 @@ public class CfaConfigBuilder {
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
 							precGranularity.createRefiner(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
+				case UCB:
+					refiner = SingleExprTraceRefiner.create(ExprTraceUCBChecker.create(True(), True(), solver),
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
+					break;
 				default:
 					throw new UnsupportedOperationException(
 							domain + " domain does not support " + refinement + " refinement.");
@@ -320,6 +324,9 @@ public class CfaConfigBuilder {
 					break;
 				case MULTI_SEQ:
 					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					break;
+				case UCB:
+					exprTraceChecker = ExprTraceUCBChecker.create(True(), True(), solver);
 					break;
 				default:
 					throw new UnsupportedOperationException(
