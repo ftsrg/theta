@@ -29,6 +29,6 @@ docker build -t theta-xta-cli -f docker/theta-xta-cli.Dockerfile .
 
 The script `run-theta-xta-cli.sh` can be used for running the containerized version on models residing on the host:
 ```
-./run-theta-xta-cli.sh model.xta [OTHER ARGUMENTS]
+./docker/run-theta-xta-cli.sh model.xta [OTHER ARGUMENTS]
 ```
 Note that the model must be given as the first positional argument (without `--model`).

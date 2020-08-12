@@ -36,7 +36,7 @@ docker build -t theta-cfa-cli -f docker/theta-cfa-cli.Dockerfile .
 
 The script `run-theta-cfa-cli.sh` can be used for running the containerized version on models residing on the host:
 ```
-./run-theta-cfa-cli.sh model.cfa [OTHER ARGUMENTS]
+./docker/run-theta-cfa-cli.sh model.cfa [OTHER ARGUMENTS]
 ```
 Note that the model must be given as the first positional argument (without `--model`).
 
