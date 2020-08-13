@@ -21,7 +21,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static java.util.Collections.singleton;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.TransFunc;
