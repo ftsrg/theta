@@ -40,6 +40,7 @@ Note that the model must be given as the first positional argument (without `--m
 All arguments are optional, except `--model`.
 
 * `--model`: Path of the input STS model (mandatory).
+* `--cex`: Output file where the counterexample is written (if the result is unsafe). If the argument is not given (default) the counterexample is not printed. Use `CON` (Windows) or `/dev/stdout` (Linux) as argument to print to the standard output.
 * `--loglevel`: Detailedness of logging.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`
 * `--domain`: Domain of the abstraction, possible values:
