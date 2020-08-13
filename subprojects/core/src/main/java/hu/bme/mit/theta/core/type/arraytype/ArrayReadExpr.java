@@ -29,7 +29,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
 

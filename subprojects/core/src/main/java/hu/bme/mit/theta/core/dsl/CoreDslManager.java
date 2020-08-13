@@ -17,7 +17,6 @@ package hu.bme.mit.theta.core.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
