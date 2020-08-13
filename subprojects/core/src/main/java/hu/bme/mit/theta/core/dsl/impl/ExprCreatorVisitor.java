@@ -70,7 +70,6 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
