@@ -99,7 +99,7 @@ public final class PredState implements ExprState {
 			if (preds.isEmpty()) {
 				result = True();
 			} else if (preds.size() == 1) {
-				result = Utils.singleElementOf(preds);
+				result = singleElementOf(preds);
 			} else {
 				result = And(preds);
 			}

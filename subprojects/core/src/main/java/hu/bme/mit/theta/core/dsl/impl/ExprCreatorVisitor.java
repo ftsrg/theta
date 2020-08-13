@@ -249,9 +249,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-				case CoreDslParser.EQ:
+				case EQ:
 					return Eq(leftOp, rightOp);
-				case CoreDslParser.NEQ:
+				case NEQ:
 					return Neq(leftOp, rightOp);
 				default:
 					throw new AssertionError();
@@ -269,13 +269,13 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-				case CoreDslParser.LT:
+				case LT:
 					return Lt(leftOp, rightOp);
-				case CoreDslParser.LEQ:
+				case LEQ:
 					return Leq(leftOp, rightOp);
-				case CoreDslParser.GT:
+				case GT:
 					return Gt(leftOp, rightOp);
-				case CoreDslParser.GEQ:
+				case GEQ:
 					return Geq(leftOp, rightOp);
 				default:
 					throw new AssertionError();
@@ -407,10 +407,10 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-			case CoreDslParser.PLUS:
+			case PLUS:
 				return createAddExpr(leftOp, rightOp);
 
-			case CoreDslParser.MINUS:
+			case MINUS:
 				return createSubExpr(leftOp, rightOp);
 
 			default:
@@ -472,16 +472,16 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-			case CoreDslParser.MUL:
+			case MUL:
 				return createMulExpr(leftOp, rightOp);
 
-			case CoreDslParser.DIV:
+			case DIV:
 				return createDivExpr(leftOp, rightOp);
 
-			case CoreDslParser.MOD:
+			case MOD:
 				return createModExpr(leftOp, rightOp);
 
-			case CoreDslParser.REM:
+			case REM:
 				return createRemExpr(leftOp, rightOp);
 
 			default:

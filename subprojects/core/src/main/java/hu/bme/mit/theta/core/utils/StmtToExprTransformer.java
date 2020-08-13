@@ -83,7 +83,7 @@ final class StmtToExprTransformer {
 															  final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
-			return StmtUnfoldResult.of(ImmutableList.of(BoolExprs.True()), newIndexing);
+			return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
 		}
 
 		@Override
