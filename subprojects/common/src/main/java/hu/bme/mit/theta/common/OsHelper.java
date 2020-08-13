@@ -36,7 +36,7 @@ public final class OsHelper {
 		} else if (os.toLowerCase().startsWith("windows")) {
 			return OperatingSystem.WINDOWS;
 		} else {
-			throw new RuntimeException("Operating system \"" + os + "\" not supported.");
+			throw new UnsupportedOperationException("Operating system \"" + os + "\" not supported.");
 		}
 	}
 

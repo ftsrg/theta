@@ -47,7 +47,7 @@ public final class Z3SolverFactory implements SolverFactory {
 				System.loadLibrary("z3java");
 				break;
 			default:
-				throw new RuntimeException("Operating system not supported.");
+				throw new UnsupportedOperationException("Operating system not supported.");
 		}
 	}
 
