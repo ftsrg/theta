@@ -192,7 +192,7 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
-		final ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
+		final ArrayExpr arrayExpr = (ArrayExpr) term;
 		final ArraySort sort = (ArraySort) arrayExpr.getSort();
 		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}

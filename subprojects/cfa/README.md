@@ -33,7 +33,6 @@ This can be used to simulate non-deterministic input from the user or the enviro
 Algorithms are usually interested in proving that the error location is not reachable.
 For more information see Section 2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf).
 
-
 Variables of the CFA can have the following types.
 * `bool`: Booleans.
 * `int`: Mathematical, unbounded SMT integers.
