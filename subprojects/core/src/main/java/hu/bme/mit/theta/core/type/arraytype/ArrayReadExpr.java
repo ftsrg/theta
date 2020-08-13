@@ -99,8 +99,8 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	public Expr<ElemType> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		checkArgument(ops.size() == 2);
-		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
-		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(ops.get(0), array.getType());
+		final Expr<IndexType> newIndex = cast(ops.get(1), index.getType());
 		return with(newArray, newIndex);
 	}
 

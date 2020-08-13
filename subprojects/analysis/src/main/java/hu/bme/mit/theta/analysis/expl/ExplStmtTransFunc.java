@@ -94,7 +94,7 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 		}
 
 		final ExplState abstracted = prec.createState(val);
-		return Collections.singleton(abstracted);
+		return singleton(abstracted);
 	}
 
 }

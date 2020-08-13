@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
@@ -111,7 +112,7 @@ final class Z3TermTransformer {
 		return transform(term, null, new ArrayList<>());
 	}
 
-	public Expr<?> toFuncLitExpr(final com.microsoft.z3.FuncDecl funcDecl, final Model model,
+	public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
@@ -191,8 +192,8 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
-		final com.microsoft.z3.ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
-		final com.microsoft.z3.ArraySort sort = (ArraySort) arrayExpr.getSort();
+		final ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
+		final ArraySort sort = (ArraySort) arrayExpr.getSort();
 		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}
 
@@ -205,10 +206,9 @@ final class Z3TermTransformer {
 		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
 	}
 
-	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-									   final List<Decl<?>> vars) {
+	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
 
-		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();
+		final FuncDecl funcDecl = term.getFuncDecl();
 		final String symbol = funcDecl.getName().toString();
 
 		if (environment.containsKey(symbol)) {

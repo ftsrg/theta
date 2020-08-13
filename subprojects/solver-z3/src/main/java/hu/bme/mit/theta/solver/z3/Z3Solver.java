@@ -318,7 +318,7 @@ final class Z3Solver implements Solver {
 
 		private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
 			final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-			for (final com.microsoft.z3.FuncDecl symbol : z3Model.getDecls()) {
+			for (final FuncDecl symbol : z3Model.getDecls()) {
 				if (symbolTable.definesSymbol(symbol)) {
 					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
 					builder.add(constDecl);
