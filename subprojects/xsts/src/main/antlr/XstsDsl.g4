@@ -134,17 +134,25 @@ value:
     literal|reference;
 
 literal:
-    INTLIT|BOOLLIT
+    INTLIT|BOOLLIT|arrLitExpr
+    ;
+
+arrLitExpr
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=typeName GT)? DEFAULT LARROW elseExpr=expr RBRACK
+    |   LBRACK LT indexType=typeName GT DEFAULT LARROW elseExpr=expr RBRACK
     ;
 
 reference:
     name=ID;
 
 typeName:
-    INT|BOOL|customType;
+    INT|BOOL|arrayType|customType;
 
 customType:
     name=ID;
+
+arrayType:
+    LBRACK indexType=typeName RBRACK RARROW elemType=typeName;
 
 typeDeclaration:
     TYPE name=ID DP LCURLY literals+=typeLiteral (COMMA literals+=typeLiteral)* RCURLY;
@@ -169,7 +177,9 @@ ASSUME: 'assume';
 NEXT: 'next';
 AND: '&&';
 OR: '||';
-IMPLIES: '->';
+IMPLIES: '=>';
+LARROW: '<-';
+RARROW: '->';
 NOT: '!';
 EQ: '==';
 NEQ: '!=';
@@ -195,7 +205,12 @@ COMMA: ',';
 TYPE: 'type';
 LCURLY: '{';
 RCURLY: '}';
+LBRACK: '[';
+RBRACK: ']';
 INTLIT: [0-9]+;
+DEFAULT: 'default';
 BOOLLIT: 'true' | 'false';
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: (' '| '\t' | '\n' | '\r') -> skip;
+COMMENT: '/*' .*? '*/' -> skip;
+LINE_COMMENT: '//' ~[\r\n]* -> skip;
