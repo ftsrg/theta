@@ -30,8 +30,10 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
+import hu.bme.mit.theta.xsts.analysis.initprec.XstsCtrlInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsInitPrec;
+import hu.bme.mit.theta.xsts.analysis.initprec.XstsPropInitPrec;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -86,10 +88,11 @@ public class XstsConfigBuilder {
     ;
 
     public enum InitPrec {
-        EMPTY(new XstsEmptyInitPrec());
+        EMPTY(new XstsEmptyInitPrec()),
 
-//        TODO XstsPropInitPrec
-//        PROP(new XstsPropInitPrec());
+        PROP(new XstsPropInitPrec()),
+
+        CTRL(new XstsCtrlInitPrec());
 
         public final XstsInitPrec builder;
 
