@@ -11,7 +11,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.*;
-import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.*;
@@ -29,18 +29,18 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
 
-    private final ItpSolver solver;
+    private final Solver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
-    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
+    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
     }
 
     public static ExprTraceUCBChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-                                                final ItpSolver solver) {
+                                                final Solver solver) {
         return new ExprTraceUCBChecker(init, target, solver);
     }
 
@@ -109,35 +109,36 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
         final List<VarIndexing> indexings,
         final Trace<? extends ExprState, ? extends ExprAction> trace
     ) {
-        final int stateCount = trace.getStates().size();
-        final List<Expr<BoolType>> wps = calculateWpStates(trace, indexings);
+        int solverSize = 0;
+        solver.push(); solverSize++;
 
-        final List<Expr<BoolType>> predicates = new ArrayList<>();
-        final List<Expr<BoolType>> dataRegions = new ArrayList<>();
+        try {
+            final int stateCount = trace.getStates().size();
+            final List<Expr<BoolType>> wps = calculateWpStates(trace, indexings);
 
-        for(var i = 0; i < stateCount; i++) {
-            try (WithPushPop wpp = new WithPushPop(solver)) {
+            final List<Expr<BoolType>> predicates = new ArrayList<>();
+            final List<Expr<BoolType>> dataRegions = new ArrayList<>();
+
+            for(var i = 0; i < stateCount; i++) {
+                final List<Expr<BoolType>> nextRegion = new ArrayList<>();
                 /* Calculate SP */
                 if (i == 0) {
-                    dataRegions.addAll(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(i))));
-                    solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(i))));
-
-                    dataRegions.addAll(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
-                    solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
+                    nextRegion.addAll(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(i))));
+                    nextRegion.addAll(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
                 } else /* i > 0 */ {
-                    dataRegions.addAll(ExprUtils.getConjuncts(predicates.get(i - 1)));
-                    solver.track(ExprUtils.getConjuncts(predicates.get(i - 1)));
-
-                    dataRegions.addAll(ExprUtils.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
-                    solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
+                    nextRegion.addAll(ExprUtils.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
 
                     if (i == stateCount - 1) {
-                        dataRegions.addAll(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(i))));
-                        solver.track(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(i))));
+                        nextRegion.addAll(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(i))));
                     }
                 }
 
+                /* Add data region */
+                solver.track(nextRegion);
+                dataRegions.addAll(nextRegion);
+
                 /* Add wp */
+                solver.push(); solverSize++;
                 solver.track(wps.get(i));
 
                 solver.check();
@@ -153,21 +154,28 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
                 }
 
                 /* Add the negated of the above expression as the new predicate */
+                solver.pop(); solverSize--; // Remove wp from solver stack
+                solver.push(); solverSize++;
                 predicates.add(
                     ExprSimplifier.simplify(
                         Not(And(new HashSet<>(predicate))),
                         ImmutableValuation.empty()
                     )
                 );
+                solver.track(predicates.get(i));
+                dataRegions.add(predicates.get(i));
             }
+            return ExprTraceStatus.infeasible(
+                ItpRefutation.sequence(
+                    IntStream.range(0, predicates.size())
+                        .mapToObj(i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
+                        .collect(Collectors.toUnmodifiableList())
+                )
+            );
         }
-        return ExprTraceStatus.infeasible(
-            ItpRefutation.sequence(
-                IntStream.range(0, predicates.size())
-                    .mapToObj(i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
-                    .collect(Collectors.toUnmodifiableList())
-            )
-        );
+        finally {
+            solver.pop(solverSize);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -189,7 +197,6 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
         var wpstate = WpState.of(target);
         wps.set(stateCount - 1, target);
         for(var i = stateCount - 1; i > 0; i--) {
-            var state = wptrace.getState(i);
             var action = wptrace.getAction(i - 1);
 
             for(var stmt : Lists.reverse(action.getStmts())) {
