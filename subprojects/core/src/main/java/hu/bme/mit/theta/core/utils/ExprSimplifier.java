@@ -51,19 +51,7 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.inttype.*;
-import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.rattype.*;
 
 public final class ExprSimplifier {
 
@@ -88,6 +76,8 @@ public final class ExprSimplifier {
 			.addCase(RatAddExpr.class, ExprSimplifier::simplifyRatAdd)
 
 			.addCase(RatSubExpr.class, ExprSimplifier::simplifyRatSub)
+
+			.addCase(RatPosExpr.class, ExprSimplifier::simplifyRatPos)
 
 			.addCase(RatNegExpr.class, ExprSimplifier::simplifyRatNeg)
 
@@ -116,6 +106,8 @@ public final class ExprSimplifier {
 			.addCase(IntAddExpr.class, ExprSimplifier::simplifyIntAdd)
 
 			.addCase(IntSubExpr.class, ExprSimplifier::simplifyIntSub)
+
+			.addCase(IntPosExpr.class, ExprSimplifier::simplifyIntPos)
 
 			.addCase(IntNegExpr.class, ExprSimplifier::simplifyIntNeg)
 
@@ -148,6 +140,8 @@ public final class ExprSimplifier {
 			.addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
 			.addCase(BvSubExpr.class, ExprSimplifier::simplifyBvSub)
+
+			.addCase(BvPosExpr.class, ExprSimplifier::simplifyBvPos)
 
 			.addCase(BvNegExpr.class, ExprSimplifier::simplifyBvNeg)
 
@@ -507,6 +501,10 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
+	private static Expr<RatType> simplifyRatPos(final RatPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
+	}
+
 	private static Expr<RatType> simplifyRatNeg(final RatNegExpr expr, final Valuation val) {
 		final Expr<RatType> op = simplify(expr.getOp(), val);
 
@@ -765,6 +763,10 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
+	private static Expr<IntType> simplifyIntPos(final IntPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
+	}
+
 	private static Expr<IntType> simplifyIntNeg(final IntNegExpr expr, final Valuation val) {
 		final Expr<IntType> op = simplify(expr.getOp(), val);
 
@@ -1008,6 +1010,10 @@ public final class ExprSimplifier {
 		}
 
 		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
 	}
 
 	private static Expr<BvType> simplifyBvNeg(final BvNegExpr expr, final Valuation val) {
