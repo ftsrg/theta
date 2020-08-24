@@ -231,12 +231,12 @@ additiveExpr
 	;
 
 multiplicativeExpr
-	:	ops+=negExpr (opers+=(MUL | DIV | MOD | REM) ops+=negExpr)*
+	:	ops+=unaryExpr (opers+=(MUL | DIV | MOD | REM) ops+=unaryExpr)*
 	;
 
-negExpr
+unaryExpr
 	:	bitwiseNotExpr
-	|	MINUS op=negExpr
+	|	oper=(PLUS | MINUS) op=unaryExpr
 	;
 
 bitwiseNotExpr
