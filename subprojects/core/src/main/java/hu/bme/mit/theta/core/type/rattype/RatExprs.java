@@ -40,6 +40,10 @@ public final class RatExprs {
 		return RatSubExpr.of(leftOp, rightOp);
 	}
 
+	public static RatPosExpr Pos(final Expr<RatType> op) {
+		return RatPosExpr.of(op);
+	}
+
 	public static RatNegExpr Neg(final Expr<RatType> op) {
 		return RatNegExpr.of(op);
 	}
