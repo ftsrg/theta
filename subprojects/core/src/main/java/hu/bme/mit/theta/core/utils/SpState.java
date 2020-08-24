@@ -101,7 +101,7 @@ public class SpState {
         public <DeclType extends Type> SpState visit(final AssignStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
-            final String valName = String.format("_val_%d", constCount);
+            final String valName = String.format("_spval_%d", constCount);
             final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
             final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 
@@ -115,7 +115,7 @@ public class SpState {
         public <DeclType extends Type> SpState visit(final HavocStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
-            final String valName = String.format("_val_%d", constCount);
+            final String valName = String.format("_spval_%d", constCount);
             final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
             final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
             final Expr<BoolType> expr = sub.apply(state.getExpr());

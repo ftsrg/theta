@@ -8,7 +8,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.*;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
@@ -54,9 +52,9 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
         indexings.add(VarIndexing.all(0));
 
-        Valuation model = null;
-        Collection<Expr<BoolType>> unsatCore = null;
-        boolean concretizable;
+        final Valuation model;
+        final Collection<Expr<BoolType>> unsatCore;
+        final boolean concretizable;
 
         try (WithPushPop wpp = new WithPushPop(solver)) {
             solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
@@ -75,7 +73,9 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
 
             if (concretizable) {
                 model = solver.getModel();
+                unsatCore = null;
             } else {
+                model = null;
                 unsatCore = solver.getUnsatCore();
             }
         }
