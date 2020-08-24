@@ -16,16 +16,20 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.UnaryExpr;
 
-public interface Additive<ExprType extends Additive<ExprType>> extends Type {
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-	AddExpr<ExprType> Add(Iterable<? extends Expr<ExprType>> ops);
+public abstract class PosExpr<ExprType extends Additive<ExprType>> extends UnaryExpr<ExprType, ExprType> {
 
-	SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
+	protected PosExpr(final Expr<ExprType> op) {
+		super(op);
+	}
 
-	PosExpr<ExprType> Pos(Expr<ExprType> op);
-
-	NegExpr<ExprType> Neg(Expr<ExprType> op);
+	public static <ExprType extends Additive<ExprType>> PosExpr<?> create2(final Expr<?> op) {
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
+		final Expr<ExprType> newOp = cast(op, type);
+		return type.Pos(newOp);
+	}
 
 }
