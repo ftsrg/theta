@@ -55,18 +55,7 @@ import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.*;
-import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 final class Z3ExprTransformer {
@@ -125,6 +114,8 @@ final class Z3ExprTransformer {
 
 				.addCase(RatSubExpr.class, this::transformRatSub)
 
+				.addCase(RatPosExpr.class, this::transformRatPos)
+
 				.addCase(RatNegExpr.class, this::transformRatNeg)
 
 				.addCase(RatMulExpr.class, this::transformRatMul)
@@ -150,6 +141,8 @@ final class Z3ExprTransformer {
 				.addCase(IntAddExpr.class, this::transformIntAdd)
 
 				.addCase(IntSubExpr.class, this::transformIntSub)
+
+				.addCase(IntPosExpr.class, this::transformIntPos)
 
 				.addCase(IntNegExpr.class, this::transformIntNeg)
 
@@ -184,6 +177,8 @@ final class Z3ExprTransformer {
 				.addCase(BvAddExpr.class, this::transformBvAdd)
 
 				.addCase(BvSubExpr.class, this::transformBvSub)
+
+				.addCase(BvPosExpr.class, this::transformBvPos)
 
 				.addCase(BvNegExpr.class, this::transformBvNeg)
 
@@ -391,6 +386,10 @@ final class Z3ExprTransformer {
 		return context.mkSub(leftOpTerm, rightOpTerm);
 	}
 
+	private com.microsoft.z3.Expr transformRatPos(final RatPosExpr expr) {
+		return toTerm(expr.getOp());
+	}
+
 	private com.microsoft.z3.Expr transformRatNeg(final RatNegExpr expr) {
 		final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
 		return context.mkUnaryMinus(opTerm);
@@ -464,6 +463,10 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 		return context.mkSub(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformIntPos(final IntPosExpr expr) {
+		return toTerm(expr.getOp());
 	}
 
 	private com.microsoft.z3.Expr transformIntNeg(final IntNegExpr expr) {
@@ -574,6 +577,10 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
 		return context.mkBVSub(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvPos(final BvPosExpr expr) {
+		return toTerm(expr.getOp());
 	}
 
 	private com.microsoft.z3.Expr transformBvNeg(final BvNegExpr expr) {
