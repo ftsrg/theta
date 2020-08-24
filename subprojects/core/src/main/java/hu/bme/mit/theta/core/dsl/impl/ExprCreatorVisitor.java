@@ -21,18 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.*;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -517,10 +506,19 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	////
 
 	@Override
-	public Expr<?> visitNegExpr(final NegExprContext ctx) {
+	public Expr<?> visitUnaryExpr(final UnaryExprContext ctx) {
 		if (ctx.op != null) {
 			final Expr<?> op = ctx.op.accept(this);
-			return Neg(op);
+			switch(ctx.oper.getType()) {
+				case PLUS:
+					return Pos(op);
+
+				case MINUS:
+					return Neg(op);
+
+				default:
+					throw new AssertionError();
+			}
 		} else {
 			return visitChildren(ctx);
 		}
