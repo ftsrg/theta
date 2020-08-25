@@ -530,10 +530,19 @@ final class CfaExpression {
 		////
 
 		@Override
-		public Expr<?> visitNegExpr(final NegExprContext ctx) {
+		public Expr<?> visitUnaryExpr(final UnaryExprContext ctx) {
 			if (ctx.op != null) {
 				final Expr<?> op = ctx.op.accept(this);
-				return Neg(op);
+				switch(ctx.oper.getType()) {
+					case PLUS:
+						return Pos(op);
+
+					case MINUS:
+						return Neg(op);
+
+					default:
+						throw new AssertionError();
+				}
 			} else {
 				return visitChildren(ctx);
 			}

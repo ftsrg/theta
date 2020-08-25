@@ -26,6 +26,10 @@ public final class BvExprs {
         return BvSubExpr.of(leftOp, rightOp);
     }
 
+    public static BvPosExpr Pos(final Expr<BvType> op) {
+        return BvPosExpr.of(op);
+    }
+
     public static BvNegExpr Neg(final Expr<BvType> op) {
         return BvNegExpr.of(op);
     }
