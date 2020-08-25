@@ -8,6 +8,7 @@
  * - {@link hu.bme.mit.theta.core.type.inttype.IntLitExpr}: integer literal
  *
  * - {@link hu.bme.mit.theta.core.type.inttype.IntNegExpr}: unary minus
+ * - {@link hu.bme.mit.theta.core.type.inttype.IntPosExpr}: unary plus
  * - {@link hu.bme.mit.theta.core.type.inttype.IntAddExpr}: addition
  * - {@link hu.bme.mit.theta.core.type.inttype.IntSubExpr}: subtraction
  * - {@link hu.bme.mit.theta.core.type.inttype.IntMulExpr}: multiplication

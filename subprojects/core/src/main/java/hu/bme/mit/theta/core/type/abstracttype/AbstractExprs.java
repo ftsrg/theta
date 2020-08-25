@@ -98,6 +98,12 @@ public final class AbstractExprs {
 		return type.Sub(newLeftOp, newRightOp);
 	}
 
+	public static <T extends Additive<T>> PosExpr<?> Pos(final Expr<?> op) {
+		final Expr<T> tOp = bind(op);
+		final T type = tOp.getType();
+		return type.Pos(tOp);
+	}
+
 	public static <T extends Additive<T>> NegExpr<?> Neg(final Expr<?> op) {
 		final Expr<T> tOp = bind(op);
 		final T type = tOp.getType();
