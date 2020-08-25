@@ -6,6 +6,7 @@
  * - {@link hu.bme.mit.theta.core.type.rattype.RatLitExpr}: rational literal, e.g., 1%2 is 0.5
  *
  * - {@link hu.bme.mit.theta.core.type.rattype.RatNegExpr}: unary minus
+ * - {@link hu.bme.mit.theta.core.type.rattype.RatPosExpr}: unary plus
  * - {@link hu.bme.mit.theta.core.type.rattype.RatAddExpr}: addition
  * - {@link hu.bme.mit.theta.core.type.rattype.RatSubExpr}: subtraction
  * - {@link hu.bme.mit.theta.core.type.rattype.RatMulExpr}: multiplication
