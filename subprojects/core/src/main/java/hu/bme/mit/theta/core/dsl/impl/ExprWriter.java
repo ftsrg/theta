@@ -46,6 +46,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
 import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
@@ -61,6 +62,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 
 public final class ExprWriter {
@@ -106,6 +108,8 @@ public final class ExprWriter {
 
 				.addCase(IntSubExpr.class, e -> infixBinary(e, " - "))
 
+				.addCase(IntPosExpr.class, e -> prefixUnary(e, "+"))
+
 				.addCase(IntNegExpr.class, e -> prefixUnary(e, "-"))
 
 				.addCase(IntMulExpr.class, e -> infixMultiary(e, " * "))
@@ -137,6 +141,8 @@ public final class ExprWriter {
 				.addCase(RatAddExpr.class, e -> infixMultiary(e, " + "))
 
 				.addCase(RatSubExpr.class, e -> infixBinary(e, " - "))
+
+				.addCase(RatPosExpr.class, e -> prefixUnary(e, "+"))
 
 				.addCase(RatNegExpr.class, e -> prefixUnary(e, "-"))
 
