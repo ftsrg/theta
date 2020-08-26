@@ -102,7 +102,7 @@ public final class ClockOps {
 
 			if (expr instanceof IntLitExpr) {
 				final IntLitExpr intLit = (IntLitExpr) expr;
-				final int value = Math.toIntExact(intLit.getValue());
+				final int value = Math.toIntExact(intLit.getValue().longValue());
 				return Reset(varDecl, value);
 
 			} else if (expr instanceof RefExpr) {
@@ -132,7 +132,7 @@ public final class ClockOps {
 					} else if (ops[1].equals(varRef)) {
 						if (ops[0] instanceof IntLitExpr) {
 							final IntLitExpr intLit = (IntLitExpr) ops[0];
-							final int offset = Math.toIntExact(intLit.getValue());
+							final int offset = Math.toIntExact(intLit.getValue().longValue());
 							return Shift(varDecl, offset);
 						}
 					}

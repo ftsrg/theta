@@ -248,7 +248,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     }
 
     public IntLitExpr toInt() {
-        return Int(BvUtils.bvLitExprToBigInteger(this).intValue());
+        return Int(BvUtils.bvLitExprToBigInteger(this));
     }
 
     @Override
