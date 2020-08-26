@@ -30,7 +30,6 @@ public final class IntExprs {
 		return IntType.getInstance();
 	}
 
-	@Deprecated
 	public static IntLitExpr Int(final int value) {
 		return IntLitExpr.of(value);
 	}
