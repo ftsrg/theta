@@ -408,7 +408,7 @@ public final class ExprSimplifier {
 			return Utils.singleElementOf(ops);
 		}
 
-		return expr.with(new HashSet<>(ops));
+		return expr.with(new LinkedHashSet<>(ops));
 	}
 
 	private static Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
@@ -438,7 +438,7 @@ public final class ExprSimplifier {
 			return Utils.singleElementOf(ops);
 		}
 
-		return expr.with(ops);
+		return expr.with(new LinkedHashSet<>(ops));
 	}
 
 	/*
