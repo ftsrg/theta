@@ -23,10 +23,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Utils;
@@ -411,7 +408,7 @@ public final class ExprSimplifier {
 			return Utils.singleElementOf(ops);
 		}
 
-		return expr.with(ops);
+		return expr.with(new HashSet<>(ops));
 	}
 
 	private static Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
