@@ -46,6 +46,13 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described in
+ * Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
+ * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on Foundations
+ * of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing Machinery, New York, NY, USA,
+ * 487–497. DOI:https://doi.org/10.1145/3106237.3106307
+ */
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private enum AssertionGeneratorMethod { SP, WP }
 
@@ -53,9 +60,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
-    private final boolean IT;
-    private final AssertionGeneratorMethod SPorWP;
-    private final boolean LV;
+    private final boolean IT; // Whether to abstract the trace or not
+    private final AssertionGeneratorMethod SPorWP; // Whether to use pre- or postconditions
+    private final boolean LV; // Whether to project the assertions to live variables
 
     private ExprTraceNewtonChecker(
         final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver,
@@ -69,14 +76,15 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         this.LV = lv;
     }
 
-    public static ExprTraceNewtonCheckerITBuilder create(final Expr<BoolType> init, final Expr<BoolType> target,
-                                                final Solver solver) {
+    public static ExprTraceNewtonCheckerITBuilder create(
+        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver
+    ) {
         return new ExprTraceNewtonCheckerITBuilder(solver, init, target);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExprTraceStatus<ItpRefutation> check(Trace<? extends ExprState, ? extends ExprAction> trace) {
+    public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         try {
             return check2((Trace<? extends ExprState, ? extends StmtAction>) trace);
@@ -86,10 +94,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         }
     }
 
-    private ExprTraceStatus<ItpRefutation> check2(Trace<? extends ExprState, ? extends StmtAction> trace) {
-        trace = flattenTrace(trace);
+    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+        var ftrace = flattenTrace(trace); // Moves the expressions in the states to the corresponting actions as assumptions
 
-        final int stateCount = trace.getStates().size();
+        final int stateCount = ftrace.getStates().size();
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
         indexings.add(VarIndexing.all(0));
 
@@ -100,7 +108,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         try (WithPushPop wpp = new WithPushPop(solver)) {
             for (int i = 1; i < stateCount; ++i) {
                 var curIndexing = indexings.get(i - 1);
-                for(var stmt : trace.getAction(i - 1).getStmts()) {
+                for(var stmt : ftrace.getAction(i - 1).getStmts()) {
                     var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
                     solver.track(PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing));
                     curIndexing = curIndexing.add(stmtUnfoldResult.getIndexing());
@@ -124,7 +132,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             return createCounterexample(model, indexings, trace);
         } else {
             checkNotNull(unsatCore);
-            return createRefinement(unsatCore, indexings, trace);
+            return createRefinement(unsatCore, indexings, ftrace);
         }
     }
 
@@ -200,6 +208,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return ExprTraceStatus.infeasible(ItpRefutation.sequence(assertions));
     }
 
+    /*
+     * State abstraction
+     */
+
     private Trace<? extends ExprState, ? extends StmtAction> computeAbstractTrace(
         final Collection<Expr<BoolType>> unsatCore,
         final Trace<? extends ExprState, ? extends StmtAction> trace
@@ -253,6 +265,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
         }, null);
     }
+
+    /*
+     * Assertion computation
+     */
 
     private List<Expr<BoolType>> computeAssertionsFromTraceWithStrongestPostcondition(
         final Trace<? extends ExprState, ? extends StmtAction> trace
@@ -311,6 +327,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             return assertions;
         }
     }
+
+    /*
+     * Live variable collection
+     */
 
     private Collection<VarDecl<?>> collectVariablesInTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         var variables = new HashSet<VarDecl<?>>();
@@ -441,6 +461,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return pastLiveVariables;
     }
 
+    /*
+     * Projection to live variables
+     */
+
     private Expr<BoolType> existentialProjection(
         final Expr<BoolType> expr,
         final Collection<VarDecl<?>> variables,
@@ -470,6 +494,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             ? Forall(params, expr)
             : expr;
     }
+
+    /*
+     * Builder for ExprTraceNewtonChecker
+     */
 
     public static class ExprTraceNewtonCheckerITBuilder {
         private final Solver solver;
@@ -538,6 +566,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             return new ExprTraceNewtonChecker(init, target, solver, IT, SPorWP, false);
         }
     }
+
+    /*
+     * Custom StmtAction to use when constructing helper traces
+     */
 
     private static class NewtonAction extends StmtAction {
         private final List<Stmt> stmts;
