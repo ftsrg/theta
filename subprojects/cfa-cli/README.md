@@ -75,6 +75,15 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
   - `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
   - `UNSAT_CORE`: Unsat cores, only available if `--domain` is `EXPL`.
   - `UCB`: Unsat core based predicates as per [M. Leuckner et al.](https://www.researchgate.net/publication/300250376_A_New_Refinement_Strategy_for_CEGAR-Based_Industrial_Model_Checking). This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver).
+  - `NEWTON_******`: Newton-style refinement as per [D. Dietsch et al.](https://dl.acm.org/doi/10.1145/3106237.3106307). This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver). The supported Newton-style algorithms can be found in the following list (for more information on the algotithms, check the article):
+    - `NEWTON_SP`: Only works for really simple inputs
+    - `NEWTON_WP`: Only works for really simple inputs
+    - `NEWTON_SP_LV`
+    - `NEWTON_WP_LV`
+    - `NEWTON_IT_SP`
+    - `NEWTON_IT_WP`
+    - `NEWTON_IT_SP_LV`
+    - `NEWTON_IT_WP_LV`: Usually the most effective
   - _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
 - `--predsplit`: Splitting applied to predicates during refinement, possible values:
   - `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
