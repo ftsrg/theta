@@ -51,6 +51,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -589,7 +590,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-		final int value = Integer.parseInt(ctx.value.getText());
+		final var value = new BigInteger(ctx.value.getText());
 		return Int(value);
 	}
 

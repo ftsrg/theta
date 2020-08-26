@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -181,7 +182,7 @@ public class CoreInterpreter {
 		} else if (object instanceof Decl) {
 			return Ref((Decl<?>) object);
 		} else if (object instanceof Integer) {
-			return Int((Integer) object);
+			return Int(BigInteger.valueOf((Integer) object));
 		} else {
 			throw new UnsupportedOperationException();
 		}

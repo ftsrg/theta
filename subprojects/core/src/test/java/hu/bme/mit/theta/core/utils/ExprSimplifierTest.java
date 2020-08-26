@@ -74,6 +74,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import java.util.ArrayList;
@@ -269,6 +270,7 @@ public class ExprSimplifierTest {
 		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), Add(a, Int(3)))));
 		assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
 		assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
+		assertEquals(Int(new BigInteger("4294967294")), simplify(Add(Int(Integer.MAX_VALUE), Int(Integer.MAX_VALUE))));
 	}
 
 	@Test

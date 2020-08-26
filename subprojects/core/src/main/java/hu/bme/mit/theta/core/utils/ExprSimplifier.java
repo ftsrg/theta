@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -721,24 +722,24 @@ public final class ExprSimplifier {
 				ops.add(opVisited);
 			}
 		}
-		int value = 0;
+		var value = BigInteger.ZERO;
 
 		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<IntType> op = iterator.next();
 			if (op instanceof IntLitExpr) {
 				final IntLitExpr litOp = (IntLitExpr) op;
-				value = value + litOp.getValue();
+				value = value.add(litOp.getValue());
 				iterator.remove();
 			}
 		}
 
-		if (value != 0) {
+		if (value.compareTo(BigInteger.ZERO) != 0) {
 			final Expr<IntType> sum = Int(value);
 			ops.add(sum);
 		}
 
 		if (ops.isEmpty()) {
-			return Int(0);
+			return Int(BigInteger.ZERO);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
 		}
@@ -758,7 +759,7 @@ public final class ExprSimplifier {
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp)) {
-				return Int(0);
+				return Int(BigInteger.ZERO);
 			}
 		}
 
@@ -792,26 +793,26 @@ public final class ExprSimplifier {
 			}
 		}
 
-		int value = 1;
+		var value = BigInteger.ONE;
 		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<IntType> op = iterator.next();
 			if (op instanceof IntLitExpr) {
 				final IntLitExpr litOp = (IntLitExpr) op;
-				value = value * litOp.getValue();
+				value = value.multiply(litOp.getValue());
 				iterator.remove();
-				if (value == 0) {
-					return Int(0);
+				if (value.compareTo(BigInteger.ZERO) == 0) {
+					return Int(BigInteger.ZERO);
 				}
 			}
 		}
 
-		if (value != 1) {
+		if (value.compareTo(BigInteger.ONE) != 0) {
 			final Expr<IntType> prod = Int(value);
 			ops.add(0, prod);
 		}
 
 		if (ops.isEmpty()) {
-			return Int(1);
+			return Int(BigInteger.ONE);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
 		}

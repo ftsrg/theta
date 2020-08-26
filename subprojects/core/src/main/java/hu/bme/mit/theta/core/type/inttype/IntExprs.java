@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.math.BigInteger;
+
 public final class IntExprs {
 
 	private IntExprs() {
@@ -28,7 +30,12 @@ public final class IntExprs {
 		return IntType.getInstance();
 	}
 
+	@Deprecated
 	public static IntLitExpr Int(final int value) {
+		return IntLitExpr.of(value);
+	}
+
+	public static IntLitExpr Int(final BigInteger value) {
 		return IntLitExpr.of(value);
 	}
 
