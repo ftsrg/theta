@@ -123,8 +123,8 @@ public final class ClockOps {
 					if (ops[0].equals(varRef)) {
 						if (ops[1] instanceof RatLitExpr) {
 							final RatLitExpr ratLit = (RatLitExpr) ops[1];
-							final int num = ratLit.getNum();
-							final int denom = ratLit.getDenom();
+							final int num = ratLit.getNum().intValue();
+							final int denom = ratLit.getDenom().intValue();
 							if (denom == 1) {
 								return Shift(varDecl, num);
 							}

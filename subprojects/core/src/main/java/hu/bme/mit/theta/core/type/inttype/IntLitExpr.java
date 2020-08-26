@@ -63,7 +63,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	}
 
 	public RatLitExpr toRat() {
-		return Rat(this.value.intValue(), 1);
+		return Rat(this.value, 1);
 	}
 
 	public BvLitExpr toBv(int size, boolean isSigned) {
