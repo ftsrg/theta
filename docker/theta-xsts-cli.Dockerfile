@@ -1,16 +1,16 @@
 FROM openjdk:11.0.6-slim
 
 RUN apt-get update && \
-    apt-get install -y git libgomp1
+    apt-get install -y --no-install-recommends libgomp1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/mondokm/theta.git && \
-    cd theta && \
-    git checkout xsts && \
+RUN mkdir theta
+COPY . theta
+WORKDIR /theta
+RUN ./gradlew clean && \
     ./gradlew theta-xsts-cli:build && \
-    cd .. && \
-    mv theta/subprojects/xsts-cli/build/libs/theta-xsts-cli-0.0.1-SNAPSHOT-all.jar ./theta-xsts-cli.jar
+    mv subprojects/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /theta-xsts-cli.jar
+WORKDIR /
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
-
 ENTRYPOINT ["java", "-jar", "theta-xsts-cli.jar"]
-
