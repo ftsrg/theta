@@ -4,10 +4,14 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
-import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -15,7 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 public class SpState {
     private static final int HASH_SEED = 2029;
@@ -35,8 +38,16 @@ public class SpState {
         return new SpState(expr, 0);
     }
 
+    public static SpState of(final Expr<BoolType> expr, final int constCount) {
+        return new SpState(expr, constCount);
+    }
+
     public Expr<BoolType> getExpr() {
         return expr;
+    }
+
+    public int getConstCount() {
+        return constCount;
     }
 
     /**
@@ -101,7 +112,7 @@ public class SpState {
         public <DeclType extends Type> SpState visit(final AssignStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
-            final String valName = String.format("_spval_%d", constCount);
+            final String valName = String.format("_sp_%d", constCount);
             final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
             final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 
@@ -115,7 +126,7 @@ public class SpState {
         public <DeclType extends Type> SpState visit(final HavocStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
-            final String valName = String.format("_spval_%d", constCount);
+            final String valName = String.format("_sp_%d", constCount);
             final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
             final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
             final Expr<BoolType> expr = sub.apply(state.getExpr());
