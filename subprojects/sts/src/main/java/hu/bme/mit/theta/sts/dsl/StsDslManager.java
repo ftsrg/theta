@@ -22,7 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import hu.bme.mit.theta.core.type.Expr;
@@ -42,7 +43,7 @@ public final class StsDslManager {
 
 	public static StsSpec createStsSpec(final InputStream inputStream, final List<? extends Expr<?>> args)
 			throws IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
+		final CharStream input = CharStreams.fromStream(inputStream);
 
 		final StsDslLexer lexer = new StsDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);

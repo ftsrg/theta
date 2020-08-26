@@ -98,6 +98,12 @@ public final class AbstractExprs {
 		return type.Sub(newLeftOp, newRightOp);
 	}
 
+	public static <T extends Additive<T>> PosExpr<?> Pos(final Expr<?> op) {
+		final Expr<T> tOp = bind(op);
+		final T type = tOp.getType();
+		return type.Pos(tOp);
+	}
+
 	public static <T extends Additive<T>> NegExpr<?> Neg(final Expr<?> op) {
 		final Expr<T> tOp = bind(op);
 		final T type = tOp.getType();
@@ -154,6 +160,26 @@ public final class AbstractExprs {
 		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Div(newLeftOp, newRightOp);
+	}
+
+	/*
+	 * Divisible
+	 */
+
+	public static <T extends Divisible<T>> ModExpr<?> Mod(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
+		final T type = newLeftOp.getType();
+		return type.Mod(newLeftOp, newRightOp);
+	}
+
+	public static <T extends Divisible<T>> RemExpr<?> Rem(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
+		final T type = newLeftOp.getType();
+		return type.Rem(newLeftOp, newRightOp);
 	}
 
 	/*

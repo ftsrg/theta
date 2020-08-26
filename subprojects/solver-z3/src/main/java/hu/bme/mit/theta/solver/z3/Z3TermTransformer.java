@@ -29,6 +29,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
@@ -71,7 +73,8 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 
@@ -104,14 +107,14 @@ final class Z3TermTransformer {
 		environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
 		environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
 		environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
-		environment.put("mod", exprBinaryOperator(ModExpr::create));
+		environment.put("mod", exprBinaryOperator(IntModExpr::create));
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
 		return transform(term, null, new ArrayList<>());
 	}
 
-	public Expr<?> toFuncLitExpr(final com.microsoft.z3.FuncDecl funcDecl, final Model model,
+	public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
@@ -120,7 +123,7 @@ final class Z3TermTransformer {
 		popParams(vars, paramDecls);
 		return funcLitExpr;
 	}
-	
+
 	public Expr<?> toArrayLitExpr(final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
@@ -134,7 +137,7 @@ final class Z3TermTransformer {
 	private Expr<?> createArrayLitExpr(ArraySort sort, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
 		return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()), transformSort(sort.getRange()), entryExprs, elseExpr);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<Expr<?>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
 		return Array(entryExprs.stream().map(entry -> Tuple2.of((Expr<I>) entry.get1(), (Expr<E>) entry.get2())).collect(Collectors.toUnmodifiableList()),
@@ -151,6 +154,10 @@ final class Z3TermTransformer {
 
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
+
+		// BitVecNum is not BVNumeral? Potential bug?
+		} else if (/* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
+			return transformBvLit(term);
 
 		} else if (term.isConstantArray()) {
 			return transformArrLit(term, model, vars);
@@ -187,15 +194,23 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final Model model,
 									final List<Decl<?>> vars) {
-		final com.microsoft.z3.ArrayExpr arrayExpr = (com.microsoft.z3.ArrayExpr) term;
-		final com.microsoft.z3.ArraySort sort = (ArraySort) arrayExpr.getSort();
+		final ArrayExpr arrayExpr = (ArrayExpr) term;
+		final ArraySort sort = (ArraySort) arrayExpr.getSort();
 		return createArrayLitExpr(sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
 	}
 
-	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model,
-									   final List<Decl<?>> vars) {
+	private Expr<?> transformBvLit(final com.microsoft.z3.Expr term) {
+		final com.microsoft.z3.BitVecNum bvNum = (com.microsoft.z3.BitVecNum) term;
 
-		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();
+		BigInteger value = bvNum.getBigInteger();
+
+		// At this point signedness is not known. Presuming unsigned
+		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
+	}
+
+	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
+
+		final FuncDecl funcDecl = term.getFuncDecl();
 		final String symbol = funcDecl.getName().toString();
 
 		if (environment.containsKey(symbol)) {

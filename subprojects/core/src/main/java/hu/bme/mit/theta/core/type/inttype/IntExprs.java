@@ -36,12 +36,20 @@ public final class IntExprs {
 		return IntToRatExpr.of(op);
 	}
 
+	public static IntToBvExpr ToBv(final Expr<IntType> op, final int size, final boolean isSigned) {
+		return IntToBvExpr.of(op, size, isSigned);
+	}
+
 	public static IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
 		return IntAddExpr.of(ops);
 	}
 
 	public static IntSubExpr Sub(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		return IntSubExpr.of(leftOp, rightOp);
+	}
+
+	public static IntPosExpr Pos(final Expr<IntType> op) {
+		return IntPosExpr.of(op);
 	}
 
 	public static IntNegExpr Neg(final Expr<IntType> op) {
@@ -56,12 +64,12 @@ public final class IntExprs {
 		return IntDivExpr.of(leftOp, rightOp);
 	}
 
-	public static ModExpr Mod(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return ModExpr.of(leftOp, rightOp);
+	public static IntModExpr Mod(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return IntModExpr.of(leftOp, rightOp);
 	}
 
-	public static RemExpr Rem(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return RemExpr.of(leftOp, rightOp);
+	public static IntRemExpr Rem(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return IntRemExpr.of(leftOp, rightOp);
 	}
 
 	public static IntEqExpr Eq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {

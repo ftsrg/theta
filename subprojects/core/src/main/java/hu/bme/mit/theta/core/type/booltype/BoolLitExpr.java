@@ -22,7 +22,7 @@ public abstract class BoolLitExpr extends NullaryExpr<BoolType> implements LitEx
 
 	public abstract boolean getValue();
 
-	public static final BoolLitExpr of(final boolean value) {
+	public static BoolLitExpr of(final boolean value) {
 		return value ? TrueExpr.getInstance() : FalseExpr.getInstance();
 	}
 

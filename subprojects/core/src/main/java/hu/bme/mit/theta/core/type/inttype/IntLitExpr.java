@@ -23,7 +23,11 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
+
+import java.math.BigInteger;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>, Comparable<IntLitExpr> {
 
@@ -58,6 +62,17 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return Rat(this.value, 1);
 	}
 
+	public BvLitExpr toBv(int size, boolean isSigned) {
+		BigInteger res = BigInteger.valueOf(value);
+		BigInteger fittedRes = BvUtils.fitBigIntegerIntoDomain(res, size, isSigned);
+
+		if(res.equals(fittedRes)) {
+			return BvUtils.bigIntegerToBvLitExpr(fittedRes, size, isSigned);
+		} else {
+			throw new IllegalArgumentException("The value of int " + res.toString() + " does not fit the bitvector " + (isSigned ? "signed" : "unsigned") + " domain of size " + size + " bits");
+		}
+	}
+
 	public IntLitExpr add(final IntLitExpr that) {
 		return IntLitExpr.of(this.value + that.value);
 	}
@@ -68,6 +83,10 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 
 	public IntLitExpr neg() {
 		return IntLitExpr.of(-this.value);
+	}
+
+	public IntLitExpr pos() {
+		return IntLitExpr.of(this.value);
 	}
 
 	public IntLitExpr div(final IntLitExpr that) {
