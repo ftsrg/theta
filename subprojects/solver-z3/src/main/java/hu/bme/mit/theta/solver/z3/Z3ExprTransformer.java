@@ -450,7 +450,7 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformIntLit(final IntLitExpr expr) {
-		return context.mkInt(expr.getValue());
+		return context.mkInt(expr.getValue().toString());
 	}
 
 	private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {
