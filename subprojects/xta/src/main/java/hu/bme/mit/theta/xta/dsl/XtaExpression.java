@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -268,7 +268,7 @@ final class XtaExpression {
             return Div(leftOp, rightOp);
         }
 
-        private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+        private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
             final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
             final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
             return Mod(leftOp, rightOp);

@@ -13,26 +13,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.cfa.analysis.initprec;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
-import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.UnaryExpr;
 
-/**
- * An implementation for initial precision that returns empty initial
- * precisions.
- */
-public class CfaEmptyInitPrec implements CfaInitPrec {
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-	@Override
-	public ExplPrec createExpl(final CFA cfa) {
-		return ExplPrec.empty();
+public abstract class PosExpr<ExprType extends Additive<ExprType>> extends UnaryExpr<ExprType, ExprType> {
+
+	protected PosExpr(final Expr<ExprType> op) {
+		super(op);
 	}
 
-	@Override
-	public PredPrec createPred(final CFA cfa) {
-		return PredPrec.of();
+	public static <ExprType extends Additive<ExprType>> PosExpr<?> create2(final Expr<?> op) {
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
+		final Expr<ExprType> newOp = cast(op, type);
+		return type.Pos(newOp);
 	}
 
 }

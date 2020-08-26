@@ -15,13 +15,19 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import com.google.common.collect.Sets;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 final class Z3TypeTransformer {
 
@@ -32,6 +38,7 @@ final class Z3TypeTransformer {
 	private final com.microsoft.z3.BoolSort boolSort;
 	private final com.microsoft.z3.IntSort intSort;
 	private final com.microsoft.z3.RealSort realSort;
+	private final Set<com.microsoft.z3.BitVecSort> bvSorts;
 
 	Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
@@ -40,6 +47,7 @@ final class Z3TypeTransformer {
 		boolSort = context.mkBoolSort();
 		intSort = context.mkIntSort();
 		realSort = context.mkRealSort();
+		bvSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
 	}
 
 	public com.microsoft.z3.Sort toSort(final Type type) {
@@ -49,6 +57,16 @@ final class Z3TypeTransformer {
 			return intSort;
 		} else if (type instanceof RatType) {
 			return realSort;
+		} else if (type instanceof BvType) {
+			final BvType bvType = (BvType) type;
+			final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream().filter(sort -> sort.getSize() == bvType.getSize()).findAny();
+			if(bvSort.isPresent()) {
+				return bvSort.get();
+			} else {
+				final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(bvType.getSize());
+				bvSorts.add(newBvSort);
+				return newBvSort;
+			}
 		} else if (type instanceof ArrayType) {
 			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
 			final com.microsoft.z3.Sort indexSort = toSort(arrayType.getIndexType());

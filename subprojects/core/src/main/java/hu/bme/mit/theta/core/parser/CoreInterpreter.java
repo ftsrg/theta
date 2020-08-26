@@ -74,8 +74,8 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public class CoreInterpreter {
@@ -108,8 +108,8 @@ public class CoreInterpreter {
 		defineExpr("ite", exprTernaryOperator(IteExpr::create));
 		defineExpr("read", exprBinaryOperator(ArrayReadExpr::create));
 		defineExpr("write", exprTernaryOperator(ArrayWriteExpr::create));
-		defineExpr("mod", exprBinaryOperator(ModExpr::create));
-		defineExpr("rem", exprBinaryOperator(RemExpr::create));
+		defineExpr("mod", exprBinaryOperator(IntModExpr::create));
+		defineExpr("rem", exprBinaryOperator(IntRemExpr::create));
 		defineExpr("+", exprMultiaryOperator(AddExpr::create2));
 		defineExpr("-", exprBinaryOperator(SubExpr::create2));
 		defineExpr("*", exprMultiaryOperator(MulExpr::create2));
