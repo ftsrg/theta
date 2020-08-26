@@ -596,8 +596,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-		final int num = Integer.parseInt(ctx.num.getText());
-		final int denom = Integer.parseInt(ctx.denom.getText());
+		final var num = new BigInteger(ctx.num.getText());
+		final var denom = new BigInteger(ctx.denom.getText());
 		return Rat(num, denom);
 	}
 

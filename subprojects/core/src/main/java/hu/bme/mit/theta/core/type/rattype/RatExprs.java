@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.math.BigInteger;
+
 public final class RatExprs {
 
 	private RatExprs() {
@@ -28,7 +30,20 @@ public final class RatExprs {
 		return RatType.getInstance();
 	}
 
+	@Deprecated
 	public static RatLitExpr Rat(final int num, final int denom) {
+		return RatLitExpr.of(num, denom);
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final int denom) {
+		return RatLitExpr.of(num, denom);
+	}
+
+	public static RatLitExpr Rat(final int num, final BigInteger denom) {
+		return RatLitExpr.of(num, denom);
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final BigInteger denom) {
 		return RatLitExpr.of(num, denom);
 	}
 

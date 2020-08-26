@@ -461,15 +461,15 @@ public final class ExprSimplifier {
 				ops.add(opVisited);
 			}
 		}
-		int num = 0;
-		int denom = 1;
+		var num = BigInteger.ZERO;
+		var denom = BigInteger.ONE;
 
 		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<RatType> op = iterator.next();
 			if (op instanceof RatLitExpr) {
 				final RatLitExpr litOp = (RatLitExpr) op;
-				num = num * litOp.getDenom() + denom * litOp.getNum();
-				denom *= litOp.getDenom();
+				num = num.multiply(litOp.getDenom()).add(denom.multiply(litOp.getNum()));
+				denom = denom.multiply(litOp.getDenom());
 				iterator.remove();
 			}
 		}
@@ -534,17 +534,17 @@ public final class ExprSimplifier {
 				ops.add(opVisited);
 			}
 		}
-		int num = 1;
-		int denom = 1;
+		var num = BigInteger.ONE;
+		var denom = BigInteger.ONE;
 
 		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<RatType> op = iterator.next();
 			if (op instanceof RatLitExpr) {
 				final RatLitExpr litOp = (RatLitExpr) op;
-				num *= litOp.getNum();
-				denom *= litOp.getDenom();
+				num = num.multiply(litOp.getNum());
+				denom = denom.multiply(litOp.getDenom());
 				iterator.remove();
-				if (num == 0) {
+				if (num.compareTo(BigInteger.ZERO) == 0) {
 					return Rat(0, 1);
 				}
 			}
