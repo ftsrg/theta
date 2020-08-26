@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.expr;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -43,4 +44,8 @@ final class BasicExprState implements ExprState {
 		return expr.equals(False());
 	}
 
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(expr).toString();
+	}
 }
