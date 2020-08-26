@@ -626,7 +626,7 @@ final class CfaExpression {
 
 		@Override
 		public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-			final int value = Integer.parseInt(ctx.value.getText());
+			final var value = new BigInteger(ctx.value.getText());
 			return Int(value);
 		}
 
