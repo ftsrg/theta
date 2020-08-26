@@ -70,7 +70,8 @@ public class CfaConfigBuilder {
 	}
 
 	public enum Refinement {
-		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB,
+		NEWTON_WP, NEWTON_SP, NEWTON_WP_LV, NEWTON_SP_LV, NEWTON_IT_WP, NEWTON_IT_SP, NEWTON_IT_WP_LV, NEWTON_IT_SP_LV
 	}
 
 	public enum Search {
@@ -274,6 +275,70 @@ public class CfaConfigBuilder {
 					refiner = SingleExprTraceRefiner.create(ExprTraceUCBChecker.create(True(), True(), solver),
 							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
+				case NEWTON_SP:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_WP:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_SP_LV:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_WP_LV:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_IT_SP:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_IT_WP:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_IT_SP_LV:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
+				case NEWTON_IT_WP_LV:
+					refiner = SingleExprTraceRefiner.create(
+						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV(),
+						precGranularity.createRefiner(new ItpRefToExplPrec()),
+						pruneStrategy,
+						logger
+					);
+					break;
 				default:
 					throw new UnsupportedOperationException(
 							domain + " domain does not support " + refinement + " refinement.");
@@ -327,6 +392,30 @@ public class CfaConfigBuilder {
 					break;
 				case UCB:
 					exprTraceChecker = ExprTraceUCBChecker.create(True(), True(), solver);
+					break;
+				case NEWTON_SP:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV();
+					break;
+				case NEWTON_WP:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV();
+					break;
+				case NEWTON_SP_LV:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV();
+					break;
+				case NEWTON_WP_LV:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV();
+					break;
+				case NEWTON_IT_SP:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV();
+					break;
+				case NEWTON_IT_WP:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV();
+					break;
+				case NEWTON_IT_SP_LV:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV();
+					break;
+				case NEWTON_IT_WP_LV:
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV();
 					break;
 				default:
 					throw new UnsupportedOperationException(
