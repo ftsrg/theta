@@ -30,7 +30,6 @@ public final class RatExprs {
 		return RatType.getInstance();
 	}
 
-	@Deprecated
 	public static RatLitExpr Rat(final int num, final int denom) {
 		return RatLitExpr.of(num, denom);
 	}
