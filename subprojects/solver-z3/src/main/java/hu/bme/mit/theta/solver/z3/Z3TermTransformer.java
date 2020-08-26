@@ -43,6 +43,7 @@ import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
 
+import com.microsoft.z3.Native;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -184,8 +185,8 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.RatNum ratNum = (com.microsoft.z3.RatNum) term;
-		final int num = ratNum.getNumerator().getInt();
-		final int denom = ratNum.getDenominator().getInt();
+		final var num = ratNum.getNumerator().getBigInteger();
+		final var denom = ratNum.getDenominator().getBigInteger();
 		return Rat(num, denom);
 	}
 
