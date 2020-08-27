@@ -43,7 +43,6 @@ import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
 
-import com.microsoft.z3.Native;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
