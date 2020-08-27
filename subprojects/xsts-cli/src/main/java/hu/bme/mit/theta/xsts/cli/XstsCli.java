@@ -60,7 +60,7 @@ public class XstsCli {
     @Parameter(names = {"--model"}, description = "Path of the input XSTS model", required = true)
     String model;
 
-    @Parameter(names = {"--property"}, description = "Path of the input property", required = true)
+    @Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
     String property;
 
     @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
@@ -146,8 +146,14 @@ public class XstsCli {
     }
 
     private XSTS loadModel() throws IOException {
-        if (model.endsWith(".xsts") && property.endsWith(".prop")) {
-            try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model),new FileInputStream(property))) {
+        if (model.endsWith(".xsts")) {
+            InputStream propStream = null;
+            if (property.endsWith(".prop")) {
+                propStream = new FileInputStream(property);
+            } else {
+                propStream = new ByteArrayInputStream(property.getBytes());
+            }
+            try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
                 return XstsDslManager.createXsts(inputStream);
             }
         } else {
