@@ -282,7 +282,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.BOOLLIT()!=null){
             if(ctx.BOOLLIT().getText().equals("true")) return True(); else return False();
         }else if(ctx.INTLIT()!=null){
-            return Int(new BigInteger(ctx.INTLIT().getText()));
+            return Int(ctx.INTLIT().getText());
         }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type."+" On line "+ctx.start.getLine());
     }
 
