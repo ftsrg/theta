@@ -8,6 +8,7 @@ include(
         "common",
         "core",
         "solver",
+        "solver-smtlib",
         "solver-z3",
         "sts",
         "sts-analysis",
