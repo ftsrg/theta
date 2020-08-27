@@ -31,15 +31,35 @@ public final class RatExprs {
 	}
 
 	public static RatLitExpr Rat(final int num, final int denom) {
-		return RatLitExpr.of(num, denom);
+		return RatLitExpr.of(BigInteger.valueOf(num), BigInteger.valueOf(denom));
 	}
 
-	public static RatLitExpr Rat(final BigInteger num, final int denom) {
-		return RatLitExpr.of(num, denom);
+	public static RatLitExpr Rat(final int num, final String denom) {
+		return RatLitExpr.of(BigInteger.valueOf(num), new BigInteger(denom));
 	}
 
 	public static RatLitExpr Rat(final int num, final BigInteger denom) {
-		return RatLitExpr.of(num, denom);
+		return RatLitExpr.of(BigInteger.valueOf(num), denom);
+	}
+
+	public static RatLitExpr Rat(final String num, final int denom) {
+		return RatLitExpr.of(new BigInteger(num), BigInteger.valueOf(denom));
+	}
+
+	public static RatLitExpr Rat(final String num, final String denom) {
+		return RatLitExpr.of(new BigInteger(num), new BigInteger(denom));
+	}
+
+	public static RatLitExpr Rat(final String num, final BigInteger denom) {
+		return RatLitExpr.of(new BigInteger(num), denom);
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final int denom) {
+		return RatLitExpr.of(num, BigInteger.valueOf(denom));
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final String denom) {
+		return RatLitExpr.of(num, new BigInteger(denom));
 	}
 
 	public static RatLitExpr Rat(final BigInteger num, final BigInteger denom) {

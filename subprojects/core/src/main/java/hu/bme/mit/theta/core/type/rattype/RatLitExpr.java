@@ -52,18 +52,6 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 		return new RatLitExpr(num, denom);
 	}
 
-	public static RatLitExpr of(final BigInteger num, final int denom) {
-		return new RatLitExpr(num, BigInteger.valueOf(denom));
-	}
-
-	public static RatLitExpr of(final int num, final BigInteger denom) {
-		return new RatLitExpr(BigInteger.valueOf(num), denom);
-	}
-
-	public static RatLitExpr of(final int num, final int denom) {
-		return new RatLitExpr(BigInteger.valueOf(num), BigInteger.valueOf(denom));
-	}
-
 	@Override
 	public RatType getType() {
 		return Rat();
@@ -153,7 +141,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 	}
 
 	public RatLitExpr frac() {
-		return sub(of(floor(), 1));
+		return sub(of(floor(), BigInteger.ONE));
 	}
 
 	@Override
