@@ -44,10 +44,6 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return new IntLitExpr(value);
 	}
 
-	public static IntLitExpr of(final int value) {
-		return new IntLitExpr(BigInteger.valueOf(value));
-	}
-
 	public BigInteger getValue() {
 		return value;
 	}

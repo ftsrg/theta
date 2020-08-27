@@ -31,7 +31,11 @@ public final class IntExprs {
 	}
 
 	public static IntLitExpr Int(final int value) {
-		return IntLitExpr.of(value);
+		return IntLitExpr.of(BigInteger.valueOf(value));
+	}
+
+	public static IntLitExpr Int(final String value) {
+		return IntLitExpr.of(new BigInteger(value));
 	}
 
 	public static IntLitExpr Int(final BigInteger value) {
