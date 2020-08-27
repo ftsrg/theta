@@ -85,6 +85,10 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return IntLitExpr.of(this.value.negate());
 	}
 
+	public IntLitExpr pos() {
+		return IntLitExpr.of(this.value);
+	}
+
 	public IntLitExpr div(final IntLitExpr that) {
 		return IntLitExpr.of(this.value.divide(that.value));
 	}

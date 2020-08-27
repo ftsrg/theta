@@ -58,6 +58,10 @@ public final class IntExprs {
 		return IntSubExpr.of(leftOp, rightOp);
 	}
 
+	public static IntPosExpr Pos(final Expr<IntType> op) {
+		return IntPosExpr.of(op);
+	}
+
 	public static IntNegExpr Neg(final Expr<IntType> op) {
 		return IntNegExpr.of(op);
 	}

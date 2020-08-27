@@ -50,8 +50,49 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.*;
-import hu.bme.mit.theta.core.type.inttype.*;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -63,6 +104,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
@@ -89,6 +131,8 @@ public final class ExprSimplifier {
 			.addCase(RatAddExpr.class, ExprSimplifier::simplifyRatAdd)
 
 			.addCase(RatSubExpr.class, ExprSimplifier::simplifyRatSub)
+
+			.addCase(RatPosExpr.class, ExprSimplifier::simplifyRatPos)
 
 			.addCase(RatNegExpr.class, ExprSimplifier::simplifyRatNeg)
 
@@ -117,6 +161,8 @@ public final class ExprSimplifier {
 			.addCase(IntAddExpr.class, ExprSimplifier::simplifyIntAdd)
 
 			.addCase(IntSubExpr.class, ExprSimplifier::simplifyIntSub)
+
+			.addCase(IntPosExpr.class, ExprSimplifier::simplifyIntPos)
 
 			.addCase(IntNegExpr.class, ExprSimplifier::simplifyIntNeg)
 
@@ -149,6 +195,8 @@ public final class ExprSimplifier {
 			.addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
 			.addCase(BvSubExpr.class, ExprSimplifier::simplifyBvSub)
+
+			.addCase(BvPosExpr.class, ExprSimplifier::simplifyBvPos)
 
 			.addCase(BvNegExpr.class, ExprSimplifier::simplifyBvNeg)
 
@@ -508,6 +556,10 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
+	private static Expr<RatType> simplifyRatPos(final RatPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
+	}
+
 	private static Expr<RatType> simplifyRatNeg(final RatNegExpr expr, final Valuation val) {
 		final Expr<RatType> op = simplify(expr.getOp(), val);
 
@@ -766,6 +818,10 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
+	private static Expr<IntType> simplifyIntPos(final IntPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
+	}
+
 	private static Expr<IntType> simplifyIntNeg(final IntNegExpr expr, final Valuation val) {
 		final Expr<IntType> op = simplify(expr.getOp(), val);
 
@@ -1009,6 +1065,10 @@ public final class ExprSimplifier {
 		}
 
 		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
 	}
 
 	private static Expr<BvType> simplifyBvNeg(final BvNegExpr expr, final Valuation val) {

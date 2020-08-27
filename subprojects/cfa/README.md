@@ -33,25 +33,24 @@ This can be used to simulate non-deterministic input from the user or the enviro
 Algorithms are usually interested in proving that the error location is not reachable.
 For more information see Section 2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf).
 
-
 Variables of the CFA can have the following types.
-- `bool`: Booleans.
-- `int`: Mathematical, unbounded SMT integers.
-- `rat`: Rational numbers (implemented as SMT reals).
-- `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
-- `bv[L]`, `bitvec[L]`, `ubv[L]`, `ubitvec[L]`, `sbv[L]`, `sbitvec[L]`: Signed or unsigned bitvector of given length `L`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+* `bool`: Booleans.
+* `int`: Mathematical, unbounded SMT integers.
+* `rat`: Rational numbers (implemented as SMT reals).
+* `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
+* `bv[L]`, `bitvec[L]`, `ubv[L]`, `ubitvec[L]`, `sbv[L]`, `sbitvec[L]`: Signed or unsigned bitvector of given length `L`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
 
 Expressions of the CFA include the following.
-- Identifiers (variables).
-- Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
-  - Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
-  - Bitvector literals can be given by stating the length, information about the signedness, and the exact value of the bitvector in binary, decimal or hexadecimal form. (E.g. `4'd5` is a 4-bit-long unsigned bitvector with the decimal value 5.) _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
-- Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
-- Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
-- Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
-- Conditional: `if . then . else .`
-- Array read (`a[i]`) and write (`a[i <- v]`).
-- Bitvector specific operators, e.g., `&`, `|`, `^`, `<<`, `>>`, `>>>`, `<<~`, `~>>`, `~`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+* Identifiers (variables).
+* Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
+  * Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
+  * Bitvector literals can be given by stating the length, information about the signedness, and the exact value of the bitvector in binary, decimal or hexadecimal form. (E.g. `4'd5` is a 4-bit-long unsigned bitvector with the decimal value 5.) _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+* Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
+* Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
+* Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
+* Conditional: `if . then . else .`.
+* Array read (`a[i]`) and write (`a[i <- v]`).
+* Bitvector specific operators, e.g., `&`, `|`, `^`, `<<`, `>>`, `>>>`, `<<~`, `~>>`, `~`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
 
 ### Textual representation (DSL)
 
@@ -82,6 +81,7 @@ Note that it is also possible to include multiple statements on one edge (in new
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
 
-### C frontend
+### Frontends
 
-[Gazer](https://github.com/FTSRG/gazer) is an LLVM-based frontend for Theta that can translate C programs into CFAs, run Theta and map the verification results back to the C source level.
+* [Gazer](https://github.com/FTSRG/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli as a backend.
+* [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.

@@ -41,12 +41,17 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
     }
 
     @Override
-    public SubExpr<BvType> Sub(Expr<BvType> leftOp, Expr<BvType> rightOp) {
+    public BvSubExpr Sub(Expr<BvType> leftOp, Expr<BvType> rightOp) {
         return BvExprs.Sub(leftOp, rightOp);
     }
 
     @Override
-    public NegExpr<BvType> Neg(Expr<BvType> op) {
+    public BvPosExpr Pos(Expr<BvType> op) {
+        return BvExprs.Pos(op);
+    }
+
+    @Override
+    public BvNegExpr Neg(Expr<BvType> op) {
         return BvExprs.Neg(op);
     }
 

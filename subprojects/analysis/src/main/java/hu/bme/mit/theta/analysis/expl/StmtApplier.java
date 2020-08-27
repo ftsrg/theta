@@ -34,7 +34,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 
 final class StmtApplier {
 
-	public static enum ApplyResult {
+	public enum ApplyResult {
 		FAILURE, SUCCESS, BOTTOM
 	}
 
@@ -50,10 +50,9 @@ final class StmtApplier {
 			return applyAssume(assumeStmt, val, approximate);
 		} else if (stmt instanceof HavocStmt) {
 			final HavocStmt<?> havocStmt = (HavocStmt<?>) stmt;
-			return applyHavoc(havocStmt, val, approximate);
+			return applyHavoc(havocStmt, val);
 		} else if (stmt instanceof SkipStmt) {
-			final SkipStmt skipStmt = (SkipStmt) stmt;
-			return applySkip(skipStmt);
+			return applySkip();
 		} else {
 			throw new UnsupportedOperationException("Unhandled statement: " + stmt);
 		}
@@ -140,14 +139,13 @@ final class StmtApplier {
 		return false;
 	}
 
-	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,
-										  final boolean approximate) {
+	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val) {
 		final VarDecl<?> varDecl = stmt.getVarDecl();
 		val.remove(varDecl);
 		return ApplyResult.SUCCESS;
 	}
 
-	private static ApplyResult applySkip(final SkipStmt skipStmt) {
+	private static ApplyResult applySkip() {
 		return ApplyResult.SUCCESS;
 	}
 

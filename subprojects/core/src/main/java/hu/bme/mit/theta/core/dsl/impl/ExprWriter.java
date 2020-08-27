@@ -23,6 +23,9 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -35,6 +38,30 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -46,7 +73,9 @@ import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
 import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
@@ -61,7 +90,11 @@ import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public final class ExprWriter {
 
@@ -106,6 +139,8 @@ public final class ExprWriter {
 
 				.addCase(IntSubExpr.class, e -> infixBinary(e, " - "))
 
+				.addCase(IntPosExpr.class, e -> prefixUnary(e, "+"))
+
 				.addCase(IntNegExpr.class, e -> prefixUnary(e, "-"))
 
 				.addCase(IntMulExpr.class, e -> infixMultiary(e, " * "))
@@ -132,11 +167,15 @@ public final class ExprWriter {
 
 				.addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
 
+				.addCase(IntToBvExpr.class, e -> e.getType().toString())
+
 				// Rational
 
 				.addCase(RatAddExpr.class, e -> infixMultiary(e, " + "))
 
 				.addCase(RatSubExpr.class, e -> infixBinary(e, " - "))
+
+				.addCase(RatPosExpr.class, e -> prefixUnary(e, "+"))
 
 				.addCase(RatNegExpr.class, e -> prefixUnary(e, "-"))
 
@@ -158,11 +197,69 @@ public final class ExprWriter {
 
 				.addCase(RatLitExpr.class, e -> e.getNum() + "%" + e.getDenom())
 
+				// Bitvector
+
+				.addCase(BvAddExpr.class, e -> infixMultiary(e, " + "))
+
+				.addCase(BvSubExpr.class, e -> infixBinary(e, " - "))
+
+				.addCase(BvMulExpr.class, e -> infixMultiary(e, " * "))
+
+				.addCase(BvDivExpr.class, e -> infixBinary(e, " / "))
+
+				.addCase(BvModExpr.class, e -> infixBinary(e, " mod "))
+
+				.addCase(BvRemExpr.class, e -> infixBinary(e, " rem "))
+
+				// TODO: BvPosExpr
+
+				.addCase(BvNegExpr.class, e -> prefixUnary(e, "-"))
+
+				.addCase(BvAndExpr.class, e -> infixMultiary(e, " & "))
+
+				.addCase(BvOrExpr.class, e -> infixMultiary(e, " | "))
+
+				.addCase(BvXorExpr.class, e -> infixMultiary(e, " ^ "))
+
+				.addCase(BvNotExpr.class, e -> prefixUnary(e, "~"))
+
+				.addCase(BvShiftLeftExpr.class, e -> infixBinary(e, " << "))
+
+				.addCase(BvArithShiftRightExpr.class, e -> infixBinary(e, " >> "))
+
+				.addCase(BvLogicShiftRightExpr.class, e -> infixBinary(e, " >>> "))
+
+				.addCase(BvRotateLeftExpr.class, e -> infixBinary(e, " <<~ "))
+
+				.addCase(BvRotateRightExpr.class, e -> infixBinary(e, " ~>> "))
+
+				.addCase(BvEqExpr.class, e -> infixBinary(e, " = "))
+
+				.addCase(BvNeqExpr.class, e -> infixBinary(e, " /= "))
+
+				.addCase(BvLtExpr.class, e -> infixBinary(e, " < "))
+
+				.addCase(BvLeqExpr.class, e -> infixBinary(e, " <= "))
+
+				.addCase(BvGtExpr.class, e -> infixBinary(e, " > "))
+
+				.addCase(BvGeqExpr.class, e -> infixBinary(e, " >= "))
+
+				.addCase(BvToIntExpr.class, e -> prefixUnary(e, "(int)"))
+
+				.addCase(BvLitExpr.class, this::bvLit)
+
 				// Array
 
 				.addCase(ArrayReadExpr.class, this::arrayRead)
 
 				.addCase(ArrayWriteExpr.class, this::arrayWrite)
+
+				.addCase(ArrayEqExpr.class, e -> infixBinary(e, " = "))
+
+				.addCase(ArrayNeqExpr.class, e -> infixBinary(e, " /= "))
+
+				.addCase(ArrayLitExpr.class, this::arrayLit)
 
 				// General
 
@@ -239,6 +336,24 @@ public final class ExprWriter {
 		sb.append(" else ");
 		sb.append(writeWithBrackets(expr.getElse()));
 		return sb.toString();
+	}
+
+	private String bvLit(final BvLitExpr expr) {
+		var value = Arrays.toString(expr.getValue())
+			.replace("true", "1")
+			.replace("false", "0")
+			.replace("[", "")
+			.replace("]", "")
+			.replace(",", "")
+			.replace(" ", "");
+		return expr.getType().getSize() + "'" + (expr.getType().isSigned() ? "s" : "u") + "b" + value;
+	}
+
+	private String arrayLit(final ArrayLitExpr<?, ?> expr) {
+		return "[" +
+			expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2())).collect(Collectors.joining(", ")) +
+			"<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(expr.getElseElem()) +
+		"]";
 	}
 
 }

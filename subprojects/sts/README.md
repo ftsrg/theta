@@ -24,20 +24,20 @@ An STS is a tuple `(V, I, T, P)` of
 Algorithms are usually interested in proving that the property holds for every reachable state (safety property).
 
 Variables of the STS can have the following types.
-- `bool`: Booleans.
-- `int`: Mathematical, unbounded SMT integers.
-- `rat`: Rational numbers (implemented as SMT reals).
-- `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
+* `bool`: Booleans.
+* `int`: Mathematical, unbounded SMT integers.
+* `rat`: Rational numbers (implemented as SMT reals).
+* `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 
 Expressions of the STS include the following.
-- Identifiers (variables).
-- Primed expressions (only in transition expression) to represent the next state, e.g., `x'`.
-- Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
-- Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
-- Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
-- Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
-- Conditional: `if . then . else .`
-- Array read (`a[i]`) and write (`a[i <- v]`).
+* Identifiers (variables).
+* Primed expressions (only in transition expression) to represent the next state, e.g., `x'`.
+* Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
+* Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
+* Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
+* Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
+* Conditional: `if . then . else .`
+* Array read (`a[i]`) and write (`a[i <- v]`).
 
 ### Textual Representation (DSL)
 

@@ -8,6 +8,7 @@
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvLitExpr}: bitvector literal
  *
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvNegExpr}: unary minus
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvPosExpr}: unary plus
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvAddExpr}: addition
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvSubExpr}: subtraction
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvMulExpr}: multiplication

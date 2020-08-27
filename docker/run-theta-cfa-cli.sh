@@ -9,9 +9,9 @@ if [ -t 0 ] && [ -t 1 ]; then
     DOCKER_RUN_OPTIONS="$DOCKER_RUN_OPTIONS -t"
 fi
 
-ABSPATH=`realpath $1`
-DIR=`dirname $ABSPATH`
-FILE=/host/`basename $ABSPATH`
+ABSPATH=$(realpath "$1")
+DIR=$(dirname "$ABSPATH")
+FILE=/host/$(basename "$ABSPATH")
 shift
 
-docker run $DOCKER_RUN_OPTIONS --mount type=bind,source="$DIR",target=/host theta-cfa-cli:latest --model $FILE $@
+docker run "$DOCKER_RUN_OPTIONS" --mount type=bind,source="$DIR",target=/host theta-cfa-cli:latest --model "$FILE" "$@"

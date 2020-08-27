@@ -83,10 +83,9 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
 	@Override
 	public String toString() {
-		final String indexString = String.format("([%s]->%s)", type.getIndexType(), type.getElemType());
-		return Utils.lispStringBuilder(OPERATOR_LABEL).add(indexString).add("(")
-				.addAll(elems.stream().map(elem -> String.format("([%s]->%s)", elem.get1(), elem.get2()))).add(")")
-				.add((String.format("[]->%s", elseElem)))
+		return Utils.lispStringBuilder(OPERATOR_LABEL)
+				.addAll(elems.stream().map(elem -> String.format("([%s]->%s)", elem.get1(), elem.get2())))
+				.add((String.format("([]->%s)", elseElem)))
 				.toString();
 	}
 

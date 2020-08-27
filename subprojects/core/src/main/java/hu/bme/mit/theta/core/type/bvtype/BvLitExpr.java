@@ -76,6 +76,12 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return BvUtils.bigIntegerToBvLitExpr(prod, getType().getSize(), getType().isSigned());
     }
 
+    public BvLitExpr pos() {
+        BigInteger pos = BvUtils.bvLitExprToBigInteger(this);
+        pos = BvUtils.fitBigIntegerIntoDomain(pos, getType().getSize(), getType().isSigned());
+        return BvUtils.bigIntegerToBvLitExpr(pos, getType().getSize(), getType().isSigned());
+    }
+
     public BvLitExpr neg() {
         BigInteger neg = BvUtils.bvLitExprToBigInteger(this).negate();
         neg = BvUtils.fitBigIntegerIntoDomain(neg, getType().getSize(), getType().isSigned());

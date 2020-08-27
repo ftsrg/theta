@@ -38,7 +38,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -151,7 +150,7 @@ final class CfaExpression {
 		@Override
 		public Expr<?> visitIteExpr(final IteExprContext ctx) {
 			if (ctx.cond != null) {
-				final Expr<BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), Bool());
+				final Expr<BoolType> cond = cast(ctx.cond.accept(this), Bool());
 				final Expr<?> then = ctx.then.accept(this);
 				final Expr<?> elze = ctx.elze.accept(this);
 				return Ite(cond, then, elze);
@@ -163,8 +162,8 @@ final class CfaExpression {
 		@Override
 		public Expr<?> visitIffExpr(final IffExprContext ctx) {
 			if (ctx.rightOp != null) {
-				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
-				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				final Expr<BoolType> leftOp = cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = cast(ctx.rightOp.accept(this), Bool());
 				return Iff(leftOp, rightOp);
 			} else {
 				return visitChildren(ctx);
@@ -174,8 +173,8 @@ final class CfaExpression {
 		@Override
 		public Expr<?> visitImplyExpr(final ImplyExprContext ctx) {
 			if (ctx.rightOp != null) {
-				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
-				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				final Expr<BoolType> leftOp = cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = cast(ctx.rightOp.accept(this), Bool());
 				return Imply(leftOp, rightOp);
 			} else {
 				return visitChildren(ctx);
@@ -188,7 +187,7 @@ final class CfaExpression {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 				push(paramDecls);
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 				pop();
 
 				return Forall(paramDecls, op);
@@ -203,7 +202,7 @@ final class CfaExpression {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 				push(paramDecls);
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 				pop();
 
 				return Exists(paramDecls, op);
@@ -216,7 +215,7 @@ final class CfaExpression {
 		public Expr<?> visitOrExpr(final OrExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-						.map(op -> TypeUtils.cast(op.accept(this), Bool()));
+						.map(op -> cast(op.accept(this), Bool()));
 				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return Or(ops);
 			} else {
@@ -227,8 +226,8 @@ final class CfaExpression {
 		@Override
 		public Expr<?> visitXorExpr(final XorExprContext ctx) {
 			if (ctx.rightOp != null) {
-				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
-				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				final Expr<BoolType> leftOp = cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = cast(ctx.rightOp.accept(this), Bool());
 				return Xor(leftOp, rightOp);
 			} else {
 				return visitChildren(ctx);
@@ -239,7 +238,7 @@ final class CfaExpression {
 		public Expr<?> visitAndExpr(final AndExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-						.map(op -> TypeUtils.cast(op.accept(this), Bool()));
+						.map(op -> cast(op.accept(this), Bool()));
 				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return And(ops);
 			} else {
@@ -250,7 +249,7 @@ final class CfaExpression {
 		@Override
 		public Expr<?> visitNotExpr(final NotExprContext ctx) {
 			if (ctx.op != null) {
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 				return Not(op);
 			} else {
 				return visitChildren(ctx);
@@ -531,10 +530,19 @@ final class CfaExpression {
 		////
 
 		@Override
-		public Expr<?> visitNegExpr(final NegExprContext ctx) {
+		public Expr<?> visitUnaryExpr(final UnaryExprContext ctx) {
 			if (ctx.op != null) {
 				final Expr<?> op = ctx.op.accept(this);
-				return Neg(op);
+				switch(ctx.oper.getType()) {
+					case PLUS:
+						return Pos(op);
+
+					case MINUS:
+						return Neg(op);
+
+					default:
+						throw new AssertionError();
+				}
 			} else {
 				return visitChildren(ctx);
 			}
