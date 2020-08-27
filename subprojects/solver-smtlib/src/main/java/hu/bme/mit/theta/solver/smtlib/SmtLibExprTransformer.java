@@ -4,7 +4,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 import java.util.concurrent.ExecutionException;
 
@@ -24,6 +30,13 @@ public class SmtLibExprTransformer {
         this.exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
         this.table = DispatchTable.<String>builder()
+
+                // General
+
+                .addCase(RefExpr.class, this::transformRef)
+
+                .addCase(IteExpr.class, this::transformIte)
+
                 .build();
     }
 
@@ -35,4 +48,27 @@ public class SmtLibExprTransformer {
         }
     }
 
+    ////
+
+    /*
+     * General
+     */
+
+    protected String transformRef(final RefExpr<?> expr) {
+        final Decl<?> decl = expr.getDecl();
+        if (decl instanceof ConstDecl) {
+            return transformer.toSymbol(decl);
+        } else if (decl instanceof ParamDecl) {
+            return (String) env.eval(DeclSymbol.of(decl));
+        } else {
+            throw new UnsupportedOperationException("Cannot transform reference for declaration: " + decl);
+        }
+    }
+
+    protected String transformIte(final IteExpr<?> expr) {
+        final String condTerm = toTerm(expr.getCond());
+        final String thenTerm = toTerm(expr.getThen());
+        final String elzeTerm = toTerm(expr.getElse());
+        return String.format("(ite %s %s %s)", condTerm, thenTerm, elzeTerm);
+    }
 }
