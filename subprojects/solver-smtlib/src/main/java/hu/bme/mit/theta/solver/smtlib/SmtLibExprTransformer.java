@@ -14,6 +14,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -250,6 +255,18 @@ public class SmtLibExprTransformer {
                 // Functions
 
                 .addCase(FuncAppExpr.class, this::transformFuncApp)
+
+                // Arrays
+
+                .addCase(ArrayReadExpr.class, this::transformArrayRead)
+
+                .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
+
+                .addCase(ArrayEqExpr.class, this::transformArrayEq)
+
+                .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
+
+                .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
                 .build();
     }
@@ -731,5 +748,33 @@ public class SmtLibExprTransformer {
         } else {
             return Tuple2.of(func, ImmutableList.of(arg));
         }
+    }
+
+    /*
+     * Arrays
+     */
+
+    protected String transformArrayRead(final ArrayReadExpr<?, ?> expr) {
+        return String.format("(select %s %s)", toTerm(expr.getArray()), toTerm(expr.getIndex()));
+    }
+
+    protected String transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
+        return String.format("(store %s %s %s)", toTerm(expr.getArray()), toTerm(expr.getIndex()), toTerm(expr.getElem()));
+    }
+
+    protected String transformArrayEq(final ArrayEqExpr<?, ?> expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformArrayLit(final ArrayLitExpr<?, ?> expr) {
+        String running = String.format("((as const %s) %s)", transformer.toSort(expr.getType()), toTerm(expr.getElseElem()));
+        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+            running = String.format("(store %s %s %s)", running, toTerm(elem.get1()), toTerm(elem.get2()));
+        }
+        return running;
     }
 }
