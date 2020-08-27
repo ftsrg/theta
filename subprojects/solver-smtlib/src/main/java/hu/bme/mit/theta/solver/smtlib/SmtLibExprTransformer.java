@@ -23,6 +23,19 @@ import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
+import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -71,6 +84,34 @@ public class SmtLibExprTransformer {
                 .addCase(ExistsExpr.class, this::transformExists)
 
                 .addCase(ForallExpr.class, this::transformForall)
+
+                // Rationals
+
+                .addCase(RatLitExpr.class, this::transformRatLit)
+
+                .addCase(RatAddExpr.class, this::transformRatAdd)
+
+                .addCase(RatSubExpr.class, this::transformRatSub)
+
+                .addCase(RatPosExpr.class, this::transformRatPos)
+
+                .addCase(RatNegExpr.class, this::transformRatNeg)
+
+                .addCase(RatMulExpr.class, this::transformRatMul)
+
+                .addCase(RatDivExpr.class, this::transformRatDiv)
+
+                .addCase(RatEqExpr.class, this::transformRatEq)
+
+                .addCase(RatNeqExpr.class, this::transformRatNeq)
+
+                .addCase(RatGeqExpr.class, this::transformRatGeq)
+
+                .addCase(RatGtExpr.class, this::transformRatGt)
+
+                .addCase(RatLeqExpr.class, this::transformRatLeq)
+
+                .addCase(RatLtExpr.class, this::transformRatLt)
 
                 .build();
     }
@@ -188,5 +229,69 @@ public class SmtLibExprTransformer {
         } else {
             return String.format("(%s %s)", paramDecl.getName(), transformer.toSort(type));
         }
+    }
+
+    /*
+     * Rationals
+     */
+
+    protected String transformRatLit(final RatLitExpr expr) {
+        return String.format("(/ %d.0 %d.0)", expr.getNum(), expr.getDenom());
+    }
+
+    protected String transformRatAdd(final RatAddExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(+ %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformRatSub(final RatSubExpr expr) {
+        return String.format("(- %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatPos(final RatPosExpr expr) {
+        return toTerm(expr.getOp());
+    }
+
+    protected String transformRatNeg(final RatNegExpr expr) {
+        return String.format("(- %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformRatMul(final RatMulExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(* %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformRatDiv(final RatDivExpr expr) {
+        return String.format("(/ %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatEq(final RatEqExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatNeq(final RatNeqExpr expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatGeq(final RatGeqExpr expr) {
+        return String.format("(>= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatGt(final RatGtExpr expr) {
+        return String.format("(> %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatLeq(final RatLeqExpr expr) {
+        return String.format("(<= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatLt(final RatLtExpr expr) {
+        return String.format("(< %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 }
