@@ -22,6 +22,31 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -54,6 +79,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -165,6 +191,58 @@ public class SmtLibExprTransformer {
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
 
                 .addCase(IntToBvExpr.class, this::transformIntToBv)
+
+                // Bitvectors
+
+                .addCase(BvLitExpr.class, this::transformBvLit)
+
+                .addCase(BvAddExpr.class, this::transformBvAdd)
+
+                .addCase(BvSubExpr.class, this::transformBvSub)
+
+                .addCase(BvPosExpr.class, this::transformBvPos)
+
+                .addCase(BvNegExpr.class, this::transformBvNeg)
+
+                .addCase(BvMulExpr.class, this::transformBvMul)
+
+                .addCase(BvDivExpr.class, this::transformBvDiv)
+
+                .addCase(BvModExpr.class, this::transformBvMod)
+
+                .addCase(BvRemExpr.class, this::transformBvRem)
+
+                .addCase(BvAndExpr.class, this::transformBvAnd)
+
+                .addCase(BvOrExpr.class, this::transformBvOr)
+
+                .addCase(BvXorExpr.class, this::transformBvXor)
+
+                .addCase(BvNotExpr.class, this::transformBvNot)
+
+                .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
+
+                .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
+
+                .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
+
+                .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
+
+                .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
+
+                .addCase(BvEqExpr.class, this::transformBvEq)
+
+                .addCase(BvNeqExpr.class, this::transformBvNeq)
+
+                .addCase(BvGeqExpr.class, this::transformBvGeq)
+
+                .addCase(BvGtExpr.class, this::transformBvGt)
+
+                .addCase(BvLeqExpr.class, this::transformBvLeq)
+
+                .addCase(BvLtExpr.class, this::transformBvLt)
+
+                .addCase(BvToIntExpr.class, this::transformBvToInt)
 
                 .build();
     }
@@ -425,6 +503,189 @@ public class SmtLibExprTransformer {
     }
 
     protected String transformIntToBv(final IntToBvExpr expr) {
+        throw new UnsupportedOperationException("SMT-LIB does not have the corresponding operation");
+        /* Works with Z3, but it is not standard
         return String.format("((_ int2bv %d) %s)", expr.getType().getSize(), toTerm(expr.getOp()));
+        */
+    }
+
+    /*
+     * Bitvectors
+     */
+
+    protected String transformBvLit(final BvLitExpr expr) {
+        final String value = Arrays.toString(expr.getValue())
+            .replace("true", "1")
+            .replace("false", "0")
+            .replace("[", "")
+            .replace("]", "")
+            .replace(",", "")
+            .replace(" ", "");
+
+        return String.format("#b%s", value);
+    }
+
+    protected String transformBvAdd(final BvAddExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(bvadd %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformBvSub(final BvSubExpr expr) {
+        return String.format("(bvsub %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvPos(final BvPosExpr expr) {
+        return toTerm(expr.getOp());
+    }
+
+    protected String transformBvNeg(final BvNegExpr expr) {
+        return String.format("(bvneg %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformBvMul(final BvMulExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(bvmul %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformBvDiv(final BvDivExpr expr) {
+        if(expr.getType().isSigned()) {
+            return String.format("(bvsdiv %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvudiv %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvMod(final BvModExpr expr) {
+        if(expr.getType().isSigned()) {
+            return String.format("(bvsmod %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvurem %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvRem(final BvRemExpr expr) {
+        if(expr.getType().isSigned()) {
+            return String.format("(bvsrem %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvurem %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvAnd(final BvAndExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(bvand %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformBvOr(final BvOrExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(bvor %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformBvXor(final BvXorExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(bvxor %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformBvNot(final BvNotExpr expr) {
+        return String.format("(bvnot %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformBvShiftLeft(final BvShiftLeftExpr expr) {
+        return String.format("(bvshl %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvArithShiftRight(final BvArithShiftRightExpr expr) {
+        return String.format("(bvashr %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvLogicShiftRight(final BvLogicShiftRightExpr expr) {
+        return String.format("(bvlshr %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvRotateLeft(final BvRotateLeftExpr expr) {
+        return String.format("((_ rotate_left %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
+    }
+
+    protected String transformBvRotateRight(final BvRotateRightExpr expr) {
+        return String.format("((_ rotate_right %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
+    }
+
+    protected String transformBvEq(final BvEqExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvNeq(final BvNeqExpr expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformBvGeq(final BvGeqExpr expr) {
+        if(expr.getLeftOp().getType().isSigned()) {
+            return String.format("(bvsge %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvuge %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvGt(final BvGtExpr expr) {
+        if(expr.getLeftOp().getType().isSigned()) {
+            return String.format("(bvsgt %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvugt %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvLeq(final BvLeqExpr expr) {
+        if(expr.getLeftOp().getType().isSigned()) {
+            return String.format("(bvsle %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvule %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvLt(final BvLtExpr expr) {
+        if(expr.getLeftOp().getType().isSigned()) {
+            return String.format("(bvslt %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+        else {
+            return String.format("(bvult %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        }
+    }
+
+    protected String transformBvToInt(final BvToIntExpr expr) {
+        throw new UnsupportedOperationException("SMT-LIB does not have the corresponding operation");
+        /* Works with Z3, but not standard
+        if(expr.getOp().getType().isSigned()) {
+            final String bv = toTerm(expr.getOp());
+            final BigInteger exp = BigInteger.TWO.pow(expr.getOp().getType().getSize());
+            return String.format(
+                "(ite (bvslt %s ((_ int2bv %d) 0)) (- (bv2int %s) %s) (bv2int %s))",
+                bv, expr.getOp().getType().getSize(), bv, exp.toString(), bv
+            );
+        }
+        else {
+            return String.format("(bv2int %s)", toTerm(expr.getOp()));
+        }
+        */
     }
 }
