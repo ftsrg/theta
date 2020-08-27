@@ -422,7 +422,9 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformRatLit(final RatLitExpr expr) {
-		return context.mkReal(Math.toIntExact(expr.getNum()), Math.toIntExact(expr.getDenom()));
+		var num = context.mkReal(expr.getNum().toString());
+		var denom = context.mkReal(expr.getDenom().toString());
+		return context.mkDiv(num, denom);
 	}
 
 	private com.microsoft.z3.Expr transformRatAdd(final RatAddExpr expr) {
@@ -501,7 +503,7 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformIntLit(final IntLitExpr expr) {
-		return context.mkInt(expr.getValue());
+		return context.mkInt(expr.getValue().toString());
 	}
 
 	private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {

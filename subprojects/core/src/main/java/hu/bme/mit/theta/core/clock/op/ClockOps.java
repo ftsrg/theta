@@ -102,7 +102,7 @@ public final class ClockOps {
 
 			if (expr instanceof IntLitExpr) {
 				final IntLitExpr intLit = (IntLitExpr) expr;
-				final int value = Math.toIntExact(intLit.getValue());
+				final int value = Math.toIntExact(intLit.getValue().longValue());
 				return Reset(varDecl, value);
 
 			} else if (expr instanceof RefExpr) {
@@ -123,8 +123,8 @@ public final class ClockOps {
 					if (ops[0].equals(varRef)) {
 						if (ops[1] instanceof RatLitExpr) {
 							final RatLitExpr ratLit = (RatLitExpr) ops[1];
-							final int num = ratLit.getNum();
-							final int denom = ratLit.getDenom();
+							final int num = ratLit.getNum().intValue();
+							final int denom = ratLit.getDenom().intValue();
 							if (denom == 1) {
 								return Shift(varDecl, num);
 							}
@@ -132,7 +132,7 @@ public final class ClockOps {
 					} else if (ops[1].equals(varRef)) {
 						if (ops[0] instanceof IntLitExpr) {
 							final IntLitExpr intLit = (IntLitExpr) ops[0];
-							final int offset = Math.toIntExact(intLit.getValue());
+							final int offset = Math.toIntExact(intLit.getValue().longValue());
 							return Shift(varDecl, offset);
 						}
 					}
