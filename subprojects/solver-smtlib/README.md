@@ -1,0 +1,1 @@
+This project wraps a generic solver that supports the SMT-LIB2 interface into our common interfaces for solvers (located in the [solver](../solver) project).
