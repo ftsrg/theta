@@ -23,6 +23,23 @@ import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -112,6 +129,42 @@ public class SmtLibExprTransformer {
                 .addCase(RatLeqExpr.class, this::transformRatLeq)
 
                 .addCase(RatLtExpr.class, this::transformRatLt)
+
+                // Integers
+
+                .addCase(IntLitExpr.class, this::transformIntLit)
+
+                .addCase(IntAddExpr.class, this::transformIntAdd)
+
+                .addCase(IntSubExpr.class, this::transformIntSub)
+
+                .addCase(IntPosExpr.class, this::transformIntPos)
+
+                .addCase(IntNegExpr.class, this::transformIntNeg)
+
+                .addCase(IntMulExpr.class, this::transformIntMul)
+
+                .addCase(IntDivExpr.class, this::transformIntDiv)
+
+                .addCase(IntModExpr.class, this::transformIntMod)
+
+                .addCase(IntRemExpr.class, this::transformIntRem)
+
+                .addCase(IntEqExpr.class, this::transformIntEq)
+
+                .addCase(IntNeqExpr.class, this::transformIntNeq)
+
+                .addCase(IntGeqExpr.class, this::transformIntGeq)
+
+                .addCase(IntGtExpr.class, this::transformIntGt)
+
+                .addCase(IntLeqExpr.class, this::transformIntLeq)
+
+                .addCase(IntLtExpr.class, this::transformIntLt)
+
+                .addCase(IntToRatExpr.class, this::transformIntToRat)
+
+                .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                 .build();
     }
@@ -293,5 +346,85 @@ public class SmtLibExprTransformer {
 
     protected String transformRatLt(final RatLtExpr expr) {
         return String.format("(< %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    /*
+     * Integers
+     */
+
+    protected String transformIntLit(final IntLitExpr expr) {
+        return Integer.toString(expr.getValue());
+    }
+
+    protected String transformIntAdd(final IntAddExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(+ %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformIntSub(final IntSubExpr expr) {
+        return String.format("(- %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntPos(final IntPosExpr expr) {
+        return toTerm(expr.getOp());
+    }
+
+    protected String transformIntNeg(final IntNegExpr expr) {
+        return String.format("(- %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformIntMul(final IntMulExpr expr) {
+        final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+        return String.format("(* %s)", String.join(" ", opTerms));
+    }
+
+    protected String transformIntDiv(final IntDivExpr expr) {
+        return String.format("(/ %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntMod(final IntModExpr expr) {
+        return String.format("(mod %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntRem(final IntRemExpr expr) {
+        return String.format("(rem %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntEq(final IntEqExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntNeq(final IntNeqExpr expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntGeq(final IntGeqExpr expr) {
+        return String.format("(>= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntGt(final IntGtExpr expr) {
+        return String.format("(> %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntLeq(final IntLeqExpr expr) {
+        return String.format("(<= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntLt(final IntLtExpr expr) {
+        return String.format("(< %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformIntToRat(final IntToRatExpr expr) {
+        return String.format("(to_real %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformIntToBv(final IntToBvExpr expr) {
+        return String.format("((_ int2bv %d) %s)", expr.getType().getSize(), toTerm(expr.getOp()));
     }
 }
