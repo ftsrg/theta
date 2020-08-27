@@ -17,7 +17,8 @@ package hu.bme.mit.theta.core.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -86,7 +87,7 @@ public final class CoreDslManager {
 	////
 
 	private static CoreDslParser createParserForString(final String string) {
-		final ANTLRInputStream input = new ANTLRInputStream(string);
+		final CharStream input = CharStreams.fromString(string);
 		final CoreDslLexer lexer = new CoreDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
 		final CoreDslParser parser = new CoreDslParser(tokens);

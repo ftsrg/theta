@@ -100,6 +100,10 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 				this.getDenom().multiply(that.getDenom()));
 	}
 
+	public RatLitExpr pos() {
+		return RatLitExpr.of(this.getNum(), this.getDenom());
+	}
+
 	public RatLitExpr neg() {
 		return RatLitExpr.of(this.getNum().negate(), this.getDenom());
 	}

@@ -51,10 +51,50 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.*;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -66,6 +106,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
@@ -125,6 +166,8 @@ final class Z3ExprTransformer {
 
 				.addCase(RatSubExpr.class, this::transformRatSub)
 
+				.addCase(RatPosExpr.class, this::transformRatPos)
+
 				.addCase(RatNegExpr.class, this::transformRatNeg)
 
 				.addCase(RatMulExpr.class, this::transformRatMul)
@@ -150,6 +193,8 @@ final class Z3ExprTransformer {
 				.addCase(IntAddExpr.class, this::transformIntAdd)
 
 				.addCase(IntSubExpr.class, this::transformIntSub)
+
+				.addCase(IntPosExpr.class, this::transformIntPos)
 
 				.addCase(IntNegExpr.class, this::transformIntNeg)
 
@@ -184,6 +229,8 @@ final class Z3ExprTransformer {
 				.addCase(BvAddExpr.class, this::transformBvAdd)
 
 				.addCase(BvSubExpr.class, this::transformBvSub)
+
+				.addCase(BvPosExpr.class, this::transformBvPos)
 
 				.addCase(BvNegExpr.class, this::transformBvNeg)
 
@@ -393,6 +440,10 @@ final class Z3ExprTransformer {
 		return context.mkSub(leftOpTerm, rightOpTerm);
 	}
 
+	private com.microsoft.z3.Expr transformRatPos(final RatPosExpr expr) {
+		return toTerm(expr.getOp());
+	}
+
 	private com.microsoft.z3.Expr transformRatNeg(final RatNegExpr expr) {
 		final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
 		return context.mkUnaryMinus(opTerm);
@@ -466,6 +517,10 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 		return context.mkSub(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformIntPos(final IntPosExpr expr) {
+		return toTerm(expr.getOp());
 	}
 
 	private com.microsoft.z3.Expr transformIntNeg(final IntNegExpr expr) {
@@ -576,6 +631,10 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.BitVecExpr leftOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.BitVecExpr rightOpTerm = (com.microsoft.z3.BitVecExpr) toTerm(expr.getRightOp());
 		return context.mkBVSub(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvPos(final BvPosExpr expr) {
+		return toTerm(expr.getOp());
 	}
 
 	private com.microsoft.z3.Expr transformBvNeg(final BvNegExpr expr) {
@@ -775,7 +834,7 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
-		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getElseElem().getType()), toTerm(expr.getElseElem()));
+		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
 		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
 			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
 		}

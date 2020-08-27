@@ -63,6 +63,11 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	}
 
 	@Override
+	public IntPosExpr Pos(final Expr<IntType> op) {
+		return IntExprs.Pos(op);
+	}
+
+	@Override
 	public IntNegExpr Neg(final Expr<IntType> op) {
 		return IntExprs.Neg(op);
 	}

@@ -1,6 +1,6 @@
 # Building Theta
 
-Theta is uses Java 11, therefore JDK 11 is required to build Theta.
+Theta uses Java 11, therefore JDK 11 is required to build Theta.
 Currently, we use [OpenJDK 11](https://openjdk.java.net/projects/jdk/11/) (see instructions for [Windows](https://stackoverflow.com/questions/52511778/how-to-install-openjdk-11-on-windows) and [Ubuntu](https://www.linuxuprising.com/2019/01/how-to-install-openjdk-11-in-ubuntu.html)).
 We are mainly developing on Windows, but we also test Theta on Linux.
 Theta can be built from the command line, but you can also import it into [IntelliJ IDEA](https://www.jetbrains.com/idea/).

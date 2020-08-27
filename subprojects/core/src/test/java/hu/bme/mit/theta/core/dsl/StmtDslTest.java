@@ -4,7 +4,6 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,7 +29,7 @@ public class StmtDslTest {
     @Parameterized.Parameter(value = 2)
     public Collection<Decl<?>> decls;
 
-    private static VarDecl<IntType> x = Decls.Var("x", IntExprs.Int());
+    private static VarDecl<IntType> x = Decls.Var("x", Int());
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
