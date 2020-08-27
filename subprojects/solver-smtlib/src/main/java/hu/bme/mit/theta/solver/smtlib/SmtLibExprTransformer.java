@@ -2,7 +2,9 @@ package hu.bme.mit.theta.solver.smtlib;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -47,6 +49,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -243,6 +246,10 @@ public class SmtLibExprTransformer {
                 .addCase(BvLtExpr.class, this::transformBvLt)
 
                 .addCase(BvToIntExpr.class, this::transformBvToInt)
+                
+                // Functions
+
+                .addCase(FuncAppExpr.class, this::transformFuncApp)
 
                 .build();
     }
@@ -687,5 +694,42 @@ public class SmtLibExprTransformer {
             return String.format("(bv2int %s)", toTerm(expr.getOp()));
         }
         */
+    }
+
+    /*
+     * Functions
+     */
+
+    protected String transformFuncApp(final FuncAppExpr<?, ?> expr) {
+        final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
+        final Expr<?> func = funcAndArgs.get1();
+        if (func instanceof RefExpr) {
+            final RefExpr<?> ref = (RefExpr<?>) func;
+            final Decl<?> decl = ref.getDecl();
+            final String funcDecl = transformer.toSymbol(decl);
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final String[] argTerms = args.stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+            return String.format("(%s %s)", funcDecl, String.join(" ", argTerms));
+        } else {
+            throw new UnsupportedOperationException("Higher order functions are not supported: " + func);
+        }
+    }
+
+    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+        final Expr<?> func = expr.getFunc();
+        final Expr<?> arg = expr.getParam();
+        if (func instanceof FuncAppExpr) {
+            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+            final Expr<?> resFunc = funcAndArgs.get1();
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg).build();
+            return Tuple2.of(resFunc, resArgs);
+        } else {
+            return Tuple2.of(func, ImmutableList.of(arg));
+        }
     }
 }
