@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -71,11 +72,11 @@ public final class ZoneState implements ExprState {
 			final RatLitExpr sx = (RatLitExpr) valuation.eval(x).get();
 			final RatLitExpr fx = sx.frac();
 
-			if (fx.getNum() == 0) {
-				dbm.and(Eq(x, sx.getNum()));
+			if (fx.getNum().compareTo(BigInteger.ZERO) == 0) {
+				dbm.and(Eq(x, sx.getNum().intValue()));
 			} else {
-				dbm.and(Lt(x, sx.ceil()));
-				dbm.and(Gt(x, sx.floor()));
+				dbm.and(Lt(x, sx.ceil().intValue()));
+				dbm.and(Gt(x, sx.floor().intValue()));
 			}
 
 			for (final VarDecl<RatType> y : constrainedVars) {
@@ -88,9 +89,9 @@ public final class ZoneState implements ExprState {
 
 				final int compareResult = fx.compareTo(fy);
 				if (compareResult == 0) {
-					dbm.and(Eq(x, y, sx.floor() - sy.floor()));
+					dbm.and(Eq(x, y, sx.floor().intValue() - sy.floor().intValue()));
 				} else if (compareResult < 0) {
-					dbm.and(Lt(x, y, sx.floor() - sy.floor()));
+					dbm.and(Lt(x, y, sx.floor().intValue() - sy.floor().intValue()));
 				}
 			}
 		}

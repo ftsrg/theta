@@ -41,6 +41,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.LabelExpr;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
@@ -97,7 +98,7 @@ final class XtaExpression {
 
         @Override
         public Expr<?> visitNatExpression(final NatExpressionContext ctx) {
-            final int value = Integer.parseInt(ctx.fValue.getText());
+            final var value = new BigInteger(ctx.fValue.getText());
             return Int(value);
         }
 

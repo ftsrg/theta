@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,10 +50,10 @@ public final class IntAddExpr extends AddExpr<IntType> {
 
 	@Override
 	public IntLitExpr eval(final Valuation val) {
-		int sum = 0;
+		var sum = BigInteger.ZERO;
 		for (final Expr<IntType> op : getOps()) {
 			final IntLitExpr opVal = (IntLitExpr) op.eval(val);
-			sum += opVal.getValue();
+			sum = sum.add(opVal.getValue());
 		}
 		return Int(sum);
 	}
