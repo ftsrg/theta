@@ -151,7 +151,7 @@ public class XstsCli {
             if (property.endsWith(".prop")) {
                 propStream = new FileInputStream(property);
             } else {
-                propStream = new ByteArrayInputStream(property.getBytes());
+                propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
             }
             try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
                 return XstsDslManager.createXsts(inputStream);
