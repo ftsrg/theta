@@ -11,6 +11,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -281,7 +282,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         if(ctx.BOOLLIT()!=null){
             if(ctx.BOOLLIT().getText().equals("true")) return True(); else return False();
         }else if(ctx.INTLIT()!=null){
-            return Int(Integer.parseInt(ctx.INTLIT().getText()));
+            return Int(new BigInteger(ctx.INTLIT().getText()));
         }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type."+" On line "+ctx.start.getLine());
     }
 
