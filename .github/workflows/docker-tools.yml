@@ -28,7 +28,7 @@ jobs:
     - name: Build XSTS Docker image
       run: docker build -t theta-xsts-cli -f docker/theta-xsts-cli.Dockerfile .
     - name: Run XSTS docker on example
-      run: ./docker/run-theta-xsts-cli.sh subprojects/xsts-analysis/src/test/resources/model/sequential.xsts --property "prop{ !(x==1) }"
+      run: ./docker/run-theta-xsts-cli.sh subprojects/xsts-analysis/src/test/resources/model/sequential.xsts --property "!(x==1)"
 
   xta-cli-docker:
     runs-on: ubuntu-latest
