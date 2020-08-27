@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,12 +50,12 @@ public final class RatMulExpr extends MulExpr<RatType> {
 
 	@Override
 	public RatLitExpr eval(final Valuation val) {
-		int prodNum = 1;
-		int prodDenom = 1;
+		var prodNum = BigInteger.ONE;
+		var prodDenom = BigInteger.ONE;
 		for (final Expr<RatType> op : getOps()) {
 			final RatLitExpr opLit = (RatLitExpr) op.eval(val);
-			prodNum *= opLit.getNum();
-			prodDenom *= opLit.getDenom();
+			prodNum = prodNum.multiply(opLit.getNum());
+			prodDenom = prodDenom.multiply(opLit.getDenom());
 		}
 		return Rat(prodNum, prodDenom);
 	}
