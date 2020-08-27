@@ -291,8 +291,8 @@ public final class ClockConstrs {
 
 			if (rightOp instanceof RatLitExpr) {
 				final RatLitExpr ratLit = (RatLitExpr) rightOp;
-				if (ratLit.getDenom() == 1) {
-					final int num = ratLit.getNum();
+				if (ratLit.getDenom().intValue() == 1) {
+					final int num = ratLit.getNum().intValue();
 					return num;
 				}
 			}

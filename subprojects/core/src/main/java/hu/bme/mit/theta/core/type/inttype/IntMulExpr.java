@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,10 +50,10 @@ public final class IntMulExpr extends MulExpr<IntType> {
 
 	@Override
 	public IntLitExpr eval(final Valuation val) {
-		int prod = 1;
+		var prod = BigInteger.ONE;
 		for (final Expr<IntType> op : getOps()) {
 			final IntLitExpr opVal = (IntLitExpr) op.eval(val);
-			prod *= opVal.getValue();
+			prod = prod.multiply(opVal.getValue());
 		}
 		return Int(prod);
 	}
