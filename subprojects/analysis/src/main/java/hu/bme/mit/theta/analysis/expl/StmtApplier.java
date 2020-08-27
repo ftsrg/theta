@@ -211,19 +211,6 @@ final class StmtApplier {
 	private static ApplyResult applyOrt(final OrtStmt stmt, final MutableValuation val,
 										   final boolean approximate) {
 		throw new UnsupportedOperationException();
-//		if(approximate){
-//			List<MutableValuation> valuations=new ArrayList<MutableValuation>();
-//			for(int i=0; i<stmt.getStmts().size(); i++){
-//				MutableValuation subVal=MutableValuation.copyOf(val);
-//				ApplyResult res=apply(stmt.getStmts().get(i),subVal,approximate);
-//				if(res==ApplyResult.FAILURE) return ApplyResult.FAILURE;
-//				if(res==ApplyResult.SUCCESS){
-//					valuations.add(subVal);
-//				}
-//			}
-//		}else {
-//			return ApplyResult.FAILURE;
-//		}
 	}
 
 
