@@ -371,7 +371,7 @@ public class SmtLibExprTransformer {
         for (final ParamDecl<?> paramDecl : paramDecls) {
             final String paramSymbol = transformParamDecl(paramDecl);
             paramTerms[i] = paramSymbol;
-            env.define(DeclSymbol.of(paramDecl), paramSymbol);
+            env.define(DeclSymbol.of(paramDecl), paramDecl.getName());
             i++;
         }
         return paramTerms;
