@@ -15,9 +15,28 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -58,25 +77,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import org.junit.Test;
-
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-
-import java.util.List;
-
-import java.util.ArrayList;
 
 public class ExprSimplifierTest {
 
@@ -269,6 +269,7 @@ public class ExprSimplifierTest {
 		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), Add(a, Int(3)))));
 		assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
 		assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
+		assertEquals(Int("4294967294"), simplify(Add(Int(Integer.MAX_VALUE), Int(Integer.MAX_VALUE))));
 	}
 
 	@Test
