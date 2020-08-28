@@ -16,6 +16,7 @@ import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.parser.CheckSatResponse;
 import hu.bme.mit.theta.solver.smtlib.parser.GeneralResponse;
+import hu.bme.mit.theta.solver.smtlib.parser.GetUnsatCoreResponse;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,10 +108,10 @@ public class SmtLibSolver implements Solver {
         else if(res.isSpecific()) {
             final CheckSatResponse checkSatResponse = res.asSpecific();
             if(checkSatResponse.isSat()) {
-                return SolverStatus.SAT;
+                status = SolverStatus.SAT;
             }
             else if(checkSatResponse.isUnsat()) {
-                return SolverStatus.UNSAT;
+                status = SolverStatus.UNSAT;
             }
             else {
                 throw new UnknownSolverStatusException();
@@ -118,6 +120,8 @@ public class SmtLibSolver implements Solver {
         else {
             throw new AssertionError();
         }
+
+        return status;
     }
 
     @Override
@@ -167,11 +171,39 @@ public class SmtLibSolver implements Solver {
         checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
 
         if (unsatCore == null) {
-            //unsatCore = extractUnsatCore();
+            unsatCore = extractUnsatCore();
         }
 
         assert unsatCore != null;
         return Collections.unmodifiableCollection(unsatCore);
+    }
+
+    private Collection<Expr<BoolType>> extractUnsatCore() {
+        assert status == SolverStatus.UNSAT;
+        assert unsatCore == null;
+
+        final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
+        final Collection<String> unsatCoreLabels;
+
+        final var res = parseResponse(solverBinary.issueCommand("(get-unsat-core)"));
+        if(res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        }
+        else if(res.isSpecific()) {
+            final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific();
+            unsatCoreLabels = getUnsatCoreResponse.getLabels();
+        }
+        else {
+            throw new AssertionError();
+        }
+
+        for(final var label : unsatCoreLabels) {
+            final Expr<BoolType> assumption = assumptions.get(label);
+            assert assumption != null;
+            unsatCore.add(assumption);
+        }
+
+        return unsatCore;
     }
 
     @Override
