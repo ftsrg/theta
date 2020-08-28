@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -49,7 +48,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
@@ -77,17 +75,15 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.*;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Generic_termContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.HexadecimalContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.IdentifierContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.IndexContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.KeywordContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.NumeralContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.StringContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SymbolContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.TermContext;
@@ -268,14 +264,6 @@ public class SmtLibTermTransformer {
             }
         }
 
-        @Override
-        public Expr<?> visitQual_identifier(Qual_identifierContext ctx) {
-            if(ctx.identifier().symbol().getText().equals("const")) {
-
-            }
-            return super.visitQual_identifier(ctx);
-        }
-
         // symbol
 
         @Override
@@ -295,17 +283,17 @@ public class SmtLibTermTransformer {
 
         @Override
         public Expr<?> visitNumeral(NumeralContext ctx) {
-            return IntExprs.Int(Integer.parseInt(ctx.getText()));
+            return IntExprs.Int(ctx.getText());
         }
 
         @Override
         public Expr<?> visitDecimal(DecimalContext ctx) {
             final var decimal = new BigDecimal(ctx.getText());
             if(decimal.scale() <= 0) {
-                return RatExprs.Rat(decimal.unscaledValue().intValue(), BigInteger.ONE.intValue());
+                return RatExprs.Rat(decimal.unscaledValue(), BigInteger.ONE);
             }
             else {
-                return RatExprs.Rat(decimal.unscaledValue().intValue(), BigInteger.TEN.pow(decimal.scale()).intValue());
+                return RatExprs.Rat(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()));
             }
         }
 
