@@ -23,8 +23,9 @@ public class SmtLibSolverFactory implements SolverFactory {
     public Solver createSolver() {
         final var symbolTable = new SmtLibSymbolTable();
         final var transformationManager = new SmtLibTransformationManager(symbolTable);
+        final var termTransformer = new SmtLibTermTransformer(symbolTable);
 
-        return new SmtLibSolver(symbolTable, transformationManager, solverPath, args);
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverPath, args);
     }
 
     @Override
