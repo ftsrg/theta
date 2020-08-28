@@ -649,7 +649,7 @@ public class SmtLibExprTransformer {
         final var toRotate = toTerm(expr.getLeftOp());
         final var rotateWith = toTerm(expr.getRightOp());
         final var size = toTerm(BvUtils.intToBvLitExpr(expr.getType().getSize(), expr.getType().getSize(), expr.getRightOp().getType().isSigned()));
-        return String.format("(bvor (bvshl %s %s) (bvashr %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
+        return String.format("(bvor (bvshl %s %s) (bvlshr %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
         // return String.format("((_ rotate_left %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
     }
 
@@ -657,7 +657,7 @@ public class SmtLibExprTransformer {
         final var toRotate = toTerm(expr.getLeftOp());
         final var rotateWith = toTerm(expr.getRightOp());
         final var size = toTerm(BvUtils.intToBvLitExpr(expr.getType().getSize(), expr.getType().getSize(), expr.getRightOp().getType().isSigned()));
-        return String.format("(bvor (bvashr %s %s) (bvshl %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
+        return String.format("(bvor (bvlshr %s %s) (bvshl %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
         // return String.format("((_ rotate_right %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
     }
 
