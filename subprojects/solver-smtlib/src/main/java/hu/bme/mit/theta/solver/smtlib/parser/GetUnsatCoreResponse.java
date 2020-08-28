@@ -16,7 +16,7 @@ public class GetUnsatCoreResponse implements SpecificResponse {
 
     public static GetUnsatCoreResponse fromContext(Get_unsat_core_responseContext ctx) {
         return new GetUnsatCoreResponse(
-            ctx.symbols.stream().map(RuleContext::getText).collect(Collectors.toUnmodifiableSet())
+            ctx.symbol().stream().map(RuleContext::getText).collect(Collectors.toUnmodifiableSet())
         );
     }
 

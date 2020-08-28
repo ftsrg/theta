@@ -47,13 +47,13 @@ general_response_unsupported
     ;
 
 general_response_error
-    : reason=PS_Unsupported
-    | ParOpen PS_Error reason=String ParClose
+    : ParOpen PS_Error reason=String ParClose
     ;
 
 specific_success_response
     : check_sat_response
     | get_unsat_core_response
+    | get_model_response
     ;
 
 check_sat_response
@@ -63,7 +63,115 @@ check_sat_response
     ;
 
 get_unsat_core_response
-    : ParOpen symbols+=symbol* ParClose
+    : ParOpen symbol* ParClose
+    ;
+
+get_model_response
+    : ParOpen PS_Model? model_response* ParClose
+    ;
+
+model_response
+    : model_response_fun
+    | model_response_fun_rec
+    | model_response_funs_rec
+    ;
+
+model_response_fun
+    : ParOpen CMD_DefineFun function_def ParClose
+    ;
+
+model_response_fun_rec
+    : ParOpen CMD_DefineFunRec function_def ParClose
+    ;
+
+model_response_funs_rec
+    : ParOpen CMD_DefineFunsRec ParOpen function_dec+ ParClose ParOpen term+ ParClose ParClose
+    ;
+
+function_def
+    : symbol ParOpen sorted_var* ParClose sort term
+    ;
+
+function_dec
+    : ParOpen symbol ParOpen sorted_var* ParClose sort ParClose
+    ;
+
+// Parser Rules End
+
+// Parser Rules Start
+
+// Starting rule(s)
+
+simpleSymbol
+    : predefSymbol
+    | UndefinedSymbol
+    ;
+
+quotedSymbol
+    : QuotedSymbol
+    ;
+
+predefSymbol
+    : PS_Not
+    | PS_Bool
+    | PS_ContinuedExecution
+    | PS_Error
+    | PS_False
+    | PS_ImmediateExit
+    | PS_Incomplete
+    | PS_Logic
+    | PS_Memout
+    | PS_Sat
+    | PS_Success
+    | PS_Theory
+    | PS_True
+    | PS_Unknown
+    | PS_Unsupported
+    | PS_Unsat
+    ;
+
+predefKeyword
+    : PK_AllStatistics
+    | PK_AssertionStackLevels
+    | PK_Authors
+    | PK_Category
+    | PK_Chainable
+    | PK_Definition
+    | PK_DiagnosticOutputChannel
+    | PK_ErrorBehaviour
+    | PK_Extension
+    | PK_Funs
+    | PK_FunsDescription
+    | PK_GlobalDeclarations
+    | PK_InteractiveMode
+    | PK_Language
+    | PK_LeftAssoc
+    | PK_License
+    | PK_Named
+    | PK_Name
+    | PK_Notes
+    | PK_Pattern
+    | PK_PrintSuccess
+    | PK_ProduceAssertions
+    | PK_ProduceAssignments
+    | PK_ProduceModels
+    | PK_ProduceProofs
+    | PK_ProduceUnsatAssumptions
+    | PK_ProduceUnsatCores
+    | PK_RandomSeed
+    | PK_ReasonUnknown
+    | PK_RegularOutputChannel
+    | PK_ReproducibleResourceLimit
+    | PK_RightAssoc
+    | PK_SmtLibVersion
+    | PK_Sorts
+    | PK_SortsDescription
+    | PK_Source
+    | PK_Status
+    | PK_Theories
+    | PK_Values
+    | PK_Verbosity
+    | PK_Version
     ;
 
 symbol
@@ -71,23 +179,148 @@ symbol
     | quotedSymbol
     ;
 
-simpleSymbol
-    : UndefinedSymbol
+numeral
+    : Numeral
     ;
 
-quotedSymbol
-    : QuotedSymbol
+decimal
+    : Decimal
+    ;
+
+hexadecimal
+    : HexDecimal
+    ;
+
+binary
+    : Binary
+    ;
+
+string
+    : String
+    ;
+
+keyword
+    : predefKeyword
+    | Colon simpleSymbol
+    ;
+
+// S-expression
+
+spec_constant
+    : numeral
+    | decimal
+    | hexadecimal
+    | binary
+    | string
+    ;
+
+
+s_expr
+    : spec_constant
+    | symbol
+    | keyword
+    | ParOpen s_expr* ParClose
+    ;
+
+// Identifiers
+
+index
+    : numeral
+    | symbol
+    ;
+
+identifier
+    : symbol
+    | ParOpen GRW_Underscore symbol index+ ParClose
+    ;
+
+// Attributes
+
+attribute_value
+    : spec_constant
+    | symbol
+    | ParOpen s_expr* ParClose
+    ;
+
+attribute
+    : keyword
+    | keyword attribute_value
+    ;
+
+// Sorts
+
+sort
+    : identifier
+    | ParOpen identifier sort+ ParClose
+    ;
+
+
+// Terms and Formulas
+
+qual_identifier
+    : identifier
+    | ParOpen GRW_As identifier sort ParClose
+    ;
+
+var_binding
+    : ParOpen symbol term ParClose
+    ;
+
+sorted_var
+    : ParOpen symbol sort ParClose
+    ;
+
+pattern
+    : symbol
+    | ParOpen symbol symbol+ ParClose
+    ;
+
+match_case
+    : ParOpen pattern term ParClose
+    ;
+
+term
+    : spec_constant
+    | qual_identifier
+    | generic_term
+    | let_term
+    | forall_term
+    | exists_term
+    | match_term
+    | annotate_term
+    ;
+
+generic_term
+    : ParOpen qual_identifier term+ ParClose
+    ;
+
+let_term
+    : ParOpen GRW_Let ParOpen var_binding+ ParClose term ParClose
+    ;
+
+forall_term
+    : ParOpen GRW_Forall ParOpen sorted_var+ ParClose term ParClose
+    ;
+
+exists_term
+    : ParOpen GRW_Exists ParOpen sorted_var+ ParClose term ParClose
+    ;
+
+match_term
+    : ParOpen GRW_Match term ParOpen match_case+ ParClose ParClose
+    ;
+
+annotate_term
+    : ParOpen GRW_Exclamation term attribute+ ParClose
     ;
 
 // Parser Rules End
 
 // Lexer Rules Start
 
-
 Comment
     : Semicolon ~[\r\n]* -> skip
     ;
-
 
 ParOpen
     : '('
@@ -138,6 +371,9 @@ PS_Logic
     ;
 PS_Memout
     : 'memout'
+    ;
+PS_Model
+    : 'model'
     ;
 PS_Sat
     : 'sat'
@@ -307,12 +543,12 @@ Numeral
     | [1-9] Digit*
     ;
 
-Binary:
-    BinaryDigit+
+Binary
+    : '#b' BinaryDigit+
     ;
 
 HexDecimal
-    : '#x' HexDigit HexDigit HexDigit HexDigit
+    : '#x' HexDigit+
     ;
 
 Decimal
