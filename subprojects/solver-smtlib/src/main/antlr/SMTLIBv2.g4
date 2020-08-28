@@ -53,12 +53,30 @@ general_response_error
 
 specific_success_response
     : check_sat_response
+    | get_unsat_core_response
     ;
 
 check_sat_response
     : value=PS_Sat
     | value=PS_Unsat
     | value=PS_Unknown
+    ;
+
+get_unsat_core_response
+    : ParOpen symbols+=symbol* ParClose
+    ;
+
+symbol
+    : simpleSymbol
+    | quotedSymbol
+    ;
+
+simpleSymbol
+    : UndefinedSymbol
+    ;
+
+quotedSymbol
+    : QuotedSymbol
     ;
 
 // Parser Rules End

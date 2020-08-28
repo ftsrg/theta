@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public final class SmtLibSolverTest {
@@ -73,6 +74,29 @@ public final class SmtLibSolverTest {
         assertTrue(status.isSat());
 
         solver.pop();
+    }
+
+    @Test
+    public void testUnsatCore() {
+        final Solver solver = solverFactory.createSolver();
+
+        final ConstDecl<IntType> x = Const("x", IntExprs.Int());
+        final ConstDecl<IntType> y = Const("y", IntExprs.Int());
+        final Expr<BoolType> expr1 = IntExprs.Eq(x.getRef(), IntExprs.Int(0));
+        final Expr<BoolType> expr2 = IntExprs.Eq(x.getRef(), IntExprs.Int(1));
+        final Expr<BoolType> expr3 = IntExprs.Eq(y.getRef(), IntExprs.Int(1));
+
+        solver.track(expr1);
+        solver.track(expr2);
+        solver.track(expr3);
+
+        final SolverStatus status = solver.check();
+        assertTrue(status.isUnsat());
+
+        final var uc = solver.getUnsatCore();
+        assertTrue(uc.contains(expr1));
+        assertTrue(uc.contains(expr2));
+        assertEquals(2, uc.size());
     }
 
     @Test
