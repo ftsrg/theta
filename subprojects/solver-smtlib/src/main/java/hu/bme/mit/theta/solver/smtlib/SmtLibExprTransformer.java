@@ -86,6 +86,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -645,11 +646,19 @@ public class SmtLibExprTransformer {
     }
 
     protected String transformBvRotateLeft(final BvRotateLeftExpr expr) {
-        return String.format("((_ rotate_left %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
+        final var toRotate = toTerm(expr.getLeftOp());
+        final var rotateWith = toTerm(expr.getRightOp());
+        final var size = toTerm(BvUtils.intToBvLitExpr(expr.getType().getSize(), expr.getType().getSize(), expr.getRightOp().getType().isSigned()));
+        return String.format("(bvor (bvshl %s %s) (bvashr %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
+        // return String.format("((_ rotate_left %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
     }
 
     protected String transformBvRotateRight(final BvRotateRightExpr expr) {
-        return String.format("((_ rotate_right %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
+        final var toRotate = toTerm(expr.getLeftOp());
+        final var rotateWith = toTerm(expr.getRightOp());
+        final var size = toTerm(BvUtils.intToBvLitExpr(expr.getType().getSize(), expr.getType().getSize(), expr.getRightOp().getType().isSigned()));
+        return String.format("(bvor (bvashr %s %s) (bvshl %s (bvsub %s %s)))", toRotate, rotateWith, toRotate, size, rotateWith);
+        // return String.format("((_ rotate_right %s) %s)", toTerm(expr.getRightOp()), toTerm(expr.getLeftOp()));
     }
 
     protected String transformBvEq(final BvEqExpr expr) {
