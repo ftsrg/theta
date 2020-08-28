@@ -456,7 +456,7 @@ public class SmtLibExprTransformer {
      */
 
     protected String transformIntLit(final IntLitExpr expr) {
-        return Integer.toString(expr.getValue());
+        return expr.getValue().toString();
     }
 
     protected String transformIntAdd(final IntAddExpr expr) {
