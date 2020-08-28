@@ -1,0 +1,62 @@
+package hu.bme.mit.theta.solver.smtlib.parser;
+
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.*;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Get_model_responseContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_fun_recContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funs_recContext;
+
+public class GetModelResponse implements SpecificResponse {
+    private final Map<String, String> values;
+
+    private GetModelResponse(final Map<String, String> values) {
+        this.values = values;
+    }
+
+    public static GetModelResponse fromContext(final Get_model_responseContext ctx) {
+        return new GetModelResponse(ctx.model_response().stream().map(member -> member.accept(new SMTLIBv2BaseVisitor<Tuple2<String, String>>() {
+            @Override
+            public Tuple2<String, String> visitModel_response_fun(Model_response_funContext ctx) {
+                return Tuple2.of(extractString(ctx.function_def().symbol()), extractString(ctx.function_def().term()));
+            }
+
+            @Override
+            public Tuple2<String, String> visitModel_response_fun_rec(Model_response_fun_recContext ctx) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Tuple2<String, String> visitModel_response_funs_rec(Model_response_funs_recContext ctx) {
+                throw new UnsupportedOperationException();
+            }
+        })).collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2)));
+    }
+
+    public Collection<String> getDecls() {
+        return values.keySet();
+    }
+
+    public String getTerm(final String symbol) {
+        return values.get(symbol);
+    }
+
+    private static String extractString(final ParserRuleContext ctx) {
+        return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+    }
+}
