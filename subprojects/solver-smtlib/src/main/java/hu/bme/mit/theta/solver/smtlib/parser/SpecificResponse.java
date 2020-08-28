@@ -16,6 +16,11 @@ public interface SpecificResponse {
             public SpecificResponse visitGet_unsat_core_response(SMTLIBv2Parser.Get_unsat_core_responseContext ctx) {
                 return GetUnsatCoreResponse.fromContext(ctx);
             }
+
+            @Override
+            public SpecificResponse visitGet_model_response(SMTLIBv2Parser.Get_model_responseContext ctx) {
+                return GetModelResponse.fromContext(ctx);
+            }
         });
     }
 }
