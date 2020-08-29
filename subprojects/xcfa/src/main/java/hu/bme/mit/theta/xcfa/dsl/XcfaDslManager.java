@@ -5,7 +5,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *	  http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,8 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SpecContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+
+import com.google.common.base.Preconditions;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,6 +49,27 @@ public final class XcfaDslManager {
 
 		final SpecContext context = parser.spec();
 		final XcfaSymbol specification = new XcfaSymbol(context);
+		return specification.instantiate();
+	}
+
+	public static XCFA createXcfa(final InputStream[] inputStreams) throws IOException {
+		Preconditions.checkArgument(inputStreams.length != 0,
+				"At least one XCFA file is required.");
+		XcfaSymbol specification = null;
+		for (InputStream inputStream : inputStreams) {
+			final CharStream input = CharStreams.fromStream(inputStream);
+
+			final XcfaDslLexer lexer = new XcfaDslLexer(input);
+			final CommonTokenStream tokens = new CommonTokenStream(lexer);
+			final XcfaDslParser parser = new XcfaDslParser(tokens);
+
+			final SpecContext context = parser.spec();
+			if (specification == null) {
+				specification = new XcfaSymbol(context);
+			} else {
+				specification.addContext(context);
+			}
+		}
 		return specification.instantiate();
 	}
 

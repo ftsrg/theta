@@ -5,7 +5,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *	  http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,138 +40,150 @@ import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
 public class XcfaCli {
-    private static final String JAR_NAME = "theta-xcfa-cli.jar";
-    private final String[] args;
-    private final TableWriter writer;
+	private static final String JAR_NAME = "theta-xcfa-cli.jar";
+	private final String[] args;
+	private final TableWriter writer;
 
-    @Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
-    String model;
+	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
+	String model;
 
-    @Parameter(names = "--loglevel", description = "Detailedness of logging")
-    Logger.Level logLevel = Logger.Level.SUBSTEP;
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.SUBSTEP;
 
-    @Parameter(names = "--partialorder", description = "Use partial order reduction")
-    Boolean partialOrder = false;
+	@Parameter(names = "--partialorder", description = "Use partial order reduction")
+	Boolean partialOrder = false;
 
-    @Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
-    Boolean benchmarkMode = false;
+	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
+	Boolean benchmarkMode = false;
 
-    @Parameter(names = "--cex", description = "Log concrete counterexample")
-    String cexfile = null;
+	@Parameter(names = "--cex", description = "Log concrete counterexample")
+	String cexfile = null;
 
-    @Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
-    boolean headerOnly = false;
+	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
 
-    private Logger logger;
+	private Logger logger;
 
-    public XcfaCli(final String[] args) {
-        this.args = args;
-        writer = new BasicTableWriter(System.out, ",", "\"", "\"");
-    }
+	public XcfaCli(final String[] args) {
+		this.args = args;
+		writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+	}
 
-    public static void main(final String[] args) {
-        final XcfaCli mainApp = new XcfaCli(args);
-        mainApp.run();
-    }
+	public static void main(final String[] args) {
+		final XcfaCli mainApp = new XcfaCli(args);
+		mainApp.run();
+	}
 
-    private void run() {
-        try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).acceptUnknownOptions(true).build().parse(args);
-            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
-        } catch (final ParameterException ex) {
-            System.out.println("Invalid parameters, details:");
-            System.out.println(ex.getMessage());
-            ex.usage();
-            return;
-        }
+	private void run() {
+		try {
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).acceptUnknownOptions(true).build().parse(args);
+			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		} catch (final ParameterException ex) {
+			System.out.println("Invalid parameters, details:");
+			System.out.println(ex.getMessage());
+			ex.usage();
+			return;
+		}
 
-        if (headerOnly) {
-            printHeader();
-            return;
-        }
+		if (headerOnly) {
+			printHeader();
+			return;
+		}
 
-        try {
-            final Stopwatch sw = Stopwatch.createStarted();
-            final XCFA _xcfa = loadModel();
-            final XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
+		try {
+			final Stopwatch sw = Stopwatch.createStarted();
+			final XCFA _xcfa = loadModel();
+			final XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
 
-            final var config =
-                    partialOrder
-                    ? XcfaChecker.getSimpleDPOR()
-                    : XcfaChecker.getSimpleExplicit();
-            var checker = XcfaChecker.createChecker(xcfa, config.build());
-            final SafetyResult<?, ?> status = checker.check();
-            sw.stop();
-            printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile != null) {
-                writeCex(status.asUnsafe(), cexfile);
-            }
-        } catch (final Throwable ex) {
-            printError(ex);
-        }
-        if (benchmarkMode) {
-            writer.newRow();
-        }
-    }
+			final var config =
+					partialOrder
+					? XcfaChecker.getSimpleDPOR()
+					: XcfaChecker.getSimpleExplicit();
+			var checker = XcfaChecker.createChecker(xcfa, config.build());
+			final SafetyResult<?, ?> status = checker.check();
+			sw.stop();
+			printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(status.asUnsafe(), cexfile);
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+		}
+		if (benchmarkMode) {
+			writer.newRow();
+		}
+	}
 
-    private void printHeader() {
-        final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
-        for (final String str : header) {
-            writer.cell(str);
-        }
-        writer.newRow();
-    }
+	private void printHeader() {
+		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
+		for (final String str : header) {
+			writer.cell(str);
+		}
+		writer.newRow();
+	}
 
-    private XCFA loadModel() throws IOException {
-        try (InputStream inputStream = new FileInputStream(model)) {
-            return XcfaDslManager.createXcfa(inputStream);
-        }
-    }
+	private XCFA loadModel() throws IOException {
+		String[] models = model.split(",");
+		if (models.length == 1) {
+			try (InputStream inputStream = new FileInputStream(model)) {
+				return XcfaDslManager.createXcfa(inputStream);
+			}
+		}
+		InputStream[] inputStreams = new InputStream[models.length];
+		for (int i = 0; i < models.length; i++) {
+			inputStreams[i] = new FileInputStream(models[i]);
+		}
+		XCFA xcfa = XcfaDslManager.createXcfa(inputStreams);
+		for (int i = 0; i < models.length; i++) {
+			inputStreams[i].close();
+		}
+		return xcfa;
+	}
 
-    private void printResult(final SafetyResult<?, ?> status, final XCFA xcfa, final long totalTimeMs) {
-        if (status.isSafe()) {
-            System.out.println("(SafetyResult Safe)");
-        } else {
-            System.out.println("(SafetyResult Unsafe)");
-        }
-        if (benchmarkMode) {
-            final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-            writer.cell(status.isSafe());
-            writer.cell(totalTimeMs);
-            writer.cell(stats.getAlgorithmTimeMs());
-            writer.cell(stats.getAbstractorTimeMs());
-            writer.cell(stats.getRefinerTimeMs());
-            writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
-            if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
-            } else {
-                writer.cell("");
-            }
-        }
-    }
+	private void printResult(final SafetyResult<?, ?> status, final XCFA xcfa, final long totalTimeMs) {
+		if (status.isSafe()) {
+			System.out.println("(SafetyResult Safe)");
+		} else {
+			System.out.println("(SafetyResult Unsafe)");
+		}
+		if (benchmarkMode) {
+			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+			writer.cell(status.isSafe());
+			writer.cell(totalTimeMs);
+			writer.cell(stats.getAlgorithmTimeMs());
+			writer.cell(stats.getAbstractorTimeMs());
+			writer.cell(stats.getRefinerTimeMs());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				writer.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				writer.cell("");
+			}
+		}
+	}
 
-    private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-        if (benchmarkMode) {
-            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
-        } else {
-            logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-            logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-            final StringWriter errors = new StringWriter();
-            ex.printStackTrace(new PrintWriter(errors));
-            logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
-        }
-    }
+	private void printError(final Throwable ex) {
+		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		if (benchmarkMode) {
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+		} else {
+			logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
+			logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
+			final StringWriter errors = new StringWriter();
+			ex.printStackTrace(new PrintWriter(errors));
+			logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+		}
+	}
 
-    private void writeCex(final SafetyResult.Unsafe<?, ?> status, String cexfile) {
-        try (var writer = new PrintWriter(cexfile)) {
-            writer.print(status.getTrace());
-        } catch (IOException ex) {
-            logger.write(Logger.Level.RESULT, "Failed to write counter-example!");
-        }
-    }
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status, String cexfile) {
+		try (var writer = new PrintWriter(cexfile)) {
+			writer.print(status.getTrace());
+		} catch (IOException ex) {
+			logger.write(Logger.Level.RESULT, "Failed to write counter-example!");
+		}
+	}
 }

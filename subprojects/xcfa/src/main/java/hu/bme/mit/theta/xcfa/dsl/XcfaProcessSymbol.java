@@ -20,10 +20,13 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.google.common.base.Preconditions;
 
 final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> implements Scope {
 
@@ -105,5 +108,32 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 
 	public boolean isMain() {
 		return isMain;
+	}
+
+	public void addContext(ProcessDeclContext context) {
+		Preconditions.checkArgument(context.id.getText().equals(name));
+		Preconditions.checkArgument((context.main != null) == isMain);
+
+		if (context.paramDecls != null) {
+			context.paramDecls.decls.forEach(declContext -> {
+				XcfaParamSymbol paramSymbol;
+				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+				params.add(paramSymbol);
+			});
+		}
+		if (context.varDecls != null) {
+			context.varDecls.forEach(varDeclContext -> {
+				XcfaVariableSymbol variableSymbol;
+				symbolTable.add(variableSymbol = new XcfaVariableSymbol(varDeclContext));
+				vars.add(variableSymbol);
+			});
+		}
+		if (context.procedureDecls != null) {
+			context.procedureDecls.forEach(procedureDeclContext -> {
+				XcfaProcedureSymbol procedureSymbol;
+				symbolTable.add(procedureSymbol = new XcfaProcedureSymbol(this, procedureDeclContext));
+				procedures.add(procedureSymbol);
+			});
+		}
 	}
 }

@@ -49,6 +49,28 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 		});
 	}
 
+	/**
+	 * New contexts (XCFA files) can be added until instantiated.
+	 * @param context
+	 */
+	public void addContext(final XcfaDslParser.SpecContext context) {
+		context.varDecls.forEach(varDeclContext -> {
+			XcfaVariableSymbol var;
+			symbolTable.add(var = new XcfaVariableSymbol(varDeclContext));
+			vars.add(var);
+		});
+		context.processDecls.forEach(processDeclContext -> {
+			String processId = processDeclContext.id.getText();
+			var existingProcess = processes.stream().filter(x -> x.getName().equals(processId)).findAny();
+			if (existingProcess.isPresent()) {
+				existingProcess.get().addContext(processDeclContext);
+			} else {
+				XcfaProcessSymbol proc;
+				symbolTable.add(proc = new XcfaProcessSymbol(this, processDeclContext));
+				processes.add(proc);
+			}
+		});
+	}
 
 	public XCFA instantiate() {
 		if (xcfa != null) return xcfa;
