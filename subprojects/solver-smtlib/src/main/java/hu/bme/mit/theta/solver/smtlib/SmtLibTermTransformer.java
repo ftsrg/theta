@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
@@ -44,6 +45,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
@@ -53,11 +55,13 @@ import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
@@ -84,6 +88,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Generic_termContext;
@@ -117,12 +123,23 @@ public class SmtLibTermTransformer {
         return new TermTransformer(this, model).toExpr(parser.term());
     }
 
+    public <T extends Type> LitExpr<T> toLitExpr(final String litImpl, final T type, final GetModelResponse model) {
+        final var litExpr = toExpr(litImpl, model);
+
+        if(litExpr instanceof LitExpr) {
+            return (LitExpr<T>) cast(litExpr, type);
+        }
+        else {
+            return (LitExpr<T>) cast(ExprUtils.simplify(litExpr), type);
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    public <I extends Type, E extends Type>  Expr<?> toArrayLitExpr(final String arrayLitImpl, final ArrayType<I, E> type, final GetModelResponse model) {
+    public <I extends Type, E extends Type>  LitExpr<ArrayType<I, E>> toArrayLitExpr(final String arrayLitImpl, final ArrayType<I, E> type, final GetModelResponse model) {
         final var arrayLitExpr = toExpr(arrayLitImpl, model);
-        final var entryExprsBuilder = new ImmutableList.Builder<Tuple2<Expr<I>, Expr<E>>>();
 
         if(arrayLitExpr instanceof IteExpr) {
+            final var entryExprsBuilder = new ImmutableList.Builder<Tuple2<Expr<I>, Expr<E>>>();
             var iteExpr = (IteExpr<E>) arrayLitExpr;
             while (true) {
                 entryExprsBuilder.add(Tuple2.of((Expr<I>) iteExpr.getCond().getOps().get(1), iteExpr.getThen()));
@@ -134,7 +151,18 @@ public class SmtLibTermTransformer {
             }
         }
         else {
-            return toExpr(arrayLitImpl, model);
+            return (LitExpr<ArrayType<I, E>>) cast(ExprUtils.simplify(arrayLitExpr), type);
+        }
+    }
+
+    public LitExpr<BvType> toBvLitExpr(final String bvLitImpl, final BvType type, final GetModelResponse model) {
+        final var bvLitExpr = toExpr(bvLitImpl, model);
+
+        if(bvLitExpr instanceof BvLitExpr) {
+            return Bv(((BvLitExpr) bvLitExpr).getValue(), type.isSigned());
+        }
+        else {
+            return (LitExpr<BvType>) cast(ExprUtils.simplify(bvLitExpr), type);
         }
     }
 
@@ -267,7 +295,7 @@ public class SmtLibTermTransformer {
                 .collect(Collectors.toUnmodifiableList());
 
             pushParams(paramDecls);
-            final Expr<BoolType> op = TypeUtils.cast(visitTerm(ctx.term()), Bool());
+            final Expr<BoolType> op = cast(visitTerm(ctx.term()), Bool());
             popParams(paramDecls);
             return Forall(paramDecls, op);
         }
@@ -279,7 +307,7 @@ public class SmtLibTermTransformer {
                 .collect(Collectors.toUnmodifiableList());
 
             pushParams(paramDecls);
-            final Expr<BoolType> op = TypeUtils.cast(visitTerm(ctx.term()), Bool());
+            final Expr<BoolType> op = cast(visitTerm(ctx.term()), Bool());
             popParams(paramDecls);
             return Exists(paramDecls, op);
         }

@@ -346,7 +346,7 @@ public class SmtLibSolver implements Solver {
             if (term == null) {
                 return null;
             } else {
-                return (LitExpr<?>) ExprUtils.simplify(cast(termTransformer.toArrayLitExpr(term, type, model), type));
+                return termTransformer.toArrayLitExpr(term, type, model);
             }
         }
 
@@ -355,8 +355,7 @@ public class SmtLibSolver implements Solver {
             if (term == null) {
                 return null;
             } else {
-                BvLitExpr expr = (BvLitExpr) termTransformer.toExpr(term, model);
-                return Bv(expr.getValue(), type.isSigned());
+                return termTransformer.toBvLitExpr(term, type, model);
             }
         }
 
@@ -365,7 +364,7 @@ public class SmtLibSolver implements Solver {
             if (term == null) {
                 return null;
             } else {
-                return (LitExpr<?>) ExprUtils.simplify(cast(termTransformer.toExpr(term, model), type));
+                return termTransformer.toLitExpr(term, type, model);
             }
         }
 
