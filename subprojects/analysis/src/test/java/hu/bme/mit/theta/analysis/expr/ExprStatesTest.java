@@ -38,7 +38,7 @@ public class ExprStatesTest {
 
 	private final VarDecl<IntType> vx = Var("x", Int());
 	private final ExplPrec prec = ExplPrec.of(Collections.singleton(vx));
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 	@Test
 	public void test1() {

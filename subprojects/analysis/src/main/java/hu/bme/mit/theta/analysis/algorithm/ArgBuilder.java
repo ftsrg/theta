@@ -99,7 +99,9 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 				if (excludeBottom && succState.isBottom()) {
 					continue;
 				}
-				if (node.getSuccStates().noneMatch(s -> analysis.getPartialOrd().isLeq(succState, s))) {
+				// Only add state if there is no covering sibling (with the same action)
+				if (node.getSuccNodes().noneMatch(n -> n.getInEdge().get().getAction().equals(action) &&
+						analysis.getPartialOrd().isLeq(succState, n.getState()))) {
 					final boolean isTarget = target.test(succState);
 					final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState, isTarget);
 					newSuccNodes.add(newNode);

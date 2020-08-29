@@ -44,7 +44,7 @@ public class ExplTransFuncTest {
 	private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
 	private final ExplState state = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 
-	ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstace().createSolver());
+	ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver());
 
 	@Test
 	public void testNormal() {

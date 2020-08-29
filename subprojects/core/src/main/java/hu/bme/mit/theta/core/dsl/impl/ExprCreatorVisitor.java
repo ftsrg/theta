@@ -20,6 +20,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_AND;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ARITH_SHIFT_RIGHT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_LOGIC_SHIFT_RIGHT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_OR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ROTATE_LEFT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ROTATE_RIGHT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_SHIFT_LEFT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_XOR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DIV;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EQ;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.GEQ;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.GT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.LEQ;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.LT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MINUS;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MOD;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MUL;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.NEQ;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.PLUS;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.REM;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
@@ -31,6 +51,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -47,30 +68,24 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.antlr.v4.runtime.Token;
-
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessorExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AdditiveExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AndExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ArrayAccessContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseAndExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseOrExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseShiftExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseXorExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DeclListContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EqualityExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ExistsExprContext;
@@ -84,13 +99,26 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ImplyExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IntLitExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IteExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MultiplicativeExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.NegExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.NotExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.OrExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ParenExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatLitExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RelationExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TrueExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.UnaryExprContext;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import org.antlr.v4.runtime.Token;
+
+import com.google.common.collect.ImmutableList;
+
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
@@ -104,8 +132,8 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
@@ -269,9 +297,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-				case CoreDslParser.EQ:
+				case EQ:
 					return Eq(leftOp, rightOp);
-				case CoreDslParser.NEQ:
+				case NEQ:
 					return Neq(leftOp, rightOp);
 				default:
 					throw new AssertionError();
@@ -289,14 +317,96 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-				case CoreDslParser.LT:
+				case LT:
 					return Lt(leftOp, rightOp);
-				case CoreDslParser.LEQ:
+				case LEQ:
 					return Leq(leftOp, rightOp);
-				case CoreDslParser.GT:
+				case GT:
 					return Gt(leftOp, rightOp);
-				case CoreDslParser.GEQ:
+				case GEQ:
 					return Geq(leftOp, rightOp);
+				default:
+					throw new AssertionError();
+			}
+
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	////
+
+	@Override
+	public Expr<?> visitBitwiseOrExpr(final BitwiseOrExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+			switch (ctx.oper.getType()) {
+				case BITWISE_OR:
+					return BvExprs.Or(List.of(leftOp, rightOp));
+				default:
+					throw new AssertionError();
+			}
+
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	@Override
+	public Expr<?> visitBitwiseXorExpr(final BitwiseXorExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+			switch (ctx.oper.getType()) {
+				case BITWISE_XOR:
+					return BvExprs.Xor(List.of(leftOp, rightOp));
+				default:
+					throw new AssertionError();
+			}
+
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	@Override
+	public Expr<?> visitBitwiseAndExpr(final BitwiseAndExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+			switch (ctx.oper.getType()) {
+				case BITWISE_AND:
+					return BvExprs.And(List.of(leftOp, rightOp));
+				default:
+					throw new AssertionError();
+			}
+
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	@Override
+	public Expr<?> visitBitwiseShiftExpr(final BitwiseShiftExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BvType> leftOp = castBv(ctx.leftOp.accept(this));
+			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
+
+			switch (ctx.oper.getType()) {
+				case BITWISE_SHIFT_LEFT:
+					return BvExprs.ShiftLeft(leftOp, rightOp);
+				case BITWISE_ARITH_SHIFT_RIGHT:
+					return BvExprs.ArithShiftRight(leftOp, rightOp);
+				case BITWISE_LOGIC_SHIFT_RIGHT:
+					return BvExprs.LogicShiftRight(leftOp, rightOp);
+				case BITWISE_ROTATE_LEFT:
+					return BvExprs.RotateLeft(leftOp, rightOp);
+				case BITWISE_ROTATE_RIGHT:
+					return BvExprs.RotateRight(leftOp, rightOp);
 				default:
 					throw new AssertionError();
 			}
@@ -345,10 +455,10 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-			case CoreDslParser.PLUS:
+			case PLUS:
 				return createAddExpr(leftOp, rightOp);
 
-			case CoreDslParser.MINUS:
+			case MINUS:
 				return createSubExpr(leftOp, rightOp);
 
 			default:
@@ -410,16 +520,16 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-			case CoreDslParser.MUL:
+			case MUL:
 				return createMulExpr(leftOp, rightOp);
 
-			case CoreDslParser.DIV:
+			case DIV:
 				return createDivExpr(leftOp, rightOp);
 
-			case CoreDslParser.MOD:
+			case MOD:
 				return createModExpr(leftOp, rightOp);
 
-			case CoreDslParser.REM:
+			case REM:
 				return createRemExpr(leftOp, rightOp);
 
 			default:
@@ -441,13 +551,13 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		return Div(leftOp, rightOp);
 	}
 
-	private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Mod(leftOp, rightOp);
 	}
 
-	private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntRemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Rem(leftOp, rightOp);
@@ -456,10 +566,19 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	////
 
 	@Override
-	public Expr<?> visitNegExpr(final NegExprContext ctx) {
+	public Expr<?> visitUnaryExpr(final UnaryExprContext ctx) {
 		if (ctx.op != null) {
 			final Expr<?> op = ctx.op.accept(this);
-			return Neg(op);
+			switch(ctx.oper.getType()) {
+				case PLUS:
+					return Pos(op);
+
+				case MINUS:
+					return Neg(op);
+
+				default:
+					throw new AssertionError();
+			}
 		} else {
 			return visitChildren(ctx);
 		}
@@ -527,14 +646,14 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-		final int value = Integer.parseInt(ctx.value.getText());
+		final var value = new BigInteger(ctx.value.getText());
 		return Int(value);
 	}
 
 	@Override
 	public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-		final int num = Integer.parseInt(ctx.num.getText());
-		final int denom = Integer.parseInt(ctx.denom.getText());
+		final var num = new BigInteger(ctx.num.getText());
+		final var denom = new BigInteger(ctx.denom.getText());
 		return Rat(num, denom);
 	}
 

@@ -63,6 +63,11 @@ public final class RatType
 	}
 
 	@Override
+	public RatPosExpr Pos(final Expr<RatType> op) {
+		return RatExprs.Pos(op);
+	}
+
+	@Override
 	public RatNegExpr Neg(final Expr<RatType> op) {
 		return RatExprs.Neg(op);
 	}

@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
@@ -49,16 +50,16 @@ public final class RatAddExpr extends AddExpr<RatType> {
 
 	@Override
 	public RatLitExpr eval(final Valuation val) {
-		int sumNum = 0;
-		int sumDenom = 1;
+		var sumNum = BigInteger.ZERO;
+		var sumDenom = BigInteger.ONE;
 		for (final Expr<RatType> op : getOps()) {
 			final RatLitExpr opLit = (RatLitExpr) op.eval(val);
-			final int leftNum = sumNum;
-			final int leftDenom = sumDenom;
-			final int rightNum = opLit.getNum();
-			final int rightDenom = opLit.getDenom();
-			sumNum = leftNum * rightDenom + leftDenom * rightNum;
-			sumDenom = leftDenom * rightDenom;
+			final var leftNum = sumNum;
+			final var leftDenom = sumDenom;
+			final var rightNum = opLit.getNum();
+			final var rightDenom = opLit.getDenom();
+			sumNum = leftNum.multiply(rightDenom).add(leftDenom.multiply(rightNum));
+			sumDenom = leftDenom.multiply(rightDenom);
 		}
 		return Rat(sumNum, sumDenom);
 	}

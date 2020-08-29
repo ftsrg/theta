@@ -23,6 +23,10 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Assume statement of the form [EXPRESSION], where EXPRESSION is a Boolean {@link Expr}.
+ * The statement is a guard that can only be passed if EXPRESSION evaluates to true.
+ */
 public final class AssumeStmt implements Stmt {
 
 	private static final int HASH_SEED = 547;
