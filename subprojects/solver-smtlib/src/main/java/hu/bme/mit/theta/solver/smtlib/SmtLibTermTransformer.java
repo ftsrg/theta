@@ -1,10 +1,14 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
@@ -26,6 +30,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.IffExpr;
 import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
@@ -53,6 +58,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
@@ -75,6 +81,9 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Generic_termContext;
@@ -136,14 +145,14 @@ public class SmtLibTermTransformer {
     }
 
     private static final class TermTransformer extends SMTLIBv2BaseVisitor<Expr<?>> {
-        private final List<Decl<?>> vars;
+        private final BiMap<Decl<?>, String> vars;
         private final GetModelResponse model;
         private static Map<String, BiFunction<List<IndexContext>, List<TermContext>, Expr<?>>> funAppTransformer;
 
         private final SmtLibTermTransformer that;
 
         private TermTransformer(final SmtLibTermTransformer that, final GetModelResponse model) {
-            this.vars = new ArrayList<>();
+            this.vars = HashBiMap.create();
             this.model = model;
             this.that = that;
 
@@ -251,11 +260,35 @@ public class SmtLibTermTransformer {
             return ArrayExprs.Array(Collections.emptyList(), (Expr<E>) elze, type);
         }
 
+        @Override
+        public Expr<?> visitForall_term(SMTLIBv2Parser.Forall_termContext ctx) {
+            final var paramDecls = ctx.sorted_var().stream()
+                .map(sv -> Decls.Param(sv.symbol().getText(), new SortTransformer().visitSort(sv.sort())))
+                .collect(Collectors.toUnmodifiableList());
+
+            pushParams(paramDecls);
+            final Expr<BoolType> op = TypeUtils.cast(visitTerm(ctx.term()), Bool());
+            popParams(paramDecls);
+            return Forall(paramDecls, op);
+        }
+
+        @Override
+        public Expr<?> visitExists_term(SMTLIBv2Parser.Exists_termContext ctx) {
+            final var paramDecls = ctx.sorted_var().stream()
+                .map(sv -> Decls.Param(sv.symbol().getText(), new SortTransformer().visitSort(sv.sort())))
+                .collect(Collectors.toUnmodifiableList());
+
+            pushParams(paramDecls);
+            final Expr<BoolType> op = TypeUtils.cast(visitTerm(ctx.term()), Bool());
+            popParams(paramDecls);
+            return Exists(paramDecls, op);
+        }
+
         // identifier
 
         @Override
         public Expr<?> visitIdentifier(IdentifierContext ctx) {
-            if(ctx.symbol().getText().equals("(as-array)")) {
+            if(ctx.symbol().getText().equals("as-array")) {
                 final var name = ctx.index().get(0).getText();
                 return that.toExpr(model.getTerm(name), model);
             }
@@ -319,6 +352,18 @@ public class SmtLibTermTransformer {
         @Override
         public Expr<?> visitKeyword(KeywordContext ctx) {
             return super.visitKeyword(ctx);
+        }
+
+        ////
+
+        private <T extends Type> void pushParams(final List<ParamDecl<T>> paramDecls) {
+            vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), Decl::getName)));
+        }
+
+        private <T extends Type> void popParams(final List<ParamDecl<T>> paramDecls) {
+            for (final var paramDecl : paramDecls) {
+                vars.remove(paramDecl, paramDecl.getName());
+            }
         }
 
         ////
