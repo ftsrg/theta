@@ -9,8 +9,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -30,7 +30,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,8 +42,6 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class SmtLibSolver implements Solver {
     private final SolverBinary solverBinary;
@@ -322,15 +319,11 @@ public class SmtLibSolver implements Solver {
         private <DeclType extends Type> LitExpr<?> extractLiteral(final ConstDecl<DeclType> decl) {
             final String symbol = transformationManager.toSymbol(decl);
             final Type type = decl.getType();
-            /*if (type instanceof FuncType) {
-                return extractFuncLiteral(funcDecl);
-            } else if (type instanceof ArrayType) {
-                return extractArrayLiteral(funcDecl);
-            } else if (type instanceof BvType) {
-                return extractBvConstLiteral(funcDecl, (BvType) type);
-            } else {*/
-            //}
-            if(type instanceof ArrayType) {
+
+            if(type instanceof FuncType) {
+                return extractFuncLiteral(symbol, (FuncType<?, ?>) type);
+            }
+            else if(type instanceof ArrayType) {
                 return extractArrayLiteral(symbol, (ArrayType<?, ?>) type);
             }
             else if (type instanceof BvType) {
@@ -341,12 +334,21 @@ public class SmtLibSolver implements Solver {
             }
         }
 
+        private LitExpr<?> extractFuncLiteral(final String symbol, final FuncType<?, ?> type) {
+            final String term = model.getTerm(symbol);
+            if (term == null) {
+                return null;
+            } else {
+                return checkNotNull(termTransformer.toFuncLitExpr(term, type, model));
+            }
+        }
+
         private LitExpr<?> extractArrayLiteral(final String symbol, final ArrayType<?, ?> type) {
             final String term = model.getTerm(symbol);
             if (term == null) {
                 return null;
             } else {
-                return termTransformer.toArrayLitExpr(term, type, model);
+                return checkNotNull(termTransformer.toArrayLitExpr(term, type, model));
             }
         }
 
@@ -355,7 +357,7 @@ public class SmtLibSolver implements Solver {
             if (term == null) {
                 return null;
             } else {
-                return termTransformer.toBvLitExpr(term, type, model);
+                return checkNotNull(termTransformer.toBvLitExpr(term, type, model));
             }
         }
 
@@ -364,7 +366,7 @@ public class SmtLibSolver implements Solver {
             if (term == null) {
                 return null;
             } else {
-                return termTransformer.toLitExpr(term, type, model);
+                return checkNotNull(termTransformer.toLitExpr(term, type, model));
             }
         }
 
