@@ -18,7 +18,6 @@ import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.smtlib.binary.SolverBinary;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.parser.CheckSatResponse;
@@ -40,12 +39,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class SmtLibSolver implements UCSolver, Solver {
-    protected final SolverBinary solverBinary;
-    private final boolean unsatCoreEnabled;
-
     protected final SmtLibSymbolTable symbolTable;
     protected final SmtLibTransformationManager transformationManager;
     protected final SmtLibTermTransformer termTransformer;
+
+    protected final SmtLibSolverBinary solverBinary;
+    private final boolean unsatCoreEnabled;
 
     protected final Stack<Expr<BoolType>> assertions;
     protected final Map<String, Expr<BoolType>> assumptions;
@@ -60,13 +59,13 @@ public class SmtLibSolver implements UCSolver, Solver {
 
     public SmtLibSolver(
         final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SolverBinary solverBinary, boolean unsatCoreEnabled
+        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary, boolean unsatCoreEnabled
     ) {
+        this.solverBinary = solverBinary;
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
 
-        this.solverBinary = solverBinary;
         this.unsatCoreEnabled = unsatCoreEnabled;
 
         assertions = new StackImpl<>();
@@ -191,7 +190,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         }
         else if(res.isSpecific()) {
             final GetModelResponse getModelResponse = res.asSpecific();
-            return new SmtLibValuation(getModelResponse);
+            return new SmtLibValuation(getModelResponse.getModel());
         }
         else {
             throw new AssertionError();
@@ -280,11 +279,11 @@ public class SmtLibSolver implements UCSolver, Solver {
     }
 
     private final class SmtLibValuation extends Valuation {
-        private final GetModelResponse model;
+        private final SmtLibModel model;
         private final Map<Decl<?>, LitExpr<?>> constToExpr;
         private volatile Collection<ConstDecl<?>> constDecls = null;
 
-        public SmtLibValuation(final GetModelResponse model) {
+        public SmtLibValuation(final SmtLibModel model) {
             this.model = model;
             constToExpr = new HashMap<>();
         }
@@ -381,7 +380,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             return Collections.unmodifiableMap(constToExpr);
         }
 
-        private Collection<ConstDecl<?>> constDeclsOf(final GetModelResponse model) {
+        private Collection<ConstDecl<?>> constDeclsOf(final SmtLibModel model) {
             final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
             for (final var symbol : model.getDecls()) {
                 if (symbolTable.definesSymbol(symbol)) {

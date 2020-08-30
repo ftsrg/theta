@@ -11,7 +11,6 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.smtlib.binary.SolverBinary;
 
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -29,7 +28,7 @@ public abstract class SmtLibItpSolver<ItpMarkerType extends SmtLibItpMarker<?>> 
 
     public SmtLibItpSolver(
         final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SolverBinary solverBinary,
+        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
         final Supplier<ItpMarkerType> markerCreator
     ) {
         this.solver = new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);

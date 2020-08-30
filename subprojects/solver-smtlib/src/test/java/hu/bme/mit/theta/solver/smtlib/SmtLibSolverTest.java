@@ -20,12 +20,16 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
+import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSymbolTable;
+import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.parser.GetModelResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
@@ -45,11 +49,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class SmtLibSolverTest {
-    private static SmtLibSolverFactory solverFactory;
+    private static GenericSmtLibSolverFactory solverFactory;
 
     @BeforeClass
     public static void init() {
-        solverFactory = SmtLibSolverFactory.create(
+        solverFactory = GenericSmtLibSolverFactory.create(
             Path.of("/home/vagrant/Vagrant/z3-4.8.8-x64-ubuntu-16.04/bin/z3"),
             new String[] { "-in", "-smt2" }
         );
@@ -57,15 +61,15 @@ public final class SmtLibSolverTest {
 
     @Test
     public void test() {
-        final var symbolTable = new SmtLibSymbolTable();
-        final var termTransformer = new SmtLibTermTransformer(symbolTable);
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
 
         final var x = Const("x", BvExprs.BvType(4, true));
         symbolTable.put(x, "x", "(declare-fun x () (_ BitVec 4))");
 
         final var expr = termTransformer.toExpr(
                 "z () Bool (forall ((y (Array (_ BitVec 4) Int))) (= (select y x) 0))",
-                BoolExprs.Bool(), GetModelResponse.empty()
+                BoolExprs.Bool(), new SmtLibModel(Map.of())
         );
         assertNotNull(expr);
         assertTrue(expr instanceof ForallExpr);
