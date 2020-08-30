@@ -23,6 +23,11 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * Assignment statement of the form VARIABLE := EXPRESSION.
+ * The statement updates the VARIABLE with the result of EXPRESSION.
+ * @param <DeclType>
+ */
 public final class AssignStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 409;

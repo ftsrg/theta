@@ -23,24 +23,28 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
+
+import java.math.BigInteger;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>, Comparable<IntLitExpr> {
 
 	private static final int HASH_SEED = 4111;
 	private volatile int hashCode = 0;
 
-	private final int value;
+	private final BigInteger value;
 
-	private IntLitExpr(final int value) {
+	private IntLitExpr(final BigInteger value) {
 		this.value = value;
 	}
 
-	public static IntLitExpr of(final int value) {
+	public static IntLitExpr of(final BigInteger value) {
 		return new IntLitExpr(value);
 	}
 
-	public int getValue() {
+	public BigInteger getValue() {
 		return value;
 	}
 
@@ -58,20 +62,35 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return Rat(this.value, 1);
 	}
 
+	public BvLitExpr toBv(int size, boolean isSigned) {
+		BigInteger res = value;
+		BigInteger fittedRes = BvUtils.fitBigIntegerIntoDomain(res, size, isSigned);
+
+		if(res.equals(fittedRes)) {
+			return BvUtils.bigIntegerToBvLitExpr(fittedRes, size, isSigned);
+		} else {
+			throw new IllegalArgumentException("The value of int " + res.toString() + " does not fit the bitvector " + (isSigned ? "signed" : "unsigned") + " domain of size " + size + " bits");
+		}
+	}
+
 	public IntLitExpr add(final IntLitExpr that) {
-		return IntLitExpr.of(this.value + that.value);
+		return IntLitExpr.of(this.value.add(that.value));
 	}
 
 	public IntLitExpr sub(final IntLitExpr that) {
-		return IntLitExpr.of(this.value - that.value);
+		return IntLitExpr.of(this.value.subtract(that.value));
 	}
 
 	public IntLitExpr neg() {
-		return IntLitExpr.of(-this.value);
+		return IntLitExpr.of(this.value.negate());
+	}
+
+	public IntLitExpr pos() {
+		return IntLitExpr.of(this.value);
 	}
 
 	public IntLitExpr div(final IntLitExpr that) {
-		return IntLitExpr.of(this.value / that.value);
+		return IntLitExpr.of(this.value.divide(that.value));
 	}
 
 	public IntLitExpr mod(final IntLitExpr that) {
@@ -80,11 +99,11 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		// 5 mod -3 = 2
 		// -5 mod 3 = 1
 		// -5 mod -3 = 1
-		int result = this.value % that.value;
-		if (result < 0) {
-			result += Math.abs(that.value);
+		var result = this.value.mod(that.value.abs());
+		if (result.compareTo(BigInteger.ZERO) < 0) {
+			result = result.add(that.value.abs());
 		}
-		assert result >= 0;
+		assert result.compareTo(BigInteger.ZERO) >= 0;
 		return IntLitExpr.of(result);
 	}
 
@@ -94,49 +113,49 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		// 5 rem -3 = -2
 		// -5 rem 3 = 1
 		// -5 rem -3 = -1
-		final int thisAbs = Math.abs(this.value);
-		final int thatAbs = Math.abs(that.value);
-		if (this.value < 0 && that.value < 0) {
-			int result = thisAbs % thatAbs;
-			if (result != 0) {
-				result -= thatAbs;
+		final var thisAbs = this.value.abs();
+		final var thatAbs = that.value.abs();
+		if (this.value.compareTo(BigInteger.ZERO) < 0 && that.value.compareTo(BigInteger.ZERO) < 0) {
+			var result = thisAbs.mod(thatAbs);
+			if (result.compareTo(BigInteger.ZERO) != 0) {
+				result = result.subtract(thatAbs);
 			}
 			return new IntLitExpr(result);
-		} else if (this.value >= 0 && that.value < 0) {
-			return new IntLitExpr(-(thisAbs % thatAbs));
-		} else if (this.value < 0 && that.value >= 0) {
-			int result = thisAbs % thatAbs;
-			if (result != 0) {
-				result = thatAbs - result;
+		} else if (this.value.compareTo(BigInteger.ZERO) >= 0 && that.value.compareTo(BigInteger.ZERO) < 0) {
+			return new IntLitExpr(thisAbs.mod(thatAbs).negate());
+		} else if (this.value.compareTo(BigInteger.ZERO) < 0 && that.value.compareTo(BigInteger.ZERO) >= 0) {
+			var result = thisAbs.mod(thatAbs);
+			if (result.compareTo(BigInteger.ZERO) != 0) {
+				result = thatAbs.subtract(result);
 			}
 			return IntLitExpr.of(result);
 		} else {
-			return IntLitExpr.of(this.value % that.value);
+			return IntLitExpr.of(this.value.mod(that.value));
 		}
 	}
 
 	public BoolLitExpr eq(final IntLitExpr that) {
-		return Bool(this.value == that.value);
+		return Bool(this.value.compareTo(that.value) == 0);
 	}
 
 	public BoolLitExpr neq(final IntLitExpr that) {
-		return Bool(this.value != that.value);
+		return Bool(this.value.compareTo(that.value) != 0);
 	}
 
 	public BoolLitExpr lt(final IntLitExpr that) {
-		return Bool(this.value < that.value);
+		return Bool(this.value.compareTo(that.value) < 0);
 	}
 
 	public BoolLitExpr leq(final IntLitExpr that) {
-		return Bool(this.value <= that.value);
+		return Bool(this.value.compareTo(that.value) <= 0);
 	}
 
 	public BoolLitExpr gt(final IntLitExpr that) {
-		return Bool(this.value > that.value);
+		return Bool(this.value.compareTo(that.value) > 0);
 	}
 
 	public BoolLitExpr geq(final IntLitExpr that) {
-		return Bool(this.value >= that.value);
+		return Bool(this.value.compareTo(that.value) >= 0);
 	}
 
 	@Override
@@ -144,7 +163,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + value;
+			result = 31 * result + value.hashCode();
 			hashCode = result;
 		}
 		return result;
@@ -156,7 +175,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 			return true;
 		} else if (obj instanceof IntLitExpr) {
 			final IntLitExpr that = (IntLitExpr) obj;
-			return this.getValue() == that.getValue();
+			return this.getValue().compareTo(that.getValue()) == 0;
 		} else {
 			return false;
 		}
@@ -164,12 +183,12 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 
 	@Override
 	public String toString() {
-		return Long.toString(getValue());
+		return getValue().toString();
 	}
 
 	@Override
 	public int compareTo(final IntLitExpr that) {
-		return Long.compare(this.getValue(), that.getValue());
+		return this.getValue().compareTo(that.getValue());
 	}
 
 }

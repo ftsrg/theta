@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstace();
+	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 

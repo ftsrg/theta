@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -91,14 +92,18 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		reachedSet.addAll(arg.getNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
 
-		while (!waitlist.isEmpty() && !stopCriterion.canStop(arg)) {
-			final ArgNode<S, A> node = waitlist.remove();
+		if (!stopCriterion.canStop(arg)) {
+			while (!waitlist.isEmpty()) {
+				final ArgNode<S, A> node = waitlist.remove();
 
-			close(node, reachedSet.get(node));
-			if (!node.isSubsumed() && !node.isTarget()) {
-				final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);
-				reachedSet.addAll(newNodes);
-				waitlist.addAll(newNodes);
+				Collection<ArgNode<S, A>> newNodes = Collections.emptyList();
+				close(node, reachedSet.get(node));
+				if (!node.isSubsumed() && !node.isTarget()) {
+					newNodes = argBuilder.expand(node, prec);
+					reachedSet.addAll(newNodes);
+					waitlist.addAll(newNodes);
+				}
+				if (stopCriterion.canStop(arg, newNodes)) break;
 			}
 		}
 

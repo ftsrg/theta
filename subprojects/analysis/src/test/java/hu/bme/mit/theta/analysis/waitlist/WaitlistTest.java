@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.waitlist;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.NoSuchElementException;
 
-import org.junit.Assert;
 import org.junit.Test;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 
 public class WaitlistTest {
 
@@ -28,138 +30,138 @@ public class WaitlistTest {
 	public void testFifo() {
 		final Waitlist<String> waitlist = FifoWaitlist.create();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 
 		waitlist.add("A");
 		assertEquals(1, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("B");
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("C");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("D");
 		assertEquals(4, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item1 = waitlist.remove();
 		assertEquals("A", item1);
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item2 = waitlist.remove();
 		assertEquals("B", item2);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("E");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item3 = waitlist.remove();
 		assertEquals("C", item3);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.clear();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 	}
 
 	@Test
 	public void testLifo() {
 		final Waitlist<String> waitlist = LifoWaitlist.create();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 
 		waitlist.add("A");
 		assertEquals(1, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("B");
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("C");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("D");
 		assertEquals(4, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item1 = waitlist.remove();
 		assertEquals("D", item1);
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item2 = waitlist.remove();
 		assertEquals("C", item2);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("E");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item3 = waitlist.remove();
 		assertEquals("E", item3);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.clear();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 	}
 
 	@Test
 	public void testPriority() {
 		final Waitlist<String> waitlist = PriorityWaitlist.create();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 
 		waitlist.add("C");
 		assertEquals(1, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("A");
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("D");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("B");
 		assertEquals(4, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item1 = waitlist.remove();
 		assertEquals("A", item1);
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item2 = waitlist.remove();
 		assertEquals("B", item2);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.add("E");
 		assertEquals(3, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		final String item3 = waitlist.remove();
 		assertEquals("C", item3);
 		assertEquals(2, waitlist.size());
-		Assert.assertFalse(waitlist.isEmpty());
+		assertFalse(waitlist.isEmpty());
 
 		waitlist.clear();
 		assertEquals(0, waitlist.size());
-		Assert.assertTrue(waitlist.isEmpty());
+		assertTrue(waitlist.isEmpty());
 	}
 
 	@Test(expected = NoSuchElementException.class)
@@ -193,10 +195,10 @@ public class WaitlistTest {
 		}
 
 		while (!wl1.isEmpty() && !wl2.isEmpty()) {
-			Assert.assertEquals(wl1.remove(), wl2.remove());
+			assertEquals(wl1.remove(), wl2.remove());
 		}
 
-		Assert.assertTrue(wl1.isEmpty());
-		Assert.assertTrue(wl2.isEmpty());
+		assertTrue(wl1.isEmpty());
+		assertTrue(wl2.isEmpty());
 	}
 }

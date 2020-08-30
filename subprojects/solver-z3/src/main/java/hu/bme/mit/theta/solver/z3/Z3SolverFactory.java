@@ -24,18 +24,18 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class Z3SolverFactory implements SolverFactory {
 
-	private static final Z3SolverFactory INSTACE;
+	private static final Z3SolverFactory INSTANCE;
 
 	static {
 		loadLibraries();
-		INSTACE = new Z3SolverFactory();
+		INSTANCE = new Z3SolverFactory();
 	}
 
 	private Z3SolverFactory() {
 	}
 
-	public static Z3SolverFactory getInstace() {
-		return INSTACE;
+	public static Z3SolverFactory getInstance() {
+		return INSTANCE;
 	}
 
 	private static void loadLibraries() {
@@ -47,7 +47,7 @@ public final class Z3SolverFactory implements SolverFactory {
 				System.loadLibrary("z3java");
 				break;
 			default:
-				throw new RuntimeException("Operating system not supported.");
+				throw new UnsupportedOperationException("Operating system not supported.");
 		}
 	}
 
@@ -65,7 +65,7 @@ public final class Z3SolverFactory implements SolverFactory {
 
 	@Override
 	public ItpSolver createItpSolver() {
-		final com.microsoft.z3.InterpolationContext z3Context = InterpolationContext.mkContext();
+		final InterpolationContext z3Context = InterpolationContext.mkContext();
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
 		final Z3SymbolTable symbolTable = new Z3SymbolTable();

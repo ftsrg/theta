@@ -20,16 +20,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		implements Expr<ArrayType<IndexType, ElemType>> {
@@ -84,8 +85,19 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public LitExpr<ArrayType<IndexType, ElemType>> eval(final Valuation val) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>)array.eval(val);
+		LitExpr<IndexType> indexVal = index.eval(val);
+		LitExpr<ElemType> elemVal = elem.eval(val);
+
+		List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elemList = new ArrayList<>();
+		for(Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+			if(!elem.get1().equals(indexVal)) {
+				elemList.add(elem);
+			}
+		}
+		elemList.add(Tuple2.of(indexVal, elemVal));
+
+		return Array(elemList, arrayVal.getElseElem(), arrayVal.getType());
 	}
 
 	@Override
@@ -102,9 +114,9 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	public Expr<ArrayType<IndexType, ElemType>> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		checkArgument(ops.size() == 3);
-		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
-		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
-		final Expr<ElemType> newElem = TypeUtils.cast(ops.get(2), elem.getType());
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(ops.get(0), array.getType());
+		final Expr<IndexType> newIndex = cast(ops.get(1), index.getType());
+		final Expr<ElemType> newElem = cast(ops.get(2), elem.getType());
 		return with(newArray, newIndex, newElem);
 	}
 

@@ -41,7 +41,7 @@ public class PredInitFuncTest {
 
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 	private final PredAbstractor predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
 
 	@Test
