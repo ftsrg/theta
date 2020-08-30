@@ -13,13 +13,13 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public final class ContinousSolverBinary implements SolverBinary {
+public final class ContinuousSolverBinary implements SolverBinary {
 
     private final Process solverProcess;
     private final PrintWriter solverInput;
     private final Reader solverOutput;
 
-    public ContinousSolverBinary(final Path solverPath, final String[] args) {
+    public ContinuousSolverBinary(final Path solverPath, final String[] args) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));

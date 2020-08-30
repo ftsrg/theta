@@ -4,6 +4,7 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.smtlib.binary.ContinuousSolverBinary;
 
 import java.nio.file.Path;
 
@@ -25,8 +26,9 @@ public class SmtLibSolverFactory implements SolverFactory {
         final var symbolTable = new SmtLibSymbolTable();
         final var transformationManager = new SmtLibTransformationManager(symbolTable);
         final var termTransformer = new SmtLibTermTransformer(symbolTable);
+        final var solverBinary = new ContinuousSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverPath, args);
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
     }
 
     @Override
@@ -34,8 +36,9 @@ public class SmtLibSolverFactory implements SolverFactory {
         final var symbolTable = new SmtLibSymbolTable();
         final var transformationManager = new SmtLibTransformationManager(symbolTable);
         final var termTransformer = new SmtLibTermTransformer(symbolTable);
+        final var solverBinary = new ContinuousSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverPath, args);
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
     }
 
     @Override
