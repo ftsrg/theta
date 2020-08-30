@@ -6,28 +6,23 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.parser.GetModelResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +33,6 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
@@ -69,7 +63,7 @@ public final class SmtLibSolverTest {
         symbolTable.put(x, "x", "(declare-fun x () (_ BitVec 4))");
 
         final var expr = termTransformer.toExpr(
-                "(forall ((y (Array (_ BitVec 4) Int))) (= (select y x) 0))",
+                "z () Bool (forall ((y (Array (_ BitVec 4) Int))) (= (select y x) 0))",
                 BoolExprs.Bool(), GetModelResponse.empty()
         );
         assertNotNull(expr);
@@ -183,6 +177,12 @@ public final class SmtLibSolverTest {
         // Act
         final SolverStatus status = solver.check();
         assertTrue(status.isSat());
+        final Valuation model = solver.getModel();
+        final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
+        final Expr<FuncType<IntType, IntType>> val = optVal.get();
+
+        // Assert
+        assertEquals(ca.getType(), val.getType());
     }
 
     @Test
