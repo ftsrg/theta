@@ -34,10 +34,6 @@ class SolverStub implements Solver {
 	}
 
 	@Override
-	public void track(final Expr<BoolType> assertion) {
-	}
-
-	@Override
 	public SolverStatus check() {
 		return null;
 	}
@@ -63,11 +59,6 @@ class SolverStub implements Solver {
 
 	@Override
 	public Valuation getModel() {
-		return null;
-	}
-
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
 		return null;
 	}
 

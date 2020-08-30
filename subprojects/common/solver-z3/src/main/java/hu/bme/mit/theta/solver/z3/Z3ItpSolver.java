@@ -32,12 +32,13 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
-final class Z3ItpSolver implements ItpSolver {
+final class Z3ItpSolver implements ItpSolver, Solver {
 
 	private final Z3TransformationManager transformationManager;
 	private final Z3TermTransformer termTransformer;
@@ -150,12 +151,6 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	@Override
-	public void track(final Expr<BoolType> assertion) {
-		checkNotNull(assertion);
-		solver.track(assertion);
-	}
-
-	@Override
 	public SolverStatus check() {
 		return solver.check();
 	}
@@ -191,11 +186,6 @@ final class Z3ItpSolver implements ItpSolver {
 	@Override
 	public Valuation getModel() {
 		return solver.getModel();
-	}
-
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
-		return solver.getUnsatCore();
 	}
 
 	@Override

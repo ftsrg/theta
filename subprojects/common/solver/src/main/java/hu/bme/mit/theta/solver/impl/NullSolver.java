@@ -42,11 +42,6 @@ public final class NullSolver implements Solver {
 	}
 
 	@Override
-	public void track(final Expr<BoolType> assertion) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public SolverStatus check() {
 		throw new UnsupportedOperationException();
 	}
@@ -73,11 +68,6 @@ public final class NullSolver implements Solver {
 
 	@Override
 	public Valuation getModel() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
 		throw new UnsupportedOperationException();
 	}
 

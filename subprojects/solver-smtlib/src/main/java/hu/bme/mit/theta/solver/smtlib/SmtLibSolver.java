@@ -15,6 +15,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.binary.ContinousSolverBinary;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class SmtLibSolver implements Solver {
+public class SmtLibSolver implements UCSolver, Solver {
     private final SolverBinary solverBinary;
 
     private final SmtLibSymbolTable symbolTable;

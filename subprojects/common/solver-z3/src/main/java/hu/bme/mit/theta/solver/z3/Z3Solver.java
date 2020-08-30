@@ -44,10 +44,11 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
-final class Z3Solver implements Solver {
+final class Z3Solver implements UCSolver, Solver {
 
 	private final Z3SymbolTable symbolTable;
 	private final Z3TransformationManager transformationManager;
