@@ -1,0 +1,1 @@
+This project is a cli tool for installing, managing the SMT-LIB compatible solvers.
