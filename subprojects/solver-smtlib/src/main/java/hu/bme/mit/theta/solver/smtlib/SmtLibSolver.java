@@ -18,7 +18,6 @@ import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.smtlib.binary.ContinousSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.binary.SolverBinary;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
@@ -30,31 +29,27 @@ import hu.bme.mit.theta.solver.smtlib.parser.ThrowExceptionErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class SmtLibSolver implements UCSolver, Solver {
-    private final SolverBinary solverBinary;
+    protected final SolverBinary solverBinary;
+    private final boolean unsatCoreEnabled;
 
-    private final SmtLibSymbolTable symbolTable;
-    private final SmtLibTransformationManager transformationManager;
-    private final SmtLibTermTransformer termTransformer;
+    protected final SmtLibSymbolTable symbolTable;
+    protected final SmtLibTransformationManager transformationManager;
+    protected final SmtLibTermTransformer termTransformer;
 
-    private final Stack<Expr<BoolType>> assertions;
-    private final Map<String, Expr<BoolType>> assumptions;
-    private final Set<ConstDecl<?>> declarations;
-    private final Stack<Set<ConstDecl<?>>> declarationStack;
+    protected final Stack<Expr<BoolType>> assertions;
+    protected final Map<String, Expr<BoolType>> assumptions;
+    protected final Stack<ConstDecl<?>> declarationStack;
 
     private static final String ASSUMPTION_LABEL = "_LABEL_%d";
     private int labelNum = 0;
@@ -65,17 +60,17 @@ public class SmtLibSolver implements UCSolver, Solver {
 
     public SmtLibSolver(
         final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final Path solverPath, final String[] args
+        final SmtLibTermTransformer termTransformer, final SolverBinary solverBinary, boolean unsatCoreEnabled
     ) {
-        this.solverBinary = new ContinousSolverBinary(solverPath, args);
-
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
 
+        this.solverBinary = solverBinary;
+        this.unsatCoreEnabled = unsatCoreEnabled;
+
         assertions = new StackImpl<>();
         assumptions = new HashMap<>();
-        declarations = new HashSet<>();
         declarationStack = new StackImpl<>();
 
         init();
@@ -84,8 +79,7 @@ public class SmtLibSolver implements UCSolver, Solver {
     @Override
     public void add(Expr<BoolType> assertion) {
         final var consts = ExprUtils.getConstants(assertion);
-        consts.removeAll(declarations);
-        declarations.addAll(consts);
+        consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
         final var term = transformationManager.toTerm(assertion);
@@ -96,11 +90,21 @@ public class SmtLibSolver implements UCSolver, Solver {
         clearState();
     }
 
+    public void add(final Expr<BoolType> assertion, final String term) {
+        final var consts = ExprUtils.getConstants(assertion);
+        consts.removeAll(declarationStack.toCollection());
+        declarationStack.add(consts);
+
+        consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
+        issueGeneralCommand(String.format("(assert %s)%n", term));
+
+        clearState();
+    }
+
     @Override
     public void track(Expr<BoolType> assertion) {
         final var consts = ExprUtils.getConstants(assertion);
-        consts.removeAll(declarations);
-        declarations.addAll(consts);
+        consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
         final var term = transformationManager.toTerm(assertion);
@@ -142,8 +146,6 @@ public class SmtLibSolver implements UCSolver, Solver {
     public void push() {
         assertions.push();
         declarationStack.push();
-        declarations.clear();
-        declarations.addAll(declarationStack.toCollection().stream().flatMap(Collection::stream).collect(Collectors.toSet()));
         issueGeneralCommand("(push)");
     }
 
@@ -240,10 +242,12 @@ public class SmtLibSolver implements UCSolver, Solver {
         return assertions.toCollection();
     }
 
-    protected void init() {
+    private void init() {
         issueGeneralCommand("(set-option :print-success true)");
         issueGeneralCommand("(set-option :produce-models true)");
-        issueGeneralCommand("(set-option :produce-unsat-cores true)");
+        if(unsatCoreEnabled) {
+            issueGeneralCommand("(set-option :produce-unsat-cores true)");
+        }
         issueGeneralCommand("(set-logic ALL)");
     }
 
