@@ -65,6 +65,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.TrueExprContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Collection;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -546,7 +547,7 @@ final class XcfaExpression {
 
 		@Override
 		public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-			final int value = Integer.parseInt(ctx.value.getText());
+			final BigInteger value = new BigInteger(ctx.value.getText());
 			return Int(value);
 		}
 
