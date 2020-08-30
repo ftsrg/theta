@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -18,12 +19,12 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.parser.GetModelResponse;
+import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -49,14 +50,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class SmtLibSolverTest {
-    private static GenericSmtLibSolverFactory solverFactory;
+    private static SolverFactory solverFactory;
 
     @BeforeClass
-    public static void init() {
-        solverFactory = GenericSmtLibSolverFactory.create(
-            Path.of("/home/vagrant/Vagrant/z3-4.8.8-x64-ubuntu-16.04/bin/z3"),
-            new String[] { "-in", "-smt2" }
+    public static void init() throws SmtLibSolverInstallerException {
+        final var solverManager = SmtLibSolverManager.create(
+            Path.of(System.getProperty("user.home")).resolve(".theta"),
+            NullLogger.getInstance()
         );
+
+        solverFactory = solverManager.getSolverFactory("generic", "cvc4");
     }
 
     @Test

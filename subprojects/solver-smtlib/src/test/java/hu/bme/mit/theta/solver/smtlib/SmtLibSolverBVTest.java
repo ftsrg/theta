@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
+import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,6 +33,11 @@ public class SmtLibSolverBVTest {
     @Parameterized.Parameter(2)
     public Expr<?> actual;
 
+    private static final SmtLibSolverManager solverManager = SmtLibSolverManager.create(
+        Path.of(System.getProperty("user.home")).resolve(".theta"),
+        NullLogger.getInstance()
+    );
+
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
@@ -43,7 +50,7 @@ public class SmtLibSolverBVTest {
     }
 
     @Test
-    public void testOperationEquals() {
+    public void testOperationEquals() throws SmtLibSolverInstallerException {
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -61,10 +68,7 @@ public class SmtLibSolverBVTest {
         );
 
         // Equality check
-        final Solver solver = GenericSmtLibSolverFactory.create(
-            Path.of("/home/vagrant/Vagrant/z3-4.8.8-x64-ubuntu-16.04/bin/z3"),
-            new String[] { "-in", "-smt2" }
-        ).createSolver();
+        final Solver solver = solverManager.getSolverFactory("generic", "cvc4").createSolver();
         solver.push();
 
         solver.add(EqExpr.create2(expected, actual));
