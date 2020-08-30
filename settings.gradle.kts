@@ -9,6 +9,7 @@ include(
         "core",
         "solver",
         "solver-smtlib",
+        "solver-smtlib-cli",
         "solver-z3",
         "sts",
         "sts-analysis",
