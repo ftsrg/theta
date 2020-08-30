@@ -27,6 +27,12 @@ public interface SolverFactory {
 	Solver createSolver();
 
 	/**
+	 * Create a solver that is capable of producing unsat cores.
+	 * @return Solver instance
+	 */
+	UCSolver createUCSolver();
+
+	/**
 	 * Create a solver that is capable of interpolation.
 	 * @return Solver instance
 	 */

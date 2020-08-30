@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.UCSolver;
 
 public final class Z3SolverFactory implements SolverFactory {
 
@@ -53,6 +54,18 @@ public final class Z3SolverFactory implements SolverFactory {
 
 	@Override
 	public Solver createSolver() {
+		final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
+		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
+
+		final Z3SymbolTable symbolTable = new Z3SymbolTable();
+		final Z3TransformationManager transformationManager = new Z3TransformationManager(symbolTable, z3Context);
+		final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
+
+		return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
+	}
+
+	@Override
+	public UCSolver createUCSolver() {
 		final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 

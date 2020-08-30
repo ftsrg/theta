@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.parser.GetModelResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -96,7 +97,7 @@ public final class SmtLibSolverTest {
 
     @Test
     public void testTrack() {
-        final Solver solver = solverFactory.createSolver();
+        final UCSolver solver = solverFactory.createUCSolver();
 
         final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
         final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
@@ -113,7 +114,7 @@ public final class SmtLibSolverTest {
 
     @Test
     public void testUnsatCore() {
-        final Solver solver = solverFactory.createSolver();
+        final UCSolver solver = solverFactory.createUCSolver();
 
         final ConstDecl<IntType> x = Const("x", IntExprs.Int());
         final ConstDecl<IntType> y = Const("y", IntExprs.Int());
@@ -136,7 +137,7 @@ public final class SmtLibSolverTest {
 
     @Test
     public void testModel() {
-        final Solver solver = solverFactory.createSolver();
+        final UCSolver solver = solverFactory.createUCSolver();
 
         final ConstDecl<IntType> x = Const("x", IntExprs.Int());
         final ConstDecl<IntType> y = Const("y", IntExprs.Int());
