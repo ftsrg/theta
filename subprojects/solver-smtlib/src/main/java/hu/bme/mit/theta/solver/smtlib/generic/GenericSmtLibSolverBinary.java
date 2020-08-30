@@ -1,6 +1,6 @@
-package hu.bme.mit.theta.solver.smtlib.binary;
+package hu.bme.mit.theta.solver.smtlib.generic;
 
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverProcessFailureException;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverBinaryException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,13 +13,13 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public final class ContinuousSolverBinary implements SolverBinary {
+public final class GenericSmtLibSolverBinary implements hu.bme.mit.theta.solver.smtlib.SmtLibSolverBinary {
 
     private final Process solverProcess;
     private final PrintWriter solverInput;
     private final Reader solverOutput;
 
-    public ContinuousSolverBinary(final Path solverPath, final String[] args) {
+    public GenericSmtLibSolverBinary(final Path solverPath, final String[] args) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
@@ -31,7 +31,7 @@ public final class ContinuousSolverBinary implements SolverBinary {
             solverOutput = new InputStreamReader(solverProcess.getInputStream(), StandardCharsets.US_ASCII);
             checkState(solverProcess.isAlive());
         } catch (IOException e) {
-            throw new SmtLibSolverProcessFailureException(e);
+            throw new SmtLibSolverBinaryException(e);
         }
     }
 
@@ -48,14 +48,14 @@ public final class ContinuousSolverBinary implements SolverBinary {
         while (sb.length() == 0 || !readProcessor.isReady()) {
             Thread.yield();
             if (!solverProcess.isAlive()) {
-                throw new SmtLibSolverProcessFailureException("Solver process terminated early");
+                throw new SmtLibSolverBinaryException("Solver process terminated early");
             }
             try {
                 while (solverOutput.ready() && !readProcessor.isReady()) {
                     readProcessor.step(sb, (char) solverOutput.read());
                 }
             } catch (IOException e) {
-                throw new SmtLibSolverProcessFailureException(e);
+                throw new SmtLibSolverBinaryException(e);
             }
         }
         return sb.toString().trim();

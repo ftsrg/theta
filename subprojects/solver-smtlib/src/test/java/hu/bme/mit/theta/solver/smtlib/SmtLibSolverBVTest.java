@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,7 +61,7 @@ public class SmtLibSolverBVTest {
         );
 
         // Equality check
-        final Solver solver = SmtLibSolverFactory.create(
+        final Solver solver = GenericSmtLibSolverFactory.create(
             Path.of("/home/vagrant/Vagrant/z3-4.8.8-x64-ubuntu-16.04/bin/z3"),
             new String[] { "-in", "-smt2" }
         ).createSolver();

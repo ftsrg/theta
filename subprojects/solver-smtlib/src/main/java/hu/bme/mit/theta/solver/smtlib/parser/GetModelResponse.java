@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.solver.smtlib.parser;
 
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.solver.smtlib.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,10 +15,10 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_respon
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funs_recContext;
 
 public class GetModelResponse implements SpecificResponse {
-    private final Map<String, String> values;
+    private final SmtLibModel model;
 
     private GetModelResponse(final Map<String, String> values) {
-        this.values = values;
+        model = new SmtLibModel(values);
     }
 
     public static GetModelResponse fromContext(final Get_model_responseContext ctx) {
@@ -40,16 +40,8 @@ public class GetModelResponse implements SpecificResponse {
         })).collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2)));
     }
 
-    public static GetModelResponse empty() {
-        return new GetModelResponse(Map.of());
-    }
-
-    public Collection<String> getDecls() {
-        return values.keySet();
-    }
-
-    public String getTerm(final String symbol) {
-        return values.get(symbol);
+    public SmtLibModel getModel() {
+        return model;
     }
 
     private static String extractString(final ParserRuleContext ctx) {
