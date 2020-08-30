@@ -1,22 +1,14 @@
 package hu.bme.mit.theta.solver.smtlib.parser;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.rattype.RatExprs;
-import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.*;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Get_model_responseContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_fun_recContext;
@@ -33,7 +25,7 @@ public class GetModelResponse implements SpecificResponse {
         return new GetModelResponse(ctx.model_response().stream().map(member -> member.accept(new SMTLIBv2BaseVisitor<Tuple2<String, String>>() {
             @Override
             public Tuple2<String, String> visitModel_response_fun(Model_response_funContext ctx) {
-                return Tuple2.of(extractString(ctx.function_def().symbol()), extractString(ctx.function_def().term()));
+                return Tuple2.of(extractString(ctx.function_def().symbol()), extractString(ctx.function_def()));
             }
 
             @Override
@@ -46,6 +38,10 @@ public class GetModelResponse implements SpecificResponse {
                 throw new UnsupportedOperationException();
             }
         })).collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2)));
+    }
+
+    public static GetModelResponse empty() {
+        return new GetModelResponse(Map.of());
     }
 
     public Collection<String> getDecls() {

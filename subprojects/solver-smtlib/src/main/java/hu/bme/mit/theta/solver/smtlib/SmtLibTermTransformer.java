@@ -3,11 +3,9 @@ package hu.bme.mit.theta.solver.smtlib;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.QuintFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -15,7 +13,6 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Divisible;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
@@ -23,17 +20,16 @@ import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.IffExpr;
 import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
@@ -59,6 +55,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -92,6 +90,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -109,13 +108,11 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Spec_constantContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SymbolContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.TermContext;
+import static java.util.stream.Collectors.toList;
 
 public class SmtLibTermTransformer {
-    protected static final String PARAM_NAME_FORMAT = "_p%d";
-
     protected final SmtLibSymbolTable symbolTable;
     protected final Map<String, OperatorCreatorFunction> funAppTransformer;
-    protected final DispatchTable2<Type, Expr<?>> typingCorrector;
 
     public SmtLibTermTransformer(final SmtLibSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -179,12 +176,29 @@ public class SmtLibTermTransformer {
             put("select", exprArrayReadOperator());
             put("store", exprArrayWriteOperator());
         }};
-
-        this.typingCorrector = DispatchTable2.<Type, Expr<?>>builder()
-                .build();
     }
 
     /* Public interface */
+
+    public <P extends Type, R extends Type> LitExpr<FuncType<P, R>> toFuncLitExpr(final String funcLitImpl, final FuncType<P, R> type, final GetModelResponse model) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(funcLitImpl));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        final var litExpr = transformFuncDef(parser.function_def(), type, model, HashBiMap.create());
+        if(litExpr == null) {
+            return null;
+        }
+        else if(litExpr instanceof LitExpr) {
+            return (LitExpr<FuncType<P, R>>) cast(litExpr, type);
+        }
+        else {
+            return (LitExpr<FuncType<P, R>>) cast(ExprUtils.simplify(litExpr), type);
+        }
+    }
 
     public Expr<?> toExpr(final String term, final Type type, final GetModelResponse model) {
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(term));
@@ -194,13 +208,22 @@ public class SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        return cast(transformTerm(parser.term(), type, model, HashBiMap.create()), type);
+        final var expr = transformTerm(parser.function_def().term(), type, model, HashBiMap.create());
+        if(expr == null) {
+            return null;
+        }
+        else {
+            return cast(expr, type);
+        }
     }
 
     public <T extends Type> LitExpr<T> toLitExpr(final String litImpl, final T type, final GetModelResponse model) {
         final var litExpr = toExpr(litImpl, type, model);
 
-        if(litExpr instanceof LitExpr) {
+        if(litExpr == null) {
+            return null;
+        }
+        else if(litExpr instanceof LitExpr) {
             return (LitExpr<T>) cast(litExpr, type);
         }
         else {
@@ -212,7 +235,10 @@ public class SmtLibTermTransformer {
     public <I extends Type, E extends Type>  LitExpr<ArrayType<I, E>> toArrayLitExpr(final String arrayLitImpl, final ArrayType<I, E> type, final GetModelResponse model) {
         final var arrayLitExpr = toExpr(arrayLitImpl, type, model);
 
-        if(arrayLitExpr instanceof IteExpr) {
+        if(arrayLitExpr == null) {
+            return null;
+        }
+        else if(arrayLitExpr instanceof IteExpr) {
             final var entryExprsBuilder = new ImmutableList.Builder<Tuple2<Expr<I>, Expr<E>>>();
             var iteExpr = (IteExpr<E>) arrayLitExpr;
             while (true) {
@@ -232,7 +258,10 @@ public class SmtLibTermTransformer {
     public LitExpr<BvType> toBvLitExpr(final String bvLitImpl, final BvType type, final GetModelResponse model) {
         final var bvLitExpr = toExpr(bvLitImpl, type, model);
 
-        if(bvLitExpr instanceof BvLitExpr) {
+        if(bvLitExpr == null) {
+            return null;
+        }
+        else if(bvLitExpr instanceof BvLitExpr) {
             return Bv(((BvLitExpr) bvLitExpr).getValue(), type.isSigned());
         }
         else {
@@ -244,7 +273,35 @@ public class SmtLibTermTransformer {
 
     /* Visitor implementation */
 
-    protected Expr<?> transformTerm(final TermContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformFuncDef(final SMTLIBv2Parser.Function_defContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
+        assert type == null || type instanceof FuncType;
+        assert model != null;
+        assert vars != null;
+
+        final var funcType = type != null ? (FuncType<?, ?>) type : null;
+
+        final var paramDecls = ctx.sorted_var().stream()
+            .map(sv -> new ParamTypeDeducer(
+                sv.symbol().getText(), transformSort(sv.sort(),
+                funcType != null ? funcType.getParamType() : null))
+            )
+            .collect(toList());
+        checkArgument(paramDecls.size() == 1, "Only unary functions are supported");
+
+        pushParams(paramDecls, vars);
+        final var op = transformTerm(ctx.term(), funcType != null ? funcType.getResultType() : type, model, vars);
+        popParams(paramDecls, vars);
+
+        if(paramDecls.get(0).isTypeUnknown()) {
+            return null;
+        }
+        else {
+            assert op != null;
+            return Func(paramDecls.get(0).getParamDecl(), op);
+        }
+    }
+
+    protected Expr<?> transformTerm(final TermContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -277,7 +334,7 @@ public class SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformSpecConstant(final Spec_constantContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformSpecConstant(final Spec_constantContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -301,14 +358,14 @@ public class SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformQualIdentifier(final Qual_identifierContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformQualIdentifier(final Qual_identifierContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
         return transformIdentifier(ctx.identifier(), type, model, vars);
     }
 
-    protected Expr<?> transformGenericTerm(final Generic_termContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformGenericTerm(final Generic_termContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -321,9 +378,10 @@ public class SmtLibTermTransformer {
             final var constType = transformSort(ctx.qual_identifier().sort(), type);
             if (constType instanceof ArrayType) {
                 assert type == null || type.equals(constType);
+                checkArgument(funAppParams.size() == 1, "Invalid as const construct");
 
                 final var arrayType = (ArrayType<?, ?>) constType;
-                final var expr = transformTerm(ctx.term().get(0), arrayType.getElemType(), model, vars);
+                final var expr = transformTerm(funAppParams.get(0), arrayType.getElemType(), model, vars);
                 return createArrayLitExpr(expr, (ArrayType<?, ?>) type);
             }
             else {
@@ -332,14 +390,10 @@ public class SmtLibTermTransformer {
         } else if (funAppTransformer.containsKey(funName)) { // known function application
             return funAppTransformer.get(funName).apply(funParams, funAppParams, type, model, vars);
         } else { // custom function application
-            throw new UnsupportedOperationException();
-            /*final Expr<?> funcExpr;
-            if (symbolTable.definesSymbol(operation)) {
-                funcExpr = symbolTable.getConst(operation).getRef();
-            } else {
-                funcExpr = toFuncLitExpr(funcDecl, model, vars);
-            }
-            return transformFuncApp(funcExpr, term.getArgs(), model, vars);*/
+            checkArgument(funParams.size() == 0, "Custom unary function application cannot vahe parameter");
+            checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
+
+            return createFuncAppExpr(funName, funAppParams.get(0), type, model, vars);
         }
     }
 
@@ -348,63 +402,85 @@ public class SmtLibTermTransformer {
         return Array(Collections.emptyList(), (Expr<E>) elze, type);
     }
 
-    protected Expr<?> transformForallTerm(final Forall_termContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(final String funName, final TermContext funAppParam, final Type returnType,  final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
+
+        var paramExpr = transformTerm(funAppParam, null, model, vars);
+        final Type paramType = paramExpr != null ? paramExpr.getType() : null;
+
+        final Expr<?> funcExpr;
+        if (symbolTable.definesSymbol(funName)) {
+            funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
+        } else {
+            final var funDefImpl = model.getTerm(funName);
+            if(paramType == null || returnType == null) {
+                funcExpr = toFuncLitExpr(funDefImpl, null, model);
+                if(funcExpr == null) {
+                    return null;
+                }
+            }
+            else {
+                funcExpr = checkNotNull(toFuncLitExpr(funDefImpl, FuncType.of(paramType, returnType), model), "Unsupported expression: was not able to deduce all types");
+            }
+        }
+
+        assert funcExpr.getType() instanceof FuncType;
+        @SuppressWarnings("unchecked") final var funType = (FuncType<P, R>) funcExpr.getType();
+        paramExpr = paramExpr == null ? transformTerm(funAppParam, funType.getParamType(), model, vars) : paramExpr;
+
+        return FuncExprs.App(cast(funcExpr, funType), cast(paramExpr, funType.getParamType()));
+    }
+
+    protected Expr<?> transformForallTerm(final Forall_termContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type.equals(Bool());
         assert model != null;
         assert vars != null;
 
         final var paramDecls = ctx.sorted_var().stream()
-                .map(sv -> Decls.Param(sv.symbol().getText(), transformSort(sv.sort(), null)))
-                .collect(Collectors.toList());
-
-        while (paramDecls.stream().anyMatch(p -> p.getType() instanceof DummyType)) {
-            try {
-                pushParams(paramDecls, vars);
-                transformTerm(ctx.term(), type, model, vars);
-                throw new SmtLibSolverException("Unsupported term: could'nt deduce all types");
-            }
-            catch (ParamTypeDeducedException e) {
-                popParams(paramDecls, vars);
-                paramDecls.set(paramDecls.indexOf(e.getDecl()), Decls.Param(e.getDecl().getName(), e.getType()));
-            }
-        }
+            .map(sv -> new ParamTypeDeducer(sv.symbol().getText(), transformSort(sv.sort(), null)))
+            .collect(toList());
 
         pushParams(paramDecls, vars);
         final var op = transformTerm(ctx.term(), type, model, vars);
         popParams(paramDecls, vars);
 
-        return Forall(paramDecls, cast(op, Bool()));
+        if(paramDecls.stream().anyMatch(ParamTypeDeducer::isTypeUnknown)) {
+            return null;
+        }
+        else {
+            assert op != null;
+            return Forall(
+                paramDecls.stream().map(ParamTypeDeducer::getParamDecl).collect(Collectors.toUnmodifiableList()),
+                cast(op, Bool())
+            );
+        }
     }
 
-    protected Expr<?> transformExistsTerm(final Exists_termContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformExistsTerm(final Exists_termContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type.equals(Bool());
         assert model != null;
         assert vars != null;
 
         final var paramDecls = ctx.sorted_var().stream()
-            .map(sv -> Decls.Param(sv.symbol().getText(), transformSort(sv.sort(), null)))
-            .collect(Collectors.toList());
-
-        while (paramDecls.stream().anyMatch(p -> p.getType() instanceof DummyType)) {
-            try {
-                pushParams(paramDecls, vars);
-                transformTerm(ctx.term(), type, model, vars);
-                throw new SmtLibSolverException("Unsupported term: could'nt deduce all types");
-            }
-            catch (ParamTypeDeducedException e) {
-                popParams(paramDecls, vars);
-                paramDecls.set(paramDecls.indexOf(e.getDecl()), Decls.Param(e.getDecl().getName(), e.getType()));
-            }
-        }
+            .map(sv -> new ParamTypeDeducer(sv.symbol().getText(), transformSort(sv.sort(), null)))
+            .collect(toList());
 
         pushParams(paramDecls, vars);
         final var op = transformTerm(ctx.term(), type, model, vars);
         popParams(paramDecls, vars);
 
-        return Exists(paramDecls, cast(op, Bool()));
+        if(paramDecls.stream().anyMatch(ParamTypeDeducer::isTypeUnknown)) {
+            return null;
+        }
+        else {
+            assert op != null;
+            return Exists(
+                paramDecls.stream().map(ParamTypeDeducer::getParamDecl).collect(Collectors.toUnmodifiableList()),
+                cast(op, Bool())
+            );
+        }
     }
 
-    protected Expr<?> transformIdentifier(final IdentifierContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformIdentifier(final IdentifierContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -417,7 +493,7 @@ public class SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformSymbol(final SymbolContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformSymbol(final SymbolContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -430,16 +506,17 @@ public class SmtLibTermTransformer {
             default:
                 if(vars.containsValue(value)) {
                     final var decl = vars.inverse().get(value);
-                    final var ref = decl.getRef();
-                    if(decl.getType() instanceof DummyType) {
+                    if(decl.isTypeUnknown()) {
                         if(type == null) {
                             return null;
                         }
                         else {
-                            throw new ParamTypeDeducedException((ParamDecl<?>) decl, type);
+                            decl.setType(type);
+                            return decl.getRef();
                         }
                     }
                     else {
+                        final var ref = decl.getRef();
                         assert type == null || type.equals(ref.getType());
                         return ref;
                     }
@@ -455,7 +532,7 @@ public class SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformNumeral(final NumeralContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformNumeral(final NumeralContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type.equals(Int());
         assert model != null;
         assert vars != null;
@@ -463,7 +540,7 @@ public class SmtLibTermTransformer {
         return Int(ctx.getText());
     }
 
-    protected Expr<?> transformDecimal(final DecimalContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformDecimal(final DecimalContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type.equals(Rat());
         assert model != null;
         assert vars != null;
@@ -477,7 +554,7 @@ public class SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformHexadecimal(final HexadecimalContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformHexadecimal(final HexadecimalContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type instanceof BvType;
         assert model != null;
         assert vars != null;
@@ -489,13 +566,13 @@ public class SmtLibTermTransformer {
             final var bvType = (BvType) type;
             final var numStr = ctx.getText().substring(2);
             final var num = new BigInteger(numStr, 16);
-            checkState(bvType.getSize() == numStr.length() * 4);
+            checkState(bvType.getSize() == numStr.length() * 4, "Type mismatch");
 
             return BvUtils.bigIntegerToBvLitExpr(num, bvType.getSize(), bvType.isSigned());
         }
     }
 
-    protected Expr<?> transformBinary(final BinaryContext ctx, final Type type, final GetModelResponse model, final BiMap<Decl<?>, String> vars) {
+    protected Expr<?> transformBinary(final BinaryContext ctx, final Type type, final GetModelResponse model, final BiMap<ParamTypeDeducer, String> vars) {
         assert type == null || type instanceof BvType;
         assert model != null;
         assert vars != null;
@@ -507,7 +584,7 @@ public class SmtLibTermTransformer {
             final var bvType = (BvType) type;
             final var numStr = ctx.getText().substring(2);
             final var num = new BigInteger(numStr, 2);
-            checkState(bvType.getSize() == numStr.length());
+            checkState(bvType.getSize() == numStr.length(), "Type mismatch");
 
             return BvUtils.bigIntegerToBvLitExpr(num, bvType.getSize(), bvType.isSigned());
         }
@@ -528,11 +605,11 @@ public class SmtLibTermTransformer {
             case "BitVec":
                 assert type == null || type instanceof BvType;
                 if(type == null) {
-                    return new DummyType();
+                    return null;
                 }
                 else {
                     final var bvType = (BvType) type;
-                    checkArgument(Integer.parseInt(ctx.identifier().index().get(0).getText()) == bvType.getSize());
+                    checkArgument(Integer.parseInt(ctx.identifier().index().get(0).getText()) == bvType.getSize(), "Type mismatch");
                     return BvExprs.BvType(bvType.getSize(), bvType.isSigned());
                 }
             case "Array":
@@ -540,8 +617,8 @@ public class SmtLibTermTransformer {
                 if(type == null) {
                     final var indexType = transformSort(ctx.sort().get(0), null);
                     final var elemType = transformSort(ctx.sort().get(1), null);
-                    if(indexType instanceof DummyType || elemType instanceof DummyType) {
-                        return new DummyType();
+                    if(indexType == null || elemType == null) {
+                        return null;
                     }
                     else {
                         return Array(indexType, elemType);
@@ -560,11 +637,11 @@ public class SmtLibTermTransformer {
 
     /* Variable scope handling */
 
-    protected <T extends Type> void pushParams(final List<? extends Decl<?>> paramDecls, BiMap<Decl<?>, String> vars) {
-        vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), Decl::getName)));
+    protected void pushParams(final List<ParamTypeDeducer> paramDecls, BiMap<ParamTypeDeducer, String> vars) {
+        vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), ParamTypeDeducer::getName)));
     }
 
-    protected <T extends Type> void popParams(final List<? extends Decl<?>> paramDecls, BiMap<Decl<?>, String> vars) {
+    protected void popParams(final List<ParamTypeDeducer> paramDecls, BiMap<ParamTypeDeducer, String> vars) {
         for (final var paramDecl : paramDecls) {
             vars.remove(paramDecl, paramDecl.getName());
         }
@@ -575,23 +652,23 @@ public class SmtLibTermTransformer {
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprNullaryOperator(final Supplier<Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 0);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 0, "Nullary operator expected");
             return function.get();
         };
     }
 
     private OperatorCreatorFunction exprUnaryOperator(final UnaryOperator<Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 1);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
 
             if(type == null) {
                 final var op = transformTerm(ops.get(0), type, model, vars);
                 return function.apply(op);
             }
             else {
-                final var op = checkNotNull(transformTerm(ops.get(0), type, model, vars));
+                final var op = checkNotNull(transformTerm(ops.get(0), type, model, vars), "Unsupported expression: was not able to deduce all types");
                 return function.apply(op);
             }
         };
@@ -599,8 +676,8 @@ public class SmtLibTermTransformer {
 
     private OperatorCreatorFunction exprBinaryOperator(final BinaryOperator<Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 2);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Binary operator expected");
 
             if(type == null) {
                 var op1 = transformTerm(ops.get(0), null, model, vars);
@@ -609,10 +686,10 @@ public class SmtLibTermTransformer {
                     return null;
                 }
                 else if(op1 != null && op2 == null) {
-                    op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars));
+                    op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
                 }
                 else if(op1 == null /* && op2 != null */) {
-                    op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars));
+                    op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
                 }
                 return function.apply(op1, op2);
             }
@@ -627,8 +704,8 @@ public class SmtLibTermTransformer {
     private OperatorCreatorFunction exprRelationalOperator(final BinaryOperator<Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
             assert type == null || type.equals(Bool());
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 2);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Binary operator expected");
 
             var op1 = transformTerm(ops.get(0), null, model, vars);
             var op2 = transformTerm(ops.get(1), null, model, vars);
@@ -636,10 +713,10 @@ public class SmtLibTermTransformer {
                 return null;
             }
             else if(op1 != null && op2 == null) {
-                op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars));
+                op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
             }
             else if(op1 == null /* && op2 != null */) {
-                op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars));
+                op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
             }
             return function.apply(op1, op2);
         };
@@ -647,8 +724,8 @@ public class SmtLibTermTransformer {
 
     private OperatorCreatorFunction exprArrayReadOperator() {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 2);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Binary operator expected");
 
             var op1 = transformTerm(ops.get(0), null, model, vars);
             var op2 = transformTerm(ops.get(1), null, model, vars);
@@ -658,7 +735,7 @@ public class SmtLibTermTransformer {
             else if(op1 != null && op2 == null) {
                 assert op1.getType() instanceof ArrayType;
                 final var arrayType = (ArrayType<?, ?>) op1.getType();
-                op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars));
+                op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars), "Unsupported expression: was not able to deduce all types");
             }
             else if(op1 == null /* && op2 != null */) {
                 if(type == null) {
@@ -666,7 +743,7 @@ public class SmtLibTermTransformer {
                 }
                 else {
                     final var arrayType = Array(op2.getType(), type);
-                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars));
+                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars), "Unsupported expression: was not able to deduce all types");
                 }
             }
             return ArrayReadExpr.create(op1, op2);
@@ -675,8 +752,8 @@ public class SmtLibTermTransformer {
 
     private OperatorCreatorFunction exprMinusOperator() {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 1 || ops.size() == 2);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 1 || ops.size() == 2, "Unary or binary operator expected");
             if(ops.size() == 2) {
                 return exprBinaryOperator(SubExpr::create2).apply(params, ops, type, model, vars);
             }
@@ -689,8 +766,8 @@ public class SmtLibTermTransformer {
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprTernaryOperator(final TernaryOperator<Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 3);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 3, "Ternary operator expected");
             final Expr<?> op1 = transformTerm(ops.get(0), type, model, vars);
             final Expr<?> op2 = transformTerm(ops.get(1), type, model, vars);
             final Expr<?> op3 = transformTerm(ops.get(2), type, model, vars);
@@ -700,8 +777,8 @@ public class SmtLibTermTransformer {
 
     private OperatorCreatorFunction exprIteOperator() {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 3);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 3, "Ternary operator expected");
             final var op1 = transformTerm(ops.get(0), Bool(), model, vars);
             if(type == null) {
                 var op2 = transformTerm(ops.get(1), type, model, vars);
@@ -710,10 +787,10 @@ public class SmtLibTermTransformer {
                     return null;
                 }
                 else if(op2 != null && op3 == null) {
-                    op3 = checkNotNull(transformTerm(ops.get(2), op2.getType(), model, vars));
+                    op3 = checkNotNull(transformTerm(ops.get(2), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
                 }
                 else if(op2 == null /* && op3 != null */) {
-                    op2 = checkNotNull(transformTerm(ops.get(1), op3.getType(), model, vars));
+                    op2 = checkNotNull(transformTerm(ops.get(1), op3.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
                 }
                 return IteExpr.create(op1, op2, op3);
             }
@@ -728,8 +805,8 @@ public class SmtLibTermTransformer {
     private OperatorCreatorFunction exprArrayWriteOperator() {
         return (params, ops, type, model, vars) -> {
             assert type == null || type instanceof ArrayType;
-            checkArgument(params.size() == 0);
-            checkArgument(ops.size() == 3);
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 3, "Ternary operator expected");
 
             if(type == null) {
                 var op1 = transformTerm(ops.get(0), null, model, vars);
@@ -739,15 +816,15 @@ public class SmtLibTermTransformer {
                 if(op1 != null && (op2 == null || op3 == null)) {
                     final var arrayType = (ArrayType<?, ?>) op1.getType();
                     if(op2 == null) {
-                        op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars));
+                        op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars), "Unsupported expression: was not able to deduce all types");
                     }
                     if(op3 == null) {
-                        op3 = checkNotNull(transformTerm(ops.get(2), arrayType.getElemType(), model, vars));
+                        op3 = checkNotNull(transformTerm(ops.get(2), arrayType.getElemType(), model, vars), "Unsupported expression: was not able to deduce all types");
                     }
                 }
                 else if(op1 == null && op2 != null && op3 != null) {
                     final var arrayType = Array(op2.getType(), op3.getType());
-                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars));
+                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars), "Unsupported expression: was not able to deduce all types");
                 }
                 else {
                     return null;
@@ -766,7 +843,7 @@ public class SmtLibTermTransformer {
 
     private OperatorCreatorFunction exprMultiaryOperator(final Function<List<Expr<?>>, Expr<?>> function) {
         return (params, ops, type, model, vars) -> {
-            checkArgument(params.size() == 0);
+            checkArgument(params.size() == 0, "No parameters expected");
             if(type == null) {
                 final var transformedOps = new ArrayList<Expr<?>>();
                 ops.stream()
@@ -796,27 +873,45 @@ public class SmtLibTermTransformer {
         List<TermContext>,      // Operands
         Type,                   // Expected type of result
         GetModelResponse,       // The model
-        BiMap<Decl<?>, String>, // The variable (param) store
+        BiMap<ParamTypeDeducer, String>, // The variable (param) store
         Expr<?>                 // Return type
     > {}
 
-    private final static class DummyType implements Type {}
+    private final static class ParamTypeDeducer {
+        private final String name;
+        private Type type;
+        private ParamDecl<?> paramDecl;
 
-    private final static class ParamTypeDeducedException extends RuntimeException {
-        private final ParamDecl<?> decl;
-        private final Type type;
+        public ParamTypeDeducer(final String name, final Type type) {
+            this.name = name;
+            if(type != null) {
+                setType(type);
+            }
+        }
 
-        public ParamTypeDeducedException(ParamDecl<?> decl, Type type) {
-            this.decl = decl;
+        public boolean isTypeUnknown() {
+            return type == null;
+        }
+
+        public void setType(final Type type) {
+            checkArgument(type != null);
+            checkState(this.type == null);
             this.type = type;
+            this.paramDecl = Decls.Param(name, type);
         }
 
-        public ParamDecl<?> getDecl() {
-            return decl;
+        public String getName() {
+            return name;
         }
 
-        public Type getType() {
-            return type;
+        public ParamDecl<?> getParamDecl() {
+            checkState(paramDecl != null);
+            return paramDecl;
+        }
+
+        public RefExpr<?> getRef() {
+            checkState(paramDecl != null);
+            return paramDecl.getRef();
         }
     }
 
