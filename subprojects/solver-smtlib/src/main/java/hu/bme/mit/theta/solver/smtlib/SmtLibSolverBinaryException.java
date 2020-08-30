@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.solver.smtlib;
 
-public class SmtLibSolverProcessFailureException extends SmtLibSolverException {
+public class SmtLibSolverBinaryException extends SmtLibSolverException {
 	private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverProcessFailureException(Exception e) {
+	public SmtLibSolverBinaryException(Exception e) {
 		super(e);
 	}
 
-	public SmtLibSolverProcessFailureException(String e) {
+	public SmtLibSolverBinaryException(String e) {
 		super(e);
 	}
 }
