@@ -553,8 +553,8 @@ final class XcfaExpression {
 
 		@Override
 		public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-			final int num = Integer.parseInt(ctx.num.getText());
-			final int denom = Integer.parseInt(ctx.denom.getText());
+			final BigInteger num = new BigInteger(ctx.num.getText());
+			final BigInteger denom = new BigInteger(ctx.denom.getText());
 			return Rat(num, denom);
 		}
 
