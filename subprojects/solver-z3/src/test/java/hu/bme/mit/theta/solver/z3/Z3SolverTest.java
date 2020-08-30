@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.UCSolver;
 import org.junit.Test;
 
 import java.util.List;
@@ -85,7 +86,7 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testTrack() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
 
 		final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
 		final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());

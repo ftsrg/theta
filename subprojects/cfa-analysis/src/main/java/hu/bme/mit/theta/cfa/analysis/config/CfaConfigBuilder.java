@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.cfa.analysis.config;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Prec;
@@ -36,7 +34,18 @@ import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
+import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
@@ -47,7 +56,12 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.*;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaAnalysis;
+import hu.bme.mit.theta.cfa.analysis.CfaInitPrecs;
+import hu.bme.mit.theta.cfa.analysis.CfaPrec;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.DistToErrComparator;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
@@ -58,8 +72,10 @@ import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class CfaConfigBuilder {
 	public enum Domain {
@@ -224,12 +240,11 @@ public class CfaConfigBuilder {
 	}
 
 	public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
-		final ItpSolver solver = solverFactory.createItpSolver();
 		final CfaLts lts = encoding.getLts();
 
 		if (domain == Domain.EXPL) {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
-					.create(cfa.getInitLoc(), ExplStmtAnalysis.create(solver, True(), maxEnum));
+					.create(cfa.getInitLoc(), ExplStmtAnalysis.create(solverFactory.createSolver(), True(), maxEnum));
 			final ArgBuilder<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
@@ -242,23 +257,23 @@ public class CfaConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solverFactory.createItpSolver()),
 							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solverFactory.createItpSolver()),
 							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solverFactory.createItpSolver()),
 							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solverFactory.createItpSolver()),
 							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
-					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solverFactory.createUCSolver()),
 							precGranularity.createRefiner(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
@@ -286,22 +301,23 @@ public class CfaConfigBuilder {
 			return CfaConfig.create(checker, prec);
 
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
+			final Solver analysisSolver = solverFactory.createSolver();
 			PredAbstractor predAbstractor;
 			switch (domain) {
 				case PRED_BOOL:
-					predAbstractor = PredAbstractors.booleanAbstractor(solver);
+					predAbstractor = PredAbstractors.booleanAbstractor(analysisSolver);
 					break;
 				case PRED_SPLIT:
-					predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+					predAbstractor = PredAbstractors.booleanSplitAbstractor(analysisSolver);
 					break;
 				case PRED_CART:
-					predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+					predAbstractor = PredAbstractors.cartesianAbstractor(analysisSolver);
 					break;
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
-					.create(cfa.getInitLoc(), PredAnalysis.create(solver, predAbstractor, True()));
+					.create(cfa.getInitLoc(), PredAnalysis.create(analysisSolver, predAbstractor, True()));
 			final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
@@ -313,16 +329,16 @@ public class CfaConfigBuilder {
 			ExprTraceChecker<ItpRefutation> exprTraceChecker;
 			switch (refinement) {
 				case FW_BIN_ITP:
-					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solverFactory.createItpSolver());
 					break;
 				case BW_BIN_ITP:
-					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solverFactory.createItpSolver());
 					break;
 				case SEQ_ITP:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solverFactory.createItpSolver());
 					break;
 				case MULTI_SEQ:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solverFactory.createItpSolver());
 					break;
 				default:
 					throw new UnsupportedOperationException(
