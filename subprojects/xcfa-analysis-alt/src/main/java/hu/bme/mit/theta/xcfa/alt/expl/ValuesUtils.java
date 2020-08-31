@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 /**
@@ -74,7 +75,7 @@ final class ValuesUtils {
         for (VarDecl<? extends Type> var: xcfa.getGlobalVars()) {
             IndexedConstDecl<? extends Type> x = var.getConstDecl(0);
             if (x.getType() == IntType.getInstance()) {
-                builder.put(x, IntLitExpr.of(0));
+                builder.put(x, IntLitExpr.of(new BigInteger("0")));
             } else if (x.getType() == SyntheticType.getInstance()){
                 builder.put(x, SyntheticLitExpr.unlocked());
             }

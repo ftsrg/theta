@@ -46,9 +46,6 @@ public class StateUpdateVisitor implements XcfaStmtVisitor<StmtExecutorInterface
 		Preconditions.checkArgument(_stmt instanceof CallStmt, "XcfaCallStmt should be a CallStmt!");
 		CallStmt stmt = (CallStmt) _stmt;
 		param.onCall(stmt);
-		// paraméterek befelé: stmt.getParams()
-		// az, amit hívnak: stmt.getProcedure()
-		// visszatérési értéket stmt.getVar()-ba kell írni
 		return null;
 	}
 

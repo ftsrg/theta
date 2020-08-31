@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 import org.antlr.v4.misc.OrderedHashMap;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +99,7 @@ public final class ExplState extends AbstractExplState {
 		// init global integer vars to 0.
 		for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
 			if (globalVar.getType() instanceof IntType) {
-				updateVariable((VarDecl<IntType>)globalVar, IntLitExpr.of(0));
+				updateVariable((VarDecl<IntType>)globalVar, IntLitExpr.of(new BigInteger("0")));
 			}
 		}
 		// The PartialOrderExplicitCheckerTest needs deterministic execution

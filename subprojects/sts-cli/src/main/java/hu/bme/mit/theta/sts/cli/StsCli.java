@@ -38,7 +38,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.z3.*;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
