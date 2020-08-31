@@ -44,13 +44,13 @@ final class CallUtils {
 
         // create new callstate, increment depth of call.
         processState.push(factory.createCallState(process, procedure, procedure.getInitLoc(), stmt.getResultVar()));
-        state.modifyIndexing(procedure, 1);
+        state.modifyIndexing(process, procedure, 1);
 
         // write local copies of the parameters.
         putParameterValues(state, procedure, callerParameters);
     }
 
-    public static void pop(ProcessState processState, ExplStateMutatorInterface state) {
+    public static void pop(XCFA.Process process, ProcessState processState, ExplStateMutatorInterface state) {
         // similarly to push, extra care is needed to handle the correct version of the variables.
         XCFA.Process.Procedure oldProcedure = processState.getActiveCallState().getProcedure();
         VarDecl<? extends Type> whereToSaveResultUnindexed = processState.getActiveCallState().getCallerResultVar();
@@ -58,7 +58,7 @@ final class CallUtils {
         Optional<LitExpr<? extends Type>> result = evalResult(state, oldProcedure);
         havocProcedureParametersAndVariables(state, oldProcedure);
 
-        state.modifyIndexing(oldProcedure, -1);
+        state.modifyIndexing(process, oldProcedure, -1);
         processState.pop();
         if (whereToSaveResultUnindexed != null && result.isPresent())
             state.putValue(whereToSaveResultUnindexed, (Optional)result);

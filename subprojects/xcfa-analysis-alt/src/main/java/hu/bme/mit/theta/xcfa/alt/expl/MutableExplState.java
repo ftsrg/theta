@@ -121,8 +121,8 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
     }
 
     @Override
-    public final void modifyIndexing(XCFA.Process.Procedure procedure, int modifier) {
-        ValuesUtils.modifyIndexing(this, procedure, modifier);
+    public final void modifyIndexing(XCFA.Process process, XCFA.Process.Procedure procedure, int modifier) {
+        ValuesUtils.modifyIndexing(this, process, procedure, modifier);
     }
 
     @Override
@@ -147,7 +147,7 @@ public final class MutableExplState extends ExplState implements ExplStateMutato
 
     @Override
     public final void leave(XCFA.Process process) {
-        CallUtils.pop(getProcess(process), this);
+        CallUtils.pop(process, getProcess(process), this);
     }
 
     @Override

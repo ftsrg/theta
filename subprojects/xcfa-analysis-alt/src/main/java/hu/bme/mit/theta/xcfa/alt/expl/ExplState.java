@@ -70,10 +70,11 @@ public abstract class ExplState implements State {
 
     protected static <R extends ExplState> R initialState(XCFA xcfa, Factory<R> factory) {
         LocalityUtils.init(xcfa);
+        ProcessStates processStates = ProcessStates.buildInitial(xcfa, factory);
         return factory.create(
                 ValuesUtils.getInitialValuation(xcfa),
-                ValuesUtils.getInitialIndexing(),
-                ProcessStates.buildInitial(xcfa, factory),
+                ValuesUtils.getInitialIndexing(xcfa, processStates),
+                processStates,
                 Safety.safe(),
                 null);
     }

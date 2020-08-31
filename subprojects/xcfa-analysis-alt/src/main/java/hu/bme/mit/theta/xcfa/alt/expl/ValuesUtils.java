@@ -55,12 +55,12 @@ final class ValuesUtils {
             state.getValuation().remove(var.getConstDecl(state.getIndexing().get(var)));
     }
 
-    public static void modifyIndexing(MutableExplState state, XCFA.Process.Procedure procedure, int modifier) {
+    public static void modifyIndexing(MutableExplState state, XCFA.Process process, XCFA.Process.Procedure procedure, int modifier) {
         Preconditions.checkArgument(modifier == 1 || modifier == -1);
         if (modifier == 1) {
-            state.getIndexing().pushProcedure(procedure);
+            state.getIndexing().pushProcedure(process, procedure);
         } else {
-            state.getIndexing().popProcedure();
+            state.getIndexing().popProcedure(process, procedure);
         }
     }
 
@@ -81,7 +81,7 @@ final class ValuesUtils {
         return builder.build();
     }
 
-    protected static VarDoubleIndexing getInitialIndexing() {
-        return new VarDoubleIndexing();
+    protected static VarDoubleIndexing getInitialIndexing(XCFA xcfa, ProcessStates states) {
+        return new VarDoubleIndexing(xcfa, states);
     }
 }

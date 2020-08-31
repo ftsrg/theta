@@ -15,14 +15,22 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Supports 2 levels of indexing, one "indexing" for calls, one for multiple versions of the same variable.
@@ -31,38 +39,114 @@ import java.util.Stack;
  * Note: this class is not immutable, unlike VarIndexing.
  */
 public class VarDoubleIndexing {
-    private final Stack<VarIndexing> indexingStack = new Stack<>();
+    private static final class ProcessStack {
+        private final Stack<VarIndexing> indexingStack = new Stack<>();
 
-    public VarDoubleIndexing() {
-        indexingStack.push(VarIndexing.all(0));
-    }
-
-    void pushProcedure(XCFA.Process.Procedure procedure) {
-        var peek = indexingStack.peek();
-        VarIndexing.Builder builder = peek.transform();
-        for (var x: procedure.getLocalVars()) {
-            builder.inc(x, +1);
+        public ProcessStack(ProcessState entryProcessState) {
+            indexingStack.push(VarIndexing.all(0));
+            for (CallState s : entryProcessState.callStack()) {
+                push(s.getProcedure());
+            }
         }
-        for (var x: procedure.getParams()) {
-            builder.inc(x, +1);
+
+        public void push(Procedure procedure) {
+            var peek = indexingStack.peek();
+            VarIndexing.Builder builder = peek.transform();
+            for (var x: procedure.getLocalVars()) {
+                builder.inc(x, +1);
+            }
+            for (var x: procedure.getParams()) {
+                builder.inc(x, +1);
+            }
+            indexingStack.push(builder.build());
         }
-        indexingStack.push(builder.build());
+
+        public void pop() {
+            indexingStack.pop();
+        }
+
+        public int get(VarDecl<? extends Type> decl) {
+            return indexingStack.peek().get(decl);
+        }
+
+        public void inc(VarDecl<? extends Type> decl, int modifier) {
+            // replace last element in stack
+            indexingStack.push(indexingStack.pop().inc(decl, modifier));
+        }
     }
 
-    void popProcedure() {
-        indexingStack.pop();
+    Map<XCFA.Process, ProcessStack> processes = new HashMap<>();
+
+    VarIndexing nonProcedureIndexing = VarIndexing.all(0);
+    /** Non-containment means that the variable is not a procedure-local variable */
+    Map<VarDecl<?>, ProcessStack> varToStack = new HashMap<>();
+
+    public VarDoubleIndexing(XCFA xcfa, ProcessStates initialProcessStates) {
+        // initialize callstack
+        for (var entry: initialProcessStates.getStates().entrySet()) {
+            processes.put(entry.getKey(), new ProcessStack(entry.getValue()));
+        }
+        // initialize varToStack mapping
+        for (var process : xcfa.getProcesses()) {
+            for (var procedure : process.getProcedures()) {
+                for (var localVar : procedure.getLocalVars()) {
+                    varToStack.put(localVar, processes.get(process));
+                }
+            }
+        }
     }
 
-    public int get(VarDecl<? extends Type> var) {
-        return indexingStack.peek().get(var);
+    void pushProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
+        Preconditions.checkArgument(parent.getProcedures().contains(procedure));
+        processes.get(parent).push(procedure);
+    }
+
+    void popProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
+        Preconditions.checkArgument(parent.getProcedures().contains(procedure));
+        processes.get(parent).pop();
+    }
+
+    public int get(VarDecl<? extends Type> decl) {
+        ProcessStack containingStack = varToStack.get(decl);
+        if (containingStack == null) {
+            return nonProcedureIndexing.get(decl);
+        }
+        return containingStack.get(decl);
     }
 
     public void inc(VarDecl<? extends Type> decl, int modifier) {
-        // replace last element in stack
-        indexingStack.push(indexingStack.pop().inc(decl, modifier));
+        ProcessStack containingStack = varToStack.get(decl);
+        if (containingStack == null) {
+            nonProcedureIndexing.inc(decl);
+            return;
+        }
+        containingStack.inc(decl, modifier);
     }
 
     public <DeclType extends Type> Expr<DeclType> unfold(Expr<DeclType> expr) {
-        return PathUtils.unfold(expr, indexingStack.peek());
+        return unfold(expr, 0);
+    }
+
+    // specialized from StmtHelper
+    public <DeclType extends Type> Expr<DeclType> unfold(Expr<DeclType> expr, int offset) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<DeclType> ref = (RefExpr<DeclType>) expr;
+            final Decl<DeclType> decl = ref.getDecl();
+            if (decl instanceof VarDecl) {
+                final VarDecl<DeclType> varDecl = (VarDecl<DeclType>) decl;
+                final int index = get(varDecl) + offset;
+                final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
+                final RefExpr<DeclType> refExpr = constDecl.getRef();
+                return refExpr;
+            }
+        }
+
+        if (expr instanceof PrimeExpr) {
+            final PrimeExpr<DeclType> prime = (PrimeExpr<DeclType>) expr;
+            final Expr<DeclType> op = prime.getOp();
+            return unfold(op, offset + 1);
+        }
+
+        return expr.map(op -> unfold(op, offset));
     }
 }
