@@ -3,8 +3,17 @@
 Theta is written in Java 11 using
 * [Gradle](https://gradle.org/) as a build system,
 * [Git](https://git-scm.com/) and [GitHub](https://github.com/FTSRG/theta) for version control,
-* [Travis](https://travis-ci.org/FTSRG/theta) for continuous integration,
-* [Codacy](https://www.codacy.com/app/FTSRG/theta/dashboard) for static code analysis.
+* [Travis](https://travis-ci.org/FTSRG/theta) and [GitHub actions](https://github.com/ftsrg/theta/actions) for continuous integration,
+* [Codacy](https://www.codacy.com/app/FTSRG/theta/dashboard) for static code analysis,
+* [Docker](https://www.docker.com/) for packaging.
+
+## Releases and versioning
+
+Theta uses [semantic versioning](https://semver.org/) in a `MAJOR.MINOR.PATCH` format, e.g., `v1.2.3`.
+Binaries are uploaded to major/minor [releases](https://github.com/ftsrg/theta/releases), but (currently) not for patches.
+Any change that is not visible from the user's perspective (e.g., the frontends), should be a patch increment (e.g., bugfixes, small performance improvements).
+Changes visible to the user (e.g., a new option in an algoritmh) should be at least minor increment, but if the change is big enough (e.g., new formalism, new tool) a major increment can be performed.
+We usually develop on separate branches and increment the version number just before merging to the main branch.
 
 ## Forking the repository
 

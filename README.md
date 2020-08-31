@@ -27,10 +27,6 @@ Follow the links for more information about each tool.
   * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
 * [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
 
-## Extend Theta
-
-If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Development.md](doc/Development.md).
-
 ## Overview of the architecture
 
 Theta can be divided into the following four layers.
@@ -62,6 +58,10 @@ Each project contains a README.md in its root directory describing its purpose i
 | **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) |
 | **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) |
 | **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3) |
+
+## Extend Theta
+
+If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Development.md](doc/Development.md).
 
 ## Read more
 
