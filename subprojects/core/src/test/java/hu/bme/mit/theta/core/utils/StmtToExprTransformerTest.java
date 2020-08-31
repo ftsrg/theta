@@ -63,7 +63,7 @@ public class StmtToExprTransformerTest {
 
 				{Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2)))},
 
-				{Stmts.SequenceStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))), ImmutableList.of(And(True(), False()))}
+				{Stmts.SequenceStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))), ImmutableList.of(And(ImmutableList.of(And(True(), False()))))}
 
 		});
 	}
