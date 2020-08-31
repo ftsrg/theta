@@ -5,10 +5,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public class XstsState<S extends ExprState> implements ExprState {
-
-    private static final int HASH_SEED = 4413;
-    private volatile int hashCode = 0;
+public final class XstsState<S extends ExprState> implements ExprState {
 
     private final S state;
     private final boolean lastActionWasEnv;

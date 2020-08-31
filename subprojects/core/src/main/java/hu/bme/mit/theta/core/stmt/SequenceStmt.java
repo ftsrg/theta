@@ -4,21 +4,20 @@ import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
 
-public class SequenceStmt implements Stmt{
+public final class SequenceStmt implements Stmt{
 
-    private List<Stmt> stmts;
+    private final List<Stmt> stmts;
 
     private static final int HASH_SEED = 241;
-    private static final String STMT_LABEL = "sequence";
 
     private volatile int hashCode = 0;
 
-    private SequenceStmt(List<Stmt> stmts){
+    private SequenceStmt(final List<Stmt> stmts){
         this.stmts=stmts;
         if(stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
     }
 
-    public static SequenceStmt of(List<Stmt> stmts){
+    public static SequenceStmt of(final List<Stmt> stmts){
         return new SequenceStmt(stmts);
     }
 

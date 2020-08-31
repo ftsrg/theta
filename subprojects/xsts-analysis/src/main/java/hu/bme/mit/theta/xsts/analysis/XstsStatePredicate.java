@@ -1,10 +1,6 @@
 package hu.bme.mit.theta.xsts.analysis;
 
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Solver;
 
 import java.util.function.Predicate;
 

@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class XstsInitFunc<S extends ExprState, P extends Prec> implements InitFunc<XstsState<S>,P> {
+public final class XstsInitFunc<S extends ExprState, P extends Prec> implements InitFunc<XstsState<S>,P> {
 
     private final InitFunc<S, ? super P> initFunc;
 

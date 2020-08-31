@@ -6,7 +6,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class XstsLts implements LTS<XstsState, XstsAction> {
+public final class XstsLts implements LTS<XstsState, XstsAction> {
 
     private final Collection<XstsAction> internalActions;
     private final Collection<XstsAction> externalActions;

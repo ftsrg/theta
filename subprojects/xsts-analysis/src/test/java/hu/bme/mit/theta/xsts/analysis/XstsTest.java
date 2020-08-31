@@ -24,7 +24,6 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import hu.bme.mit.theta.analysis.algorithm.*;
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;

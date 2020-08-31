@@ -4,14 +4,12 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +17,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -27,30 +24,21 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 
 public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
-    XSTS xsts;
-    private HashMap<String,Integer> literalToIntMap=new HashMap<String,Integer>();
+    private XSTS xsts;
 
-    public HashMap<String, Integer> getLiteralToIntMap() {
-        return literalToIntMap;
-    }
+    private final HashMap<String,Integer> literalToIntMap=new HashMap<String,Integer>();
+    private final HashMap<String,VarDecl<?>> nameToDeclMap=new HashMap<String, VarDecl<?>>();
+    private final HashMap<VarDecl<?>, TypeDecl> varToTypeMap=new HashMap<>();
+    private final HashMap<String,TypeDecl> nameToTypeMap=new HashMap<>();
+    private final HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
+    private final HashSet<VarDecl<?>> ctrlVars=new HashSet<>();
 
-    private HashMap<String,VarDecl<?>> nameToDeclMap=new HashMap<String, VarDecl<?>>();
-
-    private HashMap<VarDecl<?>, TypeDecl> varToTypeMap=new HashMap<>();
+    private Pattern tempVarPattern=Pattern.compile("temp([0-9])+");
+    private int counter;
 
     public XSTS getXsts(){
         return xsts;
     }
-
-    private HashMap<String,TypeDecl> nameToTypeMap=new HashMap<>();
-
-    private HashSet<Expr<BoolType>> initExprs=new HashSet<Expr<BoolType>>();
-
-    private HashSet<VarDecl<?>> ctrlVars=new HashSet<>();
-
-    private Pattern tempVarPattern=Pattern.compile("temp([0-9])+");
-
-    private int counter;
 
     @Override
     public Expr visitXsts(XstsDslParser.XstsContext ctx) {

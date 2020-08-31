@@ -8,7 +8,7 @@ import java.util.ArrayDeque;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-public class VarPool {
+public class VarPoolUtil {
 
     private static ArrayDeque<VarDecl<IntType>> intPool=new ArrayDeque<VarDecl<IntType>>();
     private static int counter=0;

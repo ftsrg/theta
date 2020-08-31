@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
@@ -29,11 +28,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 final class StmtApplier {
 

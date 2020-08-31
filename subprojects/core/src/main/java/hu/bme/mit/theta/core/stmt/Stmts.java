@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+import java.util.List;
+
 /**
  * Factory class to instantiate different statements.
  *
@@ -44,6 +46,14 @@ public final class Stmts {
 
 	public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
 		return HavocStmt.of(varDecl);
+	}
+
+	public static SequenceStmt SequenceStmt(final List<Stmt> stmts){
+		return SequenceStmt.of(stmts);
+	}
+
+	public static NonDetStmt NonDetStmt(final List<Stmt> stmts){
+		return NonDetStmt.of(stmts);
 	}
 
 }
