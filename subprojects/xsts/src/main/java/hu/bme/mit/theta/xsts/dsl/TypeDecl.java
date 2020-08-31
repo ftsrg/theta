@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class TypeDecl {
+public final class TypeDecl {
 
     private final String name;
     private final List<String> literals;

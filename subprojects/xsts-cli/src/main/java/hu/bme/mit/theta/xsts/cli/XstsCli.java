@@ -8,7 +8,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -25,7 +24,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
-import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizer;
+import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
@@ -212,7 +211,7 @@ public class XstsCli {
         //TODO remove temp vars, replace int values with literals
 
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final XstsStateSequence concrTrace = XstsTraceConcretizer.concretize(trace, solverFactory, xsts);
+        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, solverFactory, xsts);
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

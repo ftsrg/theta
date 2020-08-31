@@ -5,7 +5,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class XstsOrd<S extends ExprState> implements PartialOrd<XstsState<S>> {
+public final class XstsOrd<S extends ExprState> implements PartialOrd<XstsState<S>> {
 
     private final PartialOrd<S> partialOrd;
 

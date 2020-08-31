@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
@@ -109,7 +108,7 @@ final class StmtToExprTransformer {
 			List<VarIndexing> indexings=new ArrayList<VarIndexing>();
 			VarIndexing jointIndexing=indexing;
 			int count=0;
-			VarDecl<IntType> tempVar=VarPool.requestInt();
+			VarDecl<IntType> tempVar= VarPoolUtil.requestInt();
 			for(Stmt stmt:nonDetStmt.getStmts()){
 				Expr<BoolType> tempExpr=Eq(ExprUtils.applyPrimes(tempVar.getRef(),indexing),Int(count++));
 				StmtUnfoldResult result=toExpr(stmt,indexing.inc(tempVar));
@@ -133,7 +132,7 @@ final class StmtToExprTransformer {
 				branchExprs.add(And(exprs));
 			}
 			final Expr<BoolType> expr=Or(branchExprs);
-			VarPool.returnInt(tempVar);
+			VarPoolUtil.returnInt(tempVar);
 			return StmtUnfoldResult.of(ImmutableList.of(expr),jointIndexing);
 		}
 

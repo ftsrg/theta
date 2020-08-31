@@ -7,7 +7,6 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.StrengtheningOperator;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
@@ -16,7 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Prod2ExplPredStrengtheningOperator implements StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
+public final class Prod2ExplPredStrengtheningOperator implements StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
 
     private final Solver solver;
 

@@ -2,13 +2,10 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class XstsAnalysis<S extends ExprState, P extends Prec>
+public final class XstsAnalysis<S extends ExprState, P extends Prec>
         implements Analysis<XstsState<S>, XstsAction, P> {
 
     private final PartialOrd<XstsState<S>> partialOrd;

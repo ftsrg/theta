@@ -1,30 +1,24 @@
 package hu.bme.mit.theta.xsts.analysis.concretizer;
 
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.dsl.TypeDecl;
-
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.*;
 
-public class XstsStateSequence {
+public final class XstsStateSequence {
 
-	final ImmutableList<XstsState<ExplState>> states;
-	final XSTS xsts;
+	private final ImmutableList<XstsState<ExplState>> states;
+	private final XSTS xsts;
 
 	private XstsStateSequence(final List<XstsState<ExplState>> states, final XSTS xsts) {
 		checkNotNull(states);

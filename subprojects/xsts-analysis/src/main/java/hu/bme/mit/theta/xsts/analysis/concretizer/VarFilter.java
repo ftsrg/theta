@@ -8,7 +8,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 
 import java.util.Optional;
 
-public class VarFilter {
+public final class VarFilter {
 
 	private final XSTS xsts;
 

@@ -10,12 +10,9 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.*;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.pred.*;
-import hu.bme.mit.theta.analysis.prod2.DefaultPreStrengtheningOperator;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
@@ -37,12 +34,10 @@ import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsPropInitPrec;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XstsConfigBuilder {
 

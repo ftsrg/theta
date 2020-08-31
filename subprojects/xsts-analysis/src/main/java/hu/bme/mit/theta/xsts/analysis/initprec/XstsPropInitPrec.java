@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.xsts.analysis.initprec;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.core.utils.ExprUtils;

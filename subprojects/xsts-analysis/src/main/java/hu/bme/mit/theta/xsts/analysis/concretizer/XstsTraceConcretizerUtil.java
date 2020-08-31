@@ -19,9 +19,9 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-public class XstsTraceConcretizer {
+public final class XstsTraceConcretizerUtil {
 
-	private XstsTraceConcretizer() {
+	private XstsTraceConcretizerUtil() {
 	}
 
 	public static XstsStateSequence concretize(

@@ -6,7 +6,8 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 
-public class XstsConfig <S extends State, A extends Action, P extends Prec> {
+public final class XstsConfig <S extends State, A extends Action, P extends Prec> {
+
     private final SafetyChecker<S, A, P> checker;
     private final P initPrec;
 

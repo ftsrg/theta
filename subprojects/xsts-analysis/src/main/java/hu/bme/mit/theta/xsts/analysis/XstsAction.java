@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 import java.util.List;
 
-public class XstsAction extends StmtAction{
+public final class XstsAction extends StmtAction{
 
     private final Stmt stmt;
 

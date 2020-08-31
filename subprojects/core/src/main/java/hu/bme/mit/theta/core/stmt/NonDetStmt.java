@@ -4,21 +4,21 @@ import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
 
-public class NonDetStmt implements Stmt {
+public final class NonDetStmt implements Stmt {
 
-    private List<Stmt> stmts;
+    private final List<Stmt> stmts;
 
     private static final int HASH_SEED = 361;
     private static final String STMT_LABEL = "nondet";
 
     private volatile int hashCode = 0;
 
-    private NonDetStmt(List<Stmt> stmts){
+    private NonDetStmt(final List<Stmt> stmts){
         this.stmts=stmts;
         if(stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
     }
 
-    public static NonDetStmt of(List<Stmt> stmts){
+    public static NonDetStmt of(final List<Stmt> stmts){
         return new NonDetStmt(stmts);
     }
 
