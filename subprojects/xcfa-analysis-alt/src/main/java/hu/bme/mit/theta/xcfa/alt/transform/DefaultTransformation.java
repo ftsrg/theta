@@ -106,6 +106,7 @@ public class DefaultTransformation extends EmptyTransformation {
             var process = transformed(null, oldProcess);
             stmt.setProcess(process);
         }
+        super.afterBuild(xcfa);
     }
 
     /**
