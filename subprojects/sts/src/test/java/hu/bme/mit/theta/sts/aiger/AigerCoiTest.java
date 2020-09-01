@@ -11,7 +11,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 

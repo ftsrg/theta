@@ -31,7 +31,6 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaVisualizer;
-import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
 public final class XtaDslManagerTest {
