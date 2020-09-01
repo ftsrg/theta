@@ -91,7 +91,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

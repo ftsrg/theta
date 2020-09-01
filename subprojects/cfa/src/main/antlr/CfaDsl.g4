@@ -80,6 +80,7 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
+	|	bvType
 	;
 
 typeList
@@ -106,6 +107,19 @@ arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
 	;
 
+bvType
+    :   ubvType
+    |   sbvType
+    ;
+
+ubvType
+    :   UBVTYPE LBRACK size=INT RBRACK
+    ;
+
+sbvType
+    :   SBVTYPE LBRACK size=INT RBRACK
+    ;
+
 BOOLTYPE
 	:	'bool'
 	;
@@ -117,6 +131,18 @@ INTTYPE
 RATTYPE
 	:	'rat'
 	;
+
+UBVTYPE
+    :   'bv'
+    |   'bitvec'
+    |   'ubv'
+    |   'ubitvec'
+    ;
+
+SBVTYPE
+    :   'sbv'
+    |   'sbitvec'
+    ;
 
 // E X P R E S S I O N S
 
@@ -160,7 +186,11 @@ existsExpr
 	;
 
 orExpr
-	:	ops+=andExpr (OR ops+=andExpr)*
+	:	ops+=xorExpr (OR ops+=xorExpr)*
+	;
+
+xorExpr
+	:	leftOp=andExpr (XOR rightOp=xorExpr)?
 	;
 
 andExpr
@@ -177,21 +207,42 @@ equalityExpr
 	;
 
 relationExpr
-	:	leftOp=additiveExpr (oper=(LT | LEQ | GT | GEQ) rightOp=additiveExpr)?
+	:	leftOp=bitwiseOrExpr (oper=(LT | LEQ | GT | GEQ) rightOp=bitwiseOrExpr)?
 	;
+
+bitwiseOrExpr
+    :   leftOp=bitwiseXorExpr (oper=BITWISE_OR rightOp=bitwiseXorExpr)?
+    ;
+
+bitwiseXorExpr
+    :   leftOp=bitwiseAndExpr (oper=BITWISE_XOR rightOp=bitwiseAndExpr)?
+    ;
+
+bitwiseAndExpr
+    :   leftOp=bitwiseShiftExpr (oper=BITWISE_AND rightOp=bitwiseShiftExpr)?
+    ;
+
+bitwiseShiftExpr
+    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_ARITH_SHIFT_RIGHT | BITWISE_LOGIC_SHIFT_RIGHT | BITWISE_ROTATE_LEFT | BITWISE_ROTATE_RIGHT) rightOp=additiveExpr)?
+    ;
 
 additiveExpr
 	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS) ops+=multiplicativeExpr)*
 	;
 
 multiplicativeExpr
-	:	ops+=negExpr (opers+=(MUL | DIV | MOD | REM) ops+=negExpr)*
+	:	ops+=unaryExpr (opers+=(MUL | DIV | MOD | REM) ops+=unaryExpr)*
 	;
 
-negExpr
-	:	accessorExpr
-	|	MINUS op=negExpr
+unaryExpr
+	:	bitwiseNotExpr
+	|	oper=(PLUS | MINUS) op=unaryExpr
 	;
+
+bitwiseNotExpr
+    :   accessorExpr
+    |   BITWISE_NOT op=bitwiseNotExpr
+    ;
 
 accessorExpr
 	:	op=primaryExpr (accesses+=access)*
@@ -225,6 +276,8 @@ primaryExpr
 	|	falseExpr
 	|	intLitExpr
 	|	ratLitExpr
+	|	arrLitExpr
+	|	bvLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -244,6 +297,15 @@ intLitExpr
 ratLitExpr
 	:	num=INT PERCENT denom=INT
 	;
+
+arrLitExpr
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=type GT)? DEFAULT LARROW elseExpr=expr RBRACK
+    |   LBRACK LT indexType=type GT DEFAULT LARROW elseExpr=expr RBRACK
+    ;
+
+bvLitExpr
+    :   bv=BV
+    ;
 
 idExpr
 	:	id=ID
@@ -283,6 +345,9 @@ OR	:	'or'
 	;
 
 AND	:	'and'
+	;
+
+XOR	:	'xor'
 	;
 
 NOT	:	'not'
@@ -329,12 +394,52 @@ PERCENT
 	:	'%'
 	;
 
+BITWISE_OR
+    :   '|'
+    ;
+
+BITWISE_XOR
+    :   '^'
+    ;
+
+BITWISE_AND
+    :   '&'
+    ;
+
+BITWISE_SHIFT_LEFT
+    :   LT LT
+    ;
+
+BITWISE_ARITH_SHIFT_RIGHT
+    :   GT GT
+    ;
+
+BITWISE_LOGIC_SHIFT_RIGHT
+   :   GT GT GT
+   ;
+
+BITWISE_ROTATE_LEFT
+    :   LT LT BITWISE_NOT
+    ;
+
+BITWISE_ROTATE_RIGHT
+    :   BITWISE_NOT GT GT
+    ;
+
+BITWISE_NOT
+    :   '~'
+    ;
+
 TRUE:	'true'
 	;
 
 FALSE
 	:	'false'
 	;
+
+DEFAULT
+    :   'default'
+    ;
 
 // S T A T E M E N T S
 
@@ -384,7 +489,12 @@ RETURN
 
 // B A S I C   T O K E N S
 
-INT	:	SIGN? NAT
+BV  :   NAT '\'b' ('s'|'u')? [0-1]+
+    |   NAT '\'d' ('s'|'u')? INT
+    |   NAT '\'x' ('s'|'u')? [0-9a-fA-F]+
+    ;
+
+INT	:	NAT
 	;
 
 NAT	:	DIGIT+

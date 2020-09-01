@@ -88,7 +88,7 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

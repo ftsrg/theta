@@ -55,7 +55,7 @@ public final class ExprTraceCheckersTest {
 
 	@Before
 	public void before() {
-		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
+		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
 		traceCheckers = new ArrayList<>();
 		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), solver));
 		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), solver));

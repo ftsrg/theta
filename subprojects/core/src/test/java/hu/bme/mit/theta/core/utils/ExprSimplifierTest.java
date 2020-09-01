@@ -15,8 +15,28 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -26,6 +46,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -54,16 +76,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import static org.junit.Assert.assertTrue;
 
 public class ExprSimplifierTest {
 
@@ -74,6 +87,8 @@ public class ExprSimplifierTest {
 	private final ConstDecl<IntType> cb = Const("b", Int());
 	private final ConstDecl<IntType> cc = Const("c", Int());
 	private final ConstDecl<RatType> cd = Const("d", Rat());
+	private final ConstDecl<BvType> ce = Const("e", BvType(4, false));
+	private final ConstDecl<BvType> cf = Const("f", BvType(4, false));
 
 	private final Expr<BoolType> x = cx.getRef();
 	private final Expr<BoolType> y = cy.getRef();
@@ -82,6 +97,8 @@ public class ExprSimplifierTest {
 	private final Expr<IntType> b = cb.getRef();
 	private final Expr<IntType> c = cc.getRef();
 	private final Expr<RatType> d = cd.getRef();
+	private final Expr<BvType> e = ce.getRef();
+	private final Expr<BvType> f = cf.getRef();
 
 	// Boolean
 
@@ -233,6 +250,18 @@ public class ExprSimplifierTest {
 	}
 
 	@Test
+	public void testIntToBv() {
+		assertEquals(
+			Bv(new boolean[] {true, true, false, false}, false),
+			simplify(IntExprs.ToBv(Int(12), 4, false))
+		);
+		assertEquals(
+			Bv(new boolean[] {true, true, false, false}, true),
+			simplify(IntExprs.ToBv(Int(-4), 4, true))
+		);
+	}
+
+	@Test
 	public void testIntAdd() {
 		assertEquals(Int(6), simplify(Add(Int(1), Int(2), Int(3))));
 		assertEquals(Int(0), simplify(Add(Int(1), Int(2), Int(-3))));
@@ -240,6 +269,7 @@ public class ExprSimplifierTest {
 		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), Add(a, Int(3)))));
 		assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
 		assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
+		assertEquals(Int("4294967294"), simplify(Add(Int(Integer.MAX_VALUE), Int(Integer.MAX_VALUE))));
 	}
 
 	@Test
@@ -336,6 +366,360 @@ public class ExprSimplifierTest {
 		assertEquals(False(), simplify(Lt(a, a)));
 	}
 
+	// Bitvectors
+
+	@Test
+	public void testBvAdd() {
+		assertEquals(
+			Bv(new boolean[] {false, false, true, true}, false),
+			simplify(BvExprs.Add(List.of(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, false, false, true}, false)
+			)))
+		);
+		assertEquals(
+			BvExprs.Add(List.of(
+				e,
+				Bv(new boolean[] {false, false, true, true}, false)
+			)),
+			simplify(BvExprs.Add(List.of(
+				Bv(new boolean[] {false, false, true, false}, false),
+				e,
+				Bv(new boolean[] {false, false, false, true}, false)
+			)))
+		);
+	}
+
+	@Test
+	public void testBvSub() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, false),
+			simplify(BvExprs.Sub(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, false, false, true}, false)
+			))
+		);
+		assertEquals(
+			BvExprs.Sub(
+				e,
+				Bv(new boolean[] {false, false, true, true}, false)
+			),
+			simplify(BvExprs.Sub(
+				e,
+				BvExprs.Add(List.of(
+					Bv(new boolean[] {false, false, true, false}, false),
+					Bv(new boolean[] {false, false, false, true}, false)
+				))
+			))
+		);
+	}
+
+	@Test
+	public void testBvNeg() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, true),
+			simplify(BvExprs.Neg(Bv(new boolean[] {true, true, true, true}, true)))
+		);
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, true),
+			simplify(BvExprs.Neg(BvExprs.Neg(Bv(new boolean[] {false, false, false, true}, true))))
+		);
+	}
+
+	@Test
+	public void testBvMul() {
+		assertEquals(
+			Bv(new boolean[] {false, true, true, false}, false),
+			simplify(BvExprs.Mul(List.of(
+				Bv(new boolean[] {false, false, true, true}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			)))
+		);
+		assertEquals(
+			BvExprs.Mul(List.of(
+				Bv(new boolean[] {false, true, true, false}, false),
+				e
+			)),
+			simplify(BvExprs.Mul(List.of(
+				e,
+				Bv(new boolean[] {false, false, true, true}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			)))
+		);
+	}
+
+	@Test
+	public void testBvDiv() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, false),
+			simplify(BvExprs.Div(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, true}, false)
+			))
+		);
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, false),
+			simplify(BvExprs.Div(e, e))
+		);
+	}
+
+	@Test
+	public void testBvMod() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, false),
+			simplify(BvExprs.Mod(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, true}, false)
+			))
+		);
+		assertEquals(
+			Bv(new boolean[] {false, false, false, false}, false),
+			simplify(BvExprs.Mod(e, e))
+		);
+	}
+
+	@Test
+	public void testBvRem() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, false),
+			simplify(BvExprs.Rem(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, true}, false)
+			))
+		);
+		assertEquals(
+			Bv(new boolean[] {false, false, false, false}, false),
+			simplify(BvExprs.Rem(e, e))
+		);
+	}
+
+	@Test
+	public void testBvAnd() {
+		assertEquals(
+			Bv(new boolean[] {false, true, false, false}, false),
+			simplify(BvExprs.And(List.of(
+				Bv(new boolean[] {false, true, false, true}, false),
+				Bv(new boolean[] {false, true, true, false}, false)
+			)))
+		);
+		assertEquals(
+			BvExprs.And(List.of(
+				e,
+				Bv(new boolean[] {false, true, false, false}, false)
+			)),
+			simplify(BvExprs.And(List.of(
+				e,
+				Bv(new boolean[] {false, true, false, true}, false),
+				Bv(new boolean[] {false, true, true, false}, false)
+			)))
+		);
+	}
+
+	@Test
+	public void testBvOr() {
+		assertEquals(
+				Bv(new boolean[] {false, true, true, true}, false),
+				simplify(BvExprs.Or(List.of(
+					Bv(new boolean[] {false, true, false, true}, false),
+					Bv(new boolean[] {false, true, true, false}, false)
+				)))
+		);
+		assertEquals(
+			BvExprs.Or(List.of(
+				e,
+				Bv(new boolean[] {false, true, true, true}, false)
+			)),
+			simplify(BvExprs.Or(List.of(
+				e,
+				Bv(new boolean[] {false, true, false, true}, false),
+				Bv(new boolean[] {false, true, true, false}, false)
+			)))
+		);
+	}
+
+	@Test
+	public void testBvXor() {
+		assertEquals(
+			Bv(new boolean[] {false, false, true, true}, false),
+			simplify(BvExprs.Xor(List.of(
+				Bv(new boolean[] {false, true, false, true}, false),
+				Bv(new boolean[] {false, true, true, false}, false)
+			)))
+		);
+		assertEquals(
+			BvExprs.Xor(List.of(
+				e,
+				Bv(new boolean[] {false, false, true, true}, false)
+			)),
+			simplify(BvExprs.Xor(List.of(
+				e,
+				Bv(new boolean[] {false, true, false, true}, false),
+				Bv(new boolean[] {false, true, true, false}, false)
+			)))
+		);
+	}
+
+	@Test
+	public void testBvNot() {
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, true),
+			simplify(BvExprs.Not(Bv(new boolean[] {true, true, true, false}, true)))
+		);
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, true),
+			simplify(BvExprs.Not(BvExprs.Not(Bv(new boolean[] {false, false, false, true}, true))))
+		);
+	}
+
+	@Test
+	public void testBvShift() {
+		assertEquals(
+			Bv(new boolean[] {false, true, false, false}, true),
+			simplify(BvExprs.ShiftLeft(
+				Bv(new boolean[] {false, false, false, true}, true),
+				Bv(new boolean[] {false, false, true, false}, true)
+			))
+		);
+
+		assertEquals(
+			Bv(new boolean[] {false, false, false, true}, true),
+			simplify(BvExprs.ArithShiftRight(
+				Bv(new boolean[] {false, true, false, false}, true),
+				Bv(new boolean[] {false, false, true, false}, true)
+			))
+		);
+
+		assertEquals(
+			Bv(new boolean[] {true, true, true, false}, true),
+			simplify(BvExprs.ArithShiftRight(
+				Bv(new boolean[] {true, true, false, false}, true),
+				Bv(new boolean[] {false, false, false, true}, true)
+			))
+		);
+	}
+
+	@Test
+	public void testBvEq() {
+		assertEquals(
+			True(),
+			simplify(BvExprs.Eq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, true, false, false}, false)
+			))
+		);
+		assertEquals(
+			False(),
+			simplify(BvExprs.Eq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvNeq() {
+		assertEquals(
+			False(),
+			simplify(BvExprs.Neq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, true, false, false}, false)
+			))
+		);
+		assertEquals(
+			True(),
+			simplify(BvExprs.Neq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvGeq() {
+		assertEquals(
+			True(),
+			simplify(BvExprs.Geq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			))
+		);
+		assertEquals(
+			False(),
+			simplify(BvExprs.Geq(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvGt() {
+		assertEquals(
+			True(),
+			simplify(BvExprs.Gt(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			))
+		);
+		assertEquals(
+			False(),
+			simplify(BvExprs.Gt(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvLeq() {
+		assertEquals(
+			False(),
+			simplify(BvExprs.Leq(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			))
+		);
+		assertEquals(
+			True(),
+			simplify(BvExprs.Leq(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvLt() {
+		assertEquals(
+			False(),
+			simplify(BvExprs.Lt(
+				Bv(new boolean[] {false, true, false, false}, false),
+				Bv(new boolean[] {false, false, true, false}, false)
+			))
+		);
+		assertEquals(
+			True(),
+			simplify(BvExprs.Lt(
+				Bv(new boolean[] {false, false, true, false}, false),
+				Bv(new boolean[] {false, true, false, true}, false)
+			))
+		);
+	}
+
+	@Test
+	public void testBvToInt() {
+		assertEquals(
+			Int(12),
+			simplify(BvExprs.ToInt(Bv(new boolean[] {true, true, false, false}, false)))
+		);
+		assertEquals(
+			Int(-4),
+			simplify(BvExprs.ToInt(Bv(new boolean[] {true, true, false, false}, true)))
+		);
+	}
+
+	// Others
+
 	@Test
 	public void testRef() {
 		final Valuation val = ImmutableValuation.builder().put(ca, Int(2)).build();
@@ -348,6 +732,30 @@ public class ExprSimplifierTest {
 		assertEquals(a, simplify(Ite(True(), a, b)));
 		assertEquals(b, simplify(Ite(False(), a, b)));
 		assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
+	}
+
+	// Array
+	@Test
+	public void testArrayRead() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		elems.add(Tuple2.of(Int(1), Int(2)));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
+		assertEquals(Int(1), simplify(Read(arr, Int(0))));
+		assertEquals(Int(2), simplify(Read(arr, Int(1))));
+		assertEquals(Int(100), simplify(Read(arr, Int(182))));
+	}
+
+	@Test
+	public void testArrayWrite() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		var arr = Array(elems, Int(100), Array(Int(), Int()));
+		var newArr = simplify(Write(arr, Int(5), Int(6)));
+		assertTrue(newArr instanceof ArrayLitExpr);
+		assertEquals(Int(6), Read(newArr, Int(5)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(1), Read(newArr, Int(0)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(100), Read(newArr, Int(182)).eval(ImmutableValuation.empty()));
 	}
 
 	@Test

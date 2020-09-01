@@ -93,7 +93,7 @@ public final class RatLeqExpr extends LeqExpr<RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

@@ -29,8 +29,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * An extension of the {@link Solver} interface, which also supports interpolation.
- * It can create {@link ItpMarker}s and expressions can be added to these markers.
+ * It can create {@link ItpMarker}s, and expressions can be added to these markers.
  * The markers can form different {@link ItpPattern}s, e.g., binary or sequence.
+ * First, the expressions have to be checked with {@link #check()}. Then if the
+ * expressions are unsatisfiable, an interpolant can be calculated with
+ * {@link #getInterpolant(ItpPattern)}.
  */
 public interface ItpSolver extends Solver {
 

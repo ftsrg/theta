@@ -23,12 +23,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
 
@@ -74,8 +74,14 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 
 	@Override
 	public LitExpr<ElemType> eval(final Valuation val) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>)array.eval(val);
+		LitExpr<IndexType> indexVal = index.eval(val);
+		for (Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+			if (elem.get1().equals(indexVal)){
+				return (LitExpr<ElemType>)elem.get2();
+			}
+		}
+		return (LitExpr<ElemType>)arrayVal.getElseElem();
 	}
 
 	@Override
@@ -92,8 +98,8 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	public Expr<ElemType> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		checkArgument(ops.size() == 2);
-		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
-		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(ops.get(0), array.getType());
+		final Expr<IndexType> newIndex = cast(ops.get(1), index.getType());
 		return with(newArray, newIndex);
 	}
 

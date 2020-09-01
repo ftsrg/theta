@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -41,6 +41,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.LabelExpr;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
@@ -97,7 +98,7 @@ final class XtaExpression {
 
         @Override
         public Expr<?> visitNatExpression(final NatExpressionContext ctx) {
-            final int value = Integer.parseInt(ctx.fValue.getText());
+            final var value = new BigInteger(ctx.fValue.getText());
             return Int(value);
         }
 
@@ -268,7 +269,7 @@ final class XtaExpression {
             return Div(leftOp, rightOp);
         }
 
-        private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+        private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
             final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
             final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
             return Mod(leftOp, rightOp);

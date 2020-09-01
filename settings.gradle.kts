@@ -3,10 +3,8 @@ rootProject.name = "theta"
 include(
         "analysis",
         "cfa",
-        "cfa2dot",
         "cfa-analysis",
         "cfa-cli",
-        "cfa-metrics",
         "common",
         "core",
         "solver",

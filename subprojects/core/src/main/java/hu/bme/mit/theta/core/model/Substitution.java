@@ -24,13 +24,22 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 /**
- * Interface for a substitution, which is a mapping from declarations to
- * expressions.
+ * Interface for a substitution, which is a mapping from declarations to expressions.
  */
 public interface Substitution {
 
+	/**
+	 * Get all the declarations for which an expression is assigned.
+	 * @return
+	 */
 	Collection<? extends Decl<?>> getDecls();
 
+	/**
+	 * Evaluate a declaration, i.e., get the corresponding expression.
+	 * @param decl
+	 * @param <DeclType>
+	 * @return
+	 */
 	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
 
 	default <T extends Type> Expr<T> apply(final Expr<T> expr) {

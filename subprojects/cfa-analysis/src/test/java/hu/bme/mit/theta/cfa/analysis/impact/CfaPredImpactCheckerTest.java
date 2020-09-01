@@ -31,7 +31,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.impact.PredImpactChecker;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -46,7 +45,7 @@ public final class CfaPredImpactCheckerTest {
 		// Arrange
 		final CFA cfa = CfaDslManager.createCfa(new FileInputStream("src/test/resources/counter5_true.cfa"));
 
-		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
+		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
 
 		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.getInstance(), cfa.getInitLoc(),
 				l -> l.equals(cfa.getErrorLoc()), solver);

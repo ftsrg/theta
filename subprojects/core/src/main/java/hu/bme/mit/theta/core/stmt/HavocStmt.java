@@ -21,6 +21,11 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * Havoc statement of the form havoc VARIABLE, which performs a non-deterministic
+ * assignment to VARIABLE.
+ * @param <DeclType>
+ */
 public final class HavocStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 929;

@@ -31,7 +31,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class PredOrdTest {
 	private final VarDecl<IntType> VX = Decls.Var("x", Int());
 
-	private final PredOrd ord = PredOrd.create(Z3SolverFactory.getInstace().createSolver());
+	private final PredOrd ord = PredOrd.create(Z3SolverFactory.getInstance().createSolver());
 
 	PredState sb = PredState.of(False());
 	PredState s1 = PredState.of(Gt(VX.getRef(), Int(1)));

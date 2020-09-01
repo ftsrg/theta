@@ -78,5 +78,5 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 
 	protected abstract int getHashSeed();
 
-	protected abstract String getOperatorLabel();
+	public abstract String getOperatorLabel();
 }

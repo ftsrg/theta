@@ -81,7 +81,7 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

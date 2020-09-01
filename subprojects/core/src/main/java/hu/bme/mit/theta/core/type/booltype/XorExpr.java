@@ -93,7 +93,7 @@ public class XorExpr extends NeqExpr<BoolType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 }

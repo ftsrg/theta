@@ -93,7 +93,7 @@ public final class IntNeqExpr extends NeqExpr<IntType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

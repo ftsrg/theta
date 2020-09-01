@@ -90,7 +90,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	public String getOperatorLabel() {
 		return OPERATOR;
 	}
 
