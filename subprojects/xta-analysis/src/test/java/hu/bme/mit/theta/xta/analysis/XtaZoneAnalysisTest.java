@@ -64,7 +64,9 @@ public final class XtaZoneAnalysisTest {
 
 				{"/fischer-2-32-64.xta"},
 
-				{"/lynch-2-16.xta"}
+				{"/lynch-2-16.xta"},
+
+				{"/broadcast.xta"},
 
 		});
 	}

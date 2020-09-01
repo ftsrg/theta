@@ -15,19 +15,24 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.xta.XtaProcess.LocKind.COMMITTED;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.Sync;
-import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.Sync.Kind;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.XtaSystem;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
+import static hu.bme.mit.theta.xta.XtaProcess.LocKind.COMMITTED;
+import static java.util.stream.Collectors.toList;
 
 public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 
@@ -55,21 +60,98 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 	private static void addActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
 										  final XtaState<?> state, final Edge edge) {
 		if (edge.getSync().isPresent()) {
-			addSyncActionsForEdge(result, system, state, edge);
+			final Sync sync = edge.getSync().get();
+			if (sync.getKind() == EMIT) {
+				if (sync.getLabel().isBroadcast()) {
+					addBroadcastActionsForEdge(result, system, state, edge, sync);
+				} else {
+					addBinaryActionsForEdge(result, system, state, edge, sync);
+				}
+			}
 		} else {
-			addSimpleActionsForEdge(result, system, state, edge);
+			addBasicActionsForEdge(result, system, state, edge);
 		}
 	}
 
-	private static void addSyncActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
-											  final XtaState<?> state, final Edge emitEdge) {
+	private static void addBroadcastActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
+												   final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
+		assert emitEdge.getSync().isPresent();
+		assert emitEdge.getSync().get().equals(emitSync);
+		assert emitSync.getKind().equals(EMIT);
+		assert emitSync.getLabel().isBroadcast();
 
+		final Collection<List<Edge>> initialRecvEdgeColls = new ArrayList<>();
+		initialRecvEdgeColls.add(new ArrayList<>());
+		Collection<List<Edge>> recvEdgeColls = recvEdgesForEmitEdge(emitEdge, emitSync, state.getLocs(), initialRecvEdgeColls);
+
+		// filter out all non well-formed actions if the state is committed
 		final Loc emitLoc = emitEdge.getSource();
-		final Sync emitSync = emitEdge.getSync().get();
-		if (emitSync.getKind() != Kind.EMIT) {
-			return;
+		if (state.isCommitted() && emitLoc.getKind() != COMMITTED) {
+			recvEdgeColls = recvEdgeColls.stream().filter(edges ->
+					edges.stream().anyMatch(edge ->
+							edge.getSource().getKind() == COMMITTED)).collect(toList());
 		}
 
+		for (List<Edge> recvEdges : recvEdgeColls) {
+			result.add(XtaAction.broadcast(system, state.getLocs(), emitEdge, recvEdges));
+		}
+	}
+
+	private static Collection<List<Edge>> recvEdgesForEmitEdge(final Edge emitEdge, final Sync emitSync,
+															   final List<Loc> remainingLocs,
+															   final Collection<List<Edge>> accumulator) {
+		assert emitEdge.getSync().isPresent();
+		assert emitEdge.getSync().get().equals(emitSync);
+		assert emitSync.getKind().equals(EMIT);
+		assert emitSync.getLabel().isBroadcast();
+
+		if (remainingLocs.isEmpty()) {
+			return accumulator;
+
+		} else {
+			final Loc emitLoc = emitEdge.getSource();
+			final Loc recvLoc = head(remainingLocs);
+			final List<Loc> newRemainingLocs = tail(remainingLocs);
+
+			final Collection<List<Edge>> newAccumulator;
+
+			if (emitLoc.equals(recvLoc)) {
+				newAccumulator = accumulator;
+
+			} else {
+				newAccumulator = new ArrayList<>();
+
+				for (List<Edge> recvEdges : accumulator) {
+					// add all receiving edges to the result set
+					for (Edge recvEdge : recvLoc.getOutEdges()) {
+						if (recvEdge.getSync().isPresent()) {
+							final Sync recvSync = recvEdge.getSync().get();
+							if (recvSync.mayReceive(emitSync)) {
+								final List<Edge> newRecvEdges = new ArrayList<>(recvEdges);
+								newRecvEdges.add(recvEdge);
+								newAccumulator.add(newRecvEdges);
+							}
+						}
+					}
+
+					// include the case when none of the syncronizing edges can fire
+					newAccumulator.add(recvEdges);
+				}
+			}
+
+			return recvEdgesForEmitEdge(emitEdge, emitSync, newRemainingLocs, newAccumulator);
+		}
+	}
+
+
+	private static void addBinaryActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
+												final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
+		assert emitEdge.getSync().isPresent();
+		assert emitEdge.getSync().get().equals(emitSync);
+		assert emitSync.getKind().equals(EMIT);
+		assert !emitSync.getLabel().isBroadcast();
+
+		final Loc emitLoc = emitEdge.getSource();
 		final Label emitLabel = emitSync.getLabel();
 
 		for (final Loc recvLoc : state.getLocs()) {
@@ -94,20 +176,20 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 				final Label recvLabel = recvSync.getLabel();
 
 				if (emitLabel.equals(recvLabel)) {
-					final XtaAction action = XtaAction.synced(system, state.getLocs(), emitEdge, recvEdge);
+					final XtaAction action = XtaAction.binary(system, state.getLocs(), emitEdge, recvEdge);
 					result.add(action);
 				}
 			}
 		}
 	}
 
-	private static void addSimpleActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
-												final XtaState<?> state, final Edge edge) {
+	private static void addBasicActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
+											   final XtaState<?> state, final Edge edge) {
 		final Loc loc = edge.getSource();
 		if (state.isCommitted() && loc.getKind() != COMMITTED) {
 			return;
 		}
-		final XtaAction action = XtaAction.simple(system, state.getLocs(), edge);
+		final XtaAction action = XtaAction.basic(system, state.getLocs(), edge);
 		result.add(action);
 	}
 
