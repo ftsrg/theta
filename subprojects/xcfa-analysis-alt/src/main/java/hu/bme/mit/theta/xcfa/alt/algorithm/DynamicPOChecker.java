@@ -208,7 +208,7 @@ final class DynamicPOChecker extends XcfaChecker {
             }
         }
 
-        boolean isLocalOptimization() {
+        private boolean isLocalOptimization() {
             return initedLocalOptimization && !isExpanded();
         }
 

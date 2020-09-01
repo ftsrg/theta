@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionUtils;
@@ -126,8 +125,6 @@ public class POChecker extends XcfaChecker {
     }
 
     private final class DfsNode extends DfsNodeBase {
-
-        boolean optimized = true;
 
         private Stream<ProcessTransitions> collectTransitions(ImmutableExplState state, Collection<XCFA.Process> processes) {
             return TransitionUtils.getProcessTransitions(state).stream()

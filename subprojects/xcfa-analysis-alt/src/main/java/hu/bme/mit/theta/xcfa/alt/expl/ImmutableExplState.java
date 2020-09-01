@@ -19,7 +19,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import javax.annotation.Nullable;

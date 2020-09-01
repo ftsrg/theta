@@ -20,15 +20,16 @@ import hu.bme.mit.theta.xcfa.dsl.CallStmt;
  *
  */
 public final class XcfaEdgeSplitterTransformation {
-	
+
+	private final List<CallStmtWithOldProcedure> postBuildData = new ArrayList<>();
 	private XcfaEdgeSplitterTransformation() {}
 	
 	public static XCFA transform(XCFA original) {
-		return new XcfaEdgeSplitterTransformation()._transform(original);
+		return new XcfaEdgeSplitterTransformation().alt_transform(original);
 	}
 	
 	// reuses variables and stmts
-	private XCFA _transform(XCFA original) {
+	private XCFA alt_transform(XCFA original) {
 		XCFA.Builder builder = XCFA.builder();
 		Map<Procedure, Procedure> origToNewProcedure = new HashMap<>();
 		for (Process origPs: original.getProcesses()) {
@@ -109,8 +110,7 @@ public final class XcfaEdgeSplitterTransformation {
 			this.oldPc = oldPc;
 		}
 	}
-	
-	private final List<CallStmtWithOldProcedure> postBuildData = new ArrayList<>();
+
 	
 	/**
 	 * Ensures no references of the old XCFA remains in a Stmt.

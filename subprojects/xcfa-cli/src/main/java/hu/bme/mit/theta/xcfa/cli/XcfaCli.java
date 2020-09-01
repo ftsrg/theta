@@ -27,7 +27,6 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.alt.algorithm.Config;
 import hu.bme.mit.theta.xcfa.alt.algorithm.XcfaChecker;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;

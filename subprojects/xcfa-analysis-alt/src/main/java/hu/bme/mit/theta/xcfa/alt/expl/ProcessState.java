@@ -19,12 +19,12 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 
 final class ProcessState {
     private final Stack<CallState> callStack;

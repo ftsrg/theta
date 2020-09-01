@@ -186,6 +186,6 @@ class EmptyTransformation {
      * @param builder
      */
     protected void beforeBuild(XCFA.Builder builder) {
-
+        /* Intentionally left blank */
     }
 }

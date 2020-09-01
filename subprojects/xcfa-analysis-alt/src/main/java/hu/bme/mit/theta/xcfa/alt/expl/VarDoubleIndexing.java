@@ -39,6 +39,11 @@ import com.google.common.base.Preconditions;
  * Note: this class is not immutable, unlike VarIndexing.
  */
 public class VarDoubleIndexing {
+    private final Map<XCFA.Process, ProcessStack> processes = new HashMap<>();
+    private final VarIndexing nonProcedureIndexing = VarIndexing.all(0);
+    /** Non-containment means that the variable is not a procedure-local variable */
+    private final Map<VarDecl<?>, ProcessStack> varToStack = new HashMap<>();
+
     private static final class ProcessStack {
         private final Stack<VarIndexing> indexingStack = new Stack<>();
 
@@ -75,12 +80,6 @@ public class VarDoubleIndexing {
         }
     }
 
-    Map<XCFA.Process, ProcessStack> processes = new HashMap<>();
-
-    VarIndexing nonProcedureIndexing = VarIndexing.all(0);
-    /** Non-containment means that the variable is not a procedure-local variable */
-    Map<VarDecl<?>, ProcessStack> varToStack = new HashMap<>();
-
     public VarDoubleIndexing(XCFA xcfa, ProcessStates initialProcessStates) {
         // initialize callstack
         for (var entry: initialProcessStates.getStates().entrySet()) {
@@ -96,12 +95,12 @@ public class VarDoubleIndexing {
         }
     }
 
-    void pushProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
+    public void pushProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
         Preconditions.checkArgument(parent.getProcedures().contains(procedure));
         processes.get(parent).push(procedure);
     }
 
-    void popProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
+    public void popProcedure(XCFA.Process parent, XCFA.Process.Procedure procedure) {
         Preconditions.checkArgument(parent.getProcedures().contains(procedure));
         processes.get(parent).pop();
     }
