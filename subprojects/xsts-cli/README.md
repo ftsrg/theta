@@ -49,7 +49,7 @@ All arguments are optional, except `--model` and `--property`.
     * `PRED_BOOL`: Boolean predicate abstraction.
     * `PRED_SPLIT`: Boolean predicate abstraction with splitting.
     * `EXPL`: Explicit-value abstraction.
-    * `PROD`: Product abstraction with predicate and explicit-value abstraction.
+    * `PROD`: Product abstraction with explicit-value and predicate abstraction.
     * _Remark: Predicate abstraction tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
   Explicit-values keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
   Cartesian predicate abstraction only uses conjunctions (more efficient) while Boolean allows arbitrary formulas (more expressive).
@@ -57,6 +57,7 @@ All arguments are optional, except `--model` and `--property`.
   In `PRED_BOOL` this DNF formula is treated as a single state, while in `PRED_SPLIT` each operand of the disjunction is a separate state._
     * _Remark: It is recommended to try Cartesian first and fall back to Boolean if there is no refinement progress (seemingly infinite iterations with the same counterexample).
   Splitting rarely resulted in better performance._
+    * _Remark: In `PROD` the set of control variables is handled explicitly, while other variables are covered by predicate abstraction. A variable can be added to the set of control variables by adding the keyword `ctrl` to its declaration. Example: `ctrl var x : integer` declares an integer control variable.
     * _More information on the abstract domains can be found in [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf), Sections 2.2.1 and 3.1.3._
 * `--initprec`: Initial precision of the abstraction.
     * `EMPTY`: Start with an empty initial precision (default).
