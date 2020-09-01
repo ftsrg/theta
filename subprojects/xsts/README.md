@@ -45,12 +45,17 @@ Variables can and in most cases should have initial values assigned to them, the
 
 `var <name> : <type> = <value> `
 
+When using product abstraction (`PROD`) variables tagged as control variables are tracked explicitly. A variable can be tagged as a control variable with the keyword `ctrl`:
+
+`ctrl var <name> : <type> = <value> `
+
 Examples:
 
 ```
 var a : integer
 var b : boolean = false
 var c : Color = RED
+ctrl var x : integer = 0
 ```
 
 All variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
