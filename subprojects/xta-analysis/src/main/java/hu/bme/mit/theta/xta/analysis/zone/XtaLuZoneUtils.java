@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.SyncedXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaLuZoneUtils {
 
@@ -36,9 +36,9 @@ public final class XtaLuZoneUtils {
 
 	public static BoundFunc pre(final BoundFunc boundFunction, final XtaAction action) {
 		if (action.isBasic()) {
-			return preForSimpleAction(boundFunction, action.asBasic());
-		} else if (action.isSynced()) {
-			return preForSyncedAction(boundFunction, action.asSynced());
+			return preForBasicAction(boundFunction, action.asBasic());
+		} else if (action.isBinary()) {
+			return preForBinaryAction(boundFunction, action.asBinary());
 		} else {
 			throw new AssertionError();
 		}
@@ -46,7 +46,7 @@ public final class XtaLuZoneUtils {
 
 	////
 
-	private static BoundFunc preForSimpleAction(final BoundFunc boundFunction, final BasicXtaAction action) {
+	private static BoundFunc preForBasicAction(final BoundFunc boundFunction, final BasicXtaAction action) {
 		final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
@@ -60,7 +60,7 @@ public final class XtaLuZoneUtils {
 		return succStateBuilder.build();
 	}
 
-	private static BoundFunc preForSyncedAction(final BoundFunc boundFunction, final SyncedXtaAction action) {
+	private static BoundFunc preForBinaryAction(final BoundFunc boundFunction, final BinaryXtaAction action) {
 		final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
 		final List<Loc> sourceLocs = action.getSourceLocs();

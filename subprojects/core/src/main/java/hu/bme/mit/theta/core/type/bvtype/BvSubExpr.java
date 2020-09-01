@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvSubExpr extends SubExpr<BvType> {
+public final class BvSubExpr extends SubExpr<BvType> {
 
     private static final int HASH_SEED = 2567;
     private static final String OPERATOR = "-";

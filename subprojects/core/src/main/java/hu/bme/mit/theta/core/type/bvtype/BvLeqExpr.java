@@ -10,7 +10,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvLeqExpr extends LeqExpr<BvType> {
+public final class BvLeqExpr extends LeqExpr<BvType> {
 
     private static final int HASH_SEED = 1458;
     private static final String OPERATOR_LABEL = "<=";
