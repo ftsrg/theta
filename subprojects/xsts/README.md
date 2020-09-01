@@ -45,9 +45,9 @@ Variables can and in most cases should have initial values assigned to them, the
 
 `var <name> : <type> = <value> `
 
-When using product abstraction (`PROD`) variables tagged as control variables are tracked explicitly. A variable can be tagged as a control variable with the keyword `ctrl`:
+When using product abstraction (`PROD`), variables tagged as control variables are tracked explicitly. A variable can be tagged as a control variable with the keyword `ctrl`:
 
-`ctrl var <name> : <type> = <value> `
+`ctrl var <name> : <type>`
 
 Examples:
 
