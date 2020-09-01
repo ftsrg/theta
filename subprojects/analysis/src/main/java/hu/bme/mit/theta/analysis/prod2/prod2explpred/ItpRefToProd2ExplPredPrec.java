@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.prod2.prod2explpred;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.analysis.pred.ExprSplitters.*;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.core.decl.VarDecl;
