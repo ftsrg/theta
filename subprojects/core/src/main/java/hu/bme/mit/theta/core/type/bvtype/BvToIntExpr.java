@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
-public class BvToIntExpr extends CastExpr<BvType, IntType> {
+public final class BvToIntExpr extends CastExpr<BvType, IntType> {
 
     private static final int HASH_SEED = 6136;
     private static final String OPERATOR_LABEL = "to_int";

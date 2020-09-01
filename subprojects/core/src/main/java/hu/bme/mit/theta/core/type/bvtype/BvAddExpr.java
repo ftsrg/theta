@@ -11,7 +11,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvAddExpr extends AddExpr<BvType> {
+public final class BvAddExpr extends AddExpr<BvType> {
     private static final int HASH_SEED = 6586;
     private static final String OPERATOR_LABEL = "+";
 

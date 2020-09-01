@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvDivExpr extends DivExpr<BvType> {
+public final class BvDivExpr extends DivExpr<BvType> {
     private static final int HASH_SEED = 9832;
 
     private static final String OPERATOR_LABEL = "div";
