@@ -16,24 +16,38 @@
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import hu.bme.mit.theta.xcfa.alt.algorithm.util.DfsNodeInterface;
+import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
 import hu.bme.mit.theta.xcfa.alt.expl.ImmutableExplState;
+import hu.bme.mit.theta.xcfa.alt.expl.ProcessTransitions;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
+import hu.bme.mit.theta.xcfa.alt.expl.TransitionUtils;
+
 import javax.annotation.Nullable;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Queue;
 import java.util.Set;
 
 abstract class DfsNodeBase implements DfsNodeInterface {
     private final ImmutableExplState state;
     private final Transition lastTransition;
-    private Iterator<ImmutableExplState.ExecutableTransition> nextTransition;
-    private final Set<ImmutableExplState.ExecutableTransition> processedTransitions = new HashSet<>();
-    protected DfsNodeBase(ImmutableExplState state, @Nullable Transition lastTransition,
-                          Collection<ImmutableExplState.ExecutableTransition> outgoingTransitions) {
+    private final Queue<ImmutableExplState.ExecutableTransition> todo;
+
+    private final Collection<ProcessTransitions> all;
+    private Set<ProcessTransitions> addedTransitions;
+    private boolean expanded = false;
+    protected DfsNodeBase(ImmutableExplState state, @Nullable Transition lastTransition) {
         this.state = state;
         this.lastTransition = lastTransition;
-        nextTransition = outgoingTransitions.iterator();
+        all = TransitionUtils.getProcessTransitions(state);
+        todo = new ArrayDeque<>();
+        addedTransitions = new HashSet<>();
+    }
+
+    public boolean isExpanded() {
+        return expanded;
     }
 
     public ImmutableExplState getState() {
@@ -44,28 +58,34 @@ abstract class DfsNodeBase implements DfsNodeInterface {
         return lastTransition;
     }
 
-    protected void resetWithTransitions(Collection<ImmutableExplState.ExecutableTransition> newOutgoingTransitions) {
-        newOutgoingTransitions = new HashSet<>(newOutgoingTransitions);
-        newOutgoingTransitions.removeAll(processedTransitions);
-        nextTransition = newOutgoingTransitions.iterator();
-    }
-
     public boolean hasChild() {
         return !state.getSafety().isFinished() &&
-                nextTransition.hasNext();
+               !todo.isEmpty();
     }
 
     public boolean isSafe() {
         return state.getSafety().isSafe();
     }
 
-    protected final ImmutableExplState.ExecutableTransition fetchNextTransition() {
-        var p = nextTransition.next();
-        processedTransitions.add(p);
-        return p;
+    public boolean isFinished() {
+        return state.getSafety().isFinished();
     }
 
-    public abstract DfsNodeBase child();
+    protected final ImmutableExplState.ExecutableTransition fetchNextTransition() {
+        return todo.poll();
+    }
+
+    public abstract DfsNodeBase nodeFrom(ImmutableExplState state, ExecutableTransitionBase lastTransition);
+
+    public DfsNodeBase child() {
+        var t = fetchNextTransition();
+        return nodeFrom(t.execute(), t);
+    }
+
+
+    public Collection<ProcessTransitions> getAll() {
+        return Collections.unmodifiableCollection(all);
+    }
 
     @Override
     public String toString() {
@@ -75,7 +95,27 @@ abstract class DfsNodeBase implements DfsNodeInterface {
                 '}';
     }
 
-    public boolean isFinished() {
-        return state.getSafety().isFinished();
+    public void push(ProcessTransitions processTransitions) {
+        if (addedTransitions.contains(processTransitions))
+            return;
+        addedTransitions.add(processTransitions);
+        processTransitions.enabledStream().map(state::transitionFrom).forEach(todo::add);
+    }
+
+    public void expand() {
+        if (expanded) {
+            return;
+        }
+        expanded = true;
+
+        var newOutgoingTransitions = new HashSet<>(all);
+        newOutgoingTransitions.removeAll(addedTransitions);
+
+        // equivalent to all.forEach(this::push);
+        addedTransitions = new HashSet<>(all);
+        newOutgoingTransitions.stream()
+                .flatMap(ProcessTransitions::enabledStream)
+                .map(state::transitionFrom)
+                .forEach(todo::add);
     }
 }

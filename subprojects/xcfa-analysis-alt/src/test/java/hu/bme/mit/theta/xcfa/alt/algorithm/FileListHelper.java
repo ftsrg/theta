@@ -115,39 +115,67 @@ public class FileListHelper {
         return tests(new ConfigImpl(c));
     }
 
-    public static List<Object[]> tests(Config c) {
-        ArrayList<Object[]> result = new ArrayList<>();
+    public static ArrayList<Object[]> filterSafe(ArrayList<Object[]> original, Config c) {
+        if (!c.safeSupported()) {
+            return original.stream().filter(t ->
+                    !((Boolean) t[1]) // remove safe
+            ).collect(Collectors.toCollection(ArrayList::new));
+        }
+        return original;
+    }
+
+    public static ArrayList<Object[]> filterUnsafe(ArrayList<Object[]> original, Config c) {
+        if (!c.unsafeSupported()) {
+            return original.stream().filter(t ->
+                    (Boolean) t[1] // remove unsafe
+            ).collect(Collectors.toCollection(ArrayList::new));
+        }
+        return original;
+    }
+
+    public static void functions(ArrayList<Object[]> result, Config c) {
         if (c.functionSupported()) {
             if (c.multiThreadSupported()) {
                 result.add(
                         new Object[]{"/functions-global-local.xcfa", true}
-                        );
+                );
             }
             result.addAll(Arrays.asList(
                     new Object[]{"/fibonacci.xcfa", true},
                     new Object[]{"/gcd.xcfa", true}
-                    ));
+            ));
         }
+    }
+
+    public static void atomics(ArrayList<Object[]> result, Config c) {
         if (c.multiThreadSupported() && c.atomicSupported()) {
             result.add(
                     new Object[]{"/atomic.xcfa", true}
-                    );
+            );
         }
+    }
+
+    public static void mutexes(ArrayList<Object[]> result, Config c) {
         if (c.mutexSupported()) {
             if (c.multiThreadSupported()) {
-
                 result.addAll(Arrays.asList(
                         new Object[]{"/mutex-test3.xcfa", false},
                         new Object[]{"/mutex-test4.xcfa", true},
                         new Object[]{"/waitnotify.xcfa", false}
-                        ));
+                ));
             }
             result.addAll(Arrays.asList(
                     new Object[]{"/mutex-test.xcfa", true},
                     new Object[]{"/mutex-test2.xcfa", false}
-                    ));
-
+            ));
         }
+    }
+
+    public static List<Object[]> tests(Config c) {
+        ArrayList<Object[]> result = new ArrayList<>();
+        functions(result, c);
+        atomics(result, c);
+        mutexes(result, c);
         if (c.stateGraphLoopSupported()) {
             result.add(
                     new Object[]{"/infiniteloop.xcfa", true}
@@ -161,6 +189,9 @@ public class FileListHelper {
                     new Object[]{"/partialorder-test4.xcfa", false},
                     new Object[]{"/partialorder-min-test.xcfa", false}
                     ));
+            if (c.stateGraphLoopSupported()) {
+                result.add(new Object[]{"/partialorder-test2.xcfa", false});
+            }
             if (c.bigSupported()) {
                 result.add(new Object[]{"/very-parallel.xcfa", true});
 
@@ -171,16 +202,9 @@ public class FileListHelper {
                 new Object[]{"/deadlock.xcfa", false}
                 ));
 
-        if (!c.safeSupported()) {
-            result = result.stream().filter(t ->
-                    !((Boolean) t[1]) // remove safe
-            ).collect(Collectors.toCollection(ArrayList::new));
-        }
-        if (!c.unsafeSupported()) {
-            result = result.stream().filter(t ->
-                    (Boolean) t[1] // remove unsafe
-            ).collect(Collectors.toCollection(ArrayList::new));
-        }
+        result = filterSafe(result, c);
+        result = filterUnsafe(result, c);
+
         return result;
     }
 }

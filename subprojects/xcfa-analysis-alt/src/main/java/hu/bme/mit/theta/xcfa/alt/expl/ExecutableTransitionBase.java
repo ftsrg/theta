@@ -106,4 +106,9 @@ public class ExecutableTransitionBase implements Transition, TransitionExecutorI
     Transition getInternalTransition() {
         return transition;
     }
+
+    // TODO find a solution
+    public boolean equals(Object obj) {
+        throw new UnsupportedOperationException("Use TransitionUtils for checking equality of Transitions!");
+    }
 }

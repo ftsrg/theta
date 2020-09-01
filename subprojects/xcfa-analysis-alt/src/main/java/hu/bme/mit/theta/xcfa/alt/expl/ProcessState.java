@@ -17,8 +17,14 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
+
+import com.google.common.collect.Iterables;
 
 final class ProcessState {
     private final Stack<CallState> callStack;
@@ -41,7 +47,23 @@ final class ProcessState {
 
     public static ProcessState initial(XCFA.Process process, ExplState.Factory0 factory) {
         Stack<CallState> callStack = new Stack<>();
+
+        // fill stack backwards:
+        // push destructors, main and constructors
+        List<Procedure> ctors = new ArrayList<>();
+
+        // add destructors and collect constructors
+        for (Procedure proc : process.getProcedures()) {
+            if (proc.getName().startsWith("dtor")) {
+                callStack.add(CallState.initial(process, factory, proc));
+            } else if (proc.getName().startsWith("ctor")) {
+                ctors.add(proc);
+            }
+        }
         callStack.add(CallState.initial(process, factory));
+        for (Procedure ctor : ctors) {
+            callStack.add(CallState.initial(process, factory, ctor));
+        }
         return new ProcessState(callStack);
     }
 
@@ -78,4 +100,8 @@ final class ProcessState {
     public String toString() {
         return Utils.lispStringBuilder("ProcessState").add(callStack).toString();
     }
+
+	public Iterable<CallState> callStack() {
+		return Iterables.unmodifiableIterable(callStack);
+	}
 }

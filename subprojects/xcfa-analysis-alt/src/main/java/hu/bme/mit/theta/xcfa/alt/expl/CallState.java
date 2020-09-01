@@ -19,6 +19,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -77,7 +78,11 @@ abstract class CallState {
     }
 
     public static CallState initial(XCFA.Process process, ExplState.Factory0 factory) {
-        return factory.createCallState(process, process.getMainProcedure(), process.getMainProcedure().getInitLoc(), null);
+        return initial(process, factory, process.getMainProcedure());
+    }
+
+    public static CallState initial(XCFA.Process process, ExplState.Factory0 factory, Procedure procedure) {
+        return factory.createCallState(process, procedure, procedure.getInitLoc(), null);
     }
 
     @Override

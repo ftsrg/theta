@@ -32,7 +32,7 @@ public class CallStmt extends XcfaCallStmt {
 	// not final due to circular dependency while building
 	private XCFA.Process.Procedure procedure;
 
-	CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
+	public CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
 		this.var = var;
 		this.procedure = procedure;
 		this.params = params;
@@ -54,7 +54,7 @@ public class CallStmt extends XcfaCallStmt {
 		return procedure;
 	}
 
-	void setProcedure(XCFA.Process.Procedure procedure) {
+	public void setProcedure(XCFA.Process.Procedure procedure) {
 		checkState(this.procedure == null);
 		this.procedure = procedure;
 	}

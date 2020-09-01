@@ -20,20 +20,31 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.*;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.Collection;
 
-final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void>, XcfaStmtVisitor<Collection<VarDecl<?>>, Void> {
+final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDecl<?>>, Void> {
 
 	@Override
 	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
-		// TODO this only lists the passed parameters, not \
-		// the variables where the procedure stores them.
-		// This is not a problem for xcfa-analysis, because only globals are returned.
+		// TODO this only lists the passed parameters, not
+		//     the variables where the procedure stores them.
+		//     This is not a problem for xcfa-analysis, because only globals are returned.
 		param.addAll(stmt.getParams());
 		return null;
 	}

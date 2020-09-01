@@ -13,13 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.algorithm;
+package hu.bme.mit.theta.xcfa.alt.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -28,11 +29,11 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
-public class PartialOrderExplicitCheckerTest {
+public class POCheckerTest {
     @Parameter()
     public String filepath;
 
@@ -41,32 +42,19 @@ public class PartialOrderExplicitCheckerTest {
 
     @Parameters()
     public static Collection<Object[]> data() {
-        return Arrays.asList(
-                new Object[]{"/partialorder-test2.xcfa", false},
-                new Object[]{"/functions-global-local.xcfa", true},
-                new Object[]{"/fibonacci.xcfa", true},
-                new Object[]{"/simple-test.xcfa", true},
-                new Object[]{"/deadlock.xcfa", false},
-                // new Object[]{"/atomic.xcfa", true}, -> TODO add atomic operations
-                new Object[]{"/gcd.xcfa", true},
-                new Object[]{"/partialorder-test.xcfa", false},
-                new Object[]{"/infiniteloop.xcfa", true},
-                new Object[]{"/very-parallel.xcfa", true},
-                new Object[]{"/mutex-test.xcfa", true},
-                new Object[]{"/mutex-test2.xcfa", false},
-                new Object[]{"/mutex-test3.xcfa", false},
-                new Object[]{"/mutex-test4.xcfa", true}
-        );
+        return new ArrayList<>();//FileListHelper.tests("All");
     }
 
     @Test
     public void test() throws IOException {
-        final InputStream inputStream = getClass().getResourceAsStream(filepath);
         System.out.println("Testing " + filepath);
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
-        PartialOrderExplicitChecker checker = new PartialOrderExplicitChecker(xcfa);
+        inputStream.close();
+        var checker = XcfaChecker.createChecker(xcfa, XcfaChecker.getSimplePOR().build());
+        Assert.assertTrue(checker instanceof POChecker);
         SafetyResult<? extends State, ? extends Action> result = checker.check();
-        ExplicitCheckerTest.checkResult(result, shouldWork);
+        Helper.checkResult(result, shouldWork);
     }
 
 }

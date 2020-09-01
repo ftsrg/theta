@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.alt.expl;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -45,13 +44,13 @@ final class CallUtils {
 
         // create new callstate, increment depth of call.
         processState.push(factory.createCallState(process, procedure, procedure.getInitLoc(), stmt.getResultVar()));
-        state.modifyIndexing(procedure, 1);
+        state.modifyIndexing(process, procedure, 1);
 
         // write local copies of the parameters.
         putParameterValues(state, procedure, callerParameters);
     }
 
-    public static void pop(ProcessState processState, ExplStateMutatorInterface state) {
+    public static void pop(XCFA.Process process, ProcessState processState, ExplStateMutatorInterface state) {
         // similarly to push, extra care is needed to handle the correct version of the variables.
         XCFA.Process.Procedure oldProcedure = processState.getActiveCallState().getProcedure();
         VarDecl<? extends Type> whereToSaveResultUnindexed = processState.getActiveCallState().getCallerResultVar();
@@ -59,17 +58,16 @@ final class CallUtils {
         Optional<LitExpr<? extends Type>> result = evalResult(state, oldProcedure);
         havocProcedureParametersAndVariables(state, oldProcedure);
 
-        state.modifyIndexing(oldProcedure, -1);
+        state.modifyIndexing(process, oldProcedure, -1);
         processState.pop();
         if (whereToSaveResultUnindexed != null && result.isPresent())
             state.putValue(whereToSaveResultUnindexed, (Optional)result);
-
     }
 
     private static List<Optional<LitExpr<? extends Type>>> evalParams(ExplStateMutatorInterface state, CallStmt callStmt) {
         List<Optional<LitExpr<? extends Type>>> callerParameters = new ArrayList<>();
         for (var x: callStmt.getParams()) {
-            callerParameters.add(state.eval((Expr)x.getRef()));
+            callerParameters.add(state.eval(x.getRef()).map(z->z));
         }
         return callerParameters;
     }
@@ -88,7 +86,7 @@ final class CallUtils {
     private static Optional<LitExpr<? extends Type>> evalResult(ExplStateMutatorInterface state, XCFA.Process.Procedure procedure) {
         if (procedure.getResult() == null)
             return Optional.empty();
-        return state.eval((Expr)procedure.getResult().getRef());
+        return state.eval(procedure.getResult().getRef()).map(z->z);
     }
 
 }

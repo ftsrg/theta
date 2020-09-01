@@ -129,6 +129,28 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return Optional.of(new SyntheticLitExpr(lockedOn, num, ImmutableSet.of()));
 	}
 
+	/**
+	 * Tries to wake a given process. Only active when the process to wake is in blocked state.
+	 * Unit transition of a signal/notify stmt.
+	 * processToWake==null is special case: it's active only when there is no active edge.
+	 */
+	public Optional<SyntheticLitExpr> tryWakeProcess(XCFA.Process calledFrom, XCFA.Process processToWake) {
+		if (processToWake == null) {
+			if (blockedProcesses.isEmpty())
+				return Optional.of(this);
+			return Optional.empty();
+		}
+		if (blockedProcesses.contains(processToWake)) {
+			var builder = ImmutableSet.<XCFA.Process>builder();
+			blockedProcesses.forEach(p -> {
+				if (p != processToWake)
+					builder.add(p);
+			});
+			return Optional.of(new SyntheticLitExpr(lockedOn, num, builder.build()));
+		}
+		return Optional.empty();
+	}
+
 	private static class LazyHolder {
 		private static final SyntheticLitExpr BOTTOM = new SyntheticLitExpr(null, -1, ImmutableSet.of());
 		private static final SyntheticLitExpr INSTANCE = new SyntheticLitExpr(null, 0, ImmutableSet.of());

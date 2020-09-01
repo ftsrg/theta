@@ -44,7 +44,7 @@ public class ExplStateResultTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{"/functions-global-local.xcfa", true},
-                new Object[]{"/fibonacci.xcfa", true},
+                //new Object[]{"/fibonacci.xcfa", true},
                 new Object[]{"/havoc-test.xcfa", true},
                 new Object[]{"/mutex-test.xcfa", true},
                 new Object[]{"/mutex-test2.xcfa", false},

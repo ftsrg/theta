@@ -32,9 +32,11 @@ import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.UnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaInternalNotifyStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.alt.transform.InternalNotifyStmt;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.type.SyntheticLitExpr;
 
@@ -48,7 +50,7 @@ import java.util.Optional;
  * The former one might be immutable (hence the name), or we do not want to have it mutated.
  * The latter, however is guaranteed to represent the exact same state (and maybe reference-equal).
  */
-final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyInterface, Optional<TransitionExecutorInterface>> {
+final class ExplTransitionVisitor extends XcfaStmtVisitorBase<ExplStateReadOnlyInterface, Optional<TransitionExecutorInterface>> {
 
     private static class LazyHolder {
         private static final ExplTransitionVisitor instance = new ExplTransitionVisitor();
@@ -121,6 +123,14 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     }
 
     @Override
+    public Optional<TransitionExecutorInterface> visit(XcfaInternalNotifyStmt internalNotifyStmt, ExplStateReadOnlyInterface readOnlyState) {
+        var stmt = (InternalNotifyStmt)internalNotifyStmt;
+        var var = stmt.getSyncVar();
+        return StmtHelper.executeLockOperation(var, readOnlyState,
+                (val, process) -> val.tryWakeProcess(process, stmt.getProcessToWake()));
+    }
+
+    @Override
     public Optional<TransitionExecutorInterface> visit(UnlockStmt unlockStmt, ExplStateReadOnlyInterface readOnlyState) {
         return StmtHelper.executeLockOperation(unlockStmt.getSyncVar(), readOnlyState, SyntheticLitExpr::unlock);
     }
@@ -153,4 +163,5 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     public Optional<TransitionExecutorInterface> visit(XcfaStmt xcfaStmt, ExplStateReadOnlyInterface readOnlyState) {
         return xcfaStmt.accept(this, readOnlyState);
     }
+
 }

@@ -52,7 +52,7 @@ interface ExplStateMutatorInterface {
 
     void leave(XCFA.Process process);
 
-    void modifyIndexing(XCFA.Process.Procedure oldProcedure, int modifier);
+    void modifyIndexing(XCFA.Process process, XCFA.Process.Procedure oldProcedure, int modifier);
 
     void setUnsafe(String reason);
 }

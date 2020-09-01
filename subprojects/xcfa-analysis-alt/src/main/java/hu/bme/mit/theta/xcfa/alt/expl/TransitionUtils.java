@@ -61,12 +61,17 @@ public final class TransitionUtils {
                 processState.isOutmostCall());
     }
 
+    private static EdgeTransition getEdge(XCFA.Process process, XCFA.Process.Procedure.Edge edge) {
+        // TODO cache results
+        return new EdgeTransition(process, edge);
+    }
+
     private static Stream<Transition> getTransitionsInternal(
             XCFA.Process process, CallState callState, boolean outmostCall) {
         // for every edge, create an edge transition
         return Stream.concat(
                 callState.getLocation().getOutgoingEdges().stream().map( // edge transitions
-                        edge->new EdgeTransition(callState.getProcess(), edge)
+                        edge->getEdge(callState.getProcess(), edge)
                 ),
                 leaveOnFinal(process, callState, outmostCall).stream() // also, on final location, add leave transition
         );
@@ -87,5 +92,28 @@ public final class TransitionUtils {
             b = ((ExecutableTransitionBase) b).getInternalTransition();
         }
         return a.equals(b);
+    }
+
+    /**
+     * Collects all transitions of all processes.
+     */
+    private static ProcessTransitions allTransitions(XCFA.Process process) {
+        Collection<Transition> transitions =
+                process.getProcedures().stream()
+                        .flatMap(
+                                p -> p.getEdges().stream()
+                        ).map(
+                                edge->getEdge(process, edge)
+                        ).collect(Collectors.toUnmodifiableList());
+        return new ProcessTransitions(null, process, transitions);
+    }
+
+    /**
+     * Collects all transitions of all processes.
+     */
+    public static Collection<ProcessTransitions> getProcessTransitions(XCFA xcfa) {
+        return xcfa.getProcesses().stream()
+                .map(TransitionUtils::allTransitions)
+                .collect(Collectors.toUnmodifiableList());
     }
 }
