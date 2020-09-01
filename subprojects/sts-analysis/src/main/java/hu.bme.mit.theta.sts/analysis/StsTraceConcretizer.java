@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 
 public final class StsTraceConcretizer {

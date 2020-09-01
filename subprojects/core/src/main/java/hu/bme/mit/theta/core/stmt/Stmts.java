@@ -20,6 +20,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Factory class to instantiate different statements.
+ *
+ * @see Stmt
+ */
 public final class Stmts {
 
 	private Stmts() {

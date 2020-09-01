@@ -18,6 +18,12 @@ package hu.bme.mit.theta.core.decl;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
+/**
+ * Abstract base class for constants. Use {@link BasicConstDecl} for a basic
+ * constant, or {@link IndexedConstDecl} if the constant belongs to a variable
+ * for some index (e.g., during unfolding paths).
+ * @param <DeclType>
+ */
 public abstract class ConstDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "Const";
 

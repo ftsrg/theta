@@ -20,21 +20,37 @@ import static com.google.common.base.Preconditions.checkArgument;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.common.Utils;
 
+import java.util.Collection;
+
+/**
+ * Implementations for different stop criterions.
+ */
 public final class StopCriterions {
 
 	private StopCriterions() {
 	}
 
+	/**
+	 * @return Criterion that stops at the first counterexample
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> firstCex() {
 		return new FirstCex<>();
 	}
 
+	/**
+	 * @return Criterion that explores the whole state space
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
 		return new FullExploration<>();
 	}
 
+	/**
+	 * @param n Number of counterexamples to collect
+	 * @return Criterion that stops after a given number of counterexamples
+	 */
 	public static <S extends State, A extends Action> StopCriterion<S, A> atLeastNCexs(final int n) {
 		return new AtLeastNCexs<>(n);
 	}
@@ -43,6 +59,11 @@ public final class StopCriterions {
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
 			return arg.getUnsafeNodes().findAny().isPresent();
+		}
+
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+			return newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded());
 		}
 
 		@Override
@@ -55,6 +76,11 @@ public final class StopCriterions {
 	private static final class FullExploration<S extends State, A extends Action> implements StopCriterion<S, A> {
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
+			return false;
+		}
+
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
 			return false;
 		}
 
@@ -78,6 +104,11 @@ public final class StopCriterions {
 			// TODO: this could be optimized: we don't need to count it,
 			// we just need to know if there are >= n elements
 			return arg.getUnsafeNodes().count() >= n;
+		}
+
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+			return canStop(arg);
 		}
 
 		@Override

@@ -48,9 +48,6 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.*;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaAllVarsInitPrec;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaEmptyInitPrec;
-import hu.bme.mit.theta.cfa.analysis.initprec.CfaInitPrec;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
@@ -69,13 +66,9 @@ public class CfaConfigBuilder {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
 	}
 
-	;
-
 	public enum Refinement {
 		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE
 	}
-
-	;
 
 	public enum Search {
 		BFS {
@@ -103,8 +96,6 @@ public class CfaConfigBuilder {
 
 	}
 
-	;
-
 	public enum PredSplit {
 		WHOLE(ExprSplitters.whole()),
 
@@ -114,12 +105,10 @@ public class CfaConfigBuilder {
 
 		public final ExprSplitter splitter;
 
-		private PredSplit(final ExprSplitter splitter) {
+		PredSplit(final ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
 	}
-
-	;
 
 	public enum PrecGranularity {
 		GLOBAL {
@@ -154,8 +143,6 @@ public class CfaConfigBuilder {
 				RefutationToPrec<P, R> refToPrec);
 	}
 
-	;
-
 	public enum Encoding {
 		SBE {
 			@Override
@@ -174,16 +161,8 @@ public class CfaConfigBuilder {
 		public abstract CfaLts getLts();
 	}
 
-	;
-
 	public enum InitPrec {
-		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec());
-
-		public final CfaInitPrec builder;
-
-		private InitPrec(final CfaInitPrec builder) {
-			this.builder = builder;
-		}
+		EMPTY, ALLVARS, ALLASSUMES;
 	}
 
 	private Logger logger = NullLogger.getInstance();
@@ -196,6 +175,7 @@ public class CfaConfigBuilder {
 	private Encoding encoding = Encoding.LBE;
 	private int maxEnum = 0;
 	private InitPrec initPrec = InitPrec.EMPTY;
+	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
 	public CfaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -238,6 +218,11 @@ public class CfaConfigBuilder {
 		return this;
 	}
 
+	public CfaConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
+		this.pruneStrategy = pruneStrategy;
+		return this;
+	}
+
 	public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final CfaLts lts = encoding.getLts();
@@ -253,28 +238,28 @@ public class CfaConfigBuilder {
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
-			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
+			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner;
 
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+							precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
-							precGranularity.createRefiner(new VarsRefToExplPrec()), logger);
+							precGranularity.createRefiner(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
 					throw new UnsupportedOperationException(
@@ -284,12 +269,24 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(initPrec.builder.createExpl(cfa));
+			CfaPrec<ExplPrec> prec;
+
+			switch (initPrec){
+				case EMPTY:
+					prec = precGranularity.createPrec(ExplPrec.empty());
+					break;
+				case ALLVARS:
+					prec = precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
+					break;
+				default:
+					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
+							domain + " domain");
+			}
 
 			return CfaConfig.create(checker, prec);
 
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
-			PredAbstractor predAbstractor = null;
+			PredAbstractor predAbstractor;
 			switch (domain) {
 				case PRED_BOOL:
 					predAbstractor = PredAbstractors.booleanAbstractor(solver);
@@ -313,7 +310,7 @@ public class CfaConfigBuilder {
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
-			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
+			ExprTraceChecker<ItpRefutation> exprTraceChecker;
 			switch (refinement) {
 				case FW_BIN_ITP:
 					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
@@ -335,17 +332,39 @@ public class CfaConfigBuilder {
 			Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner;
 
 			if (refinement == Refinement.MULTI_SEQ) {
-				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precGranularity.createRefiner(refToPrec),
-						logger);
+				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
+						precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
 			} else {
-				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precGranularity.createRefiner(refToPrec),
-						logger);
+				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
+						precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
 			}
 
 			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<PredPrec> prec = precGranularity.createPrec(initPrec.builder.createPred(cfa));
+			CfaPrec<PredPrec> prec;
+
+			switch (initPrec){
+				case EMPTY:
+					prec = precGranularity.createPrec(PredPrec.of());
+					break;
+				case ALLASSUMES:
+					switch (precGranularity){
+						case LOCAL:
+							prec = CfaInitPrecs.collectAssumesLocal(cfa);
+							break;
+						case GLOBAL:
+							prec = CfaInitPrecs.collectAssumesGlobal(cfa);
+							break;
+						default:
+							throw new UnsupportedOperationException(precGranularity +
+									" precision granularity is not supported with " + domain + " domain");
+					}
+					break;
+				default:
+					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
+							domain + " domain");
+			}
 
 			return CfaConfig.create(checker, prec);
 

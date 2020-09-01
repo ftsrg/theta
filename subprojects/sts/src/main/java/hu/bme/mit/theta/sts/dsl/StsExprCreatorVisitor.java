@@ -32,16 +32,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
@@ -50,6 +41,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createParamList;
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -77,8 +69,8 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.inttype.ModExpr;
-import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslBaseVisitor;
@@ -107,6 +99,7 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.ParenExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RatLitExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RelationExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TrueExprContext;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.XorExprContext;
 
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
@@ -225,6 +218,17 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Stream<Expr<BoolType>> opStream = ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
 			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return Or(ops);
+		} else {
+			return visitChildren(ctx);
+		}
+	}
+
+	@Override
+	public Expr<?> visitXorExpr(final XorExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+			return Xor(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
 		}
@@ -430,13 +434,13 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		return Div(leftOp, rightOp);
 	}
 
-	private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Mod(leftOp, rightOp);
 	}
 
-	private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+	private IntRemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Rem(leftOp, rightOp);
@@ -516,14 +520,14 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-		final int value = Integer.parseInt(ctx.value.getText());
+		final var value = new BigInteger(ctx.value.getText());
 		return Int(value);
 	}
 
 	@Override
 	public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-		final int num = Integer.parseInt(ctx.num.getText());
-		final int denom = Integer.parseInt(ctx.denom.getText());
+		final var num = new BigInteger(ctx.num.getText());
+		final var denom = new BigInteger(ctx.denom.getText());
 		return Rat(num, denom);
 	}
 

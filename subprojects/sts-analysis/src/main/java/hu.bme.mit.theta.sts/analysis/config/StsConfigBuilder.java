@@ -71,13 +71,9 @@ public final class StsConfigBuilder {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
 	}
 
-	;
-
 	public enum Refinement {
 		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE
 	}
-
-	;
 
 	public enum Search {
 		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
@@ -91,8 +87,6 @@ public final class StsConfigBuilder {
 		}
 
 	}
-
-	;
 
 	public enum PredSplit {
 		WHOLE(ExprSplitters.whole()),
@@ -108,8 +102,6 @@ public final class StsConfigBuilder {
 		}
 	}
 
-	;
-
 	public enum InitPrec {
 		EMPTY(new StsEmptyInitPrec()), PROP(new StsPropInitPrec());
 
@@ -121,8 +113,6 @@ public final class StsConfigBuilder {
 
 	}
 
-	;
-
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory solverFactory;
 	private final Domain domain;
@@ -130,6 +120,7 @@ public final class StsConfigBuilder {
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private InitPrec initPrec = InitPrec.EMPTY;
+	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
 	public StsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -157,8 +148,9 @@ public final class StsConfigBuilder {
 		return this;
 	}
 
-	public InitPrec getInitPrec() {
-		return initPrec;
+	public StsConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
+		this.pruneStrategy = pruneStrategy;
+		return this;
 	}
 
 	public StsConfig<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
@@ -183,23 +175,23 @@ public final class StsConfigBuilder {
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-							JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
+							JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
 					throw new UnsupportedOperationException(
@@ -258,10 +250,10 @@ public final class StsConfigBuilder {
 			Refiner<PredState, StsAction, PredPrec> refiner;
 			if (refinement == Refinement.MULTI_SEQ) {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			}
 
 			final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,

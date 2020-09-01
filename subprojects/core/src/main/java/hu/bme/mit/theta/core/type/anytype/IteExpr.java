@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
@@ -104,9 +103,9 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 		checkNotNull(ops);
 		checkArgument(ops.size() == 3);
 		final ExprType exprType = getType();
-		final Expr<BoolType> newCond = TypeUtils.cast(ops.get(0), Bool());
-		final Expr<ExprType> newThen = TypeUtils.cast(ops.get(1), exprType);
-		final Expr<ExprType> newElze = TypeUtils.cast(ops.get(2), exprType);
+		final Expr<BoolType> newCond = cast(ops.get(0), Bool());
+		final Expr<ExprType> newThen = cast(ops.get(1), exprType);
+		final Expr<ExprType> newElze = cast(ops.get(2), exprType);
 		return with(newCond, newThen, newElze);
 	}
 
