@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvRemExpr extends RemExpr<BvType> {
+public final class BvRemExpr extends RemExpr<BvType> {
 
     private static final int HASH_SEED = 985;
 
