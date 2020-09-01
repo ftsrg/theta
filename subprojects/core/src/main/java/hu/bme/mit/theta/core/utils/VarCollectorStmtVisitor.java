@@ -89,7 +89,7 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(WaitStmt waitStmt, Collection<VarDecl<?>> param) {
-		param.add(waitStmt.getSyncVar());
+		param.add(waitStmt.getCndSyncVar());
 		return null;
 	}
 

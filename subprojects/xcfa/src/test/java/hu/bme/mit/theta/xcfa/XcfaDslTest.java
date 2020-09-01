@@ -83,6 +83,21 @@ public final class XcfaDslTest {
 								{{3, 1, 1, 1, 1, 1, 1, 1}},
 								{{3, 1, 1, 1, 1, 1, 1, 1}}
 						}   //statementCount
+				},
+				{"/mtx_test.xcfa",
+						2,
+						2,
+						new Integer[]{0, 0},
+						new Integer[]{0, 0},
+						new Integer[]{1, 1},
+						new Integer[][]{{0}, {0}},
+						new Integer[][]{{0}, {0}},
+						new Integer[][]{{4}, {4}},
+						new Integer[][]{{3}, {3}},
+						new Integer[][][]{
+								{{1, 1, 1}},
+								{{1, 1, 1}}
+						}
 				}
 		});
 	}
