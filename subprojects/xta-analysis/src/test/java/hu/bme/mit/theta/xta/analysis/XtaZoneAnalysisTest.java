@@ -43,10 +43,6 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
-import hu.bme.mit.theta.xta.analysis.XtaLts;
-import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
@@ -64,7 +60,9 @@ public final class XtaZoneAnalysisTest {
 
 				{"/fischer-2-32-64.xta"},
 
-				{"/lynch-2-16.xta"}
+				{"/lynch-2-16.xta"},
+
+				{"/broadcast.xta"},
 
 		});
 	}

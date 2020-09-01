@@ -15,19 +15,24 @@
  */
 package hu.bme.mit.theta.xta;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Streams.zip;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.zip;
+import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
+import static hu.bme.mit.theta.xta.Sync.Kind.RECV;
+
 public final class Sync {
+
+	private static final int HASH_SEED = 6547;
+
+	private volatile int hashCode = 0;
 
 	public enum Kind {
 		EMIT, RECV
@@ -50,11 +55,11 @@ public final class Sync {
 	}
 
 	public static Sync emit(final Label label, final List<? extends Expr<?>> args) {
-		return new Sync(label, args, Kind.EMIT);
+		return new Sync(label, args, EMIT);
 	}
 
 	public static Sync recv(final Label label, final List<? extends Expr<?>> args) {
-		return new Sync(label, args, Kind.RECV);
+		return new Sync(label, args, RECV);
 	}
 
 	public Label getLabel() {
@@ -69,21 +74,39 @@ public final class Sync {
 		return kind;
 	}
 
+	public boolean mayReceive(final Sync that) {
+		checkArgument(that.kind.equals(EMIT));
+		return this.label.equals(that.label) && this.kind.equals(RECV);
+	}
+
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + label.hashCode();
+			result = 31 * result + args.hashCode();
+			result = 31 * result + kind.hashCode();
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof Sync) {
+			final Sync that = (Sync) obj;
+			return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(that.args);
+		} else {
+			return false;
+		}
 	}
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(label.getName()).add(kind == Kind.EMIT ? "!" : "?").addAll(args).toString();
+		return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args).toString();
 	}
 
 }

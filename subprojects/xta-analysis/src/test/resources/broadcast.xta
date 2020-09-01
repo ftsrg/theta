@@ -1,0 +1,38 @@
+bool x1;
+bool x2;
+bool y;
+
+broadcast chan c;
+
+process P0() {
+    state S0, S1, S2;
+
+    commit S0;
+
+    init S0;
+
+    trans
+        S0 -> S1 {},
+        S1 -> S2 { sync c!; };
+}
+
+process P1() {
+    state S0, S1;
+
+    init S0;
+
+    trans
+        S0 -> S1 { guard x1; sync c?; },
+        S0 -> S1 { guard x2; sync c?; };
+}
+
+process P2() {
+    state S0, S1;
+
+    init S0;
+
+    trans
+        S0 -> S1 { guard y; sync c?; };
+}
+
+system P0, P1, P2;
