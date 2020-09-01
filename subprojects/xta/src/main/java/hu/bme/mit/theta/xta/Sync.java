@@ -106,7 +106,7 @@ public final class Sync {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(label.getName()).add(kind == Kind.EMIT ? "!" : "?").addAll(args).toString();
+		return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args).toString();
 	}
 
 }
