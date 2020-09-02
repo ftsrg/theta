@@ -16,17 +16,18 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.google.errorprone.annotations.Var;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,6 +46,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 public class StmtToExprTransformerTest {
 
 	private static final VarDecl<IntType> VX = Decls.Var("x", Int());
+	private static VarDecl<IntType> TEMP0 = VarPoolUtil.requestInt();
 
 	@Parameter(0)
 	public Stmt stmt;
@@ -66,13 +68,18 @@ public class StmtToExprTransformerTest {
 
 				{Stmts.SequenceStmt(ImmutableList.of(Stmts.Assign(VX, Int(2)), Stmts.Assign(VX, Int(2)))), ImmutableList.of(And(Eq(Prime(VX.getRef()), Int(2)),Eq(Prime(Prime(VX.getRef())), Int(2))))},
 
-//				{Stmts.NonDetStmt(ImmutableList.of(Stmts.Assign(VX, Int(2)), Stmts.Assign(VX, Int(2)))), ImmutableList.of(And(Eq(Prime(VX.getRef()), Int(2)),Eq(Prime(Prime(VX.getRef())), Int(2))))}
+				{Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))), ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(0)), And(ImmutableList.of(And(True(),False())))))))))},
+
+				{Stmts.NonDetStmt(ImmutableList.of(Stmts.Assign(VX, Int(2)))), ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(0)), And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))},
+
+				{Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(True()),Stmts.Assign(VX, Int(2)))), ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(0)), And(ImmutableList.of(True()))), Eq(VX.getRef(),Prime(VX.getRef())))), And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(1)), And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))}
 
 		});
 	}
 
 	@Test
 	public void test() {
+		VarPoolUtil.returnInt(TEMP0);
 
 		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
 		final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
