@@ -7,8 +7,10 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -45,6 +47,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 /**
  * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described in
@@ -472,11 +475,15 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     ) {
         var params = allVariables.stream()
             .filter(e -> !variables.contains(e))
-            .map(e -> Param(e.getName(), e.getType()))
+            .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
             .collect(Collectors.toUnmodifiableSet());
 
+        var substitution = BasicSubstitution.builder()
+            .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+            .build();
+
         return params.size() > 0
-            ? Exists(params, expr)
+            ? Exists(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
             : expr;
     }
 
@@ -487,11 +494,15 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     ) {
         var params = allVariables.stream()
             .filter(e -> !variables.contains(e))
-            .map(e -> Param(e.getName(), e.getType()))
+            .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
             .collect(Collectors.toUnmodifiableSet());
 
+        var substitution = BasicSubstitution.builder()
+           .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+           .build();
+
         return params.size() > 0
-            ? Forall(params, expr)
+            ? Forall(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
             : expr;
     }
 
