@@ -19,7 +19,7 @@ public class VarPoolUtil {
     }
 
     public static void returnInt(VarDecl<IntType> var){
-        intPool.addFirst(var);
+        if(!intPool.contains(var)) intPool.addFirst(var);
     }
 
 }

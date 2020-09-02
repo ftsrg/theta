@@ -206,7 +206,7 @@ final class StmtToExprTransformer {
 			resultExprs.addAll(branches);
 			resultExprs.addAll(endEqExprs);
 
-			return StmtUnfoldResult.of(resultExprs,resultIndexing);
+			throw new UnsupportedOperationException();
 		}
 	}
 
