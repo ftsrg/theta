@@ -174,7 +174,6 @@ public final class Z3SolverTest {
 		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
 		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
 
 		solver.push();
