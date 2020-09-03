@@ -1,0 +1,3 @@
+prop {
+	!(((normal_prior == Green && main_region_prior == Normal) && (normal_second == Green && main_region_second == Normal)))
+}
