@@ -85,10 +85,10 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append("<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>");
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append('\"');
 		final String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!"".equals(style)) {
-			sb.append(" type=\"").append(style).append("\"");
+			sb.append(" type=\"").append(style).append('\"');
 		}
 		// TODO: peripheries
 		sb.append("/>");
@@ -106,7 +106,7 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append("\t<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>").append(System.lineSeparator());
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append('\"');
 		final String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!"".equals(style)) {
 			sb.append(" type=\"").append(style).append('\"');
@@ -131,10 +131,10 @@ public final class YedWriter extends AbstractGraphWriter {
 			sb.append("\t<edge id=\"").append(edge.hashCode()).append("\" source=\"").append(edge.getSource().getId())
 					.append("\" target=\"").append(edge.getTarget().getId()).append("\">");
 			sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
-					.append(mapColorToString(attributes.getColor())).append("\"");
+					.append(mapColorToString(attributes.getColor())).append('\"');
 			final String style = mapLineStyleToString(attributes.getLineStyle());
 			if (!"".equals(style)) {
-				sb.append(" type=\"").append(style).append("\"");
+				sb.append(" type=\"").append(style).append('\"');
 			}
 			sb.append("/>");
 			sb.append("<y:Arrows source=\"none\" target=\"standard\"/>");
