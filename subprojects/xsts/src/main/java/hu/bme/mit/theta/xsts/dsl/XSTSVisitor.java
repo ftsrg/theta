@@ -10,6 +10,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +27,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     private XSTS xsts;
 
-    private final HashMap<String,Integer> literalToIntMap=new HashMap<String,Integer>();
+    private final HashMap<String,BigInteger> literalToIntMap=new HashMap<>();
     private final HashMap<String,VarDecl<?>> nameToDeclMap=new HashMap<String, VarDecl<?>>();
     private final HashMap<VarDecl<?>, TypeDecl> varToTypeMap=new HashMap<>();
     private final HashMap<String,TypeDecl> nameToTypeMap=new HashMap<>();
@@ -67,7 +68,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         checkIfTempVar(ctx.name.getText());
         if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!"+" On line "+ctx.start.getLine());
         List<String> literals=new ArrayList<>();
-        List<Integer> intValues=new ArrayList<>();
+        List<BigInteger> intValues=new ArrayList<>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
             checkIfTempVar(literal.name.getText());
             if(literals.contains(literal.name.getText())) throw new RuntimeException("Duplicate literal "+literal.name.getText()+" in type "+ctx.name.getText());
@@ -75,8 +76,8 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 intValues.add(literalToIntMap.get(literal.name.getText()));
             } else {
                 int val=counter++;
-                intValues.add(val);
-                literalToIntMap.put(literal.name.getText(),val);
+                intValues.add(BigInteger.valueOf(val));
+                literalToIntMap.put(literal.name.getText(),BigInteger.valueOf(val));
             }
             literals.add(literal.name.getText());
         }
