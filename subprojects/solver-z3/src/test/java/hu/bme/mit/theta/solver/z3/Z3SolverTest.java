@@ -424,8 +424,4 @@ public final class Z3SolverTest {
 
 	}
 
-	private static BvLitExpr UBv16(int integer) {
-		return uint16ToBvLitExpr(integer);
-	}
-
 }
