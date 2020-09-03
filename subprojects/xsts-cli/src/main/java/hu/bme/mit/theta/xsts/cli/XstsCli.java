@@ -77,9 +77,6 @@ public class XstsCli {
     @Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
     Boolean benchmarkMode = false;
 
-    @Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
-    String dotfile = null;
-
     @Parameter(names = {"--cex"}, description = "Write concrete counterexample to a file")
     String cexfile = null;
 
@@ -123,9 +120,6 @@ public class XstsCli {
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
                 writeCex(status.asUnsafe(),xsts);
-            }
-            if (dotfile != null) {
-                writeVisualStatus(status, dotfile);
             }
         } catch (final Throwable ex) {
             printError(ex);
@@ -197,14 +191,6 @@ public class XstsCli {
             ex.printStackTrace(new PrintWriter(errors));
             logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
         }
-    }
-
-    private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
-            throws FileNotFoundException {
-        final Graph graph = status.isSafe()
-                ? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
-                : new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
-        GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
