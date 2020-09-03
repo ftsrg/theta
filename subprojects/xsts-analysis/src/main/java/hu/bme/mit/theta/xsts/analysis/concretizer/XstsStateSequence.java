@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.dsl.TypeDecl;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ public final class XstsStateSequence {
 		this.xsts = xsts;
 	}
 
-	public static XstsStateSequence of(final List<XstsState<ExplState>> states, final XSTS xsts){
+	public static XstsStateSequence of(final List<XstsState<ExplState>> states, final XSTS xsts) {
 		return new XstsStateSequence(states, xsts);
 	}
 
@@ -36,7 +37,7 @@ public final class XstsStateSequence {
 		return states;
 	}
 
-	public XstsState<ExplState> getState(int index){
+	public XstsState<ExplState> getState(int index) {
 		checkElementIndex(index, states.size());
 		return states.get(index);
 	}
@@ -59,32 +60,32 @@ public final class XstsStateSequence {
 	}
 
 	public int length() {
-		return states.size()-1;
+		return states.size() - 1;
 	}
 
 	@Override
 	public String toString() {
 		final LispStringBuilder sb = Utils.lispStringBuilder(getClass().getSimpleName()).body();
 		for (int i = 0; i <= length(); i++) {
-			XstsState<ExplState> state=states.get(i);
-			sb.add(Utils.lispStringBuilder(XstsState.class.getSimpleName()).add(state.isInitialized()?"post_init":"pre_init").add(state.lastActionWasEnv()?"last_env":"last_internal").body().add(stateToString(state.getState())).toString());
+			XstsState<ExplState> state = states.get(i);
+			sb.add(Utils.lispStringBuilder(XstsState.class.getSimpleName()).add(state.isInitialized() ? "post_init" : "pre_init").add(state.lastActionWasEnv() ? "last_env" : "last_internal").body().add(stateToString(state.getState())).toString());
 		}
 		return sb.toString();
 	}
 
-	public String stateToString(ExplState state){
+	public String stateToString(ExplState state) {
 		final LispStringBuilder sb = Utils.lispStringBuilder(ExplState.class.getSimpleName()).body();
-		for(VarDecl decl: xsts.getVars()){
+		for (VarDecl decl : xsts.getVars()) {
 			Optional<LitExpr<?>> val = state.eval(decl);
-			if(val.isPresent()){
-				if(xsts.getVarToType().containsKey(decl)){
-					TypeDecl type=xsts.getVarToType().get(decl);
-					IntLitExpr intValue=(IntLitExpr) val.get();
-					int index=type.getIntValues().indexOf(intValue.getValue());
-					assert index!=-1;
-					sb.add(String.format("(%s %s)",decl.getName(),type.getLiterals().get(index)));
+			if (val.isPresent()) {
+				if (xsts.getVarToType().containsKey(decl)) {
+					TypeDecl type = xsts.getVarToType().get(decl);
+					IntLitExpr intValue = (IntLitExpr) val.get();
+					int index = type.getIntValues().indexOf(intValue.getValue());
+					assert index != -1;
+					sb.add(String.format("(%s %s)", decl.getName(), type.getLiterals().get(index)));
 				} else {
-					sb.add(String.format("(%s %s)",decl.getName(),val.get()));
+					sb.add(String.format("(%s %s)", decl.getName(), val.get()));
 				}
 			}
 		}
