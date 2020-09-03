@@ -8,6 +8,9 @@ For more information about the XSTS formalism and its supported language element
 * [`xsts`](../xsts/README.md): Classes to represent XSTSs and a domain specific language (DSL) to parse XSTSs from a textual representation.
 * [`xsts-analysis`](../xsts-analysis/README.md): XSTS specific analysis modules enabling the algorithms to operate on them.
 
+### Frontends
+* [Gamma](https://github.com/ftsrg/gamma) is a statechart composition framework, that supports theta-xsts-cli as a backend to verify collaborating state machines.
+
 ## Using the tool
 
 1. First, get the tool.
