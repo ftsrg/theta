@@ -49,7 +49,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ExplStmtTransFuncTest {
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
 

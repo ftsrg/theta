@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.expr;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static org.junit.Assert.assertEquals;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -89,17 +90,17 @@ public final class RatLitExprTest {
 	@Test
 	public void testFloor() {
 		// Act
-		final long actualFloor = number.floor();
+		final var actualFloor = number.floor();
 		// Assert
-		assertEquals(expectedfloor, actualFloor);
+		assertEquals(BigInteger.valueOf(expectedfloor), actualFloor);
 	}
 
 	@Test
 	public void testCeil() {
 		// Act
-		final long actualCeil = number.ceil();
+		final var actualCeil = number.ceil();
 		// Assert
-		assertEquals(expectedCeil, actualCeil);
+		assertEquals(BigInteger.valueOf(expectedCeil), actualCeil);
 	}
 
 	@Test

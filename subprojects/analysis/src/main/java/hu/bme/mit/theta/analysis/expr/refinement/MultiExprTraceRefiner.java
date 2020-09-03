@@ -38,19 +38,22 @@ public class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P 
 
 	private final ExprTraceChecker<R> exprTraceChecker;
 	private final PrecRefiner<S, A, P, R> precRefiner;
+	private final PruneStrategy pruneStrategy;
 	private final Logger logger;
 
-	private MultiExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
-								  final Logger logger) {
+	private MultiExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+								  final PrecRefiner<S, A, P, R> precRefiner,
+								  final PruneStrategy pruneStrategy, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 		this.precRefiner = checkNotNull(precRefiner);
+		this.pruneStrategy = checkNotNull(pruneStrategy);
 		this.logger = checkNotNull(logger);
 	}
 
 	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> MultiExprTraceRefiner<S, A, P, R> create(
 			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
-			final Logger logger) {
-		return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, logger);
+			final PruneStrategy pruneStrategy, final Logger logger) {
+		return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
 	}
 
 	@Override
@@ -111,11 +114,21 @@ public class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P 
 					refinedPrec = precRefiner.refine(refinedPrec, traces.get(i), refutations.get(i));
 				}
 			}
-			logger.write(Level.SUBSTEP, "|  |  Pruning...");
-			for (int i = 0; i < nodesToPrune.size(); ++i) {
-				if (!skip.get(i)) {
-					arg.prune(nodesToPrune.get(i));
-				}
+			switch (pruneStrategy){
+				case LAZY:
+					logger.write(Level.SUBSTEP, "|  |  Pruning (lazy)...");
+					for (int i = 0; i < nodesToPrune.size(); ++i) {
+						if (!skip.get(i)) {
+							arg.prune(nodesToPrune.get(i));
+						}
+					}
+					break;
+				case FULL:
+					logger.write(Level.SUBSTEP, "|  |  Pruning (full)...");
+					arg.pruneAll();
+					break;
+				default:
+					throw new UnsupportedOperationException("Unsupported pruning strategy");
 			}
 			logger.write(Level.SUBSTEP, "done%n");
 			return RefinerResult.spurious(refinedPrec);

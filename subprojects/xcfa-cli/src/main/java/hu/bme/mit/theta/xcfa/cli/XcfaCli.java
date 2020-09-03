@@ -5,7 +5,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *	  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,18 +19,34 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.alt.algorithm.Config;
-import hu.bme.mit.theta.xcfa.alt.algorithm.XcfaChecker;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,25 +55,50 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A command line interface for running a CEGAR configuration on a CFA compatible XCFA.
+ */
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
+	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
+
+	@Parameter(names = "--domain", description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
+
+	@Parameter(names = "--refinement", description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
+
+	@Parameter(names = "--search", description = "Search strategy")
+	Search search = Search.BFS;
+
+	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+	PredSplit predSplit = PredSplit.WHOLE;
 
 	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
 	String model;
 
-	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.SUBSTEP;
+	@Parameter(names = "--precgranularity", description = "Precision granularity")
+	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
-	@Parameter(names = "--partialorder", description = "Use partial order reduction")
-	Boolean partialOrder = false;
+	@Parameter(names = "--encoding", description = "Block encoding")
+	Encoding encoding = Encoding.LBE;
+
+	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 0;
+
+	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
+	InitPrec initPrec = InitPrec.EMPTY;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Level.SUBSTEP;
 
 	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
 	@Parameter(names = "--cex", description = "Log concrete counterexample")
-	String cexfile = null;
+	Boolean cexfile = false;
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -76,7 +117,7 @@ public class XcfaCli {
 
 	private void run() {
 		try {
-			JCommander.newBuilder().addObject(this).programName(JAR_NAME).acceptUnknownOptions(true).build().parse(args);
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 		} catch (final ParameterException ex) {
 			System.out.println("Invalid parameters, details:");
@@ -92,19 +133,13 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA _xcfa = loadModel();
-			final XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
-
-			final var config =
-					partialOrder
-					? XcfaChecker.getSimpleDPOR()
-					: XcfaChecker.getSimpleExplicit();
-			var checker = XcfaChecker.createChecker(xcfa, config.build());
-			final SafetyResult<?, ?> status = checker.check();
+			final CFA cfa = loadModel();
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
+			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
-			printResult(status, xcfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(status.asUnsafe(), cexfile);
+			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
+			if (status.isUnsafe() && cexfile) {
+				writeCex(status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -123,32 +158,22 @@ public class XcfaCli {
 		writer.newRow();
 	}
 
-	private XCFA loadModel() throws IOException {
-		String[] models = model.split(",");
-		if (models.length == 1) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				return XcfaDslManager.createXcfa(inputStream);
-			}
+	private CFA loadModel() throws IOException {
+		try (InputStream inputStream = new FileInputStream(model)) {
+			final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+			final CFA cfa = xcfa.createCFA();
+			return cfa;
 		}
-		InputStream[] inputStreams = new InputStream[models.length];
-		for (int i = 0; i < models.length; i++) {
-			inputStreams[i] = new FileInputStream(models[i]);
-		}
-		XCFA xcfa = XcfaDslManager.createXcfa(inputStreams);
-		for (int i = 0; i < models.length; i++) {
-			inputStreams[i].close();
-		}
-		return xcfa;
 	}
 
-	private void printResult(final SafetyResult<?, ?> status, final XCFA xcfa, final long totalTimeMs) {
-		if (status.isSafe()) {
-			System.out.println("(SafetyResult Safe)");
-		} else {
-			System.out.println("(SafetyResult Unsafe)");
-		}
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
+		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
+	}
+
+	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {
+		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
-			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 			writer.cell(status.isSafe());
 			writer.cell(totalTimeMs);
 			writer.cell(stats.getAlgorithmTimeMs());
@@ -171,19 +196,17 @@ public class XcfaCli {
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
-			logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
+			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
+			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
 			final StringWriter errors = new StringWriter();
 			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status, String cexfile) {
-		try (var writer = new PrintWriter(cexfile)) {
-			writer.print(status.getTrace());
-		} catch (IOException ex) {
-			logger.write(Logger.Level.RESULT, "Failed to write counter-example!");
-		}
+	private void writeCex(final Unsafe<?, ?> status) {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+		logger.write(Level.RESULT, "%s", concrTrace);
 	}
 }

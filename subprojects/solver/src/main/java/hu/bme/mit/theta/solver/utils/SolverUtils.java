@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -89,6 +90,7 @@ public final class SolverUtils {
 
 		@Override
 		public Valuation next() {
+			if (!hasNext()) throw new NoSuchElementException("Formula is UNSAT");
 			final Valuation model = solver.getModel();
 			solver.add(feedback.apply(model));
 			return model;

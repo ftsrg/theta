@@ -30,6 +30,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslLexer;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser;
+import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsSpecContext;
+
 public final class StsDslManager {
 
 	private StsDslManager() {

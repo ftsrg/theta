@@ -25,7 +25,7 @@ import com.microsoft.z3.Solver;
 public final class Z3ModelTest {
 
 	static {
-		Z3SolverFactory.getInstace();
+		Z3SolverFactory.getInstance();
 	}
 
 	@Test

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +39,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -269,6 +272,8 @@ final class Z3Solver implements Solver {
 				return extractFuncLiteral(funcDecl);
 			} else if (type instanceof ArrayType) {
 				return extractArrayLiteral(funcDecl);
+			} else if (type instanceof BvType) {
+				return extractBvConstLiteral(funcDecl, (BvType) type);
 			} else {
 				return extractConstLiteral(funcDecl);
 			}
@@ -280,8 +285,18 @@ final class Z3Solver implements Solver {
 		}
 
 		private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+			final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model, new ArrayList<>());
+			return (LitExpr<?>) expr;
+		}
+
+		private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl, final BvType type) {
+			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+			if (term == null) {
+				return null;
+			} else {
+				BvLitExpr expr = (BvLitExpr) termTransformer.toExpr(term);
+				return Bv(expr.getValue(), type.isSigned());
+			}
 		}
 
 		private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
@@ -303,7 +318,7 @@ final class Z3Solver implements Solver {
 
 		private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
 			final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-			for (final com.microsoft.z3.FuncDecl symbol : z3Model.getDecls()) {
+			for (final FuncDecl symbol : z3Model.getDecls()) {
 				if (symbolTable.definesSymbol(symbol)) {
 					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
 					builder.add(constDecl);

@@ -37,7 +37,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class ExplInitFuncTest {
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 	@Test
 	public void test1() {

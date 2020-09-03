@@ -16,20 +16,21 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
-import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.common.Utils;
+import com.google.common.base.Optional;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 public class WaitStmt extends XcfaStmt {
-	private static final String STMT_LABEL = "wait";
-	private final VarDecl<SyntheticType> syncVar;
+	private final VarDecl<?> cndSyncVar;
+	private final Optional<VarDecl<?>> mtxSyncVar;
 
-	public WaitStmt(VarDecl<?> lhs) {
-		Preconditions.checkArgument(lhs.getType() == SyntheticType.getInstance(), STMT_LABEL + " stmt should be passed a synthetic");
-		syncVar = (VarDecl<SyntheticType>) lhs;
+	public WaitStmt(VarDecl<?> cnd, VarDecl<?> mtx) {
+		cndSyncVar = cnd;
+		mtxSyncVar = Optional.fromNullable(mtx);
+	}
+	public WaitStmt(VarDecl<?> cnd) {
+		this(cnd, null);
 	}
 
 	@Override
@@ -42,11 +43,10 @@ public class WaitStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<SyntheticType> getSyncVar() {
-		return syncVar;
+	public VarDecl<?> getCndSyncVar() {
+		return cndSyncVar;
 	}
-
-	public String toString() {
-		return Utils.lispStringBuilder(STMT_LABEL).add(syncVar.getName()).toString();
+	public Optional<VarDecl<?>> getMtxSyncVar() {
+		return mtxSyncVar;
 	}
 }

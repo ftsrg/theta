@@ -99,7 +99,7 @@ public final class LazyXtaCheckerTest {
 		final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(UnitPrec.getInstance());
 
 		// Assert
-		final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstace().createSolver());
+		final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstance().createSolver());
 		final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
 		assertTrue(argCheckResult);
 	}

@@ -81,7 +81,7 @@ final class WrittenVarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collectio
 
     @Override
     public Void visit(WaitStmt waitStmt, Collection<VarDecl<?>> param) {
-        param.add(waitStmt.getSyncVar());
+        param.add(waitStmt.getCndSyncVar());
         return null;
     }
 
