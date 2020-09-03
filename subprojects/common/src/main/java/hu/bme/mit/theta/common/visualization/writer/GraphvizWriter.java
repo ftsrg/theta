@@ -114,13 +114,13 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		style += "filled";
 
 		sb.append("\t\t").append(node.getId());
-		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\"");
+		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
 		if (attributes.getPeripheries() > 1) {
 			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
-		sb.append(",style=\"").append(style).append("\"");
+		sb.append(",style=\"").append(style).append('\"');
 		if (!attributes.getFont().equals("")) {
-			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+			sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 		}
 		sb.append(",fillcolor=").append(mapColorToString(attributes.getFillColor()));
 		sb.append(",color=").append(mapColorToString(attributes.getLineColor()));
@@ -139,7 +139,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
 		}
 		if (!attributes.getFont().equals("")) {
-			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+			sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 		}
 		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\";")
 				.append(System.lineSeparator());
@@ -157,19 +157,18 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		} else {
 			for (final Edge edge : node.getOutEdges()) {
 				final EdgeAttributes attributes = edge.getAttributes();
-				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
-				sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment()))
-						.append("\"");
+				sb.append('\t').append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
+				sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
 				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
 				if (!"".equals(style)) {
 					sb.append(",style=").append(style);
 				}
 				if (!attributes.getFont().equals("")) {
-					sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+					sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 				}
 				if (attributes.getWeight() != 1) {
-					sb.append(",weight=\"").append(attributes.getWeight()).append("\"");
+					sb.append(",weight=\"").append(attributes.getWeight()).append('\"');
 				}
 				sb.append("];").append(System.lineSeparator());
 			}
