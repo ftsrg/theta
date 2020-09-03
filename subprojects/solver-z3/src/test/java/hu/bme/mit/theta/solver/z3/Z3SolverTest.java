@@ -174,7 +174,6 @@ public final class Z3SolverTest {
 		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
 		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
 
 		solver.push();
@@ -423,10 +422,6 @@ public final class Z3SolverTest {
 		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Mod(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
 		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Rem(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
 
-	}
-
-	private static BvLitExpr UBv16(int integer) {
-		return uint16ToBvLitExpr(integer);
 	}
 
 }

@@ -31,24 +31,30 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 
 	private final TransFunc<S1, ? super A, P1> transFunc1;
 	private final TransFunc<S2, ? super A, P2> transFunc2;
+	private final PreStrengtheningOperator<S1, S2> preStrenghteningOperator;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
 	private Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
-						   final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+						   final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
+						   final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator
+						   ) {
 		this.transFunc1 = checkNotNull(transFunc1);
 		this.transFunc2 = checkNotNull(transFunc2);
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);
+		this.preStrenghteningOperator = checkNotNull(preStrengtheningOperator);
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2TransFunc<S1, S2, A, P1, P2> create(
 			final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2) {
-		return create(transFunc1, transFunc2, (states, prec) -> states);
+		return create(transFunc1, transFunc2, DefaultPreStrengtheningOperator.create(),(states, prec) -> states);
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2TransFunc<S1, S2, A, P1, P2> create(
 			final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
-			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
-		return new Prod2TransFunc<>(transFunc1, transFunc2, strenghteningOperator);
+			final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator
+			) {
+		return new Prod2TransFunc<>(transFunc1, transFunc2, preStrengtheningOperator, strenghteningOperator);
 	}
 
 	@Override
@@ -62,8 +68,8 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 			return singleton(state);
 		}
 
-		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state.getState1(), action,
-				prec.getPrec1());
+		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(preStrenghteningOperator.strengthenState1(state),
+				action,	prec.getPrec1());
 		final Optional<? extends S1> optBottom1 = succStates1.stream().filter(State::isBottom).findAny();
 
 		if (optBottom1.isPresent()) {
@@ -71,8 +77,8 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 			return singleton(Prod2State.bottom1(bottom1));
 		}
 
-		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(state.getState2(), action,
-				prec.getPrec2());
+		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(preStrenghteningOperator.strengthenState2(state),
+				action, prec.getPrec2());
 		final Optional<? extends S2> optBottom2 = succStates2.stream().filter(State::isBottom).findAny();
 
 		if (optBottom2.isPresent()) {

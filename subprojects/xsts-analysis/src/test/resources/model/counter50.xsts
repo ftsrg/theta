@@ -1,0 +1,10 @@
+ctrl var x: integer = 0
+
+trans {
+    assume x<50;
+    x:=x+1;
+}
+
+init {}
+
+env {}

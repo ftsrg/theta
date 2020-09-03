@@ -1,0 +1,3 @@
+prop{
+    !(main_region == Normal && signal_alert_Out == true)
+}
