@@ -4,20 +4,15 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -34,7 +29,15 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.SequenceInputStream;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
 public class XstsCli {
