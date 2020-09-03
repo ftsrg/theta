@@ -1,0 +1,3 @@
+prop{
+    !(LightCommands_displayGreen_Out_prior && LightCommands_displayGreen_Out_second)
+}

@@ -1,0 +1,30 @@
+type Main_region : { __Inactive__, Normal, Error}
+var signal_alert_Out : boolean = false
+var signal_step_In : boolean = false
+ctrl var main_region : Main_region = __Inactive__
+
+
+trans {
+    assume (main_region == Normal && signal_step_In == true);
+    main_region := Error;
+    signal_alert_Out := true;
+} or {
+    assume (main_region == Error && signal_step_In == true);
+    main_region := Normal;
+} or {
+    assume (!(main_region == __Inactive__) && !((main_region == Normal && signal_step_In == true) || (main_region == Error && signal_step_In == true)));
+}
+
+
+init {
+    main_region := Normal;
+}
+
+env {
+    choice {
+    	signal_step_In := true;
+    } or {
+    	signal_step_In := false;
+    }
+    signal_alert_Out := false;
+}
