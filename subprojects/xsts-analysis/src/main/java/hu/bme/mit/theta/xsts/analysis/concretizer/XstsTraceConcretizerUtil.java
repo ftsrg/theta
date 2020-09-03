@@ -27,7 +27,7 @@ public final class XstsTraceConcretizerUtil {
 	public static XstsStateSequence concretize(
 			final Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
 
-		final VarFilter varFilter=VarFilter.of(xsts);
+		final VarFilter varFilter = VarFilter.of(xsts);
 		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
 				Not(xsts.getProp()), solverFactory.createItpSolver());
 		final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
@@ -38,7 +38,7 @@ public final class XstsTraceConcretizerUtil {
 
 		final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
 		for (int i = 0; i < trace.getStates().size(); ++i) {
-			xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))),trace.getState(i).lastActionWasEnv(),trace.getState(i).isInitialized()));
+			xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
 		}
 
 		return XstsStateSequence.of(xstsStates, xsts);

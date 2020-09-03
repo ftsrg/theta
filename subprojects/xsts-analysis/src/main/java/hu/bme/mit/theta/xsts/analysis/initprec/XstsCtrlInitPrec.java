@@ -5,7 +5,7 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.xsts.XSTS;
 
-public class XstsCtrlInitPrec implements XstsInitPrec{
+public class XstsCtrlInitPrec implements XstsInitPrec {
 	@Override
 	public ExplPrec createExpl(XSTS xsts) {
 		return ExplPrec.of(xsts.getCtrlVars());
@@ -18,6 +18,6 @@ public class XstsCtrlInitPrec implements XstsInitPrec{
 
 	@Override
 	public Prod2Prec<ExplPrec, PredPrec> createProd2ExplPred(XSTS xsts) {
-		return Prod2Prec.of(ExplPrec.of(xsts.getCtrlVars()),PredPrec.of());
+		return Prod2Prec.of(ExplPrec.of(xsts.getCtrlVars()), PredPrec.of());
 	}
 }
