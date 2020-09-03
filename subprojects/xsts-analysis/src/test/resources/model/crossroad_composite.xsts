@@ -1,0 +1,472 @@
+type Main_region_Controller : { __Inactive__, Operating, B, C, A}
+type Operating_Controller : { __Inactive__, Init, SecondaryPrepares, Secondary, Priority, PriorityPrepares}
+type Main_region_TrafficLightCtrl : { __Inactive__, Normal, Interrupted}
+type Normal_TrafficLightCtrl : { __Inactive__, Green, Red, Yellow}
+type Interrupted_TrafficLightCtrl : { __Inactive__, BlinkingYellow, Black}
+var PoliceInterrupt_police_In_controller : boolean = false
+var main_region_controller : Main_region_Controller = __Inactive__
+var operating_controller : Operating_Controller = __Inactive__
+var InitTimeout5_controller : integer = 0
+var a_controller : integer = 0
+var LightCommands_displayGreen_Out_prior : boolean = false
+var LightCommands_displayYellow_Out_prior : boolean = false
+var LightCommands_displayNone_Out_prior : boolean = false
+var LightCommands_displayRed_Out_prior : boolean = false
+var PoliceInterrupt_police_In_prior : boolean = false
+var Control_toggle_In_prior : boolean = false
+var main_region_prior : Main_region_TrafficLightCtrl = __Inactive__
+var normal_prior : Normal_TrafficLightCtrl = __Inactive__
+var interrupted_prior : Interrupted_TrafficLightCtrl = __Inactive__
+var BlinkingYellowTimeout3_prior : integer = 0
+var b_prior : integer = 0
+var a_prior : boolean = false
+var asd_prior : integer = 0
+var Control_toggle_In_second : boolean = false
+var LightCommands_displayGreen_Out_second : boolean = false
+var PoliceInterrupt_police_In_second : boolean = false
+var LightCommands_displayNone_Out_second : boolean = false
+var LightCommands_displayRed_Out_second : boolean = false
+var LightCommands_displayYellow_Out_second : boolean = false
+var main_region_second : Main_region_TrafficLightCtrl = __Inactive__
+var normal_second : Normal_TrafficLightCtrl = __Inactive__
+var interrupted_second : Interrupted_TrafficLightCtrl = __Inactive__
+var BlinkingYellowTimeout3_second : integer = 0
+var asd_second : integer = 0
+var b_second : integer = 0
+var a_second : boolean = false
+
+trans {
+	ort {
+		Control_toggle_In_prior := false;
+		Control_toggle_In_second := false;
+		PoliceInterrupt_police_In_prior := false;
+		PoliceInterrupt_police_In_second := false;
+		InitTimeout5_controller := (InitTimeout5_controller + 1000);
+		choice {
+			assume ((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller)));
+			assume (operating_controller == SecondaryPrepares);
+			operating_controller := Priority;
+			assume (operating_controller == Priority);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+			Control_toggle_In_second := true;
+		} or {
+			assume ((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller)));
+			assume (operating_controller == Secondary);
+			operating_controller := SecondaryPrepares;
+			assume (operating_controller == SecondaryPrepares);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_second := true;
+		} or {
+			assume ((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false))));
+			assume (operating_controller == Priority);
+			operating_controller := PriorityPrepares;
+			assume (operating_controller == PriorityPrepares);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+		} or {
+			assume ((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller)));
+			assume (operating_controller == PriorityPrepares);
+			operating_controller := Secondary;
+			assume (operating_controller == Secondary);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+			Control_toggle_In_second := true;
+		} or {
+			assume ((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller)));
+			assume (operating_controller == Init);
+			operating_controller := PriorityPrepares;
+			assume (operating_controller == PriorityPrepares);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+		} or {
+			assume ((!((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false)))) && !((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller)))) && ((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true)));
+			assume (main_region_controller == Operating);
+			PoliceInterrupt_police_In_prior := true;
+			PoliceInterrupt_police_In_second := true;
+			main_region_controller := Operating;
+			choice {
+				assume (operating_controller == __Inactive__);
+				operating_controller := Init;
+			} or {
+				assume !((operating_controller == __Inactive__));
+			}
+			assume (main_region_controller == Operating);
+			choice {
+				assume (operating_controller == Init);
+				InitTimeout5_controller := 0;
+				Control_toggle_In_prior := true;
+			} or {
+				assume (operating_controller == SecondaryPrepares);
+				InitTimeout5_controller := 0;
+				Control_toggle_In_second := true;
+			} or {
+				assume (operating_controller == Secondary);
+				InitTimeout5_controller := 0;
+				Control_toggle_In_prior := true;
+				Control_toggle_In_second := true;
+			} or {
+				assume (operating_controller == Priority);
+				InitTimeout5_controller := 0;
+				Control_toggle_In_prior := true;
+				Control_toggle_In_second := true;
+			} or {
+				assume (operating_controller == PriorityPrepares);
+				InitTimeout5_controller := 0;
+				Control_toggle_In_prior := true;
+			}
+		} or {
+			assume ((!((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false)))) && !((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller)))) && ((main_region_controller == Operating) && (!((PoliceInterrupt_police_In_controller == true)) && (PoliceInterrupt_police_In_controller == true))));
+			assume (main_region_controller == Operating);
+			main_region_controller := __Inactive__;
+			choice {
+				assume (!((a_controller == 0)));
+				main_region_controller := C;
+				assume (main_region_controller == C);
+			} or {
+				assume (!((!((a_controller == 0)))) && (a_controller == 0));
+				a_controller := (a_controller + 1);
+				choice {
+					assume (a_controller > 0);
+					a_controller := (a_controller - 3);
+					main_region_controller := A;
+					assume (main_region_controller == A);
+				} or {
+					assume (!((a_controller > 0)) && (!((a_controller > 0))));
+					a_controller := 4;
+					main_region_controller := B;
+					assume (main_region_controller == B);
+				}
+			}
+		} or {
+			assume !((((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) || ((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller))) || ((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false)))) || ((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) || ((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller))) || ((!((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false)))) && !((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller)))) && ((main_region_controller == Operating) && (PoliceInterrupt_police_In_controller == true))) || ((!((((main_region_controller == Operating) && (operating_controller == Init)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == SecondaryPrepares)) && ((1000 * 1) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Secondary)) && ((1000 * 2) <= InitTimeout5_controller))) && !((((main_region_controller == Operating) && (operating_controller == Priority)) && (((1000 * 2) <= InitTimeout5_controller) && (true != false)))) && !((((main_region_controller == Operating) && (operating_controller == PriorityPrepares)) && ((1000 * 1) <= InitTimeout5_controller)))) && ((main_region_controller == Operating) && (!((PoliceInterrupt_police_In_controller == true)) && (PoliceInterrupt_police_In_controller == true))))));
+		}
+	} {
+		LightCommands_displayYellow_Out_prior := false;
+		LightCommands_displayGreen_Out_prior := false;
+		LightCommands_displayNone_Out_prior := false;
+		LightCommands_displayRed_Out_prior := false;
+		BlinkingYellowTimeout3_prior := (BlinkingYellowTimeout3_prior + 1000);
+		choice {
+			assume ((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Green)) && (Control_toggle_In_prior == true)));
+			assume (normal_prior == Green);
+			b_prior := 4;
+			normal_prior := Yellow;
+			assume (normal_prior == Yellow);
+			LightCommands_displayYellow_Out_prior := true;
+		} or {
+			assume ((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Yellow)) && (Control_toggle_In_prior == true)));
+			assume (normal_prior == Yellow);
+			normal_prior := Red;
+			assume (normal_prior == Red);
+			LightCommands_displayRed_Out_prior := true;
+		} or {
+			assume ((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Red)) && (Control_toggle_In_prior == true)));
+			assume (normal_prior == Red);
+			a_prior := true;
+			normal_prior := Green;
+			assume (normal_prior == Green);
+			LightCommands_displayGreen_Out_prior := true;
+		} or {
+			assume ((!(((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Interrupted) && (interrupted_prior == Black)) && (500 <= BlinkingYellowTimeout3_prior)));
+			assume (interrupted_prior == Black);
+			interrupted_prior := BlinkingYellow;
+			assume (interrupted_prior == BlinkingYellow);
+			BlinkingYellowTimeout3_prior := 0;
+			LightCommands_displayYellow_Out_prior := true;
+		} or {
+			assume ((!(((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Interrupted) && (interrupted_prior == BlinkingYellow)) && (500 <= BlinkingYellowTimeout3_prior)));
+			assume (interrupted_prior == BlinkingYellow);
+			interrupted_prior := Black;
+			assume (interrupted_prior == Black);
+			BlinkingYellowTimeout3_prior := 0;
+			LightCommands_displayNone_Out_prior := true;
+		} or {
+			assume (((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)));
+			assume (main_region_prior == Normal);
+			choice {
+				assume (normal_prior == Green);
+			} or {
+				assume (normal_prior == Red);
+				a_prior := true;
+			} or {
+				assume (normal_prior == Yellow);
+			}
+			asd_prior := 321;
+			main_region_prior := Interrupted;
+			interrupted_prior := BlinkingYellow;
+			assume (main_region_prior == Interrupted);
+			choice {
+				assume (interrupted_prior == BlinkingYellow);
+				BlinkingYellowTimeout3_prior := 0;
+				LightCommands_displayYellow_Out_prior := true;
+			} or {
+				assume (interrupted_prior == Black);
+				BlinkingYellowTimeout3_prior := 0;
+				LightCommands_displayNone_Out_prior := true;
+			}
+		} or {
+			assume (((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)));
+			assume (main_region_prior == Interrupted);
+			interrupted_prior := __Inactive__;
+			main_region_prior := Normal;
+			choice {
+				assume (normal_prior == __Inactive__);
+				normal_prior := Red;
+			} or {
+				assume !((normal_prior == __Inactive__));
+			}
+			assume (main_region_prior == Normal);
+			choice {
+				assume (normal_prior == Green);
+				LightCommands_displayGreen_Out_prior := true;
+			} or {
+				assume (normal_prior == Red);
+				LightCommands_displayRed_Out_prior := true;
+			} or {
+				assume (normal_prior == Yellow);
+				LightCommands_displayYellow_Out_prior := true;
+			}
+		} or {
+			assume !((((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Green)) && (Control_toggle_In_prior == true))) || ((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Yellow)) && (Control_toggle_In_prior == true))) || ((!(((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Normal) && (normal_prior == Red)) && (Control_toggle_In_prior == true))) || ((!(((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Interrupted) && (interrupted_prior == Black)) && (500 <= BlinkingYellowTimeout3_prior))) || ((!(((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)))) && (((main_region_prior == Interrupted) && (interrupted_prior == BlinkingYellow)) && (500 <= BlinkingYellowTimeout3_prior))) || (((main_region_prior == Normal) && (PoliceInterrupt_police_In_prior == true))) || (((main_region_prior == Interrupted) && (PoliceInterrupt_police_In_prior == true)))));
+		}
+	} {
+		LightCommands_displayRed_Out_second := false;
+		LightCommands_displayYellow_Out_second := false;
+		LightCommands_displayGreen_Out_second := false;
+		LightCommands_displayNone_Out_second := false;
+		BlinkingYellowTimeout3_second := (BlinkingYellowTimeout3_second + 1000);
+		choice {
+			assume ((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Red)) && (Control_toggle_In_second == true)));
+			assume (normal_second == Red);
+			a_second := true;
+			normal_second := Green;
+			assume (normal_second == Green);
+			LightCommands_displayGreen_Out_second := true;
+		} or {
+			assume ((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Green)) && (Control_toggle_In_second == true)));
+			assume (normal_second == Green);
+			b_second := 4;
+			normal_second := Yellow;
+			assume (normal_second == Yellow);
+			LightCommands_displayYellow_Out_second := true;
+		} or {
+			assume ((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Yellow)) && (Control_toggle_In_second == true)));
+			assume (normal_second == Yellow);
+			normal_second := Red;
+			assume (normal_second == Red);
+			LightCommands_displayRed_Out_second := true;
+		} or {
+			assume ((!(((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Interrupted) && (interrupted_second == Black)) && (500 <= BlinkingYellowTimeout3_second)));
+			assume (interrupted_second == Black);
+			interrupted_second := BlinkingYellow;
+			assume (interrupted_second == BlinkingYellow);
+			BlinkingYellowTimeout3_second := 0;
+			LightCommands_displayYellow_Out_second := true;
+		} or {
+			assume ((!(((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Interrupted) && (interrupted_second == BlinkingYellow)) && (500 <= BlinkingYellowTimeout3_second)));
+			assume (interrupted_second == BlinkingYellow);
+			interrupted_second := Black;
+			assume (interrupted_second == Black);
+			BlinkingYellowTimeout3_second := 0;
+			LightCommands_displayNone_Out_second := true;
+		} or {
+			assume (((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)));
+			assume (main_region_second == Normal);
+			choice {
+				assume (normal_second == Green);
+			} or {
+				assume (normal_second == Red);
+				a_second := true;
+			} or {
+				assume (normal_second == Yellow);
+			}
+			asd_second := 321;
+			main_region_second := Interrupted;
+			interrupted_second := BlinkingYellow;
+			assume (main_region_second == Interrupted);
+			choice {
+				assume (interrupted_second == BlinkingYellow);
+				BlinkingYellowTimeout3_second := 0;
+				LightCommands_displayYellow_Out_second := true;
+			} or {
+				assume (interrupted_second == Black);
+				BlinkingYellowTimeout3_second := 0;
+				LightCommands_displayNone_Out_second := true;
+			}
+		} or {
+			assume (((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)));
+			assume (main_region_second == Interrupted);
+			interrupted_second := __Inactive__;
+			main_region_second := Normal;
+			choice {
+				assume (normal_second == __Inactive__);
+				normal_second := Red;
+			} or {
+				assume !((normal_second == __Inactive__));
+			}
+			assume (main_region_second == Normal);
+			choice {
+				assume (normal_second == Green);
+				LightCommands_displayGreen_Out_second := true;
+			} or {
+				assume (normal_second == Red);
+				LightCommands_displayRed_Out_second := true;
+			} or {
+				assume (normal_second == Yellow);
+				LightCommands_displayYellow_Out_second := true;
+			}
+		} or {
+			assume !((((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Red)) && (Control_toggle_In_second == true))) || ((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Green)) && (Control_toggle_In_second == true))) || ((!(((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Normal) && (normal_second == Yellow)) && (Control_toggle_In_second == true))) || ((!(((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Interrupted) && (interrupted_second == Black)) && (500 <= BlinkingYellowTimeout3_second))) || ((!(((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)))) && (((main_region_second == Interrupted) && (interrupted_second == BlinkingYellow)) && (500 <= BlinkingYellowTimeout3_second))) || (((main_region_second == Normal) && (PoliceInterrupt_police_In_second == true))) || (((main_region_second == Interrupted) && (PoliceInterrupt_police_In_second == true)))));
+		}
+	}
+}
+init {
+	a_controller := 0;
+	InitTimeout5_controller := (((((1000 * 2) + (1000 * 2)) + (1000 * 1)) + (1000 * 2)) + (1000 * 1));
+	main_region_controller := __Inactive__;
+	operating_controller := __Inactive__;
+	PoliceInterrupt_police_In_controller := false;
+	b_prior := 0;
+	a_prior := false;
+	asd_prior := 0;
+	BlinkingYellowTimeout3_prior := (500 + 500);
+	main_region_prior := __Inactive__;
+	normal_prior := __Inactive__;
+	interrupted_prior := __Inactive__;
+	PoliceInterrupt_police_In_prior := false;
+	Control_toggle_In_prior := false;
+	LightCommands_displayGreen_Out_prior := false;
+	LightCommands_displayYellow_Out_prior := false;
+	LightCommands_displayNone_Out_prior := false;
+	LightCommands_displayRed_Out_prior := false;
+	b_second := 0;
+	a_second := false;
+	asd_second := 0;
+	BlinkingYellowTimeout3_second := (500 + 500);
+	main_region_second := __Inactive__;
+	normal_second := __Inactive__;
+	interrupted_second := __Inactive__;
+	Control_toggle_In_second := false;
+	PoliceInterrupt_police_In_second := false;
+	LightCommands_displayGreen_Out_second := false;
+	LightCommands_displayNone_Out_second := false;
+	LightCommands_displayRed_Out_second := false;
+	LightCommands_displayYellow_Out_second := false;
+	main_region_controller := Operating;
+	choice {
+		assume (operating_controller == __Inactive__);
+		operating_controller := Init;
+	} or {
+		assume !((operating_controller == __Inactive__));
+	}
+	main_region_prior := Normal;
+	choice {
+		assume (normal_prior == __Inactive__);
+		normal_prior := Red;
+	} or {
+		assume !((normal_prior == __Inactive__));
+	}
+	main_region_second := Normal;
+	choice {
+		assume (normal_second == __Inactive__);
+		normal_second := Red;
+	} or {
+		assume !((normal_second == __Inactive__));
+	}
+	choice {
+		assume (main_region_controller == Operating);
+		choice {
+			assume (operating_controller == Init);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+		} or {
+			assume (operating_controller == SecondaryPrepares);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_second := true;
+		} or {
+			assume (operating_controller == Secondary);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+			Control_toggle_In_second := true;
+		} or {
+			assume (operating_controller == Priority);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+			Control_toggle_In_second := true;
+		} or {
+			assume (operating_controller == PriorityPrepares);
+			InitTimeout5_controller := 0;
+			Control_toggle_In_prior := true;
+		}
+	} or {
+		assume (main_region_controller == B);
+	} or {
+		assume (main_region_controller == C);
+	} or {
+		assume (main_region_controller == A);
+	}
+	choice {
+		assume (main_region_prior == Normal);
+		choice {
+			assume (normal_prior == Green);
+			LightCommands_displayGreen_Out_prior := true;
+		} or {
+			assume (normal_prior == Red);
+			LightCommands_displayRed_Out_prior := true;
+		} or {
+			assume (normal_prior == Yellow);
+			LightCommands_displayYellow_Out_prior := true;
+		}
+	} or {
+		assume (main_region_prior == Interrupted);
+		choice {
+			assume (interrupted_prior == BlinkingYellow);
+			BlinkingYellowTimeout3_prior := 0;
+			LightCommands_displayYellow_Out_prior := true;
+		} or {
+			assume (interrupted_prior == Black);
+			BlinkingYellowTimeout3_prior := 0;
+			LightCommands_displayNone_Out_prior := true;
+		}
+	}
+	choice {
+		assume (main_region_second == Normal);
+		choice {
+			assume (normal_second == Green);
+			LightCommands_displayGreen_Out_second := true;
+		} or {
+			assume (normal_second == Red);
+			LightCommands_displayRed_Out_second := true;
+		} or {
+			assume (normal_second == Yellow);
+			LightCommands_displayYellow_Out_second := true;
+		}
+	} or {
+		assume (main_region_second == Interrupted);
+		choice {
+			assume (interrupted_second == BlinkingYellow);
+			BlinkingYellowTimeout3_second := 0;
+			LightCommands_displayYellow_Out_second := true;
+		} or {
+			assume (interrupted_second == Black);
+			BlinkingYellowTimeout3_second := 0;
+			LightCommands_displayNone_Out_second := true;
+		}
+	}
+}
+env {
+	choice {
+		PoliceInterrupt_police_In_controller := true;
+	} or {
+		PoliceInterrupt_police_In_controller := false;
+	}
+	LightCommands_displayGreen_Out_prior := false;
+	LightCommands_displayNone_Out_prior := false;
+	LightCommands_displayRed_Out_prior := false;
+	LightCommands_displayYellow_Out_prior := false;
+	LightCommands_displayGreen_Out_second := false;
+	LightCommands_displayRed_Out_second := false;
+	LightCommands_displayNone_Out_second := false;
+	LightCommands_displayYellow_Out_second := false;
+}

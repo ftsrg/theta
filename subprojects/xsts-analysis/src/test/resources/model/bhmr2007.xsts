@@ -1,0 +1,28 @@
+ctrl var i : integer = 0
+var n : integer = 0
+ctrl var a : integer = 0
+ctrl var b : integer = 0
+var error : boolean = false
+
+trans {
+    assume i<n;
+    choice{
+        a:=a+1;
+        b:=b+2;
+    } or {
+        a:=a+2;
+        b:=b+1;
+    }
+    i:=i+1;
+} or {
+    assume !(i<n);
+    assume !(a+b==(3*n));
+    error:=true;
+}
+
+init {
+    havoc n;
+    assume n>0 && n<35;
+}
+
+env {}
