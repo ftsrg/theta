@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xsts.dsl;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslLexer;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -23,12 +22,11 @@ public final class XstsDslManager {
 	}
 
 	public static XSTS createXsts(final InputStream inputStream) throws IOException {
-
-		final XstsDslLexer lexer=new XstsDslLexer(CharStreams.fromStream(inputStream));
-		final CommonTokenStream tokenStream=new CommonTokenStream(lexer);
-		final XstsDslParser parser=new XstsDslParser(tokenStream);
-		final XstsDslParser.XstsContext model =parser.xsts();
-		final XSTSVisitor visitor=new XSTSVisitor();
+		final XstsDslLexer lexer = new XstsDslLexer(CharStreams.fromStream(inputStream));
+		final CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+		final XstsDslParser parser = new XstsDslParser(tokenStream);
+		final XstsDslParser.XstsContext model = parser.xsts();
+		final XSTSVisitor visitor = new XSTSVisitor();
 		visitor.visitXsts(model);
 
 		return visitor.getXsts();
