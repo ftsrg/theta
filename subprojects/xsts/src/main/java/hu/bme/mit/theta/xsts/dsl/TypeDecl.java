@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
@@ -9,16 +10,16 @@ public final class TypeDecl {
 
     private final String name;
     private final List<String> literals;
-    private final List<Integer> intValues;
+    private final List<BigInteger> intValues;
 
-    private TypeDecl(final String name, final List<String> literals, final List<Integer> intValues) {
+    private TypeDecl(final String name, final List<String> literals, final List<BigInteger> intValues) {
         this.name = name;
         checkArgument(literals.size()==intValues.size());
         this.literals = literals;
         this.intValues = intValues;
     }
 
-    public static TypeDecl of(final String name, final List<String> literals, final List<Integer> intValues){
+    public static TypeDecl of(final String name, final List<String> literals, final List<BigInteger> intValues){
         return new TypeDecl(name, literals, intValues);
     }
 
@@ -47,7 +48,7 @@ public final class TypeDecl {
         return literals;
     }
 
-    public List<Integer> getIntValues() { return intValues; }
+    public List<BigInteger> getIntValues() { return intValues; }
 
     @Override
     public String toString() {
