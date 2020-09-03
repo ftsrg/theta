@@ -29,6 +29,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.*;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,10 +43,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.ItpSolver;
 
 public final class Z3ItpSolverTest {
 
@@ -90,10 +89,12 @@ public final class Z3ItpSolverTest {
 		solver.add(B, Neq(c, d));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(A));
 		System.out.println("----------");
+		Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
 	}
 
 	@Test
@@ -110,6 +111,7 @@ public final class Z3ItpSolverTest {
 		solver.add(I3, Neq(d, e));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(I1));
@@ -133,6 +135,7 @@ public final class Z3ItpSolverTest {
 		solver.add(I3, Eq(b, c));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(I1));
@@ -152,6 +155,7 @@ public final class Z3ItpSolverTest {
 		solver.add(B, Neq(App(g, c), App(g, d)));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(A));
@@ -168,6 +172,7 @@ public final class Z3ItpSolverTest {
 		solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(A));
@@ -197,6 +202,7 @@ public final class Z3ItpSolverTest {
 		solver.add(B, App(q, i));
 
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(A));
@@ -216,11 +222,13 @@ public final class Z3ItpSolverTest {
 
 		solver.add(A, Neq(a, c));
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 
 		solver.pop();
 
 		solver.add(B, Neq(a, c));
 		solver.check();
+		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 		final Interpolant itp = solver.getInterpolant(pattern);
 
 		System.out.println(itp.eval(A));
