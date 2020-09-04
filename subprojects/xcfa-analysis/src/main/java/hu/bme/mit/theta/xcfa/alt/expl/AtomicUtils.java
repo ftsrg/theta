@@ -38,4 +38,6 @@ final class AtomicUtils {
         Preconditions.checkState(state.getAtomicLock() == process, "An (atomic end) transition ran from a different process");
         state.setAtomicLock(null);
     }
+
+    private AtomicUtils() { }
 }

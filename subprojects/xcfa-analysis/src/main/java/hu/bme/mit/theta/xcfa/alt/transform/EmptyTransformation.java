@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.xcfa.alt.transform;
 
 import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
@@ -19,7 +18,7 @@ import java.util.Optional;
 class EmptyTransformation {
     protected final XCFA old;
 
-    private Map<Object, Object> cache = new HashMap<>();
+    private final Map<Object, Object> cache = new HashMap<>();
     private final List<CallRegistration> callStmts = new ArrayList<>();
 
     EmptyTransformation(XCFA old) {
@@ -182,10 +181,10 @@ class EmptyTransformation {
     }
 
     /**
-     * For post-processing a build. For example, adding new processes
+     * For post-processing a build. For example, adding new processes or variables.
      * @param builder
      */
     protected void beforeBuild(XCFA.Builder builder) {
-
+        // Intentionally empty.
     }
 }

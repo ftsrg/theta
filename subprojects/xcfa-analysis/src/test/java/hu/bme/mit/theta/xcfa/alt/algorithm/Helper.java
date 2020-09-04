@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import org.junit.Assert;
 
-public class Helper {
+class Helper {
 
     public static void printTrace(Trace<? extends State, ? extends Action> trace) {
         System.err.println("Trace:");
@@ -22,5 +22,9 @@ public class Helper {
         }
         Assert.assertFalse(String.format("Error reached, but it shouldn't have been. Error: %s", result), shouldWork && !result.isSafe());
         Assert.assertFalse("Error or deadlock is not reached, but it should have been.", !shouldWork && result.isSafe());
+    }
+
+    private Helper() {
+
     }
 }

@@ -21,7 +21,6 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.expl.ExplState;
 import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 import hu.bme.mit.theta.xcfa.alt.expl.TransitionUtils;
-import hu.bme.mit.theta.xcfa.alt.transform.DefaultTransformation;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,6 +40,7 @@ import static org.junit.runners.Parameterized.Parameters;
  * Tests if for all finished (safe or unsafe) path (checked by ExplicitChecker),
  * there is a stuttering equivalent that is checked here.
  * Only tests the safe inputs. Its output probably only makes sense where
+ * TODO probably erroneous
  */
 @RunWith(Parameterized.class)
 public class DynamicPOCheckerCompletenessTest {

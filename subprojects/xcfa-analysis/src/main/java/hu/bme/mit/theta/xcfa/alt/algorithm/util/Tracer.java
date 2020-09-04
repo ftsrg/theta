@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-// TODO rename
-public class Tracer {
+public final class Tracer {
 
     private Tracer() { }
 

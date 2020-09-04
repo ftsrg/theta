@@ -29,16 +29,16 @@ public class DefaultTransformation extends EmptyTransformation {
 
     private final Config config;
 
-    public DefaultTransformation(XCFA old, Config config) {
-        super(old);
-        this.config = config;
-    }
-
     /**
      * Circular dependency in Builder pattern -> save the stmts
      * Mapped to the old process, so it can be transformed
      */
-    Map<InternalNotifyStmt, XCFA.Process> internalNotifyStmts = new HashMap<>();
+    private Map<InternalNotifyStmt, XCFA.Process> internalNotifyStmts = new HashMap<>();
+
+    public DefaultTransformation(XCFA old, Config config) {
+        super(old);
+        this.config = config;
+    }
 
     /**
      * For every global synthetic variable, creates a spurious wake-up call thread.

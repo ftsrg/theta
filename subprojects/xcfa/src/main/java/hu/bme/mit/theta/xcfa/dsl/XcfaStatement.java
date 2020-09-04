@@ -211,7 +211,7 @@ final class XcfaStatement {
 			final InstantiatableSymbol symbol1 = (InstantiatableSymbol) opt1.get();
 			final InstantiatableSymbol symbol2 = (InstantiatableSymbol) opt2.get();
 			final VarDecl<?> var1 = (VarDecl<?>) symbol1.instantiate();
-			final VarDecl<?> var2 = (VarDecl<?>) symbol1.instantiate();
+			final VarDecl<?> var2 = (VarDecl<?>) symbol2.instantiate();
 			return new WaitStmt(var1, var2);
 		}
 		@Override

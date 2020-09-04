@@ -58,10 +58,10 @@ public class ExplStateResultTest {
         StringBuilder builder = new StringBuilder();
         builder.append("Trace:\n");
         for (int i = 0; i < transitions.size(); i++) {
-            builder.append(states.get(i)).append("\n");
-            builder.append(transitions.get(i)).append("\n");
+            builder.append(states.get(i)).append('\n');
+            builder.append(transitions.get(i)).append('\n');
         }
-        builder.append(states.get(states.size() - 1)).append("\n");
+        builder.append(states.get(states.size() - 1)).append('\n');
         return builder.toString();
     }
 

@@ -78,4 +78,5 @@ public final class LocalityUtils {
                 .findAny();
     }
 
+    private LocalityUtils() { }
 }

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * Helps return the list of good tests.
  */
-public class FileListHelper {
+class FileListHelper {
 
     public interface Config {
         boolean atomicSupported();
@@ -207,4 +207,6 @@ public class FileListHelper {
 
         return result;
     }
+
+    private FileListHelper() { }
 }

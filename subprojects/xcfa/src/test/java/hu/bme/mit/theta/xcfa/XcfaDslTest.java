@@ -106,6 +106,7 @@ public final class XcfaDslTest {
 	public void test() throws IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+		inputStream.close();
 		Assert.assertEquals(globalVarCount, xcfa.getGlobalVars().size());
 		Assert.assertEquals(processCount, xcfa.getProcesses().size());
 		for (int i = 0; i < xcfa.getProcesses().size(); ++i) {

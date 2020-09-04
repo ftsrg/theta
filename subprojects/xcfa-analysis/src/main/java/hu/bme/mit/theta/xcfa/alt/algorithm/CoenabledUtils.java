@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xcfa.alt.expl.Transition;
 /**
  * Dynamic partial ordering has a notion of co-enabledness, which tries to capture usage of locking.
  */
-public class CoenabledUtils {
+public final class CoenabledUtils {
 
     private CoenabledUtils() { }
 

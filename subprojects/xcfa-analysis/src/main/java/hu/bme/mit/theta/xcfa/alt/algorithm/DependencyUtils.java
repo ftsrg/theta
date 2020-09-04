@@ -38,7 +38,7 @@ import java.util.Collection;
  * If any depends on any transition, then they are dependent.
  * For two transition sets, any depends any -> dependent
  */
-public class DependencyUtils {
+public final class DependencyUtils {
 
     /**
      * Returns whether the two collections have elements in common.
@@ -69,4 +69,6 @@ public class DependencyUtils {
     public static boolean depends(ProcessTransitions pt, ProcessTransitions tr) {
         return pt.transitionStream().anyMatch(t->depends(tr, t));
     }
+
+    private DependencyUtils() { }
 }

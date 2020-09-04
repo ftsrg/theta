@@ -26,4 +26,6 @@ public final class MapCollector {
             return orderedCollector(kk, vv);
         return normalCollector(kk, vv);
     }
+
+    private MapCollector() { }
 }

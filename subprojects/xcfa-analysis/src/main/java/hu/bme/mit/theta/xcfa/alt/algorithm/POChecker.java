@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.alt.algorithm;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionBase;
 import hu.bme.mit.theta.xcfa.alt.expl.ExecutableTransitionUtils;

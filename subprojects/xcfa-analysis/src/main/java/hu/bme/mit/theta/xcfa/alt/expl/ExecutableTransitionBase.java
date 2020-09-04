@@ -107,7 +107,12 @@ public class ExecutableTransitionBase implements Transition, TransitionExecutorI
         return transition;
     }
 
-    // TODO find a solution
+
+    // TODO different ExecutableTransitions are a pain. Find some solution.
+
+    /**
+     * Do not use. Use TransitionUtils.equals(a,b) instead
+     */
     public boolean equals(Object obj) {
         throw new UnsupportedOperationException("Use TransitionUtils for checking equality of Transitions!");
     }

@@ -33,6 +33,7 @@ public class ExplStateTest {
     public  void init() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream("/functions-global-local.xcfa");
         xcfa = XcfaDslManager.createXcfa(inputStream);
+        inputStream.close();
     }
 
     @Test
