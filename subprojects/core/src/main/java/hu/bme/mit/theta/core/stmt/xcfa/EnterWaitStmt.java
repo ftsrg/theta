@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
  * Pseudo stmt not found in an XCFA grammar. The Wait has to be split for xcfa-analysis subproject.
  * This represents the first phase when the thread enters the waiting state, and notify can bring that out, while
  * releasing the lock.
+ * TODO does not separate mutex and condition variable!
  */
 public class EnterWaitStmt extends XcfaStmt {
 

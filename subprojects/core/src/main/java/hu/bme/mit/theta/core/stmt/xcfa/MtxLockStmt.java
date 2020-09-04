@@ -19,12 +19,13 @@ package hu.bme.mit.theta.core.stmt.xcfa;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
-public class MtxUnlock extends XcfaStmt {
-	private final VarDecl<?> syncVar;
+public class MtxLockStmt extends XcfaStmt {
+	private final VarDecl<SyntheticType> syncVar;
 
-	public MtxUnlock(VarDecl<?> lhs) {
-		syncVar = lhs;
+	public MtxLockStmt(VarDecl<?> lhs) {
+		syncVar = (VarDecl<SyntheticType>)lhs;
 	}
 
 	@Override
@@ -37,7 +38,7 @@ public class MtxUnlock extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getSyncVar() {
+	public VarDecl<SyntheticType> getSyncVar() {
 		return syncVar;
 	}
 }

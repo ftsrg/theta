@@ -16,8 +16,24 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.*;
-import hu.bme.mit.theta.core.stmt.xcfa.*;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.Collection;
@@ -114,14 +130,13 @@ final class WrittenVarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collectio
     }
 
     @Override
-    public Void visit(LockStmt lockStmt, Collection<VarDecl<?>> param) {
+    public Void visit(MtxLockStmt lockStmt, Collection<VarDecl<?>> param) {
         param.add(lockStmt.getSyncVar());
         return null;
     }
 
     @Override
-    public Void visit(UnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
-        // TODO is this needed here?
+    public Void visit(MtxUnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
         param.add(unlockStmt.getSyncVar());
         return null;
     }

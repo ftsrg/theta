@@ -64,12 +64,12 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R>{
     }
 
     @Override
-    public R visit(LockStmt lockStmt, P param) {
+    public R visit(MtxLockStmt lockStmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public R visit(UnlockStmt unlockStmt, P param) {
+    public R visit(MtxUnlockStmt unlockStmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 

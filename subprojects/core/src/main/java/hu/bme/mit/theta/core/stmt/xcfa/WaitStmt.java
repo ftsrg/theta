@@ -16,18 +16,20 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
-import com.google.common.base.Optional;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
+
+import java.util.Optional;
 
 public class WaitStmt extends XcfaStmt {
-	private final VarDecl<?> cndSyncVar;
-	private final Optional<VarDecl<?>> mtxSyncVar;
+	private final VarDecl<SyntheticType> cndSyncVar;
+	private final Optional<VarDecl<SyntheticType>> mtxSyncVar;
 
 	public WaitStmt(VarDecl<?> cnd, VarDecl<?> mtx) {
-		cndSyncVar = cnd;
-		mtxSyncVar = Optional.fromNullable(mtx);
+		cndSyncVar = (VarDecl<SyntheticType>)cnd;
+		mtxSyncVar = Optional.ofNullable((VarDecl<SyntheticType>)mtx);
 	}
 	public WaitStmt(VarDecl<?> cnd) {
 		this(cnd, null);
@@ -43,10 +45,11 @@ public class WaitStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getCndSyncVar() {
+	public VarDecl<SyntheticType> getCndSyncVar() {
 		return cndSyncVar;
 	}
-	public Optional<VarDecl<?>> getMtxSyncVar() {
+
+	public Optional<VarDecl<SyntheticType>> getMtxSyncVar() {
 		return mtxSyncVar;
 	}
 }

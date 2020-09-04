@@ -22,12 +22,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLock;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlock;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -252,7 +251,7 @@ final class XcfaStatement {
 			checkState(opt.isPresent());
 			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxLock(lhs);
+			return new MtxLockStmt(lhs);
 		}
 
 		@Override
@@ -262,7 +261,7 @@ final class XcfaStatement {
 			checkState(opt.isPresent());
 			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxUnlock(lhs);
+			return new MtxUnlockStmt(lhs);
 		}
 
 	}
