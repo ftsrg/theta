@@ -13,6 +13,8 @@ include(
         "sts-analysis",
         "sts-cli",
         "xcfa",
+        "xcfa-cli-stateless",
+        "xcfa-analysis",
         "xcfa-cli-legacy",
         "xta",
         "xta-analysis",
