@@ -13,19 +13,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.cfa.analysis;
+package hu.bme.mit.theta.cfa.analysis.stateless;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import hu.bme.mit.theta.xcfa.XCFA;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
-import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.cfa.CFA.Loc;
+public final class StatelessMC {
 
-public final class XcfaAnalysis {
+    private StatelessMC(XCFA xcfa) {
 
+    }
 
+    private boolean verify() {
+        return true;
+    }
+
+    public static boolean check(XCFA xcfa) {
+        final StatelessMC statelessMC = new StatelessMC(xcfa);
+        return statelessMC.verify();
+    }
 }
