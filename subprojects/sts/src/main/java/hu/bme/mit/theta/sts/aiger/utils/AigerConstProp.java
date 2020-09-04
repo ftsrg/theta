@@ -30,7 +30,7 @@ import hu.bme.mit.theta.sts.aiger.elements.Latch;
 /**
  * Constant propagation for AIGER systems.
  */
-public class AigerConstProp {
+public final class AigerConstProp {
 
 	private AigerConstProp() {
 	}

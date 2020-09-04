@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
-import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ArrayIdContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.FunctionDeclContext;
@@ -100,9 +99,23 @@ final class XtaSpecification implements Scope {
 					final String name = createName(processSymbol, argumentList);
 					processSymbol.instantiate(system, name, argumentList, env);
 				}
-
 			} else if (symbol instanceof XtaInstantiationSymbol) {
-				throw new UnsupportedOperationException();
+				final XtaInstantiationSymbol instantiationSymbol = (XtaInstantiationSymbol) symbol;
+				final String procName = instantiationSymbol.getProcName();
+				final Optional<Symbol> optSymbol = resolve(procName);
+				if (optSymbol.isEmpty()) {
+					throw new RuntimeException("Symbol \"" + procName + "\" is undefined.");
+				} else {
+					Symbol someSymbol = optSymbol.get();
+					if (someSymbol instanceof XtaProcessSymbol) {
+						final XtaProcessSymbol processSymbol = (XtaProcessSymbol) someSymbol;
+						final String name = instantiationSymbol.getName();
+						final List<Expr<?>> argumentList = instantiationSymbol.getArgumentList(env);
+						processSymbol.instantiate(system, name, argumentList, env);
+					} else {
+						throw new RuntimeException("Symbol \"" + procName + "\" is not a template.");
+					}
+				}
 			} else {
 				throw new AssertionError();
 			}
@@ -131,7 +144,7 @@ final class XtaSpecification implements Scope {
 			if (variable.isConstant()) {
 				// do nothing; will be defined lazily on first occurrence
 			} else {
-				final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate(variable.getName(), env);
+				final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate("", env);
 				if (instantiateResult.isChannel()) {
 					final Label label = instantiateResult.asChannel().getLabel();
 					env.define(variable, label);
@@ -210,7 +223,7 @@ final class XtaSpecification implements Scope {
 	}
 
 	private void declare(final InstantiationContext context) {
-		final XtaInstantiationSymbol processSymbol = new XtaInstantiationSymbol(context);
+		final XtaInstantiationSymbol processSymbol = new XtaInstantiationSymbol(this, context);
 		symbolTable.add(processSymbol);
 	}
 

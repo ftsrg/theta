@@ -321,7 +321,7 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformIte(final IteExpr<?> expr) {
-		final com.microsoft.z3.BoolExpr condTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getCond());
+		final BoolExpr condTerm = (BoolExpr) toTerm(expr.getCond());
 		final com.microsoft.z3.Expr thenTerm = toTerm(expr.getThen());
 		final com.microsoft.z3.Expr elzeTerm = toTerm(expr.getElse());
 		return context.mkITE(condTerm, thenTerm, elzeTerm);
@@ -341,38 +341,38 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformNot(final NotExpr expr) {
-		final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
+		final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
 		return context.mkNot(opTerm);
 	}
 
 	private com.microsoft.z3.Expr transformImply(final ImplyExpr expr) {
-		final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
+		final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
+		final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
 		return context.mkImplies(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformIff(final IffExpr expr) {
-		final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
+		final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
+		final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
 		return context.mkIff(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformXor(final XorExpr expr) {
-		final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
+		final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
+		final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
 		return context.mkXor(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {
-		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.BoolExpr) toTerm(e))
+		final BoolExpr[] opTerms = expr.getOps().stream()
+			.map(e -> (BoolExpr) toTerm(e))
 			.toArray(BoolExpr[]::new);
 		return context.mkAnd(opTerms);
 	}
 
 	private com.microsoft.z3.Expr transformOr(final OrExpr expr) {
-		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.BoolExpr) toTerm(e))
+		final BoolExpr[] opTerms = expr.getOps().stream()
+			.map(e -> (BoolExpr) toTerm(e))
 			.toArray(BoolExpr[]::new);
 		return context.mkOr(opTerms);
 	}
@@ -380,8 +380,8 @@ final class Z3ExprTransformer {
 	private com.microsoft.z3.Expr transformExists(final ExistsExpr expr) {
 		env.push();
 		final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
-		final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
-		final com.microsoft.z3.BoolExpr result = context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
+		final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
+		final BoolExpr result = context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
 		env.pop();
 		return result;
 	}
@@ -389,8 +389,8 @@ final class Z3ExprTransformer {
 	private com.microsoft.z3.Expr transformForall(final ForallExpr expr) {
 		env.push();
 		final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
-		final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
-		final com.microsoft.z3.BoolExpr result = context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
+		final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
+		final BoolExpr result = context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
 		env.pop();
 		return result;
 	}

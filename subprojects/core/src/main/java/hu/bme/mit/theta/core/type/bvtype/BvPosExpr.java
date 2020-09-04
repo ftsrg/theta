@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
-public class BvPosExpr extends PosExpr<BvType> {
+public final class BvPosExpr extends PosExpr<BvType> {
 
     private static final int HASH_SEED = 8962;
     private static final String OPERATOR_LABEL = "+";

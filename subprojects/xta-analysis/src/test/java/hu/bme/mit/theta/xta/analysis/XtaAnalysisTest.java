@@ -39,10 +39,6 @@ import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
-import hu.bme.mit.theta.xta.analysis.XtaLts;
-import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
@@ -60,7 +56,9 @@ public final class XtaAnalysisTest {
 
 				{"/fischer-2-32-64.xta"},
 
-				{"/lynch-2-16.xta"}
+				{"/lynch-2-16.xta"},
+
+				{"/broadcast.xta"},
 
 		});
 	}

@@ -15,30 +15,22 @@
  */
 package hu.bme.mit.theta.xta.analysis.expl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static java.util.Collections.singleton;
-
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xta.XtaSystem;
+
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singleton;
 
 final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 
-	private final Collection<VarDecl<?>> varDecls;
+	private final XtaSystem system;
 
 	private XtaExplInitFunc(final XtaSystem system) {
-		checkNotNull(system);
-		varDecls = system.getDataVars();
+		this.system = checkNotNull(system);
 	}
 
 	public static XtaExplInitFunc create(final XtaSystem system) {
@@ -48,18 +40,7 @@ final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 	@Override
 	public Collection<ExplState> getInitStates(final UnitPrec prec) {
 		checkNotNull(prec);
-		final MutableValuation val = new MutableValuation();
-		for (final VarDecl<?> varDecl : varDecls) {
-			final Type type = varDecl.getType();
-			if (type instanceof BoolType) {
-				val.put(varDecl, False());
-			} else if (type instanceof IntType) {
-				val.put(varDecl, Int(0));
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		}
-		final ExplState initState = ExplState.of(val);
+		final ExplState initState = ExplState.of(system.getInitVal());
 		return singleton(initState);
 	}
 

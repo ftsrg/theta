@@ -29,7 +29,7 @@ import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.SyncedXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaActZoneUtils {
 
@@ -43,10 +43,10 @@ public final class XtaActZoneUtils {
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (action.isBasic()) {
-			final BasicXtaAction simpleAction = action.asBasic();
+			final BasicXtaAction basicAction = action.asBasic();
 
-			final List<Update> updates = simpleAction.getEdge().getUpdates();
-			final Collection<Guard> guards = simpleAction.getEdge().getGuards();
+			final List<Update> updates = basicAction.getEdge().getUpdates();
+			final Collection<Guard> guards = basicAction.getEdge().getGuards();
 
 			for (final Loc loc : targetLocs) {
 				for (final Guard invar : loc.getInvars()) {
@@ -78,12 +78,12 @@ public final class XtaActZoneUtils {
 				}
 			}
 
-		} else if (action.isSynced()) {
+		} else if (action.isBinary()) {
 
-			final SyncedXtaAction syncedAction = action.asSynced();
+			final BinaryXtaAction binaryAction = action.asBinary();
 
-			final Edge emittingEdge = syncedAction.getEmitEdge();
-			final Edge receivingEdge = syncedAction.getRecvEdge();
+			final Edge emittingEdge = binaryAction.getEmitEdge();
+			final Edge receivingEdge = binaryAction.getRecvEdge();
 
 			for (final Loc loc : targetLocs) {
 				for (final Guard invar : loc.getInvars()) {

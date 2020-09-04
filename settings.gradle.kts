@@ -17,7 +17,10 @@ include(
         "xcfa-analysis",
         "xta",
         "xta-analysis",
-        "xta-cli"
+        "xta-cli",
+        "xsts",
+        "xsts-analysis",
+        "xsts-cli"
 )
 
 for (project in rootProject.children) {
