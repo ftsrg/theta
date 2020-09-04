@@ -1,0 +1,42 @@
+var x : int
+
+// process1:
+// while (true) { skip; }
+
+// process2:
+// skip;
+
+// el kell failelnie
+
+main process process1 {
+
+	main procedure mainProcedure(){
+        init loc L0
+        loc L1
+        final loc L2
+        var y : int
+
+        L0 -> L1 {
+            y := y
+        }
+        L1 -> L0 {
+            y := y
+        }
+	}
+}
+
+process process2 {
+
+	main procedure mainProcedure(){
+        init loc L0
+        final loc L1
+        error loc LE
+        var y : int
+        L0 -> L1 {
+            y := y
+        }
+        L0 -> LE {
+            y := y
+        }
+	}
+}
