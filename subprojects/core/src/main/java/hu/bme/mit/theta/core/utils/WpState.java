@@ -220,7 +220,7 @@ public final class WpState {
 
 		@Override
 		public WpState visit(OrtStmt stmt, WpState param) {
-			hrow new UnsupportedOperationException();
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

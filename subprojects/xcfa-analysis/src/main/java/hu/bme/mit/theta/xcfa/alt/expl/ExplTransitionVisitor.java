@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.alt.expl;
 
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -149,6 +145,21 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
     @Override
     public Optional<TransitionExecutorInterface> visit(XcfaStmt xcfaStmt, ExplStateReadOnlyInterface readOnlyState) {
         return xcfaStmt.accept(this, readOnlyState);
+    }
+
+    @Override
+    public Optional<TransitionExecutorInterface> visit(SequenceStmt stmt, ExplStateReadOnlyInterface param) {
+        throw new UnsupportedOperationException("Operation not supported!");
+    }
+
+    @Override
+    public Optional<TransitionExecutorInterface> visit(NonDetStmt stmt, ExplStateReadOnlyInterface param) {
+        throw new UnsupportedOperationException("Operation not supported!");
+    }
+
+    @Override
+    public Optional<TransitionExecutorInterface> visit(OrtStmt stmt, ExplStateReadOnlyInterface param) {
+        throw new UnsupportedOperationException("Operation not supported!");
     }
 
 }
