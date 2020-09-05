@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
@@ -11,13 +12,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-public final class BvConcatExpr extends MultiaryExpr<BvType, BvType> {
+public final class BvConcatExpr implements Expr<BvType> {
     private static final int HASH_SEED = 8264;
     private static final String OPERATOR_LABEL = "++";
 
+    private final List<Expr<BvType>> ops;
+
+    private volatile int hashCode = 0;
+
     private BvConcatExpr(final Iterable<? extends Expr<BvType>> ops) {
-        super(ops);
-        checkArgument(ops.iterator().hasNext(), "It needs to have at least one operand");
+        checkNotNull(ops);
+        checkArgument(ops.iterator().hasNext());
+        this.ops = ImmutableList.copyOf(ops);
     }
 
     public static BvConcatExpr of(final Iterable<? extends Expr<BvType>> ops) {
@@ -30,8 +36,13 @@ public final class BvConcatExpr extends MultiaryExpr<BvType, BvType> {
     }
 
     @Override
+    public int getArity() {
+        return ops.size();
+    }
+
+    @Override
     public BvType getType() {
-        return BvType.of(getOps().stream().map(e -> e.getType().getSize()).reduce(0, Integer::sum));
+        return BvType.of(ops.stream().map(o -> o.getType().getSize()).reduce(0, Integer::sum));
     }
 
     @Override
@@ -44,12 +55,27 @@ public final class BvConcatExpr extends MultiaryExpr<BvType, BvType> {
     }
 
     @Override
-    public BvConcatExpr with(final Iterable<? extends Expr<BvType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return BvConcatExpr.of(ops);
+    public List<? extends Expr<BvType>> getOps() {
+        return ops;
+    }
+
+    @Override
+    public Expr<BvType> withOps(List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        checkArgument(ops.size() >= 1);
+
+        return of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + getOps().hashCode();
+            hashCode = result;
         }
+        return result;
     }
 
     @Override
@@ -65,12 +91,7 @@ public final class BvConcatExpr extends MultiaryExpr<BvType, BvType> {
     }
 
     @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+    public String toString() {
+        return Utils.lispStringBuilder(OPERATOR_LABEL).addAll(getOps()).toString();
     }
 }

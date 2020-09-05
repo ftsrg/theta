@@ -204,9 +204,9 @@ public final class ExprWriter {
 
 				// Bitvector
 
-				.addCase(BvConcatExpr.class, e -> infixMultiary(e, " ++ "))
+				.addCase(BvConcatExpr.class, this::bvConcat)
 
-				.addCase(BvExtractExpr.class, e -> bvExtract(e))
+				.addCase(BvExtractExpr.class, this::bvExtract)
 
 				.addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
 
@@ -336,6 +336,18 @@ public final class ExprWriter {
 	private String exists(final ExistsExpr e) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private String bvConcat(final BvConcatExpr expr) {
+		final StringBuilder sb = new StringBuilder();
+		final int ops = expr.getOps().size();
+		for (int i = 0; i < ops; ++i) {
+			sb.append(writeWithBrackets(expr.getOps().get(i)));
+			if (i != ops - 1) {
+				sb.append(" ++ ");
+			}
+		}
+		return sb.toString();
 	}
 
 	private String bvExtract(final BvExtractExpr e) {

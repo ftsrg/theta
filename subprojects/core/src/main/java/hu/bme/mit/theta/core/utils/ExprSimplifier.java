@@ -1046,7 +1046,7 @@ public final class ExprSimplifier {
 				iterator.remove();
 			}
 			else {
-				return expr.with(ops);
+				return expr.withOps(ops);
 			}
 		}
 
