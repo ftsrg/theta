@@ -243,7 +243,7 @@ public class CfaCli {
 	}
 
 	private String getFileExtension(String name) {
-		int lastIndexOf = name.lastIndexOf(".");
+		int lastIndexOf = name.lastIndexOf('.');
 		if (lastIndexOf == -1) return "";
 		return name.substring(lastIndexOf + 1);
 	}
