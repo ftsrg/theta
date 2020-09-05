@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
@@ -65,6 +66,20 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
             concated[this.getType().getSize() + i] = that.getValue()[i];
         }
         return Bv(concated);
+    }
+
+    public BvLitExpr extract(final IntLitExpr from, final IntLitExpr until) {
+        final int fromValue = from.getValue().intValue();
+        final int untilValue = until.getValue().intValue();
+        checkArgument(fromValue >= 0);
+        checkArgument(untilValue >= 0);
+        checkArgument(untilValue >= fromValue);
+
+        boolean[] extracted = new boolean[untilValue - fromValue + 1];
+        for(int i = 0; i < extracted.length; i++) {
+            extracted[i] = this.getValue()[fromValue + i];
+        }
+        return Bv(extracted);
     }
 
     public BvLitExpr add(final BvLitExpr that) {

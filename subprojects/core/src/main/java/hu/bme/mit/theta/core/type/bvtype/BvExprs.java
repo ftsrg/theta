@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 
 import java.util.List;
 
@@ -20,6 +21,10 @@ public final class BvExprs {
 
     public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
         return BvConcatExpr.of(ops);
+    }
+
+    public static BvExtractExpr Extract(final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
+        return BvExtractExpr.of(bitvec, from, until);
     }
 
     public static BvAddExpr Add(final Iterable<? extends Expr<BvType>> ops) {
