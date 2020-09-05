@@ -15,13 +15,14 @@
  */
 package hu.bme.mit.theta.core.decl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Type;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents a variable declaration. Variables cannot be directly passed to the SMT solver,
@@ -31,11 +32,13 @@ import hu.bme.mit.theta.core.type.Type;
  */
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "var";
+	private final LitExpr<DeclType> initValue;
 
 	private final Map<Integer, IndexedConstDecl<DeclType>> indexToConst;
 
-	VarDecl(final String name, final DeclType type) {
+	VarDecl(final String name, final DeclType type, LitExpr<DeclType> initValue) {
 		super(name, type);
+		this.initValue = initValue;
 		indexToConst = new HashMap<>();
 	}
 
@@ -54,4 +57,7 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 		return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
 	}
 
+	public LitExpr<DeclType> getInitValue() {
+		return initValue;
+	}
 }

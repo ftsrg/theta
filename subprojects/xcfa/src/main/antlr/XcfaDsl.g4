@@ -21,7 +21,7 @@ spec:	(varDecls+=varDecl | processDecls+=processDecl)*
 	;
 
 varDecl
-	:	VAR ddecl=decl
+	:	VAR ddecl=decl (LPAREN initexpr=primaryExpr RPAREN)?
 	;
 
 processDecl

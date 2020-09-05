@@ -25,12 +25,19 @@ final class XcfaVariableSymbol extends InstantiatableSymbol<VarDecl<?>> {
 
 	private final String name;
 	private final XcfaType type;
+	private final XcfaLitExpression initExpr;
 	private VarDecl<?> var = null;
 
 	XcfaVariableSymbol(final VarDeclContext context) {
 		checkNotNull(context);
 		name = context.ddecl.name.getText();
 		type = new XcfaType(context.ddecl.ttype);
+		if(context.initexpr != null) {
+			initExpr = new XcfaLitExpression(context.initexpr);
+		}
+		else {
+			initExpr = null;
+		}
 	}
 
 	@Override
@@ -40,7 +47,12 @@ final class XcfaVariableSymbol extends InstantiatableSymbol<VarDecl<?>> {
 
 	public VarDecl<?> instantiate() {
 		if (var != null) return var;
-		return var = Var(name, type.instantiate());
+		if(initExpr != null) {
+			return var = Var(name, type.instantiate(), initExpr.instantiate());
+		}
+		else {
+			return var = Var(name, type.instantiate());
+		}
 	}
 
 }

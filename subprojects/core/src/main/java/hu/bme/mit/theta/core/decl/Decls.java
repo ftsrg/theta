@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.decl;
 
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 /**
@@ -54,8 +56,11 @@ public final class Decls {
 	 * @param <T>
 	 * @return
 	 */
+	public static <T extends Type> VarDecl<T> Var(final String name, final T type, final Expr<?> initValue) {
+		return new VarDecl<>(name, type, (LitExpr<T>)initValue);
+	}
 	public static <T extends Type> VarDecl<T> Var(final String name, final T type) {
-		return new VarDecl<>(name, type);
+		return new VarDecl<>(name, type, null);
 	}
 
 }

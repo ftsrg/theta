@@ -1,6 +1,6 @@
 main process cfa {
 main procedure mainProc(){
-	var x : int
+	var x : int (0)
 
 	init loc L0
     loc L1

@@ -1,0 +1,18 @@
+var init_end : bool
+var x : int
+main process mainProcess {
+    main procedure mainProcedure (){
+        init loc L0
+        final loc Lf
+        L0 -> Lf {
+            x := 0
+            init_end := true
+        }
+    }
+}
+process p0 {
+    main procedure mainProcedure (){
+        init loc L0
+        final loc Lf
+    }
+}
