@@ -13,7 +13,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvMulExpr extends MulExpr<BvType> {
     private static final int HASH_SEED = 9825;
-    private static final String OPERATOR_LABEL = "*";
+    private static final String OPERATOR_LABEL = "bvmul";
 
     private BvMulExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);

@@ -13,7 +13,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvAndExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9125;
-    private static final String OPERATOR_LABEL = "&";
+    private static final String OPERATOR_LABEL = "bvand";
 
     private BvAndExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);

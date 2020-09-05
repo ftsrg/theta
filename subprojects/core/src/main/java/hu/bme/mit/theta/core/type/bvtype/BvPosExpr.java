@@ -4,17 +4,15 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvPosExpr extends PosExpr<BvType> {
 
     private static final int HASH_SEED = 8962;
-    private static final String OPERATOR_LABEL = "+";
+    private static final String OPERATOR_LABEL = "bvpos";
 
     private BvPosExpr(final Expr<BvType> op) {
         super(op);
-        checkArgument(op.getType().isSigned(), "Only signed bitvector can be negated");
     }
 
     public static BvPosExpr of(final Expr<BvType> op) {

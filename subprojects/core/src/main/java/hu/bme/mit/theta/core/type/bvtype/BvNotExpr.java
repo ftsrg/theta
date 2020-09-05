@@ -9,7 +9,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 public final class BvNotExpr extends NegExpr<BvType> {
 
     private static final int HASH_SEED = 1527;
-    private static final String OPERATOR_LABEL = "~";
+    private static final String OPERATOR_LABEL = "bvnot";
 
     private BvNotExpr(final Expr<BvType> op) {
         super(op);

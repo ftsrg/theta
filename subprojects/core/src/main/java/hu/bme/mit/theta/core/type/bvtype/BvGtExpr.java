@@ -13,7 +13,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 public final class BvGtExpr extends GtExpr<BvType> {
 
     private static final int HASH_SEED = 6231;
-    private static final String OPERATOR_LABEL = ">";
+    private static final String OPERATOR_LABEL = "bvgt";
 
     private BvGtExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
