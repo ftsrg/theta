@@ -1,15 +1,13 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class State {
 
@@ -76,14 +74,14 @@ public class State {
         this.currentlyAtomic = currentlyAtomic;
     }
 
-    public XCFA.Process.Procedure.Edge getOneStep() {
-        for(XCFA.Process process : xcfa.getProcesses()) {
+    public Tuple2<XCFA.Process, XCFA.Process.Procedure.Edge> getOneStep() {
+        for(XCFA.Process process : currentlyAtomic == null ? xcfa.getProcesses() : Collections.singleton(currentlyAtomic)) {
             for(XCFA.Process.Procedure.Edge edge : currentLocs.get(process).getOutgoingEdges()) {
                 boolean disabled = false;
                 for(Stmt stmt : edge.getStmts()) {
                     if(stmt instanceof AssumeStmt) {
                         if(((BoolLitExpr)((AssumeStmt) stmt).getCond().eval(mutableValuation)).getValue()) {
-                            return edge;
+                            return Tuple2.of(process, edge);
                         }
                         else {
                             disabled = true;
@@ -91,7 +89,9 @@ public class State {
                         }
                     }
                 }
-                if(!disabled) return edge;
+                if(!disabled) {
+                    return Tuple2.of(process, edge);
+                }
             }
         }
         return null;

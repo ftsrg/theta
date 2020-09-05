@@ -218,6 +218,8 @@ public final class XCFA {
 
 			public static final class Location {
 				private final String name;
+				private boolean isErrorLoc = false;
+				private boolean isEndLoc = false;
 
 				private final Map<String, String> dictionary;
 
@@ -250,6 +252,22 @@ public final class XCFA {
 				@Override
 				public String toString() {
 					return name;
+				}
+
+				public boolean isErrorLoc() {
+					return isErrorLoc;
+				}
+
+				public void setErrorLoc(boolean errorLoc) {
+					isErrorLoc = errorLoc;
+				}
+
+				public boolean isEndLoc() {
+					return isEndLoc;
+				}
+
+				public void setEndLoc(boolean endLoc) {
+					isEndLoc = endLoc;
 				}
 			}
 
@@ -393,6 +411,7 @@ public final class XCFA {
 					checkArgument(initLoc == null || !initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
 					checkArgument(finalLoc == null || !finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
 					this.errorLoc = errorLoc;
+					errorLoc.setErrorLoc(true);
 				}
 
 				public Location getFinalLoc() {
@@ -405,6 +424,7 @@ public final class XCFA {
 					//checkArgument(!errorLoc.equals(finalLoc), "Final location cannot be the same as error location.");
 					checkArgument(initLoc == null || !initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
 					this.finalLoc = finalLoc;
+					finalLoc.setEndLoc(true);
 				}
 
 				public Procedure build() {
