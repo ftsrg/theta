@@ -13,6 +13,9 @@ import static hu.bme.mit.theta.core.utils.BvUtils.sint16ToBvLitExpr;
 import static hu.bme.mit.theta.core.utils.BvUtils.uint16ToBvLitExpr;
 
 public class BvTestUtils {
+
+    private BvTestUtils() {}
+
     public static Collection<?> BasicOperations() {
         return Arrays.asList(new Object[][] {
             /* Unsigned basic operations */
