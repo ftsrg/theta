@@ -4,7 +4,7 @@ import hu.bme.mit.theta.analysis.State;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class DefaultPreStrengtheningOperator<S1 extends State, S2 extends State> implements PreStrengtheningOperator<S1, S2> {
+public final class DefaultPreStrengtheningOperator<S1 extends State, S2 extends State> implements PreStrengtheningOperator<S1, S2> {
 
     private DefaultPreStrengtheningOperator(){}
 
