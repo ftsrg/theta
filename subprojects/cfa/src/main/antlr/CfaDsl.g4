@@ -214,8 +214,12 @@ additiveExpr
 	;
 
 multiplicativeExpr
-	:	ops+=unaryExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM) ops+=unaryExpr)*
+	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM) ops+=bvConcatExpr)*
 	;
+
+bvConcatExpr
+    :   ops+=unaryExpr (opers+=BV_CONCAT ops+=unaryExpr)*
+    ;
 
 unaryExpr
 	:	bitwiseNotExpr
@@ -236,6 +240,7 @@ access
 	|	readIndex=arrayReadAccess
 	|	writeIndex=arrayWriteAccess
 	|	prime=primeAccess
+	|   bvExtract=bvExtractAccess
 	;
 
 funcAccess
@@ -253,6 +258,10 @@ arrayWriteAccess
 primeAccess
 	:	QUOT
 	;
+
+bvExtractAccess
+    :   LBRACK from=INT COLON until=INT RBRACK
+    ;
 
 primaryExpr
 	:	trueExpr
@@ -376,6 +385,10 @@ REM	:	'rem'
 PERCENT
 	:	'%'
 	;
+
+BV_CONCAT
+    :   PLUS PLUS
+    ;
 
 BV_ADD
     :   'bvadd'
