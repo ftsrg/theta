@@ -1,30 +1,30 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvDivExpr extends DivExpr<BvType> {
-    private static final int HASH_SEED = 9832;
+public final class BvSDivExpr extends BinaryExpr<BvType, BvType> {
+    private static final int HASH_SEED = 9830;
 
-    private static final String OPERATOR_LABEL = "bvdiv";
+    private static final String OPERATOR_LABEL = "bvsdiv";
 
-    private BvDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    private BvSDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
         checkAllTypesEqual(leftOp, rightOp);
     }
 
-    public static BvDivExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvDivExpr(leftOp, rightOp);
+    public static BvSDivExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return new BvSDivExpr(leftOp, rightOp);
     }
 
-    public static BvDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+    public static BvSDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
         final Expr<BvType> newLeftOp = castBv(leftOp);
         final Expr<BvType> newRightOp = castBv(rightOp);
-        return BvDivExpr.of(newLeftOp, newRightOp);
+        return BvSDivExpr.of(newLeftOp, newRightOp);
     }
 
     @Override
@@ -37,25 +37,25 @@ public final class BvDivExpr extends DivExpr<BvType> {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
 
-        return leftOpVal.div(rightOpVal);
+        return leftOpVal.sdiv(rightOpVal);
     }
 
     @Override
-    public BvDivExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    public BvSDivExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
-            return BvDivExpr.of(leftOp, rightOp);
+            return BvSDivExpr.of(leftOp, rightOp);
         }
     }
 
     @Override
-    public BvDivExpr withLeftOp(final Expr<BvType> leftOp) {
+    public BvSDivExpr withLeftOp(final Expr<BvType> leftOp) {
         return with(leftOp, getRightOp());
     }
 
     @Override
-    public BvDivExpr withRightOp(final Expr<BvType> rightOp) {
+    public BvSDivExpr withRightOp(final Expr<BvType> rightOp) {
         return with(getLeftOp(), rightOp);
     }
 
@@ -63,8 +63,8 @@ public final class BvDivExpr extends DivExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvDivExpr) {
-            final BvDivExpr that = (BvDivExpr) obj;
+        } else if (obj instanceof BvSDivExpr) {
+            final BvSDivExpr that = (BvSDivExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
