@@ -11,7 +11,7 @@ public final class BvRemExpr extends RemExpr<BvType> {
 
     private static final int HASH_SEED = 985;
 
-    private static final String OPERATOR_LABEL = "rem";
+    private static final String OPERATOR_LABEL = "bvrem";
 
     private BvRemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);

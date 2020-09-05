@@ -13,7 +13,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 public final class BvLeqExpr extends LeqExpr<BvType> {
 
     private static final int HASH_SEED = 1458;
-    private static final String OPERATOR_LABEL = "<=";
+    private static final String OPERATOR_LABEL = "bvle";
 
     private BvLeqExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);

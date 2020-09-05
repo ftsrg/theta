@@ -12,7 +12,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 public final class BvLtExpr extends LtExpr<BvType> {
 
     private static final int HASH_SEED = 2798;
-    private static final String OPERATOR_LABEL = "<";
+    private static final String OPERATOR_LABEL = "bvlt";
 
     private BvLtExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);

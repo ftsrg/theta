@@ -10,7 +10,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 public final class BvDivExpr extends DivExpr<BvType> {
     private static final int HASH_SEED = 9832;
 
-    private static final String OPERATOR_LABEL = "div";
+    private static final String OPERATOR_LABEL = "bvdiv";
 
     private BvDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
