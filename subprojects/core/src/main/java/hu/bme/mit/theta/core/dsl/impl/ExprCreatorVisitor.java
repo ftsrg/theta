@@ -20,14 +20,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_AND;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ARITH_SHIFT_RIGHT;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_LOGIC_SHIFT_RIGHT;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_OR;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ROTATE_LEFT;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_ROTATE_RIGHT;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_SHIFT_LEFT;
-import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BITWISE_XOR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ADD;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_AND;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ASHR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_LSHR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_MUL;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_OR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ROL;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ROR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SDIV;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SGE;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SGT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SHL;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SLE;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SLT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SMOD;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SREM;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SUB;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_UDIV;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_UGE;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_UGT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ULE;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ULT;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_UREM;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_XOR;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DIV;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EQ;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.GEQ;
@@ -72,6 +88,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -106,8 +123,16 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatLitExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RelationExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TrueExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.UnaryExprContext;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
@@ -325,6 +350,22 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 					return Gt(leftOp, rightOp);
 				case GEQ:
 					return Geq(leftOp, rightOp);
+				case BV_ULT:
+					return BvExprs.ULt(castBv(leftOp), castBv(rightOp));
+				case BV_ULE:
+					return BvExprs.ULeq(castBv(leftOp), castBv(rightOp));
+				case BV_UGT:
+					return BvExprs.UGt(castBv(leftOp), castBv(rightOp));
+				case BV_UGE:
+					return BvExprs.UGeq(castBv(leftOp), castBv(rightOp));
+				case BV_SLT:
+					return BvExprs.SLt(castBv(leftOp), castBv(rightOp));
+				case BV_SLE:
+					return BvExprs.SLeq(castBv(leftOp), castBv(rightOp));
+				case BV_SGT:
+					return BvExprs.SGt(castBv(leftOp), castBv(rightOp));
+				case BV_SGE:
+					return BvExprs.SGeq(castBv(leftOp), castBv(rightOp));
 				default:
 					throw new AssertionError();
 			}
@@ -343,7 +384,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 			switch (ctx.oper.getType()) {
-				case BITWISE_OR:
+				case BV_OR:
 					return BvExprs.Or(List.of(leftOp, rightOp));
 				default:
 					throw new AssertionError();
@@ -361,7 +402,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 			switch (ctx.oper.getType()) {
-				case BITWISE_XOR:
+				case BV_XOR:
 					return BvExprs.Xor(List.of(leftOp, rightOp));
 				default:
 					throw new AssertionError();
@@ -379,7 +420,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 			switch (ctx.oper.getType()) {
-				case BITWISE_AND:
+				case BV_AND:
 					return BvExprs.And(List.of(leftOp, rightOp));
 				default:
 					throw new AssertionError();
@@ -397,15 +438,15 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 			switch (ctx.oper.getType()) {
-				case BITWISE_SHIFT_LEFT:
+				case BV_SHL:
 					return BvExprs.ShiftLeft(leftOp, rightOp);
-				case BITWISE_ARITH_SHIFT_RIGHT:
+				case BV_ASHR:
 					return BvExprs.ArithShiftRight(leftOp, rightOp);
-				case BITWISE_LOGIC_SHIFT_RIGHT:
+				case BV_LSHR:
 					return BvExprs.LogicShiftRight(leftOp, rightOp);
-				case BITWISE_ROTATE_LEFT:
+				case BV_ROL:
 					return BvExprs.RotateLeft(leftOp, rightOp);
-				case BITWISE_ROTATE_RIGHT:
+				case BV_ROR:
 					return BvExprs.RotateRight(leftOp, rightOp);
 				default:
 					throw new AssertionError();
@@ -461,6 +502,12 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			case MINUS:
 				return createSubExpr(leftOp, rightOp);
 
+			case BV_ADD:
+				return createBvAddExpr(castBv(leftOp), castBv(rightOp));
+
+			case BV_SUB:
+				return createBvSubExpr(castBv(leftOp), castBv(rightOp));
+
 			default:
 				throw new AssertionError();
 		}
@@ -478,6 +525,21 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 	private SubExpr<?> createSubExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		return Sub(leftOp, rightOp);
+	}
+
+	private BvAddExpr createBvAddExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		if (leftOp instanceof BvAddExpr) {
+			final BvAddExpr addLeftOp = (BvAddExpr) leftOp;
+			final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+				.build();
+			return BvExprs.Add(ops);
+		} else {
+			return BvExprs.Add(Arrays.asList(leftOp, rightOp));
+		}
+	}
+
+	private BvSubExpr createBvSubExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.Sub(leftOp, rightOp);
 	}
 
 	////
@@ -523,14 +585,32 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			case MUL:
 				return createMulExpr(leftOp, rightOp);
 
+			case BV_MUL:
+				return createBvMulExpr(castBv(leftOp), castBv(rightOp));
+
 			case DIV:
 				return createDivExpr(leftOp, rightOp);
+
+			case BV_UDIV:
+				return createBvUDivExpr(castBv(leftOp), castBv(rightOp));
+
+			case BV_SDIV:
+				return createBvSDivExpr(castBv(leftOp), castBv(rightOp));
 
 			case MOD:
 				return createModExpr(leftOp, rightOp);
 
+			case BV_SMOD:
+				return createBvSModExpr(castBv(leftOp), castBv(rightOp));
+
 			case REM:
 				return createRemExpr(leftOp, rightOp);
+
+			case BV_UREM:
+				return createBvURemExpr(castBv(leftOp), castBv(rightOp));
+
+			case BV_SREM:
+				return createBvSRemExpr(castBv(leftOp), castBv(rightOp));
 
 			default:
 				throw new AssertionError();
@@ -547,8 +627,27 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		}
 	}
 
+	private BvMulExpr createBvMulExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		if (leftOp instanceof BvMulExpr) {
+			final BvMulExpr addLeftOp = (BvMulExpr) leftOp;
+			final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+				.build();
+			return BvExprs.Mul(ops);
+		} else {
+			return BvExprs.Mul(Arrays.asList(leftOp, rightOp));
+		}
+	}
+
 	private DivExpr<?> createDivExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		return Div(leftOp, rightOp);
+	}
+
+	private BvUDivExpr createBvUDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.UDiv(leftOp, rightOp);
+	}
+
+	private BvSDivExpr createBvSDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.SDiv(leftOp, rightOp);
 	}
 
 	private IntModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
@@ -557,10 +656,22 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		return Mod(leftOp, rightOp);
 	}
 
+	private BvSModExpr createBvSModExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.SMod(leftOp, rightOp);
+	}
+
 	private IntRemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
 		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Rem(leftOp, rightOp);
+	}
+
+	private BvURemExpr createBvURemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.URem(leftOp, rightOp);
+	}
+
+	private BvSRemExpr createBvSRemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+		return BvExprs.SRem(leftOp, rightOp);
 	}
 
 	////
