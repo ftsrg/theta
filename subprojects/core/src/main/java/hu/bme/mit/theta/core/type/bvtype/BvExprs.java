@@ -109,8 +109,4 @@ public final class BvExprs {
     public static BvGeqExpr Geq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvGeqExpr.of(leftOp, rightOp);
     }
-
-    public static BvToIntExpr ToInt(final Expr<BvType> op) {
-        return BvToIntExpr.of(op);
-    }
 }
