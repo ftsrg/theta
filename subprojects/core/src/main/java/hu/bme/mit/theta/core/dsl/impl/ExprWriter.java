@@ -41,26 +41,32 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -75,7 +81,6 @@ import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
@@ -167,8 +172,6 @@ public final class ExprWriter {
 
 				.addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
 
-				.addCase(IntToBvExpr.class, e -> e.getType().toString())
-
 				// Rational
 
 				.addCase(RatAddExpr.class, e -> infixMultiary(e, " + "))
@@ -199,53 +202,63 @@ public final class ExprWriter {
 
 				// Bitvector
 
-				.addCase(BvAddExpr.class, e -> infixMultiary(e, " + "))
+				.addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
 
-				.addCase(BvSubExpr.class, e -> infixBinary(e, " - "))
+				.addCase(BvSubExpr.class, e -> infixBinary(e, " bvsub "))
 
-				.addCase(BvMulExpr.class, e -> infixMultiary(e, " * "))
+				.addCase(BvMulExpr.class, e -> infixMultiary(e, " bvmul "))
 
-				.addCase(BvDivExpr.class, e -> infixBinary(e, " / "))
+				.addCase(BvUDivExpr.class, e -> infixBinary(e, " bvudiv "))
 
-				.addCase(BvModExpr.class, e -> infixBinary(e, " mod "))
+				.addCase(BvSDivExpr.class, e -> infixBinary(e, " bvsdiv "))
 
-				.addCase(BvRemExpr.class, e -> infixBinary(e, " rem "))
+				.addCase(BvSModExpr.class, e -> infixBinary(e, " bvsmod "))
 
-				// TODO: BvPosExpr
+				.addCase(BvURemExpr.class, e -> infixBinary(e, " bvurem "))
 
-				.addCase(BvNegExpr.class, e -> prefixUnary(e, "-"))
+				.addCase(BvSRemExpr.class, e -> infixBinary(e, " bvsrem "))
 
-				.addCase(BvAndExpr.class, e -> infixMultiary(e, " & "))
+				.addCase(BvPosExpr.class, e -> prefixUnary(e, "bvpos"))
 
-				.addCase(BvOrExpr.class, e -> infixMultiary(e, " | "))
+				.addCase(BvNegExpr.class, e -> prefixUnary(e, "bvneg"))
 
-				.addCase(BvXorExpr.class, e -> infixMultiary(e, " ^ "))
+				.addCase(BvAndExpr.class, e -> infixMultiary(e, " bvand "))
 
-				.addCase(BvNotExpr.class, e -> prefixUnary(e, "~"))
+				.addCase(BvOrExpr.class, e -> infixMultiary(e, " bvor "))
 
-				.addCase(BvShiftLeftExpr.class, e -> infixBinary(e, " << "))
+				.addCase(BvXorExpr.class, e -> infixMultiary(e, " bvxor "))
 
-				.addCase(BvArithShiftRightExpr.class, e -> infixBinary(e, " >> "))
+				.addCase(BvNotExpr.class, e -> prefixUnary(e, "bvnot"))
 
-				.addCase(BvLogicShiftRightExpr.class, e -> infixBinary(e, " >>> "))
+				.addCase(BvShiftLeftExpr.class, e -> infixBinary(e, " bvshl "))
 
-				.addCase(BvRotateLeftExpr.class, e -> infixBinary(e, " <<~ "))
+				.addCase(BvArithShiftRightExpr.class, e -> infixBinary(e, " bvashr "))
 
-				.addCase(BvRotateRightExpr.class, e -> infixBinary(e, " ~>> "))
+				.addCase(BvLogicShiftRightExpr.class, e -> infixBinary(e, " bvlshr "))
+
+				.addCase(BvRotateLeftExpr.class, e -> infixBinary(e, " bvrol "))
+
+				.addCase(BvRotateRightExpr.class, e -> infixBinary(e, " bvror "))
 
 				.addCase(BvEqExpr.class, e -> infixBinary(e, " = "))
 
 				.addCase(BvNeqExpr.class, e -> infixBinary(e, " /= "))
 
-				.addCase(BvLtExpr.class, e -> infixBinary(e, " < "))
+				.addCase(BvULtExpr.class, e -> infixBinary(e, " bvult "))
 
-				.addCase(BvLeqExpr.class, e -> infixBinary(e, " <= "))
+				.addCase(BvULeqExpr.class, e -> infixBinary(e, " bvule "))
 
-				.addCase(BvGtExpr.class, e -> infixBinary(e, " > "))
+				.addCase(BvUGtExpr.class, e -> infixBinary(e, " bvugt "))
 
-				.addCase(BvGeqExpr.class, e -> infixBinary(e, " >= "))
+				.addCase(BvUGeqExpr.class, e -> infixBinary(e, " buge "))
 
-				.addCase(BvToIntExpr.class, e -> prefixUnary(e, "(int)"))
+				.addCase(BvSLtExpr.class, e -> infixBinary(e, " bvslt "))
+
+				.addCase(BvSLeqExpr.class, e -> infixBinary(e, " bvsle "))
+
+				.addCase(BvSGtExpr.class, e -> infixBinary(e, " bvsgt "))
+
+				.addCase(BvSGeqExpr.class, e -> infixBinary(e, " bsge "))
 
 				.addCase(BvLitExpr.class, this::bvLit)
 
@@ -346,7 +359,7 @@ public final class ExprWriter {
 			.replace("]", "")
 			.replace(",", "")
 			.replace(" ", "");
-		return expr.getType().getSize() + "'" + (expr.getType().isSigned() ? "s" : "u") + "b" + value;
+		return expr.getType().getSize() + "'b" + value;
 	}
 
 	private String arrayLit(final ArrayLitExpr<?, ?> expr) {
