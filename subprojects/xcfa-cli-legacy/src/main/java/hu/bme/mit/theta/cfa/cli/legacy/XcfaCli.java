@@ -13,26 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.cfa.cli;
-
-import java.io.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+package hu.bme.mit.theta.cfa.cli.legacy;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
@@ -46,29 +37,29 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
-import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
-import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.cfa.XCFA;
+import hu.bme.mit.theta.cfa.dsl.XcfaDslManager;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 /**
- * A command line interface for running a CEGAR configuration on a CFA.
+ * A command line interface for running a CEGAR configuration on a CFA compatible XCFA.
  */
-public class CfaCli {
-	private static final String JAR_NAME = "theta-cfa-cli.jar";
+public class XcfaCli {
+	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
@@ -85,7 +76,7 @@ public class CfaCli {
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
+	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
 	String model;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
@@ -100,36 +91,27 @@ public class CfaCli {
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
 
-	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
-	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
-
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
 	Logger.Level logLevel = Level.SUBSTEP;
 
 	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
-	String cexfile = null;
+	@Parameter(names = "--cex", description = "Log concrete counterexample")
+	Boolean cexfile = false;
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
-	@Parameter(names = "--visualize", description = "Visualize CFA to this file without running the algorithm")
-	String visualize = null;
-
-	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
-	boolean metrics = false;
-
 	private Logger logger;
 
-	public CfaCli(final String[] args) {
+	public XcfaCli(final String[] args) {
 		this.args = args;
 		writer = new BasicTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {
-		final CfaCli mainApp = new CfaCli(args);
+		final XcfaCli mainApp = new XcfaCli(args);
 		mainApp.run();
 	}
 
@@ -141,16 +123,6 @@ public class CfaCli {
 			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
 			ex.usage();
-			return;
-		}
-
-		if (visualize != null) {
-			visualize();
-			return;
-		}
-
-		if (metrics) {
-			printMetrics();
 			return;
 		}
 
@@ -166,7 +138,7 @@ public class CfaCli {
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
 			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
+			if (status.isUnsafe() && cexfile) {
 				writeCex(status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
@@ -175,77 +147,6 @@ public class CfaCli {
 		if (benchmarkMode) {
 			writer.newRow();
 		}
-	}
-
-	private void printMetrics(){
-		try {
-			final CFA cfa = loadModel();
-			logger.write(Level.RESULT, "Vars: %s%n" , cfa.getVars().size());
-			logger.write(Level.RESULT, "Bool vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(BoolExprs.Bool())).count());
-			logger.write(Level.RESULT, "Int vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(IntExprs.Int())).count());
-			logger.write(Level.RESULT, "Locs: %s%n" , cfa.getLocs().size());
-			logger.write(Level.RESULT, "Edges: %s%n" , cfa.getEdges().size());
-			logger.write(Level.RESULT, "Cyclomatic complexity: %s%n" , cfa.getEdges().size() - cfa.getLocs().size() + 2 * getCfaComponents(cfa));
-			logger.write(Level.RESULT, "Assignments: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssignStmt).count());
-			logger.write(Level.RESULT, "Assumptions: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count());
-			logger.write(Level.RESULT, "Havocs: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof HavocStmt).count());
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	public static int getCfaComponents(final CFA cfa) {
-		final Set<CFA.Loc> visited = new HashSet<>();
-		int components = 0;
-
-		for (final CFA.Loc loc : cfa.getLocs()) {
-			if (!visited.contains(loc)) {
-				components++;
-				visited.add(loc);
-				final Queue<CFA.Loc> queue = new LinkedList<>();
-				queue.add(loc);
-				while (!queue.isEmpty()) {
-					final CFA.Loc next = queue.remove();
-					for (final CFA.Edge edge : next.getOutEdges()) {
-						if (!visited.contains(edge.getTarget())) {
-							visited.add(edge.getTarget());
-							queue.add(edge.getTarget());
-						}
-					}
-				}
-			}
-		}
-		return components;
-	}
-
-	private void visualize() {
-		try {
-			final CFA cfa = loadModel();
-			final Graph graph = CfaVisualizer.visualize(cfa);
-			String ext = getFileExtension(visualize.toLowerCase());
-			switch(ext) {
-				case "pdf":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PDF);
-					break;
-				case "png":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PNG);
-					break;
-				case "svg":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.SVG);
-					break;
-				default:
-					GraphvizWriter.getInstance().writeFile(graph, visualize);
-					break;
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	private String getFileExtension(String name) {
-		int lastIndexOf = name.lastIndexOf(".");
-		if (lastIndexOf == -1) return "";
-		return name.substring(lastIndexOf + 1);
 	}
 
 	private void printHeader() {
@@ -259,15 +160,15 @@ public class CfaCli {
 
 	private CFA loadModel() throws IOException {
 		try (InputStream inputStream = new FileInputStream(model)) {
-			final CFA cfa = CfaDslManager.createCfa(inputStream);
+			final XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+			final CFA cfa = xcfa.createCFA();
 			return cfa;
 		}
 	}
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-				.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {
@@ -306,17 +207,6 @@ public class CfaCli {
 	private void writeCex(final Unsafe<?, ?> status) {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
-		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
-			}
-		}
+		logger.write(Level.RESULT, "%s", concrTrace);
 	}
 }
