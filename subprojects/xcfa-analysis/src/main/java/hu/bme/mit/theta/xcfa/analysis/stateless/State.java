@@ -13,7 +13,7 @@ public class State {
 
     private final MutableValuation mutableValuation;
     private final XCFA xcfa;
-    private final Map<XCFA.Process, List<XCFA.Process.Procedure>> callStacks;
+    private final Map<XCFA.Process, List<Tuple2<XCFA.Process.Procedure, XCFA.Process.Procedure.Location>>> callStacks;
     private final Map<XCFA.Process, XCFA.Process.Procedure.Location> currentLocs;
     private XCFA.Process currentlyAtomic;
 
@@ -32,7 +32,7 @@ public class State {
     private State(
             final MutableValuation mutableValuation,
             final XCFA xcfa,
-            final Map<XCFA.Process, List<XCFA.Process.Procedure>> callStacks,
+            final Map<XCFA.Process, List<Tuple2<XCFA.Process.Procedure, XCFA.Process.Procedure.Location>>> callStacks,
             final Map<XCFA.Process, XCFA.Process.Procedure.Location> currentLocs,
             final XCFA.Process currentlyAtomic
             ) {
@@ -58,7 +58,7 @@ public class State {
         return xcfa;
     }
 
-    public Map<XCFA.Process, List<XCFA.Process.Procedure>> getCallStacks() {
+    public Map<XCFA.Process, List<Tuple2<XCFA.Process.Procedure, XCFA.Process.Procedure.Location>>> getCallStacks() {
         return callStacks;
     }
 
