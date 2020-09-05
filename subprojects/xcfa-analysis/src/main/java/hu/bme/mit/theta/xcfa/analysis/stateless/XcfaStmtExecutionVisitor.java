@@ -59,7 +59,7 @@ public class XcfaStmtExecutionVisitor implements StmtVisitor<Tuple3<MutableValua
 
     @Override
     public Void visit(StoreStmt storeStmt, Tuple3<MutableValuation, State, XCFA.Process> param) {
-        param.get1().put(storeStmt.getLhs(), param.get1().eval(storeStmt.getRhs()).get());
+        param.get1().put(storeStmt.getRhs(), param.get1().eval(storeStmt.getLhs()).get());
         return null;
     }
 
