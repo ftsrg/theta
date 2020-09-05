@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
@@ -40,6 +41,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Add;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.And;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ArithShiftRight;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Concat;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.LogicShiftRight;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Mul;
@@ -107,6 +110,16 @@ public class BvTestUtils {
 
     public static Collection<?> BitvectorOperations() {
         return Arrays.asList(new Object[][] {
+            /* Concat, extract operations */
+            {
+                BvConcatExpr.class,
+                Bv(new boolean[] { true, false, false, true }),
+                Concat(List.of(
+                    Bv(new boolean[] { true, false }),
+                    Bv(new boolean[] { false, true }))
+                )
+            },
+
             /* Unsigned bitvector specific operations */
             { BvAndExpr.class, UBv16(1), And(List.of(UBv16(7), UBv16(9))) },
             { BvXorExpr.class, UBv16(14), Xor(List.of(UBv16(7), UBv16(9))) },

@@ -4,7 +4,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
@@ -15,8 +14,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.BvUtils.*;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToNeutralBvLitExpr;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
+import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
+import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoNeutralDomain;
+import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoSignedDomain;
+import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoUnsignedDomain;
+import static hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger;
+import static hu.bme.mit.theta.core.utils.BvUtils.signedBvLitExprToBigInteger;
+import static hu.bme.mit.theta.core.utils.BvUtils.unsignedBvLitExprToBigInteger;
 
 public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType>, Comparable<BvLitExpr> {
 
@@ -48,6 +54,17 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     @Override
     public LitExpr<BvType> eval(Valuation val) {
         return this;
+    }
+
+    public BvLitExpr concat(final BvLitExpr that) {
+        boolean[] concated = new boolean[this.getType().getSize() + that.getType().getSize()];
+        for(int i = 0; i < this.getType().getSize(); i++) {
+            concated[i] = this.getValue()[i];
+        }
+        for(int i = 0; i < that.getType().getSize(); i++) {
+            concated[this.getType().getSize() + i] = that.getValue()[i];
+        }
+        return Bv(concated);
     }
 
     public BvLitExpr add(final BvLitExpr that) {
