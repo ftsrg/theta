@@ -18,6 +18,10 @@ public final class BvExprs {
         return BvLitExpr.of(value);
     }
 
+    public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
+        return BvConcatExpr.of(ops);
+    }
+
     public static BvAddExpr Add(final Iterable<? extends Expr<BvType>> ops) {
         return BvAddExpr.of(ops);
     }

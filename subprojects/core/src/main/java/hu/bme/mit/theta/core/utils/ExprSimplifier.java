@@ -53,6 +53,7 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
@@ -193,6 +194,8 @@ public final class ExprSimplifier {
 			.addCase(ArrayWriteExpr.class, ExprSimplifier::simplifyArrayWrite)
 
 			// Bitvectors
+
+			.addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
 
 			.addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
@@ -1012,6 +1015,40 @@ public final class ExprSimplifier {
 	/*
 	 * Bitvectors
 	 */
+
+	private static Expr<BvType> simplifyBvConcat(final BvConcatExpr expr, final Valuation val) {
+		final List<Expr<BvType>> ops = new ArrayList<>();
+
+		for (final Expr<BvType> op : expr.getOps()) {
+			final Expr<BvType> opVisited = simplify(op, val);
+			if (opVisited instanceof BvConcatExpr) {
+				final BvConcatExpr addOp = (BvConcatExpr) opVisited;
+				ops.addAll(addOp.getOps());
+			} else {
+				ops.add(opVisited);
+			}
+		}
+		BvLitExpr value = null;
+
+		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+			final Expr<BvType> op = iterator.next();
+			if (op instanceof BvLitExpr) {
+				final BvLitExpr litOp = (BvLitExpr) op;
+				if(value == null) {
+					value = litOp;
+				}
+				else {
+					value = value.concat(litOp);
+				}
+				iterator.remove();
+			}
+			else {
+				return expr.with(ops);
+			}
+		}
+
+		return value;
+	}
 
 	private static Expr<BvType> simplifyBvAdd(final BvAddExpr expr, final Valuation val) {
 		final List<Expr<BvType>> ops = new ArrayList<>();

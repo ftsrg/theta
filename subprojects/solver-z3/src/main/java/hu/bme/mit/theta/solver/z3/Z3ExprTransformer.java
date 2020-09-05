@@ -49,6 +49,7 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
@@ -226,6 +227,8 @@ final class Z3ExprTransformer {
 				// Bitvectors
 
 				.addCase(BvLitExpr.class, this::transformBvLit)
+
+				.addCase(BvConcatExpr.class, this::transformBvConcat)
 
 				.addCase(BvAddExpr.class, this::transformBvAdd)
 
@@ -623,6 +626,14 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
+	}
+
+	private com.microsoft.z3.Expr transformBvConcat(final BvConcatExpr expr) {
+		final com.microsoft.z3.BitVecExpr[] opTerms = expr.getOps().stream()
+			.map(e-> (com.microsoft.z3.BitVecExpr) toTerm(e))
+			.toArray(com.microsoft.z3.BitVecExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkConcat);
 	}
 
 	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {

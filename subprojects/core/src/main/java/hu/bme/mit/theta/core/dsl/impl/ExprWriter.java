@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
@@ -201,6 +202,8 @@ public final class ExprWriter {
 				.addCase(RatLitExpr.class, e -> e.getNum() + "%" + e.getDenom())
 
 				// Bitvector
+
+				.addCase(BvConcatExpr.class, e -> infixMultiary(e, " ++ "))
 
 				.addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
 
