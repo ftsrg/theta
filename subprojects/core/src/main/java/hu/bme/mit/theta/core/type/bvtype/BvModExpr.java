@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvModExpr extends ModExpr<BvType> {
+public final class BvModExpr extends ModExpr<BvType> {
 
     private static final int HASH_SEED = 1451;
     private static final String OPERATOR_LABEL = "mod";

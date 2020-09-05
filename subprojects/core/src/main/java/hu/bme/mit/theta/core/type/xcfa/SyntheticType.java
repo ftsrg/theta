@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.xcfa;
 
 import hu.bme.mit.theta.core.type.Type;
 
-public class SyntheticType implements Type {
+public final class SyntheticType implements Type {
 
 	private static final SyntheticType INSTANCE = new SyntheticType();
 

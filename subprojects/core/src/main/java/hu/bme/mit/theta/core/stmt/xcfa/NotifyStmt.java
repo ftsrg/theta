@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 
 /**
  * Notifies any waiting thread. Due to how pthread condition variables work, the mutex/synthetic need not be locked.
- * TODO "at least one" thread is notified. The explicit state checker should check all possible outcome of this stmt.
+ * TODO add mutex synt var?
  */
 public class NotifyStmt extends XcfaStmt {
 	private static final String STMT_LABEL = "notify";

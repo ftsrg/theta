@@ -1,0 +1,68 @@
+main process mainProcess{
+
+	main procedure mainProcedure(){
+		init loc L0
+		loc L1
+		loc L2
+		loc L3
+		final loc L4
+		error loc LE
+		var a : int
+		var b : int
+		var xResult : int
+
+        // a > b, best when both are fibonacci numbers
+		L0 -> L1 {
+			a := 63
+		}
+
+		L1 -> L2 {
+			b := 39
+		}
+
+		L2 -> L3 {
+			xResult := call gcd(b,a)
+		}
+
+		L3 -> LE {
+		    assume not (xResult = 3)
+		}
+
+		L3 -> L4 {
+		    assume xResult = 3
+		}
+	}
+
+	int procedure gcd ( b : int , a : int ) {
+	    var result : int
+		init loc L0
+		loc L1
+		loc L2
+		loc L3
+		final loc L4
+		L0 -> L1 {
+		    assume b = 0
+		}
+		L0 -> L2 {
+		    assume not (b = 0)
+		}
+		L1 -> L4 {
+		    result := a
+		}
+		L2 -> L3 {
+		    a := a mod b
+		}
+		L3 -> L4 {
+		    result := call gcd(a,b)
+		}
+	}
+}
+
+// when a>=b>=0
+// gcd(a,b) {
+//   L0: if (b == 0) {
+//   L1:   return a;
+//   }
+//   L2: a = a % b;
+//   L3: result := gcd(b,a);
+// }

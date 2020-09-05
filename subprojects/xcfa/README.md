@@ -76,6 +76,32 @@ main process counter2 {
 }
 ```
 
-Notes: every global integer variable is assigned zero on initialization. TODO add synchronization to solve this.
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
+
+### Details/TODOs for developers
+
+- `xcfa`
+
+  - Supports multiple XCFA files with `XCFA XcfaDslManager::createXcfa(InputStream[] inputStreams)`
+  
+  - Result variables must have the name `result` or have the name pattern `*_RES_VAR` (for interfacing with Gazer).
+  
+  - Contains a utility to split edge by the statements. (`XcfaEdgeSplitterTransformation`).
+
+- `xcfa-analysis-alt` subproject, `expl` package
+
+  - Constructors and destructors (found by the _name pattern_ `ctor*` and `dtor*`) are handled (by initially adding them
+    to the stack)
+
+  - every global integer variable is assigned zero on initialization.
+  
+- `xcfa-cli`
+
+  - Uses analysis-alt, _accepts unknown parameters_ (to interface with Gazer without big changes).
+  
+  - Can use partial order reduction or explicit state enumeration to check safety.
+  
+  - Can load from multiple XCFA files, separated by comma. _NOT documented_ in the flag's description.
+  
+  - Processes with the same name are merged.

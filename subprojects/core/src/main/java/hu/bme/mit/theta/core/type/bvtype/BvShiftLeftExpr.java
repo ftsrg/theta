@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.Expr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
-public class BvShiftLeftExpr extends BinaryExpr<BvType, BvType> {
+public final class BvShiftLeftExpr extends BinaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 4288;
     private static final String OPERATOR_LABEL = "<<";
 

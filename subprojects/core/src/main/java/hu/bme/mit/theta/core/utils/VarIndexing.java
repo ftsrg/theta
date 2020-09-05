@@ -27,12 +27,18 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import hu.bme.mit.theta.core.decl.VarDecl;
+
+import javax.annotation.CheckReturnValue;
 
 /**
  * Represents an immutable mapping, where each variable is associated with an
  * index. The inner builder class can also be used to create a new instance.
+ *
+ * CheckReturnValue, because the class is immutable
  */
+@CheckReturnValue
 public class VarIndexing {
 
 	private static final VarIndexing ALL_ZERO = new Builder(0).build();
@@ -102,6 +108,7 @@ public class VarIndexing {
 	 * @param varDecl Variable to increment
 	 * @return Transformed indexing
 	 */
+	@CheckReturnValue
 	public VarIndexing inc(final VarDecl<?> varDecl) {
 		return inc(varDecl, 1);
 	}
@@ -167,6 +174,7 @@ public class VarIndexing {
 
 	////
 
+	@CanIgnoreReturnValue
 	public static final class Builder {
 		private int defaultIndex;
 		private Map<VarDecl<?>, Integer> varToOffset;
@@ -187,7 +195,7 @@ public class VarIndexing {
 
 			if (n != 0) {
 				final Integer offset = varToOffset.getOrDefault(varDecl, 0);
-				final Integer newOffset = offset + n;
+				final int newOffset = offset + n;
 				checkArgument(defaultIndex + newOffset >= 0, "Negative index for variable");
 				varToOffset.put(varDecl, newOffset);
 			}
@@ -273,12 +281,14 @@ public class VarIndexing {
 			return this;
 		}
 
+		@CheckReturnValue
 		public int get(final VarDecl<?> varDecl) {
 			checkNotNull(varDecl);
 			final Integer offset = varToOffset.getOrDefault(varDecl, 0);
 			return defaultIndex + offset;
 		}
 
+		@CheckReturnValue
 		public VarIndexing build() {
 			return new VarIndexing(this);
 		}

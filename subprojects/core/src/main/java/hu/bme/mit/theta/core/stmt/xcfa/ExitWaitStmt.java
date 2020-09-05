@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
 /**
  * Pseudo stmt not found in an XCFA grammar. The Wait has to be split for xcfa-analysis subproject.
  * This represents the second phase when the thread exits the wait state and regrabs the lock.
- * TODO spurious wake-up call...?
  */
 public class ExitWaitStmt extends XcfaStmt {
 

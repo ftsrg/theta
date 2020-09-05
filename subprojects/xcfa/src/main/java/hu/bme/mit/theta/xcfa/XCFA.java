@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
  *
- * TODO type checks around parameters and return value passing
+ * TODO add type checks around parameters and return value passing
  *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
 public final class XCFA {
@@ -59,7 +59,9 @@ public final class XCFA {
 		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
 		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
 		CFA.Builder builder = CFA.builder();
-		CFA.Loc initLoc = null, errorLoc = null, finalLoc = null;
+		CFA.Loc initLoc = null;
+		CFA.Loc errorLoc = null;
+		CFA.Loc finalLoc = null;
 		for (Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
 			List<CFA.Loc> locations = new ArrayList<>();
 			locations.add(builder.createLoc(e.source.name));

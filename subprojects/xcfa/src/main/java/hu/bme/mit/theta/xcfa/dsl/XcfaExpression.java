@@ -22,7 +22,12 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -32,7 +37,6 @@ import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AccessContext;
@@ -190,7 +194,7 @@ final class XcfaExpression {
 		@Override
 		public Expr<?> visitIteExpr(final IteExprContext ctx) {
 			if (ctx.cond != null) {
-				final Expr<BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), Bool());
+				final Expr<BoolType> cond = cast(ctx.cond.accept(this), Bool());
 				final Expr<?> then = ctx.then.accept(this);
 				final Expr<?> elze = ctx.elze.accept(this);
 				return Ite(cond, then, elze);
@@ -202,8 +206,8 @@ final class XcfaExpression {
 		@Override
 		public Expr<?> visitIffExpr(final IffExprContext ctx) {
 			if (ctx.rightOp != null) {
-				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
-				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				final Expr<BoolType> leftOp = cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = cast(ctx.rightOp.accept(this), Bool());
 				return Iff(leftOp, rightOp);
 			} else {
 				return visitChildren(ctx);
@@ -213,8 +217,8 @@ final class XcfaExpression {
 		@Override
 		public Expr<?> visitImplyExpr(final ImplyExprContext ctx) {
 			if (ctx.rightOp != null) {
-				final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
-				final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
+				final Expr<BoolType> leftOp = cast(ctx.leftOp.accept(this), Bool());
+				final Expr<BoolType> rightOp = cast(ctx.rightOp.accept(this), Bool());
 				return Imply(leftOp, rightOp);
 			} else {
 				return visitChildren(ctx);
@@ -226,7 +230,7 @@ final class XcfaExpression {
 			if (ctx.paramDecls != null) {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 
 				return Forall(paramDecls, op);
 			} else {
@@ -239,7 +243,7 @@ final class XcfaExpression {
 			if (ctx.paramDecls != null) {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 
 				return Exists(paramDecls, op);
 			} else {
@@ -251,7 +255,7 @@ final class XcfaExpression {
 		public Expr<?> visitOrExpr(final OrExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-						.map(op -> TypeUtils.cast(op.accept(this), Bool()));
+						.map(op -> cast(op.accept(this), Bool()));
 				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return Or(ops);
 			} else {
@@ -263,7 +267,7 @@ final class XcfaExpression {
 		public Expr<?> visitAndExpr(final AndExprContext ctx) {
 			if (ctx.ops.size() > 1) {
 				final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-						.map(op -> TypeUtils.cast(op.accept(this), Bool()));
+						.map(op -> cast(op.accept(this), Bool()));
 				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return And(ops);
 			} else {
@@ -274,7 +278,7 @@ final class XcfaExpression {
 		@Override
 		public Expr<?> visitNotExpr(final NotExprContext ctx) {
 			if (ctx.op != null) {
-				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
+				final Expr<BoolType> op = cast(ctx.op.accept(this), Bool());
 				return Not(op);
 			} else {
 				return visitChildren(ctx);
@@ -462,15 +466,15 @@ final class XcfaExpression {
 			return Div(leftOp, rightOp);
 		}
 
-		private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
-			final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
+		private ModExpr<?> createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+			final Expr<IntType> leftOp = cast(uncastLeftOp, Int());
+			final Expr<IntType> rightOp = cast(uncastRightOp, Int());
 			return Mod(leftOp, rightOp);
 		}
 
-		private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
-			final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
+		private RemExpr<?> createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+			final Expr<IntType> leftOp = cast(uncastLeftOp, Int());
+			final Expr<IntType> rightOp = cast(uncastRightOp, Int());
 			return Rem(leftOp, rightOp);
 		}
 

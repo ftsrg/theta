@@ -21,6 +21,15 @@ jobs:
     - name: Run STS docker on example
       run: ./docker/run-theta-sts-cli.sh subprojects/sts/src/test/resources/simple1.system
 
+  xsts-cli-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build XSTS Docker image
+      run: docker build -t theta-xsts-cli -f docker/theta-xsts-cli.Dockerfile .
+    - name: Run XSTS docker on example
+      run: ./docker/run-theta-xsts-cli.sh subprojects/xsts-analysis/src/test/resources/model/sequential.xsts --property "!(x==1)"
+
   xta-cli-docker:
     runs-on: ubuntu-latest
     steps:

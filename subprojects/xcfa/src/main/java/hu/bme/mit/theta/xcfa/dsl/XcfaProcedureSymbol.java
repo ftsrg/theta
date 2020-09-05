@@ -179,7 +179,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 
 		checkArgument(nInitLocs == 1, "Exactly one initial location must be specififed");
 		checkArgument(nFinalLocs == 1, "Exactly one final location must be specififed");
-		//checkArgument(nErrorLocs == 1, "Exactly one error location must be specififed");
+		checkArgument(nErrorLocs <= 1, "At most one error location must be specififed");
 
 		return result;
 	}

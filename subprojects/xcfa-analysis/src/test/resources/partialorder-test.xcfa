@@ -1,0 +1,55 @@
+var global : int
+
+// P:
+// switch:
+// [] b: if (global == 1) { E: global = 2; }
+// [] d: (nothing)
+
+// Q:
+// C: global = 1; assert(global!=2);
+
+// the program has to fail
+
+main process P {
+
+	main procedure m(){
+		init loc PGate
+		loc PSet
+		final loc PFin
+		var local : int
+
+        PGate -> PSet { // b
+            assume global = 1
+        }
+        PSet -> PFin {
+            global := 2
+        }
+        PGate -> PFin { // d
+            local := local
+        }
+	}
+}
+
+process Q {
+
+	main procedure m(){
+		init loc QSet
+		loc QGate
+
+		final loc QFin
+		error loc QErr
+
+        QSet -> QGate {
+            global := 1
+        }
+
+        QGate -> QFin {
+            assume true
+        }
+
+        QGate -> QErr {
+            assume global = 2
+        }
+	}
+}
+

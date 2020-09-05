@@ -1,0 +1,95 @@
+var global : int
+
+// :
+// switch:
+// [] b: if (global == 1) { E: global = 2; }
+// [] d: (nothing)
+
+// :
+// C: global = 1; assert(global!=2);
+
+// the program has to fail
+
+main process P {
+
+	main procedure m(){
+		init loc Gate1
+		loc Set2
+		loc Gate4
+		final loc Fin
+		error loc Err
+
+        Gate1 -> Fin { }
+        Set2 -> Fin { }
+        Gate4 -> Fin { }
+        Gate1 -> Set2 { // b
+            assume global = 1
+        }
+        Set2 -> Gate4 {
+            global := 2
+        }
+        Gate4 -> Err {
+            assume global = 4
+        }
+	}
+}
+
+process Q {
+
+	main procedure m(){
+		init loc Set1
+		loc Gate2
+		loc Set3
+
+		final loc Fin
+		error loc Err
+
+		Set1 -> Fin { }
+		Gate2 -> Fin { }
+		Set3 -> Fin { }
+
+        Set1 -> Gate2 {
+            global := 1
+        }
+
+        Set1 -> Fin {
+            assume true
+        }
+
+        Gate2 -> Set3 {
+            assume global = 2
+        }
+
+        Set3 -> Fin {
+            global := 3
+        }
+	}
+}
+
+process R {
+
+	main procedure m(){
+		init loc Gate1
+		loc Gate3
+		loc Set4
+
+		final loc Fin
+		error loc Err
+
+		Gate1 -> Fin { }
+		Gate3 -> Fin { }
+		Set4 -> Fin { }
+
+        Gate1 -> Gate3 {
+            assume global = 1
+        }
+
+        Gate3 -> Set4 {
+            assume global = 3
+        }
+
+        Set4 -> Fin {
+            global := 4
+        }
+	}
+}

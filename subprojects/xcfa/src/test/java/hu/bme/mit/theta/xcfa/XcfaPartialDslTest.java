@@ -84,10 +84,13 @@ public class XcfaPartialDslTest {
 	@Test
 	public void test() throws IOException {
 		System.err.println(filepaths[0]);
-		final InputStream[] inputStreams = Arrays.asList(filepaths).stream()
+		final InputStream[] inputStreams = Arrays.stream(filepaths)
 				.map(path -> getClass().getResourceAsStream(path))
 				.collect(Collectors.toList()).toArray(new InputStream[0]);
 		XCFA xcfa = XcfaDslManager.createXcfa(inputStreams);
+		Arrays.stream(inputStreams).forEach(stream -> {
+			try { stream.close(); } catch (IOException e) { throw new RuntimeException(e); }
+		});
 		Assert.assertEquals(globalVarCount, xcfa.getGlobalVars().size());
 		Assert.assertEquals(processCount, xcfa.getProcesses().size());
 		for (int i = 0; i < xcfa.getProcesses().size(); ++i) {

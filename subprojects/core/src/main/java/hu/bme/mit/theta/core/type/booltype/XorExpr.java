@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
-public class XorExpr extends NeqExpr<BoolType> {
+public final class XorExpr extends NeqExpr<BoolType> {
 
 	private static final int HASH_SEED = 937;
 

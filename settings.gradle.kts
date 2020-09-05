@@ -16,9 +16,13 @@ include(
         "xcfa-cli-stateless",
         "xcfa-analysis",
         "xcfa-cli-legacy",
+        "xcfa-cli",
         "xta",
         "xta-analysis",
-        "xta-cli"
+        "xta-cli",
+        "xsts",
+        "xsts-analysis",
+        "xsts-cli"
 )
 
 for (project in rootProject.children) {
