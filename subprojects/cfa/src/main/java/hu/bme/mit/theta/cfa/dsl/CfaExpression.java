@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
@@ -66,6 +67,7 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -625,6 +627,64 @@ final class CfaExpression {
 		////
 
 		@Override
+		public Expr<?> visitBvConcatExpr(final BvConcatExprContext ctx) {
+			if (ctx.ops.size() > 1) {
+				final Stream<Expr<?>> opStream = ctx.ops.stream().map(op -> op.accept(this));
+				final List<Expr<?>> ops = opStream.collect(toList());
+
+				final Expr<?> opsHead = ops.get(0);
+				final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
+
+				return createConcatExpr(opsHead, opsTail, ctx.opers);
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
+		private Expr<?> createConcatExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
+												 final List<? extends Token> opers) {
+			checkArgument(opsTail.size() == opers.size());
+
+			if (opsTail.isEmpty()) {
+				return opsHead;
+			} else {
+				final Expr<?> newOpsHead = opsTail.get(0);
+				final List<? extends Expr<?>> newOpsTail = opsTail.subList(1, opsTail.size());
+
+				final Token operHead = opers.get(0);
+				final List<? extends Token> opersTail = opers.subList(1, opers.size());
+
+				final Expr<?> subExpr = createConcatSubExpr(opsHead, newOpsHead, operHead);
+
+				return createConcatExpr(subExpr, newOpsTail, opersTail);
+			}
+		}
+
+		private Expr<?> createConcatSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
+			switch (oper.getType()) {
+				case BV_CONCAT:
+					return createBvConcatExpr(castBv(leftOp), castBv(rightOp));
+
+				default:
+					throw new AssertionError();
+			}
+		}
+
+		private BvConcatExpr createBvConcatExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			if (leftOp instanceof BvConcatExpr) {
+				final BvConcatExpr addLeftOp = (BvConcatExpr) leftOp;
+				final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+					.build();
+				return BvExprs.Concat(ops);
+			} else {
+				return BvExprs.Concat(Arrays.asList(leftOp, rightOp));
+			}
+		}
+
+
+		////
+
+		@Override
 		public Expr<?> visitUnaryExpr(final UnaryExprContext ctx) {
 			if (ctx.op != null) {
 				final Expr<?> op = ctx.op.accept(this);
@@ -684,6 +744,8 @@ final class CfaExpression {
 				return createArrayWriteExpr(op, access.writeIndex);
 			} else if (access.prime != null) {
 				return createPrimeExpr(op);
+			} else if (access.bvExtract != null) {
+				return createBvExtractExpr(op, access.bvExtract);
 			} else {
 				throw new AssertionError();
 			}
@@ -713,6 +775,11 @@ final class CfaExpression {
 
 		private Expr<?> createPrimeExpr(final Expr<?> op) {
 			return Prime(op);
+		}
+
+		private Expr<?> createBvExtractExpr(final Expr<?> op, final BvExtractAccessContext ctx) {
+			final Expr<BvType> bitvec = castBv(op);
+			return Extract(bitvec, Int(ctx.from.getText()), Int(ctx.until.getText()));
 		}
 
 		////
