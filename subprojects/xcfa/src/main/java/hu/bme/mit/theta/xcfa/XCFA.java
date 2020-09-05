@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -26,9 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
