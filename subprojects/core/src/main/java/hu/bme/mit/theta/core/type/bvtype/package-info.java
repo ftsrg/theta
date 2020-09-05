@@ -6,6 +6,8 @@
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvType}: the actual bitvector type
  *
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvLitExpr}: bitvector literal
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvConcatExpr}: bitvector concatenation
+ * - {@link hu.bme.mit.theta.core.type.bvtype.BvExtractExpr}: bitvector extraction
  *
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvNegExpr}: unary minus
  * - {@link hu.bme.mit.theta.core.type.bvtype.BvPosExpr}: unary plus
