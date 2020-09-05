@@ -13,26 +13,20 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
     private final static String TYPE_LABEL = "Bv";
 
     private final int size;
-    private final boolean isSigned;
 
     private volatile int hashCode = 0;
 
-    private BvType(final int size, final boolean isSigned) {
+    private BvType(final int size) {
         checkArgument(size > 0);
         this.size = size;
-        this.isSigned = isSigned;
     }
 
-    public static BvType of(final int size, final boolean isSigned) {
-        return new BvType(size, isSigned);
+    public static BvType of(final int size) {
+        return new BvType(size);
     }
 
     public int getSize() {
         return size;
-    }
-
-    public boolean isSigned() {
-        return isSigned;
     }
 
     @Override
@@ -121,7 +115,6 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
         int result = hashCode;
         if (result == 0) {
             result = HASH_SEED;
-            result = 31 * result + (isSigned ? 1 : 0);
             result = 31 * result + size;
             hashCode = result;
         }
@@ -134,7 +127,7 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
             return true;
         } else if (obj instanceof BvType) {
             final BvType that = (BvType) obj;
-            return this.getSize() == that.getSize() && this.isSigned() == that.isSigned();
+            return this.getSize() == that.getSize();
         } else {
             return false;
         }
@@ -142,6 +135,6 @@ public final class BvType implements Additive<BvType>, Multiplicative<BvType>, D
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(TYPE_LABEL).add(size).add(isSigned ? "signed" : "unsigned").toString();
+        return Utils.lispStringBuilder(TYPE_LABEL).add(size).toString();
     }
 }
