@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.z3;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import hu.bme.mit.theta.common.DispatchTable;
@@ -51,6 +52,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
@@ -229,6 +231,8 @@ final class Z3ExprTransformer {
 				.addCase(BvLitExpr.class, this::transformBvLit)
 
 				.addCase(BvConcatExpr.class, this::transformBvConcat)
+
+				.addCase(BvExtractExpr.class, this::transformBvExtract)
 
 				.addCase(BvAddExpr.class, this::transformBvAdd)
 
@@ -634,6 +638,15 @@ final class Z3ExprTransformer {
 			.toArray(com.microsoft.z3.BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkConcat);
+	}
+
+	private com.microsoft.z3.Expr transformBvExtract(final BvExtractExpr expr) {
+		final com.microsoft.z3.BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getBitvec());
+		final int from = expr.getFrom().getValue().intValue();
+		final int until = expr.getUntil().getValue().intValue();
+		final int size = expr.getBitvec().getType().getSize();
+
+		return context.mkExtract(size - from - 1, size - until - 1, bitvecTerm);
 	}
 
 	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {

@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
@@ -205,6 +206,8 @@ public final class ExprWriter {
 
 				.addCase(BvConcatExpr.class, e -> infixMultiary(e, " ++ "))
 
+				.addCase(BvExtractExpr.class, e -> bvExtract(e))
+
 				.addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
 
 				.addCase(BvSubExpr.class, e -> infixBinary(e, " bvsub "))
@@ -333,6 +336,10 @@ public final class ExprWriter {
 	private String exists(final ExistsExpr e) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private String bvExtract(final BvExtractExpr e) {
+		return writeWithBrackets(e.getBitvec()) + "[" + write(e.getFrom()) + ":" + write(e.getUntil()) + "]";
 	}
 
 	private String arrayRead(final ArrayReadExpr<?, ?> e) {

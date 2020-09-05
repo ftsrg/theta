@@ -54,6 +54,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
@@ -196,6 +197,8 @@ public final class ExprSimplifier {
 			// Bitvectors
 
 			.addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
+
+			.addCase(BvExtractExpr.class, ExprSimplifier::simplifyBvExtract)
 
 			.addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
@@ -1048,6 +1051,17 @@ public final class ExprSimplifier {
 		}
 
 		return value;
+	}
+
+	private static Expr<BvType> simplifyBvExtract(final BvExtractExpr expr, final Valuation val) {
+		final Expr<BvType> bitvec = simplify(expr.getBitvec(), val);
+
+		if(bitvec instanceof BvLitExpr) {
+			return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
+		}
+		else {
+			return expr;
+		}
 	}
 
 	private static Expr<BvType> simplifyBvAdd(final BvAddExpr expr, final Valuation val) {
