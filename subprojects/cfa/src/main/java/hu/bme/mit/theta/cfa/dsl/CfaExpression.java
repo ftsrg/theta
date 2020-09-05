@@ -33,14 +33,23 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -291,6 +300,22 @@ final class CfaExpression {
 						return Gt(leftOp, rightOp);
 					case GEQ:
 						return Geq(leftOp, rightOp);
+					case BV_ULT:
+						return BvExprs.ULt(castBv(leftOp), castBv(rightOp));
+					case BV_ULE:
+						return BvExprs.ULeq(castBv(leftOp), castBv(rightOp));
+					case BV_UGT:
+						return BvExprs.UGt(castBv(leftOp), castBv(rightOp));
+					case BV_UGE:
+						return BvExprs.UGeq(castBv(leftOp), castBv(rightOp));
+					case BV_SLT:
+						return BvExprs.SLt(castBv(leftOp), castBv(rightOp));
+					case BV_SLE:
+						return BvExprs.SLeq(castBv(leftOp), castBv(rightOp));
+					case BV_SGT:
+						return BvExprs.SGt(castBv(leftOp), castBv(rightOp));
+					case BV_SGE:
+						return BvExprs.SGeq(castBv(leftOp), castBv(rightOp));
 					default:
 						throw new AssertionError();
 				}
@@ -309,7 +334,7 @@ final class CfaExpression {
 				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 				switch (ctx.oper.getType()) {
-					case BITWISE_OR:
+					case BV_OR:
 						return BvExprs.Or(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
@@ -327,7 +352,7 @@ final class CfaExpression {
 				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 				switch (ctx.oper.getType()) {
-					case BITWISE_XOR:
+					case BV_XOR:
 						return BvExprs.Xor(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
@@ -345,7 +370,7 @@ final class CfaExpression {
 				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 				switch (ctx.oper.getType()) {
-					case BITWISE_AND:
+					case BV_AND:
 						return BvExprs.And(List.of(leftOp, rightOp));
 					default:
 						throw new AssertionError();
@@ -363,15 +388,15 @@ final class CfaExpression {
 				final Expr<BvType> rightOp = castBv(ctx.rightOp.accept(this));
 
 				switch (ctx.oper.getType()) {
-					case BITWISE_SHIFT_LEFT:
+					case BV_SHL:
 						return BvExprs.ShiftLeft(leftOp, rightOp);
-					case BITWISE_ARITH_SHIFT_RIGHT:
+					case BV_ASHR:
 						return BvExprs.ArithShiftRight(leftOp, rightOp);
-					case BITWISE_LOGIC_SHIFT_RIGHT:
+					case BV_LSHR:
 						return BvExprs.LogicShiftRight(leftOp, rightOp);
-					case BITWISE_ROTATE_LEFT:
+					case BV_ROL:
 						return BvExprs.RotateLeft(leftOp, rightOp);
-					case BITWISE_ROTATE_RIGHT:
+					case BV_ROR:
 						return BvExprs.RotateRight(leftOp, rightOp);
 					default:
 						throw new AssertionError();
@@ -427,6 +452,12 @@ final class CfaExpression {
 				case MINUS:
 					return createSubExpr(leftOp, rightOp);
 
+				case BV_ADD:
+					return createBvAddExpr(castBv(leftOp), castBv(rightOp));
+
+				case BV_SUB:
+					return createBvSubExpr(castBv(leftOp), castBv(rightOp));
+
 				default:
 					throw new AssertionError();
 			}
@@ -445,6 +476,21 @@ final class CfaExpression {
 
 		private SubExpr<?> createSubExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			return Sub(leftOp, rightOp);
+		}
+
+		private BvAddExpr createBvAddExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			if (leftOp instanceof BvAddExpr) {
+				final BvAddExpr addLeftOp = (BvAddExpr) leftOp;
+				final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+					.build();
+				return BvExprs.Add(ops);
+			} else {
+				return BvExprs.Add(Arrays.asList(leftOp, rightOp));
+			}
+		}
+
+		private BvSubExpr createBvSubExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.Sub(leftOp, rightOp);
 		}
 
 		////
@@ -490,14 +536,32 @@ final class CfaExpression {
 				case MUL:
 					return createMulExpr(leftOp, rightOp);
 
+				case BV_MUL:
+					return createBvMulExpr(castBv(leftOp), castBv(rightOp));
+
 				case DIV:
 					return createDivExpr(leftOp, rightOp);
+
+				case BV_UDIV:
+					return createBvUDivExpr(castBv(leftOp), castBv(rightOp));
+
+				case BV_SDIV:
+					return createBvSDivExpr(castBv(leftOp), castBv(rightOp));
 
 				case MOD:
 					return createModExpr(leftOp, rightOp);
 
+				case BV_SMOD:
+					return createBvSModExpr(castBv(leftOp), castBv(rightOp));
+
 				case REM:
 					return createRemExpr(leftOp, rightOp);
+
+				case BV_UREM:
+					return createBvURemExpr(castBv(leftOp), castBv(rightOp));
+
+				case BV_SREM:
+					return createBvSRemExpr(castBv(leftOp), castBv(rightOp));
 
 				default:
 					throw new AssertionError();
@@ -515,16 +579,47 @@ final class CfaExpression {
 			}
 		}
 
+		private BvMulExpr createBvMulExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			if (leftOp instanceof BvMulExpr) {
+				final BvMulExpr addLeftOp = (BvMulExpr) leftOp;
+				final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+					.build();
+				return BvExprs.Mul(ops);
+			} else {
+				return BvExprs.Mul(Arrays.asList(leftOp, rightOp));
+			}
+		}
+
 		private DivExpr<?> createDivExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			return Div(leftOp, rightOp);
+		}
+
+		private BvUDivExpr createBvUDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.UDiv(leftOp, rightOp);
+		}
+
+		private BvSDivExpr createBvSDivExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.SDiv(leftOp, rightOp);
 		}
 
 		private ModExpr<?> createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 			return Mod(uncastLeftOp, uncastRightOp);
 		}
 
+		private BvSModExpr createBvSModExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.SMod(leftOp, rightOp);
+		}
+
 		private RemExpr<?> createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 			return Rem(uncastLeftOp, uncastRightOp);
+		}
+
+		private BvURemExpr createBvURemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.URem(leftOp, rightOp);
+		}
+
+		private BvSRemExpr createBvSRemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+			return BvExprs.SRem(leftOp, rightOp);
 		}
 
 		////
@@ -687,42 +782,14 @@ final class CfaExpression {
 			checkArgument(size > 0, "Bitvector must have positive size");
 
 			final boolean[] value;
-			final boolean isSigned;
-			if(sizeAndContent[1].startsWith("bs")) {
-				value = decodeBinaryBvContent(sizeAndContent[1].substring(2));
-				isSigned = true;
-			}
-			else if(sizeAndContent[1].startsWith("ds")) {
-				value = decodeDecimalBvContent(sizeAndContent[1].substring(2), size, true);
-				isSigned = true;
-			}
-			else if(sizeAndContent[1].startsWith("xs")) {
-				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(2));
-				isSigned = true;
-			}
-			else if(sizeAndContent[1].startsWith("bu")) {
-				value = decodeBinaryBvContent(sizeAndContent[1].substring(2));
-				isSigned = false;
-			}
-			else if(sizeAndContent[1].startsWith("du")) {
-				value = decodeDecimalBvContent(sizeAndContent[1].substring(2), size, false);
-				isSigned = false;
-			}
-			else if(sizeAndContent[1].startsWith("xu")) {
-				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(2));
-				isSigned = false;
-			}
-			else if(sizeAndContent[1].startsWith("b")) {
+			if(sizeAndContent[1].startsWith("b")) {
 				value = decodeBinaryBvContent(sizeAndContent[1].substring(1));
-				isSigned = false;
 			}
 			else if(sizeAndContent[1].startsWith("d")) {
-				value = decodeDecimalBvContent(sizeAndContent[1].substring(1), size, false);
-				isSigned = false;
+				value = decodeDecimalBvContent(sizeAndContent[1].substring(1), size);
 			}
 			else if(sizeAndContent[1].startsWith("x")) {
 				value = decodeHexadecimalBvContent(sizeAndContent[1].substring(1));
-				isSigned = false;
 			}
 			else {
 				throw new IllegalArgumentException("Invalid bitvector literal");
@@ -735,7 +802,7 @@ final class CfaExpression {
 				bvValue[size - 1 - i] = value[value.length - 1 - i];
 			}
 
-			return Bv(bvValue, isSigned);
+			return Bv(bvValue);
 		}
 
 		private boolean[] decodeBinaryBvContent(String lit) {
@@ -750,23 +817,15 @@ final class CfaExpression {
 			return value;
 		}
 
-		private boolean[] decodeDecimalBvContent(String lit, int size, boolean isSigned) {
+		private boolean[] decodeDecimalBvContent(String lit, int size) {
 			BigInteger value = new BigInteger(lit);
 			checkArgument(
-				(
-					isSigned &&
-					value.compareTo(BigInteger.TWO.pow(size-1).multiply(BigInteger.valueOf(-1))) >= 0 &&
-					value.compareTo(BigInteger.TWO.pow(size-1)) < 0
-				) ||
-				(
-					!isSigned &&
-					value.compareTo(BigInteger.ZERO) >= 0 &&
-					value.compareTo(BigInteger.TWO.pow(size)) < 0
-				),
+				value.compareTo(BigInteger.TWO.pow(size-1).multiply(BigInteger.valueOf(-1))) >= 0 &&
+				value.compareTo(BigInteger.TWO.pow(size)) < 0,
 				"Decimal literal is not in range"
 			);
 
-			if(isSigned && value.compareTo(BigInteger.ZERO) < 0) {
+			if(value.compareTo(BigInteger.ZERO) < 0) {
 				value = value.add(BigInteger.TWO.pow(size));
 			}
 
