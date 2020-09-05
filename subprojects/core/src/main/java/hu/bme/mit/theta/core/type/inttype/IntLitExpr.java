@@ -62,17 +62,6 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return Rat(this.value, 1);
 	}
 
-	public BvLitExpr toBv(int size, boolean isSigned) {
-		BigInteger res = value;
-		BigInteger fittedRes = BvUtils.fitBigIntegerIntoDomain(res, size, isSigned);
-
-		if(res.equals(fittedRes)) {
-			return BvUtils.bigIntegerToBvLitExpr(fittedRes, size, isSigned);
-		} else {
-			throw new IllegalArgumentException("The value of int " + res.toString() + " does not fit the bitvector " + (isSigned ? "signed" : "unsigned") + " domain of size " + size + " bits");
-		}
-	}
-
 	public IntLitExpr add(final IntLitExpr that) {
 		return IntLitExpr.of(this.value.add(that.value));
 	}

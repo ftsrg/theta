@@ -127,10 +127,6 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 		if (type instanceof RatType) {
 			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
 			return result;
-		} else if (type instanceof BvType) {
-			final BvType bvType = (BvType) type;
-			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToBv(op, bvType.getSize(), bvType.isSigned());
-			return result;
 		} else {
 			throw new ClassCastException("Int cannot be cast to " + type);
 		}
