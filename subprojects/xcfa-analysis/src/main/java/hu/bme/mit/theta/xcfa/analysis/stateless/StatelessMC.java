@@ -26,6 +26,10 @@ public final class StatelessMC {
     }
 
     private boolean verify() {
+        State state = new State(xcfa);
+        XCFA.Process.Procedure.Edge edge = state.getOneStep();
+        System.out.println(edge);
+
         return true;
     }
 
