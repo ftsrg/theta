@@ -7,24 +7,25 @@ import hu.bme.mit.theta.core.type.Expr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
+public final class BvURemExpr extends BinaryExpr<BvType, BvType> {
 
-    private static final int HASH_SEED = 2567;
-    private static final String OPERATOR = "bvsub";
+    private static final int HASH_SEED = 995;
 
-    private BvSubExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    private static final String OPERATOR_LABEL = "bvurem";
+
+    private BvURemExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
         checkAllTypesEqual(leftOp, rightOp);
     }
 
-    public static BvSubExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvSubExpr(leftOp, rightOp);
+    public static BvURemExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return new BvURemExpr(leftOp, rightOp);
     }
 
-    public static BvSubExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+    public static BvURemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
         final Expr<BvType> newLeftOp = castBv(leftOp);
         final Expr<BvType> newRightOp = castBv(rightOp);
-        return BvSubExpr.of(newLeftOp, newRightOp);
+        return BvURemExpr.of(newLeftOp, newRightOp);
     }
 
     @Override
@@ -36,26 +37,25 @@ public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
     public BvLitExpr eval(final Valuation val) {
         final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
         final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-
-        return leftOpVal.sub(rightOpVal);
+        return leftOpVal.urem(rightOpVal);
     }
 
     @Override
-    public BvSubExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    public BvURemExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
-            return BvSubExpr.of(leftOp, rightOp);
+            return BvURemExpr.of(leftOp, rightOp);
         }
     }
 
     @Override
-    public BvSubExpr withLeftOp(final Expr<BvType> leftOp) {
+    public BvURemExpr withLeftOp(final Expr<BvType> leftOp) {
         return with(leftOp, getRightOp());
     }
 
     @Override
-    public BvSubExpr withRightOp(final Expr<BvType> rightOp) {
+    public BvURemExpr withRightOp(final Expr<BvType> rightOp) {
         return with(getLeftOp(), rightOp);
     }
 
@@ -63,8 +63,8 @@ public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvSubExpr) {
-            final BvSubExpr that = (BvSubExpr) obj;
+        } else if (obj instanceof BvURemExpr) {
+            final BvURemExpr that = (BvURemExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
@@ -78,7 +78,6 @@ public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
 
     @Override
     public String getOperatorLabel() {
-        return OPERATOR;
+        return OPERATOR_LABEL;
     }
-
 }
