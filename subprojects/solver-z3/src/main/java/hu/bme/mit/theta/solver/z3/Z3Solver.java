@@ -294,8 +294,7 @@ final class Z3Solver implements Solver {
 			if (term == null) {
 				return null;
 			} else {
-				BvLitExpr expr = (BvLitExpr) termTransformer.toExpr(term);
-				return Bv(expr.getValue(), type.isSigned());
+				return (BvLitExpr) termTransformer.toExpr(term);
 			}
 		}
 

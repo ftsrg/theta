@@ -204,8 +204,7 @@ final class Z3TermTransformer {
 
 		BigInteger value = bvNum.getBigInteger();
 
-		// At this point signedness is not known. Presuming unsigned
-		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
+		return BvUtils.bigIntegerToNeutralBvLitExpr(value, bvNum.getSortSize());
 	}
 
 	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
