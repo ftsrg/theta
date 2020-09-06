@@ -74,8 +74,8 @@ All arguments are optional, except `--model`.
     * `LBE` (default): Large-block encoding, where sequential paths are treated as a single step for abstraction.
 * `--maxenum`: Maximal number of states to be enumerated when performing explicit-value analysis (`--domain EXPL`) and an expression cannot be deterministically evaluated.
 If the limit is exceeded, unknown values are propagated.
-As a special (and default) case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain.
-In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
+As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain.
+In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information). The default is `10`.
 * `--refinement`: Refinement strategy, possible values:
     * `FW_BIN_ITP`: Forward binary interpolation, only performs well if `--prunestrategy` is `FULL`.
     * `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
