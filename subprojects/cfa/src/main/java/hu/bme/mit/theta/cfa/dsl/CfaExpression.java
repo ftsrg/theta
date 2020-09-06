@@ -68,6 +68,8 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -681,6 +683,25 @@ final class CfaExpression {
 			}
 		}
 
+		@Override
+		public Expr<?> visitBvExtendExpr(final BvExtendExprContext ctx) {
+			if (ctx.rightOp != null) {
+				final BvType extendType = BvExprs.BvType(Integer.parseInt(ctx.rightOp.size.getText()));
+
+				switch (ctx.oper.getType()) {
+					case BV_ZERO_EXTEND:
+						return ZExt(castBv(ctx.leftOp.accept(this)), extendType);
+
+					case BV_SIGN_EXTEND:
+						return SExt(castBv(ctx.leftOp.accept(this)), extendType);
+
+					default:
+						throw new AssertionError();
+				}
+			} else {
+				return visitChildren(ctx);
+			}
+		}
 
 		////
 
