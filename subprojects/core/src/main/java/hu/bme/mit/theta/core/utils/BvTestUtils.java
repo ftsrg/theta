@@ -124,8 +124,8 @@ public class BvTestUtils {
             },
             {
                 BvExtractExpr.class,
-                Bv(new boolean[] { false, true }),
-                Extract(Bv(new boolean[] { true, false, false, true, false }), Int(2), Int(3))
+                Bv(new boolean[] { false, false }),
+                Extract(Bv(new boolean[] { true, false, false, true, false }), Int(2), Int(4))
             },
 
             /* Unsigned bitvector specific operations */
