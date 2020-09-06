@@ -73,11 +73,11 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         final int untilValue = until.getValue().intValue();
         checkArgument(fromValue >= 0);
         checkArgument(untilValue >= 0);
-        checkArgument(untilValue >= fromValue);
+        checkArgument(untilValue > fromValue);
 
-        boolean[] extracted = new boolean[untilValue - fromValue + 1];
+        boolean[] extracted = new boolean[untilValue - fromValue];
         for(int i = 0; i < extracted.length; i++) {
-            extracted[i] = this.getValue()[fromValue + i];
+            extracted[extracted.length - i - 1] = this.getValue()[this.getValue().length - (fromValue + i) - 1];
         }
         return Bv(extracted);
     }

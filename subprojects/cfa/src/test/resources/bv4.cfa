@@ -12,7 +12,7 @@ main process cfa {
 	L0 -> L1 { x := 2'b10 ++ 2'b01 ++ 1'b1 }
     L1 -> L2 { assume x = 5'b10011 }
     L1 -> ERR { assume not (x = 5'b10011) }
-    L2 -> L3 { y := x[2:3] }
+    L2 -> L3 { y := x[3:1] }
     L3 -> END { assume y = 2'b01 }
     L3 -> ERR { assume not (y = 2'b01) }
 }

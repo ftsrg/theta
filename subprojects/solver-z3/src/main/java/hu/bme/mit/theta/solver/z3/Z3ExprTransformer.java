@@ -644,9 +644,8 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getBitvec());
 		final int from = expr.getFrom().getValue().intValue();
 		final int until = expr.getUntil().getValue().intValue();
-		final int size = expr.getBitvec().getType().getSize();
 
-		return context.mkExtract(size - from - 1, size - until - 1, bitvecTerm);
+		return context.mkExtract(until - 1, from, bitvecTerm);
 	}
 
 	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {

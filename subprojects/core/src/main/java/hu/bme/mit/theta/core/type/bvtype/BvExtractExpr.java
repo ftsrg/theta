@@ -32,7 +32,7 @@ public final class BvExtractExpr implements Expr<BvType> {
         checkNotNull(until);
         checkArgument(from.getValue().compareTo(BigInteger.ZERO) >= 0);
         checkArgument(until.getValue().compareTo(BigInteger.ZERO) >= 0);
-        checkArgument(until.getValue().compareTo(from.getValue()) >= 0);
+        checkArgument(until.getValue().compareTo(from.getValue()) > 0);
 
         this.bitvec = bitvec;
         this.from = from;
@@ -74,7 +74,7 @@ public final class BvExtractExpr implements Expr<BvType> {
 
     @Override
     public BvType getType() {
-        return BvType.of(until.getValue().subtract(from.getValue()).add(BigInteger.ONE).intValue());
+        return BvType.of(until.getValue().subtract(from.getValue()).intValue());
     }
 
     @Override

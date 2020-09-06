@@ -203,7 +203,7 @@ primeAccess
 	;
 
 bvExtractAccess
-    :   LBRACK from=INT COLON until=INT RBRACK
+    :   LBRACK until=INT COLON from=INT RBRACK
     ;
 
 primaryExpr

@@ -76,7 +76,7 @@ These operations are specific to bitvectors only. These operations require that 
 The following two operators are special operators specific to bitvectors.
 
 - **Concatenation**: Concatenates two bitvectors. The bitvectors do not have to be the same size; `a ++ b`
-- **Extraction**: Extracts a part of the bitvector. The indexes must be constant integer literals. Parameter from is interpreted as the starting index (with the most significant bit being 0), while parameter until is interpreted as the (inclusive) ending index (with the most significant bit being 0). The result is a bitvector of length _until-from+1_; `a[from:until]`
+- **Extraction**: Extracts a part of the bitvector. The indexes must be constant integer literals. Parameter from is interpreted as the starting index (with the least significant bit being 0), while parameter until is interpreted as the (exclusive) ending index (with the least significant bit being 0). The result is a bitvector of length _until-from_; `a[until:from]`
 
 ### Relational operations
 
