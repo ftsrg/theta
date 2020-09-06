@@ -15,10 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Tuple3;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
 
 import java.util.Map;
 
@@ -31,23 +30,26 @@ public final class StatelessMC {
     }
 
     private boolean verify() {
-        State state = new State(xcfa);
-
-        Tuple2<XCFA.Process, XCFA.Process.Procedure.Edge> edge;
-        while( (edge = state.getOneStep()) != null) {
-            if(edge.get2().getTarget().isErrorLoc()) {
-                System.out.println("Error location reached!");
-                return false;
+        ExecutionGraph initialExecutionGraph = new ExecutionGraph();
+        for(VarDecl<?> varDecl : xcfa.getGlobalVars()) {
+            if(varDecl.getInitValue() != null) {
+                initialExecutionGraph.addInitialWrite(varDecl, varDecl.getInitValue());
             }
-            for (Stmt stmt : edge.get2().getStmts()) {
-                stmt.accept(new XcfaStmtExecutionVisitor(), Tuple3.of(state.getMutableValuation(), state, edge.get1()));
-            }
-            state.getCurrentLocs().put(edge.get1(), edge.get2().getTarget());
         }
+
+        State state = initialExecutionGraph.executeXcfa(xcfa);
+
         for (Map.Entry<XCFA.Process, XCFA.Process.Procedure.Location> entry : state.getCurrentLocs().entrySet()) {
-            XCFA.Process process = entry.getKey();
             XCFA.Process.Procedure.Location location = entry.getValue();
+            boolean deadlock = false;
             if (!location.isEndLoc()) {
+                if(location.isErrorLoc()) {
+                    System.out.println("Error location reached!");
+                    return false;
+                }
+                deadlock = true;
+            }
+            if(deadlock) {
                 System.out.println("Deadlock reached!");
                 return false;
             }
