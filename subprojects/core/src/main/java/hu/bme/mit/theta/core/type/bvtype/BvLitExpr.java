@@ -82,6 +82,32 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         return Bv(extracted);
     }
 
+    public BvLitExpr zext(final BvType extendType) {
+        checkArgument(extendType.getSize() >= this.getType().getSize());
+
+        boolean[] extended = new boolean[extendType.getSize()];
+        for(int i = 0; i < this.getValue().length; i++) {
+            extended[extended.length - i - 1] = this.getValue()[this.getValue().length - i - 1];
+        }
+        for(int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
+            extended[i] = false;
+        }
+        return Bv(extended);
+    }
+
+    public BvLitExpr sext(final BvType extendType) {
+        checkArgument(extendType.getSize() >= this.getType().getSize());
+
+        boolean[] extended = new boolean[extendType.getSize()];
+        for(int i = 0; i < this.getValue().length; i++) {
+            extended[extended.length - i - 1] = this.getValue()[this.getValue().length - i - 1];
+        }
+        for(int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
+            extended[i] = this.getValue()[0];
+        }
+        return Bv(extended);
+    }
+
     public BvLitExpr add(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         BigInteger sum = neutralBvLitExprToBigInteger(this).add(neutralBvLitExprToBigInteger(that));
