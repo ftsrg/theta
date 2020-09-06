@@ -6,7 +6,7 @@ As of now, Theta has basic bitvector support for the CFA formalism.
 
 In Theta, every bitvector has a positive length. It follows, that the range of every bitvector has a size of 2<sup>n</sup>. There are different operations that are available for bitvectors. It is important to note, that (usually) only operations between bitvectors with the same size are valid.
 
-Bitvectors have n bits. If the bitvector is interpreted as an unsigned number then the values of the bits are interpreted as the binary representation of the underlying number. However, if the bitvector is interpreted as a signed number then the values of the bits are interpreted as the two's complement representation of the underlying number.
+Bitvectors have n bits. Interpreting the signedness (signed/unsigned) of bitvectors depend on the operations (e.g., signed greater vs unsigned greater). If the bitvector is interpreted as an unsigned number then the values of the bits are interpreted as the binary representation of the underlying number. However, if the bitvector is interpreted as a signed number then the values of the bits are interpreted as the two's complement representation of the underlying number.
 
 ## Declaring bitvector variables
 
