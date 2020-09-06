@@ -21,7 +21,8 @@ import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
 public final class StatelessMC {
 
     public static boolean check(XCFA xcfa) {
-        ExecutionGraph initialExecutionGraph = new ExecutionGraph(xcfa);
+        final ExecutionGraph executionGraph = new ExecutionGraph(xcfa);
+        executionGraph.execute();
         return true;
     }
 }

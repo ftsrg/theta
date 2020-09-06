@@ -1,10 +1,14 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless.graph;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.State;
+import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStmtExecutionVisitor;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Node;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Read;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Write;
@@ -39,13 +43,13 @@ public class ExecutionGraph {
             Map<VarDecl<?>, List<Write>> revisitableWrites,
             Map<XCFA.Process, List<Node>> nodes,
             State currentState) {
-        this.initialWrites = Set.copyOf(initialWrites);
+        this.initialWrites = new HashSet<>(initialWrites);
         this.revisitableReads = new HashMap<>();
-        revisitableReads.forEach((varDecl, reads) -> this.revisitableReads.put(varDecl, List.copyOf(reads)));
+        revisitableReads.forEach((varDecl, reads) -> this.revisitableReads.put(varDecl, new ArrayList<>(reads)));
         this.revisitableWrites = new HashMap<>();
-        revisitableWrites.forEach((varDecl, writes) -> this.revisitableWrites.put(varDecl, List.copyOf(writes)));
+        revisitableWrites.forEach((varDecl, writes) -> this.revisitableWrites.put(varDecl, new ArrayList<>(writes)));
         this.nodes = new HashMap<>();
-        nodes.forEach((process, nodes1) -> this.nodes.put(process, List.copyOf(nodes1)));
+        nodes.forEach((process, nodes1) -> this.nodes.put(process, new ArrayList<>(nodes1))); // TODO: deep copy nodes and edges
         this.currentState = State.copyOf(currentState);
     }
 
@@ -56,6 +60,26 @@ public class ExecutionGraph {
                 executionGraph.revisitableWrites,
                 executionGraph.nodes,
                 executionGraph.currentState);
+    }
+
+    public void execute() {
+        Tuple2<XCFA.Process, XCFA.Process.Procedure.Edge> edge;
+        while((edge = currentState.getOneStep()) != null) {
+
+            currentState.getCurrentLocs().put(edge.get1(), edge.get2().getTarget());
+
+            if(edge.get2().getTarget().isErrorLoc()) {
+                System.out.println("Error location reachable!");
+            }
+
+
+            for(Stmt stmt : edge.get2().getStmts()) {
+                stmt.accept(new XcfaStmtExecutionVisitor(), Tuple4.of(currentState.getMutablePartitionedValuation(), currentState, edge.get1(), this));
+            }
+
+         }
+        System.out.println("Execution graph finished!");
+
     }
 
     private void addNode(XCFA.Process proc, Node node) {
@@ -99,11 +123,14 @@ public class ExecutionGraph {
                     revisitableReads.put(global, new ArrayList<>());
                 }
                 revisitableReads.get(global).add(read);
+                executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(proc), local, write.getValue());
+                // TODO: add rf edges
             }
             else {
                 executionGraph = ExecutionGraph.copyOf(this);
+                executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(proc), local, write.getValue());
+                executionGraph.execute();
             }
-            executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(proc), local, write.getValue());
         }
 
     }
@@ -129,11 +156,13 @@ public class ExecutionGraph {
                 read.invalidate(executionGraph.currentState);
                 executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
             }
+            // TODO: add rf edges
         }
     }
 
     private List<List<Read>> getRevisitSets(VarDecl<?> global) {
         List<List<Read>> ret = new ArrayList<>();
+        if(revisitableReads.get(global) == null) return ret;
         for(int i = 0; i < (1<<revisitableReads.get(global).size()); ++i) {
             List<Read> list = new ArrayList<>();
             for(int j = 0; j < revisitableReads.get(global).size(); ++j) {
@@ -147,7 +176,12 @@ public class ExecutionGraph {
     }
 
     public void addInitialWrite(VarDecl<?> global, LitExpr<?> value) {
-        initialWrites.add(new Write(global, value));
+        Write write = new Write(global, value);
+        initialWrites.add(write);
+        if(!revisitableWrites.containsKey(global)) {
+            revisitableWrites.put(global, new ArrayList<>());
+        }
+        revisitableWrites.get(global).add(write);
     }
 
 }

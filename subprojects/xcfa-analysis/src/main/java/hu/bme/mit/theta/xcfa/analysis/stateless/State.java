@@ -41,12 +41,12 @@ public class State {
     ) {
         this.mutableValuation = MutablePartitionedValuation.copyOf(mutableValuation);
         this.xcfa = xcfa;
-        this.partitionLUT = partitionLUT;
+        this.partitionLUT = new HashMap<>(partitionLUT);
         this.callStacks = new HashMap<>();
         for(XCFA.Process process : xcfa.getProcesses()) {
-            this.callStacks.put(process, List.copyOf(callStacks.get(process)));
+            this.callStacks.put(process, new ArrayList<>(callStacks.get(process)));
         }
-        this.currentLocs =  Map.copyOf(currentLocs);
+        this.currentLocs =  new HashMap<>(currentLocs);
         this.currentlyAtomic = currentlyAtomic;
     }
 
@@ -102,6 +102,9 @@ public class State {
     }
 
     public int getPartitionId(XCFA.Process proc) {
+        if(!partitionLUT.containsKey(proc)) {
+            partitionLUT.put(proc, mutableValuation.createPartition());
+        }
         return partitionLUT.get(proc);
     }
 }
