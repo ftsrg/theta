@@ -45,6 +45,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
@@ -70,6 +71,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -207,6 +209,10 @@ public final class ExprWriter {
 				.addCase(BvConcatExpr.class, this::bvConcat)
 
 				.addCase(BvExtractExpr.class, this::bvExtract)
+
+				.addCase(BvZExtExpr.class, this::bvZExt)
+
+				.addCase(BvSExtExpr.class, this::bvSExt)
 
 				.addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
 
@@ -352,6 +358,14 @@ public final class ExprWriter {
 
 	private String bvExtract(final BvExtractExpr e) {
 		return writeWithBrackets(e.getBitvec()) + "[" + write(e.getFrom()) + ":" + write(e.getUntil()) + "]";
+	}
+
+	private String bvZExt(final BvZExtExpr e) {
+		return "(" + writeWithBrackets(e.getOp()) + " zero_extend " + e.getExtendType().toString() + ")";
+	}
+
+	private String bvSExt(final BvSExtExpr e) {
+		return "(" + writeWithBrackets(e.getOp()) + " sign_extend " + e.getExtendType().toString() + ")";
 	}
 
 	private String arrayRead(final ArrayReadExpr<?, ?> e) {
