@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseOrExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseShiftExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseXorExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvConcatExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtendExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtractAccessContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DeclListContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EqualityExprContext;
@@ -109,6 +110,7 @@ import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SDIV;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SGE;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SGT;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SHL;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SIGN_EXTEND;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SLE;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SLT;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_SMOD;
@@ -121,6 +123,7 @@ import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ULE;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ULT;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_UREM;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_XOR;
+import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BV_ZERO_EXTEND;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DIV;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EQ;
 import static hu.bme.mit.theta.core.dsl.gen.CoreDslParser.GEQ;
@@ -158,6 +161,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
@@ -731,6 +736,28 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			return BvExprs.Concat(ops);
 		} else {
 			return BvExprs.Concat(Arrays.asList(leftOp, rightOp));
+		}
+	}
+
+
+
+	@Override
+	public Expr<?> visitBvExtendExpr(final BvExtendExprContext ctx) {
+		if (ctx.rightOp != null) {
+			final BvType extendType = BvExprs.BvType(Integer.parseInt(ctx.rightOp.size.getText()));
+
+			switch (ctx.oper.getType()) {
+				case BV_ZERO_EXTEND:
+					return ZExt(castBv(ctx.leftOp.accept(this)), extendType);
+
+				case BV_SIGN_EXTEND:
+					return SExt(castBv(ctx.leftOp.accept(this)), extendType);
+
+				default:
+					throw new AssertionError();
+			}
+		} else {
+			return visitChildren(ctx);
 		}
 	}
 
