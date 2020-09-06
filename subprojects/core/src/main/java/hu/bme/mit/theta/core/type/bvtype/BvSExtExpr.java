@@ -14,7 +14,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvSExtExpr implements Expr<BvType> {
     private static final int HASH_SEED = 6126;
-    private static final String OPERATOR_LABEL = "sign_extend";
+    private static final String OPERATOR_LABEL = "bv_sign_extend";
 
     private final Expr<BvType> op;
     private final BvType extendType;
@@ -101,6 +101,6 @@ public final class BvSExtExpr implements Expr<BvType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getOps()).add(getType()).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getOp()).add(getType()).toString();
     }
 }

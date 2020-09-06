@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -366,13 +367,13 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     @Override
     public String toString() {
-        return Arrays.toString(value)
-            .replace("true", "1")
-            .replace("false", "0")
-            .replace("[", "")
-            .replace("]", "")
-            .replace(",", "")
-            .replace(" ", "");
+        final StringBuilder sb = new StringBuilder();
+        sb.append(getType().getSize());
+        sb.append("'b");
+        for(boolean bit : value) {
+            sb.append(bit ? "1" : "0");
+        }
+        return sb.toString();
     }
 
     @Override
