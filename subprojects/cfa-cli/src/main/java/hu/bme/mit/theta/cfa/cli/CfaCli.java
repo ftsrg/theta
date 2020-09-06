@@ -95,7 +95,7 @@ public class CfaCli {
 	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 0;
+	Integer maxEnum = 10;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
