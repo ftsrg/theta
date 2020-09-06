@@ -95,7 +95,7 @@ public class CfaCli {
 	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 0;
+	Integer maxEnum = 10;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -165,7 +165,7 @@ public class CfaCli {
 			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
-			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
+			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
 			}
@@ -243,7 +243,7 @@ public class CfaCli {
 	}
 
 	private String getFileExtension(String name) {
-		int lastIndexOf = name.lastIndexOf(".");
+		int lastIndexOf = name.lastIndexOf('.');
 		if (lastIndexOf == -1) return "";
 		return name.substring(lastIndexOf + 1);
 	}
@@ -270,7 +270,7 @@ public class CfaCli {
 				.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
 	}
 
-	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {
+	private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());

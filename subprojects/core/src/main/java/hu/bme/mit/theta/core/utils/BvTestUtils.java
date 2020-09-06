@@ -80,6 +80,9 @@ import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
 import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
 
 public class BvTestUtils {
+
+    private BvTestUtils() {}
+
     public static Collection<?> BasicOperations() {
         return Arrays.asList(new Object[][] {
             /* Unsigned basic operations */

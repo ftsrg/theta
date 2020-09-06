@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.microsoft.z3.BoolExpr;
@@ -41,8 +42,8 @@ public final class Z3ModelTest {
 		solver.check();
 		final Model model = solver.getModel();
 
-		System.out.println(model.getConstInterp(a));
-		System.out.println(model.getConstInterp(b));
+		Assert.assertTrue(model.getConstInterp(a).isTrue());
+		Assert.assertNull(model.getConstInterp(b));
 
 		context.close();
 	}
