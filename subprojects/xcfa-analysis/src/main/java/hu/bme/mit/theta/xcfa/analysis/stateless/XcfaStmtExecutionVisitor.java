@@ -62,13 +62,13 @@ public class XcfaStmtExecutionVisitor
 
     @Override
     public Void visit(StoreStmt storeStmt, Tuple4<MutableValuation, State, XCFA.Process, ExecutionGraph> param) {
-        param.get4().addRead(storeStmt.getLhs(), storeStmt.getRhs());
+        param.get4().addWrite(param.get3(), storeStmt.getLhs(), storeStmt.getRhs());
         return null;
     }
 
     @Override
     public Void visit(LoadStmt loadStmt, Tuple4<MutableValuation, State, XCFA.Process, ExecutionGraph> param) {
-        param.get4().addRead(loadStmt.getRhs(), loadStmt.getLhs());
+        param.get4().addRead(param.get3(), loadStmt.getRhs(), loadStmt.getLhs());
         return null;
     }
 

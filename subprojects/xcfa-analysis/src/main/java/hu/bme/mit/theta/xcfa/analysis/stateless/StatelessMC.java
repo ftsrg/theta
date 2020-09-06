@@ -15,51 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
 
-import java.util.Map;
-
 public final class StatelessMC {
 
-    private final XCFA xcfa;
-
-    private StatelessMC(XCFA xcfa) {
-        this.xcfa = xcfa;
-    }
-
-    private boolean verify() {
-        ExecutionGraph initialExecutionGraph = new ExecutionGraph();
-        for(VarDecl<?> varDecl : xcfa.getGlobalVars()) {
-            if(varDecl.getInitValue() != null) {
-                initialExecutionGraph.addInitialWrite(varDecl, varDecl.getInitValue());
-            }
-        }
-
-        State state = initialExecutionGraph.executeXcfa(xcfa);
-
-        for (Map.Entry<XCFA.Process, XCFA.Process.Procedure.Location> entry : state.getCurrentLocs().entrySet()) {
-            XCFA.Process.Procedure.Location location = entry.getValue();
-            boolean deadlock = false;
-            if (!location.isEndLoc()) {
-                if(location.isErrorLoc()) {
-                    System.out.println("Error location reached!");
-                    return false;
-                }
-                deadlock = true;
-            }
-            if(deadlock) {
-                System.out.println("Deadlock reached!");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public static boolean check(XCFA xcfa) {
-        final StatelessMC statelessMC = new StatelessMC(xcfa);
-        return statelessMC.verify();
+        ExecutionGraph initialExecutionGraph = new ExecutionGraph(xcfa);
+        return true;
     }
 }

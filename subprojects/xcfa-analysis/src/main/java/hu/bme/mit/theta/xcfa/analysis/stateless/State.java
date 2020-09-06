@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
@@ -11,14 +11,15 @@ import java.util.*;
 
 public class State {
 
-    private final MutableValuation mutableValuation;
+    private final MutablePartitionedValuation mutableValuation;
+    private final Map<XCFA.Process, Integer> partitionLUT; 
     private final XCFA xcfa;
     private final Map<XCFA.Process, List<Tuple2<XCFA.Process.Procedure, XCFA.Process.Procedure.Location>>> callStacks;
     private final Map<XCFA.Process, XCFA.Process.Procedure.Location> currentLocs;
     private XCFA.Process currentlyAtomic;
 
     public State(final XCFA xcfa) {
-        this.mutableValuation = new MutableValuation();
+        this.mutableValuation = new MutablePartitionedValuation();
         this.xcfa = xcfa;
         this.callStacks = new HashMap<>();
         this.currentLocs = new HashMap<>();
@@ -27,17 +28,20 @@ public class State {
             this.currentLocs.put(process, process.getMainProcedure().getInitLoc());
         }
         currentlyAtomic = null;
+        mutableValuation.createPartition();
+        partitionLUT = new HashMap<>();
     }
 
     private State(
-            final MutableValuation mutableValuation,
+            final MutablePartitionedValuation mutableValuation,
             final XCFA xcfa,
             final Map<XCFA.Process, List<Tuple2<XCFA.Process.Procedure, XCFA.Process.Procedure.Location>>> callStacks,
-            final Map<XCFA.Process, XCFA.Process.Procedure.Location> currentLocs,
+            Map<XCFA.Process, Integer> partitionLUT, final Map<XCFA.Process, XCFA.Process.Procedure.Location> currentLocs,
             final XCFA.Process currentlyAtomic
-            ) {
-        this.mutableValuation = MutableValuation.copyOf(mutableValuation);
+    ) {
+        this.mutableValuation = MutablePartitionedValuation.copyOf(mutableValuation);
         this.xcfa = xcfa;
+        this.partitionLUT = partitionLUT;
         this.callStacks = new HashMap<>();
         for(XCFA.Process process : xcfa.getProcesses()) {
             this.callStacks.put(process, List.copyOf(callStacks.get(process)));
@@ -47,10 +51,10 @@ public class State {
     }
 
     public static State copyOf(State state) {
-        return new State(state.mutableValuation, state.xcfa, state.callStacks, state.currentLocs, state.currentlyAtomic);
+        return new State(state.mutableValuation, state.xcfa, state.callStacks, state.partitionLUT, state.currentLocs, state.currentlyAtomic);
     }
 
-    public MutableValuation getMutableValuation() {
+    public MutablePartitionedValuation getMutablePartitionedValuation() {
         return mutableValuation;
     }
 
@@ -97,4 +101,7 @@ public class State {
         return null;
     }
 
+    public int getPartitionId(XCFA.Process proc) {
+        return partitionLUT.get(proc);
+    }
 }

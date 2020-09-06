@@ -34,10 +34,10 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
  */
 public final class MutablePartitionedValuation extends Valuation {
 
-	private final List<Map<Decl<?>, LitExpr<?>>> declToExpr;
+	private final List<Map<Decl<?>, LitExpr<?>>> partitions;
 
 	public MutablePartitionedValuation() {
-		this.declToExpr = new ArrayList<>();
+		this.partitions = new ArrayList<>();
 	}
 
 	public static MutablePartitionedValuation copyOf(final MutablePartitionedValuation val) {
@@ -49,51 +49,51 @@ public final class MutablePartitionedValuation extends Valuation {
 		return result;
 	}
 
-	private int createPartition() {
-		declToExpr.add(new LinkedHashMap<>());
-		return declToExpr.size()-1;
+	public int createPartition() {
+		partitions.add(new LinkedHashMap<>());
+		return partitions.size()-1;
 	}
 
 
 	public List<Map<Decl<?>, LitExpr<?>>> getPartitions() {
-		return Collections.unmodifiableList(declToExpr);
+		return Collections.unmodifiableList(partitions);
 	}
 
 	public MutablePartitionedValuation put(final int id, final Decl<?> decl, final LitExpr<?> value) {
 		checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
-		checkArgument(declToExpr.size() > id, "Index out of bounds");
-		declToExpr.get(id).put(decl, value);
+		checkArgument(partitions.size() > id, "Index out of bounds");
+		partitions.get(id).put(decl, value);
 		return this;
 	}
 
 	public MutablePartitionedValuation remove(final int id, final Decl<?> decl) {
-		checkArgument(declToExpr.size() > id, "Index out of bounds");
-		declToExpr.get(id).remove(decl);
+		checkArgument(partitions.size() > id, "Index out of bounds");
+		partitions.get(id).remove(decl);
 		return this;
 	}
 
 	public MutablePartitionedValuation remove(final Decl<?> decl) {
-		for(Map<Decl<?>, LitExpr<?>> decls : declToExpr) {
+		for(Map<Decl<?>, LitExpr<?>> decls : partitions) {
 			decls.remove(decl);
 		}
 		return this;
 	}
 
 	public MutablePartitionedValuation clear(){
-		declToExpr.clear();
+		partitions.clear();
 		return this;
 	}
 
 	public MutablePartitionedValuation clear(final int id){
-		checkArgument(declToExpr.size() > id, "Index out of bounds");
-		declToExpr.get(id).clear();
+		checkArgument(partitions.size() > id, "Index out of bounds");
+		partitions.get(id).clear();
 		return this;
 	}
 
 	public MutablePartitionedValuation putAll(final int id, final Valuation val){
-		checkArgument(declToExpr.size() > id, "Index out of bounds");
+		checkArgument(partitions.size() > id, "Index out of bounds");
 		for (final Decl<?> decl : val.getDecls()) {
-			declToExpr.get(id).put(decl, val.eval(decl).get());
+			partitions.get(id).put(decl, val.eval(decl).get());
 		}
 		return this;
 	}
@@ -101,21 +101,28 @@ public final class MutablePartitionedValuation extends Valuation {
 	@Override
 	public Collection<Decl<?>> getDecls() {
 		Set<Decl<?>> returnSet = new HashSet<>();
-		for(Map<Decl<?>, LitExpr<?>> decls : declToExpr) {
+		for(Map<Decl<?>, LitExpr<?>> decls : partitions) {
 			returnSet.addAll(decls.keySet());
 		}
 		return Collections.unmodifiableSet(returnSet);
 	}
 
 	public Collection<Decl<?>> getDecls(final int id) {
-		checkArgument(declToExpr.size() > id, "Index out of bounds");
-		return Collections.unmodifiableSet(declToExpr.get(id).keySet());
+		checkArgument(partitions.size() > id, "Index out of bounds");
+		return Collections.unmodifiableSet(partitions.get(id).keySet());
+	}
+
+	public Valuation getValuation(final int id) {
+		checkArgument(partitions.size() > id, "Index out of bounds");
+		MutableValuation mutableValuation = new MutableValuation();
+		partitions.forEach(declLitExprMap -> declLitExprMap.forEach(mutableValuation::put));
+		return mutableValuation;
 	}
 
 	@Override
 	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
-		for(Map<Decl<?>, LitExpr<?>> decls : declToExpr) {
+		for(Map<Decl<?>, LitExpr<?>> decls : partitions) {
 			@SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(decl);
 			if(val != null) return Optional.of(val);;
 		}
@@ -132,7 +139,7 @@ public final class MutablePartitionedValuation extends Valuation {
 	@Override
 	public Map<Decl<?>, LitExpr<?>> toMap() {
 		Map<Decl<?>, LitExpr<?>> ret = new HashMap<>();
-		for(Map<Decl<?>, LitExpr<?>> decl : declToExpr) {
+		for(Map<Decl<?>, LitExpr<?>> decl : partitions) {
 			ret.putAll(decl);
 		}
 		return Collections.unmodifiableMap(ret);
