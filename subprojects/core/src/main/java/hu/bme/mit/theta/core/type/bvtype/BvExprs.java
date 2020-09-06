@@ -27,6 +27,14 @@ public final class BvExprs {
         return BvExtractExpr.of(bitvec, from, until);
     }
 
+    public static BvZExtExpr ZExt(final Expr<BvType> bitvec, final BvType extendType) {
+        return BvZExtExpr.of(bitvec, extendType);
+    }
+
+    public static BvSExtExpr SExt(final Expr<BvType> bitvec, final BvType extendType) {
+        return BvSExtExpr.of(bitvec, extendType);
+    }
+
     public static BvAddExpr Add(final Iterable<? extends Expr<BvType>> ops) {
         return BvAddExpr.of(ops);
     }
