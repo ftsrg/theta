@@ -73,10 +73,12 @@ These operations are specific to bitvectors only. These operations require that 
 - **Bitwise rotate right**: Rotates *a* to the right with *b*; `a bvror b`
 - **Bitwise not:** Negates all the bits in bitvectors; `bvnot a`
 
-The following two operators are special operators specific to bitvectors.
+The following four operators are special operators specific to bitvectors.
 
 - **Concatenation**: Concatenates two bitvectors. The bitvectors do not have to be the same size; `a ++ b`
 - **Extraction**: Extracts a part of the bitvector. The indexes must be constant integer literals. Parameter from is interpreted as the starting index (with the least significant bit being 0), while parameter until is interpreted as the (exclusive) ending index (with the least significant bit being 0). The result is a bitvector of length _until-from_; `a[until:from]`
+- **Zero extend**: Extends the size of the bitvector to size N. The new bits will have the value 0; `a bv_zero_extend bv[N]`
+- **Sign extend**: Extends the size of the bitvector to size N. The new bits will have the value of the most significant bit of a; `a bv_sign_extend bv[N]`
 
 ### Relational operations
 
