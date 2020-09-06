@@ -50,7 +50,7 @@ public final class AigerVisualizer {
 	 */
 	public static String visualize(final AigerSystem system) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("digraph aiger {" + lineSeparator());
+		sb.append("digraph aiger {").append(lineSeparator());
 		appendNodes(system, sb);
 		appendWires(system, sb);
 		sb.append('}');
@@ -82,7 +82,7 @@ public final class AigerVisualizer {
 			if (!wire.isPonated()) {
 				sb.append(" [arrowhead=" + INVHEAD + "]");
 			}
-			sb.append(";" + lineSeparator());
+			sb.append(';').append(lineSeparator());
 		}
 	}
 }

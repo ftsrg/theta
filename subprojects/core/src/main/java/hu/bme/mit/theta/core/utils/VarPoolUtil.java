@@ -10,6 +10,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class VarPoolUtil {
 
+    private VarPoolUtil() {}
+
     private static ArrayDeque<VarDecl<IntType>> intPool=new ArrayDeque<VarDecl<IntType>>();
     private static int counter=0;
 

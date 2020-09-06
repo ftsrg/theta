@@ -49,6 +49,8 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
  */
 public class PredAbstractors {
 
+	private PredAbstractors() {}
+
 	/**
 	 * Interface for performing predicate abstraction over an expression.
 	 */
