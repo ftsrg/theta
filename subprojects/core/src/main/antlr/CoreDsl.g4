@@ -166,7 +166,11 @@ multiplicativeExpr
 	;
 
 bvConcatExpr
-    :   ops+=unaryExpr (opers+=BV_CONCAT ops+=unaryExpr)*
+    :   ops+=bvExtendExpr (opers+=BV_CONCAT ops+=bvExtendExpr)*
+    ;
+
+bvExtendExpr
+    :   leftOp=unaryExpr (oper=(BV_ZERO_EXTEND | BV_SIGN_EXTEND) rightOp=bvType)?
     ;
 
 unaryExpr
@@ -430,6 +434,14 @@ BV_SGE
 
 BV_CONCAT
     :   PLUS PLUS
+    ;
+
+BV_ZERO_EXTEND
+    :   'bv_zero_extend'
+    ;
+
+BV_SIGN_EXTEND
+    :   'bv_sign_extend'
     ;
 
 TRUE:	'true'
