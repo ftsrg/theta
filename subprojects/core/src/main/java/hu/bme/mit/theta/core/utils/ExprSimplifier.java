@@ -56,6 +56,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
@@ -83,6 +84,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -199,6 +201,10 @@ public final class ExprSimplifier {
 			.addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
 
 			.addCase(BvExtractExpr.class, ExprSimplifier::simplifyBvExtract)
+
+			.addCase(BvZExtExpr.class, ExprSimplifier::simplifyBvZExt)
+
+			.addCase(BvSExtExpr.class, ExprSimplifier::simplifyBvSExt)
 
 			.addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
@@ -1058,6 +1064,28 @@ public final class ExprSimplifier {
 
 		if(bitvec instanceof BvLitExpr) {
 			return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
+		}
+		else {
+			return expr;
+		}
+	}
+
+	private static Expr<BvType> simplifyBvZExt(final BvZExtExpr expr, final Valuation val) {
+		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
+
+		if(bitvec instanceof BvLitExpr) {
+			return ((BvLitExpr) bitvec).zext(expr.getExtendType());
+		}
+		else {
+			return expr;
+		}
+	}
+
+	private static Expr<BvType> simplifyBvSExt(final BvSExtExpr expr, final Valuation val) {
+		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
+
+		if(bitvec instanceof BvLitExpr) {
+			return ((BvLitExpr) bitvec).sext(expr.getExtendType());
 		}
 		else {
 			return expr;
