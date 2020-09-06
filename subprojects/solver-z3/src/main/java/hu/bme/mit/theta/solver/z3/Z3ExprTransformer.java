@@ -64,6 +64,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
@@ -79,6 +80,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -233,6 +235,10 @@ final class Z3ExprTransformer {
 				.addCase(BvConcatExpr.class, this::transformBvConcat)
 
 				.addCase(BvExtractExpr.class, this::transformBvExtract)
+
+				.addCase(BvZExtExpr.class, this::transformBvZExt)
+
+				.addCase(BvSExtExpr.class, this::transformBvSExt)
 
 				.addCase(BvAddExpr.class, this::transformBvAdd)
 
@@ -646,6 +652,20 @@ final class Z3ExprTransformer {
 		final int until = expr.getUntil().getValue().intValue();
 
 		return context.mkExtract(until - 1, from, bitvecTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvZExt(final BvZExtExpr expr) {
+		final com.microsoft.z3.BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getOp());
+		final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
+
+		return context.mkZeroExt(extendWith, bitvecTerm);
+	}
+
+	private com.microsoft.z3.Expr transformBvSExt(final BvSExtExpr expr) {
+		final com.microsoft.z3.BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getOp());
+		final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
+
+		return context.mkSignExt(extendWith, bitvecTerm);
 	}
 
 	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {
