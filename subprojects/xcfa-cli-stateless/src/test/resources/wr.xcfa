@@ -1,24 +1,10 @@
-var init_end : bool
-var x : int
-main process mainProcess {
+var x : int (0)
+main process p0 {
     main procedure mainProcedure (){
         var a : int
         init loc L0
         final loc Lf
         L0 -> Lf {
-            a := 0
-            a -> x
-            init_end := true
-        }
-    }
-}
-process p0 {
-    main procedure mainProcedure (){
-        var a : int
-        init loc L0
-        final loc Lf
-        L0 -> Lf {
-            assume init_end
             a := 1
             a -> x
         }
@@ -32,7 +18,6 @@ process p1 {
         final loc Lf
 
         L0 -> Lf {
-            assume init_end
             a <- x
         }
     }

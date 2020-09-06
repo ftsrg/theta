@@ -10,17 +10,20 @@ import hu.bme.mit.theta.xcfa.analysis.stateless.State;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStmtExecutionVisitor;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Node;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Read;
+import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Write;
 
 import java.util.*;
 
 public class ExecutionGraph {
-    private final Map<XCFA.Process, List<Node>> nodes;
+    private final Set<Write> initialWrites;
+    private final Map<XCFA.Process, List<Node>> processNodes;
     private final Set<Read> revisitableSet;
     private State state;
 
     public ExecutionGraph() {
-        nodes = new HashMap<>();
         revisitableSet = new HashSet<>();
+        initialWrites = new HashSet<>();
+        processNodes = new HashMap<>();
     }
 
     public State executeXcfa(XCFA xcfa) {
