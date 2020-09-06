@@ -16,6 +16,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
@@ -31,6 +32,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -43,6 +45,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Add;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.And;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ArithShiftRight;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Concat;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
@@ -55,6 +58,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Or;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.RotateLeft;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.RotateRight;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SDiv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SGeq;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SGt;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SLeq;
@@ -70,6 +74,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ULeq;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ULt;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.URem;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Xor;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
 import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
@@ -113,7 +118,7 @@ public class BvTestUtils {
 
     public static Collection<?> BitvectorOperations() {
         return Arrays.asList(new Object[][] {
-            /* Concat, extract operations */
+            /* Concat, extract, extend operations */
             {
                 BvConcatExpr.class,
                 Bv(new boolean[] { true, false, false, true }),
@@ -126,6 +131,16 @@ public class BvTestUtils {
                 BvExtractExpr.class,
                 Bv(new boolean[] { false, false }),
                 Extract(Bv(new boolean[] { true, false, false, true, false }), Int(2), Int(4))
+            },
+            {
+                BvZExtExpr.class,
+                Bv(new boolean[] { false, false, true, false }),
+                ZExt(Bv(new boolean[] { true, false }), BvType(4))
+            },
+            {
+                BvSExtExpr.class,
+                Bv(new boolean[] { true, true, true, false }),
+                SExt(Bv(new boolean[] { true, false }), BvType(4))
             },
 
             /* Unsigned bitvector specific operations */
