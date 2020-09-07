@@ -22,7 +22,7 @@ public final class StatelessMC {
 
     public static boolean check(XCFA xcfa) {
         final ExecutionGraph executionGraph = new ExecutionGraph(xcfa);
-        executionGraph.execute();
+        ExecutionGraph.start();
         return true;
     }
 }
