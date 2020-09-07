@@ -199,7 +199,7 @@ public class XstsCli {
                 logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
             }
             else {
-                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace");
+                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
             }
         }
     }
