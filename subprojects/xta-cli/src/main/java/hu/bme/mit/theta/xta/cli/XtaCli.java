@@ -107,9 +107,13 @@ public final class XtaCli {
 		}
 	}
 
-	private XtaSystem loadModel() throws IOException {
-		try (InputStream inputStream = new FileInputStream(model)) {
-			return XtaDslManager.createSystem(inputStream);
+	private XtaSystem loadModel() throws Exception {
+		try {
+			try (InputStream inputStream = new FileInputStream(model)) {
+				return XtaDslManager.createSystem(inputStream);
+			}
+		} catch (Exception ex) {
+			throw new Exception("Could not parse XTA: " + ex.getMessage(), ex);
 		}
 	}
 

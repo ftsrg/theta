@@ -800,7 +800,10 @@ final class CfaExpression {
 		@Override
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
 			Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
-			if (optSymbol.isEmpty()) throw new NoSuchElementException("Identifier '" + ctx.id.getText() + "' not found");
+			if (optSymbol.isEmpty()) {
+				throw new NoSuchElementException("Identifier '" + ctx.id.getText() + "' at line " +
+						ctx.start.getLine() + " cannot be resolved");
+			}
 			final Symbol symbol = optSymbol.get();
 			final Decl<?> decl = (Decl<?>) env.eval(symbol);
 			return decl.getRef();
