@@ -135,7 +135,7 @@ public class StsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
@@ -146,6 +146,14 @@ public class StsCli {
 		}
 		if (benchmarkMode) {
 			writer.newRow();
+		}
+	}
+
+	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -178,9 +186,13 @@ public class StsCli {
 		}
 	}
 
-	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
-				.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+		try {
+			return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
@@ -210,8 +222,7 @@ public class StsCli {
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.RESULT, "Message:%n%s%n", ex.getMessage());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
 				final StringWriter errors = new StringWriter();
 				ex.printStackTrace(new PrintWriter(errors));
