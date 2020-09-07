@@ -320,8 +320,7 @@ public class CfaCli {
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.RESULT, "Message:%n%s%n", ex.getMessage());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
 				final StringWriter errors = new StringWriter();
 				ex.printStackTrace(new PrintWriter(errors));

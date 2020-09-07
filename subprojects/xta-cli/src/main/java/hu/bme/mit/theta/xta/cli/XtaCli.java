@@ -97,13 +97,21 @@ public final class XtaCli {
 			final XtaSystem system = loadModel();
 			final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy,
 					clockStrategy, searchStrategy);
-			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
+			final SafetyResult<?, ?> result = check(checker);
 			printResult(result);
 			if (dotfile != null) {
 				writeVisualStatus(result, dotfile);
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
+		}
+	}
+
+	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+		try {
+			return checker.check(UnitPrec.getInstance());
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -131,9 +139,7 @@ public final class XtaCli {
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
-			System.out.println("Exception of type " + ex.getClass().getSimpleName() + " occurred");
-			System.out.println("Message:");
-			System.out.println(ex.getMessage());
+			System.out.println(ex.getClass().getSimpleName() + " occurred, message: " + message);
 			if (stacktrace) {
 				final StringWriter errors = new StringWriter();
 				ex.printStackTrace(new PrintWriter(errors));
