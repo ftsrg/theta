@@ -260,10 +260,13 @@ public class CfaCli {
 		writer.newRow();
 	}
 
-	private CFA loadModel() throws IOException {
+	private CFA loadModel() throws Exception {
 		try (InputStream inputStream = new FileInputStream(model)) {
-			final CFA cfa = CfaDslManager.createCfa(inputStream);
-			return cfa;
+			try {
+				return CfaDslManager.createCfa(inputStream);
+			} catch (final Exception ex) {
+				throw new Exception("Could not parse CFA: " + ex.getMessage(), ex);
+			}
 		}
 	}
 

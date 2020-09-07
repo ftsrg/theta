@@ -158,21 +158,23 @@ public class StsCli {
 		writer.newRow();
 	}
 
-	private STS loadModel() throws IOException {
-		if (model.endsWith(".aag")) {
-			final AigerSystem aigerSystem = AigerParser.parse(model);
-			AigerCoi.apply(aigerSystem);
-			return AigerToSts.createSts(aigerSystem);
-		} else if (model.endsWith(".system")) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				if (spec.getAllSts().size() != 1) {
-					throw new UnsupportedOperationException("STS contains multiple properties.");
+	private STS loadModel() throws Exception {
+		try {
+			if (model.endsWith(".aag")) {
+				final AigerSystem aigerSystem = AigerParser.parse(model);
+				AigerCoi.apply(aigerSystem);
+				return AigerToSts.createSts(aigerSystem);
+			} else {
+				try (InputStream inputStream = new FileInputStream(model)) {
+					final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+					if (spec.getAllSts().size() != 1) {
+						throw new UnsupportedOperationException("STS contains multiple properties.");
+					}
+					return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 				}
-				return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 			}
-		} else {
-			throw new IOException("Unknown format");
+		} catch (Exception ex) {
+			throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
 		}
 	}
 

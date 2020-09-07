@@ -144,19 +144,16 @@ public class XstsCli {
         writer.newRow();
     }
 
-    private XSTS loadModel() throws IOException {
-        if (model.endsWith(".xsts")) {
+    private XSTS loadModel() throws Exception {
+        try {
             InputStream propStream = null;
-            if (property.endsWith(".prop")) {
-                propStream = new FileInputStream(property);
-            } else {
-                propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
-            }
+            if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+            else  propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
             try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
                 return XstsDslManager.createXsts(inputStream);
             }
-        } else {
-            throw new IOException("Unknown format");
+        } catch (Exception ex) {
+            throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
         }
     }
 
