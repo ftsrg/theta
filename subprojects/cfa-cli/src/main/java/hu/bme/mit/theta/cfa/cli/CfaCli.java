@@ -59,8 +59,13 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.z3.*;
 
@@ -184,14 +189,16 @@ public class CfaCli {
 		try {
 			final CFA cfa = loadModel();
 			logger.write(Level.RESULT, "Vars: %s%n" , cfa.getVars().size());
-			logger.write(Level.RESULT, "Bool vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(BoolExprs.Bool())).count());
-			logger.write(Level.RESULT, "Int vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(IntExprs.Int())).count());
+			logger.write(Level.RESULT, "  Bool vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof BoolType).count());
+			logger.write(Level.RESULT, "  Int vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof IntType).count());
+			logger.write(Level.RESULT, "  Bitvector vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof BvType).count());
+			logger.write(Level.RESULT, "  Array vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof ArrayType).count());
 			logger.write(Level.RESULT, "Locs: %s%n" , cfa.getLocs().size());
 			logger.write(Level.RESULT, "Edges: %s%n" , cfa.getEdges().size());
+			logger.write(Level.RESULT, "  Assignments: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssignStmt).count());
+			logger.write(Level.RESULT, "  Assumptions: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count());
+			logger.write(Level.RESULT, "  Havocs: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof HavocStmt).count());
 			logger.write(Level.RESULT, "Cyclomatic complexity: %s%n" , cfa.getEdges().size() - cfa.getLocs().size() + 2 * getCfaComponents(cfa));
-			logger.write(Level.RESULT, "Assignments: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssignStmt).count());
-			logger.write(Level.RESULT, "Assumptions: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count());
-			logger.write(Level.RESULT, "Havocs: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof HavocStmt).count());
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
