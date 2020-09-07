@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -30,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -66,6 +64,9 @@ public final class XtaCli {
 
 	@Parameter(names = {"--header", "-h"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
+
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
 
 	public XtaCli(final String[] args) {
 		this.args = args;
@@ -125,10 +126,19 @@ public final class XtaCli {
 		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
-			writer.newRow();
 		} else {
-			System.out.println("Exception occured: " + ex.getClass().getSimpleName());
-			System.out.println("Message: " + ex.getMessage());
+			System.out.println("Exception of type " + ex.getClass().getSimpleName() + " occurred");
+			System.out.println("Message:");
+			System.out.println(ex.getMessage());
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				System.out.println("Trace:");
+				System.out.println(errors);
+			}
+			else {
+				System.out.println("Use --stacktrace for stack trace");
+			}
 		}
 	}
 
