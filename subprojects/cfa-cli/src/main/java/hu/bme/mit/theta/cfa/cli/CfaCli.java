@@ -121,6 +121,9 @@ public class CfaCli {
 	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
 	boolean metrics = false;
 
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
 	private Logger logger;
 
 	public CfaCli(final String[] args) {
@@ -296,10 +299,15 @@ public class CfaCli {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
 			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-			final StringWriter errors = new StringWriter();
-			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.RESULT, "Message:%n%s%n", ex.getMessage());
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+			}
+			else {
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace");
+			}
 		}
 	}
 
