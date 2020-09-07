@@ -41,9 +41,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -801,7 +799,9 @@ final class CfaExpression {
 
 		@Override
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
-			final Symbol symbol = currentScope.resolve(ctx.id.getText()).get();
+			Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
+			if (optSymbol.isEmpty()) throw new NoSuchElementException("Identifier '" + ctx.id.getText() + "' not found");
+			final Symbol symbol = optSymbol.get();
 			final Decl<?> decl = (Decl<?>) env.eval(symbol);
 			return decl.getRef();
 		}
