@@ -306,7 +306,7 @@ public class CfaCli {
 				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
 			}
 			else {
-				logger.write(Level.RESULT, "Use --stacktrace for stack trace");
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
 			}
 		}
 	}
