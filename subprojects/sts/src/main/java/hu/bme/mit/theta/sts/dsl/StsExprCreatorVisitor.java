@@ -44,6 +44,7 @@ import static java.util.stream.Collectors.toList;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -535,7 +536,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	public Expr<?> visitIdExpr(final IdExprContext ctx) {
 		final Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 
-		checkArgument(optSymbol.isPresent());
+		if (optSymbol.isEmpty()) throw new NoSuchElementException("Identifier '" + ctx.id.getText() + "' not found");
 		final Symbol symbol = optSymbol.get();
 
 		checkArgument(symbol instanceof DeclSymbol);
