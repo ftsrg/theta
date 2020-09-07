@@ -25,10 +25,12 @@ public class ExecutionGraph {
     private final int id;
     private static int cnt = 0;
     private final Map<Node, Node> copyLut;
+    private Tuple2<hu.bme.mit.theta.xcfa.XCFA.Process, XCFA.Process.Procedure.Edge> processingEdge;
+    private int firstStmt;
 
     public ExecutionGraph(XCFA xcfa) {
         this.copyLut = null;
-        this.currentState = new State(xcfa);
+        this.currentState = new State(xcfa, this);
         this.revisitableReads = new HashMap<>();
         nodes = new HashMap<>();
         initialWrites = new HashSet<>();
@@ -40,6 +42,7 @@ public class ExecutionGraph {
             }
         }
         id = cnt++;
+        processingEdge = null;
     }
 
     private ExecutionGraph(
@@ -47,7 +50,9 @@ public class ExecutionGraph {
             Map<VarDecl<?>, List<Read>> revisitableReads,
             Map<VarDecl<?>, List<Write>> revisitableWrites,
             Map<XCFA.Process, List<Node>> nodes,
-            State currentState) {
+            State currentState,
+            Tuple2<hu.bme.mit.theta.xcfa.XCFA.Process, XCFA.Process.Procedure.Edge> processingEdge) {
+        this.processingEdge = processingEdge;
         this.revisitableReads = new HashMap<>();
         this.revisitableWrites = new HashMap<>();
         this.nodes = new HashMap<>();
@@ -97,7 +102,7 @@ public class ExecutionGraph {
         });
         initialWrites.forEach(write -> this.initialWrites.add((Write)copyLut.get(write)));
 
-        this.currentState = State.copyOf(currentState);
+        this.currentState = State.copyOf(currentState, this);
         id = cnt++;
     }
 
@@ -107,12 +112,15 @@ public class ExecutionGraph {
                 executionGraph.revisitableReads,
                 executionGraph.revisitableWrites,
                 executionGraph.nodes,
-                executionGraph.currentState);
+                executionGraph.currentState,
+                executionGraph.processingEdge);
     }
 
+    private int step = 0;
     public void execute() {
         Tuple2<XCFA.Process, XCFA.Process.Procedure.Edge> edge;
-        while((edge = currentState.getOneStep()) != null) {
+
+        while((edge = (processingEdge == null ? currentState.getOneStep() : processingEdge)) != null) {
 
             currentState.getCurrentLocs().put(edge.get1(), edge.get2().getTarget());
 
@@ -120,19 +128,26 @@ public class ExecutionGraph {
                 System.out.println("Error location reachable!");
             }
 
-
-            for(Stmt stmt : edge.get2().getStmts()) {
+            processingEdge = edge;
+            firstStmt = currentState.getFirstStmt().getOrDefault(edge.get2(), 0);
+            for(;firstStmt < edge.get2().getStmts().size();++firstStmt) {
+                currentState.getFirstStmt().put(edge.get2(), firstStmt+1);
+                Stmt stmt = edge.get2().getStmts().get(firstStmt);
                 stmt.accept(new XcfaStmtExecutionVisitor(), Tuple4.of(currentState.getMutablePartitionedValuation(), currentState, edge.get1(), this));
             }
+            currentState.getFirstStmt().remove(edge.get2());
+            processingEdge = null;
 
-         }
-        printGraph();
+
+        }
+        printGraph(step);
     }
 
-    public void printGraph() {
-        System.out.println("subgraph cluster_" + id + " {");
-        initialWrites.forEach(write -> write.getOutgoingEdges().forEach(edge1 -> System.out.println(write + " -> " + edge1.getTarget() + (edge1.getLabel().equals("po") ? "" : "[label=" + edge1.getLabel() + ",constraint=false,color=green,fontcolor=green,style=dashed]"))));
-        nodes.forEach((process, nodes1) -> nodes1.forEach(node -> node.getOutgoingEdges().forEach(edge1 -> System.out.println(node + " -> " + edge1.getTarget() + (edge1.getLabel().equals("po") ? "" : "[label=" + edge1.getLabel() + ",constraint=false,color=green,fontcolor=green,style=dashed]")))));
+    public void printGraph(int step) {
+        System.out.println("subgraph cluster_" + id + "_" + step + " {");
+        System.out.println("label=cluster_" + id + "_" + step);
+        initialWrites.forEach(write -> write.getOutgoingEdges().forEach(edge1 -> System.out.println("\"" + write + "_" + step  + "\"" + " -> " + "\"" + edge1.getTarget() + "_" + step  + "\"" + (edge1.getLabel().equals("po") ? "" : "[label=" + edge1.getLabel() + ",constraint=false,color=green,fontcolor=green,style=dashed]"))));
+        nodes.forEach((process, nodes1) -> nodes1.forEach(node -> node.getOutgoingEdges().forEach(edge1 -> System.out.println("\"" + node + "_" + step  + "\"" + " -> " + "\"" + edge1.getTarget() + "_" + step  + "\"" + (edge1.getLabel().equals("po") ? "" : "[label=" + edge1.getLabel() + ",constraint=false,color=green,fontcolor=green,style=dashed]")))));
         System.out.println("}");
     }
 
@@ -157,10 +172,10 @@ public class ExecutionGraph {
     public void addRead(XCFA.Process proc, VarDecl<?> local, VarDecl<?> global) {
         Read read;
         if(nodes.containsKey(proc)) {
-            read = new Read(currentState.getMutablePartitionedValuation().getValuation(currentState.getPartitionId(proc)), global, local, proc);
+            read = new Read(currentState.getMutablePartitionedValuation().getValuation(currentState.getPartitionId(proc)), global, local, processingEdge, firstStmt);
         }
         else {
-            read = new Read(new MutableValuation(), global, local, proc);
+            read = new Read(new MutableValuation(), global, local, processingEdge, firstStmt);
         }
         addNode(proc, read);
 
@@ -196,7 +211,7 @@ public class ExecutionGraph {
     }
 
     public void addWrite(XCFA.Process proc, VarDecl<?> local, VarDecl<?> global) {
-        Write write = new Write(global, currentState.getMutablePartitionedValuation().eval(local).get());
+        Write write = new Write(global, currentState.getMutablePartitionedValuation().eval(local).get(), proc);
         addNode(proc, write);
         if(!revisitableWrites.containsKey(global)) {
             revisitableWrites.put(global, new ArrayList<>());
@@ -209,14 +224,11 @@ public class ExecutionGraph {
             if (i < revisitSets.size()-1) {
                 executionGraph = ExecutionGraph.copyOf(this);
                 for (Read read : reads) {
-                    read.invalidate(executionGraph.currentState);
-                    executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
-                    if(executionGraph.copyLut != null) {
-                        write = (Write) executionGraph.copyLut.get(write);
-                        read = (Read) executionGraph.copyLut.get(read);
-                    }
-                    removeRfEdges(write, read);
-                    removeSuccessor(read, executionGraph);
+                    Write newWrite = (Write) executionGraph.copyLut.get(write);
+                    Read newRead = (Read) executionGraph.copyLut.get(read);
+                    newRead.invalidate(executionGraph.currentState);
+                    executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), newRead.getLocal(), newWrite.getValue());
+                    removeRfEdges(newWrite, newRead);
                 }
                 executionGraph.execute();
             } else {
@@ -225,13 +237,9 @@ public class ExecutionGraph {
                     read.invalidate(executionGraph.currentState);
                     executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
                     removeRfEdges(write, read);
-                    removeSuccessor(read, executionGraph);
                 }
             }
         }
-    }
-
-    private void removeSuccessor(Read read, ExecutionGraph executionGraph) {
     }
 
     private void removeRfEdges(Write write, Read read) {
@@ -242,10 +250,6 @@ public class ExecutionGraph {
         Edge rf = new Edge(write, read, "rf");
         write.addOutgoingEdge(rf);
         read.addIncomingEdge(rf);
-    }
-
-    private void handleReads(Write write, List<Read> reads, ExecutionGraph executionGraph) {
-
     }
 
     private List<List<Read>> getRevisitSets(VarDecl<?> global) {
@@ -260,11 +264,17 @@ public class ExecutionGraph {
             }
             ret.add(list);
         }
-        return ret;
+        return ret.stream().filter(reads -> {
+            Set<XCFA.Process> processes = new HashSet<>();
+            for(Read r : reads) {
+                processes.add(r.getParentProcess());
+            }
+            return processes.size() == reads.size();
+        }).collect(Collectors.toList());
     }
 
     public void addInitialWrite(VarDecl<?> global, LitExpr<?> value) {
-        Write write = new Write(global, value);
+        Write write = new Write(global, value, null);
         initialWrites.add(write);
         if(!revisitableWrites.containsKey(global)) {
             revisitableWrites.put(global, new ArrayList<>());
@@ -272,4 +282,13 @@ public class ExecutionGraph {
         revisitableWrites.get(global).add(write);
     }
 
+    public void removeNode(Node target) {
+        nodes.get(target.getParentProcess()).remove(target);
+        if(target instanceof Write) {
+            revisitableWrites.get(((Write) target).getGlobalVar()).remove(target);
+        }
+        else if(target instanceof Read) {
+            revisitableReads.get(((Read) target).getGlobal()).remove(target);
+        }
+    }
 }
