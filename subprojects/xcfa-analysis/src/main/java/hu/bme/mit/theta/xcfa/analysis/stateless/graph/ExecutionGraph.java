@@ -14,6 +14,7 @@ import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Read;
 import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Write;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExecutionGraph {
     private final Set<Write> initialWrites;
@@ -207,27 +208,44 @@ public class ExecutionGraph {
             ExecutionGraph executionGraph;
             if (i < revisitSets.size()-1) {
                 executionGraph = ExecutionGraph.copyOf(this);
-                handleReads(write, reads, executionGraph);
+                for (Read read : reads) {
+                    read.invalidate(executionGraph.currentState);
+                    executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
+                    if(executionGraph.copyLut != null) {
+                        write = (Write) executionGraph.copyLut.get(write);
+                        read = (Read) executionGraph.copyLut.get(read);
+                    }
+                    removeRfEdges(write, read);
+                    removeSuccessor(read, executionGraph);
+                }
                 executionGraph.execute();
             } else {
                 executionGraph = this;
-                handleReads(write, reads, executionGraph);
+                for (Read read : reads) {
+                    read.invalidate(executionGraph.currentState);
+                    executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
+                    removeRfEdges(write, read);
+                    removeSuccessor(read, executionGraph);
+                }
             }
         }
     }
 
-    private void handleReads(Write write, List<Read> reads, ExecutionGraph executionGraph) {
-        for (Read read : reads) {
-            read.invalidate(executionGraph.currentState);
-            executionGraph.currentState.getMutablePartitionedValuation().put(executionGraph.currentState.getPartitionId(read.getParentProcess()), read.getLocal(), write.getValue());
-            if(executionGraph.copyLut != null) {
-                write = (Write) executionGraph.copyLut.get(write);
-                read = (Read) executionGraph.copyLut.get(read);
-            }
-            Edge rf = new Edge(write, read, "rf");
-            write.addOutgoingEdge(rf);
-            read.addIncomingEdge(rf);
+    private void removeSuccessor(Read read, ExecutionGraph executionGraph) {
+    }
+
+    private void removeRfEdges(Write write, Read read) {
+        for(Edge e : read.getIncomingEdges().stream().filter(edge -> edge.getLabel().equals("rf")).collect(Collectors.toList())) {
+            e.getSource().getOutgoingEdges().remove(e);
+            e.getTarget().getIncomingEdges().remove(e);
         }
+        Edge rf = new Edge(write, read, "rf");
+        write.addOutgoingEdge(rf);
+        read.addIncomingEdge(rf);
+    }
+
+    private void handleReads(Write write, List<Read> reads, ExecutionGraph executionGraph) {
+
     }
 
     private List<List<Read>> getRevisitSets(VarDecl<?> global) {
