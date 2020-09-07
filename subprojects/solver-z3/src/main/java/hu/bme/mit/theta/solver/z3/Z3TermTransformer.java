@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -70,6 +71,7 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
@@ -351,6 +353,9 @@ final class Z3TermTransformer {
 			return Int();
 		} else if (sort instanceof com.microsoft.z3.RealSort) {
 			return Rat();
+		} else if (sort instanceof com.microsoft.z3.BitVecSort) {
+			final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) sort;
+			return BvType(bvSort.getSize());
 		} else {
 			throw new AssertionError("Unsupported sort: " + sort);
 		}
