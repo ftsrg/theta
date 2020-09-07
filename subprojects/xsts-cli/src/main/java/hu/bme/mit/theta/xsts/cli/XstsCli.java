@@ -86,6 +86,9 @@ public class XstsCli {
     @Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
+    @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+    boolean stacktrace = false;
+
     private Logger logger;
 
     public XstsCli(final String[] args) {
@@ -189,10 +192,15 @@ public class XstsCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
         } else {
             logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-            logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-            final StringWriter errors = new StringWriter();
-            ex.printStackTrace(new PrintWriter(errors));
-            logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+            logger.write(Logger.Level.RESULT, "Message:%n%s%n", ex.getMessage());
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
+            }
+            else {
+                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace");
+            }
         }
     }
 

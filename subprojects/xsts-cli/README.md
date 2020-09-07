@@ -91,5 +91,6 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 
 | Flag | Description |
 |--|--|
+| `--stacktrace` | Print full stack trace for exceptions. |
 | `--benchmark` | Benchmark mode, only print metrics in csv format. |
 | `--header` | Print the header for the benchmark mode csv format. |

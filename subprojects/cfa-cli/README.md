@@ -102,5 +102,6 @@ Otherwise, the output is simply in `dot` format.
 
 | Flag | Description |
 |--|--|
+| `--stacktrace` | Print full stack trace for exceptions. |
 | `--benchmark` | Benchmark mode, only print metrics in csv format. |
 | `--header` | Print the header for the benchmark mode csv format. |
