@@ -19,4 +19,16 @@ public class Write extends Node {
     public LitExpr<?> getValue() {
         return value;
     }
+
+    @Override
+    public Node duplicate() {
+        return new Write(globalVar, value);
+    }
+
+    private static int cnt = 0;
+    private final int id = cnt++;
+    @Override
+    public String toString() {
+        return "\"W(" + getGlobalVar().getName() + ", " + getValue() + ")_" + id + "\"";
+    }
 }

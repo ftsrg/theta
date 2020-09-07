@@ -34,11 +34,23 @@ public class Read extends Node{
 
     }
 
+    @Override
+    public Node duplicate() {
+        return new Read(localVarsBefore, global, local, parentProcess);
+    }
+
     public XCFA.Process getParentProcess() {
         return parentProcess;
     }
 
     public VarDecl<?> getLocal() {
         return local;
+    }
+
+    private static int cnt = 0;
+    private final int id = cnt++;
+    @Override
+    public String toString() {
+        return "\"R(" + getGlobal().getName() + ")_" + id + "\"";
     }
 }

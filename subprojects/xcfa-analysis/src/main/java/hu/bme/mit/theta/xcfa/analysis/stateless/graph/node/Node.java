@@ -6,7 +6,7 @@ import hu.bme.mit.theta.xcfa.analysis.stateless.graph.Edge;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Node {
+public abstract class Node {
 
     private final Set<Edge> incomingEdges;
     private final Set<Edge> outgoingEdges;
@@ -17,7 +17,7 @@ public class Node {
     }
 
     public Set<Edge> getOutgoingEdges() {
-        return outgoingEdges;
+    return outgoingEdges;
     }
 
     public Set<Edge> getIncomingEdges() {
@@ -38,4 +38,7 @@ public class Node {
         }
         outgoingEdges.clear();
     }
+
+    public abstract Node duplicate();
+
 }
