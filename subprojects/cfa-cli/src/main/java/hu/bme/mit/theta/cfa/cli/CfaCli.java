@@ -166,7 +166,7 @@ public class CfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
 			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
-			final SafetyResult<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
@@ -270,10 +270,22 @@ public class CfaCli {
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
-		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-				.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) throws Exception {
+		try {
+			return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
+	}
+
+	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
