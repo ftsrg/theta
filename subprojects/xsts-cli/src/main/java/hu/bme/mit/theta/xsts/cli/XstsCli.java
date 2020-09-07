@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.io.SequenceInputStream;
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class XstsCli {
 
@@ -144,11 +145,8 @@ public class XstsCli {
     }
 
     private void printHeader() {
-        final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"};
-        for (final String str : header) {
-            writer.cell(str);
-        }
+        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
         writer.newRow();
     }
 

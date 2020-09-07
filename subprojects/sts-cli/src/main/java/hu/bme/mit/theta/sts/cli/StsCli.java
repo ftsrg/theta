@@ -17,6 +17,7 @@ package hu.bme.mit.theta.sts.cli;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -158,11 +159,8 @@ public class StsCli {
 	}
 
 	private void printHeader() {
-		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size"};
-		for (final String str : header) {
-			writer.cell(str);
-		}
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size").forEach(writer::cell);
 		writer.newRow();
 	}
 
