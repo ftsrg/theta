@@ -75,12 +75,12 @@ public abstract class Valuation implements Substitution {
 	}
 
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		return HASH_SEED * 31 + toMap().hashCode();
 	}
 
 	@Override
-	public final boolean equals(final Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof Valuation) {

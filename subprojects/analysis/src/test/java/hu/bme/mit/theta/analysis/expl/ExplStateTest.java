@@ -43,6 +43,7 @@ public class ExplStateTest {
 		final ExplState t3 = ExplState.of(ImmutableValuation.empty());
 		final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 		final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
+		final ExplState b = ExplState.bottom();
 
 		Assert.assertSame(t1, t2);
 		Assert.assertSame(t1, t3);
@@ -50,6 +51,9 @@ public class ExplStateTest {
 
 		Assert.assertNotSame(s1, t1);
 		Assert.assertEquals(s1, s2);
+
+		Assert.assertNotEquals(t1, b);
+		Assert.assertNotEquals(t2, b);
 	}
 
 	@Test
