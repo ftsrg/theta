@@ -153,11 +153,6 @@ public class CfaCli {
 			return;
 		}
 
-		if (visualize != null) {
-			visualize();
-			return;
-		}
-
 		if (headerOnly) {
 			printHeader();
 			return;
@@ -166,6 +161,12 @@ public class CfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
+
+			if (visualize != null) {
+				final Graph graph = CfaVisualizer.visualize(cfa);
+				GraphvizWriter.getInstance().writeFileAutoConvert(graph, visualize);
+				return;
+			}
 
 			if (metrics) {
 				CfaMetrics.printMetrics(logger, cfa);
@@ -185,36 +186,6 @@ public class CfaCli {
 		if (benchmarkMode) {
 			writer.newRow();
 		}
-	}
-
-	private void visualize() {
-		try {
-			final CFA cfa = loadModel();
-			final Graph graph = CfaVisualizer.visualize(cfa);
-			String ext = getFileExtension(visualize.toLowerCase());
-			switch(ext) {
-				case "pdf":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PDF);
-					break;
-				case "png":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PNG);
-					break;
-				case "svg":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.SVG);
-					break;
-				default:
-					GraphvizWriter.getInstance().writeFile(graph, visualize);
-					break;
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	private String getFileExtension(String name) {
-		int lastIndexOf = name.lastIndexOf('.');
-		if (lastIndexOf == -1) return "";
-		return name.substring(lastIndexOf + 1);
 	}
 
 	private void printHeader() {
@@ -272,17 +243,16 @@ public class CfaCli {
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
 				final StringWriter errors = new StringWriter();
 				ex.printStackTrace(new PrintWriter(errors));
 				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
-			}
-			else {
+			} else {
 				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
 			}
 		}

@@ -216,17 +216,16 @@ public class StsCli {
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
 				final StringWriter errors = new StringWriter();
 				ex.printStackTrace(new PrintWriter(errors));
 				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
-			}
-			else {
+			} else {
 				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
 			}
 		}
