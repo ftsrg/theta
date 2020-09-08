@@ -158,11 +158,6 @@ public class CfaCli {
 			return;
 		}
 
-		if (metrics) {
-			printMetrics();
-			return;
-		}
-
 		if (headerOnly) {
 			printHeader();
 			return;
@@ -171,6 +166,12 @@ public class CfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
+
+			if (metrics) {
+				CfaMetrics.printMetrics(logger, cfa);
+				return;
+			}
+
 			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
@@ -184,49 +185,6 @@ public class CfaCli {
 		if (benchmarkMode) {
 			writer.newRow();
 		}
-	}
-
-	private void printMetrics(){
-		try {
-			final CFA cfa = loadModel();
-			logger.write(Level.RESULT, "Vars: %s%n" , cfa.getVars().size());
-			logger.write(Level.RESULT, "  Bool vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof BoolType).count());
-			logger.write(Level.RESULT, "  Int vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof IntType).count());
-			logger.write(Level.RESULT, "  Bitvector vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof BvType).count());
-			logger.write(Level.RESULT, "  Array vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType() instanceof ArrayType).count());
-			logger.write(Level.RESULT, "Locs: %s%n" , cfa.getLocs().size());
-			logger.write(Level.RESULT, "Edges: %s%n" , cfa.getEdges().size());
-			logger.write(Level.RESULT, "  Assignments: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssignStmt).count());
-			logger.write(Level.RESULT, "  Assumptions: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count());
-			logger.write(Level.RESULT, "  Havocs: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof HavocStmt).count());
-			logger.write(Level.RESULT, "Cyclomatic complexity: %s%n" , cfa.getEdges().size() - cfa.getLocs().size() + 2 * getCfaComponents(cfa));
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	public static int getCfaComponents(final CFA cfa) {
-		final Set<CFA.Loc> visited = new HashSet<>();
-		int components = 0;
-
-		for (final CFA.Loc loc : cfa.getLocs()) {
-			if (!visited.contains(loc)) {
-				components++;
-				visited.add(loc);
-				final Queue<CFA.Loc> queue = new LinkedList<>();
-				queue.add(loc);
-				while (!queue.isEmpty()) {
-					final CFA.Loc next = queue.remove();
-					for (final CFA.Edge edge : next.getOutEdges()) {
-						if (!visited.contains(edge.getTarget())) {
-							visited.add(edge.getTarget());
-							queue.add(edge.getTarget());
-						}
-					}
-				}
-			}
-		}
-		return components;
 	}
 
 	private void visualize() {
