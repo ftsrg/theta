@@ -1,0 +1,19 @@
+specification bool1 {
+	
+	property safe : {
+		var x1 : bool
+		var x2 : bool
+		
+		// This dummy invariant is needed because TTMCInterpolatingSolver throws an exception for an empty list of invariants
+		invariant x1 = x1
+		
+		initial not x1
+		initial x2
+		transition x1 or not x2 or x2'
+		transition x1 or x2 or not x1'
+		transition not x1 or x1'
+		transition not x1 or not x2'
+		transition x2 or not x2'
+		
+	} models G(not x1 or x2)
+}
