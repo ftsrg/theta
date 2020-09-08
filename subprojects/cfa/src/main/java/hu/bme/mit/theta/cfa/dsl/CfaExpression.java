@@ -25,6 +25,7 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
@@ -266,7 +267,7 @@ final class CfaExpression {
 					case NEQ:
 						return Neq(leftOp, rightOp);
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -290,7 +291,7 @@ final class CfaExpression {
 					case GEQ:
 						return Geq(leftOp, rightOp);
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -310,7 +311,7 @@ final class CfaExpression {
 					case BITWISE_OR:
 						return BvExprs.Or(List.of(leftOp, rightOp));
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -328,7 +329,7 @@ final class CfaExpression {
 					case BITWISE_XOR:
 						return BvExprs.Xor(List.of(leftOp, rightOp));
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -346,7 +347,7 @@ final class CfaExpression {
 					case BITWISE_AND:
 						return BvExprs.And(List.of(leftOp, rightOp));
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -372,7 +373,7 @@ final class CfaExpression {
 					case BITWISE_ROTATE_RIGHT:
 						return BvExprs.RotateRight(leftOp, rightOp);
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 
 			} else {
@@ -391,14 +392,14 @@ final class CfaExpression {
 				final Expr<?> opsHead = ops.get(0);
 				final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
 
-				return createAdditiveExpr(opsHead, opsTail, ctx.opers);
+				return createAdditiveExpr(opsHead, opsTail, ctx.opers, ctx);
 			} else {
 				return visitChildren(ctx);
 			}
 		}
 
 		private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-										   final List<? extends Token> opers) {
+										   final List<? extends Token> opers, final AdditiveExprContext ctx) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -410,13 +411,14 @@ final class CfaExpression {
 				final Token operHead = opers.get(0);
 				final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-				final Expr<?> subExpr = createAdditiveSubExpr(opsHead, newOpsHead, operHead);
+				final Expr<?> subExpr = createAdditiveSubExpr(opsHead, newOpsHead, operHead, ctx);
 
-				return createAdditiveExpr(subExpr, newOpsTail, opersTail);
+				return createAdditiveExpr(subExpr, newOpsTail, opersTail, ctx);
 			}
 		}
 
-		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
+		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper,
+											  final AdditiveExprContext ctx) {
 			switch (oper.getType()) {
 
 				case PLUS:
@@ -426,7 +428,7 @@ final class CfaExpression {
 					return createSubExpr(leftOp, rightOp);
 
 				default:
-					throw new AssertionError();
+					throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
 			}
 		}
 
@@ -456,7 +458,7 @@ final class CfaExpression {
 				final Expr<?> opsHead = ops.get(0);
 				final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
 
-				return createMutliplicativeExpr(opsHead, opsTail, ctx.opers);
+				return createMutliplicativeExpr(opsHead, opsTail, ctx.opers, ctx);
 			} else {
 				return visitChildren(ctx);
 			}
@@ -464,7 +466,7 @@ final class CfaExpression {
 		}
 
 		private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-												 final List<? extends Token> opers) {
+												 final List<? extends Token> opers, final MultiplicativeExprContext ctx) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -476,13 +478,14 @@ final class CfaExpression {
 				final Token operHead = opers.get(0);
 				final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-				final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead);
+				final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead, ctx);
 
-				return createMutliplicativeExpr(subExpr, newOpsTail, opersTail);
+				return createMutliplicativeExpr(subExpr, newOpsTail, opersTail, ctx);
 			}
 		}
 
-		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
+		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper,
+													final MultiplicativeExprContext ctx) {
 			switch (oper.getType()) {
 
 				case MUL:
@@ -498,7 +501,7 @@ final class CfaExpression {
 					return createRemExpr(leftOp, rightOp);
 
 				default:
-					throw new AssertionError();
+					throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
 			}
 		}
 
@@ -539,7 +542,7 @@ final class CfaExpression {
 						return Neg(op);
 
 					default:
-						throw new AssertionError();
+						throw new ParseException(ctx, "Unknown operator");
 				}
 			} else {
 				return visitChildren(ctx);
@@ -588,7 +591,7 @@ final class CfaExpression {
 			} else if (access.prime != null) {
 				return createPrimeExpr(op);
 			} else {
-				throw new AssertionError();
+				throw new ParseException(access, "Unknown expression");
 			}
 		}
 
@@ -723,7 +726,7 @@ final class CfaExpression {
 				isSigned = false;
 			}
 			else {
-				throw new IllegalArgumentException("Invalid bitvector literal");
+				throw new ParseException(ctx, "Invalid bitvector literal");
 			}
 
 			checkArgument(value.length <= size, "The value of the literal cannot be represented on the given amount of bits");
@@ -801,8 +804,7 @@ final class CfaExpression {
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
 			Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 			if (optSymbol.isEmpty()) {
-				throw new NoSuchElementException("Identifier '" + ctx.id.getText() + "' at line " +
-						ctx.start.getLine() + " cannot be resolved");
+				throw new ParseException(ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
 			}
 			final Symbol symbol = optSymbol.get();
 			final Decl<?> decl = (Decl<?>) env.eval(symbol);
