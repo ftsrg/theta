@@ -165,8 +165,8 @@ public class XstsCli {
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
         try {
-            return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy).search(search)
-                    .predSplit(predSplit).logger(logger).build(xsts);
+            return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
+                    .pruneStrategy(pruneStrategy).search(search) .predSplit(predSplit).logger(logger).build(xsts);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
@@ -194,17 +194,16 @@ public class XstsCli {
     }
 
     private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
         if (benchmarkMode) {
-            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
         } else {
             logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
                 logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
-            }
-            else {
+            } else {
                 logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
             }
         }
