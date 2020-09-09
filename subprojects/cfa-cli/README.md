@@ -1,6 +1,7 @@
 ## Overview
 
 The `cfa-cli` project is an executable (command line) tool for running CEGAR-based analyses on CFAs.
+Furthermore, it also includes some utilities, such as calculating metrics or visualizing the CFA.
 For more information about the CFA formalism and its supported language elements, take a look at the [`cfa`](../cfa/README.md) project.
 
 ### Related projects
@@ -102,5 +103,6 @@ Otherwise, the output is simply in `dot` format.
 
 | Flag | Description |
 |--|--|
+| `--stacktrace` | Print full stack trace for exceptions. |
 | `--benchmark` | Benchmark mode, only print metrics in csv format. |
 | `--header` | Print the header for the benchmark mode csv format. |

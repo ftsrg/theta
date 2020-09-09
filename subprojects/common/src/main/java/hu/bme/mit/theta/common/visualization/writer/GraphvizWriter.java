@@ -17,6 +17,7 @@ package hu.bme.mit.theta.common.visualization.writer;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import hu.bme.mit.theta.common.visualization.Alignment;
@@ -31,13 +32,9 @@ import hu.bme.mit.theta.common.visualization.Shape;
 
 /**
  * Class for writing graphs in GraphViz format.
- * <p>
  * Known limitations (due to GraphViz):
- * <p>
  * - Fill color of composite nodes is ignored.
- * <p>
  * - Shape of composite nodes is ignored.
- * <p>
  * - Peripheries of composite nodes are ignored.
  */
 public final class GraphvizWriter extends AbstractGraphWriter {
@@ -47,7 +44,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
 		private final String option;
 
-		private Format(final String option) {
+		Format(final String option) {
 			this.option = option;
 		}
 
@@ -93,6 +90,45 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		if (!deleteSuccessful) {
 			throw new IOException("Could not delete temporary dot file.");
 		}
+	}
+
+	private String getFileExtension(String name) {
+		int lastIndexOf = name.lastIndexOf('.');
+		if (lastIndexOf == -1) return "";
+		return name.substring(lastIndexOf + 1);
+	}
+
+	public void writeFileAutoConvert(final Graph graph, final String fileName) throws IOException, InterruptedException {
+		String ext = getFileExtension(fileName.toLowerCase());
+		if (ext.equals("dot")) {
+			writeFile(graph, fileName);
+			return;
+		}
+		Format format;
+		switch (ext) {
+			case "pdf":
+				format = Format.PDF;
+				break;
+			case "png":
+				format = Format.PNG;
+				break;
+			case "svg":
+				format = Format.SVG;
+				break;
+			case "gif":
+				format = Format.GIF;
+				break;
+			case "eps":
+				format = Format.EPS;
+				break;
+			case "jpg":
+			case "jpeg":
+				format = Format.JPG;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown format to GraphViz: " + ext);
+		}
+		writeFile(graph, fileName, format);
 	}
 
 	private void printNode(final Node node, final StringBuilder sb) {

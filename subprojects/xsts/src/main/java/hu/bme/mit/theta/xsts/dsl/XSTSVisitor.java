@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -66,12 +67,14 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     @Override
     public Expr visitTypeDeclaration(XstsDslParser.TypeDeclarationContext ctx) {
         checkIfTempVar(ctx.name.getText());
-        if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) throw new RuntimeException("Type "+ctx.name.getText()+" already exists!"+" On line "+ctx.start.getLine());
+        if(nameToTypeMap.containsKey(ctx.name.getText()) || ctx.name.getText().equals("integer") || ctx.name.getText().equals("boolean")) {
+            throw new ParseException(ctx, "Type '" + ctx.name.getText() + "' already exists!");
+        }
         List<String> literals=new ArrayList<>();
         List<BigInteger> intValues=new ArrayList<>();
         for(XstsDslParser.TypeLiteralContext literal:ctx.literals){
             checkIfTempVar(literal.name.getText());
-            if(literals.contains(literal.name.getText())) throw new RuntimeException("Duplicate literal "+literal.name.getText()+" in type "+ctx.name.getText());
+            if(literals.contains(literal.name.getText())) throw new ParseException(ctx, "Duplicate literal '" + literal.name.getText() + "' in type '" + ctx.name.getText() + "'");
             if(literalToIntMap.containsKey(literal.name.getText())) {
                 intValues.add(literalToIntMap.get(literal.name.getText()));
             } else {
@@ -90,9 +93,9 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     public Expr visitVariableDeclaration(XstsDslParser.VariableDeclarationContext ctx) {
         checkIfTempVar(ctx.name.getText());
         if(nameToDeclMap.containsKey(ctx.name.getText())){
-            throw new RuntimeException("Variable ["+ctx.name.getText()+"] already exists.");
+            throw new ParseException(ctx, "Variable '" + ctx.name.getText() + "' already exists.");
         } else if(literalToIntMap.containsKey(ctx.name.getText())){
-            throw new RuntimeException("["+ctx.name.getText()+"] is a type literal, cannot declare variable with this name.");
+            throw new ParseException(ctx, "'" + ctx.name.getText() + "' is a type literal, cannot declare variable with this name.");
         }
 
         VarDecl decl;
@@ -106,7 +109,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             decl=Decls.Var(ctx.name.getText(),IntType.getInstance());
             varToTypeMap.put(decl,nameToTypeMap.get(ctx.type.customType().name.getText()));
         } else {
-            throw new RuntimeException("Unknown type "+ctx.type.customType().name.getText()+" on line "+ctx.start.getLine());
+            throw new ParseException(ctx, "Unknown type '" + ctx.type.customType().name.getText() + "'.");
         }
 
         if(ctx.CTRL()!=null) ctrlVars.add(decl);
@@ -119,17 +122,17 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
     @Override
     public Expr visitExpr(XstsDslParser.ExprContext ctx) {
-        if(ctx.iteExpression()==null) throw new RuntimeException("Invalid expression on line "+ctx.start.getLine());
+        if (ctx.iteExpression() == null) throw new ParseException(ctx, "Invalid expression.");
         return visitIteExpression(ctx.iteExpression());
     }
 
     @Override
     public Expr visitIteExpression(XstsDslParser.IteExpressionContext ctx) {
-        if(ctx.cond != null){
-            if(ctx.then == null || ctx.elze == null) throw new RuntimeException("Invalid if-then-else expression on line "+ctx.start.getLine());
-            return Ite(visitExpr(ctx.cond),visitExpr(ctx.then),visitExpr(ctx.elze));
+        if (ctx.cond != null){
+            if (ctx.then == null || ctx.elze == null) throw new ParseException(ctx, "Invalid if-then-else expression.");
+            return Ite(visitExpr(ctx.cond), visitExpr(ctx.then), visitExpr(ctx.elze));
         } else {
-            if(ctx.implyExpression()==null) throw new RuntimeException("Invalid expression on line "+ctx.start.getLine());
+            if (ctx.implyExpression() == null) throw new ParseException(ctx, "Invalid expression.");
             return visitImplyExpression(ctx.implyExpression());
         }
     }
@@ -191,7 +194,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
                 return Lt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
             }else if(ctx.oper.GT()!=null){
                 return Gt(visitAdditiveExpr(ctx.ops.get(0)),visitAdditiveExpr(ctx.ops.get(1)));
-            } else throw new UnsupportedOperationException("Unsupported operation "+ctx.oper.getText()+" on line "+ctx.start.getLine());
+            } else throw new ParseException(ctx, "Unsupported operation '" + ctx.oper.getText() + "'");
         }else return visitAdditiveExpr(ctx.ops.get(0));
     }
 
@@ -230,7 +233,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             }else if(ctx.opers.get(i-1).MUL()!=null){
                 res=Mul(res,visitNegExpr(ctx.ops.get(i)));
             } else{
-                throw new UnsupportedOperationException("Unsupported operation "+ctx.opers.get(i-1).getText()+" on line "+ctx.start.getLine());
+                throw new ParseException(ctx, "Unsupported operation '" + ctx.opers.get(i-1).getText() + "'");
             }
         }
         return res;
@@ -272,7 +275,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
             if(ctx.BOOLLIT().getText().equals("true")) return True(); else return False();
         }else if(ctx.INTLIT()!=null){
             return Int(ctx.INTLIT().getText());
-        }else throw new RuntimeException("Literal "+ctx.getText()+" could not be resolved to integer or boolean type."+" On line "+ctx.start.getLine());
+        }else throw new ParseException(ctx, "Literal '" + ctx.getText() + "' could not be resolved to integer or boolean type.");
     }
 
     @Override
@@ -280,15 +283,14 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
         checkIfTempVar(ctx.name.getText());
         if(literalToIntMap.containsKey(ctx.name.getText())) return Int(literalToIntMap.get(ctx.name.getText()));
         else if(nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
-        else throw new RuntimeException("Literal or reference "+ctx.name.getText()+" could not be resolved."+" On line "+ctx.start.getLine());
+        else throw new ParseException(ctx, "Literal or reference '" + ctx.name.getText() + "' could not be resolved.");
 
     }
 
     @Override
     public Expr visitPrime(XstsDslParser.PrimeContext ctx) {
         if(ctx.reference()!=null) return visitReference(ctx.reference());
-        else throw new UnsupportedOperationException("Prime expressions are not supported."+" On line "+ctx.start.getLine());
-//            return Prime(visitPrime(ctx.prime()));
+        else throw new ParseException(ctx, "Prime expressions are not supported.");
     }
 
     public Stmt processAction(XstsDslParser.ActionContext ctx) {
@@ -329,12 +331,16 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
     }
 
     public AssignStmt processAssignAction(XstsDslParser.AssignActionContext ctx) {
-        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) throw new RuntimeException("Could not resolve variable "+ctx.lhs.getText()+" on line "+ctx.start.getLine());
+        if(!nameToDeclMap.containsKey(ctx.lhs.getText())) {
+            throw new ParseException(ctx, "Could not resolve variable '" + ctx.lhs.getText() + "'");
+        }
         return Stmts.Assign(nameToDeclMap.get(ctx.lhs.getText()),visitExpr(ctx.rhs));
     }
 
     public HavocStmt processHavocAction(XstsDslParser.HavocActionContext ctx){
-        if(!nameToDeclMap.containsKey(ctx.name.getText())) throw new RuntimeException("Could not resolve variable "+ctx.name.getText()+" on line "+ctx.start.getLine());
+        if(!nameToDeclMap.containsKey(ctx.name.getText())) {
+            throw new ParseException(ctx, "Could not resolve variable '" + ctx.name.getText() + "'");
+        }
         return Stmts.Havoc(nameToDeclMap.get(ctx.name.getText()));
     }
 }
