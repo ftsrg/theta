@@ -9,7 +9,6 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -266,9 +265,9 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     public BvLitExpr urem(final BvLitExpr that) {
         // Semantics:
         // 5 rem 3 = 2
-        BigInteger thisInt = BvUtils.signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = BvUtils.signedBvLitExprToBigInteger(that);
-        return BvUtils.bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        BigInteger thisInt = signedBvLitExprToBigInteger(this);
+        BigInteger thatInt = signedBvLitExprToBigInteger(that);
+        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
     }
 
     public BvLitExpr srem(final BvLitExpr that) {
@@ -282,13 +281,13 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         BigInteger thisAbs = thisInt.abs();
         BigInteger thatAbs = thatInt.abs();
         if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
-            return BvUtils.bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
+            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
         } else if (thisInt.compareTo(BigInteger.ZERO) >= 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
-            return BvUtils.bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs), getType().getSize());
+            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs), getType().getSize());
         } else if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) >= 0) {
-            return BvUtils.bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
+            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
         } else {
-            return BvUtils.bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+            return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
         }
     }
 

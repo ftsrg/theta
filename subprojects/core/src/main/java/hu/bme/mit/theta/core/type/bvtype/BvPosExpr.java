@@ -3,7 +3,6 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 

@@ -23,9 +23,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
 

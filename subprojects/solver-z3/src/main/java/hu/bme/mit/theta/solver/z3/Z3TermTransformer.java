@@ -71,7 +71,6 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
