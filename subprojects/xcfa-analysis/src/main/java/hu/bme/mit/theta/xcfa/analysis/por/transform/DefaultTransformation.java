@@ -60,7 +60,7 @@ public class DefaultTransformation extends EmptyTransformation {
     protected void beforeBuild(XCFA.Builder builder) {
         // save builder data BEFORE modifying
         if (config.spuriousWakeUp()) {
-            var varsBefore = builder.getGlobalVars();
+            var varsBefore = builder.getGlobalVars().keySet();
             for (VarDecl<? extends Type> var : varsBefore) {
                 if (var.getType() instanceof SyntheticType) {
                     var procedure = XCFA.Process.Procedure.builder();

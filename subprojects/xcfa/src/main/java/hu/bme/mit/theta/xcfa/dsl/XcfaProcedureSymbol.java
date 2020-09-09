@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
@@ -97,7 +98,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		builder.setRtype(rtype);
 		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		if (variables != null)
-			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		locations.forEach(xcfaLocationSymbol -> {
 			XCFA.Process.Procedure.Location loc = xcfaLocationSymbol.instantiate();
 			builder.addLoc(loc);

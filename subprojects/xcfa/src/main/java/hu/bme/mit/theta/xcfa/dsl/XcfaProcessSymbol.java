@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
@@ -25,8 +27,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import com.google.common.base.Preconditions;
 
 final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> implements Scope {
 
@@ -96,7 +96,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 		if (process != null) return process;
 		XCFA.Process.Builder builder = XCFA.Process.builder();
 		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
-		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		procedures.forEach(xcfaProcedureSymbol -> {
 			XCFA.Process.Procedure procedure;
 			builder.addProcedure(procedure = xcfaProcedureSymbol.instantiate());

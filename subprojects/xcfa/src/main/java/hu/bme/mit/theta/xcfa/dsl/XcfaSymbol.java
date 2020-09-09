@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 
@@ -75,7 +76,7 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 	public XCFA instantiate() {
 		if (xcfa != null) return xcfa;
 		XCFA.Builder builder = XCFA.builder();
-		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		processes.forEach(xcfaProcessSymbol -> {
 			XCFA.Process process;
 			builder.addProcess(process = xcfaProcessSymbol.instantiate());

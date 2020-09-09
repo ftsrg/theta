@@ -46,11 +46,6 @@ public class ExecutionGraph {
         initialWrites = new HashSet<>();
         revisitableWrites = new HashMap<>();
 
-        for(VarDecl<?> varDecl : xcfa.getGlobalVars()) {
-            if(varDecl.getInitValue() != null) {
-                addInitialWrite(varDecl, varDecl.getInitValue());
-            }
-        }
         id = cnt++;
         processingEdge = null;
         toRun.add(this);

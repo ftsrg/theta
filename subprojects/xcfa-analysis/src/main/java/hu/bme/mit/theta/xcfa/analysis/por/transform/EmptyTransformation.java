@@ -31,7 +31,7 @@ class EmptyTransformation {
                 p -> builder.addProcess(transformed(builder, p))
         );
         builder.setMainProcess(transformed(builder, old.getMainProcess()));
-        old.getGlobalVars().forEach(builder::createVar);
+        old.getGlobalVars().forEach(var -> builder.createVar(var, old.getInitValue(var)));
         beforeBuild(builder);
         var result = builder.build();
         afterBuild(result);
@@ -147,9 +147,9 @@ class EmptyTransformation {
                 p -> builder.addProcedure(transformed(builder, p))
         );
         val.getParams().forEach(
-                p -> builder.createVar(transformed(builder, p))
+                p -> builder.createVar(transformed(builder, p), null)
         );
-        val.getThreadLocalVars().forEach(builder::createVar);
+        val.getThreadLocalVars().forEach(var -> builder.createVar(var, val.getInitValue(var)));
         builder.setMainProcedure(transformed(builder, val.getMainProcedure()));
         builder.setName(val.getName());
         return builder.build();
@@ -160,7 +160,7 @@ class EmptyTransformation {
         val.getLocs().forEach(
                 p -> builder.addLoc(transformed(builder, p))
         );
-        val.getLocalVars().forEach(builder::createVar);
+        val.getLocalVars().forEach(var -> builder.createVar(var, val.getInitValue(var)));
         val.getEdges().forEach(
                 p -> builder.addEdge(transformed(builder, p))
         );

@@ -1,10 +1,5 @@
 package hu.bme.mit.theta.xcfa.utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -13,6 +8,11 @@ import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Edge;
 import hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Splits multiple-stmt edges
@@ -46,7 +46,7 @@ public final class XcfaEdgeSplitterTransformation {
 					builderPc.createParam(origParam);
 				}
 				for (var origVar : origPc.getLocalVars()) {
-					builderPc.createVar(origVar);
+					builderPc.createVar(origVar, origPc.getInitValue(origVar));
 				}
 				builderPc.setRtype(origPc.getRtype());
 				builderPc.setResult(origPc.getResult());
@@ -58,7 +58,7 @@ public final class XcfaEdgeSplitterTransformation {
 				}
 			}
 			for (var origVar : origPs.getThreadLocalVars()) {
-				builderPs.createVar(origVar);
+				builderPs.createVar(origVar, origPs.getInitValue(origVar));
 			}
 			var ps = builderPs.build();
 			builder.addProcess(ps);
@@ -67,7 +67,7 @@ public final class XcfaEdgeSplitterTransformation {
 			}
 		}
 		for (var origVar : original.getGlobalVars()) {
-			builder.createVar(origVar);
+			builder.createVar(origVar, original.getInitValue(origVar));
 		}
 		for (var q : postBuildData) {
 			var pc = origToNewProcedure.get(q.oldPc);

@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.core.decl;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.HashMap;
@@ -32,13 +31,10 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "var";
-	private final LitExpr<DeclType> initValue;
-
 	private final Map<Integer, IndexedConstDecl<DeclType>> indexToConst;
 
-	VarDecl(final String name, final DeclType type, LitExpr<DeclType> initValue) {
+	VarDecl(final String name, final DeclType type) {
 		super(name, type);
-		this.initValue = initValue;
 		indexToConst = new HashMap<>();
 	}
 
@@ -57,7 +53,4 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 		return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
 	}
 
-	public LitExpr<DeclType> getInitValue() {
-		return initValue;
-	}
 }

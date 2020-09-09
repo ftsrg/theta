@@ -47,12 +47,10 @@ final class XcfaVariableSymbol extends InstantiatableSymbol<VarDecl<?>> {
 
 	public VarDecl<?> instantiate() {
 		if (var != null) return var;
-		if(initExpr != null) {
-			return var = Var(name, type.instantiate(), initExpr.instantiate());
-		}
-		else {
-			return var = Var(name, type.instantiate());
-		}
+		return var = Var(name, type.instantiate());
 	}
 
+	public XcfaLitExpression getInitExpr() {
+		return initExpr;
+	}
 }
