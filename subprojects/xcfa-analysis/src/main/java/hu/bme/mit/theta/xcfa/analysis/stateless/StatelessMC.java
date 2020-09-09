@@ -16,13 +16,18 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
+import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraph;
+
+import java.util.Queue;
 
 public final class StatelessMC {
 
     public static boolean check(XCFA xcfa) {
-        final ExecutionGraph executionGraph = new ExecutionGraph(xcfa);
-        ExecutionGraph.start();
+        Queue<ExecutionGraph> executionGraphQueue = ExecutionGraph.create(xcfa);
+        ExecutionGraph executionGraph;
+        while((executionGraph = executionGraphQueue.poll()) != null) {
+            executionGraph.execute();
+        }
         return true;
     }
 }

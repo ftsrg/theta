@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless.graph;
+package hu.bme.mit.theta.xcfa.analysis.statelessold.graph;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple4;
@@ -7,11 +7,11 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.State;
-import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStmtExecutionVisitor;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Node;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Read;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Write;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.State;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.XcfaStmtExecutionVisitor;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node.Node;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node.Read;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node.Write;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -277,33 +277,11 @@ public class ExecutionGraph {
     }
 
     private List<List<Read>> getRevisitSets(VarDecl<?> global) {
-        List<List<Read>> ret = new ArrayList<>();
-        if(revisitableReads.get(global) == null) return ret;
-        for(int i = 0; i < (1<<revisitableReads.get(global).size()); ++i) {
-            List<Read> list = new ArrayList<>();
-            for(int j = 0; j < revisitableReads.get(global).size(); ++j) {
-                if((i & (1<<j)) != 0) {
-                    list.add(revisitableReads.get(global).get(j));
-                }
-            }
-            ret.add(list);
-        }
-        return ret.stream().filter(reads -> {
-            Set<XCFA.Process> processes = new HashSet<>();
-            for(Read r : reads) {
-                processes.add(r.getParentProcess());
-            }
-            return processes.size() == reads.size();
-        }).collect(Collectors.toList());
+return null;
     }
 
     public void addInitialWrite(VarDecl<?> global, LitExpr<?> value) {
-        Write write = new Write(global, value, null);
-        initialWrites.add(write);
-        if(!revisitableWrites.containsKey(global)) {
-            revisitableWrites.put(global, new ArrayList<>());
-        }
-        revisitableWrites.get(global).add(write);
+
     }
 
     public void removeNode(Node target) {

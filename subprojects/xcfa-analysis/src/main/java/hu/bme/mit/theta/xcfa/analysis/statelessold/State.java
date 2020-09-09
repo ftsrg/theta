@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless;
+package hu.bme.mit.theta.xcfa.analysis.statelessold;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.ExecutionGraph;
 
 import java.util.*;
 

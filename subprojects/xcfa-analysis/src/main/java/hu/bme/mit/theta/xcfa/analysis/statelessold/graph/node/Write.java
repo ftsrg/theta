@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless.graph.node;
+package hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;

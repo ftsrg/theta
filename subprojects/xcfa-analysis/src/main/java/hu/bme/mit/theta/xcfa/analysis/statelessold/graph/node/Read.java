@@ -1,10 +1,10 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless.graph.node;
+package hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.State;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.State;
 
 public class Read extends Node{
     private final Valuation localVarsBefore;

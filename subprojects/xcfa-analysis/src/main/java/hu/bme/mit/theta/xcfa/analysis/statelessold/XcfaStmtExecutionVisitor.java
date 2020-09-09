@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless;
+package hu.bme.mit.theta.xcfa.analysis.statelessold;
 
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.ExecutionGraph;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.ExecutionGraph;
 
 public class XcfaStmtExecutionVisitor
         implements  StmtVisitor<Tuple4<MutablePartitionedValuation, State, XCFA.Process, ExecutionGraph>, Void>,

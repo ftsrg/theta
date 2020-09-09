@@ -1,6 +1,6 @@
-package hu.bme.mit.theta.xcfa.analysis.stateless.graph;
+package hu.bme.mit.theta.xcfa.analysis.statelessold.graph;
 
-import hu.bme.mit.theta.xcfa.analysis.stateless.graph.node.Node;
+import hu.bme.mit.theta.xcfa.analysis.statelessold.graph.node.Node;
 
 public class Edge {
     private final Node source;
