@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -294,8 +293,7 @@ final class Z3Solver implements Solver {
 			if (term == null) {
 				return null;
 			} else {
-				BvLitExpr expr = (BvLitExpr) termTransformer.toExpr(term);
-				return Bv(expr.getValue(), type.isSigned());
+				return (BvLitExpr) termTransformer.toExpr(term);
 			}
 		}
 
@@ -318,7 +316,7 @@ final class Z3Solver implements Solver {
 
 		private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
 			final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-			for (final com.microsoft.z3.FuncDecl symbol : z3Model.getDecls()) {
+			for (final FuncDecl symbol : z3Model.getDecls()) {
 				if (symbolTable.definesSymbol(symbol)) {
 					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
 					builder.add(constDecl);

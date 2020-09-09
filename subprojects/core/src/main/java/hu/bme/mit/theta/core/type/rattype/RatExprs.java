@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.math.BigInteger;
+
 public final class RatExprs {
 
 	private RatExprs() {
@@ -29,6 +31,38 @@ public final class RatExprs {
 	}
 
 	public static RatLitExpr Rat(final int num, final int denom) {
+		return RatLitExpr.of(BigInteger.valueOf(num), BigInteger.valueOf(denom));
+	}
+
+	public static RatLitExpr Rat(final int num, final String denom) {
+		return RatLitExpr.of(BigInteger.valueOf(num), new BigInteger(denom));
+	}
+
+	public static RatLitExpr Rat(final int num, final BigInteger denom) {
+		return RatLitExpr.of(BigInteger.valueOf(num), denom);
+	}
+
+	public static RatLitExpr Rat(final String num, final int denom) {
+		return RatLitExpr.of(new BigInteger(num), BigInteger.valueOf(denom));
+	}
+
+	public static RatLitExpr Rat(final String num, final String denom) {
+		return RatLitExpr.of(new BigInteger(num), new BigInteger(denom));
+	}
+
+	public static RatLitExpr Rat(final String num, final BigInteger denom) {
+		return RatLitExpr.of(new BigInteger(num), denom);
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final int denom) {
+		return RatLitExpr.of(num, BigInteger.valueOf(denom));
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final String denom) {
+		return RatLitExpr.of(num, new BigInteger(denom));
+	}
+
+	public static RatLitExpr Rat(final BigInteger num, final BigInteger denom) {
 		return RatLitExpr.of(num, denom);
 	}
 
@@ -38,6 +72,10 @@ public final class RatExprs {
 
 	public static RatSubExpr Sub(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		return RatSubExpr.of(leftOp, rightOp);
+	}
+
+	public static RatPosExpr Pos(final Expr<RatType> op) {
+		return RatPosExpr.of(op);
 	}
 
 	public static RatNegExpr Neg(final Expr<RatType> op) {

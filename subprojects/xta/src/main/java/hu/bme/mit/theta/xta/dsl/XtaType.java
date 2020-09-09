@@ -121,8 +121,8 @@ final class XtaType {
 			final IntLitExpr lowerLitExpr = (IntLitExpr) ExprUtils.simplify(lowerExpr);
 			final IntLitExpr upperLitExpr = (IntLitExpr) ExprUtils.simplify(upperExpr);
 
-			final int lower = lowerLitExpr.getValue();
-			final int upper = upperLitExpr.getValue();
+			final int lower = lowerLitExpr.getValue().intValue();
+			final int upper = upperLitExpr.getValue().intValue();
 
 			final Type result = RangeType.Range(lower, upper);
 			return result;
@@ -156,7 +156,7 @@ final class XtaType {
 				final Object value = env.compute(variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
 
 				final IntLitExpr elemCount = (IntLitExpr) value;
-				final Type result = RangeType.Range(0, elemCount.getValue() - 1);
+				final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
 				return result;
 
 			} else if (symbol instanceof XtaTypeSymbol) {
@@ -174,7 +174,7 @@ final class XtaType {
 			final XtaExpression expression = new XtaExpression(scope, ctx.fExpression);
 			final Expr<?> expr = expression.instantiate(env);
 			final IntLitExpr elemCount = (IntLitExpr) expr;
-			final Type result = RangeType.Range(0, elemCount.getValue() - 1);
+			final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
 			return result;
 		}
 

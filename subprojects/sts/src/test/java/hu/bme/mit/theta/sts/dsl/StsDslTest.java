@@ -29,8 +29,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.sts.STS;
-import hu.bme.mit.theta.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.sts.dsl.StsSpec;
 
 @RunWith(Parameterized.class)
 public class StsDslTest {

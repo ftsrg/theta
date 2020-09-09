@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,7 +66,9 @@ public final class CfaParserTest {
 	public void test() {
 		// Act
 		final CFA cfa = parser.cfa();
-		System.out.println(cfa);
+		Assert.assertEquals(1, cfa.getVars().size());
+		Assert.assertEquals(6, cfa.getLocs().size());
+		Assert.assertEquals(6, cfa.getEdges().size());
 	}
 
 }

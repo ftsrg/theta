@@ -24,6 +24,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -95,6 +98,19 @@ public final class ClockOps {
 		}
 
 		@Override
+		public ClockOp visit(SequenceStmt stmt, Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ClockOp visit(NonDetStmt stmt, Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ClockOp visit(OrtStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+		@Override
 		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {
 
 			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
@@ -102,7 +118,7 @@ public final class ClockOps {
 
 			if (expr instanceof IntLitExpr) {
 				final IntLitExpr intLit = (IntLitExpr) expr;
-				final int value = Math.toIntExact(intLit.getValue());
+				final int value = Math.toIntExact(intLit.getValue().longValue());
 				return Reset(varDecl, value);
 
 			} else if (expr instanceof RefExpr) {
@@ -123,8 +139,8 @@ public final class ClockOps {
 					if (ops[0].equals(varRef)) {
 						if (ops[1] instanceof RatLitExpr) {
 							final RatLitExpr ratLit = (RatLitExpr) ops[1];
-							final int num = ratLit.getNum();
-							final int denom = ratLit.getDenom();
+							final int num = ratLit.getNum().intValue();
+							final int denom = ratLit.getDenom().intValue();
 							if (denom == 1) {
 								return Shift(varDecl, num);
 							}
@@ -132,7 +148,7 @@ public final class ClockOps {
 					} else if (ops[1].equals(varRef)) {
 						if (ops[0] instanceof IntLitExpr) {
 							final IntLitExpr intLit = (IntLitExpr) ops[0];
-							final int offset = Math.toIntExact(intLit.getValue());
+							final int offset = Math.toIntExact(intLit.getValue().longValue());
 							return Shift(varDecl, offset);
 						}
 					}

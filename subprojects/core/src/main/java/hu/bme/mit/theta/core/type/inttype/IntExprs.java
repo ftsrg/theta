@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.math.BigInteger;
+
 public final class IntExprs {
 
 	private IntExprs() {
@@ -29,15 +31,19 @@ public final class IntExprs {
 	}
 
 	public static IntLitExpr Int(final int value) {
+		return IntLitExpr.of(BigInteger.valueOf(value));
+	}
+
+	public static IntLitExpr Int(final String value) {
+		return IntLitExpr.of(new BigInteger(value));
+	}
+
+	public static IntLitExpr Int(final BigInteger value) {
 		return IntLitExpr.of(value);
 	}
 
 	public static IntToRatExpr ToRat(final Expr<IntType> op) {
 		return IntToRatExpr.of(op);
-	}
-
-	public static IntToBvExpr ToBv(final Expr<IntType> op, final int size, final boolean isSigned) {
-		return IntToBvExpr.of(op, size, isSigned);
 	}
 
 	public static IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
@@ -46,6 +52,10 @@ public final class IntExprs {
 
 	public static IntSubExpr Sub(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		return IntSubExpr.of(leftOp, rightOp);
+	}
+
+	public static IntPosExpr Pos(final Expr<IntType> op) {
+		return IntPosExpr.of(op);
 	}
 
 	public static IntNegExpr Neg(final Expr<IntType> op) {
