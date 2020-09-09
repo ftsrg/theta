@@ -12,7 +12,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvNeqExpr extends NeqExpr<BvType> {
     private static final int HASH_SEED = 2488;
-    private static final String OPERATOR_LABEL = "=";
+    private static final String OPERATOR_LABEL = "/=";
 
     private BvNeqExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);

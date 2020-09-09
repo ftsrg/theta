@@ -9,7 +9,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvRotateRightExpr extends BinaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 2564;
-    private static final String OPERATOR_LABEL = "~>>";
+    private static final String OPERATOR_LABEL = "bvror";
 
     private BvRotateRightExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
