@@ -2,19 +2,17 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.UnaryExpr;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
-public final class BvNegExpr extends NegExpr<BvType> {
+public final class BvNegExpr extends UnaryExpr<BvType, BvType> {
 
     private static final int HASH_SEED = 8325;
-    private static final String OPERATOR_LABEL = "-";
+    private static final String OPERATOR_LABEL = "bvneg";
 
     private BvNegExpr(final Expr<BvType> op) {
         super(op);
-        checkArgument(op.getType().isSigned(), "Only signed bitvector can be negated");
     }
 
     public static BvNegExpr of(final Expr<BvType> op) {

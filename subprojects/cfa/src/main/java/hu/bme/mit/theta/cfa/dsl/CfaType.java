@@ -72,15 +72,9 @@ final class CfaType {
 		}
 
 		@Override
-		public Type visitUbvType(final UbvTypeContext ctx) {
+		public Type visitBvType(final BvTypeContext ctx) {
 			final int size = Integer.parseInt(ctx.size.getText());
-			return BvType(size, false);
-		}
-
-		@Override
-		public Type visitSbvType(final SbvTypeContext ctx) {
-			final int size = Integer.parseInt(ctx.size.getText());
-			return BvType(size, true);
+			return BvType(size);
 		}
 	}
 
