@@ -6,9 +6,9 @@ import hu.bme.mit.theta.core.type.Expr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
-public class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
+public final class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 965;
-    private static final String OPERATOR_LABEL = ">>";
+    private static final String OPERATOR_LABEL = "bvashr";
 
     private BvArithShiftRightExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);

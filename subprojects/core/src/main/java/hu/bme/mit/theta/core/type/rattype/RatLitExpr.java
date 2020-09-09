@@ -15,40 +15,40 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import com.google.common.math.IntMath;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
+import java.math.BigInteger;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
 
 	private static final int HASH_SEED = 149;
 
-	private final int num;
-	private final int denom;
+	private final BigInteger num;
+	private final BigInteger denom;
 
 	private volatile int hashCode = 0;
 
-	private RatLitExpr(final int num, final int denom) {
-		checkArgument(denom != 0);
+	private RatLitExpr(final BigInteger num, final BigInteger denom) {
+		checkArgument(denom.compareTo(BigInteger.ZERO) != 0);
 
-		final int gcd = IntMath.gcd(Math.abs(num), Math.abs(denom));
-		if (denom >= 0) {
-			this.num = num / gcd;
-			this.denom = denom / gcd;
+		final var gcd = num.abs().gcd(denom.abs());
+		if (denom.compareTo(BigInteger.ZERO) >= 0) {
+			this.num = num.divide(gcd);
+			this.denom = denom.divide(gcd);
 		} else {
-			this.num = -num / gcd;
-			this.denom = -denom / gcd;
+			this.num = num.divide(gcd).negate();
+			this.denom = denom.divide(gcd).negate();
 		}
 	}
 
-	public static RatLitExpr of(final int num, final int denom) {
+	public static RatLitExpr of(final BigInteger num, final BigInteger denom) {
 		return new RatLitExpr(num, denom);
 	}
 
@@ -62,86 +62,90 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 		return this;
 	}
 
-	public int getNum() {
+	public BigInteger getNum() {
 		return num;
 	}
 
-	public int getDenom() {
+	public BigInteger getDenom() {
 		return denom;
 	}
 
 	public int sign() {
-		return (num < 0) ? -1 : (num == 0) ? 0 : 1;
+		return num.signum();
 	}
 
-	public int floor() {
-		if (num >= 0 || num % denom == 0) {
-			return num / denom;
+	public BigInteger floor() {
+		if (num.compareTo(BigInteger.ZERO) >= 0 || num.mod(denom).compareTo(BigInteger.ZERO) == 0) {
+			return num.divide(denom);
 		} else {
-			return num / denom - 1;
+			return num.divide(denom).subtract(BigInteger.ONE);
 		}
 	}
 
-	public int ceil() {
-		if (num <= 0 || num % denom == 0) {
-			return num / denom;
+	public BigInteger ceil() {
+		if (num.compareTo(BigInteger.ZERO) <= 0 || num.mod(denom).compareTo(BigInteger.ZERO) == 0) {
+			return num.divide(denom);
 		} else {
-			return num / denom + 1;
+			return num.divide(denom).add(BigInteger.ONE);
 		}
 	}
 
 	public RatLitExpr add(final RatLitExpr that) {
-		return RatLitExpr.of(this.getNum() * that.getDenom() + this.getDenom() * that.getNum(),
-				this.getDenom() * that.getDenom());
+		return RatLitExpr.of(this.getNum().multiply(that.getDenom()).add(this.getDenom().multiply(that.getNum())),
+				this.getDenom().multiply(that.getDenom()));
 	}
 
 	public RatLitExpr sub(final RatLitExpr that) {
-		return RatLitExpr.of(this.getNum() * that.getDenom() - this.getDenom() * that.getNum(),
-				this.getDenom() * that.getDenom());
+		return RatLitExpr.of(this.getNum().multiply(that.getDenom()).subtract(this.getDenom().multiply(that.getNum())),
+				this.getDenom().multiply(that.getDenom()));
+	}
+
+	public RatLitExpr pos() {
+		return RatLitExpr.of(this.getNum(), this.getDenom());
 	}
 
 	public RatLitExpr neg() {
-		return RatLitExpr.of(-this.getNum(), this.getDenom());
+		return RatLitExpr.of(this.getNum().negate(), this.getDenom());
 	}
 
 	public RatLitExpr mul(final RatLitExpr that) {
-		return RatLitExpr.of(this.getNum() * that.getNum(), this.getDenom() * that.getDenom());
+		return RatLitExpr.of(this.getNum().multiply(that.getNum()), this.getDenom().multiply(that.getDenom()));
 	}
 
 	public RatLitExpr div(final RatLitExpr that) {
-		return RatLitExpr.of(this.getNum() * that.getDenom(), this.getDenom() * that.getNum());
+		return RatLitExpr.of(this.getNum().multiply(that.getDenom()), this.getDenom().multiply(that.getNum()));
 	}
 
 	public BoolLitExpr eq(final RatLitExpr that) {
-		return Bool(this.getNum() == that.getNum() && this.getDenom() == that.getDenom());
+		return Bool(this.getNum().compareTo(that.getNum()) == 0 && this.getDenom().compareTo(that.getDenom()) == 0);
 	}
 
 	public BoolLitExpr neq(final RatLitExpr that) {
-		return Bool(this.getNum() != that.getNum() || this.getDenom() != that.getDenom());
+		return Bool(this.getNum().compareTo(that.getNum()) != 0 || this.getDenom().compareTo(that.getDenom()) != 0);
 	}
 
 	public BoolLitExpr lt(final RatLitExpr that) {
-		return Bool(this.getNum() * that.getDenom() < this.getDenom() * that.getNum());
+		return Bool(this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum())) < 0);
 	}
 
 	public BoolLitExpr leq(final RatLitExpr that) {
-		return Bool(this.getNum() * that.getDenom() <= this.getDenom() * that.getNum());
+		return Bool(this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum())) <= 0);
 	}
 
 	public BoolLitExpr gt(final RatLitExpr that) {
-		return Bool(this.getNum() * that.getDenom() > this.getDenom() * that.getNum());
+		return Bool(this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum())) > 0);
 	}
 
 	public BoolLitExpr geq(final RatLitExpr that) {
-		return Bool(this.getNum() * that.getDenom() >= this.getDenom() * that.getNum());
+		return Bool(this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum())) >= 0);
 	}
 
 	public RatLitExpr abs() {
-		return RatLitExpr.of(Math.abs(num), denom);
+		return RatLitExpr.of(num.abs(), denom);
 	}
 
 	public RatLitExpr frac() {
-		return sub(of(floor(), 1));
+		return sub(of(floor(), BigInteger.ONE));
 	}
 
 	@Override
@@ -149,8 +153,8 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + num;
-			result = 31 * result + denom;
+			result = 31 * result + num.hashCode();
+			result = 31 * result + denom.hashCode();
 			hashCode = result;
 		}
 		return hashCode;
@@ -162,7 +166,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 			return true;
 		} else if (obj instanceof RatLitExpr) {
 			final RatLitExpr that = (RatLitExpr) obj;
-			return (this.getNum() == that.getNum() && this.getDenom() == that.getDenom());
+			return (this.getNum().compareTo(that.getNum()) == 0 && this.getDenom().compareTo(that.getDenom()) == 0);
 		} else {
 			return false;
 		}
@@ -179,7 +183,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
 	@Override
 	public int compareTo(final RatLitExpr that) {
-		return Integer.compare(this.getNum() * that.getDenom(), this.getDenom() * that.getNum());
+		return this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum()));
 	}
 
 }

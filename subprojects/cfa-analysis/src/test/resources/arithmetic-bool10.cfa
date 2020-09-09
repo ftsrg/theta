@@ -1,0 +1,53 @@
+main process cfa {
+    var x : bool
+    var y : bool
+    var z : bool
+    
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    loc L5
+    loc L6
+    loc L7
+    loc L8
+    loc L9
+    loc L10
+    loc L11
+    loc L12
+    loc L13
+    final loc LF
+    error loc LE
+    
+    L0 -> L1 {
+        x := true
+        y := false
+    }
+
+    L1 -> L2 { z := x and y }
+    L2 -> LF { assume z }
+    L2 -> L3 { assume not z }
+
+    L3 -> L4 { z := x or y }
+    L4 -> LF { assume not z }
+    L4 -> L5 { assume z }
+
+    L5 -> L6 { z := x xor y }
+    L6 -> LF { assume not z }
+    L6 -> L7 { assume z }
+
+    L7 -> L8 { z := x iff y }
+    L8 -> LF { assume z }
+    L8 -> L9 { assume not z }
+
+    L9  -> L10 { z := x imply y }
+    L10 -> LF  { assume z }
+    L10 -> L11 { assume not z }
+    
+    L11 -> L12 { z := not x }
+    L12 -> LF  { assume z }
+    L12 -> L13 { assume not z }
+
+    L13 -> LE { assume true }
+}

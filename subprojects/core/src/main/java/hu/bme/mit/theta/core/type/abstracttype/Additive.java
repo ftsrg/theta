@@ -24,6 +24,8 @@ public interface Additive<ExprType extends Additive<ExprType>> extends Type {
 
 	SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
 
+	PosExpr<ExprType> Pos(Expr<ExprType> op);
+
 	NegExpr<ExprType> Neg(Expr<ExprType> op);
 
 }

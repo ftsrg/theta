@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		implements Expr<ArrayType<IndexType, ElemType>> {
@@ -115,9 +114,9 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	public Expr<ArrayType<IndexType, ElemType>> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		checkArgument(ops.size() == 3);
-		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
-		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
-		final Expr<ElemType> newElem = TypeUtils.cast(ops.get(2), elem.getType());
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(ops.get(0), array.getType());
+		final Expr<IndexType> newIndex = cast(ops.get(1), index.getType());
+		final Expr<ElemType> newElem = cast(ops.get(2), elem.getType());
 		return with(newArray, newIndex, newElem);
 	}
 

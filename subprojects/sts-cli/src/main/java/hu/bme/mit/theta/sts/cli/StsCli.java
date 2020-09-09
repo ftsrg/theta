@@ -15,25 +15,20 @@
  */
 package hu.bme.mit.theta.sts.cli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -41,8 +36,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.*;
@@ -53,6 +47,8 @@ import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
+import hu.bme.mit.theta.sts.analysis.StsAction;
+import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
@@ -99,11 +95,14 @@ public class StsCli {
 	@Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
-	String dotfile = null;
+	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+	String cexfile = null;
 
 	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
+
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
 
 	private Logger logger;
 
@@ -137,11 +136,11 @@ public class StsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (dotfile != null) {
-				writeVisualStatus(status, dotfile);
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(sts, status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -151,36 +150,47 @@ public class StsCli {
 		}
 	}
 
-	private void printHeader() {
-		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size"};
-		for (final String str : header) {
-			writer.cell(str);
+	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
 		}
+	}
+
+	private void printHeader() {
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size").forEach(writer::cell);
 		writer.newRow();
 	}
 
-	private STS loadModel() throws IOException {
-		if (model.endsWith(".aag")) {
-			final AigerSystem aigerSystem = AigerParser.parse(model);
-			AigerCoi.apply(aigerSystem);
-			return AigerToSts.createSts(aigerSystem);
-		} else if (model.endsWith(".system")) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				if (spec.getAllSts().size() != 1) {
-					throw new UnsupportedOperationException("STS contains multiple properties.");
+	private STS loadModel() throws Exception {
+		try {
+			if (model.endsWith(".aag")) {
+				final AigerSystem aigerSystem = AigerParser.parse(model);
+				AigerCoi.apply(aigerSystem);
+				return AigerToSts.createSts(aigerSystem);
+			} else {
+				try (InputStream inputStream = new FileInputStream(model)) {
+					final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+					if (spec.getAllSts().size() != 1) {
+						throw new UnsupportedOperationException("STS contains multiple properties.");
+					}
+					return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 				}
-				return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 			}
-		} else {
-			throw new IOException("Unknown format");
+		} catch (Exception ex) {
+			throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
 		}
 	}
 
-	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
-				.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+		try {
+			return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
@@ -206,23 +216,37 @@ public class StsCli {
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-			final StringWriter errors = new StringWriter();
-			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+			} else {
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+			}
 		}
 	}
 
-	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
-			throws FileNotFoundException {
-		final Graph graph = status.isSafe()
-				? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
-				: new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
-		GraphvizWriter.getInstance().writeFile(graph, filename);
+	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) {
+		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
+		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, solverFactory);
+		final File file = new File(cexfile);
+		PrintWriter printWriter = null;
+		try {
+			printWriter = new PrintWriter(file);
+			for (Valuation state : concrTrace.getStates()) {
+				printWriter.println(state.toString());
+			}
+		} catch (final FileNotFoundException e) {
+			printError(e);
+		} finally {
+			if (printWriter != null) {
+				printWriter.close();
+			}
+		}
 	}
 }

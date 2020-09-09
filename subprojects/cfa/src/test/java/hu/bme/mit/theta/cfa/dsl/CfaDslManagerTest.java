@@ -15,14 +15,12 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -30,7 +28,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 
 @RunWith(Parameterized.class)
 public final class CfaDslManagerTest {
@@ -66,7 +63,7 @@ public final class CfaDslManagerTest {
 	}
 
 	@Test
-	public void test() throws FileNotFoundException, IOException, InterruptedException {
+	public void test() throws IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final CFA cfa = CfaDslManager.createCfa(inputStream);
 		Assert.assertEquals(varCount, cfa.getVars().size());

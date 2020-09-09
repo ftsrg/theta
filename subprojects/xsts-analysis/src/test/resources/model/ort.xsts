@@ -1,0 +1,22 @@
+var x: integer = 0
+var y: integer = 0
+
+trans {
+    ort {
+        assume true;
+    } {
+        x:=1;
+        x:=2;
+        choice {
+            assume true;
+        } or {
+            assume true;
+        }
+    } {
+        assume y>2;
+    }
+}
+
+init {}
+
+env {}

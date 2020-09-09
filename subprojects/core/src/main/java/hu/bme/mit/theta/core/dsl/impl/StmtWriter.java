@@ -18,6 +18,9 @@ package hu.bme.mit.theta.core.dsl.impl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -48,5 +51,18 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
 		return "havoc " + stmt.getVarDecl().getName();
 	}
+
+	@Override
+	public String visit(SequenceStmt stmt, Void param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String visit(NonDetStmt stmt, Void param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String visit(OrtStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
 }

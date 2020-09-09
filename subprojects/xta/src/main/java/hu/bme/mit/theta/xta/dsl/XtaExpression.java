@@ -41,8 +41,11 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.LabelExpr;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -97,7 +100,7 @@ final class XtaExpression {
 
         @Override
         public Expr<?> visitNatExpression(final NatExpressionContext ctx) {
-            final int value = Integer.parseInt(ctx.fValue.getText());
+            final var value = new BigInteger(ctx.fValue.getText());
             return Int(value);
         }
 
@@ -114,7 +117,9 @@ final class XtaExpression {
         @Override
         public Expr<?> visitIdExpression(final IdExpressionContext ctx) {
             final String name = ctx.fId.getText();
-            final Symbol symbol = scope.resolve(name).get();
+            Optional<? extends Symbol> optSymbol = scope.resolve(name);
+            if (optSymbol.isEmpty()) throw new NoSuchElementException("Identifier '" + name + "' not found");
+            final Symbol symbol = optSymbol.get();
 
             if (env.isDefined(symbol)) {
                 // A variable, synchronization label, or a constant already defined

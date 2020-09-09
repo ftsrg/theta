@@ -47,7 +47,7 @@ public final class Z3SolverFactory implements SolverFactory {
 				System.loadLibrary("z3java");
 				break;
 			default:
-				throw new RuntimeException("Operating system not supported.");
+				throw new UnsupportedOperationException("Operating system not supported.");
 		}
 	}
 
@@ -65,7 +65,7 @@ public final class Z3SolverFactory implements SolverFactory {
 
 	@Override
 	public ItpSolver createItpSolver() {
-		final com.microsoft.z3.InterpolationContext z3Context = InterpolationContext.mkContext();
+		final InterpolationContext z3Context = InterpolationContext.mkContext();
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
 		final Z3SymbolTable symbolTable = new Z3SymbolTable();

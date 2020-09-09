@@ -17,17 +17,16 @@ Theta can both serve as a model checking backend, and also includes ready-to-use
 ## Use Theta
 
 Tools are concrete instantiations of the framework to solve a certain problem using the built-in algorithms.
-Currently, the following 3 tools are available.
-Follow the links for more information about each tool.
+Currently, the following tools are available (follow the links for more information).
 
 * [`theta-cfa-cli`](subprojects/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
-  * [Gazer](https://github.com/FTSRG/gazer) is an LLVM-based frontend to verify C programs using theta-cfa.
+  * [Gazer](https://github.com/ftsrg/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli.
+  * [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
 * [`theta-sts-cli`](subprojects/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
-* [`theta-xta-cli`](subprojects/xta-cli): Verification of Uppaal timed automata (XTA).
-
-## Extend Theta
-
-If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Development.md](doc/Development.md).
+  * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
+* [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
+* [`theta-xsts-cli`](subprojects/xsts-cli): Verification of safety properties in eXtended Symbolic Transition Systems (XSTS) using CEGAR-based algorithms.
+  * [Gamma](https://github.com/ftsrg/gamma) is a statechart composition framework, that supports theta-xsts-cli as a backend to verify collaborating state machines.
 
 ## Overview of the architecture
 
@@ -37,7 +36,7 @@ Theta can be divided into the following four layers.
 Formalisms are usually low level, mathematical representations based on first order logic expressions and graph like structures.
 Formalisms can also support higher level languages that can be mapped to that particular formalism by a language front-end (consisting of a specific parser and possibly reductions for simplification of the model).
 The common features of the different formalisms reside in the [`core`](subprojects/core) project (e.g., expressions and statements) and each formalism has its own project.
-Currently, there are three formalisms: symbolic transition systems ([`sts`](subprojects/sts)), control-flow automata ([`cfa`](subprojects/cfa)) and timed automata ([`xta`](subprojects/xta)).
+Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts) / [`xsts`](subprojects/xsts)), control-flow automata ([`cfa`](subprojects/cfa)) and timed automata ([`xta`](subprojects/xta)).
 * **Analysis back-end**: The analysis back-end provides the verification algorithms that can formally prove whether a model meets certain requirements.
 There is an interpreter for each formalism, providing a common interface towards the algorithms (e.g., calculating initial states and successors).
 This ensures that most components of the algorithms work for all formalisms (as long as they provide the interpreter).
@@ -47,26 +46,31 @@ The common components reside in the [`analysis`](subprojects/analysis) project (
 * **SMT solver interface and SMT solvers**: Many components of the algorithms rely on satisfiability modulo theories (SMT) solvers.
 The framework provides a general SMT solver interface in the project [`solver`](subprojects/solver) that supports incremental solving, unsat cores, and the generation of binary and sequence interpolants.
 Currently, the interface is implemented by the [Z3](https://github.com/Z3Prover/z3) SMT solver in the project [`solver-z3`](subprojects/solver-z3), but it can easily be extended with new solvers.
-* **Tools**: Tools are command line or GUI applications that can be compiled into a runnable jar file.
+* **Tools**: Tools are command line applications that can be compiled into a runnable jar file.
 Tools usually read some input and then instantiate and run the algorithms.
-Tools are implemented in separate projects.
+Tools are implemented in separate projects, currently with the `-cli` suffix.
 
 The table below shows the architecture and the projects.
 Each project contains a README.md in its root directory describing its purpose in more detail.
 
-|  | Common | CFA | STS | XTA |
-|--|--|--|--|--|
-| **Tools** |  | [`cfa-cli`](subprojects/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) |
-| **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) |
-| **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) |
+|  | Common | CFA | STS | XTA | XSTS |
+|--|--|--|--|--|--|
+| **Tools** |  | [`cfa-cli`](subprojects/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
+| **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
+| **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
 | **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3) |
+
+## Extend Theta
+
+If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Development.md](doc/Development.md).
 
 ## Read more
 
 If you want to read more, take a look at [our list of publications](https://ftsrg.github.io/theta/publications/).
 A good starting point is our [tool paper](https://ftsrg.github.io/theta/publications/fmcad2017.pdf) and [slides](https://www.slideshare.net/AkosHajdu/theta-a-framework-for-abstraction-refinementbased-model-checking)/[talk](https://oc-presentation.ltcc.tuwien.ac.at/engage/theodul/ui/core.html?id=c658c37e-ae70-11e7-a0dd-bb49f3cb440c) presented at FMCAD 2017.
+Furthermore, our [paper in the Journal of Automated Reasoning](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) is a good overview of the algorithms in Theta.
 
-To cite Theta, please use the following paper.
+To cite Theta as a tool, please use the following paper.
 
 ```
 @inproceedings{theta-fmcad2017,

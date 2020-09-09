@@ -15,13 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -32,9 +29,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 final class StmtApplier {
 
-	public static enum ApplyResult {
+	public enum ApplyResult {
 		FAILURE, SUCCESS, BOTTOM
 	}
 
@@ -50,10 +50,18 @@ final class StmtApplier {
 			return applyAssume(assumeStmt, val, approximate);
 		} else if (stmt instanceof HavocStmt) {
 			final HavocStmt<?> havocStmt = (HavocStmt<?>) stmt;
-			return applyHavoc(havocStmt, val, approximate);
+			return applyHavoc(havocStmt, val);
 		} else if (stmt instanceof SkipStmt) {
-			final SkipStmt skipStmt = (SkipStmt) stmt;
-			return applySkip(skipStmt);
+			return applySkip();
+		} else if (stmt instanceof SequenceStmt) {
+			final SequenceStmt sequenceStmt = (SequenceStmt) stmt;
+			return applySequence(sequenceStmt, val, approximate);
+		} else if (stmt instanceof NonDetStmt) {
+			final NonDetStmt nonDetStmt = (NonDetStmt) stmt;
+			return applyNonDet(nonDetStmt, val, approximate);
+		} else if (stmt instanceof OrtStmt) {
+			final OrtStmt ortStmt = (OrtStmt) stmt;
+			return applyOrt(ortStmt, val, approximate);
 		} else {
 			throw new UnsupportedOperationException("Unhandled statement: " + stmt);
 		}
@@ -140,15 +148,69 @@ final class StmtApplier {
 		return false;
 	}
 
-	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,
-										  final boolean approximate) {
+	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val) {
 		final VarDecl<?> varDecl = stmt.getVarDecl();
 		val.remove(varDecl);
 		return ApplyResult.SUCCESS;
 	}
 
-	private static ApplyResult applySkip(final SkipStmt skipStmt) {
+	private static ApplyResult applySkip() {
 		return ApplyResult.SUCCESS;
 	}
+
+	private static ApplyResult applySequence(final SequenceStmt stmt, final MutableValuation val,
+											 final boolean approximate) {
+		MutableValuation copy = MutableValuation.copyOf(val);
+		for(Stmt subStmt: stmt.getStmts()){
+			ApplyResult res=apply(subStmt,copy,approximate);
+			if(res==ApplyResult.BOTTOM || res==ApplyResult.FAILURE) return res;
+		}
+		val.clear();
+		val.putAll(copy);
+		return ApplyResult.SUCCESS;
+	}
+
+	private static ApplyResult applyNonDet(final NonDetStmt stmt, final MutableValuation val,
+											 final boolean approximate) {
+		List<MutableValuation> valuations=new ArrayList<MutableValuation>();
+		int successIndex=-1;
+		for(int i=0; i<stmt.getStmts().size(); i++){
+			MutableValuation subVal=MutableValuation.copyOf(val);
+			ApplyResult res=apply(stmt.getStmts().get(i),subVal,approximate);
+			if(res==ApplyResult.FAILURE) return ApplyResult.FAILURE;
+			if(res==ApplyResult.SUCCESS){
+				valuations.add(subVal);
+				if(successIndex==-1)successIndex=i;
+			}
+		}
+		if(valuations.size()==0){
+			return ApplyResult.BOTTOM;
+		} else  if(valuations.size()==1){
+			return apply(stmt.getStmts().get(successIndex),val,approximate);
+		} else if(approximate){
+			apply(stmt.getStmts().get(successIndex),val,approximate);
+			List<Decl> toRemove=new ArrayList<Decl>();
+			for(Decl decl: val.getDecls()){
+				for(MutableValuation subVal: valuations){
+					if(!val.eval(decl).equals(subVal.eval(decl))){
+						toRemove.add(decl);
+						break;
+					}
+				}
+			}
+			for(Decl decl:toRemove) val.remove(decl);
+			return ApplyResult.SUCCESS;
+		} else{
+			return ApplyResult.FAILURE;
+		}
+	}
+
+	private static ApplyResult applyOrt(final OrtStmt stmt, final MutableValuation val,
+										   final boolean approximate) {
+		throw new UnsupportedOperationException();
+	}
+
+
+
 
 }

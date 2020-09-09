@@ -7,6 +7,9 @@ import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -138,6 +141,21 @@ public class SpState {
             final Expr<BoolType> expr = And(state.getExpr(), stmt.getCond());
             final int constCount = state.constCount;
             return new SpState(expr, constCount);
+        }
+
+        @Override
+        public SpState visit(SequenceStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public SpState visit(NonDetStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public SpState visit(OrtStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
         }
     }
 }
