@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
 import java.util.ArrayList;
 import java.util.Collection;

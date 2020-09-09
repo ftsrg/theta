@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.type.inttype;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType implements Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>, Equational<IntType>, Ordered<IntType>,

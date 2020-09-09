@@ -2,9 +2,7 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
