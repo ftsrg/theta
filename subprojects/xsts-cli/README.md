@@ -60,7 +60,7 @@ All arguments are optional, except `--model` and `--property`.
   In `PRED_BOOL` this DNF formula is treated as a single state, while in `PRED_SPLIT` each operand of the disjunction is a separate state._
     * _Remark: It is recommended to try Cartesian first and fall back to Boolean if there is no refinement progress (seemingly infinite iterations with the same counterexample).
   Splitting rarely resulted in better performance._
-    * _Remark: In `PROD` the set of control variables is handled explicitly, while other variables are covered by predicate abstraction. A variable can be added to the set of control variables by adding the keyword `ctrl` to its declaration. Example: `ctrl var x : integer` declares an integer control variable.
+    * _Remark: In `PROD` the set of control variables is handled explicitly, while other variables are covered by predicate abstraction. A variable can be added to the set of control variables by adding the keyword `ctrl` to its declaration. Example: `ctrl var x : integer` declares an integer control variable._
     * _More information on the abstract domains can be found in [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf), Sections 2.2.1 and 3.1.3._
 * `--initprec`: Initial precision of the abstraction.
     * `EMPTY`: Start with an empty initial precision (default).
@@ -91,5 +91,6 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 
 | Flag | Description |
 |--|--|
+| `--stacktrace` | Print full stack trace for exceptions. |
 | `--benchmark` | Benchmark mode, only print metrics in csv format. |
 | `--header` | Print the header for the benchmark mode csv format. |

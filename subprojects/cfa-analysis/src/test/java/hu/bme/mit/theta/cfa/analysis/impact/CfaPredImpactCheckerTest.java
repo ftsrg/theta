@@ -41,7 +41,6 @@ public final class CfaPredImpactCheckerTest {
 
 	@Test
 	public void test() throws FileNotFoundException, IOException {
-		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		// Arrange
 		final CFA cfa = CfaDslManager.createCfa(new FileInputStream("src/test/resources/counter5_true.cfa"));
 

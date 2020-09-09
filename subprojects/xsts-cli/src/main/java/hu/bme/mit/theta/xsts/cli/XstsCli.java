@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.io.SequenceInputStream;
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class XstsCli {
 
@@ -86,6 +87,9 @@ public class XstsCli {
     @Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
+    @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+    boolean stacktrace = false;
+
     private Logger logger;
 
     public XstsCli(final String[] args) {
@@ -118,7 +122,7 @@ public class XstsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final XSTS xsts = loadModel();
             final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-            final SafetyResult<?, ?> status = configuration.check();
+            final SafetyResult<?, ?> status = check(configuration);
             sw.stop();
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
@@ -132,34 +136,40 @@ public class XstsCli {
         }
     }
 
-    private void printHeader() {
-        final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"};
-        for (final String str : header) {
-            writer.cell(str);
+    private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+        try {
+            return configuration.check();
+        } catch (final Exception ex) {
+            throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
         }
+    }
+
+    private void printHeader() {
+        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
         writer.newRow();
     }
 
-    private XSTS loadModel() throws IOException {
-        if (model.endsWith(".xsts")) {
+    private XSTS loadModel() throws Exception {
+        try {
             InputStream propStream = null;
-            if (property.endsWith(".prop")) {
-                propStream = new FileInputStream(property);
-            } else {
-                propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
-            }
+            if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+            else  propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
             try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
                 return XstsDslManager.createXsts(inputStream);
             }
-        } else {
-            throw new IOException("Unknown format");
+        } catch (Exception ex) {
+            throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
         }
     }
 
-    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) {
-        return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy).search(search)
-                .predSplit(predSplit).logger(logger).build(xsts);
+    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+        try {
+            return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
+                    .pruneStrategy(pruneStrategy).search(search) .predSplit(predSplit).logger(logger).build(xsts);
+        } catch (final Exception ex) {
+            throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+        }
     }
 
     private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
@@ -184,15 +194,18 @@ public class XstsCli {
     }
 
     private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
         if (benchmarkMode) {
-            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
         } else {
-            logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-            logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-            final StringWriter errors = new StringWriter();
-            ex.printStackTrace(new PrintWriter(errors));
-            logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+            logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
+            } else {
+                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
+            }
         }
     }
 
