@@ -86,9 +86,9 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
     * `UCB`: Unsat core based predicates [M. Leuckner et al.](https://link.springer.com/chapter/10.1007%2F978-3-319-26287-1_10). This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver).
     * `NWT_*`: Newton-style refinement as per [D. Dietsch et al.](https://dl.acm.org/doi/10.1145/3106237.3106307). This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver). The supported Newton-style algorithms can be found in the following list (for more information on the algotithms, check the article):
         * `NWT_SP` and `NWT_WP`: Only works for really simple inputs
-        * `NWT_SP_LV`, `NWT_WP_LV`, `NWT_IT_SP`, `NWT_IT_WP`, `NWT_IT_SP_LV`
-        * `NWT_IT_WP_LV`: Usually the most effective
-    * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
+        * `NWT_SP_LV`, `NWT_WP_LV`, `NWT_IT_SP`, `NWT_IT_WP_LV`, `NWT_IT_SP_LV`
+        * `NWT_IT_WP`: Usually the most effective
+    * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually. For bitvectors, `NWT_IT_WP` is recommended._
 * `--predsplit`: Splitting applied to predicates during refinement, possible values:
     * `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
     * `CONJUNCTS`: Split predicates into conjuncts.
