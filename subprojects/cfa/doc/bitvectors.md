@@ -97,6 +97,6 @@ These operations encode relational operations between bitvectors. These operatio
 
 ## Algorithmic support for verification with bitvectors
 
-As of now, bitvectors are only partially supported due to the fact, that the underlying SMT solver, Z3 does not support interpolation when bitvectors are involved.
-
-As a result, CEGAR with predicate abstraction is not supported at all. However, CEGAR with explicit value abstraction, and with the UNSAT core refinement strategy is working preoperty, as it does not rely on the interpolation capabilities of the SMT solver.
+The CEGAR algorithms use Z3 as an SMT solver, which does not support interpolation when bitvectors are involved.
+Therefore, refinement algorithms involving interpolation (`--refinement *_ITP`) do not work.
+However, there are other refinement algorithms (e.g., `UNSAT_CORE`, `UCB` or `NWT_*`) that do not rely on interpolation and work for bitvectors as well.

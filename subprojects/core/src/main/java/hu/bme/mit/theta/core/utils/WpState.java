@@ -48,8 +48,16 @@ public final class WpState {
 		return new WpState(expr, 0);
 	}
 
+	public static WpState of(final Expr<BoolType> expr, final int constCount) {
+		return new WpState(expr, constCount);
+	}
+
 	public Expr<BoolType> getExpr() {
 		return expr;
+	}
+
+	public int getConstCount() {
+		return constCount;
 	}
 
 	/**
@@ -133,7 +141,7 @@ public final class WpState {
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
 			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final int constCount = state.constCount + 1;
-			final String valName = String.format("_val_%d", constCount);
+			final String valName = String.format("_wp_%d", constCount);
 			final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
 			final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());

@@ -255,13 +255,13 @@ public final class ExprSimplifier {
 			.addCase(BvULeqExpr.class, ExprSimplifier::simplifyBvULeq)
 
 			.addCase(BvULtExpr.class, ExprSimplifier::simplifyBvULt)
-	
+
 			.addCase(BvSGeqExpr.class, ExprSimplifier::simplifyBvSGeq)
-	
+
 			.addCase(BvSGtExpr.class, ExprSimplifier::simplifyBvSGt)
-	
+
 			.addCase(BvSLeqExpr.class, ExprSimplifier::simplifyBvSLeq)
-	
+
 			.addCase(BvSLtExpr.class, ExprSimplifier::simplifyBvSLt)
 
 			// General

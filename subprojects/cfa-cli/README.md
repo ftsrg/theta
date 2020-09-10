@@ -82,8 +82,13 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
     * `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
     * `SEQ_ITP` (default): Sequence interpolation.
     * `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
-    * `UNSAT_CORE`: Unsat cores, only available if `--domain` is `EXPL`.
-    * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually._
+    * `UNSAT_CORE`: Simple unsat cores, only available if `--domain` is `EXPL`. This refinement strategy does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver).
+    * `UCB`: Unsat core based predicates ([see paper](https://link.springer.com/chapter/10.1007%2F978-3-319-26287-1_10) for more information). _Experimental feature._ Does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver).
+    * `NWT_*`: Newton-style refinement. _Experimental feature._ Does not rely on interpolation, so it can even work if interpolating is not possible (e.g. bitvectors with Z3 solver). The supported Newton-style variants can be found in the following list ([see paper](https://dl.acm.org/doi/10.1145/3106237.3106307) for more information):
+        * `NWT_SP` and `NWT_WP`: Only works for really simple inputs,
+        * `NWT_SP_LV`, `NWT_WP_LV`, `NWT_IT_SP`, `NWT_IT_WP_LV`, `NWT_IT_SP_LV`,
+        * `NWT_IT_WP`: Usually the most effective.
+    * _Remark: `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually. For bitvectors, `NWT_IT_WP` is recommended._
 * `--predsplit`: Splitting applied to predicates during refinement, possible values:
     * `WHOLE` (default): Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
     * `CONJUNCTS`: Split predicates into conjuncts.
