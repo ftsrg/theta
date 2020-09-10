@@ -151,8 +151,8 @@ public class XstsCli {
     }
 
     private XSTS loadModel() throws Exception {
+        InputStream propStream = null;
         try {
-            InputStream propStream = null;
             if (property.endsWith(".prop")) propStream = new FileInputStream(property);
             else  propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
             try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
@@ -160,6 +160,8 @@ public class XstsCli {
             }
         } catch (Exception ex) {
             throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
+        } finally {
+            if (propStream != null) propStream.close();
         }
     }
 
