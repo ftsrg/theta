@@ -37,8 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain.*;
-import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.BW_BIN_ITP;
-import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.SEQ_ITP;
+import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.*;
 
 @RunWith(value = Parameterized.class)
 public class CfaTest {
@@ -60,12 +59,6 @@ public class CfaTest {
 	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-
-				{ "src/test/resources/counter5_true.cfa", PRED_BOOL, SEQ_ITP, true, 0 },
-
-				{ "src/test/resources/counter5_true.cfa", PRED_CART, BW_BIN_ITP, true, 0 },
-
-				{ "src/test/resources/counter5_true.cfa", EXPL, SEQ_ITP, true, 0 },
 
 				{ "src/test/resources/arithmetic-bool00.cfa", PRED_CART, SEQ_ITP, false, 15 },
 
@@ -102,6 +95,20 @@ public class CfaTest {
 				{ "src/test/resources/arrays.cfa", PRED_BOOL, BW_BIN_ITP, false, 8 },
 
 				{ "src/test/resources/arrays.cfa", EXPL, SEQ_ITP, false, 8 },
+
+				{ "src/test/resources/counter5_true.cfa", PRED_BOOL, SEQ_ITP, true, 0 },
+
+				{ "src/test/resources/counter5_true.cfa", PRED_CART, BW_BIN_ITP, true, 0 },
+
+				{ "src/test/resources/counter5_true.cfa", EXPL, SEQ_ITP, true, 0 },
+
+				{ "src/test/resources/counter_bv_true.cfa", EXPL, NWT_IT_WP, true, 0 },
+
+				{ "src/test/resources/counter_bv_false.cfa", EXPL, NWT_IT_WP, false, 13 },
+
+				{ "src/test/resources/counter_bv_true.cfa", PRED_CART, NWT_IT_WP, true, 0 },
+
+				{ "src/test/resources/counter_bv_false.cfa", PRED_CART, UCB, false, 13 },
 
 				{ "src/test/resources/ifelse.cfa", PRED_CART, SEQ_ITP, false, 3 },
 
