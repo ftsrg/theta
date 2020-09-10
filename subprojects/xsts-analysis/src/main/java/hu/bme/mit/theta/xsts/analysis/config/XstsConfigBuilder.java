@@ -45,13 +45,9 @@ public class XstsConfigBuilder {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, PROD
 	}
 
-	;
-
 	public enum Refinement {
 		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE
 	}
-
-	;
 
 	public enum Search {
 		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
@@ -65,8 +61,6 @@ public class XstsConfigBuilder {
 		}
 
 	}
-
-	;
 
 	public enum PredSplit {
 		WHOLE(ExprSplitters.whole()),
@@ -82,8 +76,6 @@ public class XstsConfigBuilder {
 		}
 	}
 
-	;
-
 	public enum InitPrec {
 		EMPTY(new XstsEmptyInitPrec()),
 
@@ -98,8 +90,6 @@ public class XstsConfigBuilder {
 		}
 
 	}
-
-	;
 
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory solverFactory;
@@ -187,8 +177,7 @@ public class XstsConfigBuilder {
 							JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
-					throw new UnsupportedOperationException(
-							domain + " domain does not support " + refinement + " refinement.");
+					throw new UnsupportedOperationException(domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<XstsState<ExplState>, XstsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,

@@ -13,31 +13,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod2ExplPredPreStrengtheningOperator implements PreStrengtheningOperator<ExplState, PredState> {
 
-    private Prod2ExplPredPreStrengtheningOperator(){}
+	private Prod2ExplPredPreStrengtheningOperator() {
+	}
 
-    public static Prod2ExplPredPreStrengtheningOperator create(){
-        return new Prod2ExplPredPreStrengtheningOperator();
-    }
+	public static Prod2ExplPredPreStrengtheningOperator create() {
+		return new Prod2ExplPredPreStrengtheningOperator();
+	}
 
-    @Override
-    public ExplState strengthenState1(Prod2State<ExplState, PredState> state) {
-        checkNotNull(state);
+	@Override
+	public ExplState strengthenState1(Prod2State<ExplState, PredState> state) {
+		checkNotNull(state);
+		return state.getState1();
+	}
 
-        return state.getState1();
-    }
+	@Override
+	public PredState strengthenState2(Prod2State<ExplState, PredState> state) {
+		checkNotNull(state);
+		var explState = state.getState1();
+		var predState = state.getState2();
 
-    @Override
-    public PredState strengthenState2(Prod2State<ExplState, PredState> state) {
-        checkNotNull(state);
+		var exprs = new ArrayList<Expr<BoolType>>();
 
-        var explState = state.getState1();
-        var predState = state.getState2();
+		exprs.addAll(predState.getPreds());
+		exprs.add(explState.getVal().toExpr());
 
-        var exprs = new ArrayList<Expr<BoolType>>();
-
-        exprs.addAll(predState.getPreds());
-        exprs.add(explState.getVal().toExpr());
-
-        return PredState.of(exprs);
-    }
+		return PredState.of(exprs);
+	}
 }
