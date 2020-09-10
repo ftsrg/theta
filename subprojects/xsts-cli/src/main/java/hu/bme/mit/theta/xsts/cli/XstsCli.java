@@ -43,191 +43,191 @@ import java.util.stream.Stream;
 
 public class XstsCli {
 
-    private static final String JAR_NAME = "theta-xsts-cli.jar";
-    private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
-    private final String[] args;
-    private final TableWriter writer;
+	private static final String JAR_NAME = "theta-xsts-cli.jar";
+	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
+	private final String[] args;
+	private final TableWriter writer;
 
-    @Parameter(names = {"--domain"}, description = "Abstract domain")
-    Domain domain = Domain.PRED_CART;
+	@Parameter(names = {"--domain"}, description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
 
-    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
-    Refinement refinement = Refinement.SEQ_ITP;
+	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
 
-    @Parameter(names = {"--search"}, description = "Search strategy")
-    Search search = Search.BFS;
+	@Parameter(names = {"--search"}, description = "Search strategy")
+	Search search = Search.BFS;
 
-    @Parameter(names = {"--predsplit"}, description = "Predicate splitting")
-    PredSplit predSplit = PredSplit.WHOLE;
+	@Parameter(names = {"--predsplit"}, description = "Predicate splitting")
+	PredSplit predSplit = PredSplit.WHOLE;
 
-    @Parameter(names = {"--model"}, description = "Path of the input XSTS model", required = true)
-    String model;
+	@Parameter(names = {"--model"}, description = "Path of the input XSTS model", required = true)
+	String model;
 
-    @Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
-    String property;
+	@Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
+	String property;
 
-    @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-    Integer maxEnum = 0;
+	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 0;
 
-    @Parameter(names = {"--initprec"}, description = "Initial precision")
-    InitPrec initPrec = InitPrec.EMPTY;
+	@Parameter(names = {"--initprec"}, description = "Initial precision")
+	InitPrec initPrec = InitPrec.EMPTY;
 
-    @Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
-    PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
-    @Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
-    Logger.Level logLevel = Logger.Level.SUBSTEP;
+	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.SUBSTEP;
 
-    @Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
-    Boolean benchmarkMode = false;
+	@Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
+	Boolean benchmarkMode = false;
 
-    @Parameter(names = {"--cex"}, description = "Write concrete counterexample to a file")
-    String cexfile = null;
+	@Parameter(names = {"--cex"}, description = "Write concrete counterexample to a file")
+	String cexfile = null;
 
-    @Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
-    boolean headerOnly = false;
+	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
 
-    @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
-    boolean stacktrace = false;
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
 
-    private Logger logger;
+	private Logger logger;
 
-    public XstsCli(final String[] args) {
-        this.args = args;
-        writer = new BasicTableWriter(System.out, ",", "\"", "\"");
-    }
+	public XstsCli(final String[] args) {
+		this.args = args;
+		writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+	}
 
-    public static void main(final String[] args) {
-        final XstsCli mainApp = new XstsCli(args);
-        mainApp.run();
-    }
+	public static void main(final String[] args) {
+		final XstsCli mainApp = new XstsCli(args);
+		mainApp.run();
+	}
 
-    private void run() {
-        try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
-        } catch (final ParameterException ex) {
-            System.out.println("Invalid parameters, details:");
-            System.out.println(ex.getMessage());
-            ex.usage();
-            return;
-        }
+	private void run() {
+		try {
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		} catch (final ParameterException ex) {
+			System.out.println("Invalid parameters, details:");
+			System.out.println(ex.getMessage());
+			ex.usage();
+			return;
+		}
 
-        if (headerOnly) {
-            printHeader();
-            return;
-        }
+		if (headerOnly) {
+			printHeader();
+			return;
+		}
 
-        try {
-            final Stopwatch sw = Stopwatch.createStarted();
-            final XSTS xsts = loadModel();
-            final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-            final SafetyResult<?, ?> status = check(configuration);
-            sw.stop();
-            printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile != null) {
-                writeCex(status.asUnsafe(),xsts);
-            }
-        } catch (final Throwable ex) {
-            printError(ex);
-        }
-        if (benchmarkMode) {
-            writer.newRow();
-        }
-    }
+		try {
+			final Stopwatch sw = Stopwatch.createStarted();
+			final XSTS xsts = loadModel();
+			final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+			final SafetyResult<?, ?> status = check(configuration);
+			sw.stop();
+			printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(status.asUnsafe(), xsts);
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+		}
+		if (benchmarkMode) {
+			writer.newRow();
+		}
+	}
 
-    private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
-        try {
-            return configuration.check();
-        } catch (final Exception ex) {
-            throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
-        }
-    }
+	private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
+		}
+	}
 
-    private void printHeader() {
-        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
-        writer.newRow();
-    }
+	private void printHeader() {
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
+		writer.newRow();
+	}
 
-    private XSTS loadModel() throws Exception {
-        InputStream propStream = null;
-        try {
-            if (property.endsWith(".prop")) propStream = new FileInputStream(property);
-            else  propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
-            try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
-                return XstsDslManager.createXsts(inputStream);
-            }
-        } catch (Exception ex) {
-            throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
-        } finally {
-            if (propStream != null) propStream.close();
-        }
-    }
+	private XSTS loadModel() throws Exception {
+		InputStream propStream = null;
+		try {
+			if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
+			try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
+				return XstsDslManager.createXsts(inputStream);
+			}
+		} catch (Exception ex) {
+			throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
+		} finally {
+			if (propStream != null) propStream.close();
+		}
+	}
 
-    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
-        try {
-            return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
-                    .pruneStrategy(pruneStrategy).search(search) .predSplit(predSplit).logger(logger).build(xsts);
-        } catch (final Exception ex) {
-            throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
-        }
-    }
+	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+		try {
+			return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).search(search).predSplit(predSplit).logger(logger).build(xsts);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
+	}
 
-    private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-        if (benchmarkMode) {
-            writer.cell(status.isSafe());
-            writer.cell(totalTimeMs);
-            writer.cell(stats.getAlgorithmTimeMs());
-            writer.cell(stats.getAbstractorTimeMs());
-            writer.cell(stats.getRefinerTimeMs());
-            writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
-            if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
-            } else {
-                writer.cell("");
-            }
-            writer.cell(sts.getVars().size());
-        }
-    }
+	private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
+		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+		if (benchmarkMode) {
+			writer.cell(status.isSafe());
+			writer.cell(totalTimeMs);
+			writer.cell(stats.getAlgorithmTimeMs());
+			writer.cell(stats.getAbstractorTimeMs());
+			writer.cell(stats.getRefinerTimeMs());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				writer.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				writer.cell("");
+			}
+			writer.cell(sts.getVars().size());
+		}
+	}
 
-    private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ex.getMessage();
-        if (benchmarkMode) {
-            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
-        } else {
-            logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
-            if (stacktrace) {
-                final StringWriter errors = new StringWriter();
-                ex.printStackTrace(new PrintWriter(errors));
-                logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
-            } else {
-                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
-            }
-        }
-    }
+	private void printError(final Throwable ex) {
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
+		if (benchmarkMode) {
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+		} else {
+			logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
+			} else {
+				logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
+			}
+		}
+	}
 
-    private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
-        //TODO remove temp vars, replace int values with literals
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
+		//TODO remove temp vars, replace int values with literals
 
-        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, solverFactory, xsts);
-        final File file = new File(cexfile);
-        PrintWriter printWriter = null;
-        try {
-            printWriter = new PrintWriter(file);
-            printWriter.write(concrTrace.toString());
-        } catch (final FileNotFoundException e) {
-            printError(e);
-        } finally {
-            if (printWriter != null) {
-                printWriter.close();
-            }
-        }
-    }
+		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
+		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, solverFactory, xsts);
+		final File file = new File(cexfile);
+		PrintWriter printWriter = null;
+		try {
+			printWriter = new PrintWriter(file);
+			printWriter.write(concrTrace.toString());
+		} catch (final FileNotFoundException e) {
+			printError(e);
+		} finally {
+			if (printWriter != null) {
+				printWriter.close();
+			}
+		}
+	}
 
 }
