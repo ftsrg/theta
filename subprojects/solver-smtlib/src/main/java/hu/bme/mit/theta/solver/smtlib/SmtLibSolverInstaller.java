@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public interface SmtLibSolverInstaller {
-    void install(Path home, String version) throws SmtLibSolverInstallerException;
+    void install(Path home, String version, String name) throws SmtLibSolverInstallerException;
 
     void uninstall(Path home, String version) throws SmtLibSolverInstallerException;
 
