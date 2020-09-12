@@ -16,11 +16,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.IfStmt;
-import hu.bme.mit.theta.core.stmt.LoopStmt;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -157,8 +152,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         for(var i = 1; i < stateCount; i++) {
             var initStream =
                 (i == 1)
-                    ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
-                    : Stream.<AssumeStmt>empty();
+                ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
+                : Stream.<AssumeStmt>empty();
 
             var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
 
@@ -166,11 +161,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             var targetStream =
                 (i == stateCount - 1)
-                    ? Stream.concat(
+                ? Stream.concat(
                     ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream().map(AssumeStmt::of),
                     ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of)
                 )
-                    : Stream.<AssumeStmt>empty();
+                : Stream.<AssumeStmt>empty();
 
             flattenedActions.add(
                 NewtonAction.of(
@@ -271,31 +266,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             @Override
             public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Void param) {
                 return HavocStmt.of(stmt.getVarDecl());
-            }
-
-            @Override
-            public Stmt visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Stmt visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Stmt visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Stmt visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Stmt visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
             }
         }, null);
     }
@@ -400,31 +370,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
-
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
         }, null);
     }
 
@@ -449,31 +394,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
-
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
         }, null);
     }
 
@@ -497,31 +417,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.singletonList(stmt.getVarDecl());
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
             }
         }, null);
     }
@@ -604,8 +499,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             .collect(Collectors.toUnmodifiableSet());
 
         var substitution = BasicSubstitution.builder()
-            .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
-            .build();
+           .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+           .build();
 
         return params.size() > 0
             ? Forall(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
