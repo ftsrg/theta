@@ -83,7 +83,7 @@ public final class SmtLibSolverManager {
         return genericInstaller.get1();
     }
 
-    public void install(final String solver, final String version) throws SmtLibSolverInstallerException {
+    public void install(final String solver, final String version, final String name) throws SmtLibSolverInstallerException {
         checkArgument(!solver.equals(genericInstaller.get1()));
 
         if(!installers.containsKey(solver)) {
@@ -99,7 +99,7 @@ public final class SmtLibSolverManager {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        installers.get(solver).install(installDir, version);
+        installers.get(solver).install(installDir, version, name);
     }
 
     public void installGeneric(final String version, final Path solverPath, final String[] args) throws SmtLibSolverInstallerException {
@@ -155,7 +155,7 @@ public final class SmtLibSolverManager {
         return installers.get(solver).getSolverFactory(home.resolve(solver), version);
     }
 
-    public List<String> getSupportedSolvers() throws SmtLibSolverInstallerException {
+    public List<String> getSupportedSolvers() {
         return installers.keySet().stream().collect(Collectors.toUnmodifiableList());
     }
 
