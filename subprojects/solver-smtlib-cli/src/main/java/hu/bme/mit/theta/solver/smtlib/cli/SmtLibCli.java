@@ -33,7 +33,7 @@ public class SmtLibCli {
     @Parameter(names = "--uninstall", description = "Uninstall a solver")
     String uninstall;
 
-    @Parameter(names = "--list-installed", help = true)
+    @Parameter(names = "--list-installed", description = "Lists installed solvers and their versions")
     private boolean listInstalled;
 
     @Parameter(names = "--home", description = "The path of the solver registry")
