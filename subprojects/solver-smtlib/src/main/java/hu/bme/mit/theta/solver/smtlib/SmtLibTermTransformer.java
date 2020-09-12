@@ -10,7 +10,7 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 public interface SmtLibTermTransformer {
     <P extends Type, R extends Type> LitExpr<FuncType<P, R>> toFuncLitExpr(String funcLitImpl, FuncType<P, R> type, SmtLibModel model);
 
-    Expr<?> toExpr(String term, Type type, SmtLibModel model);
+    <T extends Type> Expr<T> toExpr(String term, T type, SmtLibModel model);
 
     <T extends Type> LitExpr<T> toLitExpr(String litImpl, T type, SmtLibModel model);
 
