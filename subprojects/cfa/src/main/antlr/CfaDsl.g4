@@ -108,16 +108,7 @@ arrayType
 	;
 
 bvType
-    :   ubvType
-    |   sbvType
-    ;
-
-ubvType
-    :   UBVTYPE LBRACK size=INT RBRACK
-    ;
-
-sbvType
-    :   SBVTYPE LBRACK size=INT RBRACK
+    :   BVTYPE LBRACK size=INT RBRACK
     ;
 
 BOOLTYPE
@@ -132,16 +123,8 @@ RATTYPE
 	:	'rat'
 	;
 
-UBVTYPE
+BVTYPE
     :   'bv'
-    |   'bitvec'
-    |   'ubv'
-    |   'ubitvec'
-    ;
-
-SBVTYPE
-    :   'sbv'
-    |   'sbitvec'
     ;
 
 // E X P R E S S I O N S
@@ -207,41 +190,49 @@ equalityExpr
 	;
 
 relationExpr
-	:	leftOp=bitwiseOrExpr (oper=(LT | LEQ | GT | GEQ) rightOp=bitwiseOrExpr)?
+	:	leftOp=bitwiseOrExpr (oper=(LT | LEQ | GT | GEQ | BV_ULT | BV_ULE | BV_UGT | BV_UGE | BV_SLT | BV_SLE | BV_SGT | BV_SGE) rightOp=bitwiseOrExpr)?
 	;
 
 bitwiseOrExpr
-    :   leftOp=bitwiseXorExpr (oper=BITWISE_OR rightOp=bitwiseXorExpr)?
+    :   leftOp=bitwiseXorExpr (oper=BV_OR rightOp=bitwiseXorExpr)?
     ;
 
 bitwiseXorExpr
-    :   leftOp=bitwiseAndExpr (oper=BITWISE_XOR rightOp=bitwiseAndExpr)?
+    :   leftOp=bitwiseAndExpr (oper=BV_XOR rightOp=bitwiseAndExpr)?
     ;
 
 bitwiseAndExpr
-    :   leftOp=bitwiseShiftExpr (oper=BITWISE_AND rightOp=bitwiseShiftExpr)?
+    :   leftOp=bitwiseShiftExpr (oper=BV_AND rightOp=bitwiseShiftExpr)?
     ;
 
 bitwiseShiftExpr
-    :   leftOp=additiveExpr (oper=(BITWISE_SHIFT_LEFT | BITWISE_ARITH_SHIFT_RIGHT | BITWISE_LOGIC_SHIFT_RIGHT | BITWISE_ROTATE_LEFT | BITWISE_ROTATE_RIGHT) rightOp=additiveExpr)?
+    :   leftOp=additiveExpr (oper=(BV_SHL | BV_ASHR | BV_LSHR | BV_ROL | BV_ROR) rightOp=additiveExpr)?
     ;
 
 additiveExpr
-	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS) ops+=multiplicativeExpr)*
+	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS | BV_ADD | BV_SUB) ops+=multiplicativeExpr)*
 	;
 
 multiplicativeExpr
-	:	ops+=unaryExpr (opers+=(MUL | DIV | MOD | REM) ops+=unaryExpr)*
+	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM) ops+=bvConcatExpr)*
 	;
+
+bvConcatExpr
+    :   ops+=bvExtendExpr (opers+=BV_CONCAT ops+=bvExtendExpr)*
+    ;
+
+bvExtendExpr
+    :   leftOp=unaryExpr (oper=(BV_ZERO_EXTEND | BV_SIGN_EXTEND) rightOp=bvType)?
+    ;
 
 unaryExpr
 	:	bitwiseNotExpr
-	|	oper=(PLUS | MINUS) op=unaryExpr
+	|	oper=(PLUS | MINUS | BV_POS | BV_NEG) op=unaryExpr
 	;
 
 bitwiseNotExpr
     :   accessorExpr
-    |   BITWISE_NOT op=bitwiseNotExpr
+    |   BV_NOT op=bitwiseNotExpr
     ;
 
 accessorExpr
@@ -253,6 +244,7 @@ access
 	|	readIndex=arrayReadAccess
 	|	writeIndex=arrayWriteAccess
 	|	prime=primeAccess
+	|   bvExtract=bvExtractAccess
 	;
 
 funcAccess
@@ -270,6 +262,10 @@ arrayWriteAccess
 primeAccess
 	:	QUOT
 	;
+
+bvExtractAccess
+    :   LBRACK until=INT COLON from=INT RBRACK
+    ;
 
 primaryExpr
 	:	trueExpr
@@ -394,40 +390,124 @@ PERCENT
 	:	'%'
 	;
 
-BITWISE_OR
-    :   '|'
+BV_CONCAT
+    :   PLUS PLUS
     ;
 
-BITWISE_XOR
-    :   '^'
+BV_ZERO_EXTEND
+    :   'bv_zero_extend'
     ;
 
-BITWISE_AND
-    :   '&'
+BV_SIGN_EXTEND
+    :   'bv_sign_extend'
     ;
 
-BITWISE_SHIFT_LEFT
-    :   LT LT
+BV_ADD
+    :   'bvadd'
     ;
 
-BITWISE_ARITH_SHIFT_RIGHT
-    :   GT GT
+BV_SUB
+    :   'bvsub'
     ;
 
-BITWISE_LOGIC_SHIFT_RIGHT
-   :   GT GT GT
-   ;
-
-BITWISE_ROTATE_LEFT
-    :   LT LT BITWISE_NOT
+BV_POS
+    :   'bvpos'
     ;
 
-BITWISE_ROTATE_RIGHT
-    :   BITWISE_NOT GT GT
+BV_NEG
+    :   'bvneg'
     ;
 
-BITWISE_NOT
-    :   '~'
+BV_MUL
+    :   'bvmul'
+    ;
+
+BV_UDIV
+    :   'bvudiv'
+    ;
+
+BV_SDIV
+    :   'bvsdiv'
+    ;
+
+BV_SMOD
+    :   'bvsmod'
+    ;
+
+BV_UREM
+    :   'bvurem'
+    ;
+
+BV_SREM
+    :   'bvsrem'
+    ;
+
+BV_OR
+    :   'bvor'
+    ;
+
+BV_AND
+    :   'bvand'
+    ;
+
+BV_XOR
+    :   'bvxor'
+    ;
+
+BV_NOT
+    :   'bvnot'
+    ;
+
+BV_SHL
+    :   'bvshl'
+    ;
+
+BV_ASHR
+    :   'bvashr'
+    ;
+
+BV_LSHR
+    :   'bvlshr'
+    ;
+
+BV_ROL
+    :   'bvrol'
+    ;
+
+BV_ROR
+    :   'bvror'
+    ;
+
+BV_ULT
+    :   'bvult'
+    ;
+
+BV_ULE
+    :   'bvule'
+    ;
+
+BV_UGT
+    :   'bvugt'
+    ;
+
+BV_UGE
+    :   'bvuge'
+    ;
+
+BV_SLT
+    :   'bvslt'
+    ;
+
+BV_SLE
+    :   'bvsle'
+    ;
+
+BV_SGT
+    :   'bvsgt'
+    ;
+
+BV_SGE
+    :   'bvsge'
     ;
 
 TRUE:	'true'
@@ -489,9 +569,9 @@ RETURN
 
 // B A S I C   T O K E N S
 
-BV  :   NAT '\'b' ('s'|'u')? [0-1]+
-    |   NAT '\'d' ('s'|'u')? INT
-    |   NAT '\'x' ('s'|'u')? [0-9a-fA-F]+
+BV  :   NAT '\'b' [0-1]+
+    |   NAT '\'d' (PLUS | MINUS)? INT
+    |   NAT '\'x' [0-9a-fA-F]+
     ;
 
 INT	:	NAT

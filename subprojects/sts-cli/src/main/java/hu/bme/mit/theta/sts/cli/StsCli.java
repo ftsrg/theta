@@ -17,6 +17,7 @@ package hu.bme.mit.theta.sts.cli;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -100,6 +101,9 @@ public class StsCli {
 	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
 	private Logger logger;
 
 	public StsCli(final String[] args) {
@@ -132,7 +136,7 @@ public class StsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
@@ -146,36 +150,47 @@ public class StsCli {
 		}
 	}
 
-	private void printHeader() {
-		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size"};
-		for (final String str : header) {
-			writer.cell(str);
+	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
 		}
+	}
+
+	private void printHeader() {
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size").forEach(writer::cell);
 		writer.newRow();
 	}
 
-	private STS loadModel() throws IOException {
-		if (model.endsWith(".aag")) {
-			final AigerSystem aigerSystem = AigerParser.parse(model);
-			AigerCoi.apply(aigerSystem);
-			return AigerToSts.createSts(aigerSystem);
-		} else if (model.endsWith(".system")) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				if (spec.getAllSts().size() != 1) {
-					throw new UnsupportedOperationException("STS contains multiple properties.");
+	private STS loadModel() throws Exception {
+		try {
+			if (model.endsWith(".aag")) {
+				final AigerSystem aigerSystem = AigerParser.parse(model);
+				AigerCoi.apply(aigerSystem);
+				return AigerToSts.createSts(aigerSystem);
+			} else {
+				try (InputStream inputStream = new FileInputStream(model)) {
+					final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+					if (spec.getAllSts().size() != 1) {
+						throw new UnsupportedOperationException("STS contains multiple properties.");
+					}
+					return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 				}
-				return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 			}
-		} else {
-			throw new IOException("Unknown format");
+		} catch (Exception ex) {
+			throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
 		}
 	}
 
-	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
-				.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+		try {
+			return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
@@ -201,15 +216,18 @@ public class StsCli {
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-			final StringWriter errors = new StringWriter();
-			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+			} else {
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+			}
 		}
 	}
 

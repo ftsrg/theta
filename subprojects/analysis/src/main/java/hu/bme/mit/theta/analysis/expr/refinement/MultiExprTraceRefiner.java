@@ -33,7 +33,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 
-public class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
 
 	private final ExprTraceChecker<R> exprTraceChecker;

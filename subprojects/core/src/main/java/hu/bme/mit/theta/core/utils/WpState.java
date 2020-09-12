@@ -25,12 +25,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -53,8 +48,16 @@ public final class WpState {
 		return new WpState(expr, 0);
 	}
 
+	public static WpState of(final Expr<BoolType> expr, final int constCount) {
+		return new WpState(expr, constCount);
+	}
+
 	public Expr<BoolType> getExpr() {
 		return expr;
+	}
+
+	public int getConstCount() {
+		return constCount;
 	}
 
 	/**
@@ -138,12 +141,25 @@ public final class WpState {
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
 			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final int constCount = state.constCount + 1;
-			final String valName = String.format("_val_%d", constCount);
+			final String valName = String.format("_wp_%d", constCount);
 			final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
 			final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());
 			return new WpState(expr, constCount);
 		}
+
+		@Override
+		public WpState visit(SequenceStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(NonDetStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(OrtStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
@@ -180,6 +196,19 @@ public final class WpState {
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
 			return WpVisitor.getInstance().visit(stmt, state);
 		}
+
+		@Override
+		public WpState visit(SequenceStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(NonDetStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(OrtStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {

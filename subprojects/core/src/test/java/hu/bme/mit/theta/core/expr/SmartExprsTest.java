@@ -77,7 +77,7 @@ public class SmartExprsTest {
 
 				{And(A, B, C), SmartBoolExprs.And(A, B, C, True())},
 
-				{True(), SmartBoolExprs.Or(Collections.emptySet())},
+				{False(), SmartBoolExprs.Or(Collections.emptySet())},
 
 				{A, SmartBoolExprs.Or(Collections.singleton(A))},
 

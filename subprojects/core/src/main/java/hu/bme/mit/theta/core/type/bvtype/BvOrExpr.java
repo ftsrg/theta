@@ -11,9 +11,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class BvOrExpr extends MultiaryExpr<BvType, BvType> {
+public final class BvOrExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 2745;
-    private static final String OPERATOR_LABEL = "|";
+    private static final String OPERATOR_LABEL = "bvor";
 
     private BvOrExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);

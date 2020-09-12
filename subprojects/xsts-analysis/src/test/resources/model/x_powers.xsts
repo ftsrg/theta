@@ -1,0 +1,9 @@
+var x: integer = 2
+
+trans {
+    x:=x*2;
+}
+
+init {}
+
+env {}

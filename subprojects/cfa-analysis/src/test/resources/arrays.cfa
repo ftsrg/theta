@@ -1,0 +1,29 @@
+main process cfa {
+    var arr : [int] -> bool
+    
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    loc L5
+    loc L6
+    final loc LF
+    error loc LE
+    
+    L0 -> L1 {
+        arr := [0 <- true, default <- false]
+        arr := arr[1 <- true]
+    }
+    L1 -> LF { assume not arr[0] }
+    L1 -> L2 { assume arr[0] }
+    L2 -> LF { assume not arr[1] }
+    L2 -> L3 { assume arr[1] }
+    L3 -> LF { assume arr[2] }
+    L3 -> L4 { assume not arr[2] }
+    L4 -> L5 { arr := arr[0 <- false] }
+    L5 -> LF { assume arr[0] }
+    L5 -> L6 { assume not arr[0] }
+    
+    L6 -> LE { assume true }
+}

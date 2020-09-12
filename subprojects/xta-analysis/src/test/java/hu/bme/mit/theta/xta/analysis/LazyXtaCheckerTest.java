@@ -15,26 +15,8 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
-import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
-import static org.junit.Assert.assertTrue;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -45,6 +27,21 @@ import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
+import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
@@ -53,12 +50,13 @@ public final class LazyXtaCheckerTest {
 	private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
 	private static final String MODEL_LYNCH = "/lynch-2-16.xta";
 	private static final String MODEL_ENGINE = "/engine-classic.xta";
+	private static final String MODEL_BROADCAST = "/broadcast.xta";
 
 	private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI, MODEL_FISCHER,
-			MODEL_LYNCH, MODEL_ENGINE);
+			MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
 
 	private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(MODEL_FDDI,
-			MODEL_ENGINE);
+			MODEL_ENGINE, MODEL_BROADCAST);
 
 	@Parameter(0)
 	public String filepath;
@@ -87,7 +85,7 @@ public final class LazyXtaCheckerTest {
 	}
 
 	@Before
-	public void initialize() throws FileNotFoundException, IOException {
+	public void initialize() throws IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 		checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, BFS);

@@ -46,10 +46,6 @@ public final class IntExprs {
 		return IntToRatExpr.of(op);
 	}
 
-	public static IntToBvExpr ToBv(final Expr<IntType> op, final int size, final boolean isSigned) {
-		return IntToBvExpr.of(op, size, isSigned);
-	}
-
 	public static IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
 		return IntAddExpr.of(ops);
 	}

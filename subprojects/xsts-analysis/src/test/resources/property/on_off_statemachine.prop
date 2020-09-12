@@ -1,0 +1,3 @@
+prop{
+    !(signal_alert_Out == true)
+}
