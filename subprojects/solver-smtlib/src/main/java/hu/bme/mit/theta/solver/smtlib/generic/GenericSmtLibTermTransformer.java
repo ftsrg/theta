@@ -3,10 +3,10 @@ package hu.bme.mit.theta.solver.smtlib.generic;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.QuintFunction;
+import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -38,23 +37,33 @@ import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
@@ -72,31 +81,29 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Exists_termContext;
@@ -150,15 +157,19 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             // Rational
 
             // Bitvector
+            put("concat", exprMultiaryOperator(BvConcatExpr::create));
+            put("extract", exprBvExtractOperator());
+            put("zero_extend", exprBvExtendOperator(BvZExtExpr::create));
+            put("sign_extend", exprBvExtendOperator(BvSExtExpr::create));
             put("bvadd", exprMultiaryOperator(BvAddExpr::create));
             put("bvsub", exprBinaryOperator(BvSubExpr::create));
             put("bvneg", exprUnaryOperator(BvNegExpr::create));
             put("bvmul", exprMultiaryOperator(BvAddExpr::create));
-            put("bvudiv", exprBinaryOperator(BvDivExpr::create));
-            put("bvsdiv", exprBinaryOperator(BvDivExpr::create));
-            put("bvsmod", exprBinaryOperator(BvModExpr::create));
-            put("bvsrem", exprBinaryOperator(BvRemExpr::create));
-            put("bvurem", exprBinaryOperator(BvRemExpr::create));
+            put("bvudiv", exprBinaryOperator(BvUDivExpr::create));
+            put("bvsdiv", exprBinaryOperator(BvSDivExpr::create));
+            put("bvsmod", exprBinaryOperator(BvSModExpr::create));
+            put("bvsrem", exprBinaryOperator(BvURemExpr::create));
+            put("bvurem", exprBinaryOperator(BvSRemExpr::create));
             put("bvand", exprMultiaryOperator(BvAndExpr::create));
             put("bvor", exprMultiaryOperator(BvOrExpr::create));
             put("bvxor", exprMultiaryOperator(BvXorExpr::create));
@@ -166,14 +177,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             put("bvshl", exprBinaryOperator(BvShiftLeftExpr::create));
             put("bvashr", exprBinaryOperator(BvArithShiftRightExpr::create));
             put("bvlshr", exprBinaryOperator(BvLogicShiftRightExpr::create));
-            put("bvult", exprBinaryOperator(BvLtExpr::create));
-            put("bvslt", exprBinaryOperator(BvLtExpr::create));
-            put("bvule", exprBinaryOperator(BvLeqExpr::create));
-            put("bvsle", exprBinaryOperator(BvLeqExpr::create));
-            put("bvugt", exprBinaryOperator(BvGtExpr::create));
-            put("bvsgt", exprBinaryOperator(BvGtExpr::create));
-            put("bvuge", exprBinaryOperator(BvGeqExpr::create));
-            put("bvsge", exprBinaryOperator(BvGeqExpr::create));
+            put("bvult", exprBinaryOperator(BvULtExpr::create));
+            put("bvslt", exprBinaryOperator(BvSLtExpr::create));
+            put("bvule", exprBinaryOperator(BvULeqExpr::create));
+            put("bvsle", exprBinaryOperator(BvSLeqExpr::create));
+            put("bvugt", exprBinaryOperator(BvUGtExpr::create));
+            put("bvsgt", exprBinaryOperator(BvSGtExpr::create));
+            put("bvuge", exprBinaryOperator(BvUGeqExpr::create));
+            put("bvsge", exprBinaryOperator(BvSGeqExpr::create));
 
             // Array
             put("select", exprArrayReadOperator());
@@ -185,14 +196,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     @Override
     public <P extends Type, R extends Type> LitExpr<FuncType<P, R>> toFuncLitExpr(final String funcLitImpl, final FuncType<P, R> type, final SmtLibModel model) {
-        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(funcLitImpl));
-        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
-        lexer.removeErrorListeners();
-        lexer.addErrorListener(new ThrowExceptionErrorListener());
-        parser.removeErrorListeners();
-        parser.addErrorListener(new ThrowExceptionErrorListener());
-
-        final var litExpr = transformFuncDef(parser.function_def(), type, model, HashBiMap.create());
+        final var litExpr = toFuncLitExpr(funcLitImpl, model);
         if(litExpr == null) {
             return null;
         }
@@ -204,8 +208,24 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
+    private Expr<?> toFuncLitExpr(final String funcLitImpl, final SmtLibModel model) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(funcLitImpl));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        return transformFuncDef(parser.function_def(), model, HashBiMap.create());
+    }
+
     @Override
-    public Expr<?> toExpr(final String term, final Type type, final SmtLibModel model) {
+    public <T extends Type> Expr<T> toExpr(final String term, final T type, final SmtLibModel model) {
+        final var expr  = toExpr(term, model);
+        return cast(expr, type);
+    }
+
+    private Expr<?> toExpr(final String term, final SmtLibModel model) {
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(term));
         final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
         lexer.removeErrorListeners();
@@ -213,18 +233,12 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        final var expr = transformTerm(parser.function_def().term(), type, model, HashBiMap.create());
-        if(expr == null) {
-            return null;
-        }
-        else {
-            return cast(expr, type);
-        }
+        return transformTerm(parser.function_def().term(), model, HashBiMap.create());
     }
 
     @Override
     public <T extends Type> LitExpr<T> toLitExpr(final String litImpl, final T type, final SmtLibModel model) {
-        final var litExpr = toExpr(litImpl, type, model);
+        final var litExpr = toExpr(litImpl, model);
 
         if(litExpr == null) {
             return null;
@@ -240,7 +254,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     @Override
     @SuppressWarnings("unchecked")
     public <I extends Type, E extends Type>  LitExpr<ArrayType<I, E>> toArrayLitExpr(final String arrayLitImpl, final ArrayType<I, E> type, final SmtLibModel model) {
-        final var arrayLitExpr = toExpr(arrayLitImpl, type, model);
+        final var arrayLitExpr = toExpr(arrayLitImpl, model);
 
         if(arrayLitExpr == null) {
             return null;
@@ -264,13 +278,13 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     @Override
     public LitExpr<BvType> toBvLitExpr(final String bvLitImpl, final BvType type, final SmtLibModel model) {
-        final var bvLitExpr = toExpr(bvLitImpl, type, model);
+        final var bvLitExpr = toExpr(bvLitImpl, model);
 
         if(bvLitExpr == null) {
             return null;
         }
         else if(bvLitExpr instanceof BvLitExpr) {
-            return Bv(((BvLitExpr) bvLitExpr).getValue(), type.isSigned());
+            return (BvLitExpr) bvLitExpr;
         }
         else {
             return (LitExpr<BvType>) cast(ExprUtils.simplify(bvLitExpr), type);
@@ -281,55 +295,43 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     /* Visitor implementation */
 
-    protected Expr<?> transformFuncDef(final SMTLIBv2Parser.Function_defContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type instanceof FuncType;
+    protected Expr<?> transformFuncDef(final SMTLIBv2Parser.Function_defContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
-        final var funcType = type != null ? (FuncType<?, ?>) type : null;
-
         final var paramDecls = ctx.sorted_var().stream()
-            .map(sv -> new ParamTypeDeducer(
-                sv.symbol().getText(), transformSort(sv.sort(),
-                funcType != null ? funcType.getParamType() : null))
-            )
+            .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
         checkArgument(paramDecls.size() == 1, "Only unary functions are supported");
 
         pushParams(paramDecls, vars);
-        final var op = transformTerm(ctx.term(), funcType != null ? funcType.getResultType() : type, model, vars);
+        final var op = transformTerm(ctx.term(), model, vars);
         popParams(paramDecls, vars);
 
-        if(paramDecls.get(0).isTypeUnknown()) {
-            return null;
-        }
-        else {
-            assert op != null;
-            return Func(paramDecls.get(0).getParamDecl(), op);
-        }
+        return Func(paramDecls.get(0), op);
     }
 
-    protected Expr<?> transformTerm(final TermContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformTerm(final TermContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         if(ctx.spec_constant() != null) {
-            return transformSpecConstant(ctx.spec_constant(), type, model, vars);
+            return transformSpecConstant(ctx.spec_constant(), model, vars);
         }
         else if(ctx.qual_identifier() != null) {
-            return transformQualIdentifier(ctx.qual_identifier(), type, model, vars);
+            return transformQualIdentifier(ctx.qual_identifier(), model, vars);
         }
         else if(ctx.generic_term() != null) {
-            return transformGenericTerm(ctx.generic_term(), type, model, vars);
+            return transformGenericTerm(ctx.generic_term(), model, vars);
         }
         else if(ctx.let_term() != null) {
             throw new UnsupportedOperationException();
         }
         else if(ctx.forall_term() != null) {
-            return transformForallTerm(ctx.forall_term(), type, model, vars);
+            return transformForallTerm(ctx.forall_term(), model, vars);
         }
         else if(ctx.exists_term() != null) {
-            return transformExistsTerm(ctx.exists_term(), type, model, vars);
+            return transformExistsTerm(ctx.exists_term(), model, vars);
         }
         else if(ctx.match_term() != null) {
             throw new UnsupportedOperationException();
@@ -342,21 +344,21 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformSpecConstant(final Spec_constantContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformSpecConstant(final Spec_constantContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         if(ctx.numeral() != null) {
-            return transformNumeral(ctx.numeral(), type, model, vars);
+            return transformNumeral(ctx.numeral(), model, vars);
         }
         else if(ctx.decimal() != null) {
-            return transformDecimal(ctx.decimal(), type, model, vars);
+            return transformDecimal(ctx.decimal(), model, vars);
         }
         else if(ctx.hexadecimal() != null) {
-            return transformHexadecimal(ctx.hexadecimal(), type, model, vars);
+            return transformHexadecimal(ctx.hexadecimal(), model, vars);
         }
         else if(ctx.binary() != null) {
-            return transformBinary(ctx.binary(), type, model, vars);
+            return transformBinary(ctx.binary(), model, vars);
         }
         else if(ctx.string() != null) {
             throw new UnsupportedOperationException();
@@ -366,14 +368,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformQualIdentifier(final Qual_identifierContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformQualIdentifier(final Qual_identifierContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
-        return transformIdentifier(ctx.identifier(), type, model, vars);
+        return transformIdentifier(ctx.identifier(), model, vars);
     }
 
-    protected Expr<?> transformGenericTerm(final Generic_termContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformGenericTerm(final Generic_termContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -383,25 +385,24 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         final var funAppParams = ctx.term();
 
         if (funName.equals("const")) { // as const construct
-            final var constType = transformSort(ctx.qual_identifier().sort(), type);
+            final var constType = transformSort(ctx.qual_identifier().sort());
             if (constType instanceof ArrayType) {
-                assert type == null || type.equals(constType);
                 checkArgument(funAppParams.size() == 1, "Invalid as const construct");
 
                 final var arrayType = (ArrayType<?, ?>) constType;
-                final var expr = transformTerm(funAppParams.get(0), arrayType.getElemType(), model, vars);
-                return createArrayLitExpr(expr, (ArrayType<?, ?>) type);
+                final var expr = transformTerm(funAppParams.get(0), model, vars);
+                return createArrayLitExpr(expr, arrayType);
             }
             else {
                 throw new UnsupportedOperationException();
             }
         } else if (funAppTransformer.containsKey(funName)) { // known function application
-            return funAppTransformer.get(funName).apply(funParams, funAppParams, type, model, vars);
+            return funAppTransformer.get(funName).apply(funParams, funAppParams, model, vars);
         } else { // custom function application
             checkArgument(funParams.size() == 0, "Custom unary function application cannot vahe parameter");
             checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
 
-            return createFuncAppExpr(funName, funAppParams.get(0), type, model, vars);
+            return createFuncAppExpr(funName, funAppParams.get(0), model, vars);
         }
     }
 
@@ -410,98 +411,68 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         return Array(Collections.emptyList(), (Expr<E>) elze, type);
     }
 
-    private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(final String funName, final TermContext funAppParam, final Type returnType, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-
-        var paramExpr = transformTerm(funAppParam, null, model, vars);
-        final Type paramType = paramExpr != null ? paramExpr.getType() : null;
-
+    private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(final String funName, final TermContext funAppParam, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         final Expr<?> funcExpr;
         if (symbolTable.definesSymbol(funName)) {
             funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
         } else {
             final var funDefImpl = model.getTerm(funName);
-            if(paramType == null || returnType == null) {
-                funcExpr = toFuncLitExpr(funDefImpl, null, model);
-                if(funcExpr == null) {
-                    return null;
-                }
-            }
-            else {
-                funcExpr = checkNotNull(toFuncLitExpr(funDefImpl, FuncType.of(paramType, returnType), model), "Unsupported expression: was not able to deduce all types");
-            }
+            funcExpr = toFuncLitExpr(funDefImpl, model);
         }
 
         assert funcExpr.getType() instanceof FuncType;
         @SuppressWarnings("unchecked") final var funType = (FuncType<P, R>) funcExpr.getType();
-        paramExpr = paramExpr == null ? transformTerm(funAppParam, funType.getParamType(), model, vars) : paramExpr;
+        final var paramExpr = transformTerm(funAppParam, model, vars);
 
         return FuncExprs.App(cast(funcExpr, funType), cast(paramExpr, funType.getParamType()));
     }
 
-    protected Expr<?> transformForallTerm(final Forall_termContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type.equals(Bool());
+    protected Expr<?> transformForallTerm(final Forall_termContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         final var paramDecls = ctx.sorted_var().stream()
-            .map(sv -> new ParamTypeDeducer(sv.symbol().getText(), transformSort(sv.sort(), null)))
+            .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
 
         pushParams(paramDecls, vars);
-        final var op = transformTerm(ctx.term(), type, model, vars);
+        final var op = transformTerm(ctx.term(), model, vars);
         popParams(paramDecls, vars);
 
-        if(paramDecls.stream().anyMatch(ParamTypeDeducer::isTypeUnknown)) {
-            return null;
-        }
-        else {
-            assert op != null;
-            return Forall(
-                paramDecls.stream().map(ParamTypeDeducer::getParamDecl).collect(Collectors.toUnmodifiableList()),
-                cast(op, Bool())
-            );
-        }
+        assert op != null;
+        return Forall(paramDecls, cast(op, Bool()));
     }
 
-    protected Expr<?> transformExistsTerm(final Exists_termContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type.equals(Bool());
+    protected Expr<?> transformExistsTerm(final Exists_termContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         final var paramDecls = ctx.sorted_var().stream()
-            .map(sv -> new ParamTypeDeducer(sv.symbol().getText(), transformSort(sv.sort(), null)))
+            .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
 
         pushParams(paramDecls, vars);
-        final var op = transformTerm(ctx.term(), type, model, vars);
+        final var op = transformTerm(ctx.term(), model, vars);
         popParams(paramDecls, vars);
 
-        if(paramDecls.stream().anyMatch(ParamTypeDeducer::isTypeUnknown)) {
-            return null;
-        }
-        else {
-            assert op != null;
-            return Exists(
-                paramDecls.stream().map(ParamTypeDeducer::getParamDecl).collect(Collectors.toUnmodifiableList()),
-                cast(op, Bool())
-            );
-        }
+        assert op != null;
+        return Exists(paramDecls, cast(op, Bool()));
     }
 
-    protected Expr<?> transformIdentifier(final IdentifierContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformIdentifier(final IdentifierContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         if(ctx.symbol().getText().equals("as-array")) {
             final var name = ctx.index().get(0).getText();
-            return toExpr(model.getTerm(name), type, model);
+            return toExpr(model.getTerm(name), model);
         }
         else {
-            return transformSymbol(ctx.symbol(), type, model, vars);
+            return transformSymbol(ctx.symbol(), model, vars);
         }
     }
 
-    protected Expr<?> transformSymbol(final SymbolContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
+    protected Expr<?> transformSymbol(final SymbolContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -514,25 +485,10 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             default:
                 if(vars.containsValue(value)) {
                     final var decl = vars.inverse().get(value);
-                    if(decl.isTypeUnknown()) {
-                        if(type == null) {
-                            return null;
-                        }
-                        else {
-                            decl.setType(type);
-                            return decl.getRef();
-                        }
-                    }
-                    else {
-                        final var ref = decl.getRef();
-                        assert type == null || type.equals(ref.getType());
-                        return ref;
-                    }
+                    return decl.getRef();
                 }
                 else if(symbolTable.definesSymbol(value)) {
-                    final var ref = symbolTable.getConst(value).getRef();
-                    assert type == null || type.equals(ref.getType());
-                    return ref;
+                    return symbolTable.getConst(value).getRef();
                 }
                 else {
                     throw new UnsupportedOperationException();
@@ -540,16 +496,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformNumeral(final NumeralContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type.equals(Int());
+    protected Expr<?> transformNumeral(final NumeralContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
         return Int(ctx.getText());
     }
 
-    protected Expr<?> transformDecimal(final DecimalContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type.equals(Rat());
+    protected Expr<?> transformDecimal(final DecimalContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
@@ -562,80 +516,39 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
-    protected Expr<?> transformHexadecimal(final HexadecimalContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type instanceof BvType;
+    protected Expr<?> transformHexadecimal(final HexadecimalContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
-        if(type == null) {
-            return null;
-        }
-        else {
-            final var bvType = (BvType) type;
-            final var numStr = ctx.getText().substring(2);
-            final var num = new BigInteger(numStr, 16);
-            checkState(bvType.getSize() == numStr.length() * 4, "Type mismatch");
-
-            return BvUtils.bigIntegerToBvLitExpr(num, bvType.getSize(), bvType.isSigned());
-        }
+        final var numStr = ctx.getText().substring(2);
+        final var num = new BigInteger(numStr, 16);
+        return BvUtils.bigIntegerToNeutralBvLitExpr(num, numStr.length() * 4);
     }
 
-    protected Expr<?> transformBinary(final BinaryContext ctx, final Type type, final SmtLibModel model, final BiMap<ParamTypeDeducer, String> vars) {
-        assert type == null || type instanceof BvType;
+    protected Expr<?> transformBinary(final BinaryContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
-        if(type == null) {
-            return null;
-        }
-        else {
-            final var bvType = (BvType) type;
-            final var numStr = ctx.getText().substring(2);
-            final var num = new BigInteger(numStr, 2);
-            checkState(bvType.getSize() == numStr.length(), "Type mismatch");
-
-            return BvUtils.bigIntegerToBvLitExpr(num, bvType.getSize(), bvType.isSigned());
-        }
+        final var numStr = ctx.getText().substring(2);
+        final var num = new BigInteger(numStr, 2);
+        return BvUtils.bigIntegerToNeutralBvLitExpr(num, numStr.length());
     }
 
-    protected Type transformSort(final SortContext ctx, final Type type) {
+    protected Type transformSort(final SortContext ctx) {
         final var name = ctx.identifier().symbol().getText();
         switch(name) {
             case "Bool":
-                assert type == null || type.equals(Bool());
                 return Bool();
             case "Int":
-                assert type == null || type.equals(Int());
                 return Int();
             case "Real":
-                assert type == null || type.equals(Rat());
                 return Rat();
             case "BitVec":
-                assert type == null || type instanceof BvType;
-                if(type == null) {
-                    return null;
-                }
-                else {
-                    final var bvType = (BvType) type;
-                    checkArgument(Integer.parseInt(ctx.identifier().index().get(0).getText()) == bvType.getSize(), "Type mismatch");
-                    return BvExprs.BvType(bvType.getSize(), bvType.isSigned());
-                }
+                assert ctx.identifier().index().size() == 1;
+                return BvExprs.BvType(Integer.parseInt(ctx.identifier().index().get(0).getText()));
             case "Array":
-                assert type == null || type instanceof ArrayType<?, ?>;
-                if(type == null) {
-                    final var indexType = transformSort(ctx.sort().get(0), null);
-                    final var elemType = transformSort(ctx.sort().get(1), null);
-                    if(indexType == null || elemType == null) {
-                        return null;
-                    }
-                    else {
-                        return Array(indexType, elemType);
-                    }
-                }
-                else {
-                    final var arrayType = (ArrayType<?, ?>) type;
-                    return Array(transformSort(ctx.sort().get(0), arrayType.getIndexType()), transformSort(ctx.sort().get(1), arrayType.getElemType()));
-                }
+                assert ctx.sort().size() == 2;
+                return Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
             default:
                 throw new UnsupportedOperationException();
         }
@@ -645,11 +558,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     /* Variable scope handling */
 
-    protected void pushParams(final List<ParamTypeDeducer> paramDecls, BiMap<ParamTypeDeducer, String> vars) {
-        vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), ParamTypeDeducer::getName)));
+    protected <T extends Type> void pushParams(final List<ParamDecl<T>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
+        vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), Decl::getName)));
     }
 
-    protected void popParams(final List<ParamTypeDeducer> paramDecls, BiMap<ParamTypeDeducer, String> vars) {
+    protected <T extends Type> void popParams(final List<ParamDecl<T>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
         for (final var paramDecl : paramDecls) {
             vars.remove(paramDecl, paramDecl.getName());
         }
@@ -659,7 +572,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprNullaryOperator(final Supplier<Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 0, "Nullary operator expected");
             return function.get();
@@ -667,260 +580,133 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     private OperatorCreatorFunction exprUnaryOperator(final UnaryOperator<Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 1, "Unary operator expected");
 
-            if(type == null) {
-                final var op = transformTerm(ops.get(0), type, model, vars);
-                return function.apply(op);
-            }
-            else {
-                final var op = checkNotNull(transformTerm(ops.get(0), type, model, vars), "Unsupported expression: was not able to deduce all types");
-                return function.apply(op);
-            }
+            final var op = transformTerm(ops.get(0), model, vars);
+            return function.apply(op);
+        };
+    }
+
+    private OperatorCreatorFunction exprBvExtractOperator() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 2, "Two parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var until = Integer.parseInt(params.get(0).numeral().getText()) + 1;
+            final var from = Integer.parseInt(params.get(1).numeral().getText());
+            final var extractFrom = castBv(transformTerm(ops.get(0), model, vars));
+            return BvExtractExpr.create(extractFrom, Int(from), Int(until));
+        };
+    }
+
+    private OperatorCreatorFunction exprBvExtendOperator(final BiFunction<Expr<?>, BvType, Expr<?>> function) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var extendWith = Integer.parseInt(params.get(0).numeral().getText());
+            final var toExtend = castBv(transformTerm(ops.get(0), model, vars));
+            return function.apply(toExtend, BvType.of(toExtend.getType().getSize() + extendWith));
         };
     }
 
     private OperatorCreatorFunction exprBinaryOperator(final BinaryOperator<Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 2, "Binary operator expected");
 
-            if(type == null) {
-                var op1 = transformTerm(ops.get(0), null, model, vars);
-                var op2 = transformTerm(ops.get(1), null, model, vars);
-                if(op1 == null && op2 == null) {
-                    return null;
-                }
-                else if(op1 != null && op2 == null) {
-                    op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-                else if(op1 == null /* && op2 != null */) {
-                    op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-                return function.apply(op1, op2);
-            }
-            else {
-                final var op1 = transformTerm(ops.get(0), type, model, vars);
-                final var op2 = transformTerm(ops.get(1), type, model, vars);
-                return function.apply(op1, op2);
-            }
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
+            return function.apply(op1, op2);
         };
     }
 
     private OperatorCreatorFunction exprRelationalOperator(final BinaryOperator<Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
-            assert type == null || type.equals(Bool());
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 2, "Binary operator expected");
 
-            var op1 = transformTerm(ops.get(0), null, model, vars);
-            var op2 = transformTerm(ops.get(1), null, model, vars);
-            if(op1 == null && op2 == null) {
-                return null;
-            }
-            else if(op1 != null && op2 == null) {
-                op2 = checkNotNull(transformTerm(ops.get(1), op1.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-            }
-            else if(op1 == null /* && op2 != null */) {
-                op1 = checkNotNull(transformTerm(ops.get(0), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-            }
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
             return function.apply(op1, op2);
         };
     }
 
     private OperatorCreatorFunction exprArrayReadOperator() {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 2, "Binary operator expected");
 
-            var op1 = transformTerm(ops.get(0), null, model, vars);
-            var op2 = transformTerm(ops.get(1), null, model, vars);
-            if(op1 == null && op2 == null) {
-                return null;
-            }
-            else if(op1 != null && op2 == null) {
-                assert op1.getType() instanceof ArrayType;
-                final var arrayType = (ArrayType<?, ?>) op1.getType();
-                op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars), "Unsupported expression: was not able to deduce all types");
-            }
-            else if(op1 == null /* && op2 != null */) {
-                if(type == null) {
-                    return null;
-                }
-                else {
-                    final var arrayType = Array(op2.getType(), type);
-                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-            }
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
             return ArrayReadExpr.create(op1, op2);
         };
     }
 
     private OperatorCreatorFunction exprMinusOperator() {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 1 || ops.size() == 2, "Unary or binary operator expected");
             if(ops.size() == 2) {
-                return exprBinaryOperator(SubExpr::create2).apply(params, ops, type, model, vars);
+                return exprBinaryOperator(SubExpr::create2).apply(params, ops, model, vars);
             }
             else {
-                return exprUnaryOperator(NegExpr::create2).apply(params, ops, type, model, vars);
+                return exprUnaryOperator(NegExpr::create2).apply(params, ops, model, vars);
             }
         };
     }
 
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprTernaryOperator(final TernaryOperator<Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 3, "Ternary operator expected");
-            final Expr<?> op1 = transformTerm(ops.get(0), type, model, vars);
-            final Expr<?> op2 = transformTerm(ops.get(1), type, model, vars);
-            final Expr<?> op3 = transformTerm(ops.get(2), type, model, vars);
+            final Expr<?> op1 = transformTerm(ops.get(0), model, vars);
+            final Expr<?> op2 = transformTerm(ops.get(1), model, vars);
+            final Expr<?> op3 = transformTerm(ops.get(2), model, vars);
             return function.apply(op1, op2, op3);
         };
     }
 
     private OperatorCreatorFunction exprIteOperator() {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 3, "Ternary operator expected");
-            final var op1 = transformTerm(ops.get(0), Bool(), model, vars);
-            if(type == null) {
-                var op2 = transformTerm(ops.get(1), type, model, vars);
-                var op3 = transformTerm(ops.get(2), type, model, vars);
-                if(op2 == null && op3 == null) {
-                    return null;
-                }
-                else if(op2 != null && op3 == null) {
-                    op3 = checkNotNull(transformTerm(ops.get(2), op2.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-                else if(op2 == null /* && op3 != null */) {
-                    op2 = checkNotNull(transformTerm(ops.get(1), op3.getType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-                return IteExpr.create(op1, op2, op3);
-            }
-            else {
-                final var op2 = transformTerm(ops.get(1), type, model, vars);
-                final var op3 = transformTerm(ops.get(2), type, model, vars);
-                return IteExpr.create(op1, op2, op3);
-            }
+
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
+            final var op3 = transformTerm(ops.get(2), model, vars);
+            return IteExpr.create(op1, op2, op3);
         };
     }
 
     private OperatorCreatorFunction exprArrayWriteOperator() {
-        return (params, ops, type, model, vars) -> {
-            assert type == null || type instanceof ArrayType;
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 3, "Ternary operator expected");
 
-            if(type == null) {
-                var op1 = transformTerm(ops.get(0), null, model, vars);
-                var op2 = transformTerm(ops.get(1), null, model, vars);
-                var op3 = transformTerm(ops.get(2), null, model, vars);
-
-                if(op1 != null && (op2 == null || op3 == null)) {
-                    final var arrayType = (ArrayType<?, ?>) op1.getType();
-                    if(op2 == null) {
-                        op2 = checkNotNull(transformTerm(ops.get(1), arrayType.getIndexType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                    }
-                    if(op3 == null) {
-                        op3 = checkNotNull(transformTerm(ops.get(2), arrayType.getElemType(), model, vars), "Unsupported expression: was not able to deduce all types");
-                    }
-                }
-                else if(op1 == null && op2 != null && op3 != null) {
-                    final var arrayType = Array(op2.getType(), op3.getType());
-                    op1 = checkNotNull(transformTerm(ops.get(0), arrayType, model, vars), "Unsupported expression: was not able to deduce all types");
-                }
-                else {
-                    return null;
-                }
-                return ArrayWriteExpr.create(op1, op2, op3);
-            }
-            else {
-                final var arrayType = (ArrayType<?, ?>) type;
-                final var op1 = transformTerm(ops.get(0), arrayType, model, vars);
-                final var op2 = transformTerm(ops.get(1), arrayType.getIndexType(), model, vars);
-                final var op3 = transformTerm(ops.get(2), arrayType.getElemType(), model, vars);
-                return ArrayWriteExpr.create(op1, op2, op3);
-            }
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
+            final var op3 = transformTerm(ops.get(2), model, vars);
+            return ArrayWriteExpr.create(op1, op2, op3);
         };
     }
 
     private OperatorCreatorFunction exprMultiaryOperator(final Function<List<Expr<?>>, Expr<?>> function) {
-        return (params, ops, type, model, vars) -> {
+        return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
-            if(type == null) {
-                final var transformedOps = new ArrayList<Expr<?>>();
-                ops.stream()
-                    .map(op -> transformTerm(op, type, model, vars))
-                    .forEach(transformedOps::add);
 
-                if(transformedOps.stream().allMatch(Objects::isNull)) {
-                    return null;
-                }
-                else {
-                    final var opType = transformedOps.stream().filter(Objects::nonNull).findAny().get().getType();
-                    return function.apply(IntStream
-                        .range(0, ops.size())
-                        .mapToObj(i -> transformedOps.get(i) == null ? transformTerm(ops.get(i), opType, model, vars) : transformedOps.get(i))
-                        .collect(Collectors.toUnmodifiableList())
-                    );
-                }
-            }
-            else {
-                return function.apply(ops.stream().map(op -> transformTerm(op, type, model, vars)).collect(Collectors.toUnmodifiableList()));
-            }
+            return function.apply(ops.stream().map(op -> transformTerm(op, model, vars)).collect(Collectors.toUnmodifiableList()));
         };
     }
 
-    private interface OperatorCreatorFunction extends QuintFunction<
-        List<IndexContext>,     // Parameters
-        List<TermContext>,      // Operands
-        Type,                   // Expected type of result
-                                                                       SmtLibModel,       // The model
-        BiMap<ParamTypeDeducer, String>, // The variable (param) store
-        Expr<?>                 // Return type
+    private interface OperatorCreatorFunction extends QuadFunction<
+        List<IndexContext>,             // Parameters
+        List<TermContext>,              // Operands
+        SmtLibModel,                    // The model
+        BiMap<ParamDecl<?>, String>,    // The variable (param) store
+        Expr<?>                         // Return type
     > {}
-
-    private final static class ParamTypeDeducer {
-        private final String name;
-        private Type type;
-        private ParamDecl<?> paramDecl;
-
-        public ParamTypeDeducer(final String name, final Type type) {
-            this.name = name;
-            if(type != null) {
-                setType(type);
-            }
-        }
-
-        public boolean isTypeUnknown() {
-            return type == null;
-        }
-
-        public void setType(final Type type) {
-            checkArgument(type != null);
-            checkState(this.type == null);
-            this.type = type;
-            this.paramDecl = Decls.Param(name, type);
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public ParamDecl<?> getParamDecl() {
-            checkState(paramDecl != null);
-            return paramDecl;
-        }
-
-        public RefExpr<?> getRef() {
-            checkState(paramDecl != null);
-            return paramDecl.getRef();
-        }
-    }
-
 }
