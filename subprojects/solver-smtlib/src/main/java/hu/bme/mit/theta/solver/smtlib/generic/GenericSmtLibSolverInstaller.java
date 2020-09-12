@@ -4,7 +4,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
-import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +25,11 @@ public final class GenericSmtLibSolverInstaller implements SmtLibSolverInstaller
     }
 
     @Override
-    public void install(final Path home, final String version) throws SmtLibSolverInstallerException {
+    public void install(final Path home, final String version, String name) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
         checkVersion(version);
+        checkVersion(name);
         throw new SmtLibSolverInstallerException("Unsupported operation for generic solvers");
     }
 
