@@ -48,7 +48,7 @@ public final class SmtLibSolverManager {
     private SmtLibSolverManager(final Path home, final Logger logger) {
         this.logger = logger;
         checkNotNull(home);
-        checkArgument(Files.exists(home));
+        checkArgument(Files.exists(home), "Home directory does not exist");
 
         this.home = home;
 
