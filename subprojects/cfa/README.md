@@ -38,19 +38,19 @@ Variables of the CFA can have the following types.
 * `int`: Mathematical, unbounded SMT integers.
 * `rat`: Rational numbers (implemented as SMT reals).
 * `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
-* `bv[L]`, `bitvec[L]`, `ubv[L]`, `ubitvec[L]`, `sbv[L]`, `sbitvec[L]`: Signed or unsigned bitvector of given length `L`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+* `bv[L]`: Bitvector of given length `L`. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
 
 Expressions of the CFA include the following.
 * Identifiers (variables).
 * Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
   * Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
-  * Bitvector literals can be given by stating the length, information about the signedness, and the exact value of the bitvector in binary, decimal or hexadecimal form. (E.g. `4'd5` is a 4-bit-long unsigned bitvector with the decimal value 5.) _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+  * Bitvector literals can be given by stating the length and the exact value of the bitvector in binary, decimal or hexadecimal form. (E.g. `4'd5` is a 4-bit-long bitvector with the decimal value 5.) _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
 * Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
 * Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
 * Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
 * Conditional: `if . then . else .`.
 * Array read (`a[i]`) and write (`a[i <- v]`).
-* Bitvector specific operators, e.g., `&`, `|`, `^`, `<<`, `>>`, `>>>`, `<<~`, `~>>`, `~`. _This is an experimental feature with currently limited algorithmic support. See the [details](doc/bitvectors.md) for more information._
+* Bitvector specific operators, e.g., `bvand`, `bvor`, `bvxor`, `bvshl`, `bvashr`, `bvlshr`, `bvrol`, `bvror`, `bvnot`, etc. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
 
 ### Textual representation (DSL)
 

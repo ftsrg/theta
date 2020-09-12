@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -73,6 +74,7 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
@@ -106,6 +108,7 @@ final class Z3TermTransformer {
 		environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
 		environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
 		environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
+		environment.put("mod", exprBinaryOperator(IntModExpr::create));
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
@@ -202,8 +205,7 @@ final class Z3TermTransformer {
 
 		BigInteger value = bvNum.getBigInteger();
 
-		// At this point signedness is not known. Presuming unsigned
-		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
+		return BvUtils.bigIntegerToNeutralBvLitExpr(value, bvNum.getSortSize());
 	}
 
 	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
@@ -350,6 +352,9 @@ final class Z3TermTransformer {
 			return Int();
 		} else if (sort instanceof com.microsoft.z3.RealSort) {
 			return Rat();
+		} else if (sort instanceof com.microsoft.z3.BitVecSort) {
+			final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) sort;
+			return BvType(bvSort.getSize());
 		} else {
 			throw new AssertionError("Unsupported sort: " + sort);
 		}

@@ -1,0 +1,19 @@
+main process cfa {
+	var x : int
+    var y : int
+
+	init loc L0
+    loc L1
+    loc L2
+    loc L3
+    final loc END
+    error loc ERR
+
+	L0 -> L1 { assume y > 0 }
+    L1 -> L3 { x := 1 }
+    L0 -> L2 { assume not y > 0 }
+    L2 -> L3 { x := 2 }
+    L3 -> ERR { assume 1 <= x and x <= 2 }
+    L3 -> END { assume not (1 <= x and x <= 2) }
+    
+}

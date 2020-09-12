@@ -17,6 +17,7 @@ package hu.bme.mit.theta.common.visualization.writer;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import hu.bme.mit.theta.common.visualization.Alignment;
@@ -31,13 +32,9 @@ import hu.bme.mit.theta.common.visualization.Shape;
 
 /**
  * Class for writing graphs in GraphViz format.
- * <p>
  * Known limitations (due to GraphViz):
- * <p>
  * - Fill color of composite nodes is ignored.
- * <p>
  * - Shape of composite nodes is ignored.
- * <p>
  * - Peripheries of composite nodes are ignored.
  */
 public final class GraphvizWriter extends AbstractGraphWriter {
@@ -47,7 +44,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
 		private final String option;
 
-		private Format(final String option) {
+		Format(final String option) {
 			this.option = option;
 		}
 
@@ -95,6 +92,45 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		}
 	}
 
+	private String getFileExtension(String name) {
+		int lastIndexOf = name.lastIndexOf('.');
+		if (lastIndexOf == -1) return "";
+		return name.substring(lastIndexOf + 1);
+	}
+
+	public void writeFileAutoConvert(final Graph graph, final String fileName) throws IOException, InterruptedException {
+		String ext = getFileExtension(fileName.toLowerCase());
+		if (ext.equals("dot")) {
+			writeFile(graph, fileName);
+			return;
+		}
+		Format format;
+		switch (ext) {
+			case "pdf":
+				format = Format.PDF;
+				break;
+			case "png":
+				format = Format.PNG;
+				break;
+			case "svg":
+				format = Format.SVG;
+				break;
+			case "gif":
+				format = Format.GIF;
+				break;
+			case "eps":
+				format = Format.EPS;
+				break;
+			case "jpg":
+			case "jpeg":
+				format = Format.JPG;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown format to GraphViz: " + ext);
+		}
+		writeFile(graph, fileName, format);
+	}
+
 	private void printNode(final Node node, final StringBuilder sb) {
 		if (node instanceof CompositeNode) {
 			printCompositeNode((CompositeNode) node, sb);
@@ -114,13 +150,13 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		style += "filled";
 
 		sb.append("\t\t").append(node.getId());
-		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\"");
+		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
 		if (attributes.getPeripheries() > 1) {
 			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
-		sb.append(",style=\"").append(style).append("\"");
+		sb.append(",style=\"").append(style).append('\"');
 		if (!attributes.getFont().equals("")) {
-			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+			sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 		}
 		sb.append(",fillcolor=").append(mapColorToString(attributes.getFillColor()));
 		sb.append(",color=").append(mapColorToString(attributes.getLineColor()));
@@ -139,7 +175,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
 		}
 		if (!attributes.getFont().equals("")) {
-			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+			sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 		}
 		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\";")
 				.append(System.lineSeparator());
@@ -157,19 +193,18 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		} else {
 			for (final Edge edge : node.getOutEdges()) {
 				final EdgeAttributes attributes = edge.getAttributes();
-				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
-				sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment()))
-						.append("\"");
+				sb.append('\t').append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
+				sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
 				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
 				if (!"".equals(style)) {
 					sb.append(",style=").append(style);
 				}
 				if (!attributes.getFont().equals("")) {
-					sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+					sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
 				}
 				if (attributes.getWeight() != 1) {
-					sb.append(",weight=\"").append(attributes.getWeight()).append("\"");
+					sb.append(",weight=\"").append(attributes.getWeight()).append('\"');
 				}
 				sb.append("];").append(System.lineSeparator());
 			}

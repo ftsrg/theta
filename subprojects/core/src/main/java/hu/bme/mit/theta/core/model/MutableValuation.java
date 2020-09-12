@@ -64,6 +64,18 @@ public final class MutableValuation extends Valuation {
 		return this;
 	}
 
+	public MutableValuation clear(){
+		declToExpr.clear();
+		return this;
+	}
+
+	public MutableValuation putAll(final Valuation val){
+		for (final Decl<?> decl : val.getDecls()) {
+			declToExpr.put(decl, val.eval(decl).get());
+		}
+		return this;
+	}
+
 	@Override
 	public Collection<Decl<?>> getDecls() {
 		return Collections.unmodifiableSet(declToExpr.keySet());

@@ -1,0 +1,17 @@
+var i : integer = 1
+var j : integer = 1
+var k : integer = 1
+
+trans {
+    assume i<100;
+    i:=i+1;
+    j:=j+k;
+    k:=k-1;
+}
+
+init {
+    havoc k;
+    assume k>=0 && k<=1;
+}
+
+env {}

@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.type.inttype;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType implements Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
@@ -126,10 +125,6 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	public <TargetType extends Type> Expr<TargetType> Cast(final Expr<IntType> op, final TargetType type) {
 		if (type instanceof RatType) {
 			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
-			return result;
-		} else if (type instanceof BvType) {
-			final BvType bvType = (BvType) type;
-			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToBv(op, bvType.getSize(), bvType.isSigned());
 			return result;
 		} else {
 			throw new ClassCastException("Int cannot be cast to " + type);

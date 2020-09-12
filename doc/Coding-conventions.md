@@ -7,7 +7,7 @@ We mainly follow the standard Java coding conventions and most of the convention
 
 ## Naming and formatting
 
-* **DO** use the generally accepted naming and source code formatting conventions of Java (Item 56 of [1], Chapter 1 of [5]). If you are developing in Eclipse you can import our commonly used formatting profile (see [For-developers.md](For-developers.md) for more information).
+* **DO** use the generally accepted naming and source code formatting conventions of Java (Item 56 of [1], Chapter 1 of [5]). If you are developing in IntelliJ Idea you can import our commonly used formatting profile (see [Development.md](Development.md) for more information).
 * **DO** start project names with the prefix `hu.bme.mit.theta`.
 * **DO** use CamelCase for class names containing subsequent capital letters, except when the whole name is a sequence of capital letters. Examples: `CFA`, `CfaEdge`, `OsHelper`.
 * **CONSIDER** using abbreviations for well known and common names. Examples: `Expression` -> `Expr`, `Statement` -> `Stmt`, `Counterexample` -> `Cex`.
