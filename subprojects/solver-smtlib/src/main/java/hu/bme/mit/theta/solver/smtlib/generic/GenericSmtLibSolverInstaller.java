@@ -2,61 +2,55 @@ package hu.bme.mit.theta.solver.smtlib.generic;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.BaseSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
-public final class GenericSmtLibSolverInstaller implements SmtLibSolverInstaller {
-    final Logger logger;
+public final class GenericSmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
+    private Path solverPath;
+    private String[] solverArgs;
 
-    public GenericSmtLibSolverInstaller(Logger logger) {
-        this.logger = logger;
+    public GenericSmtLibSolverInstaller(final Logger logger) {
+        super(logger);
     }
 
     @Override
-    public void install(final Path home, final String version, String name) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-        checkVersion(name);
-        throw new SmtLibSolverInstallerException("Unsupported operation for generic solvers");
+    protected String getSolverName() {
+        return "generic";
     }
 
     public void install(final Path home, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-        checkArgument(Files.exists(solverPath));
-        checkNotNull(solverArgs);
+        this.solverPath = solverPath;
+        this.solverArgs = solverArgs;
+        super.install(home, version, version);
+    }
 
-        final var installDir = home.resolve(version);
-        if(Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is already installed");
-        }
-
+    @Override
+    protected void installSolver(Path installDir, String version) throws SmtLibSolverInstallerException {
+        checkState(solverPath != null);
         try {
-            logger.write(Logger.Level.MAINSTEP, "Beginning installation...\n");
-
-            Files.createDirectory(installDir);
-
             final var solverFilePath = solverFile(installDir);
             Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(), StandardCharsets.UTF_8);
 
-            final var solverArgsPath = argsFile(installDir);
-            Files.writeString(solverArgsPath, String.join("\n", solverArgs), StandardCharsets.UTF_8);
+            final var solverInfoPath = infoFile(installDir);
+            final var info = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
+            Files.writeString(
+                solverInfoPath,
+                info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
+                StandardCharsets.UTF_8
+            );
 
-            logger.write(Logger.Level.MAINSTEP, "Installation finished");
+            solverPath = null;
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
@@ -64,32 +58,14 @@ public final class GenericSmtLibSolverInstaller implements SmtLibSolverInstaller
     }
 
     @Override
-    public void uninstall(final Path home, final String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-
-        final var installDir = home.resolve(version);
-        if(!Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is not installed");
-        }
-
+    protected void uninstallSolver(Path installDir, String version) throws SmtLibSolverInstallerException {
         try {
-            logger.write(Logger.Level.MAINSTEP, "Beginning uninstallation...\n");
-
             final var solverFilePath = solverFile(installDir);
             Files.delete(solverFilePath);
-            final var solverArgsPath = argsFile(installDir);
-            Files.delete(solverArgsPath);
-
-            Files.delete(installDir);
-
-            logger.write(Logger.Level.MAINSTEP, "Uninstallation finished");
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
         }
-
     }
 
     @Override
@@ -98,46 +74,6 @@ public final class GenericSmtLibSolverInstaller implements SmtLibSolverInstaller
         checkArgument(Files.exists(home));
         checkVersion(version);
         throw new SmtLibSolverInstallerException("Unsupported operation for generic solvers");
-    }
-
-    @Override
-    public String getInfo(final Path home, final String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-
-        final var installDir = home.resolve(version);
-        if(!Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is not installed");
-        }
-
-        try {
-            final var solverFilePath = solverFile(installDir);
-            final var solverPathStr = Files.readAllLines(solverFilePath, StandardCharsets.UTF_8).get(0);
-            final var solverArgsPath = argsFile(installDir);
-            final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
-
-            return "Generic solver" +
-                   "Solver binary: " + solverPathStr +
-                   "Arguments: " + String.join(" ", solverArgs);
-        }
-        catch (IOException e) {
-            throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
-        }
-    }
-
-    @Override
-    public Path getArgsFile(final Path home, final String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-
-        final var installDir = home.resolve(version);
-        if(!Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is not installed");
-        }
-
-        return argsFile(installDir);
     }
 
     @Override
@@ -165,33 +101,19 @@ public final class GenericSmtLibSolverInstaller implements SmtLibSolverInstaller
     }
 
     @Override
-    public List<String> getSupportedVersions() throws SmtLibSolverInstallerException {
+    public List<String> getSupportedVersions() {
         return Collections.emptyList();
     }
 
     @Override
-    public List<String> getInstalledVersions(final Path home) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-
-        final var installedDirs = home.toFile()
-            .list((current, name) -> new File(current, name).isDirectory());
-
-        assert installedDirs != null;
-        return Arrays.asList(installedDirs);
-    }
-
-    private void checkVersion(final String version) throws SmtLibSolverInstallerException {
-        if(!version.matches("^[a-zA-Z0-9_.-]+$")) {
-            throw new SmtLibSolverInstallerException("Unsupported version format: " + version);
-        }
+    protected String[] getDefaultSolverArgs(String version) {
+        checkState(solverArgs != null);
+        final var tmp = solverArgs;
+        solverArgs = null;
+        return tmp;
     }
 
     private Path solverFile(final Path installDir) {
         return installDir.resolve("solver.txt");
-    }
-
-    private Path argsFile(final Path installDir) {
-        return installDir.resolve("solver-args.txt");
     }
 }
