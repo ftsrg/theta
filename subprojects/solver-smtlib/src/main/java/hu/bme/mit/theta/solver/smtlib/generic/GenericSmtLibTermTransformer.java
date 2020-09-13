@@ -65,6 +65,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -465,7 +466,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         if(ctx.symbol().getText().equals("as-array")) {
             final var name = ctx.index().get(0).getText();
-            return toExpr(model.getTerm(name), model);
+            final var funcLit = (FuncLitExpr<?, ?>) toFuncLitExpr(model.getTerm(name), model);
+            return funcLit.getResult();
         }
         else {
             return transformSymbol(ctx.symbol(), model, vars);

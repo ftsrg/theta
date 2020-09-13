@@ -5,13 +5,18 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -24,6 +29,8 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
+    private static SmtLibSolverManager solverManager;
+
     @Parameterized.Parameter(0)
     public Class<?> exprType;
 
@@ -33,10 +40,18 @@ public class SmtLibSolverBVTest {
     @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    private static final SmtLibSolverManager solverManager = SmtLibSolverManager.create(
-        Path.of(System.getProperty("user.home")).resolve(".theta"),
-        NullLogger.getInstance()
-    );
+    @BeforeClass
+    public static void init() throws SmtLibSolverInstallerException, IOException {
+        Path home = Files.createTempDirectory("theta-solver");
+
+        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+        solverManager.install("z3", "latest", "latest", false);
+    }
+
+    @AfterClass
+    public static void destroy() throws SmtLibSolverInstallerException {
+        solverManager.uninstall("z3", "latest");
+    }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
@@ -68,7 +83,7 @@ public class SmtLibSolverBVTest {
         );
 
         // Equality check
-        final Solver solver = solverManager.getSolverFactory("generic", "cvc4").createSolver();
+        final Solver solver = solverManager.getSolverFactory("z3", "latest").createSolver();
         solver.push();
 
         solver.add(EqExpr.create2(expected, actual));
