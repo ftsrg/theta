@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * expressions are unsatisfiable, an interpolant can be calculated with
  * {@link #getInterpolant(ItpPattern)}.
  */
-public interface ItpSolver extends Solver {
+public interface ItpSolver extends SolverBase {
 
 	/**
 	 * Create a pattern for a given marker.
