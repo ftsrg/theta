@@ -15,7 +15,7 @@ The project contains:
 A CFA is a directed graph (`V`, `L`, `E`) with
 
 * variables `V = {v1, v2, ..., vn}`,
-* locations `L`, with dedicated initial (`l0`), final (`lf`) and error (`le`) locations,
+* locations `L`, with a dedicated initial (`l0`) location and optionally with dedicated final (`lf`) and error (`le`) locations,
 * edges `E` between locations, labeled with statements over the variables.
 
 Currently, there are three kind of supported statements.
@@ -30,7 +30,7 @@ After the assumption, variables are unchanged.
 After performing the havoc, `v` is assigned a non-deterministic value.
 This can be used to simulate non-deterministic input from the user or the environment.
 
-Algorithms are usually interested in proving that the error location is not reachable.
+Algorithms are usually interested in proving that the error location (given in the CFA or as a separate argument) is not reachable.
 For more information see Section 2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf).
 
 Variables of the CFA can have the following types.
