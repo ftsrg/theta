@@ -7,6 +7,7 @@ include(
         "cfa-cli",
         "common",
         "core",
+        "mcm",
         "solver",
         "solver-z3",
         "sts",

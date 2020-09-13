@@ -1,0 +1,14 @@
+// same thread stores in PO order
+stores = for_each_thread begin
+            mo[thread] union po[thread]
+         end
+
+coherence = for_each_thread begin
+                for_each mo(rf(* -> R[thread][new]) --> *W[later_write]) begin
+                    rf intersect (W[later_write] * R[thread])
+                end
+            end
+
+
+stores acyclic
+coherence acyclic

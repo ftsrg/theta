@@ -435,6 +435,13 @@ public class ExecutionGraph implements Runnable{
      * Prints the graph as a graphviz cluster
      */
     private void printGraph(int step) {
+        for (Map.Entry<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> entry : edges.entrySet()) {
+            MemoryAccess key = entry.getKey();
+            Set<Tuple2<MemoryAccess, String>> tuple2s = entry.getValue();
+            for (Tuple2<MemoryAccess, String> objects : tuple2s) {
+                if (objects.get2().equals("rf") && initialWrites.contains(key)) return;
+            }
+        }
         System.out.println("subgraph cluster_" + id + "_" + step + " {");
         System.out.println("label=cluster_" + id + "_" + step);
         revisitableReads.forEach((varDecl, reads) -> reads.forEach(read -> System.out.println("\"" + read + "_" + id + "_" + step  + "\" [style=filled]")));
