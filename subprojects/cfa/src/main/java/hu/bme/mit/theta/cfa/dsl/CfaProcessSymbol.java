@@ -130,18 +130,26 @@ final class CfaProcessSymbol implements Symbol, Scope {
 		final List<CfaLocationSymbol> result = new ArrayList<>();
 
 		int nInitLocs = 0;
+		int nFinalLocs = 0;
+		int nErrorLocs = 0;
 
 		for (final LocContext locContext : locContexts) {
 			final CfaLocationSymbol symbol = new CfaLocationSymbol(locContext);
 
 			if (symbol.isInit()) {
 				nInitLocs++;
+			} else if (symbol.isFinal()) {
+				nFinalLocs++;
+			} else if (symbol.isError()) {
+				nErrorLocs++;
 			}
 
 			result.add(symbol);
 		}
 
-		checkArgument(nInitLocs == 1, "Exactly one initial location must be specififed");
+		checkArgument(nInitLocs == 1, "Exactly one initial location must be specified");
+		checkArgument(nFinalLocs <= 1, "At most one final location must be specified");
+		checkArgument(nErrorLocs <= 1, "At most one error location must be specified");
 
 		return result;
 	}
