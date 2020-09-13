@@ -12,15 +12,11 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
 
 import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class SmtLibCli {
     private static final String JAR_NAME = "theta-solver-smtlib-cli.jar";
@@ -35,7 +31,10 @@ public class SmtLibCli {
         @Parameter(names = "--loglevel", description = "Detailedness of logging")
         Logger.Level logLevel = Logger.Level.MAINSTEP;
 
-        @Parameter(names = "--help", help = true)
+        @Parameter(names = "--stacktrace", description = "Prints the stacktrace in case of an error")
+        private boolean stacktrace = false;
+
+        @Parameter(names = "--help", help = true, description = "Prints this help message")
         private boolean help = false;
     }
 
@@ -178,7 +177,7 @@ public class SmtLibCli {
 
             switch(jc.getParsedCommand()) {
                 case InstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(installCommand.solver, smtLibSolverManager);
+                    final var solver = decodeVersionString(installCommand.solver);
 
                     if(solver.get1().equals(smtLibSolverManager.getGenericInstallerName())) {
                         logger.write(Logger.Level.RESULT, "To install a generic solver, use the \"%s\" command", InstallGenericCommand.COMMAND);
@@ -203,23 +202,23 @@ public class SmtLibCli {
                     return;
                 }
                 case UninstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(uninstallCommand.solver, smtLibSolverManager);
+                    final var solver = decodeVersionString(uninstallCommand.solver);
                     smtLibSolverManager.uninstall(solver.get1(), solver.get2());
                     return;
                 }
                 case ReinstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(reinstallCommand.solver, smtLibSolverManager);
+                    final var solver = decodeVersionString(reinstallCommand.solver);
                     smtLibSolverManager.reinstall(solver.get1(), solver.get2());
                     return;
                 }
                 case GetInfoCommand.COMMAND: {
-                    final var solver = decodeVersionString(getInfoCommand.solver, smtLibSolverManager);
+                    final var solver = decodeVersionString(getInfoCommand.solver);
                     final var info = smtLibSolverManager.getInfo(solver.get1(), solver.get2());
                     logger.write(Logger.Level.RESULT, "%s\n", info);
                     return;
                 }
                 case EditArgsCommand.COMMAND: {
-                    final var solver = decodeVersionString(editArgsCommand.solver, smtLibSolverManager);
+                    final var solver = decodeVersionString(editArgsCommand.solver);
                     final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
 
                     if(editArgsCommand.print) {
@@ -275,12 +274,19 @@ public class SmtLibCli {
                     return;
                 }
             }
-        } catch (SmtLibSolverInstallerException | IOException e) {
-            printError(e);
+        }
+        catch (SmtLibSolverInstallerException e) {
+            logger.write(Logger.Level.RESULT, "%s\n", e.getMessage());
+            if(mainParams.stacktrace) {
+                printError(e, true);
+            }
+        }
+        catch (IOException e) {
+            printError(e, mainParams.stacktrace);
         }
     }
 
-    private static Tuple2<String, String> decodeVersionString(final String version, final SmtLibSolverManager solverManager) throws SmtLibSolverInstallerException {
+    private static Tuple2<String, String> decodeVersionString(final String version) {
         final var versionArr = version.split(":");
 
         if(versionArr.length != 2) {
@@ -297,12 +303,17 @@ public class SmtLibCli {
         return path;
     }
 
-    private void printError(final Throwable ex) {
-        logger.write(Logger.Level.MAINSTEP, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-        logger.write(Logger.Level.RESULT, "Error:%n%s%n", ex.getMessage());
-        final StringWriter errors = new StringWriter();
-        ex.printStackTrace(new PrintWriter(errors));
-        logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+    private void printError(final Throwable ex, final boolean printStackTrace) {
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
+        logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+        if (printStackTrace) {
+            final StringWriter errors = new StringWriter();
+            ex.printStackTrace(new PrintWriter(errors));
+            logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
+        }
+        else {
+            logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
+        }
     }
 
     public static class SolverNameValidator implements IParameterValidator {

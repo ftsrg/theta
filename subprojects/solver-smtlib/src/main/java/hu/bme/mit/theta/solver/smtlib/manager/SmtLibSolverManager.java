@@ -6,6 +6,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.cvc4.CVC4SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.z3.Z3SmtLibSolverInstaller;
 
@@ -38,6 +39,7 @@ public final class SmtLibSolverManager {
 
     static {
         registerInstaller("z3", Z3SmtLibSolverInstaller.class);
+        registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
@@ -209,7 +211,7 @@ public final class SmtLibSolverManager {
                 return versions.get(0);
             }
             else {
-                throw new IllegalArgumentException("There are no supported versions of solver: " + solver);
+                throw new SmtLibSolverInstallerException(String.format("There are no %s versions of solver: %s", installed ? "installed" : "supported", solver));
             }
         }
     }
