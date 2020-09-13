@@ -46,6 +46,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.sts.STS;
@@ -93,10 +94,11 @@ public class StsExplTest {
 
 		final STS sts = builder.build();
 
-		final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
+		final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+		final UCSolver refinementSolver = Z3SolverFactory.getInstance().createUCSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
+		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(abstractionSolver, sts.getInit());
+		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
 
 		final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
 
@@ -108,7 +110,7 @@ public class StsExplTest {
 				.waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
 
 		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(sts.getInit(),
-				Not(sts.getProp()), solver);
+				Not(sts.getProp()), refinementSolver);
 
 		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), PruneStrategy.LAZY, logger);
@@ -118,7 +120,7 @@ public class StsExplTest {
 		final SafetyResult<ExplState, StsAction> safetyStatus = checker.check(prec);
 
 		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, solver));
+		assertTrue(isWellLabeled(arg, abstractionSolver));
 
 		// System.out.println(new
 		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.utils;
 import java.io.Closeable;
 
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverBase;
 
 /**
  * A helper class for automatic push and pop for solvers using the
@@ -25,9 +26,9 @@ import hu.bme.mit.theta.solver.Solver;
  */
 public class WithPushPop implements Closeable {
 
-	private final Solver solver;
+	private final SolverBase solver;
 
-	public WithPushPop(final Solver solver) {
+	public WithPushPop(final SolverBase solver) {
 		this.solver = solver;
 		solver.push();
 	}
