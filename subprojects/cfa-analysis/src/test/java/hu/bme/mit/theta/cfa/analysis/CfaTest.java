@@ -125,7 +125,7 @@ public class CfaTest {
 	public void test() throws IOException {
 		CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
 		CfaConfig<? extends State, ? extends Action, ? extends Prec> config
-				= new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance()).build(cfa);
+				= new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance()).build(cfa, cfa.getErrorLoc().get());
 		SafetyResult<? extends State, ? extends Action> result = config.check();
 		Assert.assertEquals(isSafe, result.isSafe());
 		if (result.isUnsafe()) {

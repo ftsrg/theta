@@ -74,26 +74,26 @@ public class CfaConfigBuilder {
 	public enum Search {
 		BFS {
 			@Override
-			public ArgNodeComparator getComp(final CFA cfa) {
+			public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
 				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs());
 			}
 		},
 
 		DFS {
 			@Override
-			public ArgNodeComparator getComp(final CFA cfa) {
+			public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
 				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs());
 			}
 		},
 
 		ERR {
 			@Override
-			public ArgNodeComparator getComp(final CFA cfa) {
-				return new DistToErrComparator(cfa);
+			public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
+				return new DistToErrComparator(cfa, errLoc);
 			}
 		};
 
-		public abstract ArgNodeComparator getComp(CFA cfa);
+		public abstract ArgNodeComparator getComp(CFA cfa, CFA.Loc errLoc);
 
 	}
 
@@ -224,7 +224,7 @@ public class CfaConfigBuilder {
 		return this;
 	}
 
-	public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
+	public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa, final CFA.Loc errLoc) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final CfaLts lts = encoding.getLts();
 
@@ -232,10 +232,10 @@ public class CfaConfigBuilder {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
 					.create(cfa.getInitLoc(), ExplStmtAnalysis.create(solver, True(), maxEnum));
 			final ArgBuilder<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
-					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
+					analysis, s -> s.getLoc().equals(errLoc), true);
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp(cfa)))
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa, errLoc)))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
@@ -372,10 +372,10 @@ public class CfaConfigBuilder {
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, predAbstractor, True()));
 			final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
-					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
+					analysis, s -> s.getLoc().equals(errLoc), true);
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp(cfa)))
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa, errLoc)))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
