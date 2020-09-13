@@ -48,16 +48,19 @@ public class SmtLibCli {
 
         @Parameter(names = "--name", description = "Install the solver version under this custom name (<solver_name>:<name>), instead of the default (<solver_name>:<solver_version>)")
         String name;
+
+        @Parameter(names = "--tempt-murphy", description = "Allows the installation of unsupported solver version")
+        boolean temptMurphy = false;
     }
 
     @Parameters(commandDescription = "Installs a generic solver")
     static class InstallGenericCommand {
         static final String COMMAND = "install-generic";
 
-        @Parameter(names = "--solverPath", description = "The path of the generic solver to install", required = true)
+        @Parameter(names = "--solver-path", description = "The path of the generic solver to install", required = true)
         String solverPath;
 
-        @Parameter(names = "--solverArgs", description = "The arguments of the generic solver to invoke with")
+        @Parameter(names = "--solver-args", description = "The arguments of the generic solver to invoke with")
         String solverArgs;
 
         @Parameter(names = "--name", description = "Install the solver version under this custom name (<solver_name>:<name>), instead of the default (<solver_name>:<solver_version>)", required = true)
@@ -167,6 +170,12 @@ public class SmtLibCli {
             final var homePath = createIfNotExists(Path.of(mainParams.home));
             final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 
+            if(jc.getParsedCommand() == null) {
+                logger.write(Logger.Level.RESULT, "Missing command\n");
+                jc.usage();
+                return;
+            }
+
             switch(jc.getParsedCommand()) {
                 case InstallCommand.COMMAND: {
                     final var solver = decodeVersionString(installCommand.solver, smtLibSolverManager);
@@ -177,10 +186,10 @@ public class SmtLibCli {
                     }
 
                     if(installCommand.name != null) {
-                        smtLibSolverManager.install(solver.get1(), solver.get2(), installCommand.name);
+                        smtLibSolverManager.install(solver.get1(), solver.get2(), installCommand.name, installCommand.temptMurphy);
                     }
                     else {
-                        smtLibSolverManager.install(solver.get1(), solver.get2(), solver.get2());
+                        smtLibSolverManager.install(solver.get1(), solver.get2(), solver.get2(), installCommand.temptMurphy);
                     }
 
                     return;
@@ -213,23 +222,11 @@ public class SmtLibCli {
                     final var solver = decodeVersionString(editArgsCommand.solver, smtLibSolverManager);
                     final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
 
-                    if(smtLibSolverManager.getSupportedVersions(solver.get1()).contains(solver.get2())) {
-                        logger.write(Logger.Level.RESULT, "Supported versions of solvers cannot be edited. If you want to pass custom arguments to a supported solver, install a new instance of the version with a custom name.");
-                        return;
-                    }
-
-                    boolean nanoInPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
-                        .map(Paths::get)
-                        .anyMatch(path -> Files.exists(path.resolve("nano")));
-
                     if(editArgsCommand.print) {
                         logger.write(Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath().toString()));
                     }
-                    else if(Desktop.isDesktopSupported()) {
+                    else if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.EDIT)) {
                         Desktop.getDesktop().edit(argsFilePath.toFile());
-                    }
-                    else if(nanoInPath) {
-                        Runtime.getRuntime().exec("nano", new String[] { argsFilePath.toAbsolutePath().toString() });
                     }
                     else {
                         logger.write(Logger.Level.MAINSTEP, "Open the following text file in your favourite editor, and edit the content:\n");
@@ -290,20 +287,7 @@ public class SmtLibCli {
             throw new IllegalArgumentException("Invalid version string: " + version);
         }
 
-        final var solver = versionArr[0];
-        final var ver = versionArr[1];
-        if(!ver.equals("latest")) {
-            return Tuple2.of(solver, versionArr[1]);
-        }
-        else {
-            final var versions = solverManager.getSupportedVersions(solver);
-            if(versions.size() > 0) {
-                return Tuple2.of(solver, versions.get(0));
-            }
-            else {
-                throw new IllegalArgumentException("There are no supported versions of solver: " + solver);
-            }
-        }
+        return Tuple2.of(versionArr[0], versionArr[1]);
     }
 
     private Path createIfNotExists(final Path path) throws IOException {
@@ -314,15 +298,14 @@ public class SmtLibCli {
     }
 
     private void printError(final Throwable ex) {
-        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-        logger.write(Logger.Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-        logger.write(Logger.Level.MAINSTEP, "Message:%n%s%n", message);
+        logger.write(Logger.Level.MAINSTEP, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
+        logger.write(Logger.Level.RESULT, "Error:%n%s%n", ex.getMessage());
         final StringWriter errors = new StringWriter();
         ex.printStackTrace(new PrintWriter(errors));
         logger.write(Logger.Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
     }
 
-    static class SolverNameValidator implements IParameterValidator {
+    public static class SolverNameValidator implements IParameterValidator {
         @Override
         public void validate(String name, String value) throws ParameterException {
             if(!value.matches("[a-zA-Z0-9]+")) {
@@ -333,7 +316,7 @@ public class SmtLibCli {
         }
     }
 
-    static class SolverNameAndVersionValidator implements IParameterValidator {
+    public static class SolverNameAndVersionValidator implements IParameterValidator {
         @Override
         public void validate(String name, String value) throws ParameterException {
             final var versionArr = value.split(":");
@@ -342,7 +325,7 @@ public class SmtLibCli {
                 throw new ParameterException(String.format("Invalid version string %s in parameter %s", value, name));
             }
 
-            if(!versionArr[0].matches("[a-zA-Z0-9]+") || !versionArr[1].matches("[a-zA-Z0-9]+")) {
+            if(!versionArr[0].matches("[a-zA-Z0-9]+") || !versionArr[1].matches("[a-zA-Z0-9-._]+")) {
                 throw new ParameterException(
                     String.format("Invalid version string %s in parameter %s", value, name)
                 );
