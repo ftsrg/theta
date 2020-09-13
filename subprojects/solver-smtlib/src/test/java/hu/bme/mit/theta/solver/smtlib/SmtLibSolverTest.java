@@ -25,9 +25,12 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -49,16 +52,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class SmtLibSolverTest {
+    private static SmtLibSolverManager solverManager;
     private static SolverFactory solverFactory;
 
     @BeforeClass
-    public static void init() throws SmtLibSolverInstallerException {
-        final var solverManager = SmtLibSolverManager.create(
-            Path.of(System.getProperty("user.home")).resolve(".theta"),
-            NullLogger.getInstance()
-        );
+    public static void init() throws SmtLibSolverInstallerException, IOException {
+        Path home = Files.createTempDirectory("theta-solver");
 
-        solverFactory = solverManager.getSolverFactory("generic", "cvc4");
+        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+        solverManager.install("z3", "latest", "latest", false);
+
+        solverFactory = solverManager.getSolverFactory("z3", "latest");
+    }
+
+    @AfterClass
+    public static void destroy() throws SmtLibSolverInstallerException {
+        solverManager.uninstall("z3", "latest");
     }
 
     @Test
