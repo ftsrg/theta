@@ -120,8 +120,6 @@ public class Z3SmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
             throw new SmtLibSolverInstallerException(e);
         }
 
-
-
         logger.write(Logger.Level.MAINSTEP, "Download finished\n");
     }
 
