@@ -21,10 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.lang.String.format;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -41,8 +38,8 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 public final class CFA {
 
 	private final Loc initLoc;
-	private final Loc finalLoc;
-	private final Loc errorLoc;
+	private final Optional<Loc> finalLoc;
+	private final Optional<Loc> errorLoc;
 
 	private final Collection<VarDecl<?>> vars;
 	private final Collection<Loc> locs;
@@ -50,8 +47,8 @@ public final class CFA {
 
 	private CFA(final Builder builder) {
 		initLoc = builder.initLoc;
-		finalLoc = builder.finalLoc;
-		errorLoc = builder.errorLoc;
+		finalLoc = Optional.ofNullable(builder.finalLoc);
+		errorLoc = Optional.ofNullable(builder.errorLoc);
 		locs = ImmutableSet.copyOf(builder.locs);
 		edges = ImmutableList.copyOf(builder.edges);
 		vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(toImmutableSet());
@@ -61,11 +58,11 @@ public final class CFA {
 		return initLoc;
 	}
 
-	public Loc getFinalLoc() {
+	public Optional<Loc> getFinalLoc() {
 		return finalLoc;
 	}
 
-	public Loc getErrorLoc() {
+	public Optional<Loc> getErrorLoc() {
 		return errorLoc;
 	}
 
@@ -97,9 +94,9 @@ public final class CFA {
 	private String locToString(final Loc loc) {
 		if (initLoc.equals(loc)) {
 			return format("(init %s)", loc.getName());
-		} else if (finalLoc.equals(loc)) {
+		} else if (finalLoc.isPresent() && finalLoc.get().equals(loc)) {
 			return format("(final %s)", loc.getName());
-		} else if (errorLoc.equals(loc)) {
+		} else if (errorLoc.isPresent() && errorLoc.get().equals(loc)) {
 			return format("(error %s)", loc.getName());
 		} else {
 			return format("(loc %s)", loc.getName());
@@ -244,10 +241,10 @@ public final class CFA {
 
 		public CFA build() {
 			checkState(initLoc != null, "Initial location must be set.");
-			checkState(finalLoc != null, "Final location must be set.");
-			checkState(errorLoc != null, "Error location must be set.");
-			checkState(finalLoc.getOutEdges().isEmpty(), "Final location cannot have outgoing edges.");
-			checkState(errorLoc.getOutEdges().isEmpty(), "Error location cannot have outgoing edges.");
+			if (finalLoc != null)
+				checkState(finalLoc.getOutEdges().isEmpty(), "Final location cannot have outgoing edges.");
+			if (errorLoc != null)
+				checkState(errorLoc.getOutEdges().isEmpty(), "Error location cannot have outgoing edges.");
 			built = true;
 			return new CFA(this);
 		}

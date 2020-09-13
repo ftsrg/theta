@@ -15,11 +15,12 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -58,18 +59,10 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
@@ -94,6 +87,9 @@ public class CfaCli {
 
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
+
+	@Parameter(names = "--targetloc", description = "Target (error) location")
+	String targetLoc = "";
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
@@ -182,7 +178,22 @@ public class CfaCli {
 				return;
 			}
 
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
+			CFA.Loc errLoc = null;
+			if (cfa.getErrorLoc().isPresent()) {
+				errLoc = cfa.getErrorLoc().get();
+			}
+			if (!targetLoc.isEmpty()) {
+				errLoc = null;
+				for (CFA.Loc running : cfa.getLocs()) {
+					if (running.getName().equals(targetLoc)) {
+						errLoc = running;
+					}
+				}
+				checkNotNull(errLoc, "Location '" + targetLoc + "' not found in CFA");
+			}
+
+			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
@@ -211,11 +222,11 @@ public class CfaCli {
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) throws Exception {
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
 			return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+					.pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
