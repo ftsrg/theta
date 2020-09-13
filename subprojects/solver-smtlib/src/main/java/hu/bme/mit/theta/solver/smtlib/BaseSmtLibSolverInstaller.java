@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.SolverFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -52,7 +52,11 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
                 StandardCharsets.UTF_8
             );
 
-            logger.write(Logger.Level.MAINSTEP, "Installation finished");
+            logger.write(Logger.Level.MAINSTEP, "Installation finished\n");
+        }
+        catch (SmtLibSolverInstallerException e) {
+            uninstall(home, version);
+            throw e;
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
@@ -63,7 +67,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     public final void uninstall(Path home, String version) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
-        checkVersion(version);
+        checkName(version);
 
         final var installDir = getInstallDir(home, version);
         if(!Files.exists(installDir)) {
@@ -75,15 +79,9 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
 
             uninstallSolver(installDir, version);
 
-            final var solverArgsPath = argsFile(installDir);
-            Files.delete(solverArgsPath);
+            deleteDirectory(installDir.toFile());
 
-            final var solverInfoPath = infoFile(installDir);
-            Files.delete(solverInfoPath);
-
-            Files.delete(installDir);
-
-            logger.write(Logger.Level.MAINSTEP, "Uninstallation finished");
+            logger.write(Logger.Level.MAINSTEP, "Uninstallation finished\n");
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
@@ -94,7 +92,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     public void reinstall(Path home, String version) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
-        checkVersion(version);
+        checkName(version);
 
         final String solverVersion;
         try {
@@ -125,7 +123,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     public final String getInfo(Path home, String version) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
-        checkVersion(version);
+        checkName(version);
 
         final var installDir = getInstallDir(home, version);
         if(!Files.exists(installDir)) {
@@ -134,7 +132,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
 
         try {
             final var solverInfoPath = infoFile(installDir);
-            final var solverInfoStr = Files.readAllLines(solverInfoPath, StandardCharsets.UTF_8).get(0);
+            final var solverInfoStr = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
             final var solverArgsPath = argsFile(installDir);
             final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
 
@@ -149,7 +147,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     public final Path getArgsFile(Path home, String version) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
-        checkVersion(version);
+        checkName(version);
 
         final var installDir = home.resolve(version);
         if(!Files.exists(installDir)) {
@@ -162,13 +160,17 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     @Override
     public final List<String> getInstalledVersions(Path home) throws SmtLibSolverInstallerException {
         checkNotNull(home);
-        checkArgument(Files.exists(home));
 
-        final var installedDirs = home.toFile()
-            .list((current, name) -> new File(current, name).isDirectory());
+        if(Files.exists(home)) {
+            final var installedDirs = home.toFile()
+                .list((current, name) -> new File(current, name).isDirectory());
 
-        assert installedDirs != null;
-        return Arrays.asList(installedDirs);
+            assert installedDirs != null;
+            return Arrays.asList(installedDirs);
+        }
+        else {
+            return Collections.emptyList();
+        }
     }
 
     protected abstract String getSolverName() throws SmtLibSolverInstallerException;
@@ -183,7 +185,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     }
 
     protected final void checkVersion(final String version) throws SmtLibSolverInstallerException {
-        if(!version.matches("^[a-zA-Z0-9_.-]+$")) {
+        if(!version.matches("^[0-9]+(\\.[0-9]+)*$")) {
             throw new SmtLibSolverInstallerException("Unsupported version format: " + version);
         }
     }
@@ -198,5 +200,16 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
 
     protected final Path infoFile(final Path installDir) {
         return installDir.resolve("solver-info.txt");
+    }
+
+    private void deleteDirectory(File directoryToBeDeleted) throws IOException {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+
+        Files.delete(directoryToBeDeleted.toPath());
     }
 }
