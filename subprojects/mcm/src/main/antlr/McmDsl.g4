@@ -28,38 +28,33 @@ definition
     : (name=ID) EQ expr
     ;
 
-expr: LPAREN expr RPAREN
-    | simpleExpr
-    | namedExpr LPAREN expr RARROW expr RPAREN
-    | namedExpr LPAREN expr RLONGARROW expr RPAREN
-    | FOREACHVAR BEGIN expr END
-    | FOREACHTHREAD BEGIN expr END
-    | FOREACH expr BEGIN expr END
-    | expr UNION expr
-    | expr SECTION expr
-    | expr SETMINUS expr
-    | expr ASTERISK expr
-    | expr RARROW expr
-    | expr RLONGARROW expr
+expr: LPAREN expr RPAREN                            # nop
+    | simpleExpr                                    # simple
+    | namedExpr LPAREN expr RARROW expr RPAREN      # nextEdge
+    | namedExpr LPAREN expr RLONGARROW expr RPAREN  # sucessorEdges
+    | FOREACHVAR BEGIN expr END                     # forEachVar
+    | FOREACHTHREAD BEGIN expr END                  # forEachThread
+    | FOREACHNODE expr BEGIN expr END                   # forEach
+    | expr UNION expr                               # unionExpr
+    | expr SECTION expr                             # sectionExpr
+    | expr SETMINUS expr                            # setMinusExpr
+    | expr ASTERISK expr                            # multiplyExpr
+    | expr RARROW expr                              # multiplyLaterExpr
     ;
 
 simpleExpr
     : EMPTYSET
     | namedExpr
-    | patternExpr
+    | ASTERISK
     | taggedExpr
     ;
 
 namedExpr
     : (name=ID)
     ;
-
-patternExpr
-    : ASTERISK ((name=ID) (LBRACK tag=ID RBRACK)?)?
-    ;
     
 taggedExpr
-    : (name=ID) (LBRACK tags+=ID RBRACK)+
+    : namedExpr (LBRACK tags+=ID RBRACK)+
     ;
 
 constraints
@@ -67,13 +62,12 @@ constraints
     ;
 
 constraint
-    : (name=ID)
-    | LPAREN constraint RPAREN
-    | simpleConstraint
-    | constraint AND constraint
-    | constraint OR constraint
-    | NOT constraint
-    | constraint RARROW constraint
+    : LPAREN constraint RPAREN      # nopConstraint
+    | simpleConstraint              # simpleConstr
+    | constraint AND constraint     # andConstraint
+    | constraint OR constraint      # orConstraint
+    | NOT constraint                # notConstraint
+    | constraint RARROW constraint  # implyConstraint
     ;
 
 simpleConstraint
@@ -91,8 +85,8 @@ FOREACHTHREAD
     :   'for_each_thread'
     ;
 
-FOREACH
-    :   'for_each'
+FOREACHNODE
+    :   'for_each_node'
     ;
 
 BEGIN

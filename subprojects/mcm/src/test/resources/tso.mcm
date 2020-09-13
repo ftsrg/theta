@@ -4,7 +4,7 @@ stores = for_each_thread begin
          end
 
 coherence = for_each_thread begin
-                for_each mo(rf(* -> R[thread][new]) --> *W[later_write]) begin
+                for_each_node mo(rf(* -> R[thread][new]) --> W[later_write]) begin
                     rf intersect (W[later_write] * R[thread])
                 end
             end

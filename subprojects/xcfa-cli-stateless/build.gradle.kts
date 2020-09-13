@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    compile(project(":theta-mcm"))
     compile(project(":theta-xcfa"))
     compile(project(":theta-xcfa-analysis"))
 }

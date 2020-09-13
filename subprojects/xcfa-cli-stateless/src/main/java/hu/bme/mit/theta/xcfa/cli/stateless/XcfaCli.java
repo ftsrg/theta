@@ -19,8 +19,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
+import hu.bme.mit.theta.mcm.MCM;
+import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 
 import java.io.File;
@@ -35,6 +37,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
 	String model;
+
+	@Parameter(names = "--mcm", description = "Path of the input MCM model", required = true)
+	String mcm;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -58,6 +63,7 @@ public class XcfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
+			final MCM mcm = loadMcm();
 			if(StatelessMC.check(xcfa)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
@@ -74,6 +80,11 @@ public class XcfaCli {
 	private XCFA loadModel() throws IOException {
 		try(InputStream inputStream = new FileInputStream(new File(model))) {
 			return XcfaDslManager.createXcfa(inputStream);
+		}
+	}
+	private MCM loadMcm() throws IOException {
+		try(InputStream inputStream = new FileInputStream(new File(mcm))) {
+			return McmDslManager.createMCM(inputStream);
 		}
 	}
 
