@@ -43,12 +43,12 @@ public interface ItpSolver extends SolverBase {
 	 * @param markerB Marker B
 	 * @return Binary interpolant pattern
 	 */
-	ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB); /* {
+	default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
 		checkNotNull(markerA);
 		checkNotNull(markerB);
 
 		return createSeqPattern(Arrays.asList(markerA, markerB));
-	}*/
+	}
 
 	/**
 	 * Create a sequence pattern, which is a linear sequence of N markers.
@@ -56,23 +56,21 @@ public interface ItpSolver extends SolverBase {
 	 * @param markers Markers
 	 * @return Sequence interpolant pattern
 	 */
-	ItpPattern createSeqPattern(final List<? extends ItpMarker> markers); /* {
+	default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
 		checkNotNull(markers);
 		checkArgument(!markers.isEmpty());
 
-		ItpPattern result = null;
-		ItpPattern current = null;
+		ItpMarkerTree<ItpMarker> current = null;
 
-		for (final ItpMarker marker : Lists.reverse(markers)) {
-			if (result == null) {
-				current = createPattern(marker);
-				result = current;
+		for (final var marker : markers) {
+			if (current == null) {
+				current = ItpMarkerTree.Leaf(marker);
 			} else {
-				current = current.createChild(marker);
+				current = ItpMarkerTree.Tree(marker, current);
 			}
 		}
-		return result;
-	}*/
+		return createTreePattern(current);
+	}
 
 	/**
 	 * Create a tree pattern, in which each node can have multiple children
