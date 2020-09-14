@@ -65,30 +65,6 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 	}
 
 	@Override
-	public ItpPattern createBinPattern(ItpMarker markerA, ItpMarker markerB) {
-		checkNotNull(markerA);
-		checkNotNull(markerB);
-		return createSeqPattern(Arrays.asList(markerA, markerB));
-	}
-
-	@Override
-	public ItpPattern createSeqPattern(List<? extends ItpMarker> markers) {
-		checkNotNull(markers);
-		checkArgument(!markers.isEmpty());
-
-		ItpMarkerTree<ItpMarker> current = null;
-
-		for (final var marker : markers) {
-			if (current == null) {
-				current = ItpMarkerTree.Leaf(marker);
-			} else {
-				current = ItpMarkerTree.Tree(marker, current);
-			}
-		}
-		return createTreePattern(current);
-	}
-
-	@Override
 	public ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root) {
 		checkNotNull(root);
 		return Z3ItpPattern.of(root);
