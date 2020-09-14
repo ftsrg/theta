@@ -16,40 +16,62 @@
 package hu.bme.mit.theta.solver;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Interface for an element of an interpolation pattern.
- * For example, in sequence interpolation the patterns form a linear chain.
  */
 public interface ItpPattern {
 
 	/**
-	 * Get the current marker.
-	 *
-	 * @return Marker
+	 * ItpPatter visitor function
+	 * @param visitor The visitor
+	 * @param <E> The return type of the visitor
+	 * @return Returns the result of the visitor
 	 */
-	ItpMarker getMarker();
+	<E> E visit(final ItpPatternVisitor<E> visitor);
 
 	/**
-	 * Get the parent pattern.
-	 *
-	 * @return Parent
+	 * Interface for a binary interpolation pattern
 	 */
-	ItpPattern getParent();
+	interface Binary<T extends ItpMarker>  extends ItpPattern {
+		T getA();
+		T getB();
+
+		@Override
+		default <E> E visit(final ItpPatternVisitor<E> visitor) {
+			return visitor.visitBinaryPattern(this);
+		}
+	}
 
 	/**
-	 * Get child patterns.
-	 *
-	 * @return Children
+	 * Interface for a sequence interpolation pattern
 	 */
-	Collection<ItpPattern> getChildren();
+	interface Sequence<T extends ItpMarker>  extends ItpPattern {
+		List<T> getSequence();
+
+		@Override
+		default <E> E visit(final ItpPatternVisitor<E> visitor) {
+			return visitor.visitSequencePattern(this);
+		}
+	}
 
 	/**
-	 * Create a child for the current pattern with a given marker.
-	 *
-	 * @param marker Marker
-	 * @return Child
+	 * Interface for a tree interpolation pattern
 	 */
-	ItpPattern createChild(final ItpMarker marker);
+	interface Tree<T extends ItpMarker>  extends ItpPattern {
+		ItpMarkerTree<T> getRoot();
+
+		@Override
+		default <E> E visit(final ItpPatternVisitor<E> visitor) {
+			return visitor.visitTreePattern(this);
+		}
+	}
+
+	interface ItpPatternVisitor<E> {
+		E visitBinaryPattern(final Binary<?> binaryPattern);
+		E visitSequencePattern(final Sequence<?> sequencePattern);
+		E visitTreePattern(final Tree<?> treePattern);
+	}
 
 }

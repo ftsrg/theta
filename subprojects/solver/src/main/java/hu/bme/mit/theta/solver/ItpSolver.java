@@ -36,15 +36,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * {@link #getInterpolant(ItpPattern)}.
  */
 public interface ItpSolver extends SolverBase {
-
-	/**
-	 * Create a pattern for a given marker.
-	 *
-	 * @param marker Marker
-	 * @return Pattern
-	 */
-	ItpPattern createPattern(final ItpMarker marker);
-
 	/**
 	 * Create a binary pattern, which is a sequence of two markers: A and B.
 	 *
@@ -52,12 +43,12 @@ public interface ItpSolver extends SolverBase {
 	 * @param markerB Marker B
 	 * @return Binary interpolant pattern
 	 */
-	default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
+	ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB); /* {
 		checkNotNull(markerA);
 		checkNotNull(markerB);
 
 		return createSeqPattern(Arrays.asList(markerA, markerB));
-	}
+	}*/
 
 	/**
 	 * Create a sequence pattern, which is a linear sequence of N markers.
@@ -65,7 +56,7 @@ public interface ItpSolver extends SolverBase {
 	 * @param markers Markers
 	 * @return Sequence interpolant pattern
 	 */
-	default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
+	ItpPattern createSeqPattern(final List<? extends ItpMarker> markers); /* {
 		checkNotNull(markers);
 		checkArgument(!markers.isEmpty());
 
@@ -81,7 +72,15 @@ public interface ItpSolver extends SolverBase {
 			}
 		}
 		return result;
-	}
+	}*/
+
+	/**
+	 * Create a tree pattern, in which each node can have multiple children
+	 *
+	 * @param root Root of the marker tree
+	 * @return Tree interpolant pattern
+	 */
+	ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root);
 
 	/**
 	 * Create a new marker.
