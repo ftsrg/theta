@@ -28,6 +28,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.*;
@@ -102,13 +105,15 @@ public final class Z3ItpSolverTest {
 		final ItpMarker I1 = solver.createMarker();
 		final ItpMarker I2 = solver.createMarker();
 		final ItpMarker I3 = solver.createMarker();
-		final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3));
+		final ItpMarker I4 = solver.createMarker();
+		final ItpMarker I5 = solver.createMarker();
+		final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3, I4, I5));
 
-		solver.add(I1, Eq(a, b));
-		solver.add(I1, Eq(a, c));
-		solver.add(I2, Eq(c, d));
-		solver.add(I3, Eq(b, e));
-		solver.add(I3, Neq(d, e));
+		solver.add(I1, Eq(a, Int(0)));
+		solver.add(I2, Eq(a, b));
+		solver.add(I3, Eq(c, d));
+		solver.add(I4, Eq(d, Int(1)));
+		solver.add(I5, Eq(b, c));
 
 		solver.check();
 		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
@@ -116,6 +121,9 @@ public final class Z3ItpSolverTest {
 
 		System.out.println(itp.eval(I1));
 		System.out.println(itp.eval(I2));
+		System.out.println(itp.eval(I3));
+		System.out.println(itp.eval(I4));
+		System.out.println(itp.eval(I5));
 		System.out.println("----------");
 	}
 
@@ -124,15 +132,15 @@ public final class Z3ItpSolverTest {
 		final ItpMarker I1 = solver.createMarker();
 		final ItpMarker I2 = solver.createMarker();
 		final ItpMarker I3 = solver.createMarker();
-		final ItpPattern pattern = solver.createPattern(I3);
-		pattern.createChild(I1);
-		pattern.createChild(I2);
+		final ItpMarker I4 = solver.createMarker();
+		final ItpMarker I5 = solver.createMarker();
+		final ItpPattern pattern = solver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
 		solver.add(I1, Eq(a, Int(0)));
-		solver.add(I1, Eq(a, b));
-		solver.add(I2, Eq(c, d));
-		solver.add(I2, Eq(d, Int(1)));
-		solver.add(I3, Eq(b, c));
+		solver.add(I2, Eq(a, b));
+		solver.add(I3, Eq(c, d));
+		solver.add(I4, Eq(d, Int(1)));
+		solver.add(I5, Eq(b, c));
 
 		solver.check();
 		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
@@ -140,6 +148,9 @@ public final class Z3ItpSolverTest {
 
 		System.out.println(itp.eval(I1));
 		System.out.println(itp.eval(I2));
+		System.out.println(itp.eval(I3));
+		System.out.println(itp.eval(I4));
+		System.out.println(itp.eval(I5));
 		System.out.println("----------");
 	}
 
