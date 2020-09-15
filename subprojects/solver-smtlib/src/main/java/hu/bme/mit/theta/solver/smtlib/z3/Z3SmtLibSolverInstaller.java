@@ -147,7 +147,7 @@ public class Z3SmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
             final var solverArgsPath = argsFile(installDir);
             final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
 
-            return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs);
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
