@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
 public interface SmtLibSolverBinary {
-    String issueCommand(String command);
+    void issueCommand(String command);
+    String readResponse();
 }
