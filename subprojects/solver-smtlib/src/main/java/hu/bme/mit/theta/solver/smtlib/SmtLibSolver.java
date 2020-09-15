@@ -1,16 +1,9 @@
 package hu.bme.mit.theta.solver.smtlib;
 
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -33,7 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -84,7 +76,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         final var term = transformationManager.toTerm(assertion);
 
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert %s)%n", term));
+        issueGeneralCommand(String.format("(assert %s)", term));
 
         clearState();
     }
@@ -95,7 +87,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         declarationStack.add(consts);
 
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert %s)%n", term));
+        issueGeneralCommand(String.format("(assert %s)", term));
 
         clearState();
     }
@@ -111,14 +103,15 @@ public class SmtLibSolver implements UCSolver, Solver {
         assumptions.put(label, assertion);
 
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert (! %s :named %s))%n", term, label));
+        issueGeneralCommand(String.format("(assert (! %s :named %s))", term, label));
 
         clearState();
     }
 
     @Override
     public SolverStatus check() {
-        var res = parseResponse(solverBinary.issueCommand("(check-sat)"));
+        solverBinary.issueCommand("(check-sat)");
+        var res = parseResponse(solverBinary.readResponse());
         if(res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         }
@@ -145,14 +138,14 @@ public class SmtLibSolver implements UCSolver, Solver {
     public void push() {
         assertions.push();
         declarationStack.push();
-        issueGeneralCommand("(push)");
+        issueGeneralCommand("(push 1)");
     }
 
     @Override
     public void pop(int n) {
         assertions.pop(n);
         declarationStack.pop(n);
-        issueGeneralCommand("(pop)");
+        issueGeneralCommand("(pop 1)");
         clearState();
     }
 
@@ -184,13 +177,14 @@ public class SmtLibSolver implements UCSolver, Solver {
         assert status == SolverStatus.SAT;
         assert model == null;
 
-        final var res = parseResponse(solverBinary.issueCommand("(get-model)"));
+        solverBinary.issueCommand("(get-model)");
+        final var res = parseResponse(solverBinary.readResponse());
         if(res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
             final GetModelResponse getModelResponse = res.asSpecific();
-            return new SmtLibValuation(getModelResponse.getModel());
+            return new SmtLibValuation(symbolTable, transformationManager, termTransformer, getModelResponse.getModel());
         }
         else {
             throw new AssertionError();
@@ -215,7 +209,8 @@ public class SmtLibSolver implements UCSolver, Solver {
         final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
         final Collection<String> unsatCoreLabels;
 
-        final var res = parseResponse(solverBinary.issueCommand("(get-unsat-core)"));
+        solverBinary.issueCommand("(get-unsat-core)");
+        final var res = parseResponse(solverBinary.readResponse());
         if(res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         }
@@ -250,20 +245,21 @@ public class SmtLibSolver implements UCSolver, Solver {
         issueGeneralCommand("(set-logic ALL)");
     }
 
-    private void clearState() {
+    protected void clearState() {
         status = null;
         model = null;
         unsatCore = null;
     }
 
-    private void issueGeneralCommand(String command) {
-        var res = parseResponse(solverBinary.issueCommand(command));
+    protected final void issueGeneralCommand(String command) {
+        solverBinary.issueCommand(command);
+        var res = parseResponse(solverBinary.readResponse());
         if(res.isError()) {
             throw new SmtLibSolverException(res.getReason());
         }
     }
 
-    private GeneralResponse parseResponse(final String response) {
+    protected final GeneralResponse parseResponse(final String response) {
         try {
             final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
             final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
@@ -275,120 +271,6 @@ public class SmtLibSolver implements UCSolver, Solver {
         }
         catch (Exception e) {
             throw new SmtLibSolverException("Could not parse solver output: " + response, e);
-        }
-    }
-
-    private final class SmtLibValuation extends Valuation {
-        private final SmtLibModel model;
-        private final Map<Decl<?>, LitExpr<?>> constToExpr;
-        private volatile Collection<ConstDecl<?>> constDecls = null;
-
-        public SmtLibValuation(final SmtLibModel model) {
-            this.model = model;
-            constToExpr = new HashMap<>();
-        }
-
-        @Override
-        public Collection<? extends Decl<?>> getDecls() {
-            Collection<ConstDecl<?>> result = constDecls;
-            if (result == null) {
-                result = constDeclsOf(model);
-                constDecls = result;
-            }
-            return result;
-        }
-
-        @Override
-        public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(Decl<DeclType> decl) {
-            checkNotNull(decl);
-
-            if (!(decl instanceof ConstDecl)) {
-                return Optional.empty();
-            }
-
-            final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
-
-            LitExpr<?> val = constToExpr.get(constDecl);
-            if (val == null) {
-                val = extractLiteral(constDecl);
-                if (val != null) {
-                    constToExpr.put(constDecl, val);
-                }
-            }
-
-            @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
-            return Optional.ofNullable(tVal);
-        }
-
-        private <DeclType extends Type> LitExpr<?> extractLiteral(final ConstDecl<DeclType> decl) {
-            final String symbol = transformationManager.toSymbol(decl);
-            final Type type = decl.getType();
-
-            if(type instanceof FuncType) {
-                return extractFuncLiteral(symbol, (FuncType<?, ?>) type);
-            }
-            else if(type instanceof ArrayType) {
-                return extractArrayLiteral(symbol, (ArrayType<?, ?>) type);
-            }
-            else if (type instanceof BvType) {
-                return extractBvConstLiteral(symbol, (BvType) type);
-            }
-            else {
-                return extractConstLiteral(symbol, type);
-            }
-        }
-
-        private LitExpr<?> extractFuncLiteral(final String symbol, final FuncType<?, ?> type) {
-            final String term = model.getTerm(symbol);
-            if (term == null) {
-                return null;
-            } else {
-                return checkNotNull(termTransformer.toFuncLitExpr(term, type, model));
-            }
-        }
-
-        private LitExpr<?> extractArrayLiteral(final String symbol, final ArrayType<?, ?> type) {
-            final String term = model.getTerm(symbol);
-            if (term == null) {
-                return null;
-            } else {
-                return checkNotNull(termTransformer.toArrayLitExpr(term, type, model));
-            }
-        }
-
-        private LitExpr<?> extractBvConstLiteral(final String symbol, final BvType type) {
-            final String term = model.getTerm(symbol);
-            if (term == null) {
-                return null;
-            } else {
-                return checkNotNull(termTransformer.toBvLitExpr(term, type, model));
-            }
-        }
-
-        private LitExpr<?> extractConstLiteral(final String symbol, final Type type) {
-            final String term = model.getTerm(symbol);
-            if (term == null) {
-                return null;
-            } else {
-                return checkNotNull(termTransformer.toLitExpr(term, type, model));
-            }
-        }
-
-        @Override
-        public Map<Decl<?>, LitExpr<?>> toMap() {
-            getDecls().forEach(this::eval);
-            return Collections.unmodifiableMap(constToExpr);
-        }
-
-        private Collection<ConstDecl<?>> constDeclsOf(final SmtLibModel model) {
-            final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-            for (final var symbol : model.getDecls()) {
-                if (symbolTable.definesSymbol(symbol)) {
-                    final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
-                    builder.add(constDecl);
-                }
-            }
-            return builder.build();
         }
     }
 
