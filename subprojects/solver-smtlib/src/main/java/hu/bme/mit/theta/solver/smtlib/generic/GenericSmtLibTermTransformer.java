@@ -234,7 +234,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        return transformTerm(parser.function_def().term(), model, HashBiMap.create());
+        return transformTerm(parser.term(), model, HashBiMap.create());
     }
 
     @Override
@@ -252,10 +252,21 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
+    private Expr<?> toLitExpr(final String litImpl, final SmtLibModel model) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(litImpl));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        return transformTerm(parser.function_def().term(), model, HashBiMap.create());
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <I extends Type, E extends Type>  LitExpr<ArrayType<I, E>> toArrayLitExpr(final String arrayLitImpl, final ArrayType<I, E> type, final SmtLibModel model) {
-        final var arrayLitExpr = toExpr(arrayLitImpl, model);
+        final var arrayLitExpr = toLitExpr(arrayLitImpl, model);
 
         if(arrayLitExpr == null) {
             return null;
@@ -279,7 +290,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     @Override
     public LitExpr<BvType> toBvLitExpr(final String bvLitImpl, final BvType type, final SmtLibModel model) {
-        final var bvLitExpr = toExpr(bvLitImpl, model);
+        final var bvLitExpr = toLitExpr(bvLitImpl, model);
 
         if(bvLitExpr == null) {
             return null;
@@ -338,7 +349,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             throw new UnsupportedOperationException();
         }
         else if(ctx.annotate_term() != null) {
-            throw new UnsupportedOperationException();
+            return transformTerm(ctx.annotate_term().term(), model, vars);
         }
         else {
             throw new SmtLibSolverException("Invalid input");
