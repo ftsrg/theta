@@ -36,13 +36,14 @@ public final class GenericSmtLibSolverBinary implements hu.bme.mit.theta.solver.
     }
 
     @Override
-    public String issueCommand(final String command) {
+    public void issueCommand(final String command) {
         checkState(solverProcess.isAlive());
         solverInput.println(command);
-        return readResponse(solverOutput);
     }
 
-    private String readResponse(final Reader solverOutput) {
+    @Override
+    public String readResponse() {
+        checkState(solverProcess.isAlive());
         final var sb = new StringBuilder(256);
         final var readProcessor = new ReadProcessor();
         while (sb.length() == 0 || !readProcessor.isReady()) {
