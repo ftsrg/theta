@@ -1,20 +1,21 @@
 package hu.bme.mit.theta.mcm.dsl;
 
-import hu.bme.mit.theta.mcm.EdgeDB;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.gen.McmDslBaseVisitor;
 import hu.bme.mit.theta.mcm.dsl.gen.McmDslParser;
+import hu.bme.mit.theta.mcm.graph.EdgeDB;
+import hu.bme.mit.theta.mcm.graph.classification.Thread;
+import hu.bme.mit.theta.mcm.graph.classification.Variable;
+import hu.bme.mit.theta.mcm.graph.classification.nodes.Node;
 import org.antlr.v4.runtime.Token;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.UnaryOperator;
 
-public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<EdgeDB>> {
+public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<List<EdgeDB>>> {
 
     private final MCM mcm;
-    private final Map<String, UnaryOperator<EdgeDB>> definitions;
+    private final Map<String, UnaryOperator<List<EdgeDB>>> definitions;
 
     public McmParserVisitor() {
         mcm = new MCM();
@@ -22,71 +23,95 @@ public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<EdgeDB>> {
     }
 
     @Override
-    protected UnaryOperator<EdgeDB> defaultResult() {
-        return edgeDB -> edgeDB;
+    protected UnaryOperator<List<EdgeDB>> defaultResult() {
+        return edgeDBList -> edgeDBList;
     }
 
     @Override
-    protected UnaryOperator<EdgeDB> aggregateResult(UnaryOperator<EdgeDB> aggregate, UnaryOperator<EdgeDB> nextResult) {
-        return edgeDB -> nextResult.apply(aggregate.apply(edgeDB));
+    protected UnaryOperator<List<EdgeDB>> aggregateResult(UnaryOperator<List<EdgeDB>> aggregate, UnaryOperator<List<EdgeDB>> nextResult) {
+        return edgeDBList -> nextResult.apply(aggregate.apply(edgeDBList));
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitDefinition(McmDslParser.DefinitionContext ctx) {
-        UnaryOperator<EdgeDB> ret;
+    public UnaryOperator<List<EdgeDB>> visitDefinition(McmDslParser.DefinitionContext ctx) {
+        UnaryOperator<List<EdgeDB>> ret;
         definitions.put(ctx.name.getText(), ret = super.visitDefinition(ctx));
         return ret;
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitNextEdge(McmDslParser.NextEdgeContext ctx) {
-        return edgeDB -> edgeDB.filterNext(ctx.namedExpr().getText(), ctx.expr(0).accept(this), ctx.expr(1).accept(this));
+    public UnaryOperator<List<EdgeDB>> visitNextEdge(McmDslParser.NextEdgeContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(edgeDB.filterNext(ctx.namedExpr().getText(), lh, rh));
+                    }
+                }
+            }
+            return ret;
+        };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitSucessorEdges(McmDslParser.SucessorEdgesContext ctx) {
-        return edgeDB -> edgeDB.filterSuccessors(ctx.namedExpr().getText(), ctx.expr(0).accept(this), ctx.expr(1).accept(this));
+    public UnaryOperator<List<EdgeDB>> visitSucessorEdges(McmDslParser.SucessorEdgesContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(edgeDB.filterSuccessors(ctx.namedExpr().getText(), lh, rh));
+                    }
+                }
+            }
+            return ret;
+        };
     }
 
-    private final Stack<Object> vars = new Stack<>(); // TODO: type
+    private final Stack<Variable> vars = new Stack<>();
 
     @Override
-    public UnaryOperator<EdgeDB> visitForEachVar(McmDslParser.ForEachVarContext ctx) {
-        return edgeDB -> {
-            EdgeDB ret = edgeDB;
-            for(Object var : edgeDB.getVars()) {
+    public UnaryOperator<List<EdgeDB>> visitForEachVar(McmDslParser.ForEachVarContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for(Variable var : edgeDBList.get(0).getVars()) {
                 this.vars.push(var);
-                ret = ctx.expr().accept(this).apply(ret);
+                ret.addAll(ctx.expr().accept(this).apply(edgeDBList));
                 this.vars.pop();
             }
             return ret;
         };
     }
 
-    private final Stack<Object> threads = new Stack<>(); // TODO: type
+    private final Stack<Thread> threads = new Stack<>();
 
     @Override
-    public UnaryOperator<EdgeDB> visitForEachThread(McmDslParser.ForEachThreadContext ctx) {
-        return edgeDB -> {
-            EdgeDB ret = edgeDB;
-            for(Object thread : edgeDB.getThreads()) {
+    public UnaryOperator<List<EdgeDB>> visitForEachThread(McmDslParser.ForEachThreadContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for(Thread thread : edgeDBList.get(0).getThreads()) {
                 this.threads.push(thread);
-                ret = ctx.expr().accept(this).apply(ret);
+                ret.addAll(ctx.expr().accept(this).apply(edgeDBList));
                 this.threads.pop();
             }
             return ret;
         };
     }
 
-    private final Stack<Object> nodes = new Stack<>(); // TODO: type
+    private final Stack<Node> nodes = new Stack<>();
 
     @Override
-    public UnaryOperator<EdgeDB> visitForEach(McmDslParser.ForEachContext ctx) {
-        return edgeDB -> {
-            EdgeDB ret = edgeDB;
-            for(Object node : ctx.expr(0).accept(this).apply(edgeDB).getNodes()) {
+    public UnaryOperator<List<EdgeDB>> visitForEach(McmDslParser.ForEachContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for(Node node : ctx.expr(0).accept(this).apply(edgeDBList).get(0).getNodes()) {
                 this.nodes.push(node);
-                ret = ctx.expr(1).accept(this).apply(ret);
+                ret.addAll(ctx.expr(1).accept(this).apply(edgeDBList));
                 this.nodes.pop();
             }
             return ret;
@@ -94,96 +119,253 @@ public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<EdgeDB>> {
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitUnionExpr(McmDslParser.UnionExprContext ctx) {
-        return edgeDB -> ctx.expr(0).accept(this).apply(edgeDB).union(ctx.expr(1).accept(this).apply(edgeDB));
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitSectionExpr(McmDslParser.SectionExprContext ctx) {
-        return edgeDB -> ctx.expr(0).accept(this).apply(edgeDB).intersect(ctx.expr(1).accept(this).apply(edgeDB));
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitSetMinusExpr(McmDslParser.SetMinusExprContext ctx) {
-        return edgeDB -> ctx.expr(0).accept(this).apply(edgeDB).minus(ctx.expr(1).accept(this).apply(edgeDB));
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitMultiplyExpr(McmDslParser.MultiplyExprContext ctx) {
-        return edgeDB -> ctx.expr(0).accept(this).apply(edgeDB).multiply(ctx.expr(1).accept(this).apply(edgeDB));
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitMultiplyLaterExpr(McmDslParser.MultiplyLaterExprContext ctx) {
-        return edgeDB -> ctx.expr(0).accept(this).apply(edgeDB).multiplyLater(ctx.expr(1).accept(this).apply(edgeDB));
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitSimpleExpr(McmDslParser.SimpleExprContext ctx) {
-        if(ctx.EMPTYSET() != null) {
-            return edgeDB -> EdgeDB.empty();
-        } else if(ctx.ASTERISK() != null) {
-            return edgeDB -> edgeDB;
-        }
-        return super.visitSimpleExpr(ctx);
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitNamedExpr(McmDslParser.NamedExprContext ctx) {
-        return edgeDB -> edgeDB.filterNamed(ctx.name.getText());
-    }
-
-    @Override
-    public UnaryOperator<EdgeDB> visitTaggedExpr(McmDslParser.TaggedExprContext ctx) {
-        return edgeDB -> {
-            EdgeDB ret = ctx.namedExpr().accept(this).apply(edgeDB);
-            for (Token token : ctx.tags) {
-                ret = ret.filterTagged(token.getText());
+    public UnaryOperator<List<EdgeDB>> visitUnionExpr(McmDslParser.UnionExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(lh.union(rh));
+                    }
+                }
             }
             return ret;
         };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitConstraints(McmDslParser.ConstraintsContext ctx) {
-        ctx.children.forEach(parseTree -> mcm.addPredicate(edgeDB -> parseTree.accept(this).apply(edgeDB).isOk()));
+    public UnaryOperator<List<EdgeDB>> visitSectionExpr(McmDslParser.SectionExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(lh.intersect(rh));
+                    }
+                }
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitSetMinusExpr(McmDslParser.SetMinusExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(lh.minus(rh));
+                    }
+                }
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitMultiplyExpr(McmDslParser.MultiplyExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.expr(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.expr(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    for (EdgeDB rh : rhs) {
+                        ret.add(lh.multiply(rh, ctx.name.getText()));
+                    }
+                }
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitSimpleExpr(McmDslParser.SimpleExprContext ctx) {
+        if(ctx.EMPTYSET() != null) {
+            return edgeDBList -> List.of(EdgeDB.empty());
+        } else if(ctx.ASTERISK() != null) {
+            return edgeDBList -> edgeDBList;
+        }
+        return super.visitSimpleExpr(ctx);
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitNamedExpr(McmDslParser.NamedExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                ret.add(edgeDB.filterNamed(ctx.name.getText()));
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitTaggedExpr(McmDslParser.TaggedExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> retList = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                for (EdgeDB ret : ctx.namedExpr().accept(this).apply(List.of(edgeDB))) {
+                    for (Token token : ctx.tags) {
+                        if (token.getText().startsWith("thread")) {
+                            if (token.getText().equals("thread")) {
+                                ret = ret.filterThread(threads.peek());
+                            } else {
+                                int i = Integer.parseInt(token.getText().substring("thread".length()));
+                                ret = ret.filterThread(threads.get(i));
+                            }
+                        } else if (token.getText().startsWith("var")) {
+                            if (token.getText().equals("var")) {
+                                ret = ret.filterVar(vars.peek());
+                            } else {
+                                int i = Integer.parseInt(token.getText().substring("var".length()));
+                                ret = ret.filterVar(vars.get(i));
+                            }
+                        } else if (token.getText().startsWith("node")) {
+                            if (token.getText().equals("node")) {
+                                ret = ret.filterNode(nodes.peek());
+                            } else {
+                                int i = Integer.parseInt(token.getText().substring("node".length()));
+                                ret = ret.filterNode(nodes.get(i));
+                            }
+                        } else if (token.getText().equals("new")) {
+                            ret = ret.filterNew();
+                        }
+                    }
+                    retList.add(ret);
+                }
+            }
+            return retList;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitConstraints(McmDslParser.ConstraintsContext ctx) {
+        ctx.children.forEach(parseTree -> mcm.addPredicate(edgeDB -> {
+            for (EdgeDB db : parseTree.accept(this).apply(List.of(edgeDB))) {
+                if(!db.isOk()) return false;
+            }
+            return true;
+        }));
         return super.visitConstraints(ctx);
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitAndConstraint(McmDslParser.AndConstraintContext ctx) {
-        return edgeDB -> ctx.constraint(0).accept(this).apply(edgeDB).and(ctx.constraint(1).accept(this).apply(edgeDB));
+    public UnaryOperator<List<EdgeDB>> visitAndConstraint(McmDslParser.AndConstraintContext ctx) {
+        return edgeDBList -> {
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.constraint(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.constraint(1).accept(this).apply(List.of(edgeDB));
+                for (EdgeDB lh : lhs) {
+                    if(!lh.isOk()) {
+                        return List.of(EdgeDB.falseValue());
+                    }
+                }
+                for (EdgeDB rh : rhs) {
+                    if(!rh.isOk()) {
+                        return List.of(EdgeDB.falseValue());
+                    }
+                }
+            }
+            return List.of(EdgeDB.trueValue());
+        };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitOrConstraint(McmDslParser.OrConstraintContext ctx) {
-        return edgeDB -> ctx.constraint(0).accept(this).apply(edgeDB).or(ctx.constraint(1).accept(this).apply(edgeDB));
+    public UnaryOperator<List<EdgeDB>> visitOrConstraint(McmDslParser.OrConstraintContext ctx) {
+        return edgeDBList -> {
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhs = ctx.constraint(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhs = ctx.constraint(1).accept(this).apply(List.of(edgeDB));
+                EdgeDB lhDB = EdgeDB.trueValue();
+                EdgeDB rhDB = EdgeDB.trueValue();
+                for (EdgeDB lh : lhs) {
+                    lhDB = lhDB.and(lh);
+                }
+                for (EdgeDB rh : rhs) {
+                    rhDB = rhDB.and(rh);
+                }
+                if(!lhDB.or(rhDB).isOk()) return List.of(EdgeDB.falseValue());
+            }
+            return List.of(EdgeDB.trueValue());
+        };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitNotConstraint(McmDslParser.NotConstraintContext ctx) {
-        return edgeDB -> ctx.constraint().accept(this).apply(edgeDB).not();
+    public UnaryOperator<List<EdgeDB>> visitNotConstraint(McmDslParser.NotConstraintContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                for (EdgeDB db : ctx.constraint().accept(this).apply(List.of(edgeDB))) {
+                    ret.add(db.not());
+                }
+            }
+            return ret;
+        };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitImplyConstraint(McmDslParser.ImplyConstraintContext ctx) {
-        return edgeDB -> ctx.constraint(0).accept(this).apply(edgeDB).imply(ctx.constraint(1).accept(this).apply(edgeDB));
+    public UnaryOperator<List<EdgeDB>> visitImplyConstraint(McmDslParser.ImplyConstraintContext ctx) {
+        return edgeDBList -> {
+            for (EdgeDB edgeDB : edgeDBList) {
+                List<EdgeDB> lhsSet = ctx.constraint(0).accept(this).apply(List.of(edgeDB));
+                List<EdgeDB> rhsSet = ctx.constraint(1).accept(this).apply(List.of(edgeDB));
+                EdgeDB lhs = EdgeDB.trueValue();
+                EdgeDB rhs = EdgeDB.trueValue();
+                for (EdgeDB db : lhsSet) {
+                    lhs = lhs.and(db);
+                }
+                for (EdgeDB db : rhsSet) {
+                    rhs = rhs.and(db);
+                }
+                if(lhs.isOk() && !rhs.isOk()) return List.of(EdgeDB.falseValue());
+            }
+            return List.of(EdgeDB.trueValue());
+        };
     }
 
     @Override
-    public UnaryOperator<EdgeDB> visitSimpleConstraint(McmDslParser.SimpleConstraintContext ctx) {
-        UnaryOperator<EdgeDB> ret;
+    public UnaryOperator<List<EdgeDB>> visitSimpleConstraint(McmDslParser.SimpleConstraintContext ctx) {
+        UnaryOperator<List<EdgeDB>> ret;
         if(ctx.ACYCLIC() != null) {
-            ret = edgeDB -> definitions.get(ctx.name.getText()).apply(edgeDB).isAcyclic();
+            ret = edgeDBList -> {
+                for (EdgeDB edgeDB : edgeDBList) {
+                    for (EdgeDB db : definitions.get(ctx.name.getText()).apply(List.of(edgeDB))) {
+                        if(!db.isAcyclic().isOk()) return List.of(EdgeDB.falseValue());
+                    }
+                }
+                return List.of(EdgeDB.trueValue());
+            };
         }
         else if(ctx.IRREFLEXIVE() != null) {
-            ret = edgeDB -> definitions.get(ctx.name.getText()).apply(edgeDB).isIrreflexive();
+            ret = edgeDBList -> {
+                for (EdgeDB edgeDB : edgeDBList) {
+                    for (EdgeDB db : definitions.get(ctx.name.getText()).apply(List.of(edgeDB))) {
+                        if(!db.isIrreflexive().isOk()) return List.of(EdgeDB.falseValue());
+                    }
+                }
+                return List.of(EdgeDB.trueValue());
+            };
         }
         else {
-            ret = edgeDB -> definitions.get(ctx.name.getText()).apply(edgeDB).isEmpty();
+            ret = edgeDBList -> {
+                for (EdgeDB edgeDB : edgeDBList) {
+                    for (EdgeDB db : definitions.get(ctx.name.getText()).apply(List.of(edgeDB))) {
+                        if(!db.isEmpty().isOk()) return List.of(EdgeDB.falseValue());
+                    }
+                }
+                return List.of(EdgeDB.trueValue());
+            };
         }
 
-        return ctx.NOT() != null ? (edgeDB -> ret.apply(edgeDB).not()) : ret;
+        return ret;
 
     }
 

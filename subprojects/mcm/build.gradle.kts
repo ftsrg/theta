@@ -4,4 +4,5 @@ plugins {
 }
 
 dependencies {
+    compile(project(":theta-common"))
 }

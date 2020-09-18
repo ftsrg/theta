@@ -34,12 +34,11 @@ expr: LPAREN expr RPAREN                            # nop
     | namedExpr LPAREN expr RLONGARROW expr RPAREN  # sucessorEdges
     | FOREACHVAR BEGIN expr END                     # forEachVar
     | FOREACHTHREAD BEGIN expr END                  # forEachThread
-    | FOREACHNODE expr BEGIN expr END                   # forEach
+    | FOREACHNODE expr BEGIN expr END               # forEach
     | expr UNION expr                               # unionExpr
     | expr SECTION expr                             # sectionExpr
     | expr SETMINUS expr                            # setMinusExpr
-    | expr ASTERISK expr                            # multiplyExpr
-    | expr RARROW expr                              # multiplyLaterExpr
+    | (name=ID) LPAREN expr ASTERISK expr RPAREN    # multiplyExpr
     ;
 
 simpleExpr
@@ -71,7 +70,7 @@ constraint
     ;
 
 simpleConstraint
-    : (name=ID) NOT? (ACYCLIC | IRREFLEXIVE | EMPTY)
+    : (name=ID) (ACYCLIC | IRREFLEXIVE | EMPTY)
     ;
 
 
