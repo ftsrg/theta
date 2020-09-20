@@ -28,7 +28,8 @@ definition
     : (name=ID) EQ expr
     ;
 
-expr: LPAREN expr RPAREN                            # nop
+expr: ASTERISK                                      # all
+    | LPAREN expr RPAREN                            # nop
     | simpleExpr                                    # simple
     | namedExpr LPAREN expr RARROW expr RPAREN      # nextEdge
     | namedExpr LPAREN expr RLONGARROW expr RPAREN  # sucessorEdges
@@ -39,12 +40,13 @@ expr: LPAREN expr RPAREN                            # nop
     | expr SECTION expr                             # sectionExpr
     | expr SETMINUS expr                            # setMinusExpr
     | (name=ID) LPAREN expr ASTERISK expr RPAREN    # multiplyExpr
+    | SOURCE LPAREN expr RPAREN                     # sourceExpr
+    | TARGET LPAREN expr RPAREN                     # targetExpr
     ;
 
 simpleExpr
     : EMPTYSET
     | namedExpr
-    | ASTERISK
     | taggedExpr
     ;
 
@@ -88,6 +90,14 @@ FOREACHNODE
     :   'for_each_node'
     ;
 
+SOURCE
+    :   'source'
+    ;
+
+TARGET
+    :   'target'
+    ;
+
 BEGIN
     :   'begin'
     ;
@@ -104,7 +114,7 @@ SECTION
     ;
 
 SETMINUS
-    :   '\\'
+    :   'minus'
     ;
 
 ASTERISK

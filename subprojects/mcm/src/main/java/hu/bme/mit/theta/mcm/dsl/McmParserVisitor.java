@@ -18,8 +18,8 @@ public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<List<EdgeD
     private final Map<String, UnaryOperator<List<EdgeDB>>> definitions;
 
     public McmParserVisitor() {
-        mcm = new MCM();
         definitions = new HashMap<>();
+        mcm = new MCM(definitions);
     }
 
     @Override
@@ -187,11 +187,45 @@ public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<List<EdgeD
     }
 
     @Override
+    public UnaryOperator<List<EdgeDB>> visitSourceExpr(McmDslParser.SourceExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                for (EdgeDB db : ctx.expr().accept(this).apply(List.of(edgeDB))) {
+                    ret.add(db.filterSource(db));
+                }
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitTargetExpr(McmDslParser.TargetExprContext ctx) {
+        return edgeDBList -> {
+            List<EdgeDB> ret = new ArrayList<>();
+            for (EdgeDB edgeDB : edgeDBList) {
+                for (EdgeDB db : ctx.expr().accept(this).apply(List.of(edgeDB))) {
+                    ret.add(db.filterTarget(db));
+                }
+            }
+            return ret;
+        };
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitAll(McmDslParser.AllContext ctx) {
+        return edgeDBList -> edgeDBList;
+    }
+
+    @Override
+    public UnaryOperator<List<EdgeDB>> visitNop(McmDslParser.NopContext ctx) {
+        return ctx.expr().accept(this);
+    }
+
+    @Override
     public UnaryOperator<List<EdgeDB>> visitSimpleExpr(McmDslParser.SimpleExprContext ctx) {
         if(ctx.EMPTYSET() != null) {
             return edgeDBList -> List.of(EdgeDB.empty());
-        } else if(ctx.ASTERISK() != null) {
-            return edgeDBList -> edgeDBList;
         }
         return super.visitSimpleExpr(ctx);
     }
@@ -201,7 +235,12 @@ public class McmParserVisitor extends McmDslBaseVisitor<UnaryOperator<List<EdgeD
         return edgeDBList -> {
             List<EdgeDB> ret = new ArrayList<>();
             for (EdgeDB edgeDB : edgeDBList) {
-                ret.add(edgeDB.filterNamed(ctx.name.getText()));
+                if(definitions.containsKey(ctx.name.getText())) {
+                    ret.addAll(definitions.get(ctx.name.getText()).apply(List.of(edgeDB)));
+                }
+                else {
+                    ret.add(edgeDB.filterNamed(ctx.name.getText()));
+                }
             }
             return ret;
         };

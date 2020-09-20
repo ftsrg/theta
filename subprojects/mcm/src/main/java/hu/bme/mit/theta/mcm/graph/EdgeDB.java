@@ -8,10 +8,8 @@ import hu.bme.mit.theta.mcm.graph.classification.nodes.Node;
 import hu.bme.mit.theta.mcm.graph.classification.nodes.Read;
 import hu.bme.mit.theta.mcm.graph.classification.nodes.Write;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -25,7 +23,7 @@ public class EdgeDB {
     private final boolean onlyLogicalValue;
     private final boolean truth;
 
-    public EdgeDB() {
+    private EdgeDB() {
         edges = new ReflexiveLabelledMap<>();
         onlyNodesAreValid = false;
         threadNodeMapping = new HashMap<>();
@@ -76,10 +74,10 @@ public class EdgeDB {
         Set<Node> rhsSet = rhs.edges.getValueSet();
         lhsSet.forEach(node -> edges.getValues(node).forEach(objects -> {
             if(objects.get1().equals(edgeLabel) && rhsSet.contains(objects.get2())) {
-                newEdges.addPair(objects.get2(), objects.get2(), "self");
+                newEdges.addPair(node, objects.get2(), edgeLabel);
             }
         }));
-        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, true);
+        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, false);
     }
 
     public EdgeDB filterSuccessors(String edgeLabel, EdgeDB lhs, EdgeDB rhs) {
@@ -87,13 +85,13 @@ public class EdgeDB {
         ReflexiveLabelledMap<Node, Node, String> lhsEdges = lhs.edges;
         Set<Node> rhsSet = rhs.edges.getValueSet();
         for (Node node : lhsEdges.getKeySet()) {
-            dfs(lhsEdges, node, edgeLabel, node1 -> {
+            dfs(edges, node, edgeLabel, node1 -> {
                 if(rhsSet.contains(node1)) {
-                    newEdges.addPair(node1, node1, "self");
+                    newEdges.addPair(node, node1, edgeLabel);
                 }
             });
         }
-        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, true);
+        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, false);
     }
 
     private void dfs(ReflexiveLabelledMap<Node, Node, String> edges, Node node, String edgeLabel, Consumer<Node> filter) {
@@ -206,6 +204,22 @@ public class EdgeDB {
         else {
             throw new UnsupportedOperationException("Trying to multiply edges!");
         }
+    }
+
+    public EdgeDB filterTarget(EdgeDB edgeDB) {
+        ReflexiveLabelledMap<Node, Node, String> newEdges = new ReflexiveLabelledMap<>();
+        for (Node node : edges.getValueSet()) {
+            newEdges.addPair(node, node, "self");
+        }
+        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, true);
+    }
+
+    public EdgeDB filterSource(EdgeDB edgeDB) {
+        ReflexiveLabelledMap<Node, Node, String> newEdges = new ReflexiveLabelledMap<>();
+        for (Node node : edges.getKeySet()) {
+            newEdges.addPair(node, node, "self");
+        }
+        return new EdgeDB(newEdges, threadNodeMapping, varNodeMapping, lastNode, true);
     }
 
     public EdgeDB filterNamed(String text) {
@@ -342,6 +356,89 @@ public class EdgeDB {
     public boolean isOk() {
         checkState(onlyLogicalValue);
         return truth;
+    }
+
+    public void addEdge(Node source, Node target, String label, boolean replaceSource, boolean replaceTarget) {
+        if(!getNodes().contains(target)) {
+            lastNode = target;
+        }
+        if(replaceSource && edges.getValueSet().contains(target)) {
+            for (Tuple2<String, Node> key : edges.getKeys(target)) {
+                Tuple2<Optional<Node>, Optional<Node>> rm = edges.removePair(key.get2(), target, label);
+                removeDeadNodes(rm);
+            }
+        }
+        if(replaceTarget && edges.getKeySet().contains(target)) {
+            for (Tuple2<String, Node> value : edges.getValues(source)) {
+                Tuple2<Optional<Node>, Optional<Node>> rm = edges.removePair(source, value.get2(), label);
+                removeDeadNodes(rm);
+            }
+        }
+        edges.addPair(source, target, label);
+        threadNodeMapping.putIfAbsent(source.getParentThread(), new HashSet<>());
+        threadNodeMapping.putIfAbsent(target.getParentThread(), new HashSet<>());
+        threadNodeMapping.get(source.getParentThread()).add(source);
+        threadNodeMapping.get(target.getParentThread()).add(target);
+
+        varNodeMapping.putIfAbsent(source.getVar(), new HashSet<>());
+        varNodeMapping.putIfAbsent(target.getVar(), new HashSet<>());
+        varNodeMapping.get(source.getVar()).add(source);
+        varNodeMapping.get(target.getVar()).add(target);
+    }
+
+    private void removeDeadNodes(Tuple2<Optional<Node>, Optional<Node>> rm) {
+        if(rm.get1().isPresent()) {
+            threadNodeMapping.get(rm.get1().get().getParentThread()).remove(rm.get1().get());
+            varNodeMapping.get(rm.get1().get().getVar()).remove(rm.get1().get());
+        }
+        if(rm.get2().isPresent()) {
+            threadNodeMapping.get(rm.get2().get().getParentThread()).remove(rm.get2().get());
+            varNodeMapping.get(rm.get2().get().getVar()).remove(rm.get2().get());
+        }
+    }
+
+    public void printGraph(OutputStream out) throws IOException {
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new PrintWriter(out))) {
+            bufferedWriter.write("digraph G{");
+            bufferedWriter.newLine();
+            Set<Node> nodes = getNodes();
+            for (Node node : threadNodeMapping.getOrDefault(Thread.getInitialThread(), new HashSet<>())) {
+                if(nodes.contains(node)) {
+                    bufferedWriter.write("\"" + node.toString() + "\"");
+                    bufferedWriter.newLine();
+                }
+            }
+            int i = 0;
+            for (Thread thread : threadNodeMapping.keySet()) {
+                if(thread != Thread.getInitialThread()) {
+                    bufferedWriter.write("subgraph cluster_" + i++ + "{ ");
+                    bufferedWriter.write("label=" + thread.toString());
+                    bufferedWriter.newLine();
+                    for (Node node : threadNodeMapping.get(thread)) {
+                        if(nodes.contains(node)) {
+                            bufferedWriter.write("\"" + node.toString() + "\"");
+                            bufferedWriter.newLine();
+                        }
+                    }
+                    bufferedWriter.write("}");
+                    bufferedWriter.newLine();
+                }
+            }
+            for (Node node : edges.getKeySet()) {
+                for (Tuple2<String, Node> value : edges.getValues(node)) {
+                    StringBuilder styling = new StringBuilder(" [");
+                    switch(value.get1()){
+                        case "po": styling.append("]"); break;
+                        case "rf": styling.append("constraint=false,color=green,style=dashed]"); break;
+                        case "mo": styling.append("constraint=false,color=purple,style=dashed]"); break;
+                        default: styling.append("constraint=false,label=").append(value.get1()).append("]"); break;
+                    }
+                    bufferedWriter.write("\"" + node + "\"" + " -> " + "\"" + value.get2() + "\"" + styling);
+                    bufferedWriter.newLine();
+                }
+            }
+            bufferedWriter.write("}");
+        }
     }
 
 }

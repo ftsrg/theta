@@ -27,7 +27,7 @@ public class ReflexiveLabelledMap<K, V, L>{
     }
 
     public Set<Tuple2<L, V>> getValues(K k) {
-        return Collections.unmodifiableSet(forwardMap.get(k));
+        return Collections.unmodifiableSet(forwardMap.getOrDefault(k, new HashSet<>()));
     }
 
     public void addPair(K k, V v, L l) {
@@ -37,8 +37,24 @@ public class ReflexiveLabelledMap<K, V, L>{
         reverseMap.get(v).add(Tuple2.of(l, k));
     }
 
+    public Tuple2<Optional<K>, Optional<V>> removePair(K k, V v, L l) {
+        K rmK = null;
+        V rmV = null;
+        forwardMap.get(k).remove(Tuple2.of(v, l));
+        if(forwardMap.get(k).isEmpty()){
+            forwardMap.remove(k);
+            rmK = k;
+        }
+        reverseMap.get(v).remove(Tuple2.of(k, l));
+        if(reverseMap.get(v).isEmpty()) {
+            reverseMap.remove(v);
+            rmV = v;
+        }
+        return Tuple2.of(Optional.ofNullable(rmK), Optional.ofNullable(rmV));
+    }
+
     public ReflexiveLabelledMap<K, V, L> duplicate() {
-        ReflexiveLabelledMap<K, V, L> ret = new ReflexiveLabelledMap<K, V, L>();
+        ReflexiveLabelledMap<K, V, L> ret = new ReflexiveLabelledMap<>();
         forwardMap.forEach((k, vs) -> ret.forwardMap.put(k, new HashSet<>(vs)));
         reverseMap.forEach((k, vs) -> ret.reverseMap.put(k, new HashSet<>(vs)));
         return ret;
