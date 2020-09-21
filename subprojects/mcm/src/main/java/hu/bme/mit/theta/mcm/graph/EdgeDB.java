@@ -56,6 +56,21 @@ public class EdgeDB {
         this.truth = truth;
     }
 
+    private EdgeDB(
+            ReflexiveLabelledMap<Node, Node, String> edges,
+            Map<Thread, Set<Node>> threadNodeMapping,
+            Map<Variable, Set<Node>> varNodeMapping,
+            boolean onlyNodesAreValid,
+            boolean onlyLogicalValue,
+            boolean truth) {
+        this.edges = edges;
+        this.threadNodeMapping = threadNodeMapping;
+        this.varNodeMapping = varNodeMapping;
+        this.onlyNodesAreValid = onlyNodesAreValid;
+        this.onlyLogicalValue = onlyLogicalValue;
+        this.truth = truth;
+    }
+
     public static EdgeDB empty() {
         return new EdgeDB();
     }
@@ -66,6 +81,25 @@ public class EdgeDB {
 
     public static EdgeDB falseValue() {
         return new EdgeDB(true);
+    }
+
+    public EdgeDB duplicate() {
+        Map<Thread, Set<Node>> threadNodeMapping = new HashMap<>();
+        if (this.threadNodeMapping != null) {
+            this.threadNodeMapping.forEach((thread, nodes) -> threadNodeMapping.put(thread, new HashSet<>(nodes)));
+        }
+        Map<Variable, Set<Node>> varNodeMapping = new HashMap<>();
+        if (this.varNodeMapping != null) {
+            this.varNodeMapping.forEach((var, nodes) -> varNodeMapping.put(var, new HashSet<>(nodes)));
+        }
+        return new EdgeDB(
+                edges.duplicate(),
+                threadNodeMapping,
+                varNodeMapping,
+                onlyNodesAreValid,
+                onlyLogicalValue,
+                truth
+        );
     }
 
     public EdgeDB filterNext(String edgeLabel, EdgeDB lhs, EdgeDB rhs) {

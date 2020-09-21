@@ -8,4 +8,5 @@ dependencies {
     compile(project(":theta-analysis"))
     compile(project(":theta-cfa"))
     compile(project(":theta-xcfa"))
+    compile(project(":theta-mcm"))
 }
