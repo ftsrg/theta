@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
@@ -68,6 +69,9 @@ public final class XtaCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	public XtaCli(final String[] args) {
 		this.args = args;
 		this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
@@ -90,6 +94,11 @@ public final class XtaCli {
 
 		if (headerOnly) {
 			LazyXtaStatistics.writeHeader(writer);
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
 			return;
 		}
 
