@@ -55,6 +55,7 @@ If the extension of the output file is `pdf`, `png` or `svg` an automatic visual
 Otherwise, the output is simply in `dot` format.
 
 The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
+* `--version`: Print version info (in this case `--model` is of course not required).
 
 ### For developer usage
 

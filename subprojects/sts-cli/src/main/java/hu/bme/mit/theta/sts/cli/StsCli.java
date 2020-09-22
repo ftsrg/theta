@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -104,6 +105,9 @@ public class StsCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public StsCli(final String[] args) {
@@ -129,6 +133,11 @@ public class StsCli {
 
 		if (headerOnly) {
 			printHeader();
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
 			return;
 		}
 

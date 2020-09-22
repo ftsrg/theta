@@ -49,6 +49,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -130,6 +131,9 @@ public class CfaCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public CfaCli(final String[] args) {
@@ -155,6 +159,11 @@ public class CfaCli {
 
 		if (headerOnly) {
 			printHeader();
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
 			return;
 		}
 
