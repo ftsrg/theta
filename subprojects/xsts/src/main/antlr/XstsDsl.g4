@@ -111,24 +111,31 @@ multiplicativeOperator:
 ;
 
 negExpr:
-	primaryExpr|
+	accessorExpr|
 	MINUS ops+=negExpr
 ;
+
+accessorExpr:
+    op=primaryExpr (acc=access)?
+;
+
+access:
+    readIndex=arrayReadAccess|
+    writeIndex=arrayWriteAccess
+;
+
+arrayReadAccess:
+	LBRACK index=expr RBRACK
+	;
+
+arrayWriteAccess:
+	LBRACK index=expr LARROW elem=expr RBRACK
+	;
 
 primaryExpr:
 	value|
 	parenExpr
 ;
-
-parenExpr:
-	LPAREN ops+=expr RPAREN | prime
-;
-
-prime:
-    ref=reference | NEXT LPAREN inner=prime RPAREN;
-
-variableDeclaration:
-    CTRL? VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
 
 value:
     literal|reference;
@@ -137,10 +144,17 @@ literal:
     INTLIT|BOOLLIT|arrLitExpr
     ;
 
+parenExpr:
+	LPAREN ops+=expr RPAREN
+;
+
 arrLitExpr
     :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=typeName GT)? DEFAULT LARROW elseExpr=expr RBRACK
     |   LBRACK LT indexType=typeName GT DEFAULT LARROW elseExpr=expr RBRACK
     ;
+
+variableDeclaration:
+    CTRL? VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
 
 reference:
     name=ID;
@@ -174,7 +188,6 @@ CHOICE: 'choice';
 NONDET_OR: 'or';
 SEMICOLON: ';';
 ASSUME: 'assume';
-NEXT: 'next';
 AND: '&&';
 OR: '||';
 IMPLIES: '=>';

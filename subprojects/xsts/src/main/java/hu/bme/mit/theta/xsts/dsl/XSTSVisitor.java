@@ -1,15 +1,22 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser;
+import org.antlr.v4.codegen.model.decl.Decl;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -17,8 +24,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -90,6 +100,23 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 		return null;
 	}
 
+	private Type visitType(XstsDslParser.TypeNameContext ctx){
+		if (ctx.BOOL() != null) {
+			return BoolType.getInstance();
+		} else if (ctx.INT() != null) {
+			return IntType.getInstance();
+		} else if (ctx.arrayType()!=null){
+			var indexType = visitType(ctx.arrayType().indexType);
+			var elemType = visitType(ctx.arrayType().elemType);
+			return ArrayType.of(indexType,elemType);
+		} else if (ctx.customType()!=null) {
+			return IntType.getInstance();
+		} else {
+			throw new ParseException(ctx,"Couldn't parse type "+ctx.getText());
+		}
+	}
+
+
 	@Override
 	public Expr visitVariableDeclaration(XstsDslParser.VariableDeclarationContext ctx) {
 		checkIfTempVar(ctx.name.getText());
@@ -99,16 +126,15 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 			throw new ParseException(ctx, "'" + ctx.name.getText() + "' is a type literal, cannot declare variable with this name.");
 		}
 
-		VarDecl decl;
-		if (ctx.type.BOOL() != null) {
-			decl = Decls.Var(ctx.name.getText(), BoolType.getInstance());
-		} else if (ctx.type.INT() != null) {
-			decl = Decls.Var(ctx.name.getText(), IntType.getInstance());
-		} else if (nameToTypeMap.containsKey(ctx.type.customType().name.getText())) {
-			decl = Decls.Var(ctx.name.getText(), IntType.getInstance());
-			varToTypeMap.put(decl, nameToTypeMap.get(ctx.type.customType().name.getText()));
-		} else {
-			throw new ParseException(ctx, "Unknown type '" + ctx.type.customType().name.getText() + "'.");
+		Type type = visitType(ctx.type);
+		VarDecl decl = Decls.Var(ctx.name.getText(), type);
+		if (ctx.type.customType()!=null){
+			if (nameToTypeMap.containsKey(ctx.type.customType().name.getText())) {
+				decl = Decls.Var(ctx.name.getText(), IntType.getInstance());
+				varToTypeMap.put(decl, nameToTypeMap.get(ctx.type.customType().name.getText()));
+			} else {
+				throw new ParseException(ctx, "Unknown type '" + ctx.type.customType().name.getText() + "'.");
+			}
 		}
 
 		if (ctx.CTRL() != null) ctrlVars.add(decl);
@@ -247,7 +273,20 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 	public Expr visitNegExpr(XstsDslParser.NegExprContext ctx) {
 		if (ctx.ops.size() > 0) {
 			return Neg(visitNegExpr(ctx.ops.get(0)));
-		} else return visitPrimaryExpr(ctx.primaryExpr());
+		} else return visitAccessorExpr(ctx.accessorExpr());
+	}
+
+	@Override
+	public Expr visitAccessorExpr(XstsDslParser.AccessorExprContext ctx) {
+		if(ctx.acc==null){
+			return visitPrimaryExpr(ctx.op);
+		} else {
+			if(ctx.acc.readIndex!=null){
+				return ArrayReadExpr.of(visitPrimaryExpr(ctx.op),visitExpr(ctx.acc.readIndex.index));
+			}else if(ctx.acc.writeIndex!=null){
+				return ArrayWriteExpr.of(visitPrimaryExpr(ctx.op),visitExpr(ctx.acc.writeIndex.index),visitExpr(ctx.acc.writeIndex.elem));
+			}else throw new ParseException(ctx,"Invalid accessor expression.");
+		}
 	}
 
 	@Override
@@ -258,8 +297,7 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 
 	@Override
 	public Expr visitParenExpr(XstsDslParser.ParenExprContext ctx) {
-		if (ctx.prime() != null) return visitPrime(ctx.prime());
-		else return visitExpr(ctx.ops.get(0));
+		return visitExpr(ctx.ops.get(0));
 	}
 
 	@Override
@@ -275,8 +313,40 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 			else return False();
 		} else if (ctx.INTLIT() != null) {
 			return Int(ctx.INTLIT().getText());
-		} else
+		} else if (ctx.arrLitExpr() != null){
+			return visitArrLitExpr(ctx.arrLitExpr());
+		} else {
 			throw new ParseException(ctx, "Literal '" + ctx.getText() + "' could not be resolved to integer or boolean type.");
+		}
+	}
+
+	@Override
+	public Expr visitArrLitExpr(XstsDslParser.ArrLitExprContext ctx) {
+		return createArrayLitExpr(ctx);
+	}
+
+	private Expr createArrayLitExpr(final XstsDslParser.ArrLitExprContext ctx) {
+		final Type indexType;
+		final Type valueType;
+
+		if(ctx.indexType != null) {
+			indexType = visitType(ctx.indexType);
+		}
+		else {
+			indexType = visitExpr(ctx.indexExpr.get(0)).getType();
+		}
+		valueType = visitExpr(ctx.elseExpr).getType();
+
+		final List<Tuple2<Expr, Expr>> elems = IntStream
+				.range(0, ctx.indexExpr.size())
+				.mapToObj(i -> Tuple2.of(
+						visitExpr(ctx.indexExpr.get(i)),
+						visitExpr(ctx.valueExpr.get(i))
+				))
+				.collect(Collectors.toUnmodifiableList());
+
+		final Expr elseExpr = visitExpr(ctx.elseExpr);
+		throw new UnsupportedOperationException("Array literal processing not yet implemented");
 	}
 
 	@Override
@@ -286,12 +356,6 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr> {
 		else if (nameToDeclMap.containsKey(ctx.name.getText())) return nameToDeclMap.get(ctx.name.getText()).getRef();
 		else throw new ParseException(ctx, "Literal or reference '" + ctx.name.getText() + "' could not be resolved.");
 
-	}
-
-	@Override
-	public Expr visitPrime(XstsDslParser.PrimeContext ctx) {
-		if (ctx.reference() != null) return visitReference(ctx.reference());
-		else throw new ParseException(ctx, "Prime expressions are not supported.");
 	}
 
 	public Stmt processAction(XstsDslParser.ActionContext ctx) {
