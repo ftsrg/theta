@@ -1,5 +1,3 @@
-_01same = *
-_02parens = (_01same)
 _03emptyDb = {}
 _04all = A
 _05writes = W

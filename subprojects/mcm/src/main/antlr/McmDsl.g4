@@ -28,8 +28,7 @@ definition
     : (name=ID) EQ expr
     ;
 
-expr: ASTERISK                                      # all
-    | LPAREN expr RPAREN                            # nop
+expr: LPAREN expr RPAREN                            # nop
     | simpleExpr                                    # simple
     | namedExpr LPAREN expr RARROW expr RPAREN      # nextEdge
     | namedExpr LPAREN expr RLONGARROW expr RPAREN  # sucessorEdges

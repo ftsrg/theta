@@ -1,10 +1,9 @@
-// same thread stores in PO order
 stores = for_each_thread begin
             mo[thread] union po[thread]
          end
 
 coherence = for_each_thread begin
-                for_each_node mo(rf(A -> R[thread][new]) --> W) begin
+                for_each_node target(mo(source(rf(A -> R[thread][new])) --> W)) begin
                     rf intersect rf(W[node] * R[thread])
                 end
             end
