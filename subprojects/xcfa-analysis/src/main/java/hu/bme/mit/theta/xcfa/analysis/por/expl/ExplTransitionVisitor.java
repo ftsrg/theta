@@ -23,20 +23,7 @@ import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaInternalNotifyStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.por.transform.InternalNotifyStmt;
@@ -75,6 +62,11 @@ final class ExplTransitionVisitor implements XcfaStmtVisitor<ExplStateReadOnlyIn
 
     @Override
     public Optional<TransitionExecutorInterface> visit(LoadStmt loadStmt, ExplStateReadOnlyInterface readOnlyState) {
+        throw new UnsupportedOperationException("Operation not supported!");
+    }
+
+    @Override
+    public Optional<TransitionExecutorInterface> visit(FenceStmt fenceStmt, ExplStateReadOnlyInterface param) {
         throw new UnsupportedOperationException("Operation not supported!");
     }
 

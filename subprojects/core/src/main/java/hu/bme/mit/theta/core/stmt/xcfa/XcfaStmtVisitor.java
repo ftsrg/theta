@@ -25,6 +25,8 @@ public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
 
 	R visit(LoadStmt loadStmt, P param);
 
+	R visit(FenceStmt fenceStmt, P param);
+
 	R visit(AtomicBeginStmt atomicBeginStmt, P param);
 
 	R visit(AtomicEndStmt atomicEndStmt, P param);

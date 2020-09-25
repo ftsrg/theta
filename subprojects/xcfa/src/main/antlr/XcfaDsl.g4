@@ -364,6 +364,7 @@ FALSE
 stmt:	assignStmt
 	|	storeStmt
 	|	loadStmt
+	|   fenceStmt
 	|	havocStmt
 	|	assumeStmt
 	|	returnStmt
@@ -388,6 +389,10 @@ assignStmt
 
 storeStmt
 	:	lhs=ID RARROW rhs=ID (atomic=ATOMICTYPE ATSIGN ordering=ID)? 
+	;
+
+fenceStmt
+	:	FENCE (fenceType=ID)?
 	;
 
 loadStmt
@@ -462,6 +467,10 @@ RETURN
 
 CALL:	'call'
 	;
+
+FENCE
+    :   'fence'
+    ;
 
 ATOMICBEGIN
 	:	'atomic-begin'

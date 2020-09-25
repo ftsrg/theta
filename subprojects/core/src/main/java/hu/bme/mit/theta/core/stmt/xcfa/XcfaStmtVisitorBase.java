@@ -35,6 +35,11 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R>{
     }
 
     @Override
+    public R visit(FenceStmt fenceStmt, P param) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
     public R visit(AtomicBeginStmt atomicBeginStmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }

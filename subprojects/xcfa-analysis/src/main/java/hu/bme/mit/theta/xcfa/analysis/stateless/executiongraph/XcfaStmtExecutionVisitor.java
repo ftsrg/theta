@@ -72,6 +72,11 @@ public class XcfaStmtExecutionVisitor
     }
 
     @Override
+    public Void visit(FenceStmt fenceStmt, Tuple3<MutablePartitionedValuation, XCFA.Process, ExecutionGraph> param) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public Void visit(AtomicBeginStmt atomicBeginStmt, Tuple3<MutablePartitionedValuation, XCFA.Process, ExecutionGraph> param) {
         param.get3().setCurrentlyAtomic(param.get2());
         return null;
