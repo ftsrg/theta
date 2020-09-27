@@ -73,7 +73,8 @@ public class XcfaStmtExecutionVisitor
 
     @Override
     public Void visit(FenceStmt fenceStmt, Tuple3<MutablePartitionedValuation, XCFA.Process, ExecutionGraph> param) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        param.get3().addFence(param.get2(), fenceStmt.getType());
+        return null;
     }
 
     @Override

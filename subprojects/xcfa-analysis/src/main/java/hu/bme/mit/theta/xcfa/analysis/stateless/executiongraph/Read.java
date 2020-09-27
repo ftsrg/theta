@@ -63,6 +63,6 @@ class Read extends MemoryAccess {
 
     @Override
     public String toString() {
-        return "R(" + getGlobalVar().getName() + ")_" + id;
+        return "\"R(" + getGlobalVar().getName() + ")_" + id + "\"";
     }
 }

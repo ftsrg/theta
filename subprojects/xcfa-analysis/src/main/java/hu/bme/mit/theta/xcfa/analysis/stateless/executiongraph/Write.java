@@ -26,6 +26,6 @@ class Write extends MemoryAccess {
 
     @Override
     public String toString() {
-        return "W(" + getGlobalVar().getName() + ", " + getValue() + ")_" + id;
+        return "\"W(" + getGlobalVar().getName() + ", " + getValue() + ")_" + id + "\"";
     }
 }
