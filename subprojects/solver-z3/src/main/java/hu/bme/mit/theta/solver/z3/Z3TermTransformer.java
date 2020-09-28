@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
@@ -117,6 +118,7 @@ final class Z3TermTransformer {
 
 	public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
+		checkNotNull(model, "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
 		pushParams(vars, paramDecls);
