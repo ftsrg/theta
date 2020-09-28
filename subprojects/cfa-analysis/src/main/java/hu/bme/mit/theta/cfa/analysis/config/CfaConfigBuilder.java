@@ -147,19 +147,19 @@ public class CfaConfigBuilder {
 	public enum Encoding {
 		SBE {
 			@Override
-			public CfaLts getLts() {
+			public CfaLts getLts(CFA.Loc targetLoc) {
 				return new CfaCachedLts(CfaSbeLts.getInstance());
 			}
 		},
 
 		LBE {
 			@Override
-			public CfaLts getLts() {
-				return new CfaCachedLts(CfaLbeLts.getInstance());
+			public CfaLts getLts(CFA.Loc targetLoc) {
+				return new CfaCachedLts(new CfaLbeLts(targetLoc));
 			}
 		};
 
-		public abstract CfaLts getLts();
+		public abstract CfaLts getLts(CFA.Loc targetLoc);
 	}
 
 	public enum InitPrec {
@@ -226,7 +226,7 @@ public class CfaConfigBuilder {
 
 	public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa, final CFA.Loc errLoc) {
 		final ItpSolver solver = solverFactory.createItpSolver();
-		final CfaLts lts = encoding.getLts();
+		final CfaLts lts = encoding.getLts(errLoc);
 
 		if (domain == Domain.EXPL) {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
