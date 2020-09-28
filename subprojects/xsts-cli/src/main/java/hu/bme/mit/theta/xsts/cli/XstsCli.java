@@ -139,9 +139,7 @@ public class XstsCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -201,6 +199,7 @@ public class XstsCli {
 				writer.cell("");
 			}
 			writer.cell(sts.getVars().size());
+			writer.newRow();
 		}
 	}
 
@@ -208,6 +207,7 @@ public class XstsCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {

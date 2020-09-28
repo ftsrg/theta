@@ -153,9 +153,7 @@ public class StsCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -221,6 +219,7 @@ public class StsCli {
 			}
 			writer.cell(sts.getVars().size());
 			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.newRow();
 		}
 	}
 
@@ -228,6 +227,7 @@ public class StsCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
