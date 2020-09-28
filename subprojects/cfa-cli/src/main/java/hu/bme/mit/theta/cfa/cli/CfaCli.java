@@ -191,9 +191,7 @@ public class CfaCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -248,6 +246,7 @@ public class CfaCli {
 			} else {
 				writer.cell("");
 			}
+			writer.newRow();
 		}
 	}
 
@@ -255,6 +254,7 @@ public class CfaCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {

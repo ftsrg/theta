@@ -113,6 +113,7 @@ public final class XtaCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
+			System.exit(1);
 		}
 	}
 
