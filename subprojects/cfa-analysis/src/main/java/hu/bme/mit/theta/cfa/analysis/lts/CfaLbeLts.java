@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class CfaLbeLts implements CfaLts {
 
-	private Loc targetLoc;
+	private final Loc targetLoc;
 
 	public CfaLbeLts(Loc targetLoc) {
 		this.targetLoc = checkNotNull(targetLoc, "Target location must be given for LBE encoder.");
