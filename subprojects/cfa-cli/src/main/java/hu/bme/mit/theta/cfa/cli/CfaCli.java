@@ -16,10 +16,6 @@
 package hu.bme.mit.theta.cfa.cli;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -58,16 +54,6 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.z3.*;
 
@@ -76,7 +62,6 @@ import hu.bme.mit.theta.solver.z3.*;
  */
 public class CfaCli {
 	private static final String JAR_NAME = "theta-cfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -213,7 +198,8 @@ public class CfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) throws Exception {
 		try {
-			return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
 		} catch (final Exception ex) {
@@ -267,16 +253,14 @@ public class CfaCli {
 		}
 	}
 
-	private void writeCex(final Unsafe<?, ?> status) {
+	private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();
