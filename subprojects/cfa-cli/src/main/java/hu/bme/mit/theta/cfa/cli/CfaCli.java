@@ -59,7 +59,6 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -69,7 +68,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class CfaCli {
 	private static final String JAR_NAME = "theta-cfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -224,7 +222,8 @@ public class CfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
 		} catch (final Exception ex) {
@@ -278,16 +277,14 @@ public class CfaCli {
 		}
 	}
 
-	private void writeCex(final Unsafe<?, ?> status) {
+	private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();
