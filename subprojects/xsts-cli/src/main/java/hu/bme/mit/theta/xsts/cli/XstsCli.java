@@ -45,7 +45,6 @@ import java.util.stream.Stream;
 public class XstsCli {
 
 	private static final String JAR_NAME = "theta-xsts-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -174,8 +173,9 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
-			return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).search(search).predSplit(predSplit).logger(logger).build(xsts);
+			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.search(search).predSplit(predSplit).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
@@ -220,18 +220,16 @@ public class XstsCli {
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 		//TODO remove temp vars, replace int values with literals
 
 		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, solverFactory, xsts);
+		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();
