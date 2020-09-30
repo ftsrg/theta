@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.cfa.analysis;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
@@ -17,9 +15,7 @@ import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class EncodingTest {
