@@ -36,8 +36,12 @@ public final class CfaLbeLts implements CfaLts {
 
 	private final Loc targetLoc;
 
-	public CfaLbeLts(Loc targetLoc) {
+	private CfaLbeLts(Loc targetLoc) {
 		this.targetLoc = checkNotNull(targetLoc, "Target location must be given for LBE encoder.");
+	}
+
+	public static CfaLbeLts of(Loc targetLoc) {
+		return new CfaLbeLts(targetLoc);
 	}
 
 	@Override
