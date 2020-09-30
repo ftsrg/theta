@@ -76,7 +76,7 @@ public class EncodingTest {
 
 	@Test
 	public void testLbe1() {
-		CfaLbeLts lts = new CfaLbeLts(getLocByName("L7"));
+		CfaLbeLts lts = CfaLbeLts.of(getLocByName("L7"));
 		Assert.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
 		Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L1"));
 		Assert.assertEquals(ImmutableSet.of("L4"), getNextLocs(lts, "L2"));
@@ -89,7 +89,7 @@ public class EncodingTest {
 
 	@Test
 	public void testLbe2() {
-		CfaLbeLts lts = new CfaLbeLts(getLocByName("L3"));
+		CfaLbeLts lts = CfaLbeLts.of(getLocByName("L3"));
 		Assert.assertEquals(ImmutableSet.of("L1"), getNextLocs(lts, "L0"));
 		Assert.assertEquals(ImmutableSet.of("L3", "L4"), getNextLocs(lts, "L1"));
 		Assert.assertEquals(ImmutableSet.of("L3"), getNextLocs(lts, "L2"));

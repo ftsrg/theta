@@ -155,7 +155,7 @@ public class CfaConfigBuilder {
 		LBE {
 			@Override
 			public CfaLts getLts(CFA.Loc targetLoc) {
-				return new CfaCachedLts(new CfaLbeLts(targetLoc));
+				return new CfaCachedLts(CfaLbeLts.of(targetLoc));
 			}
 		};
 
