@@ -147,19 +147,19 @@ public class CfaConfigBuilder {
 	public enum Encoding {
 		SBE {
 			@Override
-			public CfaLts getLts(CFA.Loc targetLoc) {
+			public CfaLts getLts(CFA.Loc errorLoc) {
 				return new CfaCachedLts(CfaSbeLts.getInstance());
 			}
 		},
 
 		LBE {
 			@Override
-			public CfaLts getLts(CFA.Loc targetLoc) {
-				return new CfaCachedLts(CfaLbeLts.of(targetLoc));
+			public CfaLts getLts(CFA.Loc errorLoc) {
+				return new CfaCachedLts(CfaLbeLts.of(errorLoc));
 			}
 		};
 
-		public abstract CfaLts getLts(CFA.Loc targetLoc);
+		public abstract CfaLts getLts(CFA.Loc errorLoc);
 	}
 
 	public enum InitPrec {
