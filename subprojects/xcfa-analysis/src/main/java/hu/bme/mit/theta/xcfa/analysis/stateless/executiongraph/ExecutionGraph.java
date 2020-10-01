@@ -34,7 +34,7 @@ public class ExecutionGraph implements Runnable{
     private final Map<VarDecl<?>, List<Read>> revisitableReads;               //deep
     private final Map<VarDecl<?>, List<Write>> writes;                        //deep
     private final Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr;  //deep
-    private final List<Write> mo;                                             //deep
+    private final Map<VarDecl<?>, List<Write>> mo;                            //deep
     private final Map<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> edges; //deep
 
     private final Map<XCFA.Process, List<StackFrame>> stackFrames;            //deep
@@ -56,7 +56,6 @@ public class ExecutionGraph implements Runnable{
         revisitableReads = new HashMap<>();
         writes = new HashMap<>();
         fr = new HashMap<>();
-        mo = new ArrayList<>();
         stackFrames = new HashMap<>();
         currentlyAtomic = null;
         mutablePartitionedValuation = new MutablePartitionedValuation();
@@ -64,6 +63,9 @@ public class ExecutionGraph implements Runnable{
         edges = new HashMap<>();
         this.xcfa = xcfa;
         this.path = new ArrayList<>();
+
+        mo = new HashMap<>();
+        xcfa.getGlobalVars().forEach(varDecl -> mo.put(varDecl, new ArrayList<>()));
 
         xcfa.getProcesses().forEach(process -> {
             stackFrames.put(process, new ArrayList<>());
@@ -91,7 +93,7 @@ public class ExecutionGraph implements Runnable{
             Map<VarDecl<?>, List<Write>> writes,
             Map<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> edges,
             Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr,
-            List<Write> mo,
+            Map<VarDecl<?>, List<Write>> mo,
             Map<XCFA.Process, List<StackFrame>> stackFrames,
             XCFA.Process currentlyAtomic,
             MutablePartitionedValuation mutablePartitionedValuation,
@@ -102,7 +104,8 @@ public class ExecutionGraph implements Runnable{
         this.initialWrites = initialWrites;
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
-        this.mo = new ArrayList<>(mo);
+        this.mo = new HashMap<>();
+        mo.forEach((varDecl, writes1) -> this.mo.put(varDecl, new ArrayList<>(writes1)));
         this.path = path;
         this.lastRead = new HashMap<>();
         lastRead.forEach((process, varDeclReadMap) -> this.lastRead.put(process, new HashMap<>(varDeclReadMap)));
@@ -169,10 +172,10 @@ public class ExecutionGraph implements Runnable{
         try {
             while(executeNextStmt())
             {
-                printGraph();
+                //printGraph(false);
                 ++step;
             }
-            printGraph();
+            printGraph(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -236,7 +239,7 @@ public class ExecutionGraph implements Runnable{
         this.writes.get(global).add(write);
         List<List<Read>> revisitSets = getRevisitSets(global);
         int childCnt = 0;
-        int size = mo.size();
+        int size = mo.get(global).size();
         for(int j = -1; j < size; ++j) {
             for(int i = 0; i < revisitSets.size(); ++i) {
                 List<Read> reads = revisitSets.get(i);
@@ -250,18 +253,18 @@ public class ExecutionGraph implements Runnable{
 
                 if(j == -1) {
                     if(size > 0) {
-                        executionGraph.edges.get(write).add(Tuple2.of(mo.get(j+1), "mo"));
+                        executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
                     }
                 }
                 else if(j < size-1) {
-                    executionGraph.edges.get(mo.get(j)).remove(Tuple2.of(mo.get(j+1), "mo"));
-                    executionGraph.edges.get(write).add(Tuple2.of(mo.get(j+1), "mo"));
-                    executionGraph.edges.get(mo.get(j)).add(Tuple2.of(write, "mo"));
+                    executionGraph.edges.get(mo.get(global).get(j)).remove(Tuple2.of(mo.get(global).get(j+1), "mo"));
+                    executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
+                    executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
                 }
                 else {
-                    executionGraph.edges.get(mo.get(j)).add(Tuple2.of(write, "mo"));
+                    executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
                 }
-                executionGraph.mo.add(j+1, write);
+                executionGraph.mo.get(global).add(j+1, write);
 
                 for(Read read : reads) {
                     Tuple2<MemoryAccess, String> edge = Tuple2.of(read, "rf");
@@ -291,6 +294,12 @@ public class ExecutionGraph implements Runnable{
             writes.put(global, new ArrayList<>());
         }
         writes.get(global).add(write);
+        List<Write> writes = mo.get(global);
+        if(writes.isEmpty()) {
+            writes.add(write);
+        } else {
+            throw new UnsupportedOperationException("Trying to create two initial writes for the same variable!");
+        }
     }
 
     void setCurrentlyAtomic(XCFA.Process currentlyAtomic) {
@@ -437,7 +446,7 @@ public class ExecutionGraph implements Runnable{
 
     private void invalidateFuture(Read read) {
         Map<XCFA.Process, Boolean> atomic = new HashMap<>();
-        invalidateFuture(read, atomic);
+        invalidateFuture(read, atomic, true);
 
         boolean foundOne = false;
         for (Map.Entry<XCFA.Process, Boolean> entry : atomic.entrySet()) {
@@ -451,17 +460,22 @@ public class ExecutionGraph implements Runnable{
         }
     }
 
-    private void invalidateFuture(MemoryAccess memoryAccess, Map<XCFA.Process, Boolean> atomic) {
+    private void invalidateFuture(MemoryAccess memoryAccess, Map<XCFA.Process, Boolean> atomic, boolean first) {
         if(memoryAccess instanceof Read) {
             edges.get(fr.get(memoryAccess).get1()).remove(fr.get(memoryAccess).get2());
             fr.remove(memoryAccess);
             revisitableReads.get(memoryAccess.getGlobalVar()).remove(memoryAccess);
         }
         for(Tuple2<MemoryAccess, String> edge : edges.get(memoryAccess)) {
-            invalidateFuture(edge.get1(), atomic);
+            invalidateFuture(edge.get1(), atomic, false);
         }
         atomic.put(memoryAccess.getParentProcess(), memoryAccess.revert(stackFrames, lastNode, mutablePartitionedValuation, getPartitionId(memoryAccess.getParentProcess())));
-        edges.put(memoryAccess, new HashSet<>());
+        if(first) {
+            edges.put(memoryAccess, new HashSet<>());
+        }
+        else {
+            edges.remove(memoryAccess);
+        }
     }
 
 
@@ -474,12 +488,22 @@ public class ExecutionGraph implements Runnable{
     /*
      * Prints the graph as a graphviz cluster
      */
-    private void printGraph() throws IOException {
-        StringBuilder path = new StringBuilder("out" + File.separator);
-        for (Integer integer : this.path) {
-            path.append(integer).append(File.separator);
+    private void printGraph(boolean isFinal) throws IOException {
+        File outFile;
+        if(!isFinal) {
+            StringBuilder path = new StringBuilder("out").append(File.separator).append("steps").append(File.separator);
+            for (Integer integer : this.path) {
+                path.append(integer).append(File.separator);
+            }
+            outFile = new File(path.append(step).append("graph.dot").toString());
         }
-        File outFile = new File(path.append(step).append("graph.dot").toString());
+        else {
+            StringBuilder path = new StringBuilder("out").append(File.separator).append("final").append(File.separator);
+            for (Integer integer : this.path) {
+                path.append(integer);
+            }
+            outFile = new File(path.append("graph.dot").toString());
+        }
         if (outFile.getParentFile().exists() || outFile.getParentFile().mkdirs()) {
             try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outFile))) {
                 bufferedWriter.write("digraph G {");
@@ -512,10 +536,10 @@ public class ExecutionGraph implements Runnable{
                             case "po":
                                 break;
                             case "rf":
-                                bufferedWriter.write(" [constraint=false,color=green,style=dashed,label=rf]");
+                                bufferedWriter.write(" [constraint=false,color=green,fontcolor=green,style=dashed,label=rf]");
                                 break;
                             case "mo":
-                                bufferedWriter.write(" [constraint=false,color=purple,style=dashed,label=mo]");
+                                bufferedWriter.write(" [constraint=false,color=purple,fontcolor=purple,style=dashed,label=mo]");
                                 break;
                             default:
                                 bufferedWriter.write(" [constraint=false,color=grey,style=dashed,label=" + tuple2.get2() + "]");
