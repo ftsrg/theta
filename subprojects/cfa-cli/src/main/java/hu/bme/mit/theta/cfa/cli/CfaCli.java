@@ -86,8 +86,8 @@ public class CfaCli {
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
 
-	@Parameter(names = "--targetloc", description = "Target (error) location")
-	String targetLoc = "";
+	@Parameter(names = "--errorloc", description = "Error (target) location")
+	String errorLoc = "";
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
@@ -180,14 +180,14 @@ public class CfaCli {
 			if (cfa.getErrorLoc().isPresent()) {
 				errLoc = cfa.getErrorLoc().get();
 			}
-			if (!targetLoc.isEmpty()) {
+			if (!errorLoc.isEmpty()) {
 				errLoc = null;
 				for (CFA.Loc running : cfa.getLocs()) {
-					if (running.getName().equals(targetLoc)) {
+					if (running.getName().equals(errorLoc)) {
 						errLoc = running;
 					}
 				}
-				checkNotNull(errLoc, "Location '" + targetLoc + "' not found in CFA");
+				checkNotNull(errLoc, "Location '" + errorLoc + "' not found in CFA");
 			}
 
 			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
