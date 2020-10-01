@@ -50,13 +50,13 @@ public final class CfaWriter {
 		for (final Loc loc : cfa.getLocs()) {
 			final String locName = "L" + loc.getName();
 			String locPrefix = "";
-			if (loc == cfa.getErrorLoc()) {
+			if (cfa.getErrorLoc().isPresent() && loc == cfa.getErrorLoc().get()) {
 				locPrefix += "error ";
 			}
 			if (loc == cfa.getInitLoc()) {
 				locPrefix += "init ";
 			}
-			if (loc == cfa.getFinalLoc()) {
+			if (cfa.getFinalLoc().isPresent() && loc == cfa.getFinalLoc().get()) {
 				locPrefix += "final ";
 			}
 			bw.write(String.format("\t%sloc %s", locPrefix, locName));

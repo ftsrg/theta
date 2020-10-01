@@ -82,14 +82,15 @@ public final class CfaVisualizer {
 		final String id = LOC_ID_PREFIX + ids.size();
 		ids.put(loc, id);
 		String label = loc.getName();
+		boolean isError = cfa.getErrorLoc().isPresent() && loc == cfa.getErrorLoc().get();
 		if (loc == cfa.getInitLoc()) {
 			label += " (init)";
-		} else if (loc == cfa.getFinalLoc()) {
+		} else if (cfa.getFinalLoc().isPresent() && loc == cfa.getFinalLoc().get()) {
 			label += " (end)";
-		} else if (loc == cfa.getErrorLoc()) {
+		} else if (isError) {
 			label += " (error)";
 		}
-		final int peripheries = loc == cfa.getErrorLoc() ? 2 : 1;
+		final int peripheries = isError ? 2 : 1;
 		final NodeAttributes nAttrs = NodeAttributes.builder().label(label).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
 				.lineStyle(LOC_LINE_STYLE).peripheries(peripheries).build();
 		graph.addNode(id, nAttrs);
