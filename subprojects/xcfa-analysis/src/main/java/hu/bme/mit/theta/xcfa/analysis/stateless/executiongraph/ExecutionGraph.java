@@ -466,6 +466,9 @@ public class ExecutionGraph implements Runnable{
             fr.remove(memoryAccess);
             revisitableReads.get(memoryAccess.getGlobalVar()).remove(memoryAccess);
         }
+        else if(memoryAccess instanceof Write) {
+            mo.get(memoryAccess.getGlobalVar()).remove(memoryAccess);
+        }
         for(Tuple2<MemoryAccess, String> edge : edges.get(memoryAccess)) {
             invalidateFuture(edge.get1(), atomic, false);
         }

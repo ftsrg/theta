@@ -184,7 +184,7 @@ final class XcfaStatement {
 
 		@Override
 		public Stmt visitFenceStmt(XcfaDslParser.FenceStmtContext ctx) {
-			return new FenceStmt(ctx.fenceType.getText());
+			return new FenceStmt(ctx.fenceType == null ? "" : ctx.fenceType.getText());
 		}
 
 		@Override
