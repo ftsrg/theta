@@ -1,6 +1,6 @@
 ## Overview
 
-The `cfa-cli` project is an executable (command line) tool for running CEGAR-based analyses on CFAs.
+The `cfa-cli` project is an executable (command line) tool for running CEGAR-based location-reachability analyses on CFAs.
 Furthermore, it also includes some utilities, such as calculating metrics or visualizing the CFA.
 For more information about the CFA formalism and its supported language elements, take a look at the [`cfa`](../cfa/README.md) project.
 
@@ -46,6 +46,7 @@ Note that the model must be given as the first positional argument (without `--m
 All arguments are optional, except `--model`.
 
 * `--model`: Path of the input CFA model (mandatory).
+* `--errorloc`: Name of the error (target) location in the CFA, which is checked for reachability. The CFA is safe if the error location is not reachable, and unsafe otherwise. This argument can be omitted if a location in the CFA is marked with the error keyword. If there is an error location marked in the CFA and this argument is also given, the argument has priority.
 * `--cex`: Output file where the counterexample is written (if the result is unsafe). If the argument is not given (default) the counterexample is not printed. Use `CON` (Windows) or `/dev/stdout` (Linux) as argument to print to the standard output.
 * `--loglevel`: Detailedness of logging.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
