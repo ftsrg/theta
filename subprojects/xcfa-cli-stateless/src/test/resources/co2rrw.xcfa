@@ -10,7 +10,6 @@ main process p0 {
 
         L0 -> L1 {
             a <- x
-            fence
         }
 
         L1 -> Lf {
