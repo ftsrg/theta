@@ -6,26 +6,26 @@ import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SetMinus<T extends MemoryAccess, L> extends Filter<T, L> {
-    private final Filter<T, L> lhs;
-    private final Filter<T, L> rhs;
+public class SetMinus<T extends MemoryAccess> extends Filter<T> {
+    private final Filter<T> lhs;
+    private final Filter<T> rhs;
     private Set<GraphOrNodeSet<T>> last;
 
-    public SetMinus(Filter<T, L> lhs, Filter<T, L> rhs) {
+    public SetMinus(Filter<T> lhs, Filter<T> rhs) {
         this.lhs = lhs;
         this.rhs = rhs;
         this.last = null;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         Set<GraphOrNodeSet<T>> lhsSet = this.lhs.filterMk(source, target, label, isFinal);
         Set<GraphOrNodeSet<T>> rhsSet = this.rhs.filterMk(source, target, label, isFinal);
         return getSets(lhsSet, rhsSet);
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         Set<GraphOrNodeSet<T>> lhsSet = this.lhs.filterRm(source, target, label);
         Set<GraphOrNodeSet<T>> rhsSet = this.rhs.filterRm(source, target, label);
         return getSets(lhsSet, rhsSet);

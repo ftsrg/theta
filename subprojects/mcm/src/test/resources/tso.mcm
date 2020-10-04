@@ -4,7 +4,7 @@ stores = for_each_thread begin
 
 coherence = for_each_thread begin
                 for_each_node target(mo(source(rf(A -> R[thread][new])) --> W)) begin
-                    rf intersect rf(W[node] * R[thread])
+                    rf intersect (W[node] * R[thread])
                 end
             end
 

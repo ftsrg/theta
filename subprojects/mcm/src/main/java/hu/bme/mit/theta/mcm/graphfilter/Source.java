@@ -8,22 +8,22 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class Source<T extends MemoryAccess, L> extends Filter<T, L> {
-    private final Filter<T, L> op;
+public class Source<T extends MemoryAccess> extends Filter<T> {
+    private final Filter<T> op;
     private Set<GraphOrNodeSet<T>> last;
 
-    public Source(Filter<T, L> op) {
+    public Source(Filter<T> op) {
         this.op = op;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         Set<GraphOrNodeSet<T>> opSet = this.op.filterMk(source, target, label, isFinal);
         return getTargets(opSet);
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         Set<GraphOrNodeSet<T>> opSet = this.op.filterRm(source, target, label);
         return getTargets(opSet);
     }

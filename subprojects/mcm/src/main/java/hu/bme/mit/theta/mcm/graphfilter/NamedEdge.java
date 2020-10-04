@@ -6,28 +6,30 @@ import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.Set;
 
-public class NamedEdge<T extends MemoryAccess, L> extends Filter<T, L> {
-    public final Graph<T> graph;
-    public final L edgeLabel;
+public class NamedEdge<T extends MemoryAccess> extends Filter<T> {
+    public final GraphOrNodeSet<T> graph;
+    public final String edgeLabel;
 
-    public NamedEdge(L edgeLabel) {
+    public NamedEdge(String edgeLabel) {
         this.edgeLabel = edgeLabel;
-        this.graph = Graph.create(false);
+        this.graph = GraphOrNodeSet.of(Graph.create(false));
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         if(label.equals(this.edgeLabel)) {
-            graph.addEdge(source, target, isFinal);
+            graph.getGraph().addEdge(source, target, isFinal);
+            graph.setChanged(true);
         }
-        return Set.of(GraphOrNodeSet.of(graph));
+        return Set.of(graph);
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         if(label.equals(this.edgeLabel)) {
-            graph.removeEdge(source, target);
+            graph.getGraph().removeEdge(source, target);
+            graph.setChanged(true);
         }
-        return Set.of(GraphOrNodeSet.of(graph));
+        return Set.of(graph);
     }
 }

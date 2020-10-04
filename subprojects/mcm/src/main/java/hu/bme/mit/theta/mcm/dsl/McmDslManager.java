@@ -20,7 +20,7 @@ public class McmDslManager {
         final McmDslParser parser = new McmDslParser(tokens);
 
         final McmDslParser.SpecificationContext context = parser.specification();
-        McmParserVisitor mcmVisitor = new McmParserVisitor();
+        McmDefinitionParserVisitor mcmVisitor = new McmDefinitionParserVisitor();
         context.accept(mcmVisitor);
         return mcmVisitor.getMcm();
     }

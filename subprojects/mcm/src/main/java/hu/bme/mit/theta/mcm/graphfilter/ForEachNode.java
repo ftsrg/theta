@@ -8,18 +8,18 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class ForEachNode<T extends MemoryAccess, L> extends Filter<T, L> {
-    private final Filter<T, L> pattern;
-    private Filter<T, L> op;
+public class ForEachNode<T extends MemoryAccess> extends Filter<T> {
+    private final Filter<T> pattern;
+    private Filter<T> op;
     private T currentNode;
 
-    public ForEachNode(Filter<T, L> pattern) {
+    public ForEachNode(Filter<T> pattern) {
         this.pattern = pattern;
         this.currentNode = null;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         checkState(op != null, "Set the operand before use!");
         Set<GraphOrNodeSet<T>> patterns = pattern.filterMk(source, target, label, isFinal);
         Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
@@ -34,7 +34,7 @@ public class ForEachNode<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label){
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label){
         checkState(op != null, "Set the operand before use!");
         Set<GraphOrNodeSet<T>> patterns = pattern.filterRm(source, target, label);
         Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
@@ -48,7 +48,7 @@ public class ForEachNode<T extends MemoryAccess, L> extends Filter<T, L> {
         return retSet;
     }
 
-    public void setOp(Filter<T, L> op) {
+    public void setOp(Filter<T> op) {
         this.op = op;
     }
 

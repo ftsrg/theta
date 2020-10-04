@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -150,6 +151,7 @@ public class ExecutionGraph implements Runnable{
 
 
     // PUBLIC METHODS
+    private static AtomicInteger cnt = new AtomicInteger(0);
 
     public void execute() {
         threadPool = new ThreadPoolExecutor(0, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
@@ -169,16 +171,17 @@ public class ExecutionGraph implements Runnable{
     @Override
     public void run() {
         step = 0;
-        try {
+        cnt.incrementAndGet();
+//        try {
             while(executeNextStmt())
             {
+                step++;
                 //printGraph(false);
-                ++step;
             }
-            printGraph(true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//            printGraph(true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         testQueue();
     }
 
@@ -485,6 +488,7 @@ public class ExecutionGraph implements Runnable{
     private synchronized void testQueue() {
         if(threadPool.getQueue().size() == 0) {
             threadPool.shutdown();
+            System.out.println("Traces: " + cnt.get());
         }
     }
 

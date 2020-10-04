@@ -9,16 +9,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class NextEdge<T extends MemoryAccess, L> extends Filter<T, L> {
-    private final Filter<T, L> source;
-    private final Filter<T, L> target;
-    private final L edgeLabel;
+public class NextEdge<T extends MemoryAccess> extends Filter<T> {
+    private final Filter<T> source;
+    private final Filter<T> target;
+    private final String edgeLabel;
     private Set<GraphOrNodeSet<T>> last;
     private final Map<T, Set<T>> edges;
     private final Map<T, Set<T>> reverse;
 
 
-    public NextEdge(Filter<T, L> source, Filter<T, L> target, L edgeLabel) {
+    public NextEdge(Filter<T> source, Filter<T> target, String edgeLabel) {
         this.source = source;
         this.target = target;
         this.edgeLabel = edgeLabel;
@@ -28,7 +28,7 @@ public class NextEdge<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -45,7 +45,7 @@ public class NextEdge<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -61,7 +61,7 @@ public class NextEdge<T extends MemoryAccess, L> extends Filter<T, L> {
         }
     }
 
-    private Set<GraphOrNodeSet<T>> getNextEdges(Set<GraphOrNodeSet<T>> lhsSet, Set<GraphOrNodeSet<T>> rhsSet, L label) {
+    private Set<GraphOrNodeSet<T>> getNextEdges(Set<GraphOrNodeSet<T>> lhsSet, Set<GraphOrNodeSet<T>> rhsSet, String label) {
         boolean changed = false;
         for (GraphOrNodeSet<T> lhs : lhsSet) {
             if(lhs.isChanged()) {

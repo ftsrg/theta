@@ -9,8 +9,8 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class ForEachThread<T extends MemoryAccess, L> extends Filter<T, L> {
-    private Filter<T, L> op;
+public class ForEachThread<T extends MemoryAccess> extends Filter<T> {
+    private Filter<T> op;
     private final Set<Process> processes;
     private Process currentProcess;
 
@@ -20,7 +20,7 @@ public class ForEachThread<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         checkState(op != null, "Set the operand before use!");
         processes.add(source.getProcess());
         processes.add(target.getProcess());
@@ -33,7 +33,7 @@ public class ForEachThread<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         checkState(op != null, "Set the operand before use!");
         processes.add(source.getProcess());
         processes.add(target.getProcess());
@@ -45,7 +45,7 @@ public class ForEachThread<T extends MemoryAccess, L> extends Filter<T, L> {
         return retSet;
     }
 
-    public void setOp(Filter<T, L> op) {
+    public void setOp(Filter<T> op) {
         this.op = op;
     }
 

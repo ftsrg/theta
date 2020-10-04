@@ -31,14 +31,14 @@ definition
 expr: LPAREN expr RPAREN                            # nop
     | simpleExpr                                    # simple
     | namedExpr LPAREN expr RARROW expr RPAREN      # nextEdge
-    | namedExpr LPAREN expr RLONGARROW expr RPAREN  # sucessorEdges
+    | namedExpr LPAREN expr RLONGARROW expr RPAREN  # successorEdges
     | FOREACHVAR BEGIN expr END                     # forEachVar
     | FOREACHTHREAD BEGIN expr END                  # forEachThread
     | FOREACHNODE expr BEGIN expr END               # forEach
     | expr UNION expr                               # unionExpr
     | expr SECTION expr                             # sectionExpr
     | expr SETMINUS expr                            # setMinusExpr
-    | (name=ID) LPAREN expr ASTERISK expr RPAREN    # multiplyExpr
+    | LPAREN expr ASTERISK expr RPAREN              # multiplyExpr
     | SOURCE LPAREN expr RPAREN                     # sourceExpr
     | TARGET LPAREN expr RPAREN                     # targetExpr
     ;

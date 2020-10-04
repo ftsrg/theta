@@ -10,19 +10,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TaggedThread<T extends MemoryAccess, L> extends Filter<T, L> {
+public class ThreadTag<T extends MemoryAccess> extends Filter<T> {
     private final Graph<T> graph;
     private final Map<Process, Set<T>> processMap;
-    private final ForEachThread<T, L> supplier;
+    private final ForEachThread<T> supplier;
 
-    public TaggedThread(Graph<T> graph, ForEachThread<T, L> supplier) {
+    public ThreadTag(Graph<T> graph, ForEachThread<T> supplier) {
         this.graph = graph;
         this.supplier = supplier;
         processMap = new HashMap<>();
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         graph.addEdge(source, target, isFinal);
         processMap.putIfAbsent(supplier.getCurrentProcess(), new HashSet<>());
         processMap.putIfAbsent(source.getProcess(), new HashSet<>());
@@ -33,7 +33,7 @@ public class TaggedThread<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         graph.removeEdge(source, target);
         if(graph.isDisconnected(source)) processMap.get(source.getProcess()).remove(source);
         if(graph.isDisconnected(target)) processMap.get(source.getProcess()).remove(target);

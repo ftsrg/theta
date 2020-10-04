@@ -10,19 +10,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TaggedVariable<T extends MemoryAccess, L> extends Filter<T, L> {
+public class VariableTag<T extends MemoryAccess> extends Filter<T> {
     private final Graph<T> graph;
     private final Map<Variable, Set<T>> processMap;
-    private final ForEachVar<T, L> supplier;
+    private final ForEachVar<T> supplier;
 
-    public TaggedVariable(Graph<T> graph, ForEachVar<T, L> supplier) {
+    public VariableTag(Graph<T> graph, ForEachVar<T> supplier) {
         this.graph = graph;
         this.supplier = supplier;
         processMap = new HashMap<>();
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, L label, boolean isFinal) {
+    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
         graph.addEdge(source, target, isFinal);
         processMap.putIfAbsent(supplier.getCurrentVariable(), new HashSet<>());
         processMap.putIfAbsent(source.getGlobalVariable(), new HashSet<>());
@@ -33,7 +33,7 @@ public class TaggedVariable<T extends MemoryAccess, L> extends Filter<T, L> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, L label) {
+    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
         graph.removeEdge(source, target);
         if(graph.isDisconnected(source)) processMap.get(source.getGlobalVariable()).remove(source);
         if(graph.isDisconnected(target)) processMap.get(source.getGlobalVariable()).remove(target);
