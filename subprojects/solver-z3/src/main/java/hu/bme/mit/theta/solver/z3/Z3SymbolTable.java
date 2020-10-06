@@ -58,4 +58,8 @@ final class Z3SymbolTable {
 		constToSymbol.put(constDecl, symbol);
 	}
 
+	public void clear() {
+		constToSymbol.clear();
+	}
+
 }

@@ -37,6 +37,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -149,6 +150,30 @@ public final class Z3SolverTest {
 		assertEquals(2, valLit.getElements().size());
 		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
 		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+	}
+
+	@Test
+	public void testReset() {
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+
+		final ConstDecl<IntType> cx = Const("x", Int());
+		final ConstDecl<IntType> cy = Const("y", Int());
+
+		IntEqExpr eqExpr = IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), Int(1)));
+		solver.add(eqExpr);
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
+		status = solver.check();
+		assertTrue(status.isUnsat());
+
+		solver.reset();
+		assertEquals(0, solver.getAssertions().size());
+
+		solver.add(eqExpr);
+		status = solver.check();
+		assertTrue(status.isSat());
 	}
 
 	@Test

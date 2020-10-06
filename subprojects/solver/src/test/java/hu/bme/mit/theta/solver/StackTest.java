@@ -91,4 +91,16 @@ public class StackTest {
 		stack.pop();
 		stack.pop();
 	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testClear() {
+		final Stack<String> stack = new StackImpl<>();
+
+		stack.push();
+		stack.push();
+		stack.clear();
+		stack.push();
+		stack.pop();
+		stack.pop();
+	}
 }
