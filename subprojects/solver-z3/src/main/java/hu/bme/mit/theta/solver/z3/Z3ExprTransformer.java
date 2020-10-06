@@ -928,4 +928,8 @@ final class Z3ExprTransformer {
 		}
 	}
 
+	public void reset() {
+		exprToTerm.invalidateAll();
+	}
+
 }
