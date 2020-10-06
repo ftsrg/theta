@@ -79,7 +79,7 @@ final class Z3ItpSolver implements ItpSolver {
 	public void add(final ItpMarker marker, final Expr<BoolType> assertion) {
 		checkNotNull(marker);
 		checkNotNull(assertion);
-		checkArgument(markers.toCollection().contains(marker));
+		checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
 		final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
 		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
 		solver.add(assertion, term);
