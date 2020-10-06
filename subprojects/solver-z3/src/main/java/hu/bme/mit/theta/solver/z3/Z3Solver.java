@@ -147,6 +147,7 @@ final class Z3Solver implements Solver {
 		assertions.clear();
 		assumptions.clear();
 		symbolTable.clear();
+		transformationManager.reset();
 		clearState();
 	}
 
