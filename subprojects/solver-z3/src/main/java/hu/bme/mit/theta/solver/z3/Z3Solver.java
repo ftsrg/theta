@@ -143,7 +143,11 @@ final class Z3Solver implements Solver {
 
 	@Override
 	public void reset() {
-		throw new UnsupportedOperationException();
+		z3Solver.reset();
+		assertions.clear();
+		assumptions.clear();
+		symbolTable.clear();
+		clearState();
 	}
 
 	@Override

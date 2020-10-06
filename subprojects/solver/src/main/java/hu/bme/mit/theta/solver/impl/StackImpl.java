@@ -71,4 +71,9 @@ public class StackImpl<T> implements Stack<T> {
 		return items.iterator();
 	}
 
+	@Override
+	public void clear() {
+		items.clear();
+		sizes.clear();
+	}
 }

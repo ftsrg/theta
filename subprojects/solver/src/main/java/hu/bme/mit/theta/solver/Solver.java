@@ -98,7 +98,8 @@ public interface Solver {
 	}
 
 	/**
-	 * Reset the solver state.
+	 * Reset the solver state. It should be only used as a last resort. Try using
+	 * {@link #push()} and {@link #pop()} instead.
 	 */
 	void reset();
 
