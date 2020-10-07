@@ -5,18 +5,24 @@ import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.Set;
+import java.util.Stack;
 
-public class NamedEdge<T extends MemoryAccess> extends Filter<T> {
-    public final GraphOrNodeSet<T> graph;
+public class NamedEdge extends Filter {
+    public final GraphOrNodeSet graph;
     public final String edgeLabel;
 
     public NamedEdge(String edgeLabel) {
         this.edgeLabel = edgeLabel;
-        this.graph = GraphOrNodeSet.of(Graph.create(false));
+        this.graph = GraphOrNodeSet.of(Graph.empty());
+    }
+
+    public NamedEdge(GraphOrNodeSet graph, String edgeLabel) {
+        this.graph = graph.duplicate();
+        this.edgeLabel = edgeLabel;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         if(label.equals(this.edgeLabel)) {
             graph.getGraph().addEdge(source, target, isFinal);
             graph.setChanged(true);
@@ -25,11 +31,16 @@ public class NamedEdge<T extends MemoryAccess> extends Filter<T> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         if(label.equals(this.edgeLabel)) {
             graph.getGraph().removeEdge(source, target);
             graph.setChanged(true);
         }
         return Set.of(graph);
+    }
+
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new NamedEdge(graph, edgeLabel);
     }
 }

@@ -1,10 +1,10 @@
 stores = for_each_thread begin
-            mo[thread] union po[thread]
+            mo union po
          end
 
 coherence = for_each_thread begin
-                for_each_node target(mo(source(rf(A -> R[thread][new])) --> W)) begin
-                    rf intersect (W[node] * R[thread])
+                for_each_node target(mo(source(rf(A -> R[thrd])) --> W)) begin
+                    rf intersect (W[node] * R[thrd])
                 end
             end
 

@@ -153,8 +153,8 @@ public class ExecutionGraph implements Runnable{
     // PUBLIC METHODS
     private static AtomicInteger cnt = new AtomicInteger(0);
 
-    public void execute() {
-        threadPool = new ThreadPoolExecutor(0, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    public void execute(int threads) {
+        threadPool = new ThreadPoolExecutor(threads, threads, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         threadPool.execute(this);
         try {
             if(!threadPool.awaitTermination(600, TimeUnit.SECONDS)) {
@@ -170,6 +170,9 @@ public class ExecutionGraph implements Runnable{
      */
     @Override
     public void run() {
+        if(threadPool.getCompletedTaskCount() % 1000 == 0) {
+            System.out.println("Active: " + threadPool.getActiveCount() + ", Queue: " + threadPool.getQueue().size() + ", Finished: "+ threadPool.getCompletedTaskCount());
+        }
         step = 0;
         cnt.incrementAndGet();
 //        try {

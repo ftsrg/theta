@@ -4,21 +4,18 @@ import hu.bme.mit.theta.mcm.Graph;
 import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class NextEdge<T extends MemoryAccess> extends Filter<T> {
-    private final Filter<T> source;
-    private final Filter<T> target;
+public class NextEdge extends Filter {
+    private final Filter source;
+    private final Filter target;
     private final String edgeLabel;
-    private Set<GraphOrNodeSet<T>> last;
-    private final Map<T, Set<T>> edges;
-    private final Map<T, Set<T>> reverse;
+    private Set<GraphOrNodeSet> last;
+    private final Map<MemoryAccess, Set<MemoryAccess>> edges;
+    private final Map<MemoryAccess, Set<MemoryAccess>> reverse;
 
 
-    public NextEdge(Filter<T> source, Filter<T> target, String edgeLabel) {
+    public NextEdge(Filter source, Filter target, String edgeLabel) {
         this.source = source;
         this.target = target;
         this.edgeLabel = edgeLabel;
@@ -27,8 +24,20 @@ public class NextEdge<T extends MemoryAccess> extends Filter<T> {
         reverse = new HashMap<>();
     }
 
+    public NextEdge(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter source, Filter target, String edgeLabel, Set<GraphOrNodeSet> last, Map<MemoryAccess, Set<MemoryAccess>> edges, Map<MemoryAccess, Set<MemoryAccess>> reverse) {
+        this.source = source.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.target = target.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.edgeLabel = edgeLabel;
+        this.last = new HashSet<>();
+        last.forEach(graphOrNodeSet -> this.last.add(graphOrNodeSet.duplicate()));
+        this.edges = new HashMap<>();
+        edges.forEach((memoryAccess, memoryAccesses) -> this.edges.put(memoryAccess, new HashSet<>(memoryAccesses)));
+        this.reverse = new HashMap<>();
+        reverse.forEach((memoryAccess, memoryAccesses) -> this.reverse.put(memoryAccess, new HashSet<>(memoryAccesses)));
+    }
+
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -38,14 +47,14 @@ public class NextEdge<T extends MemoryAccess> extends Filter<T> {
 
             edges.get(source).add(target);
             reverse.get(target).add(source);
-            Set<GraphOrNodeSet<T>> lhs = this.source.filterMk(source, target, label, isFinal);
-            Set<GraphOrNodeSet<T>> rhs = this.target.filterMk(source, target, label, isFinal);
+            Set<GraphOrNodeSet> lhs = this.source.filterMk(source, target, label, isFinal);
+            Set<GraphOrNodeSet> rhs = this.target.filterMk(source, target, label, isFinal);
             return getNextEdges(lhs, rhs, label);
         }
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -55,21 +64,26 @@ public class NextEdge<T extends MemoryAccess> extends Filter<T> {
         else {
             edges.get(source).remove(target);
             reverse.get(target).remove(source);
-            Set<GraphOrNodeSet<T>> lhs = this.source.filterRm(source, target, label);
-            Set<GraphOrNodeSet<T>> rhs = this.target.filterRm(source, target, label);
+            Set<GraphOrNodeSet> lhs = this.source.filterRm(source, target, label);
+            Set<GraphOrNodeSet> rhs = this.target.filterRm(source, target, label);
             return getNextEdges(lhs, rhs, label);
         }
     }
 
-    private Set<GraphOrNodeSet<T>> getNextEdges(Set<GraphOrNodeSet<T>> lhsSet, Set<GraphOrNodeSet<T>> rhsSet, String label) {
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new NextEdge(forEachNodes, forEachVars, forEachThreads, source, target, edgeLabel, last, edges, reverse);
+    }
+
+    private Set<GraphOrNodeSet> getNextEdges(Set<GraphOrNodeSet> lhsSet, Set<GraphOrNodeSet> rhsSet, String label) {
         boolean changed = false;
-        for (GraphOrNodeSet<T> lhs : lhsSet) {
+        for (GraphOrNodeSet lhs : lhsSet) {
             if(lhs.isChanged()) {
                 changed = true;
                 lhs.setChanged(false);
             }
         }
-        for (GraphOrNodeSet<T> rhs : rhsSet) {
+        for (GraphOrNodeSet rhs : rhsSet) {
             if(rhs.isChanged()) {
                 changed = true;
                 rhs.setChanged(false);
@@ -78,16 +92,16 @@ public class NextEdge<T extends MemoryAccess> extends Filter<T> {
         if(!changed) {
             return last;
         }
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (GraphOrNodeSet<T> lhs : lhsSet) {
-            for (GraphOrNodeSet<T> rhs : rhsSet) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (GraphOrNodeSet lhs : lhsSet) {
+            for (GraphOrNodeSet rhs : rhsSet) {
                 if(!lhs.isChanged() && !rhs.isChanged()) {
                     return last;
                 }
                 else if(!lhs.isGraph() && !rhs.isGraph()){
-                    Graph<T> ret = Graph.create(false);
-                    for (T t : lhs.getNodeSet()) {
-                        for (T t1 : edges.get(t)) {
+                    Graph ret = Graph.empty();
+                    for (MemoryAccess t : lhs.getNodeSet()) {
+                        for (MemoryAccess t1 : edges.get(t)) {
                             ret.addEdge(t, t1, false);
                         }
                     }

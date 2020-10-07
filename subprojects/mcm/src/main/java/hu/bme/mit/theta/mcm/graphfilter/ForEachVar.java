@@ -1,55 +1,68 @@
 package hu.bme.mit.theta.mcm.graphfilter;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
-import hu.bme.mit.theta.mcm.graphfilter.interfaces.Variable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import static com.google.common.base.Preconditions.checkState;
+public class ForEachVar extends Filter{
+    private Map<VarDecl<?>, Filter> op;
+    private final Set<VarDecl<? extends Type>> variables;
+    private VarDecl<?> currentVariable;
 
-public class ForEachVar<T extends MemoryAccess> extends Filter<T>{
-    private Filter<T> op;
-    private final Set<Variable> variables;
-    private Variable currentVariable;
-
-    public ForEachVar() {
-        variables = new HashSet<>();
+    public ForEachVar(Set<VarDecl<? extends Type>> variables) {
+        this.variables = variables;
         currentVariable = null;
     }
 
+    public ForEachVar(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Map<VarDecl<?>, Filter> op, Set<VarDecl<? extends Type>> variables, VarDecl<?> currentVariable) {
+        forEachVars.push(this);
+        this.op = new HashMap<>();
+        op.forEach((variable, filter) -> this.op.put(variable, filter.duplicate(forEachNodes, forEachVars, forEachThreads)));
+        this.variables = variables;
+        this.currentVariable = currentVariable;
+        forEachVars.pop();
+    }
+
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
-        checkState(op != null, "Set the operand before use!");
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         variables.add(source.getGlobalVariable());
         variables.add(target.getGlobalVariable());
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (Variable variable : variables) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (VarDecl<?> variable : variables) {
             currentVariable = variable;
-            retSet.addAll(op.filterMk(source, target, label, isFinal));
+            retSet.addAll(op.get(variable).filterMk(source, target, label, isFinal));
         }
         return retSet;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
-        checkState(op != null, "Set the operand before use!");
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         variables.add(source.getGlobalVariable());
         variables.add(target.getGlobalVariable());
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (Variable variable : variables) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (VarDecl<?> variable : variables) {
             currentVariable = variable;
-            retSet.addAll(op.filterRm(source, target, label));
+            retSet.addAll(op.get(variable).filterRm(source, target, label));
         }
         return retSet;
     }
 
-    public void setOp(Filter<T> op) {
-        this.op = op;
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new ForEachVar(forEachNodes, forEachVars, forEachThreads, op, variables, currentVariable);
     }
 
-    public Variable getCurrentVariable() {
+    public void setOp(Filter op) {
+        Stack<ForEachVar> forEachVars = new Stack<>();
+        for (VarDecl<?> variable : variables) {
+            this.op.put(variable, op.duplicate(new Stack<>(), forEachVars, new Stack<>()));
+        }
+    }
+
+    public VarDecl<?> getCurrentVariable() {
         return currentVariable;
     }
 }

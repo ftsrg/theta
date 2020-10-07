@@ -4,21 +4,27 @@ import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.Set;
+import java.util.Stack;
 
-public class NodeTag<T extends MemoryAccess> extends Filter<T> {
-    private final ForEachNode<T> supplier;
+public class NodeTag extends Filter {
+    private final ForEachNode supplier;
 
-    public NodeTag(ForEachNode<T> supplier) {
+    public NodeTag(ForEachNode supplier) {
         this.supplier = supplier;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         return Set.of(GraphOrNodeSet.of(Set.of(supplier.getCurrentNode())));
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         return null;
+    }
+
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new NodeTag(forEachNodes.peek());
     }
 }

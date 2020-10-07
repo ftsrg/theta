@@ -93,7 +93,7 @@ public final class XCFA {
 		return mainProcess;
 	}
 
-	public static final class Process {
+	public static final class Process implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Process {
 		private XCFA parent;
 		private final List<VarDecl<?>> params;
 

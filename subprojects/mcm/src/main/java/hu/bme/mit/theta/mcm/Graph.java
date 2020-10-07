@@ -1,104 +1,86 @@
 package hu.bme.mit.theta.mcm;
 
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class Graph<T> {
-    private final Map<T, Node> LUT;
-    private final Map<Node, Set<Tuple2<Node, Boolean>>> forward;
-    private final Map<Node, Set<Tuple2<Node, Boolean>>> reverse;
-    private final boolean checkAcylic;
-    private boolean acyclic;
+public class Graph {
+    private final Map<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> forward;
+    private final Map<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> reverse;
 
-    private Graph(boolean checkAcylic) {
-        acyclic = false;
-        this.checkAcylic = checkAcylic;
-        LUT = new HashMap<>();
+    private Graph() {
         forward = new HashMap<>();
         reverse = new HashMap<>();
     }
 
-    private Graph(Map<T, Node> lut, Map<Node, Set<Tuple2<Node, Boolean>>> forward, Map<Node, Set<Tuple2<Node, Boolean>>> reverse, boolean checkAcylic, boolean acyclic) {
-        this.LUT = lut;
+    private Graph(Map<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> forward, Map<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> reverse) {
         this.forward = new HashMap<>();
         this.reverse = new HashMap<>();
-        forward.forEach((node, tuple2s) -> this.forward.put(node, new HashSet<>(tuple2s)));
-        reverse.forEach((node, tuple2s) -> this.reverse.put(node, new HashSet<>(tuple2s)));
-        this.checkAcylic = checkAcylic;
-        this.acyclic = acyclic;
+        forward.forEach((MemoryAccess, tuple2s) -> this.forward.put(MemoryAccess, new HashSet<>(tuple2s)));
+        reverse.forEach((MemoryAccess, tuple2s) -> this.reverse.put(MemoryAccess, new HashSet<>(tuple2s)));
     }
 
-    public static <T> Graph<T> create(boolean checkAcylic) {
-        return new Graph<T>(checkAcylic);
+    public static  Graph empty() {
+        return new Graph();
     }
 
-    public Graph<T> duplicate() {
-        return new Graph<T>(LUT, forward, reverse, checkAcylic, acyclic);
+    public Graph duplicate() {
+        return new Graph(forward, reverse);
     }
 
-    public void addEdge(T source, T target, boolean isFinal) {
+    public void addEdge(MemoryAccess source, MemoryAccess target, boolean isFinal) {
         checkState(!exists(source, target), "Edge already exists! Use the replace/markFinal functions instead.");
-        forward.get(getNode(source)).add(Tuple2.of(getNode(target), isFinal));
-        reverse.get(getNode(target)).add(Tuple2.of(getNode(source), isFinal));
-        if(checkAcylic && acyclic) {
-            remainsAcyclic(getNode(source), getNode(target));
-        }
+        forward.get(source).add(Tuple2.of(target, isFinal));
+        reverse.get(target).add(Tuple2.of(source, isFinal));
     }
 
-    public void removeEdge(T source, T target) {
-        checkState(forward.get(getNode(source)).contains(Tuple2.of(getNode(target), false)), "Edge does not exist or is marked final.");
-        forward.get(getNode(source)).remove(Tuple2.of(getNode(target), false));
-        reverse.get(getNode(target)).remove(Tuple2.of(getNode(source), false));
-        if(checkAcylic && !acyclic) {
-            becomesAcyclic(getNode(source), getNode(target));
-        }
+    public void removeEdge(MemoryAccess source, MemoryAccess target) {
+        checkState(forward.get(source).contains(Tuple2.of(target, false)), "Edge does not exist or is marked final.");
+        forward.get(source).remove(Tuple2.of(target, false));
+        reverse.get(target).remove(Tuple2.of(source, false));
     }
 
-    public boolean isDisconnected(T node) {
-        return reverse.get(getNode(node)).size() == 0 && forward.get(getNode(node)).size() == 0;
+    public boolean isDisconnected(MemoryAccess t) {
+        return reverse.get(t).size() == 0 && forward.get(t).size() == 0;
     }
 
-    public void replaceEdge(T origSource, T origTarget, T newSource, T newTarget, boolean isFinal) {
-        removeEdge(origSource, origTarget);
-        addEdge(newSource, newTarget, isFinal);
-    }
-
-    public void markFinal(T source, T target) {
+    public void markFinal(MemoryAccess source, MemoryAccess target) {
         checkState(exists(source, target), "Edge does not exist.");
-        Set<Tuple2<Node, Boolean>> forwardList = forward.get(getNode(source));
-        if(forwardList.contains(Tuple2.of(getNode(target), false))) {
-            Set<Tuple2<Node, Boolean>> reverseList = reverse.get(getNode(target));
-            forwardList.remove(Tuple2.of(getNode(target), false));
-            forwardList.add(Tuple2.of(getNode(target), true));
-            reverseList.remove(Tuple2.of(getNode(source), false));
-            reverseList.add(Tuple2.of(getNode(source), true));
+        Set<Tuple2<MemoryAccess, Boolean>> forwardList = forward.get(source);
+        if(forwardList.contains(Tuple2.of(target, false))) {
+            Set<Tuple2<MemoryAccess, Boolean>> reverseList = reverse.get(target);
+            forwardList.remove(Tuple2.of(target, false));
+            forwardList.add(Tuple2.of(target, true));
+            reverseList.remove(Tuple2.of(source, false));
+            reverseList.add(Tuple2.of(source, true));
         }
     }
 
-    public boolean exists(T source, T target) {
-        return  forward.get(getNode(source)).contains(Tuple2.of(getNode(target), true)) ||
-                forward.get(getNode(source)).contains(Tuple2.of(getNode(target), false));
+    public boolean exists(MemoryAccess source, MemoryAccess target) {
+        return  forward.get(source).contains(Tuple2.of(target, true)) ||
+                forward.get(source).contains(Tuple2.of(target, false));
     }
 
     public boolean isAcyclic() {
-        return acyclic;
+        return false;
     }
 
     public boolean isEmpty() {
-        for (Map.Entry<Node, Set<Tuple2<Node, Boolean>>> nodeSetEntry : forward.entrySet()) {
+        for (Map.Entry<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> nodeSetEntry : forward.entrySet()) {
             if(nodeSetEntry.getValue().size() > 0) return false;
         }
         return true;
     }
 
     public boolean isIrreflexive() {
-        for (Map.Entry<Node, Set<Tuple2<Node, Boolean>>> nodeSetEntry : forward.entrySet()) {
+        for (Map.Entry<MemoryAccess, Set<Tuple2<MemoryAccess, Boolean>>> nodeSetEntry : forward.entrySet()) {
             if(nodeSetEntry.getValue().contains(Tuple2.of(nodeSetEntry.getKey(), true)) ||
                nodeSetEntry.getValue().contains(Tuple2.of(nodeSetEntry.getKey(), false))) {
                 return false;
@@ -109,48 +91,42 @@ public class Graph<T> {
 
     }
 
-    private Node getNode(T nodeProxy) {
-        if(LUT.containsKey(nodeProxy)) {
-            return LUT.get(nodeProxy);
-        }
-        Node ret;
-        LUT.put(nodeProxy, ret = new Node());
-        forward.put(ret, new HashSet<>());
-        reverse.put(ret, new HashSet<>());
-        return ret;
+    public Set<MemoryAccess> extractTargetNodes() {
+        return reverse.keySet().stream().filter(t -> !isDisconnected(t)).collect(Collectors.toSet());
     }
 
+    public Set<MemoryAccess> extractSourceNodes() {
+        return forward.keySet().stream().filter(t -> !isDisconnected(t)).collect(Collectors.toSet());
 
-    private void remainsAcyclic(Node source, Node target) {
-        acyclic = false;
     }
 
-    private void becomesAcyclic(Node source, Node target) {
-        acyclic = true;
+    public Graph minus(Graph graph) {
+        Graph retGraph = duplicate();
+        graph.forward.forEach((t, tuple2s) -> tuple2s.forEach(tuple2 -> {
+            retGraph.removeEdge(t, tuple2.get1());
+        }));
+        return retGraph;
     }
 
-    public Graph<T> union(Graph<T> graph) {
-        return null;
+    public Graph section(Graph graph) {
+        Graph retGraph = empty();
+        graph.forward.forEach((t, tuple2s) -> tuple2s.forEach(tuple2 -> {
+            if(exists(t, tuple2.get1())) {
+                retGraph.addEdge(t, tuple2.get1(), tuple2.get2());
+            }
+        }));
+        return retGraph;
     }
 
-    public Set<T> extractTargetNodes() {
-        return null;
+    public Graph union(Graph graph) {
+        Graph retGraph = duplicate();
+        graph.forward.forEach((t, tuple2s) -> tuple2s.forEach(tuple2 -> {
+            retGraph.addEdge(t, tuple2.get1(), tuple2.get2());
+        }));
+        return retGraph;
     }
 
-    public Set<T> extractSourceNodes() {
-        return null;
-    }
-
-    public Graph<T> minus(Graph<T> graph) {
-        return null;
-    }
-
-    public Graph<T> section(Graph<T> graph) {
-        return null;
-    }
-
-
-    private static class Node {
-
+    public boolean isFinal() {
+        return false;
     }
 }

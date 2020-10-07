@@ -4,23 +4,20 @@ import hu.bme.mit.theta.mcm.Graph;
 import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
-public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
-    private final Filter<T> source;
-    private final Filter<T> target;
+public class SuccessorEdge extends Filter {
+    private final Filter source;
+    private final Filter target;
     private final String edgeLabel;
-    private Set<GraphOrNodeSet<T>> last;
-    private final Map<T, Set<T>> edges;
-    private final Map<T, Set<T>> reverse;
-    private final Map<T, Set<T>> reachable;
-    private final Map<T, Set<T>> reachableFrom;
+    private Set<GraphOrNodeSet> last;
+    private final Map<MemoryAccess, Set<MemoryAccess>> edges;
+    private final Map<MemoryAccess, Set<MemoryAccess>> reverse;
+    private final Map<MemoryAccess, Set<MemoryAccess>> reachable;
+    private final Map<MemoryAccess, Set<MemoryAccess>> reachableFrom;
 
-    public SuccessorEdge(Filter<T> source, Filter<T> target, String edgeLabel) {
+    public SuccessorEdge(Filter source, Filter target, String edgeLabel) {
         this.source = source;
         this.target = target;
         this.edgeLabel = edgeLabel;
@@ -31,8 +28,24 @@ public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
         reachableFrom = new HashMap<>();
     }
 
+    public SuccessorEdge(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter source, Filter target, String edgeLabel, Set<GraphOrNodeSet> last, Map<MemoryAccess, Set<MemoryAccess>> edges, Map<MemoryAccess, Set<MemoryAccess>> reverse, Map<MemoryAccess, Set<MemoryAccess>> reachable, Map<MemoryAccess, Set<MemoryAccess>> reachableFrom) {
+        this.source = source.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.target = target.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.edgeLabel = edgeLabel;
+        this.edges = new HashMap<>();
+        edges.forEach((memoryAccess, memoryAccesses) -> this.edges.put(memoryAccess, new HashSet<>(memoryAccesses)));
+        this.reverse = new HashMap<>();
+        reverse.forEach((memoryAccess, memoryAccesses) -> this.reverse.put(memoryAccess, new HashSet<>(memoryAccesses)));
+        this.reachable = new HashMap<>();
+        reachable.forEach((memoryAccess, memoryAccesses) -> this.reachable.put(memoryAccess, new HashSet<>(memoryAccesses)));
+        this.reachableFrom = new HashMap<>();
+        reachableFrom.forEach((memoryAccess, memoryAccesses) -> this.reachableFrom.put(memoryAccess, new HashSet<>(memoryAccesses)));
+        this.last = new HashSet<>();
+        last.forEach(graphOrNodeSet -> this.last.add(graphOrNodeSet.duplicate()));
+    }
+
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -50,15 +63,15 @@ public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
                 reachableFrom.get(target).add(t);
                 reachable.get(t).add(target);
             });
-            Set<GraphOrNodeSet<T>> src = this.source.filterMk(source, target, label, isFinal);
-            Set<GraphOrNodeSet<T>> dst = this.target.filterMk(source, target, label, isFinal);
+            Set<GraphOrNodeSet> src = this.source.filterMk(source, target, label, isFinal);
+            Set<GraphOrNodeSet> dst = this.target.filterMk(source, target, label, isFinal);
             return getSuccessors(src, dst, label);
 
         }
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         if(!label.equals(edgeLabel)) {
             return last;
         }
@@ -66,10 +79,10 @@ public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
             throw new UnsupportedOperationException("Trying to remove a non-existant edge.");
         }
         else {
-            Set<T> potRemove = new HashSet<>();
+            Set<MemoryAccess> potRemove = new HashSet<>();
             potRemove.add(target);
             potRemove.addAll(reachable.get(target));
-            Set<T> remove = new HashSet<>(potRemove);
+            Set<MemoryAccess> remove = new HashSet<>(potRemove);
             potRemove.forEach(t -> reverse.get(t).forEach(t1 -> {
                 if (!potRemove.contains(t1)) {
                     remove.remove(t);
@@ -87,23 +100,28 @@ public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
             edges.get(source).remove(target);
             reverse.get(target).remove(source);
 
-            Set<GraphOrNodeSet<T>> src = this.source.filterRm(source, target, label);
-            Set<GraphOrNodeSet<T>> dst = this.target.filterRm(source, target, label);
+            Set<GraphOrNodeSet> src = this.source.filterRm(source, target, label);
+            Set<GraphOrNodeSet> dst = this.target.filterRm(source, target, label);
 
             return getSuccessors(src, dst, label);
 
         }
     }
 
-    private Set<GraphOrNodeSet<T>> getSuccessors(Set<GraphOrNodeSet<T>> srcSet, Set<GraphOrNodeSet<T>> dstSet, String label) {
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new SuccessorEdge(forEachNodes, forEachVars, forEachThreads, source, target, edgeLabel, last, edges, reverse, reachable, reachableFrom);
+    }
+
+    private Set<GraphOrNodeSet> getSuccessors(Set<GraphOrNodeSet> srcSet, Set<GraphOrNodeSet> dstSet, String label) {
         boolean changed = false;
-        for (GraphOrNodeSet<T> src : srcSet) {
+        for (GraphOrNodeSet src : srcSet) {
             if(src.isChanged()) {
                 changed = true;
                 src.setChanged(false);
             }
         }
-        for (GraphOrNodeSet<T> dst : dstSet) {
+        for (GraphOrNodeSet dst : dstSet) {
             if(dst.isChanged()) {
                 changed = true;
                 dst.setChanged(false);
@@ -112,16 +130,16 @@ public class SuccessorEdge<T extends MemoryAccess> extends Filter<T> {
         if(!changed) {
             return last;
         }
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (GraphOrNodeSet<T> src : srcSet) {
-            for (GraphOrNodeSet<T> dst : dstSet) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (GraphOrNodeSet src : srcSet) {
+            for (GraphOrNodeSet dst : dstSet) {
                 if(src.isGraph() || dst.isGraph()) {
                     throw new UnsupportedOperationException("Cannot have a graph as a source and/or target!");
                 }
                 else {
-                    Graph<T> graph = Graph.create(false);
-                    for (T s : src.getNodeSet()) {
-                        for (T t : reachable.get(s)) {
+                    Graph graph = Graph.empty();
+                    for (MemoryAccess s : src.getNodeSet()) {
+                        for (MemoryAccess t : reachable.get(s)) {
                             if(dst.getNodeSet().contains(t)) {
                                 graph.addEdge(s, t, false);
                             }

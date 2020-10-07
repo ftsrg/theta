@@ -41,6 +41,9 @@ public class XcfaCli {
 	@Parameter(names = "--mcm", description = "Path of the input MCM model", required = true)
 	String mcm;
 
+	@Parameter(names = "--poolsize", description = "Size of the thread pool (1 by default)", required = false)
+	Integer threadPoolSize = 1;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -63,8 +66,8 @@ public class XcfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
-			final MCM mcm = loadMcm();
-			if(StatelessMC.check(xcfa)) {
+			final MCM mcm = loadMcm(xcfa);
+			if(StatelessMC.check(xcfa, threadPoolSize)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {
@@ -82,9 +85,9 @@ public class XcfaCli {
 			return XcfaDslManager.createXcfa(inputStream);
 		}
 	}
-	private MCM loadMcm() throws IOException {
+	private MCM loadMcm(XCFA xcfa) throws IOException {
 		try(InputStream inputStream = new FileInputStream(new File(mcm))) {
-			return McmDslManager.createMCM(inputStream);
+			return McmDslManager.createMCM(inputStream, xcfa.getProcesses(), xcfa.getGlobalVars());
 		}
 	}
 

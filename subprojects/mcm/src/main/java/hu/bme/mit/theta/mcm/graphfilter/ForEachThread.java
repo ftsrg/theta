@@ -4,49 +4,59 @@ import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.Process;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import static com.google.common.base.Preconditions.checkState;
-
-public class ForEachThread<T extends MemoryAccess> extends Filter<T> {
-    private Filter<T> op;
-    private final Set<Process> processes;
+public class ForEachThread extends Filter {
+    private final Map<Process, Filter> op;
+    private final List<? extends Process> processes;
     private Process currentProcess;
 
-    public ForEachThread() {
-        processes = new HashSet<>();
+    public ForEachThread(List<? extends Process> processes) {
+        this.processes = processes;
         currentProcess = null;
+        op = new HashMap<>();
+    }
+
+    public ForEachThread(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Map<Process, Filter> op, List<? extends Process> processes, Process currentProcess) {
+        forEachThreads.push(this);
+        this.op = new HashMap<>();
+        op.forEach((process, filter) -> this.op.put(process, filter.duplicate(forEachNodes, forEachVars, forEachThreads)));
+        this.processes = processes;
+        this.currentProcess = currentProcess;
+        forEachThreads.pop();
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
-        checkState(op != null, "Set the operand before use!");
-        processes.add(source.getProcess());
-        processes.add(target.getProcess());
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
         for (Process process : processes) {
             currentProcess = process;
-            retSet.addAll(op.filterMk(source, target, label, isFinal));
+            retSet.addAll(op.get(currentProcess).filterMk(source, target, label, isFinal));
         }
         return retSet;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
-        checkState(op != null, "Set the operand before use!");
-        processes.add(source.getProcess());
-        processes.add(target.getProcess());
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
         for (Process process : processes) {
             currentProcess = process;
-            retSet.addAll(op.filterRm(source, target, label));
+            retSet.addAll(op.get(currentProcess).filterRm(source, target, label));
         }
         return retSet;
     }
 
-    public void setOp(Filter<T> op) {
-        this.op = op;
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new ForEachThread(forEachNodes, forEachVars, forEachThreads, op, processes, currentProcess);
+    }
+
+    public void setOp(Filter op) {
+        Stack<ForEachThread> forEachThreads = new Stack<>();
+        forEachThreads.push(this);
+        for (Process process : processes) {
+            this.op.put(process, op.duplicate(new Stack<>(), new Stack<>(), forEachThreads));
+        }
     }
 
     public Process getCurrentProcess() {

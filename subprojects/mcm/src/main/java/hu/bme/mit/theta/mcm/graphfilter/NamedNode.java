@@ -6,21 +6,28 @@ import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 
-public class NamedNode<T extends MemoryAccess> extends Filter<T> {
+public class NamedNode extends Filter {
     private final Class<?> clazz;
-    private final Graph<T> graph;
-    private final GraphOrNodeSet<T> set;
+    private final Graph graph;
+    private final GraphOrNodeSet set;
 
     public NamedNode(Class<?> clazz) {
         this.clazz = clazz;
         set = GraphOrNodeSet.of(new HashSet<>());
-        graph = Graph.create(false);
+        graph = Graph.empty();
+    }
+
+    public NamedNode(Class<?> clazz, Graph graph, GraphOrNodeSet set) {
+        this.clazz = clazz;
+        this.graph = graph.duplicate();
+        this.set = set.duplicate();
     }
 
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         graph.addEdge(source, target, isFinal);
         if((clazz == null || clazz.isInstance(source)) && !set.getNodeSet().contains(source)) {
             set.getNodeSet().add(source);
@@ -34,7 +41,7 @@ public class NamedNode<T extends MemoryAccess> extends Filter<T> {
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
         graph.removeEdge(source, target);
         if(graph.isDisconnected(source)) {
             set.getNodeSet().remove(source);
@@ -45,5 +52,10 @@ public class NamedNode<T extends MemoryAccess> extends Filter<T> {
             set.setChanged(true);
         }
         return Set.of(set);
+    }
+
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new NamedNode(clazz, graph, set);
     }
 }

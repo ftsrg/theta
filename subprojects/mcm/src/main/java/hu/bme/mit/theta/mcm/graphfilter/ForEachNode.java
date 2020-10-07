@@ -3,56 +3,77 @@ package hu.bme.mit.theta.mcm.graphfilter;
 import hu.bme.mit.theta.mcm.GraphOrNodeSet;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class ForEachNode<T extends MemoryAccess> extends Filter<T> {
-    private final Filter<T> pattern;
-    private Filter<T> op;
-    private T currentNode;
+public class ForEachNode extends Filter {
+    private final Filter pattern;
+    private Filter op;
+    private MemoryAccess currentNode;
+    private final Map<MemoryAccess, Filter> ops;
+    private final Stack<ForEachNode> forEachNodes;
 
-    public ForEachNode(Filter<T> pattern) {
+    public ForEachNode(Filter pattern) {
         this.pattern = pattern;
         this.currentNode = null;
+        ops = new HashMap<>();
+        forEachNodes = new Stack<>();
+        forEachNodes.push(this);
+    }
+
+    public ForEachNode(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter pattern, Filter op, MemoryAccess currentNode, Map<MemoryAccess, Filter> ops) {
+        forEachNodes.push(this);
+        this.pattern = pattern.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.op = op.duplicate(forEachNodes, forEachVars, forEachThreads);
+        this.currentNode = currentNode;
+        this.ops = new HashMap<>();
+        ops.forEach((memoryAccess, filter) -> this.ops.put(memoryAccess, filter.duplicate(forEachNodes, forEachVars, forEachThreads)));
+        this.forEachNodes = new Stack<>();
+        this.forEachNodes.push(this);
+        forEachNodes.pop();
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         checkState(op != null, "Set the operand before use!");
-        Set<GraphOrNodeSet<T>> patterns = pattern.filterMk(source, target, label, isFinal);
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (GraphOrNodeSet<T> pattern : patterns) {
-            checkState(!pattern.isGraph(),"Cannot iterate over the nodes of a graph!");
-            for (T node : pattern.getNodeSet()) {
-                currentNode = node;
-                retSet.addAll(op.filterMk(source, target, label, isFinal));
+        Set<GraphOrNodeSet> patterns = pattern.filterMk(source, target, label, isFinal);
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (GraphOrNodeSet pattern : patterns) {
+            for (MemoryAccess memoryAccess : pattern.getNodeSet()) {
+                ops.putIfAbsent(memoryAccess, op.duplicate(this.forEachNodes, new Stack<>(), new Stack<>()));
+                currentNode = memoryAccess;
+                retSet.addAll(ops.get(memoryAccess).filterMk(source, target, label, isFinal));
             }
         }
         return retSet;
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label){
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label){
         checkState(op != null, "Set the operand before use!");
-        Set<GraphOrNodeSet<T>> patterns = pattern.filterRm(source, target, label);
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (GraphOrNodeSet<T> pattern : patterns) {
-            checkState(!pattern.isGraph(),"Cannot iterate over the nodes of a graph!");
-            for (T node : pattern.getNodeSet()) {
-                currentNode = node;
-                retSet.addAll(op.filterRm(source, target, label));
+        Set<GraphOrNodeSet> patterns = pattern.filterRm(source, target, label);
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (GraphOrNodeSet pattern : patterns) {
+            for (MemoryAccess memoryAccess : pattern.getNodeSet()) {
+                ops.putIfAbsent(memoryAccess, op.duplicate(this.forEachNodes, new Stack<>(), new Stack<>()));
+                currentNode = memoryAccess;
+                retSet.addAll(ops.get(memoryAccess).filterRm(source, target, label));
             }
         }
         return retSet;
     }
 
-    public void setOp(Filter<T> op) {
+    @Override
+    protected ForEachNode duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new ForEachNode(forEachNodes, forEachVars, forEachThreads, pattern, op, currentNode, ops);
+    }
+
+    public void setOp(Filter op) {
         this.op = op;
     }
 
-    public T getCurrentNode() {
+    public MemoryAccess getCurrentNode() {
         return currentNode;
     }
 }

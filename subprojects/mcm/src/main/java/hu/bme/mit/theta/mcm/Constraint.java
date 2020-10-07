@@ -1,47 +1,60 @@
 package hu.bme.mit.theta.mcm;
 
 import hu.bme.mit.theta.mcm.graphfilter.Filter;
+import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
-import java.util.Set;
+public abstract class Constraint {
+    protected final Filter filter;
+    protected final boolean not;
 
-public class Constraint<T> {
-    private final Filter<T> filter;
-    private final boolean checkAcyclic;
-    private final boolean checkEmpty;
-    private final boolean checkIrreflexive;
-
-    public Constraint(Filter<T> filter, boolean checkAcyclic, boolean checkEmpty, boolean checkIrreflexive) {
+    public Constraint(Filter filter, boolean not) {
         this.filter = filter;
-        this.checkAcyclic = checkAcyclic;
-        this.checkEmpty = checkEmpty;
-        this.checkIrreflexive = checkIrreflexive;
+        this.not = not;
     }
 
-    public boolean checkMk(T source, T target, String label, boolean isFinal) {
-        Set<GraphOrNodeSet<T>> resultSet = filter.filterMk(source, target, label, isFinal);
-        for (GraphOrNodeSet<T> result : resultSet) {
-            if(!check(result)) return false;
+    public abstract Result checkMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal);
+
+    public abstract Result checkRm(MemoryAccess source, MemoryAccess target, String label);
+
+    public static abstract class Result{}
+
+    public static class AcyclicResult extends Result{}
+
+    public static class CyclicResult extends AcyclicResult {
+        private final Graph cycle;
+        private final boolean isFinal;
+
+        public CyclicResult(Graph cycle, boolean isFinal) {
+            this.cycle = cycle;
+            this.isFinal = isFinal;
         }
-        return true;
-    }
-    public boolean checkRm(T source, T target, String label) {
-        Set<GraphOrNodeSet<T>> resultSet = filter.filterRm(source, target, label);
-        for (GraphOrNodeSet<T> result : resultSet) {
-            if(check(result)) return false;
+
+        public Graph getCycle() {
+            return cycle;
         }
-        return true;
+
+        public boolean isFinal() {
+            return isFinal;
+        }
     }
 
-    private boolean check(GraphOrNodeSet<T> result) {
-        if(checkAcyclic) {
-            if(result.isGraph() && !result.getGraph().isAcyclic()) return false;
+    public static class EmptyResult extends Result {}
+
+    public static class NonEmptyResult extends EmptyResult {
+        private final GraphOrNodeSet content;
+        private final boolean isFinal;
+
+        public NonEmptyResult(GraphOrNodeSet content, boolean isFinal) {
+            this.content = content;
+            this.isFinal = isFinal;
         }
-        if(checkEmpty) {
-            if(result.isGraph() && !result.getGraph().isEmpty() || !result.isGraph() && !result.getNodeSet().isEmpty()) return false;
+
+        public boolean isFinal() {
+            return isFinal;
         }
-        if(checkIrreflexive) {
-            if(result.isGraph() && !result.getGraph().isIrreflexive()) return false;
+
+        public GraphOrNodeSet getContent() {
+            return content;
         }
-        return true;
     }
 }

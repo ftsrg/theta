@@ -58,20 +58,20 @@ taggedExpr
     ;
 
 constraints
-    : constraint*
+    : simpleConstraint*
     ;
-
-constraint
-    : LPAREN constraint RPAREN      # nopConstraint
-    | simpleConstraint              # simpleConstr
-    | constraint AND constraint     # andConstraint
-    | constraint OR constraint      # orConstraint
-    | NOT constraint                # notConstraint
-    | constraint RARROW constraint  # implyConstraint
-    ;
+//
+//constraint
+//    : LPAREN constraint RPAREN      # nopConstraint
+//    | simpleConstraint              # simpleConstr
+//    | constraint AND constraint     # andConstraint
+//    | constraint OR constraint      # orConstraint
+//    | NOT constraint                # notConstraint
+//    | constraint RARROW constraint  # implyConstraint
+//    ;
 
 simpleConstraint
-    : (name=ID) (ACYCLIC | IRREFLEXIVE | EMPTY)
+    : (NOT)? (name=ID) (ACYCLIC | EMPTY)
     ;
 
 

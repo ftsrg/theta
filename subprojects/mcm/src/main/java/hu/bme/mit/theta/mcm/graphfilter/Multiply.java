@@ -6,42 +6,55 @@ import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 
-public class Multiply<T extends MemoryAccess> extends Filter<T> {
-    private final Filter<T> lhs;
-    private final Filter<T> rhs;
-    private Set<GraphOrNodeSet<T>> last;
+public class Multiply extends Filter {
+    private final Filter lhs;
+    private final Filter rhs;
+    private Set<GraphOrNodeSet> last;
 
-    public Multiply(Filter<T> lhs, Filter<T> rhs) {
+    public Multiply(Filter lhs, Filter rhs) {
         this.lhs = lhs;
         this.rhs = rhs;
-        this.last = null;
+        this.last = new HashSet<>();
     }
 
-    @Override
-    public Set<GraphOrNodeSet<T>> filterMk(T source, T target, String label, boolean isFinal) {
+    public Multiply(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter lhs, Filter rhs, Set<GraphOrNodeSet> last) {
+            this.lhs = lhs.duplicate(forEachNodes, forEachVars, forEachThreads);
+            this.rhs = rhs.duplicate(forEachNodes, forEachVars, forEachThreads);
+            this.last = new HashSet<>();
+            last.forEach(graphOrNodeSet -> this.last.add(graphOrNodeSet.duplicate()));
+        }
 
-        Set<GraphOrNodeSet<T>> lhs = this.lhs.filterMk(source, target, label, isFinal);
-        Set<GraphOrNodeSet<T>> rhs = this.rhs.filterMk(source, target, label, isFinal);
+    @Override
+    public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
+
+        Set<GraphOrNodeSet> lhs = this.lhs.filterMk(source, target, label, isFinal);
+        Set<GraphOrNodeSet> rhs = this.rhs.filterMk(source, target, label, isFinal);
         return getMultiplication(lhs, rhs);
     }
 
     @Override
-    public Set<GraphOrNodeSet<T>> filterRm(T source, T target, String label) {
-        Set<GraphOrNodeSet<T>> lhs = this.lhs.filterRm(source, target, label);
-        Set<GraphOrNodeSet<T>> rhs = this.rhs.filterRm(source, target, label);
+    public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
+        Set<GraphOrNodeSet> lhs = this.lhs.filterRm(source, target, label);
+        Set<GraphOrNodeSet> rhs = this.rhs.filterRm(source, target, label);
         return getMultiplication(lhs, rhs);
     }
 
-    private Set<GraphOrNodeSet<T>> getMultiplication(Set<GraphOrNodeSet<T>> lhsSet, Set<GraphOrNodeSet<T>> rhsSet) {
+    @Override
+    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+        return new Multiply(forEachNodes, forEachVars, forEachThreads, lhs, rhs, last);
+    }
+
+    private Set<GraphOrNodeSet> getMultiplication(Set<GraphOrNodeSet> lhsSet, Set<GraphOrNodeSet> rhsSet) {
         boolean changed = false;
-        for (GraphOrNodeSet<T> lhs : lhsSet) {
+        for (GraphOrNodeSet lhs : lhsSet) {
             if(lhs.isChanged()) {
                 changed = true;
                 lhs.setChanged(false);
             }
         }
-        for (GraphOrNodeSet<T> rhs : rhsSet) {
+        for (GraphOrNodeSet rhs : rhsSet) {
             if(rhs.isChanged()) {
                 changed = true;
                 rhs.setChanged(false);
@@ -50,16 +63,16 @@ public class Multiply<T extends MemoryAccess> extends Filter<T> {
         if(!changed) {
             return last;
         }
-        Set<GraphOrNodeSet<T>> retSet = new HashSet<>();
-        for (GraphOrNodeSet<T> lhs : lhsSet) {
-            for (GraphOrNodeSet<T> rhs : rhsSet) {
+        Set<GraphOrNodeSet> retSet = new HashSet<>();
+        for (GraphOrNodeSet lhs : lhsSet) {
+            for (GraphOrNodeSet rhs : rhsSet) {
                 if(lhs.isGraph() || rhs.isGraph()) {
                     throw new UnsupportedOperationException("Cannot multiply graphs!");
                 }
                 else {
-                    Graph<T> ret = Graph.create(false);
-                    for (T t : lhs.getNodeSet()) {
-                        for (T t1 : rhs.getNodeSet()) {
+                    Graph ret = Graph.empty();
+                    for (MemoryAccess t : lhs.getNodeSet()) {
+                        for (MemoryAccess t1 : rhs.getNodeSet()) {
                             ret.addEdge(t, t1, false);
                         }
                     }
