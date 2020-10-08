@@ -3,7 +3,7 @@ package hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-public class Fence extends MemoryAccess {
+public class Fence extends MemoryAccess implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Fence {
     private static int cnt;
 
     static {

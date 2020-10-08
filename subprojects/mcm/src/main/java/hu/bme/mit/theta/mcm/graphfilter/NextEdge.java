@@ -9,13 +9,13 @@ import java.util.*;
 public class NextEdge extends Filter {
     private final Filter source;
     private final Filter target;
-    private final String edgeLabel;
+    private final Set<String> edgeLabel;
     private Set<GraphOrNodeSet> last;
     private final Map<MemoryAccess, Set<MemoryAccess>> edges;
     private final Map<MemoryAccess, Set<MemoryAccess>> reverse;
 
 
-    public NextEdge(Filter source, Filter target, String edgeLabel) {
+    public NextEdge(Filter source, Filter target, Set<String> edgeLabel) {
         this.source = source;
         this.target = target;
         this.edgeLabel = edgeLabel;
@@ -24,7 +24,7 @@ public class NextEdge extends Filter {
         reverse = new HashMap<>();
     }
 
-    public NextEdge(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter source, Filter target, String edgeLabel, Set<GraphOrNodeSet> last, Map<MemoryAccess, Set<MemoryAccess>> edges, Map<MemoryAccess, Set<MemoryAccess>> reverse) {
+    public NextEdge(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Filter source, Filter target, Set<String> edgeLabel, Set<GraphOrNodeSet> last, Map<MemoryAccess, Set<MemoryAccess>> edges, Map<MemoryAccess, Set<MemoryAccess>> reverse) {
         this.source = source.duplicate(forEachNodes, forEachVars, forEachThreads);
         this.target = target.duplicate(forEachNodes, forEachVars, forEachThreads);
         this.edgeLabel = edgeLabel;
@@ -38,40 +38,31 @@ public class NextEdge extends Filter {
 
     @Override
     public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
-        if(!label.equals(edgeLabel)) {
-            return last;
-        }
-        else {
+        if(edgeLabel.contains(label)) {
             edges.putIfAbsent(source, new HashSet<>());
             reverse.putIfAbsent(target, new HashSet<>());
-
             edges.get(source).add(target);
             reverse.get(target).add(source);
-            Set<GraphOrNodeSet> lhs = this.source.filterMk(source, target, label, isFinal);
-            Set<GraphOrNodeSet> rhs = this.target.filterMk(source, target, label, isFinal);
-            return getNextEdges(lhs, rhs, label);
         }
+
+        Set<GraphOrNodeSet> lhs = this.source.filterMk(source, target, label, isFinal);
+        Set<GraphOrNodeSet> rhs = this.target.filterMk(source, target, label, isFinal);
+        return getNextEdges(lhs, rhs, label);
     }
 
     @Override
     public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
-        if(!label.equals(edgeLabel)) {
-            return last;
-        }
-        else if (edges.get(source) == null || !edges.get(source).contains(target)) {
-            throw new UnsupportedOperationException("Trying to remove a non-existant edge.");
-        }
-        else {
+        if(edgeLabel.contains(label)) {
             edges.get(source).remove(target);
             reverse.get(target).remove(source);
-            Set<GraphOrNodeSet> lhs = this.source.filterRm(source, target, label);
-            Set<GraphOrNodeSet> rhs = this.target.filterRm(source, target, label);
-            return getNextEdges(lhs, rhs, label);
         }
+        Set<GraphOrNodeSet> lhs = this.source.filterRm(source, target, label);
+        Set<GraphOrNodeSet> rhs = this.target.filterRm(source, target, label);
+        return getNextEdges(lhs, rhs, label);
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new NextEdge(forEachNodes, forEachVars, forEachThreads, source, target, edgeLabel, last, edges, reverse);
     }
 
@@ -95,13 +86,10 @@ public class NextEdge extends Filter {
         Set<GraphOrNodeSet> retSet = new HashSet<>();
         for (GraphOrNodeSet lhs : lhsSet) {
             for (GraphOrNodeSet rhs : rhsSet) {
-                if(!lhs.isChanged() && !rhs.isChanged()) {
-                    return last;
-                }
-                else if(!lhs.isGraph() && !rhs.isGraph()){
+                if(!lhs.isGraph() && !rhs.isGraph()){
                     Graph ret = Graph.empty();
                     for (MemoryAccess t : lhs.getNodeSet()) {
-                        for (MemoryAccess t1 : edges.get(t)) {
+                        for (MemoryAccess t1 : edges.getOrDefault(t, new HashSet<>())) {
                             ret.addEdge(t, t1, false);
                         }
                     }

@@ -14,21 +14,20 @@ import hu.bme.mit.theta.mcm.graphfilter.interfaces.Read;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.Write;
 import org.antlr.v4.runtime.Token;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     private final MCM mcm;
     private final List<? extends Process> processes;
     private final Set<VarDecl<? extends Type>> variables;
+    private final Map<String, Filter> definitions;
 
     public McmDefinitionParserVisitor(List<? extends Process> processes, Set<VarDecl<? extends Type>> variables) {
         this.mcm = new MCM();
         this.processes = processes;
         this.variables = variables;
+        definitions = new HashMap<>();
     }
 
     public MCM getMcm() {
@@ -37,7 +36,7 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     @Override
     public Filter visitDefinition(McmDslParser.DefinitionContext ctx) {
-        mcm.addDefinition(ctx.name.getText(), ctx.expr().accept(this));
+        definitions.put(ctx.name.getText(), ctx.expr().accept(this));
         return null;
     }
 
@@ -48,12 +47,16 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     @Override
     public Filter visitNextEdge(McmDslParser.NextEdgeContext ctx) {
-        return new NextEdge(ctx.expr(0).accept(this), ctx.expr(1).accept(this), ctx.namedExpr().name.getText());
+        Set<String> names = new HashSet<>();
+        ctx.namedExpr().forEach(namedExprContext -> names.add(namedExprContext.getText()));
+        return new NextEdge(ctx.expr(0).accept(this), ctx.expr(1).accept(this), names);
     }
 
     @Override
     public Filter visitSuccessorEdges(McmDslParser.SuccessorEdgesContext ctx) {
-        return new SuccessorEdge(ctx.expr(0).accept(this), ctx.expr(1).accept(this), ctx.namedExpr().name.getText());
+        Set<String> names = new HashSet<>();
+        ctx.namedExpr().forEach(namedExprContext -> names.add(namedExprContext.getText()));
+        return new SuccessorEdge(ctx.expr(0).accept(this), ctx.expr(1).accept(this), names);
     }
 
     private final Stack<ForEachVar> forEachVars = new Stack<>();
@@ -122,8 +125,8 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     @Override
     public Filter visitNamedExpr(McmDslParser.NamedExprContext ctx) {
-        if(mcm.getDefinitions().containsKey(ctx.name.getText())) {
-            return mcm.getDefinitions().get(ctx.name.getText());
+        if(definitions.containsKey(ctx.name.getText())) {
+            return definitions.get(ctx.name.getText());
         }
         else if(ctx.name.getText().equals(ctx.name.getText().toUpperCase())) {
             return getNamedNodeFilter(ctx);
@@ -159,7 +162,7 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     @Override
     public Filter visitSimpleConstraint(McmDslParser.SimpleConstraintContext ctx) {
-        mcm.addConstraint(ctx.EMPTY() != null ? new EmptyConstraint(mcm.getDefinitions().get(ctx.name.getText()), ctx.NOT() != null) : new AcyclicConstraint(mcm.getDefinitions().get(ctx.name.getText()), ctx.NOT() != null));
+        mcm.addConstraint(ctx.EMPTY() != null ? new EmptyConstraint(definitions.get(ctx.name.getText()), ctx.NOT() != null, ctx.name.getText()) : new AcyclicConstraint(definitions.get(ctx.name.getText()), ctx.NOT() != null, ctx.name.getText()));
         return null;
     }
 }

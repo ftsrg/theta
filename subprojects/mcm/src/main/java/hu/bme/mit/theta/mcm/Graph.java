@@ -3,10 +3,7 @@ package hu.bme.mit.theta.mcm;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -36,6 +33,8 @@ public class Graph {
     }
 
     public void addEdge(MemoryAccess source, MemoryAccess target, boolean isFinal) {
+        forward.put(source, new HashSet<>());
+        reverse.put(target, new HashSet<>());
         checkState(!exists(source, target), "Edge already exists! Use the replace/markFinal functions instead.");
         forward.get(source).add(Tuple2.of(target, isFinal));
         reverse.get(target).add(Tuple2.of(source, isFinal));
@@ -48,7 +47,7 @@ public class Graph {
     }
 
     public boolean isDisconnected(MemoryAccess t) {
-        return reverse.get(t).size() == 0 && forward.get(t).size() == 0;
+        return reverse.getOrDefault(t, new HashSet<>()).size() == 0 && forward.getOrDefault(t, new HashSet<>()).size() == 0;
     }
 
     public void markFinal(MemoryAccess source, MemoryAccess target) {
@@ -69,7 +68,20 @@ public class Graph {
     }
 
     public boolean isAcyclic() {
-        return false;
+        Set<MemoryAccess> visited = new HashSet<>();
+        List<MemoryAccess> currentLevel = new LinkedList<>(forward.keySet());
+        for (int i = 0; i < currentLevel.size(); i++) {
+            MemoryAccess memoryAccess = currentLevel.get(i);
+            currentLevel.remove(memoryAccess);
+            visited.add(memoryAccess);
+            for (Tuple2<MemoryAccess, Boolean> tuple : forward.getOrDefault(memoryAccess, new HashSet<>())) {
+                if(visited.contains(tuple.get1())) {
+                    return false;
+                }
+                currentLevel.add(tuple.get1());
+            }
+        }
+        return true;
     }
 
     public boolean isEmpty() {
@@ -128,5 +140,15 @@ public class Graph {
 
     public boolean isFinal() {
         return false;
+    }
+
+    public String printGraph() {
+        StringBuilder stringBuilder = new StringBuilder("digraph G{\n");
+        forward.forEach((memoryAccess, tuple2s) -> {
+            for (Tuple2<MemoryAccess, Boolean> tuple2 : tuple2s) {
+                stringBuilder.append(memoryAccess.toString()).append(" -> ").append(tuple2.get1()).append("\n");
+            }
+        });
+        return stringBuilder.append("}").toString();
     }
 }

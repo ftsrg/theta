@@ -1,0 +1,17 @@
+samevar_w = po(W --> W) union mo(W --> W)
+
+causality = rf(W -> R) union po(R --> W)
+
+fence     = for_each_node F begin
+                (po,rf)(source(po(R --> F[node])) --> target(po(F[node] --> R)))
+            end
+
+coherence = for_each_node W begin
+                rf(source(mo(W --> W[node])) -> target(po(target(rf(W[node] -> R)) --> R)))
+            end
+
+
+fence empty
+coherence empty
+samevar_w acyclic
+causality acyclic

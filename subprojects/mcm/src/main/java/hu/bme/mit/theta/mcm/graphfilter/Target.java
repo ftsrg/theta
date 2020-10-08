@@ -37,7 +37,7 @@ public class Target extends Filter {
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new Target(forEachNodes, forEachVars, forEachThreads, op, last);
     }
 

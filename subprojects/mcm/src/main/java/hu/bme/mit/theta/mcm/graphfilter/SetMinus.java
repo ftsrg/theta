@@ -40,7 +40,7 @@ public class SetMinus extends Filter {
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new SetMinus(forEachNodes, forEachVars, forEachThreads, lhs, rhs, last);
     }
 

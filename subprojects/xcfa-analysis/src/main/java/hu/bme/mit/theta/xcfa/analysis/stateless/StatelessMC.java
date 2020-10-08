@@ -15,13 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
+import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraph;
 
 public final class StatelessMC {
 
-    public static boolean check(XCFA xcfa, int threads) {
-        ExecutionGraph executionGraph = ExecutionGraph.create(xcfa);
+    public static boolean check(XCFA xcfa, MCM mcm, int threads) {
+        ExecutionGraph executionGraph = ExecutionGraph.create(xcfa, mcm);
         executionGraph.execute(threads);
         return true;
     }

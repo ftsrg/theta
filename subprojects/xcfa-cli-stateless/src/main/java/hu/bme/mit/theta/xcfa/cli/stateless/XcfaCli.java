@@ -67,7 +67,7 @@ public class XcfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, threadPoolSize)) {
+			if(StatelessMC.check(xcfa, mcm, threadPoolSize)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {

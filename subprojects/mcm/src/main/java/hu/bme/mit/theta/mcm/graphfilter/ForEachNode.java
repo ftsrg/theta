@@ -65,7 +65,7 @@ public class ForEachNode extends Filter {
     }
 
     @Override
-    protected ForEachNode duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public ForEachNode duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new ForEachNode(forEachNodes, forEachVars, forEachThreads, pattern, op, currentNode, ops);
     }
 

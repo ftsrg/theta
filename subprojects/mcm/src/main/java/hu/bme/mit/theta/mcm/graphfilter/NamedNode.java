@@ -29,11 +29,11 @@ public class NamedNode extends Filter {
     @Override
     public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
         graph.addEdge(source, target, isFinal);
-        if((clazz == null || clazz.isInstance(source)) && !set.getNodeSet().contains(source)) {
+        if((clazz == null || clazz.isAssignableFrom(source.getClass())) && !set.getNodeSet().contains(source)) {
             set.getNodeSet().add(source);
             set.setChanged(true);
         }
-        if((clazz == null || clazz.isInstance(target)) && !set.getNodeSet().contains(target)) {
+        if((clazz == null || clazz.isAssignableFrom(target.getClass())) && !set.getNodeSet().contains(target)) {
             set.getNodeSet().add(target);
             set.setChanged(true);
         }
@@ -55,7 +55,7 @@ public class NamedNode extends Filter {
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new NamedNode(clazz, graph, set);
     }
 }

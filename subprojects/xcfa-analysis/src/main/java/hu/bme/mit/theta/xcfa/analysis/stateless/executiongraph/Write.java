@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-class Write extends MemoryAccess {
+class Write extends MemoryAccess implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Write {
     private static int cnt;
 
     static {
@@ -26,6 +26,6 @@ class Write extends MemoryAccess {
 
     @Override
     public String toString() {
-        return "\"W(" + getGlobalVar().getName() + ", " + getValue() + ")_" + id + "\"";
+        return "\"W(" + getGlobalVariable().getName() + ", " + getValue() + ")_" + id + "\"";
     }
 }

@@ -40,7 +40,7 @@ public class Union extends Filter {
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new Union(forEachNodes, forEachVars, forEachThreads, lhs, rhs, last);
     }
 

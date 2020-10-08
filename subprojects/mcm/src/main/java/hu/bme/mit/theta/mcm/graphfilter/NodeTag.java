@@ -8,6 +8,7 @@ import java.util.Stack;
 
 public class NodeTag extends Filter {
     private final ForEachNode supplier;
+    private GraphOrNodeSet last;
 
     public NodeTag(ForEachNode supplier) {
         this.supplier = supplier;
@@ -15,16 +16,16 @@ public class NodeTag extends Filter {
 
     @Override
     public Set<GraphOrNodeSet> filterMk(MemoryAccess source, MemoryAccess target, String label, boolean isFinal) {
-        return Set.of(GraphOrNodeSet.of(Set.of(supplier.getCurrentNode())));
+        return last == null ? Set.of(last = GraphOrNodeSet.of(Set.of(supplier.getCurrentNode()))) : Set.of(last);
     }
 
     @Override
     public Set<GraphOrNodeSet> filterRm(MemoryAccess source, MemoryAccess target, String label) {
-        return null;
+        return last == null ? Set.of(last = GraphOrNodeSet.of(Set.of(supplier.getCurrentNode()))) : Set.of(last);
     }
 
     @Override
-    protected Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
+    public Filter duplicate(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads) {
         return new NodeTag(forEachNodes.peek());
     }
 }

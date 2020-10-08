@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class Read extends MemoryAccess {
+class Read extends MemoryAccess implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Read {
     private static int cnt;
 
     static {
@@ -55,7 +55,7 @@ class Read extends MemoryAccess {
         super.revert(stackFrames, lastNode, mutablePartitionedValuation, partitionId);
         ArrayList<StackFrame> stackCopy = new ArrayList<>();
         savedStack.forEach(stackFrame -> stackCopy.add(stackFrame.duplicate()));
-        stackFrames.put(getParentProcess(), stackCopy);
+        stackFrames.put(getProcess(), stackCopy);
         mutablePartitionedValuation.clear(partitionId);
         mutablePartitionedValuation.putAll(partitionId, savedState);
         return savedAtomicity;
@@ -63,6 +63,6 @@ class Read extends MemoryAccess {
 
     @Override
     public String toString() {
-        return "\"R(" + getGlobalVar().getName() + ")_" + id + "\"";
+        return "\"R(" + getGlobalVariable().getName() + ")_" + id + "\"";
     }
 }
