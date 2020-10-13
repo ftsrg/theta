@@ -176,6 +176,16 @@ public final class Z3SolverTest {
 		assertTrue(status.isSat());
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void testResetStack() {
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		solver.push();
+		solver.push();
+		solver.pop();
+		solver.reset();
+		solver.pop();
+	}
+
 	@Test
 	public void testBV1() {
 		final Solver solver = Z3SolverFactory.getInstance().createSolver();
