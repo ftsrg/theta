@@ -6,8 +6,8 @@ fence     = for_each_node F begin
                 (po,rf)(source(po(R --> F[node])) --> target(po(F[node] --> R)))
             end
 
-coherence = for_each_node W begin
-                rf(source(mo(W --> W[node])) -> target(po(target(rf(W[node] -> R)) --> R)))
+coherence = for_each_node R begin
+                rf(source(mo(W --> source(rf(W -> R[node])))) -> target(po(R[node] --> R)))
             end
 
 

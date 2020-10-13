@@ -29,8 +29,8 @@ public class ExecutionGraph implements Runnable{
 
     private ThreadPoolExecutor threadPool;
 
-    private final MCM mcm;                                                    //deep
     private final XCFA xcfa;                                                  //shallow
+    private MCM mcm;                                                    //shallow
     private final Set<Write> initialWrites;                                   //shallow
     private final Map<XCFA.Process, MemoryAccess> lastNode;                   //deep
     private final Map<XCFA.Process, Map<VarDecl<?>, Read>> lastRead;          //deep
@@ -90,6 +90,7 @@ public class ExecutionGraph implements Runnable{
     private ExecutionGraph(
             ThreadPoolExecutor threadPool,
             XCFA xcfa,
+            MCM mcm,
             Set<Write> initialWrites,
             Map<XCFA.Process, MemoryAccess> lastNode,
             Map<XCFA.Process, Map<VarDecl<?>, Read>> lastRead,
@@ -99,17 +100,16 @@ public class ExecutionGraph implements Runnable{
             Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr,
             Map<VarDecl<?>, List<Write>> mo,
             Map<XCFA.Process, List<StackFrame>> stackFrames,
-            MCM mcm,
             XCFA.Process currentlyAtomic,
             MutablePartitionedValuation mutablePartitionedValuation,
             Map<XCFA.Process, Integer> partitions,
             List<Integer> path){
+        this.mcm = mcm;
         this.threadPool = threadPool;
         this.xcfa = xcfa;
         this.initialWrites = initialWrites;
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
-        this.mcm = mcm.duplicate();
         this.mo = new HashMap<>();
         mo.forEach((varDecl, writes1) -> this.mo.put(varDecl, new ArrayList<>(writes1)));
         this.path = path;
@@ -156,11 +156,17 @@ public class ExecutionGraph implements Runnable{
 
 
     // PUBLIC METHODS
-    private static AtomicInteger cnt = new AtomicInteger(0);
+    private static final AtomicInteger cnt = new AtomicInteger(0);
+
+    public void start() {
+        if(!Thread.currentThread().isInterrupted()) {
+            threadPool.execute(this);
+        }
+    }
 
     public void execute(int threads) {
         threadPool = new ThreadPoolExecutor(threads, threads, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-        threadPool.execute(this);
+        start();
         try {
             if(!threadPool.awaitTermination(600, TimeUnit.SECONDS)) {
                 threadPool.shutdownNow();
@@ -182,12 +188,30 @@ public class ExecutionGraph implements Runnable{
         step = 0;
         while(executeNextStmt()) {
             step++;
+//            if(isInErrorLoc()) {
+//                try {
+//                    this.mcm = mcm.duplicate();
+//                    mcm.fromEdges(edges);
+//                    if(!mcm.isViolated()) {
+//                        printGraph(true);
+//                        threadPool.shutdownNow();
+//                        return;
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
         try {
-            printGraph(true);
+            if(isInErrorLoc()) {
+                this.mcm = mcm.duplicate();
+                mcm.fromEdges(edges);
+                printGraph(true);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         testQueue();
     }
 
@@ -217,15 +241,13 @@ public class ExecutionGraph implements Runnable{
             if(i < size - 1) {
                 ExecutionGraph executionGraph = duplicate(i, step);
                 executionGraph.edges.get(write).add(edge);
-                executionGraph.mcm.checkMk(write, read, "rf", false);
-                executionGraph.mutablePartitionedValuation.put(getPartitionId(proc),global,write.getValue());
+                executionGraph.mutablePartitionedValuation.put(getPartitionId(proc),local,write.getValue());
                 executionGraph.fr.put(read, Tuple2.of(write, edge));
-                threadPool.execute(executionGraph);
+                executionGraph.start();
             }
             else {
                 edges.get(write).add(Tuple2.of(read, "rf"));
-                mcm.checkMk(write, read, "rf", false);
-                mutablePartitionedValuation.put(getPartitionId(proc),global,write.getValue());
+                mutablePartitionedValuation.put(getPartitionId(proc),local,write.getValue());
                 fr.put(read, Tuple2.of(write, edge));
                 revisitableReads.get(global).add(read);
             }
@@ -265,20 +287,15 @@ public class ExecutionGraph implements Runnable{
                 if(j == -1) {
                     if(size > 0) {
                         executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
-                        executionGraph.mcm.checkMk(write, mo.get(global).get(j+1), "mo", false);
                     }
                 }
                 else if(j < size-1) {
                     executionGraph.edges.get(mo.get(global).get(j)).remove(Tuple2.of(mo.get(global).get(j+1), "mo"));
-                    executionGraph.mcm.checkRm(mo.get(global).get(j), mo.get(global).get(j+1), "mo");
                     executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
-                    executionGraph.mcm.checkMk(write, mo.get(global).get(j+1), "mo", false);
                     executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
-                    executionGraph.mcm.checkMk(mo.get(global).get(j), write, "mo", false);
                 }
                 else {
                     executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
-                    executionGraph.mcm.checkMk(mo.get(global).get(j), write, "mo", false);
                 }
                 executionGraph.mo.get(global).add(j+1, write);
 
@@ -286,13 +303,12 @@ public class ExecutionGraph implements Runnable{
                     Tuple2<MemoryAccess, String> edge = Tuple2.of(read, "rf");
                     executionGraph.revisitRead(read);
                     executionGraph.edges.get(write).add(edge);
-                    executionGraph.mcm.checkMk(write, read, "rf", false);
                     executionGraph.fr.put(read, Tuple2.of(write, edge));
-                    executionGraph.mutablePartitionedValuation.put(getPartitionId(proc),global,write.getValue());
+                    executionGraph.mutablePartitionedValuation.put(getPartitionId(proc),read.getLocalVar(),write.getValue());
                 }
 
                 if(i < revisitSets.size() - 1 || j < size - 1) {
-                    threadPool.execute(executionGraph);
+                    executionGraph.start();
                 }
             }
 
@@ -341,7 +357,7 @@ public class ExecutionGraph implements Runnable{
         List<Integer> newPath = new ArrayList<>(path);
         newPath.add(step);
         newPath.add(i);
-        return new ExecutionGraph(threadPool, xcfa, initialWrites, lastNode, lastRead, revisitableReads, writes, edges, fr, mo, stackFrames, mcm, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
+        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, lastRead, revisitableReads, writes, edges, fr, mo, stackFrames, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
     }
 
     /*
@@ -440,18 +456,24 @@ public class ExecutionGraph implements Runnable{
         }
     }
 
+    private boolean isInErrorLoc() {
+        for (XCFA.Process process : xcfa.getProcesses()) {
+            StackFrame stackFrame;
+            if(stackFrames.get(process).size() > 0  && (stackFrame = stackFrames.get(process).get(stackFrames.get(process).size()-1)).isLastStmt() && stackFrame.getEdge().getTarget().isErrorLoc()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void addNode(XCFA.Process proc, MemoryAccess memoryAccess) {
         edges.put(memoryAccess, new HashSet<>());
         if(lastNode.get(proc) != null) {
             edges.get(lastNode.get(proc)).add(Tuple2.of(memoryAccess, "po"));
-            mcm.checkMk(lastNode.get(proc), memoryAccess, "po", false);
         }
         else {
-            initialWrites.forEach(write -> {
-                edges.get(write).add(Tuple2.of(memoryAccess, "po"));
-                mcm.checkMk(write, memoryAccess, "po", false);
-            });
+            initialWrites.forEach(write -> edges.get(write).add(Tuple2.of(memoryAccess, "po")));
         }
         lastNode.put(proc, memoryAccess);
     }
@@ -506,14 +528,13 @@ public class ExecutionGraph implements Runnable{
     private synchronized void testQueue() {
         if(threadPool.getQueue().size() == 0 && threadPool.getActiveCount() == 1) {
             threadPool.shutdown();
-            System.out.println("Traces: " + cnt.get());
         }
     }
 
     /*
      * Prints the graph as a graphviz cluster
      */
-    private void printGraph(boolean isFinal) throws IOException {
+    private void printGraph(@SuppressWarnings("SameParameterValue") boolean isFinal) throws IOException {
         File outFile;
         if(!isFinal) {
             StringBuilder path = new StringBuilder("out").append(File.separator).append("steps").append(File.separator);

@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.mcm;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class MCM {
@@ -23,6 +25,12 @@ public class MCM {
             this.constraints.add(duplicated);
             if(violator == constraint) this.violator = duplicated;
         }
+    }
+
+    public <T extends MemoryAccess> void fromEdges(Map<T, Set<Tuple2<T, String>>> edges) {
+        edges.forEach((t, tuple2s) -> tuple2s.forEach(objects -> {
+            checkMk(t, objects.get1(), objects.get2(), true);
+        }));
     }
 
     public void addConstraint(Constraint g) {
