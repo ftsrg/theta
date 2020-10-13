@@ -420,17 +420,6 @@ public final class Z3SolverTest {
 		solver.pop();
 	}
 
-	public void testBV13() {
-		solver.push();
-
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(4), BvExprs.Add(List.of(uint16ToBvLitExpr(1), uint16ToBvLitExpr(3)))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Sub(uint16ToBvLitExpr(4), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(12), BvExprs.Mul(List.of(uint16ToBvLitExpr(3), uint16ToBvLitExpr(4)))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(4), BvExprs.SDiv(uint16ToBvLitExpr(12), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.SMod(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.SRem(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
-	}
-
 	private static BvLitExpr uint16ToBvLitExpr(int value) {
 		return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(value), 16);
 	}
