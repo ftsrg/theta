@@ -321,7 +321,7 @@ final class Z3ExprTransformer {
 		try {
 			return exprToTerm.get(expr, () -> table.dispatch(expr));
 		} catch (final ExecutionException e) {
-			throw new AssertionError();
+			throw new AssertionError("Unhandled case: " + expr, e);
 		}
 	}
 
@@ -926,6 +926,10 @@ final class Z3ExprTransformer {
 		} else {
 			return Tuple2.of(func, ImmutableList.of(arg));
 		}
+	}
+
+	public void reset() {
+		exprToTerm.invalidateAll();
 	}
 
 }
