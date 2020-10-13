@@ -33,12 +33,12 @@ public class ExecutionGraph implements Runnable{
     private MCM mcm;                                                    //shallow
     private final Set<Write> initialWrites;                                   //shallow
     private final Map<XCFA.Process, MemoryAccess> lastNode;                   //deep
-    private final Map<XCFA.Process, Map<VarDecl<?>, Read>> lastRead;          //deep
     private final Map<VarDecl<?>, List<Read>> revisitableReads;               //deep
     private final Map<VarDecl<?>, List<Write>> writes;                        //deep
     private final Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr;  //deep
     private final Map<VarDecl<?>, List<Write>> mo;                            //deep
     private final Map<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> edges; //deep
+    private final Map<MemoryAccess, Set<Read>> sbrfReads;                     //deep
 
     private final Map<XCFA.Process, List<StackFrame>> stackFrames;            //deep
     private final MutablePartitionedValuation mutablePartitionedValuation;    //deep
@@ -56,7 +56,6 @@ public class ExecutionGraph implements Runnable{
         this.mcm = mcm;
         initialWrites = new HashSet<>();
         lastNode = new HashMap<>();
-        lastRead = new HashMap<>();
         revisitableReads = new HashMap<>();
         writes = new HashMap<>();
         fr = new HashMap<>();
@@ -67,6 +66,7 @@ public class ExecutionGraph implements Runnable{
         edges = new HashMap<>();
         this.xcfa = xcfa;
         this.path = new ArrayList<>();
+        sbrfReads = new HashMap<>();
 
         mo = new HashMap<>();
         xcfa.getGlobalVars().forEach(varDecl -> mo.put(varDecl, new ArrayList<>()));
@@ -74,7 +74,6 @@ public class ExecutionGraph implements Runnable{
         xcfa.getProcesses().forEach(process -> {
             stackFrames.put(process, new ArrayList<>());
             partitions.put(process, mutablePartitionedValuation.createPartition());
-            lastRead.put(process, new HashMap<>());
         });
 
         xcfa.getGlobalVars().forEach(varDecl -> {
@@ -93,14 +92,13 @@ public class ExecutionGraph implements Runnable{
             MCM mcm,
             Set<Write> initialWrites,
             Map<XCFA.Process, MemoryAccess> lastNode,
-            Map<XCFA.Process, Map<VarDecl<?>, Read>> lastRead,
             Map<VarDecl<?>, List<Read>> revisitableReads,
             Map<VarDecl<?>, List<Write>> writes,
             Map<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> edges,
             Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr,
             Map<VarDecl<?>, List<Write>> mo,
             Map<XCFA.Process, List<StackFrame>> stackFrames,
-            XCFA.Process currentlyAtomic,
+            Map<MemoryAccess, Set<Read>> sbrfReads, XCFA.Process currentlyAtomic,
             MutablePartitionedValuation mutablePartitionedValuation,
             Map<XCFA.Process, Integer> partitions,
             List<Integer> path){
@@ -110,11 +108,11 @@ public class ExecutionGraph implements Runnable{
         this.initialWrites = initialWrites;
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
+        this.sbrfReads = new HashMap<>();
+        sbrfReads.forEach((memoryAccess, memoryAccesses) -> this.sbrfReads.put(memoryAccess, new HashSet<>(memoryAccesses)));
         this.mo = new HashMap<>();
         mo.forEach((varDecl, writes1) -> this.mo.put(varDecl, new ArrayList<>(writes1)));
         this.path = path;
-        this.lastRead = new HashMap<>();
-        lastRead.forEach((process, varDeclReadMap) -> this.lastRead.put(process, new HashMap<>(varDeclReadMap)));
         this.revisitableReads = new HashMap<>();
         revisitableReads.forEach((varDecl, reads) -> this.revisitableReads.put(varDecl, new ArrayList<>(reads)));
         this.writes = new HashMap<>();
@@ -188,31 +186,28 @@ public class ExecutionGraph implements Runnable{
         step = 0;
         while(executeNextStmt()) {
             step++;
-//            if(isInErrorLoc()) {
-//                try {
-//                    this.mcm = mcm.duplicate();
-//                    mcm.fromEdges(edges);
-//                    if(!mcm.isViolated()) {
-//                        printGraph(true);
-//                        threadPool.shutdownNow();
-//                        return;
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
+            if (testViolation()) return;
         }
-        try {
-            if(isInErrorLoc()) {
-                this.mcm = mcm.duplicate();
-                mcm.fromEdges(edges);
-                printGraph(true);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if(testViolation()) return;
 
         testQueue();
+    }
+
+    private boolean testViolation() {
+        if(isInErrorLoc()) {
+            try {
+                this.mcm = mcm.duplicate();
+                mcm.fromEdges(edges);
+                if(!mcm.isViolated()) {
+                    printGraph(true);
+                    threadPool.shutdownNow();
+                    return true;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
 
@@ -227,11 +222,11 @@ public class ExecutionGraph implements Runnable{
                 local,
                 mutablePartitionedValuation.getValuation(getPartitionId(proc)),
                 stackFrames.get(proc),
-                lastRead.get(proc).get(global),
                 proc,
                 currentlyAtomic == proc,
                 lastNode.get(proc));
-        lastRead.get(proc).put(global, read);
+        sbrfReads.put(read, new HashSet<>(sbrfReads.getOrDefault(lastNode.get(proc), new HashSet<>())));
+        sbrfReads.get(read).add(read);
         addNode(proc, read);
 
         int size = writes.get(global).size();
@@ -260,6 +255,7 @@ public class ExecutionGraph implements Runnable{
      */
     void addFence(XCFA.Process proc, String type) {
         Fence fence = new Fence(null, proc, lastNode.get(proc), type);
+        sbrfReads.put(fence, new HashSet<>(sbrfReads.getOrDefault(lastNode.get(proc), new HashSet<>())));
         addNode(proc, fence);
     }
 
@@ -268,6 +264,7 @@ public class ExecutionGraph implements Runnable{
      */
     void addWrite(XCFA.Process proc, VarDecl<?> local, VarDecl<?> global) {
         @SuppressWarnings("OptionalGetWithoutIsPresent") Write write = new Write(global, mutablePartitionedValuation.eval(local).get(), proc, lastNode.get(proc));
+        sbrfReads.put(write, new HashSet<>(sbrfReads.getOrDefault(lastNode.get(proc), new HashSet<>())));
         addNode(proc, write);
         this.writes.get(global).add(write);
         List<List<Read>> revisitSets = getRevisitSets(global);
@@ -288,11 +285,17 @@ public class ExecutionGraph implements Runnable{
                     if(size > 0) {
                         executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
                     }
+                    for(Read r : executionGraph.sbrfReads.get(write)) {
+                        executionGraph.revisitableReads.get(r.getGlobalVariable()).remove(r);
+                    }
                 }
                 else if(j < size-1) {
                     executionGraph.edges.get(mo.get(global).get(j)).remove(Tuple2.of(mo.get(global).get(j+1), "mo"));
                     executionGraph.edges.get(write).add(Tuple2.of(mo.get(global).get(j+1), "mo"));
                     executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
+                    for(Read r : executionGraph.sbrfReads.get(write)) {
+                        executionGraph.revisitableReads.get(r.getGlobalVariable()).remove(r);
+                    }
                 }
                 else {
                     executionGraph.edges.get(mo.get(global).get(j)).add(Tuple2.of(write, "mo"));
@@ -301,10 +304,16 @@ public class ExecutionGraph implements Runnable{
 
                 for(Read read : reads) {
                     Tuple2<MemoryAccess, String> edge = Tuple2.of(read, "rf");
+                    Write originalWrite = executionGraph.fr.get(read).get1();
                     executionGraph.revisitRead(read);
+                    executionGraph.sbrfReads.get(read).removeAll(executionGraph.sbrfReads.get(originalWrite).stream().filter(memoryAccess -> !executionGraph.sbrfReads.get(read.getLastNode()).contains(memoryAccess)).collect(Collectors.toSet()));
+                    executionGraph.sbrfReads.get(read).addAll(executionGraph.sbrfReads.get(write));
                     executionGraph.edges.get(write).add(edge);
                     executionGraph.fr.put(read, Tuple2.of(write, edge));
                     executionGraph.mutablePartitionedValuation.put(getPartitionId(proc),read.getLocalVar(),write.getValue());
+                    for(Read r : executionGraph.sbrfReads.get(write)) {
+                        executionGraph.revisitableReads.get(r.getGlobalVariable()).remove(r);
+                    }
                 }
 
                 if(i < revisitSets.size() - 1 || j < size - 1) {
@@ -321,6 +330,7 @@ public class ExecutionGraph implements Runnable{
      */
     void addInititalWrite(VarDecl<?> global, LitExpr<?> value) {
         Write write = new Write(global, value, null, null);
+        sbrfReads.put(write, new HashSet<>());
         edges.put(write, new HashSet<>());
         initialWrites.add(write);
         if(!writes.containsKey(global)) {
@@ -357,7 +367,7 @@ public class ExecutionGraph implements Runnable{
         List<Integer> newPath = new ArrayList<>(path);
         newPath.add(step);
         newPath.add(i);
-        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, lastRead, revisitableReads, writes, edges, fr, mo, stackFrames, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
+        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
     }
 
     /*
@@ -480,7 +490,7 @@ public class ExecutionGraph implements Runnable{
 
 
     private void revisitRead(Read read) {
-        for(Read r : read.getPrecedingReads()) {
+        for(Read r : sbrfReads.get(read)) {
             revisitableReads.get(r.getGlobalVariable()).remove(r);
         }
         invalidateFuture(read);

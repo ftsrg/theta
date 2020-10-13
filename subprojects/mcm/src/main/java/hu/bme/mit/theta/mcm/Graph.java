@@ -33,9 +33,8 @@ public class Graph {
     }
 
     public void addEdge(MemoryAccess source, MemoryAccess target, boolean isFinal) {
-        forward.put(source, new HashSet<>());
-        reverse.put(target, new HashSet<>());
-        checkState(!exists(source, target), "Edge already exists! Use the replace/markFinal functions instead.");
+        forward.putIfAbsent(source, new HashSet<>());
+        reverse.putIfAbsent(target, new HashSet<>());
         forward.get(source).add(Tuple2.of(target, isFinal));
         reverse.get(target).add(Tuple2.of(source, isFinal));
     }
@@ -68,20 +67,20 @@ public class Graph {
     }
 
     public boolean isAcyclic() {
-        Set<MemoryAccess> visited = new HashSet<>();
-        List<MemoryAccess> currentLevel = new LinkedList<>(forward.keySet());
-        for (int i = 0; i < currentLevel.size(); i++) {
-            MemoryAccess memoryAccess = currentLevel.get(i);
-            currentLevel.remove(memoryAccess);
-            visited.add(memoryAccess);
-            for (Tuple2<MemoryAccess, Boolean> tuple : forward.getOrDefault(memoryAccess, new HashSet<>())) {
-                if(visited.contains(tuple.get1())) {
-                    return false;
-                }
-                currentLevel.add(tuple.get1());
-            }
+        for (MemoryAccess memoryAccess : forward.keySet()) {
+            if(isCyclic(new HashSet<>(), memoryAccess)) return false;
         }
         return true;
+    }
+
+    private boolean isCyclic(Set<MemoryAccess> path, MemoryAccess tail) {
+        path.add(tail);
+        for (Tuple2<MemoryAccess, Boolean> tuple2 : forward.getOrDefault(tail, Set.of())) {
+            if(path.contains(tuple2.get1())) return true;
+            else if(isCyclic(path, tuple2.get1())) return true;
+        }
+        path.remove(tail);
+        return false;
     }
 
     public boolean isEmpty() {

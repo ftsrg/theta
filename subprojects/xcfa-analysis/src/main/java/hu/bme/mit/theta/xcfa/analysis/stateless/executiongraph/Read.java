@@ -23,31 +23,18 @@ class Read extends MemoryAccess implements hu.bme.mit.theta.mcm.graphfilter.inte
     private final List<StackFrame> savedStack;
     private final boolean savedAtomicity;
 
-    private final List<Read> precedingReads;
-
-    Read(VarDecl<?> globalVar, VarDecl<?> localVar, Valuation savedState, List<StackFrame> savedStack, Read lastRead, XCFA.Process parentProcess, boolean atomic, MemoryAccess lastNode) {
+    Read(VarDecl<?> globalVar, VarDecl<?> localVar, Valuation savedState, List<StackFrame> savedStack, XCFA.Process parentProcess, boolean atomic, MemoryAccess lastNode) {
         super(globalVar, parentProcess, lastNode);
         this.localVar = localVar;
         this.savedStack = new ArrayList<>();
         savedStack.forEach(stackFrame -> this.savedStack.add(stackFrame.duplicate()));
         this.savedState = savedState;
-        if (lastRead == null) {
-            precedingReads = new ArrayList<>();
-        }
-        else {
-            precedingReads = new ArrayList<>(lastRead.precedingReads);
-            precedingReads.add(lastRead);
-        }
         this.savedAtomicity = atomic;
         id = cnt++;
     }
 
     VarDecl<?> getLocalVar() {
         return localVar;
-    }
-
-    List<Read> getPrecedingReads() {
-        return precedingReads;
     }
 
     @Override

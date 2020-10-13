@@ -19,7 +19,7 @@ process p0 {
             assume a = 1 and b = 0
         }
         L1 -> Lf {
-            assume not a = 1 and b = 0
+            assume not (a = 1 and b = 0)
         }
     }
 }
@@ -31,6 +31,7 @@ main process p1 {
         L0 -> Lf {
             a := 1
             a -> y
+            fence
             a -> x
         }
     }

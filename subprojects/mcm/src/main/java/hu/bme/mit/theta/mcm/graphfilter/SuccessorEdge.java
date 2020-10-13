@@ -71,7 +71,7 @@ public class SuccessorEdge extends Filter {
         }
         Set<GraphOrNodeSet> src = this.source.filterMk(source, target, label, isFinal);
         Set<GraphOrNodeSet> dst = this.target.filterMk(source, target, label, isFinal);
-        return getSuccessors(src, dst, label);
+        return getSuccessors(src, dst);
 
     }
 
@@ -106,7 +106,7 @@ public class SuccessorEdge extends Filter {
         Set<GraphOrNodeSet> src = this.source.filterRm(source, target, label);
         Set<GraphOrNodeSet> dst = this.target.filterRm(source, target, label);
 
-        return getSuccessors(src, dst, label);
+        return getSuccessors(src, dst);
 
     }
 
@@ -115,7 +115,7 @@ public class SuccessorEdge extends Filter {
         return new SuccessorEdge(forEachNodes, forEachVars, forEachThreads, source, target, edgeLabel, last, edges, reverse, reachable, reachableFrom, changed);
     }
 
-    private Set<GraphOrNodeSet> getSuccessors(Set<GraphOrNodeSet> srcSet, Set<GraphOrNodeSet> dstSet, String label) {
+    private Set<GraphOrNodeSet> getSuccessors(Set<GraphOrNodeSet> srcSet, Set<GraphOrNodeSet> dstSet) {
         boolean changed = false;
         for (GraphOrNodeSet src : srcSet) {
             if(src.isChanged()) {

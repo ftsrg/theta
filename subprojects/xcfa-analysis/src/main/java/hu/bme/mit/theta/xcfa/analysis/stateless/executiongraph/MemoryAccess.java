@@ -26,6 +26,10 @@ abstract class MemoryAccess implements hu.bme.mit.theta.mcm.graphfilter.interfac
         return parentProcess;
     }
 
+    public MemoryAccess getLastNode() {
+        return lastNode;
+    }
+
     boolean revert(Map<XCFA.Process, List<StackFrame>> stackFrames, Map<XCFA.Process, MemoryAccess> lastNodes, MutablePartitionedValuation mutablePartitionedValuation, int partitionId) {
         lastNodes.put(parentProcess, lastNode);
         return false;
