@@ -11,15 +11,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.xcfa.XCFA;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -40,12 +37,14 @@ public class ExecutionGraph implements Runnable{
     private final Map<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> edges; //deep
     private final Map<MemoryAccess, Set<Read>> sbrfReads;                     //deep
 
+    private final AtomicReference<ExecutionGraph> violator;                   //shallow
+
     private final Map<XCFA.Process, List<StackFrame>> stackFrames;            //deep
     private final MutablePartitionedValuation mutablePartitionedValuation;    //deep
     private XCFA.Process currentlyAtomic;                                     //shallow
 
     private final Map<XCFA.Process, Integer> partitions;                      //shallow
-    
+
     private final List<Integer> path;                                         //deep
     private int step;                                                   //shallow
 
@@ -84,6 +83,7 @@ public class ExecutionGraph implements Runnable{
                 addInititalWrite(varDecl, litExpr);
             }
         });
+        violator = new AtomicReference<>();
     }
 
     private ExecutionGraph(
@@ -98,7 +98,7 @@ public class ExecutionGraph implements Runnable{
             Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr,
             Map<VarDecl<?>, List<Write>> mo,
             Map<XCFA.Process, List<StackFrame>> stackFrames,
-            Map<MemoryAccess, Set<Read>> sbrfReads, XCFA.Process currentlyAtomic,
+            Map<MemoryAccess, Set<Read>> sbrfReads, AtomicReference<ExecutionGraph> violator, XCFA.Process currentlyAtomic,
             MutablePartitionedValuation mutablePartitionedValuation,
             Map<XCFA.Process, Integer> partitions,
             List<Integer> path){
@@ -108,6 +108,7 @@ public class ExecutionGraph implements Runnable{
         this.initialWrites = initialWrites;
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
+        this.violator = violator;
         this.sbrfReads = new HashMap<>();
         sbrfReads.forEach((memoryAccess, memoryAccesses) -> this.sbrfReads.put(memoryAccess, new HashSet<>(memoryAccesses)));
         this.mo = new HashMap<>();
@@ -154,7 +155,11 @@ public class ExecutionGraph implements Runnable{
 
 
     // PUBLIC METHODS
-    private static final AtomicInteger cnt = new AtomicInteger(0);
+
+
+    public Optional<ExecutionGraph> getViolator() {
+        return Optional.ofNullable(violator.get());
+    }
 
     public void start() {
         if(!Thread.currentThread().isInterrupted()) {
@@ -179,18 +184,15 @@ public class ExecutionGraph implements Runnable{
      */
     @Override
     public void run() {
-        if(threadPool.getCompletedTaskCount() % 1000 == 0) {
-            System.out.println("Active: " + threadPool.getActiveCount() + ", Queue: " + threadPool.getQueue().size() + ", Finished: "+ threadPool.getCompletedTaskCount());
-        }
-        cnt.incrementAndGet();
         step = 0;
-        while(executeNextStmt()) {
+        while(executeNextStmt() && !Thread.currentThread().isInterrupted()) {
             step++;
             if (testViolation()) return;
         }
-        if(testViolation()) return;
-
-        testQueue();
+        if(!Thread.currentThread().isInterrupted()) {
+            if (testViolation()) return;
+            testQueue();
+        }
     }
 
     private boolean testViolation() {
@@ -199,6 +201,7 @@ public class ExecutionGraph implements Runnable{
                 this.mcm = mcm.duplicate();
                 mcm.fromEdges(edges);
                 if(!mcm.isViolated()) {
+                    violator.set(this);
                     printGraph(true);
                     threadPool.shutdownNow();
                     return true;
@@ -367,7 +370,7 @@ public class ExecutionGraph implements Runnable{
         List<Integer> newPath = new ArrayList<>(path);
         newPath.add(step);
         newPath.add(i);
-        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
+        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, violator, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
     }
 
     /*
@@ -561,32 +564,38 @@ public class ExecutionGraph implements Runnable{
             outFile = new File(path.append("graph.dot").toString());
         }
         if (outFile.getParentFile().exists() || outFile.getParentFile().mkdirs()) {
-            try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outFile))) {
-                bufferedWriter.write("digraph G {");
+            printGraph(new FileWriter(outFile));
+        }
+    }
+
+    public void printGraph(Writer w) throws IOException {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(w)) {
+            bufferedWriter.write("digraph G {");
+            bufferedWriter.newLine();
+            for (Write initialWrite : initialWrites) {
+                bufferedWriter.write(initialWrite.toString());
                 bufferedWriter.newLine();
-                for (Write initialWrite : initialWrites) {
-                    bufferedWriter.write(initialWrite.toString());
-                    bufferedWriter.newLine();
-                }
-                for (XCFA.Process process : stackFrames.keySet()) {
-                    bufferedWriter.write("subgraph cluster_" + process.getName() + "{");
-                    bufferedWriter.newLine();
-                    for (MemoryAccess memoryAccess : edges.keySet()) {
-                        if (memoryAccess.getProcess() == process) {
-                            bufferedWriter.write(memoryAccess.toString());
-                            if (memoryAccess instanceof Read && revisitableReads.get(memoryAccess.getGlobalVariable()).contains(memoryAccess)) {
-                                bufferedWriter.write(" [style=filled]");
-                            }
-                            bufferedWriter.newLine();
+            }
+            for (XCFA.Process process : stackFrames.keySet()) {
+                bufferedWriter.write("subgraph cluster_" + process.getName() + "{");
+                bufferedWriter.newLine();
+                for (MemoryAccess memoryAccess : edges.keySet()) {
+                    if (memoryAccess.getProcess() == process) {
+                        bufferedWriter.write(memoryAccess.toString());
+                        if (memoryAccess instanceof Read && revisitableReads.get(memoryAccess.getGlobalVariable()).contains(memoryAccess)) {
+                            bufferedWriter.write(" [style=filled]");
                         }
+                        bufferedWriter.newLine();
                     }
-                    bufferedWriter.write("}");
-                    bufferedWriter.newLine();
                 }
-                for (Map.Entry<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> entry : edges.entrySet()) {
-                    MemoryAccess memoryAccess = entry.getKey();
-                    Set<Tuple2<MemoryAccess, String>> tuple2s = entry.getValue();
-                    for (Tuple2<MemoryAccess, String> tuple2 : tuple2s) {
+                bufferedWriter.write("}");
+                bufferedWriter.newLine();
+            }
+            for (Map.Entry<MemoryAccess, Set<Tuple2<MemoryAccess, String>>> entry : edges.entrySet()) {
+                MemoryAccess memoryAccess = entry.getKey();
+                Set<Tuple2<MemoryAccess, String>> tuple2s = entry.getValue();
+                for (Tuple2<MemoryAccess, String> tuple2 : tuple2s) {
+                    if(tuple2.get2().matches("po|rf")) {
                         bufferedWriter.write(memoryAccess + " -> " + tuple2.get1());
                         switch (tuple2.get2()) {
                             case "po":
@@ -594,22 +603,22 @@ public class ExecutionGraph implements Runnable{
                             case "rf":
                                 bufferedWriter.write(" [constraint=false,color=green,fontcolor=green,style=dashed,label=rf]");
                                 break;
-                            case "mo":
-                                bufferedWriter.write(" [constraint=false,color=purple,fontcolor=purple,style=dashed,label=mo]");
-                                break;
+//                                case "mo":
+//                                    bufferedWriter.write(" [constraint=false,color=purple,fontcolor=purple,style=dashed,label=mo]");
+//                                    break;
                             default:
                                 bufferedWriter.write(" [constraint=false,color=grey,style=dashed,label=" + tuple2.get2() + "]");
                                 break;
                         }
-                        bufferedWriter.newLine();
                     }
-                }
-                if(mcm.isViolated()) {
-                    bufferedWriter.write("label=\"Violated " + mcm.getViolator().getName() + "\"");
                     bufferedWriter.newLine();
                 }
-                bufferedWriter.write("}");
             }
+            if(mcm.isViolated()) {
+                bufferedWriter.write("label=\"Violated " + mcm.getViolator().getName() + "\"");
+                bufferedWriter.newLine();
+            }
+            bufferedWriter.write("}");
         }
     }
 

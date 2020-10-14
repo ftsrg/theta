@@ -44,6 +44,9 @@ public class XcfaCli {
 	@Parameter(names = "--poolsize", description = "Size of the thread pool (1 by default)", required = false)
 	Integer threadPoolSize = 1;
 
+	@Parameter(names = "--print-cex", description = "Print counterexample as cex.dot", required = false)
+	boolean printcex;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -67,7 +70,7 @@ public class XcfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, mcm, threadPoolSize)) {
+			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {

@@ -19,11 +19,21 @@ import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraph;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 public final class StatelessMC {
 
-    public static boolean check(XCFA xcfa, MCM mcm, int threads) {
+    public static boolean check(XCFA xcfa, MCM mcm, int threads, boolean printcex) {
         ExecutionGraph executionGraph = ExecutionGraph.create(xcfa, mcm);
         executionGraph.execute(threads);
-        return true;
+        if(executionGraph.getViolator().isPresent() && printcex) {
+            try {
+                executionGraph.getViolator().get().printGraph(new FileWriter("violator.dot"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return executionGraph.getViolator().isEmpty();
     }
 }
