@@ -27,7 +27,8 @@ public class ExecutionGraph implements Runnable{
     private ThreadPoolExecutor threadPool;
 
     private final XCFA xcfa;                                                  //shallow
-    private MCM mcm;                                                    //shallow
+    private MCM mcm;                                                          //shallow
+    private final boolean allstates;                                          //shallow
     private final Set<Write> initialWrites;                                   //shallow
     private final Map<XCFA.Process, MemoryAccess> lastNode;                   //deep
     private final Map<VarDecl<?>, List<Read>> revisitableReads;               //deep
@@ -51,8 +52,9 @@ public class ExecutionGraph implements Runnable{
 
     //CONSTRUCTORS
 
-    private ExecutionGraph(XCFA xcfa, MCM mcm) {
+    private ExecutionGraph(XCFA xcfa, MCM mcm, boolean allstates) {
         this.mcm = mcm;
+        this.allstates = allstates;
         initialWrites = new HashSet<>();
         lastNode = new HashMap<>();
         revisitableReads = new HashMap<>();
@@ -90,7 +92,7 @@ public class ExecutionGraph implements Runnable{
             ThreadPoolExecutor threadPool,
             XCFA xcfa,
             MCM mcm,
-            Set<Write> initialWrites,
+            boolean allstates, Set<Write> initialWrites,
             Map<XCFA.Process, MemoryAccess> lastNode,
             Map<VarDecl<?>, List<Read>> revisitableReads,
             Map<VarDecl<?>, List<Write>> writes,
@@ -105,6 +107,7 @@ public class ExecutionGraph implements Runnable{
         this.mcm = mcm;
         this.threadPool = threadPool;
         this.xcfa = xcfa;
+        this.allstates = allstates;
         this.initialWrites = initialWrites;
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
@@ -146,8 +149,8 @@ public class ExecutionGraph implements Runnable{
     /*
      * Create a new ExecutionGraph and return it
      */
-    public static ExecutionGraph create(XCFA xcfa, MCM mcm) {
-        return new ExecutionGraph(xcfa, mcm);
+    public static ExecutionGraph create(XCFA xcfa, MCM mcm, boolean allstates) {
+        return new ExecutionGraph(xcfa, mcm, allstates);
     }
 
 
@@ -187,27 +190,31 @@ public class ExecutionGraph implements Runnable{
         step = 0;
         while(executeNextStmt() && !Thread.currentThread().isInterrupted()) {
             step++;
-            if (testViolation()) return;
+            if (!allstates && testViolation()) return;
         }
         if(!Thread.currentThread().isInterrupted()) {
-            if (testViolation()) return;
+            if (!allstates && testViolation()) return;
             testQueue();
+        }
+        if(allstates) {
+            this.mcm = mcm.duplicate();
+            mcm.fromEdges(edges);
+            try {
+                printGraph(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private boolean testViolation() {
         if(isInErrorLoc()) {
-            try {
-                this.mcm = mcm.duplicate();
-                mcm.fromEdges(edges);
-                if(!mcm.isViolated()) {
-                    violator.set(this);
-                    printGraph(true);
-                    threadPool.shutdownNow();
-                    return true;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+            this.mcm = mcm.duplicate();
+            mcm.fromEdges(edges);
+            if(!mcm.isViolated()) {
+                violator.set(this);
+                threadPool.shutdownNow();
+                return true;
             }
         }
         return false;
@@ -370,7 +377,7 @@ public class ExecutionGraph implements Runnable{
         List<Integer> newPath = new ArrayList<>(path);
         newPath.add(step);
         newPath.add(i);
-        return new ExecutionGraph(threadPool, xcfa, mcm, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, violator, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
+        return new ExecutionGraph(threadPool, xcfa, mcm, allstates, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, violator, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
     }
 
     /*
@@ -595,7 +602,7 @@ public class ExecutionGraph implements Runnable{
                 MemoryAccess memoryAccess = entry.getKey();
                 Set<Tuple2<MemoryAccess, String>> tuple2s = entry.getValue();
                 for (Tuple2<MemoryAccess, String> tuple2 : tuple2s) {
-                    if(tuple2.get2().matches("po|rf")) {
+                    if(tuple2.get2().matches("po|rf|mo")) {
                         bufferedWriter.write(memoryAccess + " -> " + tuple2.get1());
                         switch (tuple2.get2()) {
                             case "po":
@@ -603,9 +610,9 @@ public class ExecutionGraph implements Runnable{
                             case "rf":
                                 bufferedWriter.write(" [constraint=false,color=green,fontcolor=green,style=dashed,label=rf]");
                                 break;
-//                                case "mo":
-//                                    bufferedWriter.write(" [constraint=false,color=purple,fontcolor=purple,style=dashed,label=mo]");
-//                                    break;
+                            case "mo":
+                                bufferedWriter.write(" [constraint=false,color=purple,fontcolor=purple,style=dashed,label=mo]");
+                                break;
                             default:
                                 bufferedWriter.write(" [constraint=false,color=grey,style=dashed,label=" + tuple2.get2() + "]");
                                 break;

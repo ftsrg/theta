@@ -38,7 +38,7 @@ expr: LPAREN expr RPAREN                            # nop
     | expr UNION expr                               # unionExpr
     | expr SECTION expr                             # sectionExpr
     | expr SETMINUS expr                            # setMinusExpr
-    | LPAREN expr ASTERISK expr RPAREN              # multiplyExpr
+    | expr ASTERISK expr                            # multiplyExpr
     | SOURCE LPAREN expr RPAREN                     # sourceExpr
     | TARGET LPAREN expr RPAREN                     # targetExpr
     ;
@@ -113,7 +113,7 @@ SECTION
     ;
 
 SETMINUS
-    :   'minus'
+    :   '\\'
     ;
 
 ASTERISK

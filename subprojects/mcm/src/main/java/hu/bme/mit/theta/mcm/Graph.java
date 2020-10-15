@@ -40,9 +40,12 @@ public class Graph {
     }
 
     public void removeEdge(MemoryAccess source, MemoryAccess target) {
-        checkState(forward.get(source).contains(Tuple2.of(target, false)), "Edge does not exist or is marked final.");
-        forward.get(source).remove(Tuple2.of(target, false));
-        reverse.get(target).remove(Tuple2.of(source, false));
+        if(forward.containsKey(source) && reverse.containsKey(target)) {
+            forward.get(source).remove(Tuple2.of(target, false));
+            reverse.get(target).remove(Tuple2.of(source, false));
+            forward.get(source).remove(Tuple2.of(target, true));
+            reverse.get(target).remove(Tuple2.of(source, true));
+        }
     }
 
     public boolean isDisconnected(MemoryAccess t) {

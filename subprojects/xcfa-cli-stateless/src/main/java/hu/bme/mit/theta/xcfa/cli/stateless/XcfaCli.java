@@ -47,6 +47,9 @@ public class XcfaCli {
 	@Parameter(names = "--print-cex", description = "Print counterexample as cex.dot", required = false)
 	boolean printcex;
 
+	@Parameter(names = "--all-states", description = "Print all resulting states as .dot files", required = false)
+	boolean allstates;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -70,7 +73,7 @@ public class XcfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex)) {
+			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {
