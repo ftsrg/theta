@@ -17,6 +17,7 @@ package hu.bme.mit.theta.sts.cli;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -63,7 +65,6 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
  */
 public class StsCli {
 	private static final String JAR_NAME = "theta-sts-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -100,6 +101,12 @@ public class StsCli {
 	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public StsCli(final String[] args) {
@@ -128,11 +135,16 @@ public class StsCli {
 			return;
 		}
 
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
@@ -140,42 +152,52 @@ public class StsCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
+			System.exit(1);
 		}
-		if (benchmarkMode) {
-			writer.newRow();
+	}
+
+	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
 		}
 	}
 
 	private void printHeader() {
-		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size"};
-		for (final String str : header) {
-			writer.cell(str);
-		}
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size").forEach(writer::cell);
 		writer.newRow();
 	}
 
-	private STS loadModel() throws IOException {
-		if (model.endsWith(".aag")) {
-			final AigerSystem aigerSystem = AigerParser.parse(model);
-			AigerCoi.apply(aigerSystem);
-			return AigerToSts.createSts(aigerSystem);
-		} else if (model.endsWith(".system")) {
-			try (InputStream inputStream = new FileInputStream(model)) {
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				if (spec.getAllSts().size() != 1) {
-					throw new UnsupportedOperationException("STS contains multiple properties.");
+	private STS loadModel() throws Exception {
+		try {
+			if (model.endsWith(".aag")) {
+				final AigerSystem aigerSystem = AigerParser.parse(model);
+				AigerCoi.apply(aigerSystem);
+				return AigerToSts.createSts(aigerSystem);
+			} else {
+				try (InputStream inputStream = new FileInputStream(model)) {
+					final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+					if (spec.getAllSts().size() != 1) {
+						throw new UnsupportedOperationException("STS contains multiple properties.");
+					}
+					return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 				}
-				return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 			}
-		} else {
-			throw new IOException("Unknown format");
+		} catch (Exception ex) {
+			throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
 		}
 	}
 
-	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
-				.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+		try {
+			return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.initPrec(initPrec).search(search)
+					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
@@ -197,25 +219,30 @@ public class StsCli {
 			}
 			writer.cell(sts.getVars().size());
 			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.newRow();
 		}
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-			final StringWriter errors = new StringWriter();
-			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+			} else {
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+			}
 		}
 	}
 
-	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) {
+	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
-		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, solverFactory);
+		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
@@ -223,8 +250,6 @@ public class StsCli {
 			for (Valuation state : concrTrace.getStates()) {
 				printWriter.println(state.toString());
 			}
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();

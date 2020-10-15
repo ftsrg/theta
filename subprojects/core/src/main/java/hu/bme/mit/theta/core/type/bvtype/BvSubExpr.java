@@ -1,16 +1,16 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvSubExpr extends SubExpr<BvType> {
+public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
 
     private static final int HASH_SEED = 2567;
-    private static final String OPERATOR = "-";
+    private static final String OPERATOR = "bvsub";
 
     private BvSubExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         super(leftOp, rightOp);
@@ -41,7 +41,7 @@ public final class BvSubExpr extends SubExpr<BvType> {
     }
 
     @Override
-    public SubExpr<BvType> with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+    public BvSubExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
@@ -50,12 +50,12 @@ public final class BvSubExpr extends SubExpr<BvType> {
     }
 
     @Override
-    public SubExpr<BvType> withLeftOp(final Expr<BvType> leftOp) {
+    public BvSubExpr withLeftOp(final Expr<BvType> leftOp) {
         return with(leftOp, getRightOp());
     }
 
     @Override
-    public SubExpr<BvType> withRightOp(final Expr<BvType> rightOp) {
+    public BvSubExpr withRightOp(final Expr<BvType> rightOp) {
         return with(getLeftOp(), rightOp);
     }
 

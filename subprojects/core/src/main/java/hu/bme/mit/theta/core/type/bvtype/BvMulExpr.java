@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
@@ -11,9 +11,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvMulExpr extends MulExpr<BvType> {
+public final class BvMulExpr extends MultiaryExpr<BvType, BvType> {
     private static final int HASH_SEED = 9825;
-    private static final String OPERATOR_LABEL = "*";
+    private static final String OPERATOR_LABEL = "bvmul";
 
     private BvMulExpr(final Iterable<? extends Expr<BvType>> ops) {
         super(ops);

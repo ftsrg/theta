@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
@@ -23,6 +24,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -116,6 +118,7 @@ final class Z3TermTransformer {
 
 	public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
+		checkNotNull(model, "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
 		pushParams(vars, paramDecls);
@@ -204,8 +207,7 @@ final class Z3TermTransformer {
 
 		BigInteger value = bvNum.getBigInteger();
 
-		// At this point signedness is not known. Presuming unsigned
-		return BvUtils.bigIntegerToBvLitExpr(value, bvNum.getSortSize(), false);
+		return BvUtils.bigIntegerToNeutralBvLitExpr(value, bvNum.getSortSize());
 	}
 
 	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
@@ -352,6 +354,9 @@ final class Z3TermTransformer {
 			return Int();
 		} else if (sort instanceof com.microsoft.z3.RealSort) {
 			return Rat();
+		} else if (sort instanceof com.microsoft.z3.BitVecSort) {
+			final com.microsoft.z3.BitVecSort bvSort = (com.microsoft.z3.BitVecSort) sort;
+			return BvType(bvSort.getSize());
 		} else {
 			throw new AssertionError("Unsupported sort: " + sort);
 		}
@@ -378,7 +383,7 @@ final class Z3TermTransformer {
 			final Supplier<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 0);
+			checkArgument(args.length == 0, "Number of arguments must be zero");
 			return function.get();
 		};
 	}
@@ -387,7 +392,7 @@ final class Z3TermTransformer {
 			final UnaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 1);
+			checkArgument(args.length == 1, "Number of arguments must be one");
 			final Expr<?> op = transform(args[0], model, vars);
 			return function.apply(op);
 		};
@@ -397,7 +402,7 @@ final class Z3TermTransformer {
 			final BinaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 2);
+			checkArgument(args.length == 2, "Number of arguments must be two");
 			final Expr<?> op1 = transform(args[0], model, vars);
 			final Expr<?> op2 = transform(args[1], model, vars);
 			return function.apply(op1, op2);
@@ -408,7 +413,7 @@ final class Z3TermTransformer {
 			final TernaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 3);
+			checkArgument(args.length == 3, "Number of arguments must be three");
 			final Expr<?> op1 = transform(args[0], model, vars);
 			final Expr<?> op2 = transform(args[1], model, vars);
 			final Expr<?> op3 = transform(args[1], model, vars);

@@ -37,12 +37,16 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,17 +57,20 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.BvUtils.uint16ToBvLitExpr;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class Z3SolverTest {
+	private Solver solver;
+
+	@Before
+	public void setup() {
+		solver = Z3SolverFactory.getInstance().createSolver();
+	}
 
 	@Test
 	public void testSimple() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
 		// Create two integer constants x and y
 		final ConstDecl<IntType> cx = Const("x", Int());
 		final ConstDecl<IntType> cy = Const("y", Int());
@@ -85,8 +92,6 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testTrack() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
 		final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
 		final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
 
@@ -107,7 +112,6 @@ public final class Z3SolverTest {
 	@Test
 	public void testFunc() {
 		// Arrange
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 		final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
 		final Expr<FuncType<IntType, IntType>> a = ca.getRef();
 		final ParamDecl<IntType> px = Param("x", Int());
@@ -129,8 +133,6 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testArray() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
         solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
@@ -151,16 +153,45 @@ public final class Z3SolverTest {
 	}
 
 	@Test
-	public void testBV1() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+	public void testReset() {
+		final ConstDecl<IntType> cx = Const("x", Int());
+		final ConstDecl<IntType> cy = Const("y", Int());
 
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		IntEqExpr eqExpr = IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), Int(1)));
+		solver.add(eqExpr);
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
+		status = solver.check();
+		assertTrue(status.isUnsat());
+
+		solver.reset();
+		assertEquals(0, solver.getAssertions().size());
+
+		solver.add(eqExpr);
+		status = solver.check();
+		assertTrue(status.isSat());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testResetStack() {
+		solver.push();
+		solver.push();
+		solver.pop();
+		solver.reset();
+		solver.pop();
+	}
+
+	@Test
+	public void testBV1() {
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false}, true)));
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false}, true)));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false})));
 		solver.add(BvExprs.Eq(cx.getRef(), cy.getRef()));
 
 		SolverStatus status = solver.check();
@@ -171,14 +202,12 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV2() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cz = Const("z", BvType(4, true));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cz = Const("z", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false}, true)));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
 		solver.add(BvExprs.Neq(cx.getRef(), cz.getRef()));
 
 		SolverStatus status = solver.check();
@@ -193,15 +222,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV3() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false}, true)));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[] {false, false, false, true}, true)))));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false})));
+		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[] {false, false, false, true})))));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -215,15 +242,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV4() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}, true))));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}))));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -237,14 +262,12 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV5() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
 		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
 
 		SolverStatus status = solver.check();
@@ -259,15 +282,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV6() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, true));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[] {false, false, true, false}, true)))));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[] {false, false, true, false})))));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -281,15 +302,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV7() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, true));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Lt(cx.getRef(), Bv(new boolean[] {true, true, true, true}, true)));
-		solver.add(BvExprs.Lt(cy.getRef(), Bv(new boolean[] {true, true, true, true}, false)));
+		solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[] {true, true, true, true})));
+		solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[] {true, true, true, true})));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -303,15 +322,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV8() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {true, false, true, false}, false)));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Mod(cx.getRef(), Bv(new boolean[] {false, true, false, false}, false))));
+		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {true, false, true, false})));
+		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.SMod(cx.getRef(), Bv(new boolean[] {false, true, false, false}))));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -325,15 +342,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV9() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {true, true, false, false}, false)));
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+		solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {true, true, false, false})));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -347,15 +362,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV10() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+		solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -369,15 +382,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV11() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false}, false)));
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+		solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -391,15 +402,13 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testBV12() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-		final ConstDecl<BvType> cx = Const("x", BvType(4, false));
-		final ConstDecl<BvType> cy = Const("y", BvType(4, false));
+		final ConstDecl<BvType> cx = Const("x", BvType(4));
+		final ConstDecl<BvType> cy = Const("y", BvType(4));
 
 		solver.push();
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false}, false)));
-		solver.add(BvExprs.Eq(BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true}, false)), cx.getRef()));
+		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+		solver.add(BvExprs.Eq(BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true})), cx.getRef()));
 
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -411,17 +420,8 @@ public final class Z3SolverTest {
 		solver.pop();
 	}
 
-	public void testBV13() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-		solver.push();
-
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(4), BvExprs.Add(List.of(uint16ToBvLitExpr(1), uint16ToBvLitExpr(3)))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Sub(uint16ToBvLitExpr(4), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(12), BvExprs.Mul(List.of(uint16ToBvLitExpr(3), uint16ToBvLitExpr(4)))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(4), BvExprs.Div(uint16ToBvLitExpr(12), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Mod(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
-		solver.add(BvExprs.Eq(uint16ToBvLitExpr(1), BvExprs.Rem(uint16ToBvLitExpr(13), uint16ToBvLitExpr(3))));
-
+	private static BvLitExpr uint16ToBvLitExpr(int value) {
+		return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(value), 16);
 	}
 
 }

@@ -44,9 +44,11 @@ import static java.util.stream.Collectors.toList;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import hu.bme.mit.theta.core.dsl.ParseException;
 import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
@@ -267,7 +269,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 				case StsDslParser.NEQ:
 					return Neq(leftOp, rightOp);
 				default:
-					throw new AssertionError();
+					throw new ParseException(ctx, "Unknown operator");
 			}
 
 		} else {
@@ -291,7 +293,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 				case StsDslParser.GEQ:
 					return Geq(leftOp, rightOp);
 				default:
-					throw new AssertionError();
+					throw new ParseException(ctx, "Unknown operator");
 			}
 
 		} else {
@@ -310,14 +312,14 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Expr<?> opsHead = ops.get(0);
 			final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
 
-			return createAdditiveExpr(opsHead, opsTail, ctx.opers);
+			return createAdditiveExpr(opsHead, opsTail, ctx.opers, ctx);
 		} else {
 			return visitChildren(ctx);
 		}
 	}
 
 	private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-									   final List<? extends Token> opers) {
+									   final List<? extends Token> opers, final AdditiveExprContext ctx) {
 		checkArgument(opsTail.size() == opers.size());
 
 		if (opsTail.isEmpty()) {
@@ -329,13 +331,14 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Token operHead = opers.get(0);
 			final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-			final Expr<?> subExpr = createAdditiveSubExpr(opsHead, newOpsHead, operHead);
+			final Expr<?> subExpr = createAdditiveSubExpr(opsHead, newOpsHead, operHead, ctx);
 
-			return createAdditiveExpr(subExpr, newOpsTail, opersTail);
+			return createAdditiveExpr(subExpr, newOpsTail, opersTail, ctx);
 		}
 	}
 
-	private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
+	private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper,
+										  final AdditiveExprContext ctx) {
 		switch (oper.getType()) {
 
 			case StsDslParser.PLUS:
@@ -345,7 +348,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 				return createSubExpr(leftOp, rightOp);
 
 			default:
-				throw new AssertionError();
+				throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
 		}
 	}
 
@@ -374,7 +377,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Expr<?> opsHead = ops.get(0);
 			final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
 
-			return createMutliplicativeExpr(opsHead, opsTail, ctx.opers);
+			return createMutliplicativeExpr(opsHead, opsTail, ctx.opers, ctx);
 		} else {
 			return visitChildren(ctx);
 		}
@@ -382,7 +385,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	}
 
 	private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-											 final List<? extends Token> opers) {
+											 final List<? extends Token> opers, final MultiplicativeExprContext ctx) {
 		checkArgument(opsTail.size() == opers.size());
 
 		if (opsTail.isEmpty()) {
@@ -394,13 +397,14 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Token operHead = opers.get(0);
 			final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-			final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead);
+			final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead, ctx);
 
-			return createMutliplicativeExpr(subExpr, newOpsTail, opersTail);
+			return createMutliplicativeExpr(subExpr, newOpsTail, opersTail, ctx);
 		}
 	}
 
-	private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
+	private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper,
+												final MultiplicativeExprContext ctx) {
 		switch (oper.getType()) {
 
 			case StsDslParser.MUL:
@@ -416,7 +420,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 				return createRemExpr(leftOp, rightOp);
 
 			default:
-				throw new AssertionError();
+				throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
 		}
 	}
 
@@ -488,18 +492,16 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		} else if (access.prime != null) {
 			return createPrimeExpr(op);
 		} else {
-			throw new AssertionError();
+			throw new ParseException(access, "Unknown expression");
 		}
 	}
 
 	private Expr<?> createFuncAppExpr(final Expr<?> op, final FuncAccessContext ctx) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		throw new ParseException(ctx, "Unsupported expression");
 	}
 
 	private Expr<?> createArrayReadExpr(final Expr<?> op, final ArrayAccessContext ctx) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		throw new ParseException(ctx, "Unsupported expression");
 	}
 
 	private Expr<?> createPrimeExpr(final Expr<?> op) {
@@ -535,7 +537,9 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	public Expr<?> visitIdExpr(final IdExprContext ctx) {
 		final Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 
-		checkArgument(optSymbol.isPresent());
+		if (optSymbol.isEmpty()) {
+			throw new ParseException(ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
+		}
 		final Symbol symbol = optSymbol.get();
 
 		checkArgument(symbol instanceof DeclSymbol);

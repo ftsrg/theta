@@ -82,7 +82,7 @@ final class Z3DeclTransformer {
 			final Type paramType = funcType.getParamType();
 			final Type resultType = funcType.getResultType();
 
-			checkArgument(!(paramType instanceof FuncType));
+			checkArgument(!(paramType instanceof FuncType), "Parameter type most not be function");
 
 			final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
 			final List<Type> paramTypes = subResult.get1();

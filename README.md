@@ -95,3 +95,4 @@ Supporters of the Theta project are listed below.
 * Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2018](http://www.emet.gov.hu/felhivasok/felhivas46/) (NTP-NFTÖ-18)
 * [CECRIS project](http://www.cecris-project.eu/)
 * [R5-COP project](http://www.r5-cop.eu/)
+* [Arrowhead Tools project](https://www.arrowhead.eu/arrowheadtools)

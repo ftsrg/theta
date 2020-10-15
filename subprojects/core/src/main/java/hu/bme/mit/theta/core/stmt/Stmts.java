@@ -48,11 +48,11 @@ public final class Stmts {
 		return HavocStmt.of(varDecl);
 	}
 
-	public static SequenceStmt SequenceStmt(final List<Stmt> stmts){
+	public static SequenceStmt SequenceStmt(final List<Stmt> stmts) {
 		return SequenceStmt.of(stmts);
 	}
 
-	public static NonDetStmt NonDetStmt(final List<Stmt> stmts){
+	public static NonDetStmt NonDetStmt(final List<Stmt> stmts) {
 		return NonDetStmt.of(stmts);
 	}
 

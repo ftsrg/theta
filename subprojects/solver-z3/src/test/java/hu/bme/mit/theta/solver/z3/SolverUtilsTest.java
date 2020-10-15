@@ -21,6 +21,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.stream.Stream;
 
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -46,7 +48,7 @@ public class SolverUtilsTest {
 		final Stream<Valuation> models = SolverUtils.models(factory, expr);
 
 		// Act
-		models.limit(5).forEach(System.out::println);
+		models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr)(expr.eval(m))).getValue()));
 	}
 
 }

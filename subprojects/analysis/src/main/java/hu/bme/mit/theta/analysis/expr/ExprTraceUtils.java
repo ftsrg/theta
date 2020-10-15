@@ -33,7 +33,7 @@ public final class ExprTraceUtils {
 	private ExprTraceUtils() {
 	}
 
-	public static Trace<ExprState, ExprAction> traceFrom(final List<? extends ExprAction> actions) {
+	public static <A extends ExprAction> Trace<ExprState, A> traceFrom(final List<? extends A> actions) {
 		checkNotNull(actions);
 		final List<ExprState> states = new ArrayList<>(actions.size() + 1);
 		for (int i = 0; i < actions.size() + 1; i++) {

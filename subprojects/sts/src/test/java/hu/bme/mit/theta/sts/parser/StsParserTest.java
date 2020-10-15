@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +39,9 @@ public final class StsParserTest {
 	@Parameter(0)
 	public String filepath;
 
+	@Parameter(1)
+	public int vars;
+
 	private Reader reader;
 	private StsParser parser;
 
@@ -45,9 +49,9 @@ public final class StsParserTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 
-				{"src/test/resources/simple1.lisp.sts"},
+				{"src/test/resources/simple1.lisp.sts", 2},
 
-				{"src/test/resources/readerswriters.lisp.sts"},
+				{"src/test/resources/readerswriters.lisp.sts", 3},
 
 		});
 	}
@@ -68,6 +72,7 @@ public final class StsParserTest {
 		// Act
 		final STS sts = parser.sts();
 		System.out.println(sts);
+		Assert.assertEquals(vars, sts.getVars().size());
 	}
 
 }

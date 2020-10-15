@@ -20,6 +20,7 @@ We usually develop on separate branches and increment the version number just be
 As the main repository is read-only, we suggest you to create your own [fork](https://help.github.com/articles/fork-a-repo/). Within your fork, we also recommend to create new _branches_ for your development. This enables us later on to easily integrate your work into the main repository by using [pull requests](https://help.github.com/articles/about-pull-requests/).
 
 As the framework is under development, we suggest you to [sync your fork](https://help.github.com/articles/syncing-a-fork/) often and merge the master branch into your development branch(es).
+If you are confident that only you are working on your branch, you can also [rebase instead of merge](https://www.atlassian.com/git/tutorials/merging-vs-rebasing), but be careful.
 
 ## Building
 

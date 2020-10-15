@@ -1,0 +1,21 @@
+main process cfa {
+    var x : bv[5]
+    var y : bv[2]
+
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    final loc END
+    error loc ERR
+
+	L0 -> L1 { x := 2'b10 ++ 2'b01 ++ 1'b1 }
+    L1 -> L2 { assume x = 5'b10011 }
+    L1 -> ERR { assume not (x = 5'b10011) }
+    L2 -> L3 { y := x[5:3] }
+    L3 -> L4 { assume y = 2'b10 }
+    L3 -> ERR { assume not (y = 2'b10) }
+    L4 -> END { assume ((y bv_zero_extend bv[4]) = 4'b0010) and ((y bv_sign_extend bv[4]) = 4'b1110) }
+    L4 -> ERR { assume not (((y bv_zero_extend bv[4]) = 4'b0010) and ((y bv_sign_extend bv[4]) = 4'b1110)) }
+}
