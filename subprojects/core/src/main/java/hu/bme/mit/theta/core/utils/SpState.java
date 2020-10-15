@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -155,6 +156,11 @@ public class SpState {
 
         @Override
         public SpState visit(OrtStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public SpState visit(XcfaStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
     }

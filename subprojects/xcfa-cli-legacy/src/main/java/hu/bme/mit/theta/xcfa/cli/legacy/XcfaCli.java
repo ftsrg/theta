@@ -157,7 +157,7 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa, cfa.getErrorLoc().get());
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {
