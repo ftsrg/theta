@@ -52,9 +52,9 @@ public class StackImpl<T> implements Stack<T> {
 
 	@Override
 	public void pop(final int n) {
-		checkArgument(n > 0);
+		checkArgument(n > 0, "Number of pops must be positive");
 		final int depth = sizes.size();
-		checkArgument(depth >= n);
+		checkArgument(depth >= n, "Stack not deep enough to pop " + n);
 
 		final int size = sizes.get(depth - n);
 		sizes.subList(depth - n, depth).clear();
@@ -71,4 +71,9 @@ public class StackImpl<T> implements Stack<T> {
 		return items.iterator();
 	}
 
+	@Override
+	public void clear() {
+		items.clear();
+		sizes.clear();
+	}
 }

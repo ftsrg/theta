@@ -41,14 +41,13 @@ public final class CfaPredImpactCheckerTest {
 
 	@Test
 	public void test() throws FileNotFoundException, IOException {
-		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		// Arrange
 		final CFA cfa = CfaDslManager.createCfa(new FileInputStream("src/test/resources/counter5_true.cfa"));
 
 		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
 
-		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.getInstance(), cfa.getInitLoc(),
-				l -> l.equals(cfa.getErrorLoc()), solver);
+		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
+				l -> l.equals(cfa.getErrorLoc().get()), solver);
 
 		// Act
 		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(UnitPrec.getInstance());

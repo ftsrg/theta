@@ -9,9 +9,9 @@ main process cfa {
     error loc ERR
 
 	L0 -> L1 { x := 4'b0000 }
-    L1 -> L2 { assume (x | 4'b0100) /= 4'b0100 }
-    L1 -> L3 { assume not ((x | 4'b0100) /= 4'b0100) }
-    L2 -> L1 { x := x * 4'd2 }
-    L3 -> END { assume (x & 4'b0100) = 4'b0100 }
-    L3 -> ERR { assume not ((x & 4'b0100) /= 4'b0100) }
+    L1 -> L2 { assume (x bvor 4'b0100) /= 4'b0100 }
+    L1 -> L3 { assume not ((x bvor 4'b0100) /= 4'b0100) }
+    L2 -> L1 { x := x bvmul 4'd2 }
+    L3 -> END { assume (x bvand 4'b0100) = 4'b0100 }
+    L3 -> ERR { assume not ((x bvand 4'b0100) /= 4'b0100) }
 }

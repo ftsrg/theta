@@ -57,12 +57,26 @@ public abstract class ExplState extends Valuation implements ExprState {
 
 	public abstract boolean isLeq(final ExplState that);
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ExplState) {
+			final ExplState that = (ExplState) obj;
+			return this.toMap().equals(that.toMap()) && this.isBottom() == that.isBottom();
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + (isBottom() ? 0 : 1);
+	}
+
 	////
 
 	private static final class NonBottom extends ExplState {
-
-		@SuppressWarnings("unused")
-		private static final int HASH_SEED = 6659;
 		private final Valuation val;
 
 		private NonBottom(final Valuation val) {
@@ -119,10 +133,6 @@ public abstract class ExplState extends Valuation implements ExprState {
 	}
 
 	private static final class Bottom extends ExplState {
-
-		@SuppressWarnings("unused")
-		private static final int HASH_SEED = 3931;
-
 		@Override
 		public Collection<? extends Decl<?>> getDecls() {
 			return Collections.emptySet();

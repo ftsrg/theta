@@ -17,42 +17,41 @@ import java.util.Set;
 
 public final class Prod2ExplPredStrengtheningOperator implements StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
 
-    private final Solver solver;
+	private final Solver solver;
 
-    private Prod2ExplPredStrengtheningOperator(final Solver solver){
-        this.solver=solver;
-    }
+	private Prod2ExplPredStrengtheningOperator(final Solver solver) {
+		this.solver = solver;
+	}
 
-    public static Prod2ExplPredStrengtheningOperator create(final Solver solver){
-        return new Prod2ExplPredStrengtheningOperator(solver);
-    }
+	public static Prod2ExplPredStrengtheningOperator create(final Solver solver) {
+		return new Prod2ExplPredStrengtheningOperator(solver);
+	}
 
-    @Override
-    public Collection<Prod2State<ExplState, PredState>> strengthen(Collection<Prod2State<ExplState, PredState>> prod2States, Prod2Prec<ExplPrec, PredPrec> prec) {
+	@Override
+	public Collection<Prod2State<ExplState, PredState>> strengthen(Collection<Prod2State<ExplState, PredState>> prod2States, Prod2Prec<ExplPrec, PredPrec> prec) {
 
-        Set<Prod2State<ExplState,PredState>> validStates = new HashSet<>();
+		Set<Prod2State<ExplState, PredState>> validStates = new HashSet<>();
 
-        for(Prod2State<ExplState,PredState> prod2State : prod2States){
+		for (Prod2State<ExplState, PredState> prod2State : prod2States) {
 
-            try(WithPushPop wp = new WithPushPop(solver)){
-                solver.add(PathUtils.unfold(prod2State.getState1().toExpr(),0));
-                solver.add(PathUtils.unfold(prod2State.getState2().toExpr(),0));
-                var result = solver.check();
-                if(result.isSat()){
-                    validStates.add(prod2State);
-                }
-            }
+			try (WithPushPop wp = new WithPushPop(solver)) {
+				solver.add(PathUtils.unfold(prod2State.getState1().toExpr(), 0));
+				solver.add(PathUtils.unfold(prod2State.getState2().toExpr(), 0));
+				var result = solver.check();
+				if (result.isSat()) {
+					validStates.add(prod2State);
+				}
+			}
 
-        }
-        if(validStates.size()<prod2States.size()){
-            var removed = new HashSet<>();
-            for(var state: prod2States){
-                if(!validStates.contains(state)) removed.add(state);
-            }
-            System.out.println("reduced set "+removed);
-        }
+		}
+		if (validStates.size() < prod2States.size()) {
+			var removed = new HashSet<>();
+			for (var state : prod2States) {
+				if (!validStates.contains(state)) removed.add(state);
+			}
+		}
 
-        return validStates;
-    }
+		return validStates;
+	}
 }
 

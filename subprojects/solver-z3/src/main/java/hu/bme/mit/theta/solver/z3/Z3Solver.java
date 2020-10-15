@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -144,7 +143,12 @@ final class Z3Solver implements Solver {
 
 	@Override
 	public void reset() {
-		throw new UnsupportedOperationException();
+		z3Solver.reset();
+		assertions.clear();
+		assumptions.clear();
+		symbolTable.clear();
+		transformationManager.reset();
+		clearState();
 	}
 
 	@Override
@@ -294,8 +298,7 @@ final class Z3Solver implements Solver {
 			if (term == null) {
 				return null;
 			} else {
-				BvLitExpr expr = (BvLitExpr) termTransformer.toExpr(term);
-				return Bv(expr.getValue(), type.isSigned());
+				return (BvLitExpr) termTransformer.toExpr(term);
 			}
 		}
 

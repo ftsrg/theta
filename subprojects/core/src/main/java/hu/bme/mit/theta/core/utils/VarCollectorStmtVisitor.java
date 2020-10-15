@@ -164,24 +164,24 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(SequenceStmt stmt, Collection<VarDecl<?>> vars) {
-		for(Stmt subStmt: stmt.getStmts()){
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(),vars);
+		for (Stmt subStmt : stmt.getStmts()) {
+			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		}
 		return null;
 	}
 
 	@Override
 	public Void visit(NonDetStmt stmt, Collection<VarDecl<?>> vars) {
-		for(Stmt subStmt: stmt.getStmts()){
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(),vars);
+		for (Stmt subStmt : stmt.getStmts()) {
+			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		}
 		return null;
 	}
 
 	@Override
 	public Void visit(OrtStmt stmt, Collection<VarDecl<?>> vars) {
-		for(Stmt subStmt: stmt.getStmts()){
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(),vars);
+		for (Stmt subStmt : stmt.getStmts()) {
+			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		}
 		return null;
 	}

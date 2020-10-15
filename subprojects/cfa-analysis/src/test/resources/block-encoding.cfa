@@ -1,0 +1,20 @@
+main process cfa {
+	init loc L0
+	loc L1
+	loc L2
+	loc L3
+	loc L4
+	loc L5
+	loc L6
+	loc L7
+	
+	L0 -> L1 { }
+	L1 -> L2 { }
+	L2 -> L3 { }
+	L3 -> L4 { }
+	L1 -> L4 { }
+	L4 -> L5 { }
+	L5 -> L6 { }
+	L6 -> L7 { }
+	L5 -> L1 { }
+}

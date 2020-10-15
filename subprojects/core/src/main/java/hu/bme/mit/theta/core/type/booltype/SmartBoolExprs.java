@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -72,7 +73,7 @@ public final class SmartBoolExprs {
 		} else if (filteredOps.size() == 1) {
 			return singleElementOf(filteredOps);
 		} else {
-			return BoolExprs.And(filteredOps);
+			return BoolExprs.And(new LinkedHashSet<>(filteredOps));
 		}
 	}
 
@@ -91,7 +92,7 @@ public final class SmartBoolExprs {
 		} else if (filteredOps.size() == 1) {
 			return singleElementOf(filteredOps);
 		} else {
-			return BoolExprs.Or(filteredOps);
+			return BoolExprs.Or(new LinkedHashSet<>(filteredOps));
 		}
 	}
 

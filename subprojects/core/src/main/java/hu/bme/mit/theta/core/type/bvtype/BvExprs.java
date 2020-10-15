@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 
 import java.util.List;
 
@@ -10,12 +11,28 @@ public final class BvExprs {
 
     }
 
-    public static BvType BvType(final int size, final boolean isSigned) {
-        return BvType.of(size, isSigned);
+    public static BvType BvType(final int size) {
+        return BvType.of(size);
     }
 
-    public static BvLitExpr Bv(final boolean[] value, final boolean isSigned) {
-        return BvLitExpr.of(value, isSigned);
+    public static BvLitExpr Bv(final boolean[] value) {
+        return BvLitExpr.of(value);
+    }
+
+    public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
+        return BvConcatExpr.of(ops);
+    }
+
+    public static BvExtractExpr Extract(final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
+        return BvExtractExpr.of(bitvec, from, until);
+    }
+
+    public static BvZExtExpr ZExt(final Expr<BvType> bitvec, final BvType extendType) {
+        return BvZExtExpr.of(bitvec, extendType);
+    }
+
+    public static BvSExtExpr SExt(final Expr<BvType> bitvec, final BvType extendType) {
+        return BvSExtExpr.of(bitvec, extendType);
     }
 
     public static BvAddExpr Add(final Iterable<? extends Expr<BvType>> ops) {
@@ -38,16 +55,24 @@ public final class BvExprs {
         return BvMulExpr.of(ops);
     }
 
-    public static BvDivExpr Div(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvDivExpr.of(leftOp, rightOp);
+    public static BvUDivExpr UDiv(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvUDivExpr.of(leftOp, rightOp);
     }
 
-    public static BvModExpr Mod(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvModExpr.of(leftOp, rightOp);
+    public static BvSDivExpr SDiv(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSDivExpr.of(leftOp, rightOp);
     }
 
-    public static BvRemExpr Rem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvRemExpr.of(leftOp, rightOp);
+    public static BvSModExpr SMod(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSModExpr.of(leftOp, rightOp);
+    }
+
+    public static BvURemExpr URem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvURemExpr.of(leftOp, rightOp);
+    }
+
+    public static BvSRemExpr SRem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSRemExpr.of(leftOp, rightOp);
     }
 
     public static BvOrExpr Or(final List<? extends Expr<BvType>> ops) {
@@ -94,23 +119,35 @@ public final class BvExprs {
         return BvNeqExpr.of(leftOp, rightOp);
     }
 
-    public static BvLtExpr Lt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvLtExpr.of(leftOp, rightOp);
+    public static BvULtExpr ULt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvULtExpr.of(leftOp, rightOp);
     }
 
-    public static BvLeqExpr Leq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvLeqExpr.of(leftOp, rightOp);
+    public static BvULeqExpr ULeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvULeqExpr.of(leftOp, rightOp);
     }
 
-    public static BvGtExpr Gt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvGtExpr.of(leftOp, rightOp);
+    public static BvUGtExpr UGt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvUGtExpr.of(leftOp, rightOp);
     }
 
-    public static BvGeqExpr Geq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvGeqExpr.of(leftOp, rightOp);
+    public static BvUGeqExpr UGeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvUGeqExpr.of(leftOp, rightOp);
     }
 
-    public static BvToIntExpr ToInt(final Expr<BvType> op) {
-        return BvToIntExpr.of(op);
+    public static BvSLtExpr SLt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSLtExpr.of(leftOp, rightOp);
+    }
+
+    public static BvSLeqExpr SLeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSLeqExpr.of(leftOp, rightOp);
+    }
+
+    public static BvSGtExpr SGt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSGtExpr.of(leftOp, rightOp);
+    }
+
+    public static BvSGeqExpr SGeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
+        return BvSGeqExpr.of(leftOp, rightOp);
     }
 }

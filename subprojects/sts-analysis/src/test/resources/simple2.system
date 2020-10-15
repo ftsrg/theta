@@ -1,0 +1,33 @@
+// A simple example where refinement is potentionally required
+specification Test {
+	property s : {
+		// Variables
+		var x : int
+		var y : int
+		var z : int
+		
+		// Invariants
+		invariant x >= 1 and x <= 2
+		invariant y >= 0 and y <= 2
+		invariant z >= 0 and z <= 2
+		
+		// Initial values
+		initial x = 2
+		initial y = 2
+		initial z = 0
+		
+		// Transitions
+		transition x' = (
+			if (not y < 2) and (not x = 1) then x - 1
+			else x + 1
+		)
+		transition y' = (
+			if y < 2 and x = 1 then y * 2
+			else y - 1
+		)
+		transition z' = (
+			if z < y and z < 2 then z + 1
+			else y
+		)
+	} models G((not y < 2) or x = 1) // Holds
+}

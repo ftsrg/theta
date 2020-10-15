@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -48,6 +50,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -56,20 +59,15 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
  */
 public class CfaCli {
 	private static final String JAR_NAME = "theta-cfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -88,6 +86,9 @@ public class CfaCli {
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
 
+	@Parameter(names = "--errorloc", description = "Error (target) location")
+	String errorLoc = "";
+
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
@@ -95,7 +96,7 @@ public class CfaCli {
 	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 0;
+	Integer maxEnum = 10;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -121,6 +122,12 @@ public class CfaCli {
 	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
 	boolean metrics = false;
 
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public CfaCli(final String[] args) {
@@ -144,133 +151,95 @@ public class CfaCli {
 			return;
 		}
 
-		if (visualize != null) {
-			visualize();
-			return;
-		}
-
-		if (metrics) {
-			printMetrics();
-			return;
-		}
-
 		if (headerOnly) {
 			printHeader();
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
 			return;
 		}
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
-			final SafetyResult<?, ?> status = configuration.check();
+
+			if (visualize != null) {
+				final Graph graph = CfaVisualizer.visualize(cfa);
+				GraphvizWriter.getInstance().writeFileAutoConvert(graph, visualize);
+				return;
+			}
+
+			if (metrics) {
+				CfaMetrics.printMetrics(logger, cfa);
+				return;
+			}
+
+			CFA.Loc errLoc = null;
+			if (cfa.getErrorLoc().isPresent()) {
+				errLoc = cfa.getErrorLoc().get();
+			}
+			if (!errorLoc.isEmpty()) {
+				errLoc = null;
+				for (CFA.Loc running : cfa.getLocs()) {
+					if (running.getName().equals(errorLoc)) {
+						errLoc = running;
+					}
+				}
+				checkNotNull(errLoc, "Location '" + errorLoc + "' not found in CFA");
+			}
+
+			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc);
+			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
-			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
+			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
+			System.exit(1);
 		}
-		if (benchmarkMode) {
-			writer.newRow();
-		}
-	}
-
-	private void printMetrics(){
-		try {
-			final CFA cfa = loadModel();
-			logger.write(Level.RESULT, "Vars: %s%n" , cfa.getVars().size());
-			logger.write(Level.RESULT, "Bool vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(BoolExprs.Bool())).count());
-			logger.write(Level.RESULT, "Int vars: %s%n" , cfa.getVars().stream().filter(v -> v.getType().equals(IntExprs.Int())).count());
-			logger.write(Level.RESULT, "Locs: %s%n" , cfa.getLocs().size());
-			logger.write(Level.RESULT, "Edges: %s%n" , cfa.getEdges().size());
-			logger.write(Level.RESULT, "Cyclomatic complexity: %s%n" , cfa.getEdges().size() - cfa.getLocs().size() + 2 * getCfaComponents(cfa));
-			logger.write(Level.RESULT, "Assignments: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssignStmt).count());
-			logger.write(Level.RESULT, "Assumptions: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count());
-			logger.write(Level.RESULT, "Havocs: %s%n" , cfa.getEdges().stream().filter(e -> e.getStmt() instanceof HavocStmt).count());
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	public static int getCfaComponents(final CFA cfa) {
-		final Set<CFA.Loc> visited = new HashSet<>();
-		int components = 0;
-
-		for (final CFA.Loc loc : cfa.getLocs()) {
-			if (!visited.contains(loc)) {
-				components++;
-				visited.add(loc);
-				final Queue<CFA.Loc> queue = new LinkedList<>();
-				queue.add(loc);
-				while (!queue.isEmpty()) {
-					final CFA.Loc next = queue.remove();
-					for (final CFA.Edge edge : next.getOutEdges()) {
-						if (!visited.contains(edge.getTarget())) {
-							visited.add(edge.getTarget());
-							queue.add(edge.getTarget());
-						}
-					}
-				}
-			}
-		}
-		return components;
-	}
-
-	private void visualize() {
-		try {
-			final CFA cfa = loadModel();
-			final Graph graph = CfaVisualizer.visualize(cfa);
-			String ext = getFileExtension(visualize.toLowerCase());
-			switch(ext) {
-				case "pdf":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PDF);
-					break;
-				case "png":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.PNG);
-					break;
-				case "svg":
-					GraphvizWriter.getInstance().writeFile(graph, visualize, GraphvizWriter.Format.SVG);
-					break;
-				default:
-					GraphvizWriter.getInstance().writeFile(graph, visualize);
-					break;
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-	}
-
-	private String getFileExtension(String name) {
-		int lastIndexOf = name.lastIndexOf(".");
-		if (lastIndexOf == -1) return "";
-		return name.substring(lastIndexOf + 1);
 	}
 
 	private void printHeader() {
-		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
-		for (final String str : header) {
-			writer.cell(str);
-		}
+		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen").forEach(writer::cell);
 		writer.newRow();
 	}
 
-	private CFA loadModel() throws IOException {
+	private CFA loadModel() throws Exception {
 		try (InputStream inputStream = new FileInputStream(model)) {
-			final CFA cfa = CfaDslManager.createCfa(inputStream);
-			return cfa;
+			try {
+				return CfaDslManager.createCfa(inputStream);
+			} catch (final Exception ex) {
+				throw new Exception("Could not parse CFA: " + ex.getMessage(), ex);
+			}
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) {
-		return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-				.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+		try {
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
 	}
 
-	private void printResult(final SafetyResult<?, ?> status, final CFA cfa, final long totalTimeMs) {
+	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
+		}
+	}
+
+	private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());
@@ -287,32 +256,35 @@ public class CfaCli {
 			} else {
 				writer.cell("");
 			}
+			writer.newRow();
 		}
 	}
 
 	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
-			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
-			final StringWriter errors = new StringWriter();
-			ex.printStackTrace(new PrintWriter(errors));
-			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
+			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+			} else {
+				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+			}
 		}
 	}
 
-	private void writeCex(final Unsafe<?, ?> status) {
+	private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();
