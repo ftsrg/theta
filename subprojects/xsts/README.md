@@ -114,7 +114,7 @@ trans {
     ... 
     <statement>
 } or {
-    <statment>
+    <statement>
     ...
     <statement>
 }
@@ -132,7 +132,7 @@ env {
     ... 
     <statement>
 } or {
-    <statment>
+    <statement>
     ...
     <statement>
 }
@@ -150,7 +150,7 @@ init {
     ... 
     <statement>
 } or {
-    <statment>
+    <statement>
     ...
     <statement>
 }
