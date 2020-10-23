@@ -50,6 +50,14 @@ public class XcfaCli {
 	@Parameter(names = "--all-states", description = "Print all resulting states as .dot files", required = false)
 	boolean allstates;
 
+	@Parameter(names = "--insitu-filtering", description = "Enables in-situ filtering for memory model violations", required = false)
+	boolean insitu;
+
+	@Parameter(names = "--max-depth", description = "Maximal depth of exploration in any thread (0 for unlimited depth)", required = false)
+	Integer maxdepth = 0;
+
+
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -73,7 +81,7 @@ public class XcfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates)) {
+			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates, insitu, maxdepth)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {

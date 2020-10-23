@@ -90,7 +90,9 @@ public class NextEdge extends Filter {
                     Graph ret = Graph.empty();
                     for (MemoryAccess t : lhs.getNodeSet()) {
                         for (MemoryAccess t1 : edges.getOrDefault(t, new HashSet<>())) {
-                            ret.addEdge(t, t1, false);
+                            if(rhs.getNodeSet().contains(t1)) {
+                                ret.addEdge(t, t1, false);
+                            }
                         }
                     }
                     retSet.add(GraphOrNodeSet.of(ret));

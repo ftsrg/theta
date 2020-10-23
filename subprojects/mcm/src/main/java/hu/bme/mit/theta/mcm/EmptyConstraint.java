@@ -7,6 +7,10 @@ import java.util.Set;
 import java.util.Stack;
 
 public class EmptyConstraint extends Constraint {
+    public GraphOrNodeSet getLast() {
+        return last;
+    }
+
     private GraphOrNodeSet last;
 
     public EmptyConstraint(Filter filter, boolean not, String name) {

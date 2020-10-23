@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.mcm.EmptyConstraint;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.xcfa.XCFA;
 
@@ -39,6 +40,10 @@ public class ExecutionGraph implements Runnable{
     private final Map<MemoryAccess, Set<Read>> sbrfReads;                     //deep
 
     private final AtomicReference<ExecutionGraph> violator;                   //shallow
+    
+    private final boolean insitu;                                             //shallow
+    private final int maxdepth;                                               //shallow
+    private final Map<XCFA.Process, Integer> currentDepth;                    //deep
 
     private final Map<XCFA.Process, List<StackFrame>> stackFrames;            //deep
     private final MutablePartitionedValuation mutablePartitionedValuation;    //deep
@@ -52,7 +57,7 @@ public class ExecutionGraph implements Runnable{
 
     //CONSTRUCTORS
 
-    private ExecutionGraph(XCFA xcfa, MCM mcm, boolean allstates) {
+    private ExecutionGraph(XCFA xcfa, MCM mcm, boolean allstates, boolean insitu, Integer maxdepth) {
         this.mcm = mcm;
         this.allstates = allstates;
         initialWrites = new HashSet<>();
@@ -68,11 +73,13 @@ public class ExecutionGraph implements Runnable{
         this.xcfa = xcfa;
         this.path = new ArrayList<>();
         sbrfReads = new HashMap<>();
+        this.currentDepth = new HashMap<>();
 
         mo = new HashMap<>();
         xcfa.getGlobalVars().forEach(varDecl -> mo.put(varDecl, new ArrayList<>()));
 
         xcfa.getProcesses().forEach(process -> {
+            currentDepth.put(process, 0);
             stackFrames.put(process, new ArrayList<>());
             partitions.put(process, mutablePartitionedValuation.createPartition());
         });
@@ -86,6 +93,9 @@ public class ExecutionGraph implements Runnable{
             }
         });
         violator = new AtomicReference<>();
+        this.insitu = insitu;
+        this.maxdepth = maxdepth;
+
     }
 
     private ExecutionGraph(
@@ -100,7 +110,7 @@ public class ExecutionGraph implements Runnable{
             Map<Read, Tuple2<Write, Tuple2<MemoryAccess, String>>> fr,
             Map<VarDecl<?>, List<Write>> mo,
             Map<XCFA.Process, List<StackFrame>> stackFrames,
-            Map<MemoryAccess, Set<Read>> sbrfReads, AtomicReference<ExecutionGraph> violator, XCFA.Process currentlyAtomic,
+            Map<MemoryAccess, Set<Read>> sbrfReads, AtomicReference<ExecutionGraph> violator, boolean insitu, int maxdepth, Map<XCFA.Process, Integer> currentDepth, XCFA.Process currentlyAtomic,
             MutablePartitionedValuation mutablePartitionedValuation,
             Map<XCFA.Process, Integer> partitions,
             List<Integer> path){
@@ -112,6 +122,9 @@ public class ExecutionGraph implements Runnable{
         this.lastNode = new HashMap<>(lastNode);
         this.fr = new HashMap<>(fr);
         this.violator = violator;
+        this.insitu = insitu;
+        this.maxdepth = maxdepth;
+        this.currentDepth = new HashMap<>(currentDepth);
         this.sbrfReads = new HashMap<>();
         sbrfReads.forEach((memoryAccess, memoryAccesses) -> this.sbrfReads.put(memoryAccess, new HashSet<>(memoryAccesses)));
         this.mo = new HashMap<>();
@@ -149,8 +162,8 @@ public class ExecutionGraph implements Runnable{
     /*
      * Create a new ExecutionGraph and return it
      */
-    public static ExecutionGraph create(XCFA xcfa, MCM mcm, boolean allstates) {
-        return new ExecutionGraph(xcfa, mcm, allstates);
+    public static ExecutionGraph create(XCFA xcfa, MCM mcm, boolean allstates, boolean insitu, Integer maxdepth) {
+        return new ExecutionGraph(xcfa, mcm, allstates, insitu, maxdepth);
     }
 
 
@@ -377,7 +390,7 @@ public class ExecutionGraph implements Runnable{
         List<Integer> newPath = new ArrayList<>(path);
         newPath.add(step);
         newPath.add(i);
-        return new ExecutionGraph(threadPool, xcfa, mcm, allstates, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, violator, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
+        return new ExecutionGraph(threadPool, xcfa, mcm, allstates, initialWrites, lastNode, revisitableReads, writes, edges, fr, mo, stackFrames, sbrfReads, violator, insitu, maxdepth, currentDepth, currentlyAtomic, mutablePartitionedValuation, partitions, newPath);
     }
 
     /*
@@ -408,7 +421,7 @@ public class ExecutionGraph implements Runnable{
      * Executes the next statement to execute
      */
     private boolean executeNextStmt() {
-        for(XCFA.Process process : currentlyAtomic == null ? xcfa.getProcesses() : Collections.singleton(currentlyAtomic)) {
+        for(XCFA.Process process : currentlyAtomic == null ? xcfa.getProcesses().stream().filter(process -> maxdepth == 0 || currentDepth.get(process) <= maxdepth).collect(Collectors.toSet()) : Collections.singleton(currentlyAtomic)) {
             StackFrame stackFrame;
             if(stackFrames.get(process).size() == 0) {
                 if (handleNewEdge(process, process.getMainProcedure().getInitLoc())) {
@@ -488,6 +501,7 @@ public class ExecutionGraph implements Runnable{
 
 
     private void addNode(XCFA.Process proc, MemoryAccess memoryAccess) {
+        currentDepth.computeIfPresent(proc, (process, integer) -> integer+1);
         edges.put(memoryAccess, new HashSet<>());
         if(lastNode.get(proc) != null) {
             edges.get(lastNode.get(proc)).add(Tuple2.of(memoryAccess, "po"));
@@ -541,6 +555,7 @@ public class ExecutionGraph implements Runnable{
         }
         else {
             edges.remove(memoryAccess);
+            currentDepth.computeIfPresent(memoryAccess.getProcess(), (process, integer) -> integer-1);
         }
     }
 
@@ -555,6 +570,7 @@ public class ExecutionGraph implements Runnable{
      * Prints the graph as a graphviz cluster
      */
     private void printGraph(@SuppressWarnings("SameParameterValue") boolean isFinal) throws IOException {
+        if(insitu && mcm.isViolated()) return;
         File outFile;
         if(!isFinal) {
             StringBuilder path = new StringBuilder("out").append(File.separator).append("steps").append(File.separator);
@@ -623,6 +639,10 @@ public class ExecutionGraph implements Runnable{
             }
             if(mcm.isViolated()) {
                 bufferedWriter.write("label=\"Violated " + mcm.getViolator().getName() + "\"");
+                bufferedWriter.newLine();
+            }
+            else if(isInErrorLoc()) {
+                bufferedWriter.write("fontcolor=red\nlabel=\"Assertion violation\"");
                 bufferedWriter.newLine();
             }
             bufferedWriter.write("}");
