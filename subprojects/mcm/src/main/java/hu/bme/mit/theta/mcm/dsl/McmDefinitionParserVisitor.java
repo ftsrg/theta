@@ -154,7 +154,21 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
                 case "var": tagSet.add(new VariableTag(forEachVars.peek())); break;
                 case "thrd": tagSet.add(new ThreadTag(forEachThreads.peek())); break;
                 case "node": tagSet.add(new NodeTag(forEachNodes.peek())); break;
-                default: throw new UnsupportedOperationException("Tag is not a var, thrd or node!");
+                default: {
+                    if(tag.getText().startsWith("var")) {
+                        int index = Integer.parseInt(tag.getText().substring(3));
+                        tagSet.add(new VariableTag(forEachVars.get(index)));
+                    }
+                    else if(tag.getText().startsWith("thrd")) {
+                        int index = Integer.parseInt(tag.getText().substring(4));
+                        tagSet.add(new ThreadTag(forEachThreads.get(index)));
+                    }
+                    else if(tag.getText().startsWith("node")) {
+                        int index = Integer.parseInt(tag.getText().substring(4));
+                        tagSet.add(new NodeTag(forEachNodes.get(index)));
+                    }
+                    else throw new UnsupportedOperationException("Tag is not a var, thrd or node!");
+                }
             }
         }
         return new Tagged(tagSet, getNamedNodeFilter(ctx.namedExpr()));

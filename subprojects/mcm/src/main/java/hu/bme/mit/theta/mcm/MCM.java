@@ -2,7 +2,9 @@ package hu.bme.mit.theta.mcm;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.mcm.graphfilter.interfaces.MemoryAccess;
+import hu.bme.mit.theta.mcm.graphfilter.interfaces.Write;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,10 +29,22 @@ public class MCM {
         }
     }
 
-    public <T extends MemoryAccess> void fromEdges(Map<T, Set<Tuple2<T, String>>> edges) {
-        edges.forEach((t, tuple2s) -> tuple2s.forEach(objects -> {
-            checkMk(t, objects.get1(), objects.get2(), true);
-        }));
+    public <T extends MemoryAccess> void fromEdges(Set<? extends Write> initialWrites, Map<T, Set<Tuple2<T, String>>> edges) {
+        Map<T, Set<Tuple2<T, String>>> usedEdges = new HashMap<>();
+        for (Write initialWrite : initialWrites) {
+            addEdge(initialWrite, usedEdges, edges);
+        }
+    }
+
+    private <T extends MemoryAccess> void addEdge(MemoryAccess memoryAccess, Map<T, Set<Tuple2<T, String>>> usedEdges, Map<T, Set<Tuple2<T, String>>> edges) {
+        usedEdges.putIfAbsent((T) memoryAccess, new HashSet<>());
+        for (Tuple2<T, String> objects : edges.getOrDefault(memoryAccess, new HashSet<>())) {
+            if(!usedEdges.get(memoryAccess).contains(objects)) {
+                usedEdges.get(memoryAccess).add(objects);
+                checkMk(memoryAccess, objects.get1(), objects.get2(), true);
+                addEdge(objects.get1(), usedEdges, edges);
+            }
+        }
     }
 
     public void addConstraint(Constraint g) {

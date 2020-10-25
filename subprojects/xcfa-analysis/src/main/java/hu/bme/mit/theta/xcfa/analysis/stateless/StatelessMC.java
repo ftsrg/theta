@@ -24,8 +24,8 @@ import java.io.IOException;
 
 public final class StatelessMC {
 
-    public static boolean check(XCFA xcfa, MCM mcm, int threads, boolean printcex, boolean allstates, boolean insitu, Integer maxdepth) {
-        ExecutionGraph executionGraph = ExecutionGraph.create(xcfa, mcm, allstates, insitu, maxdepth);
+    public static boolean check(XCFA xcfa, MCM mcm, int threads, boolean printcex, boolean allstates, boolean insitu, Integer maxdepth, boolean noPrint) {
+        ExecutionGraph executionGraph = ExecutionGraph.create(xcfa, mcm, allstates, insitu, maxdepth, noPrint);
         executionGraph.execute(threads);
         if(executionGraph.getViolator().isPresent() && printcex) {
             try {

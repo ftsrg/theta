@@ -53,6 +53,9 @@ public class XcfaCli {
 	@Parameter(names = "--insitu-filtering", description = "Enables in-situ filtering for memory model violations", required = false)
 	boolean insitu;
 
+	@Parameter(names = "--no-print", description = "Don't write anything", required = false)
+	boolean noPrint;
+
 	@Parameter(names = "--max-depth", description = "Maximal depth of exploration in any thread (0 for unlimited depth)", required = false)
 	Integer maxdepth = 0;
 
@@ -81,7 +84,7 @@ public class XcfaCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates, insitu, maxdepth)) {
+			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates, insitu, maxdepth, noPrint)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {
