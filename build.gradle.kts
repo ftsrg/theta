@@ -34,15 +34,15 @@ tasks {
 
         dependsOn(reportTasks.flatMap { it.dependsOn })
 
-        sourceDirectories = files(reportTasks.map { it.allSourceDirs })
-        classDirectories = files(reportTasks.map { it.allClassDirs })
+        sourceDirectories.setFrom(files(reportTasks.map { it.allSourceDirs }))
+        classDirectories.setFrom(files(reportTasks.map { it.allClassDirs }))
         val allExecutionData = files(reportTasks.map { it.executionData })
         // We only set executionData for declaring dependencies during task graph construction,
         // subprojects without tests will be filtered out in doFirst.
-        executionData = allExecutionData
+        executionData.setFrom(allExecutionData)
 
         doFirst {
-            executionData = allExecutionData.filter { it.exists() }
+            executionData.setFrom(allExecutionData.filter { it.exists() })
         }
     }
 
