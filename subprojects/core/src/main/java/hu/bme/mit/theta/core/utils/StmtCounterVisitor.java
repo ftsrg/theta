@@ -40,7 +40,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	public Integer visit(SequenceStmt stmt, Void param) {
 		int count = 0;
 		for (var subStmt: stmt.getStmts()){
-			count+=stmt.accept(this,null);
+			count+=subStmt.accept(this,null);
 		}
 		return count+1;
 	}
@@ -49,7 +49,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	public Integer visit(NonDetStmt stmt, Void param) {
 		int count = 0;
 		for (var subStmt: stmt.getStmts()){
-			count+=stmt.accept(this,null);
+			count+=subStmt.accept(this,null);
 		}
 		return count+1;
 	}
@@ -58,7 +58,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	public Integer visit(OrtStmt stmt, Void param) {
 		int count = 0;
 		for (var subStmt: stmt.getStmts()){
-			count+=stmt.accept(this,null);
+			count+=subStmt.accept(this,null);
 		}
 		return count+1;
 	}
