@@ -33,8 +33,8 @@ public final class XstsMetrics {
 		logger.write(Logger.Level.RESULT, "  Bitvector vars: %s%n" , xsts.getVars().stream().filter(v -> v.getType() instanceof BvType).count());
 		logger.write(Logger.Level.RESULT, "  Array vars: %s%n" , xsts.getVars().stream().filter(v -> v.getType() instanceof ArrayType).count());
 		logger.write(Logger.Level.RESULT, "  Ctrl vars: %s%n" , xsts.getCtrlVars().size());
-		logger.write(Logger.Level.RESULT, "Tran statements: %%n", xsts.getTransitions().accept(StmtCounterVisitor.getInstance(),null));
-		logger.write(Logger.Level.RESULT, "Env statements: %%n", xsts.getEnvAction().accept(StmtCounterVisitor.getInstance(),null));
-		logger.write(Logger.Level.RESULT, "Init statements: %%n", xsts.getInitAction().accept(StmtCounterVisitor.getInstance(),null));
+		logger.write(Logger.Level.RESULT, "Tran statements: %s%n", xsts.getTransitions().accept(StmtCounterVisitor.getInstance(),null));
+		logger.write(Logger.Level.RESULT, "Env statements: %s%n", xsts.getEnvAction().accept(StmtCounterVisitor.getInstance(),null));
+		logger.write(Logger.Level.RESULT, "Init statements: %s%n", xsts.getInitAction().accept(StmtCounterVisitor.getInstance(),null));
 	}
 }
