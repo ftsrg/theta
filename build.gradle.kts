@@ -39,11 +39,7 @@ tasks {
         val allExecutionData = files(reportTasks.map { it.executionData })
         // We only set executionData for declaring dependencies during task graph construction,
         // subprojects without tests will be filtered out in doFirst.
-        executionData.setFrom(allExecutionData)
-
-        doFirst {
-            executionData.setFrom(allExecutionData.filter { it.exists() })
-        }
+        executionData.setFrom(allExecutionData.filter { it.exists() })
     }
 
     // Dummy test task for generating coverage report after ./gradlew test and ./gradlew check.
