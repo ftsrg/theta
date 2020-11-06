@@ -16,7 +16,6 @@ include(
         "xcfa",
         "xcfa-cli-stateless",
         "xcfa-analysis",
-        "xcfa-cli-legacy",
         "xta",
         "xta-analysis",
         "xta-cli",
