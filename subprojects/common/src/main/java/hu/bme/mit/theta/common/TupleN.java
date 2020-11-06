@@ -15,11 +15,7 @@
  */
 package hu.bme.mit.theta.common;
 
-import com.google.common.collect.ImmutableList;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 public final class TupleN<T> extends Tuple {
 

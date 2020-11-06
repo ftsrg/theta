@@ -17,10 +17,10 @@ package hu.bme.mit.theta.common;
 
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import static com.google.common.collect.ImmutableList.of;
-import static hu.bme.mit.theta.common.parser.SExpr.list;
 import static org.junit.Assert.assertEquals;
 
 /*
@@ -28,10 +28,8 @@ import static org.junit.Assert.assertEquals;
  * The test:
  *   We model a simple directed graph using the relation edge(A, B) to denote A -> B.
  *   We then formulate two queries: which nodes are accessible from a given node, and is the graph irreflexive?
- *
  */
 public final class DatalogTest {
-
 	private final Datalog datalog;
 	private final Datalog.Relation edge;
 	private final Datalog.Relation successor;
@@ -39,6 +37,7 @@ public final class DatalogTest {
 
 	public DatalogTest() {
 		datalog = Datalog.createProgram();
+		datalog.setDebug(false);
 		edge = datalog.createRelation(2);
 		successor = datalog.createRelation(2);
 		reflexive = datalog.createRelation(1);
@@ -46,10 +45,10 @@ public final class DatalogTest {
 		Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(datalog.getVariable(), datalog.getVariable());
 		Datalog.Variable next = datalog.getVariable();
 		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(accessibleVariables.get1(), accessibleVariables.get2())))));
-		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(accessibleVariables.get1(), next))), Tuple2.of(successor, TupleN.of(Tuple2.of(next, accessibleVariables.get2())))));
+		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(successor, TupleN.of(Tuple2.of(accessibleVariables.get1(), next))), Tuple2.of(edge, TupleN.of(Tuple2.of(next, accessibleVariables.get2())))));
 
 		Datalog.Variable reflexivity = datalog.getVariable();
-		//reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(reflexivity, reflexivity)))));
+		reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(reflexivity, reflexivity)))));
 	}
 
 	private Node firstSubgraph1;
@@ -58,24 +57,19 @@ public final class DatalogTest {
 	@Test
 	public void testInitial() {
 		List<Node> firstSubgraph = new ArrayList<>();
-		for(int i = 0; i < 5; ++i) {
+		for(int i = 0; i < 10; ++i) {
 			firstSubgraph.add(new Node('A', i));
-//			for(int j = 0; j < i; ++j) {
 			if(i > 0) {
 				edge.addFact(TupleN.of(Tuple2.of(firstSubgraph.get(i - 1), firstSubgraph.get(i))));
 			}
-//			}
 		}
 		List<Node> secondSubgraph = new ArrayList<>();
-		for(int i = 0; i < 0; ++i) {
+		for(int i = 0; i < 15; ++i) {
 			secondSubgraph.add(new Node('B', i));
-//			for(int j = 0; j < i; ++j) {
 			if(i > 0) {
 				edge.addFact(TupleN.of(Tuple2.of(secondSubgraph.get(i - 1), secondSubgraph.get(i))));
 			}
-//			}
 		}
-		datalog.refresh();
 		assertEquals(0, reflexive.getElements().size());
 		assertEquals(45+105, successor.getElements().size());
 		firstSubgraph1 = firstSubgraph.get(0);
@@ -86,12 +80,11 @@ public final class DatalogTest {
 	public void testIncremental() {
 		testInitial();
 		edge.addFact(TupleN.of(Tuple2.of(firstSubgraph1, secondSubgraph1)));
-		datalog.refresh();
 		assertEquals(0, reflexive.getElements().size());
 		assertEquals(45+105+15, successor.getElements().size());
 		edge.addFact(TupleN.of(Tuple2.of(firstSubgraph1, firstSubgraph1)));
 		assertEquals(1, reflexive.getElements().size());
-		assertEquals(45+105+15, successor.getElements().size());
+		assertEquals(45+105+15+1, successor.getElements().size());
 	}
 
 	private static class Node implements DatalogArgument {
