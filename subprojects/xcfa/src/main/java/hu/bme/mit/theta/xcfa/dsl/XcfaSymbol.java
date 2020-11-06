@@ -52,7 +52,6 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 
 	/**
 	 * New contexts (XCFA files) can be added until instantiated.
-	 * @param context
 	 */
 	public void addContext(final XcfaDslParser.SpecContext context) {
 		context.varDecls.forEach(varDeclContext -> {

@@ -142,27 +142,6 @@ final class XcfaExpression {
 			currentScope = checkNotNull(scope);
 		}
 
-		////
-/*
-		private void push(final List<ParamDecl<?>> paramDecls) {
-			final BasicScope scope = new BasicScope(currentScope);
-			env.push();
-			for (final ParamDecl<?> paramDecl : paramDecls) {
-				final Symbol symbol = DeclSymbol.of(paramDecl);
-				scope.declare(symbol);
-				env.define(symbol, paramDecl);
-			}
-			currentScope = scope;
-		}
-
-		private void pop() {
-			checkState(currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
-			currentScope = currentScope.enclosingScope().get();
-			env.pop();
-		}
-*/
-		////
-
 		@Override
 		public Expr<?> visitFuncLitExpr(final FuncLitExprContext ctx) {
 			if (ctx.result != null) {
@@ -527,8 +506,7 @@ final class XcfaExpression {
 		}
 
 		private Expr<?> createFuncAppExpr(final Expr<?> op, final FuncAccessContext ctx) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+			throw new UnsupportedOperationException("Not yet implemented");
 		}
 
 		private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(final Expr<?> op,
@@ -581,7 +559,7 @@ final class XcfaExpression {
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
 			Optional<? extends Symbol> opt = currentScope.resolve(ctx.id.getText());
 			checkState(opt.isPresent(), "No variable named " + ctx.id.getText());
-			final InstantiatableSymbol symbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> symbol = (InstantiatableSymbol<?>) opt.get();
 			final Decl<?> decl = (Decl<?>) symbol.instantiate();
 			return decl.getRef();
 		}

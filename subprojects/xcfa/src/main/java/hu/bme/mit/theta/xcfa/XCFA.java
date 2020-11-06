@@ -430,7 +430,7 @@ public final class XCFA {
 				public void setInitLoc(final Location initLoc) {
 					checkNotBuilt();
 					checkArgument(locs.contains(initLoc), "Init location not present in XCFA.");
-					//checkArgument(!errorLoc.equals(initLoc), "Init location cannot be the same as error location.");
+					checkArgument(!initLoc.equals(errorLoc), "Init location cannot be the same as error location.");
 					checkArgument(finalLoc == null || !finalLoc.equals(initLoc), "Init location cannot be the same as final location.");
 					this.initLoc = initLoc;
 				}
@@ -455,7 +455,7 @@ public final class XCFA {
 				public void setFinalLoc(final Location finalLoc) {
 					checkNotBuilt();
 					checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
-					//checkArgument(!errorLoc.equals(finalLoc), "Final location cannot be the same as error location.");
+					checkArgument(!finalLoc.equals(errorLoc), "Final location cannot be the same as error location.");
 					checkArgument(initLoc == null || !initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
 					this.finalLoc = finalLoc;
 					finalLoc.setEndLoc(true);
@@ -464,9 +464,8 @@ public final class XCFA {
 				public Procedure build() {
 					checkState(initLoc != null, "Initial location must be set.");
 					checkState(finalLoc != null, "Final location must be set.");
-					//checkState(errorLoc != null, "Error location must be set."); //TODO:
 					checkState(finalLoc.outgoingEdges.isEmpty(), "Final location cannot have outgoing edges.");
-					//checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
+					if(errorLoc != null) checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
 					built = true;
 					return new Procedure(this);
 				}

@@ -78,7 +78,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.lhs.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 			return Havoc(var);
 		}
@@ -95,7 +95,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.lhs.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent(), "Could not find lhs variable %s in assign stmt %s", ctx.lhs.getText(), ctx.getText());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 
 			final XcfaExpression expression = new XcfaExpression(scope, ctx.value);
@@ -119,13 +119,13 @@ final class XcfaStatement {
 				final String lhsId = ctx.lhs.getText();
 				Optional<? extends Symbol> opt = scope.resolve(lhsId);
 				checkState(opt.isPresent());
-				InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+				InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 				var = (VarDecl<?>) lhsSymbol.instantiate();
 			} else var = null;
 
 			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent(), "Callee not found: " + callee);
-			final InstantiatableSymbol calleeSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> calleeSymbol = (InstantiatableSymbol<?>) opt.get();
 			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
 			XCFA.Process.Procedure procedure = (XCFA.Process.Procedure) calleeSymbol.instantiate();
 
@@ -135,7 +135,7 @@ final class XcfaStatement {
 				ctx.params.forEach(token -> {
 					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
 					checkState(optionalSymbol.isPresent());
-					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
+					final InstantiatableSymbol<?> varSymbol = (InstantiatableSymbol<?>) optionalSymbol.get();
 					params.add((VarDecl<?>) varSymbol.instantiate());
 
 				});
@@ -150,11 +150,11 @@ final class XcfaStatement {
 			final String lhsId = ctx.lhs.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			opt = scope.resolve(ctx.rhs.getText());
 			checkState(opt.isPresent());
-			final InstantiatableSymbol rhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> rhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
 
 			final boolean atomic = ctx.atomic != null;
@@ -169,11 +169,11 @@ final class XcfaStatement {
 			final String lhsId = ctx.lhs.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			opt = scope.resolve(ctx.rhs.getText());
 			checkState(opt.isPresent());
-			final InstantiatableSymbol rhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> rhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
 
 			final boolean atomic = ctx.atomic != null;
@@ -205,8 +205,8 @@ final class XcfaStatement {
 			Optional<? extends Symbol> opt2 = scope.resolve(id2);
 			checkState(opt1.isPresent());
 			checkState(opt2.isPresent());
-			final InstantiatableSymbol symbol1 = (InstantiatableSymbol) opt1.get();
-			final InstantiatableSymbol symbol2 = (InstantiatableSymbol) opt2.get();
+			final InstantiatableSymbol<?> symbol1 = (InstantiatableSymbol<?>) opt1.get();
+			final InstantiatableSymbol<?> symbol2 = (InstantiatableSymbol<?>) opt2.get();
 			final VarDecl<?> var1 = (VarDecl<?>) symbol1.instantiate();
 			final VarDecl<?> var2 = (VarDecl<?>) symbol2.instantiate();
 			return new WaitStmt(var1, var2);
@@ -216,7 +216,7 @@ final class XcfaStatement {
 			final String id1 = ctx.syncVar.getText();
 			Optional<? extends Symbol> opt1 = scope.resolve(id1);
 			checkState(opt1.isPresent());
-			final InstantiatableSymbol symbol1 = (InstantiatableSymbol) opt1.get();
+			final InstantiatableSymbol<?> symbol1 = (InstantiatableSymbol<?>) opt1.get();
 			final VarDecl<?> var1 = (VarDecl<?>) symbol1.instantiate();
 			return new WaitStmt(var1);
 		}
@@ -226,7 +226,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.syncVar.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			return new NotifyStmt(lhs);
 		}
@@ -236,7 +236,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.syncVar.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			return new NotifyAllStmt(lhs);
 		}
@@ -246,7 +246,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.mtxVar.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			return new MtxLockStmt(lhs);
 		}
@@ -256,7 +256,7 @@ final class XcfaStatement {
 			final String lhsId = ctx.mtxVar.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
 			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
 			return new MtxUnlockStmt(lhs);
 		}
