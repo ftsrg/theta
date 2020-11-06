@@ -19,6 +19,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -59,6 +60,8 @@ public class XcfaCli {
 	@Parameter(names = "--max-depth", description = "Maximal depth of exploration in any thread (0 for unlimited depth)", required = false)
 	Integer maxdepth = 0;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
 
 
 	public XcfaCli(final String[] args) {
@@ -77,6 +80,11 @@ public class XcfaCli {
 			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
 			ex.usage();
+			return;
+		}
+
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
 			return;
 		}
 
