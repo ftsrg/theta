@@ -4,10 +4,8 @@ package hu.bme.mit.theta.common;
  * Datalog engine using naive (enumerative) evaluation.
  * Limitations:
  *  - Only relations are supported right now, simple atoms are not
- *  - As this engine uses a naive evaluation, special care must be taken to build rules
- *    without speculative dependencies (such as: {succ(A, B) :- succ(A, NEXT), edge(NEXT, B)} is OK, but
- *    {succ(A, B) :- edge(A, NEXT), succ(NEXT, B)} is not OK, because succ(NEXT, B) might not exist when generating the
- *    elements for succ(A, B)).
+ *  - There is a performance penalty for specific rulesets, see
+ *    http://pages.cs.wisc.edu/~paris/cs838-s16/lecture-notes/lecture8.pdf
  */
 
 import com.google.common.collect.ImmutableList;
@@ -110,31 +108,26 @@ public class Datalog {
             return arity;
         }
 
-        private boolean validate(List<Tuple2<Relation, TupleN<Variable>>> clauses, Map<Variable, DatalogArgument> currentAssignments) {
+        private boolean validate(List<Tuple2<Relation, TupleN<Variable>>> clauses, Map<Variable, DatalogArgument> currentAssignments, List<Map<Variable, DatalogArgument>> assignments) {
             if(clauses.size() > 0) {
                 Tuple2<Relation, TupleN<Variable>> clause = clauses.get(0);
                 clauses.remove(0);
                 for (TupleN<DatalogArgument> element : clause.get1().elements) {
                     Map<Variable, DatalogArgument> nextAssignments = new HashMap<>(currentAssignments);
                     if (!putAssignments(nextAssignments, clause, element)) {
-                        if(validate(clauses, nextAssignments)) {
-                            currentAssignments.putAll(nextAssignments);
-                            return true;
-                        }
+                        validate(clauses, nextAssignments, assignments);
                     }
                 }
                 for (TupleN<DatalogArgument> element : clause.get1().newElements) {
                     Map<Variable, DatalogArgument> nextAssignments = new HashMap<>(currentAssignments);
                     if (!putAssignments(nextAssignments, clause, element)) {
-                        if(validate(clauses, nextAssignments)) {
-                            currentAssignments.putAll(nextAssignments);
-                            return true;
-                        }
+                        validate(clauses, nextAssignments, assignments);
                     }
                 }
-                return false;
+                return assignments.size() > 0;
             }
             else {
+                assignments.add(currentAssignments);
                 return true;
             }
         }
@@ -163,21 +156,25 @@ public class Datalog {
             }
             ArrayList<Tuple2<Relation, TupleN<Variable>>> validators = new ArrayList<>(rule.get2());
             validators.remove(clause);
-            if(validate(validators, assignments)) {
-                List<DatalogArgument> arguments = new ArrayList<>();
-                for (Object o : rule.get1()) {
-                    Variable v = (Variable) o;
-                    checkState(assignments.containsKey(v), "Not all variables are bound!");
-                    arguments.add(assignments.get(v));
-                }
-                TupleN<DatalogArgument> item = TupleN.of(arguments);
-                if(!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(item)) {
-                    toAdd.add(item);
-                    if(debug) {
-                        if (this == relations.get(1)) System.out.println("Adding " + item);
+            List<Map<Variable, DatalogArgument>> satisfyingAssignments = new ArrayList<>();
+            if(validate(validators, assignments, satisfyingAssignments)) {
+                for (Map<Variable, DatalogArgument> satisfyingAssignment : satisfyingAssignments) {
+                    List<DatalogArgument> arguments = new ArrayList<>();
+                    for (Object o : rule.get1()) {
+                        Variable v = (Variable) o;
+                        checkState(satisfyingAssignment.containsKey(v), "Not all variables are bound!");
+                        arguments.add(satisfyingAssignment.get(v));
                     }
-                    ++cnt;
+                    TupleN<DatalogArgument> item = TupleN.of(arguments);
+                    if(!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(item)) {
+                        toAdd.add(item);
+                        if(debug) {
+                            if (this == relations.get(1)) System.out.println("Adding " + item);
+                        }
+                        ++cnt;
+                    }
                 }
+
             }
             return cnt;
         }
