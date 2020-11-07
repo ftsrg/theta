@@ -37,7 +37,7 @@ public final class DatalogTest {
 
 	public DatalogTest() {
 		datalog = Datalog.createProgram();
-		datalog.setDebug(true);
+		//datalog.setDebug(true);
 		edge = datalog.createRelation(2);
 		successor = datalog.createRelation(2);
 		reflexive = datalog.createRelation(1);
