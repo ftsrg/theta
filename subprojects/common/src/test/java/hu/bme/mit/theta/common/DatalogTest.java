@@ -44,11 +44,11 @@ public final class DatalogTest {
 
 		Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(datalog.getVariable(), datalog.getVariable());
 		Datalog.Variable next = datalog.getVariable();
-		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(accessibleVariables.get1(), accessibleVariables.get2())))));
-		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(successor, TupleN.of(Tuple2.of(accessibleVariables.get1(), next))), Tuple2.of(edge, TupleN.of(Tuple2.of(next, accessibleVariables.get2())))));
+		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
+		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(successor, TupleN.of(accessibleVariables.get1(), next)), Tuple2.of(edge, TupleN.of(next, accessibleVariables.get2()))));
 
 		Datalog.Variable reflexivity = datalog.getVariable();
-		reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(Tuple2.of(reflexivity, reflexivity)))));
+		reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
 	}
 
 	private Node firstSubgraph1;
@@ -60,14 +60,14 @@ public final class DatalogTest {
 		for(int i = 0; i < 10; ++i) {
 			firstSubgraph.add(new Node('A', i));
 			if(i > 0) {
-				edge.addFact(TupleN.of(Tuple2.of(firstSubgraph.get(i - 1), firstSubgraph.get(i))));
+				edge.addFact(TupleN.of(firstSubgraph.get(i - 1), firstSubgraph.get(i)));
 			}
 		}
 		List<Node> secondSubgraph = new ArrayList<>();
 		for(int i = 0; i < 15; ++i) {
 			secondSubgraph.add(new Node('B', i));
 			if(i > 0) {
-				edge.addFact(TupleN.of(Tuple2.of(secondSubgraph.get(i - 1), secondSubgraph.get(i))));
+				edge.addFact(TupleN.of(secondSubgraph.get(i - 1), secondSubgraph.get(i)));
 			}
 		}
 		assertEquals(0, reflexive.getElements().size());
@@ -79,10 +79,10 @@ public final class DatalogTest {
 	@Test
 	public void testIncremental() {
 		testInitial();
-		edge.addFact(TupleN.of(Tuple2.of(firstSubgraph1, secondSubgraph1)));
+		edge.addFact(TupleN.of(firstSubgraph1, secondSubgraph1));
 		assertEquals(0, reflexive.getElements().size());
 		assertEquals(45+105+15, successor.getElements().size());
-		edge.addFact(TupleN.of(Tuple2.of(firstSubgraph1, firstSubgraph1)));
+		edge.addFact(TupleN.of(firstSubgraph1, firstSubgraph1));
 		assertEquals(1, reflexive.getElements().size());
 		assertEquals(45+105+15+1, successor.getElements().size());
 	}

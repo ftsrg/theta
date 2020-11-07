@@ -15,12 +15,19 @@
  */
 package hu.bme.mit.theta.common;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 
 public final class TupleN<T> extends Tuple {
 
 	private TupleN(final List<T> l) {
 		super(l);
+	}
+
+	@SafeVarargs
+	public static <T> TupleN<T> of(final T ... content) {
+		return new TupleN<T>(ImmutableList.copyOf(content));
 	}
 
 	public static <T> TupleN<T> of(final List<T> l) {
