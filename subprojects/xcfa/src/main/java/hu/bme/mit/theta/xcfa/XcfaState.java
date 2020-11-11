@@ -81,12 +81,10 @@ public class XcfaState {
     public void setCurrentlyAtomic(XCFA.Process currentlyAtomic) {
         checkState(enabledProcesses.contains(currentlyAtomic), "The atomic process is not enabled!");
         this.currentlyAtomic = currentlyAtomic;
-        recalcOffers();
     }
 
     public void addValuation(int id, VarDecl<?> decl, LitExpr<?> value) {
         valuation.put(id, decl, value);
-        recalcOffers();
     }
 
     public Optional<? extends LitExpr<?>> eval(VarDecl<?> decl) {
@@ -96,18 +94,22 @@ public class XcfaState {
     public void setEnabledProcesses(Collection<XCFA.Process> processes) {
         enabledProcesses.clear();
         enabledProcesses.addAll(processes);
-        recalcOffers();
     }
 
     void acceptOffer(XcfaStackFrame frame) {
         XCFA.Process proc = frame.getProcess();
         checkState(offers.getOrDefault(proc, new HashSet<>()).contains(frame), "Stack frame is not currently offered!");
-        if(! (frame.getStmt() instanceof XcfaCallStmt) ) {
+        if(! (frame.getStmt() instanceof XcfaCallStmt) && !stackFrames.get(proc).empty()) {
             stackFrames.get(proc).pop();
         }
+
         if(!frame.isLastStmt() || frame.getEdge().getParent().getFinalLoc() != frame.getEdge().getTarget()) {
             stackFrames.get(proc).push(frame);
         }
+        else {
+            if(stackFrames.get(proc).empty()) enabledProcesses.remove(proc);
+        }
+
         recalcOffers();
     }
 
@@ -116,13 +118,13 @@ public class XcfaState {
             VarDecl<?> varDecl = entry.getKey();
             LitExpr<?> litExpr = entry.getValue();
             Optional<? extends LitExpr<?>> eval = valuation.eval(varDecl);
-            if(eval.isEmpty() || eval.get().equals(litExpr)) return false;
+            if(eval.isEmpty() || !eval.get().equals(litExpr)) return false;
         }
         return true;
     }
 
     private void recalcOffers() {
-        offers.forEach((process, xcfaStackFrames) -> stackFrames.clear());
+        offers.forEach((process, xcfaStackFrames) -> xcfaStackFrames.clear());
         if(currentlyAtomic != null) {
             collectOffers(currentlyAtomic);
         }
@@ -135,7 +137,7 @@ public class XcfaState {
     }
 
     private void collectOffers(XCFA.Process enabledProcess) {
-        XcfaStackFrame last = stackFrames.get(enabledProcess).peek();
+        XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
         if(last == null || last.isLastStmt()) {
             XCFA.Process.Procedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
             for (XCFA.Process.Procedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
@@ -155,7 +157,7 @@ public class XcfaState {
             XcfaStackFrame xcfaStackFrame = last.duplicate(this);
             int i = last.getEdge().getStmts().indexOf(last.getStmt()) + 1;
             xcfaStackFrame.setStmt(last.getEdge().getStmts().get(i));
-            if(last.getEdge().getStmts().size() == i) xcfaStackFrame.setLastStmt();
+            if(last.getEdge().getStmts().size() == i+1) xcfaStackFrame.setLastStmt();
             offers.get(enabledProcess).add(xcfaStackFrame);
         }
     }

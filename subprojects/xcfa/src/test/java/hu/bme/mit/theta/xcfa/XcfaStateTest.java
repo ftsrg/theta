@@ -83,8 +83,8 @@ outerloop:
 			for (Map.Entry<XCFA.Process, Set<XcfaStackFrame>> entry : state.getOffers().entrySet()) {
 				Set<XcfaStackFrame> xcfaStackFrames = entry.getValue();
 				for (XcfaStackFrame xcfaStackFrame : xcfaStackFrames) {
-					xcfaStackFrame.accept();
 					xcfaStackFrame.getStmt().accept(visitor, xcfaStackFrame);
+					xcfaStackFrame.accept();
 					continue outerloop;
 				}
 			}
