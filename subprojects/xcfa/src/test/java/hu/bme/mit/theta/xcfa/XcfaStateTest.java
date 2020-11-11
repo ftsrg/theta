@@ -58,11 +58,13 @@ public final class XcfaStateTest {
 		xcfa = getXcfa("/simple.xcfa");
 		valuation = new LinkedHashMap<>();
 		valuation.put(xcfa.getMainProcess().getMainProcedure().getLocalVars().get(0), IntLitExpr.of(new BigInteger("42")));
-		testCases.add(new Object[] {
-				xcfa,
-				valuation,
-				true
-		});
+		testCases.add(new Object[] {xcfa, valuation, true});
+
+		xcfa = getXcfa("/simpleprocedure.xcfa");
+		valuation = new LinkedHashMap<>();
+		valuation.put(xcfa.getMainProcess().getThreadLocalVars().get(0), IntLitExpr.of(new BigInteger("42")));
+		testCases.add(new Object[] {xcfa, valuation, true});
+
 
 		return testCases;
 	}

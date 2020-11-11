@@ -7,12 +7,14 @@ class XcfaStackFrame {
     private final XCFA.Process.Procedure.Edge edge;
     private Stmt stmt;
     private boolean lastStmt;
+    private boolean newProcedure;
 
     XcfaStackFrame(XcfaState owner, XCFA.Process.Procedure.Edge edge, Stmt stmt) {
         this.owner = owner;
         this.edge = edge;
         this.stmt = stmt;
         this.lastStmt = false;
+        this.newProcedure = false;
     }
 
     public XCFA.Process.Procedure.Edge getEdge() {
@@ -49,5 +51,13 @@ class XcfaStackFrame {
 
     public void accept() {
         owner.acceptOffer(this);
+    }
+
+    public boolean isNewProcedure() {
+        return newProcedure;
+    }
+
+    public void setNewProcedure() {
+        this.newProcedure = true;
     }
 }

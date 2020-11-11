@@ -126,8 +126,8 @@ public final class XCFA {
 			return Collections.unmodifiableList(params);
 		}
 
-		public Set<VarDecl<?>> getThreadLocalVars() {
-			return threadLocalVars.keySet();
+		public List<VarDecl<?>> getThreadLocalVars() {
+			return List.copyOf(threadLocalVars.keySet());
 		}
 
 		public LitExpr<?> getInitValue(VarDecl<?> varDecl) {

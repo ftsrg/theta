@@ -3,10 +3,12 @@ package hu.bme.mit.theta.xcfa;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
 
@@ -99,15 +101,28 @@ public class XcfaState {
     void acceptOffer(XcfaStackFrame frame) {
         XCFA.Process proc = frame.getProcess();
         checkState(offers.getOrDefault(proc, new HashSet<>()).contains(frame), "Stack frame is not currently offered!");
-        if(! (frame.getStmt() instanceof XcfaCallStmt) && !stackFrames.get(proc).empty()) {
-            stackFrames.get(proc).pop();
+        XcfaStackFrame lastFrame = null;
+        if(!stackFrames.get(proc).empty()) {
+            lastFrame = stackFrames.get(proc).pop();
+        }
+        if(frame.isNewProcedure() && lastFrame != null) {
+            if(lastFrame.isLastStmt()) {
+                lastFrame.setStmt(SkipStmt.getInstance());
+            }
+            else {
+                int i = lastFrame.getEdge().getStmts().indexOf(lastFrame.getStmt()) + 1;
+                Stmt stmt = lastFrame.getEdge().getStmts().get(i);
+                lastFrame.setStmt(stmt);
+                if (lastFrame.getEdge().getStmts().size() == i + 1) lastFrame.setLastStmt();
+            }
+            stackFrames.get(proc).push(lastFrame);
         }
 
-        if(!frame.isLastStmt() || frame.getEdge().getParent().getFinalLoc() != frame.getEdge().getTarget()) {
+        if(frame.getEdge().getParent().getFinalLoc() != frame.getEdge().getTarget()) {
             stackFrames.get(proc).push(frame);
         }
-        else {
-            if(stackFrames.get(proc).empty()) enabledProcesses.remove(proc);
+        else if(stackFrames.get(proc).empty()) {
+            enabledProcesses.remove(proc);
         }
 
         recalcOffers();
@@ -138,7 +153,11 @@ public class XcfaState {
 
     private void collectOffers(XCFA.Process enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
-        if(last == null || last.isLastStmt()) {
+        if(last != null && last.getStmt() instanceof CallStmt) {
+            XCFA.Process.Procedure procedure = ((CallStmt) last.getStmt()).getProcedure();
+            collectProcedureOffers(enabledProcess, procedure);
+        }
+        else if(last == null || last.isLastStmt()) {
             XCFA.Process.Procedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
             for (XCFA.Process.Procedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
                 boolean canExecute = true;
@@ -148,16 +167,28 @@ public class XcfaState {
                         break;
                     }
                 }
+                if(!canExecute) continue;
                 XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, outgoingEdge, outgoingEdge.getStmts().get(0));
                 if(outgoingEdge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
-                if(canExecute) offers.get(enabledProcess).add(xcfaStackFrame);
+                offers.get(enabledProcess).add(xcfaStackFrame);
+
             }
         }
         else {
-            XcfaStackFrame xcfaStackFrame = last.duplicate(this);
             int i = last.getEdge().getStmts().indexOf(last.getStmt()) + 1;
-            xcfaStackFrame.setStmt(last.getEdge().getStmts().get(i));
-            if(last.getEdge().getStmts().size() == i+1) xcfaStackFrame.setLastStmt();
+            Stmt stmt = last.getEdge().getStmts().get(i);
+            XcfaStackFrame xcfaStackFrame = last.duplicate(this);
+            xcfaStackFrame.setStmt(stmt);
+            if (last.getEdge().getStmts().size() == i + 1) xcfaStackFrame.setLastStmt();
+            offers.get(enabledProcess).add(xcfaStackFrame);
+        }
+    }
+
+    private void collectProcedureOffers(XCFA.Process enabledProcess, XCFA.Process.Procedure procedure) {
+        for (XCFA.Process.Procedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
+            XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0));
+            if(edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
+            xcfaStackFrame.setNewProcedure();
             offers.get(enabledProcess).add(xcfaStackFrame);
         }
     }
