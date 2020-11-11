@@ -52,6 +52,10 @@ public final class XCFA {
 		return new Builder();
 	}
 
+	public XcfaState initialState() {
+		return new XcfaState(this);
+	}
+
 	public CFA createCFA() {
 		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
 		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
@@ -77,8 +81,8 @@ public final class XCFA {
 		return builder.build();
 	}
 
-	public Set<VarDecl<? extends Type>> getGlobalVars() {
-		return globalVars.keySet();
+	public List<VarDecl<? extends Type>> getGlobalVars() {
+		return List.copyOf(globalVars.keySet());
 	}
 
 	public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
@@ -195,8 +199,8 @@ public final class XCFA {
 				return Collections.unmodifiableList(params);
 			}
 
-			public Set<VarDecl<?>> getLocalVars() {
-				return localVars.keySet();
+			public List<VarDecl<?>> getLocalVars() {
+				return List.copyOf(localVars.keySet());
 			}
 
 			public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
@@ -555,7 +559,7 @@ public final class XCFA {
 		private XCFA.Process mainProcess;
 
 		private Builder() {
-			globalVars = new HashMap<>();
+			globalVars = new LinkedHashMap<>();
 			processes = new ArrayList<>();
 		}
 
