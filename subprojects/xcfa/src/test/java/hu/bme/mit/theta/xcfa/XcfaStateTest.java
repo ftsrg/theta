@@ -89,10 +89,6 @@ public final class XcfaStateTest {
 
 	@Test
 	public void test() {
-		System.out.println();
-		System.out.println();
-		System.out.println("Starting test");
-		System.out.println();
 		XcfaState state = xcfa.initialState();
 		StmtVisitor visitor = new StmtVisitor();
 		int lastProcId = 0;
@@ -103,7 +99,6 @@ outerloop:
 				i = (i + 1) % xcfa.getProcesses().size();
 				Set<XcfaStackFrame> xcfaStackFrames = state.getOffers().get(xcfa.getProcesses().get(i));
 				for (XcfaStackFrame xcfaStackFrame : xcfaStackFrames) {
-					System.out.println(i);
 					xcfaStackFrame.getStmt().accept(visitor, xcfaStackFrame);
 					xcfaStackFrame.accept();
 					lastProcId = i;
