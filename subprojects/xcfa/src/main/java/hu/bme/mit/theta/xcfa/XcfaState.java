@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -40,6 +41,7 @@ public class XcfaState {
         this.xcfa = xcfa;
         enabledProcesses = new ArrayList<>(xcfa.getProcesses());
         valuation = new MutablePartitionedValuation();
+        int globalid = valuation.createPartition();
         stackFrames = new LinkedHashMap<>();
         partitions = new LinkedHashMap<>();
         offers = new LinkedHashMap<>();
@@ -49,6 +51,12 @@ public class XcfaState {
             offers.put(process, new LinkedHashSet<>());
         });
         currentlyAtomic = null;
+        for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
+            LitExpr<?> litExpr;
+            if((litExpr = xcfa.getInitValue(globalVar)) != null) {
+                valuation.put(globalid, globalVar, litExpr);
+            }
+        }
         recalcOffers();
     }
 
@@ -81,7 +89,7 @@ public class XcfaState {
     }
 
     public void setCurrentlyAtomic(XCFA.Process currentlyAtomic) {
-        checkState(enabledProcesses.contains(currentlyAtomic), "The atomic process is not enabled!");
+        checkState(currentlyAtomic == null || enabledProcesses.contains(currentlyAtomic), "The atomic process is not enabled!");
         this.currentlyAtomic = currentlyAtomic;
     }
 
@@ -118,7 +126,7 @@ public class XcfaState {
             stackFrames.get(proc).push(lastFrame);
         }
 
-        if(frame.getEdge().getParent().getFinalLoc() != frame.getEdge().getTarget()) {
+        if(!(frame.isLastStmt() && frame.getEdge().getParent().getFinalLoc() == frame.getEdge().getTarget())) {
             stackFrames.get(proc).push(frame);
         }
         else if(stackFrames.get(proc).empty()) {

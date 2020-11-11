@@ -65,6 +65,17 @@ public final class XcfaStateTest {
 		valuation.put(xcfa.getMainProcess().getThreadLocalVars().get(0), IntLitExpr.of(new BigInteger("42")));
 		testCases.add(new Object[] {xcfa, valuation, true});
 
+		xcfa = getXcfa("/multithread.xcfa");
+		valuation = new LinkedHashMap<>();
+		valuation.put(xcfa.getProcesses().get(0).getMainProcedure().getLocalVars().get(0), IntLitExpr.of(new BigInteger("21")));
+		valuation.put(xcfa.getProcesses().get(1).getMainProcedure().getLocalVars().get(0), IntLitExpr.of(new BigInteger("42")));
+		testCases.add(new Object[] {xcfa, valuation, true});
+
+		xcfa = getXcfa("/multithread_atomic.xcfa");
+		valuation = new LinkedHashMap<>();
+		valuation.put(xcfa.getProcesses().get(0).getMainProcedure().getLocalVars().get(0), IntLitExpr.of(new BigInteger("21")));
+		valuation.put(xcfa.getProcesses().get(1).getMainProcedure().getLocalVars().get(0), IntLitExpr.of(new BigInteger("42")));
+		testCases.add(new Object[] {xcfa, valuation, true});
 
 		return testCases;
 	}
@@ -78,18 +89,27 @@ public final class XcfaStateTest {
 
 	@Test
 	public void test() {
+		System.out.println();
+		System.out.println();
+		System.out.println("Starting test");
+		System.out.println();
 		XcfaState state = xcfa.initialState();
 		StmtVisitor visitor = new StmtVisitor();
+		int lastProcId = 0;
 outerloop:
 		while(true) {
-			for (Map.Entry<XCFA.Process, Set<XcfaStackFrame>> entry : state.getOffers().entrySet()) {
-				Set<XcfaStackFrame> xcfaStackFrames = entry.getValue();
+			int i = lastProcId;
+			do {
+				i = (i + 1) % xcfa.getProcesses().size();
+				Set<XcfaStackFrame> xcfaStackFrames = state.getOffers().get(xcfa.getProcesses().get(i));
 				for (XcfaStackFrame xcfaStackFrame : xcfaStackFrames) {
+					System.out.println(i);
 					xcfaStackFrame.getStmt().accept(visitor, xcfaStackFrame);
 					xcfaStackFrame.accept();
+					lastProcId = i;
 					continue outerloop;
 				}
-			}
+			}while(i != lastProcId);
 			break;
 		}
 		assertEquals(state.test(expectedResult), required);
@@ -99,38 +119,38 @@ outerloop:
 
 		@Override
 		public Void visit(XcfaCallStmt stmt, XcfaStackFrame param) {
-			System.out.println("Visiting XcfaCallStmt");
+//			System.out.println("Visiting XcfaCallStmt");
 			return null;
 		}
 
 		@Override
 		public Void visit(StoreStmt storeStmt, XcfaStackFrame param) {
-			System.out.println("Visiting StoreStmt");
+//			System.out.println("Visiting StoreStmt");
 			return null;
 		}
 
 		@Override
 		public Void visit(LoadStmt loadStmt, XcfaStackFrame param) {
-			System.out.println("Visiting LoadStmt");
+//			System.out.println("Visiting LoadStmt");
 			return null;
 		}
 
 		@Override
 		public Void visit(FenceStmt fenceStmt, XcfaStackFrame param) {
-			System.out.println("Visiting FenceStmt");
+//			System.out.println("Visiting FenceStmt");
 			return null;
 		}
 
 		@Override
 		public Void visit(AtomicBeginStmt atomicBeginStmt, XcfaStackFrame param) {
-			System.out.println("Visiting AtomicBeginStmt");
+//			System.out.println("Visiting AtomicBeginStmt");
 			param.getOwner().setCurrentlyAtomic(param.getProcess());
 			return null;
 		}
 
 		@Override
 		public Void visit(AtomicEndStmt atomicEndStmt, XcfaStackFrame param) {
-			System.out.println("Visiting AtomicEndStmt");
+//			System.out.println("Visiting AtomicEndStmt");
 			param.getOwner().setCurrentlyAtomic(null);
 			return null;
 		}
@@ -177,19 +197,19 @@ outerloop:
 
 		@Override
 		public Void visit(SkipStmt stmt, XcfaStackFrame param) {
-			System.out.println("Visiting SkipStmt");
+//			System.out.println("Visiting SkipStmt");
 			return null;
 		}
 
 		@Override
 		public Void visit(AssumeStmt stmt, XcfaStackFrame param) {
-			System.out.println("Visiting AssumeStmt");
+//			System.out.println("Visiting AssumeStmt");
 			return null;
 		}
 
 		@Override
 		public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, XcfaStackFrame param) {
-			System.out.println("Visiting AssignStmt");
+//			System.out.println("Visiting AssignStmt");
 			XcfaState owner = param.getOwner();
 			int id = owner.getPartitions().get(param.getProcess());
 			VarDecl<?> decl = stmt.getVarDecl();
