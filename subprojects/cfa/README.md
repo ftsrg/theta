@@ -87,7 +87,17 @@ Note that for example the loop in the program appears as a cycle (`L1 -> L2 -> L
 The assertion is modeled with a branching in the CFA: if it holds, `L3 -> END` is taken, otherwise `L3 -> ERR`.
 
 Variables can be defined by `var <NAME> : <TYPE>`, locations by `(init|final|error|) loc <NAME>`, and edges by `<SOURCE> -> <TARGET> {<STATEMENT>}`.
-Note that it is also possible to include multiple statements on one edge (in new lines).
+As a syntactic sugar, it is possible to include multiple statements on one edge (in new lines).
+In this case, anonymus intermediate locations will automatically be introduced when parsing the CFA.
+For example,
+```
+L0 -> L1 {
+   x := 0
+   assume x >= 0
+}
+```
+introduces an intermediate location `""` (with an empty string as name) between `L0` and `L1`.
+There will be an edge `x := 0` from `L0`to `""` and an edge `assume x >= 0` from `""` to `L1`.
 
 See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
 
