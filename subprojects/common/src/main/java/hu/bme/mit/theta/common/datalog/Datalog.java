@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.datalog;
 
 /*
  * Datalog engine using naive (enumerative) evaluation.
@@ -9,25 +9,84 @@ package hu.bme.mit.theta.common;
  */
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class Datalog {
     private final List<Relation> relations;
     private boolean debug = false;
+
     public static Datalog createProgram() {
         return new Datalog();
     }
 
-    private Datalog() {
+    /*
+     * Datalog program (facts, deduction rules and queries) in a basic String representation.
+     * Only supports queries of entire relations right now.
+     */
+    public static String runProgram(String relations) {
+        Datalog datalog = new Datalog();
+        StringBuilder ret = new StringBuilder();
+        Map<String, Relation> relationMap = new HashMap<>();
+        for (String expression : relations.split("\\.")) {
+            String nospace = expression.replaceAll("[ \t\n]", "");
+            if(nospace.matches("([a-z_][a-zA-Z0-9_]*)\\(([a-z_0-9][a-zA-Z0-9_]*)(,[a-z_0-9][a-zA-Z_0-9]*)*\\)")) { //fact assertion
+                String[] splitString = nospace.split("\\(");
+                String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
+                relationMap.putIfAbsent(splitString[0], datalog.createRelation(arguments.length));
+                TupleN<DatalogArgument> argumentTuple = TupleN.of(Arrays.stream(arguments).map(StringDatalogArgument::new).collect(Collectors.toList()));
+                relationMap.get(splitString[0]).addFact(argumentTuple);
+            }
+            else if(nospace.matches("([a-z_][a-zA-Z_0-9]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\):-([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\)(,([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\))*")) { //deduction rule
+                String[] splitExpression = nospace.split(":-");
+
+                Map<String, Variable> variableMap = new HashMap<>();
+                String[] splitString = splitExpression[0].split("\\(");
+                String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
+                relationMap.putIfAbsent(splitString[0], datalog.createRelation(arguments.length));
+                TupleN<Variable> argumentTuple = TupleN.of(Arrays.stream(arguments).map(s -> {
+                    variableMap.putIfAbsent(s, datalog.getVariable());
+                    return variableMap.get(s);
+                }).collect(Collectors.toList()));
+
+                Set<Tuple2<Relation, TupleN<Variable>>> dependencies = new LinkedHashSet<>();
+                for (String dependency : splitExpression[1].split("\\),")) {
+                    String[] dsplitString = dependency.split("\\(");
+                    String[] darguments = dsplitString[1].replaceAll("\\)", "").split(",");
+                    relationMap.putIfAbsent(dsplitString[0], datalog.createRelation(darguments.length));
+                    TupleN<Variable> dargumentTuple = TupleN.of(Arrays.stream(darguments).map(s -> {
+                        variableMap.putIfAbsent(s, datalog.getVariable());
+                        return variableMap.get(s);
+                    }).collect(Collectors.toList()));
+                    dependencies.add(Tuple2.of(relationMap.get(dsplitString[0]), dargumentTuple));
+                }
+                relationMap.get(splitString[0]).addRule(argumentTuple, dependencies);
+
+            }
+            else if(nospace.matches("([a-z_][a-zA-Z_]*)\\?")) { //query
+                String noquestion = nospace.replaceAll("\\?", "");
+                if(!relationMap.containsKey(noquestion)) throw new RuntimeException("Query " + nospace + " does not query an existing relation!");
+                for (TupleN<DatalogArgument> element : relationMap.get(noquestion).getElements()) {
+                    StringBuilder stringBuilder = new StringBuilder(noquestion + "(");
+                    for (Object o : element) {
+                        stringBuilder.append(o.toString()).append(",");
+                    }
+                    ret.append(stringBuilder.substring(0, stringBuilder.length() - 1)).append(").").append("\r\n");
+                }
+            }
+            else {
+                throw new RuntimeException("Input " + nospace + " does not match any type of expression!");
+            }
+        }
+        return ret.toString();
+    }
+
+    protected Datalog() {
         relations = new ArrayList<>();
     }
 

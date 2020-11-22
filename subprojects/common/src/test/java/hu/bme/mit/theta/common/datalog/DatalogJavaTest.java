@@ -13,8 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.datalog;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.common.datalog.Datalog;
+import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -29,13 +33,13 @@ import static org.junit.Assert.assertEquals;
  *   We model a simple directed graph using the relation edge(A, B) to denote A -> B.
  *   We then formulate two queries: which nodes are accessible from a given node, and is the graph irreflexive?
  */
-public final class DatalogTest {
+public final class DatalogJavaTest {
 	private final Datalog datalog;
 	private final Datalog.Relation edge;
 	private final Datalog.Relation successor;
 	private final Datalog.Relation reflexive;
 
-	public DatalogTest() {
+	public DatalogJavaTest() {
 		datalog = Datalog.createProgram();
 		//datalog.setDebug(true);
 		edge = datalog.createRelation(2);
