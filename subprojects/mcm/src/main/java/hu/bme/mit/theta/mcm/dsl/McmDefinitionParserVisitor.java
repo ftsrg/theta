@@ -20,10 +20,10 @@ public class McmDefinitionParserVisitor extends McmDslBaseVisitor<Filter> {
 
     private final MCM mcm;
     private final List<? extends Process> processes;
-    private final Set<VarDecl<? extends Type>> variables;
+    private final List<VarDecl<? extends Type>> variables;
     private final Map<String, Filter> definitions;
 
-    public McmDefinitionParserVisitor(List<? extends Process> processes, Set<VarDecl<? extends Type>> variables) {
+    public McmDefinitionParserVisitor(List<? extends Process> processes, List<VarDecl<? extends Type>> variables) {
         this.mcm = new MCM();
         this.processes = processes;
         this.variables = variables;

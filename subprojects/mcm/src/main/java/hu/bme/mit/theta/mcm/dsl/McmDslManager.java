@@ -17,7 +17,7 @@ import java.util.Set;
 
 public class McmDslManager {
 
-    public static MCM createMCM(InputStream inputStream, List<? extends Process> processes, Set<VarDecl<? extends Type>> variables) throws IOException {
+    public static MCM createMCM(InputStream inputStream, List<? extends Process> processes, List<VarDecl<? extends Type>> variables) throws IOException {
         final CharStream input = CharStreams.fromStream(inputStream);
 
         final McmDslLexer lexer = new McmDslLexer(input);

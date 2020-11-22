@@ -9,15 +9,15 @@ import java.util.*;
 
 public class ForEachVar extends Filter{
     private Map<VarDecl<?>, Filter> op;
-    private final Set<VarDecl<? extends Type>> variables;
+    private final List<VarDecl<? extends Type>> variables;
     private VarDecl<?> currentVariable;
 
-    public ForEachVar(Set<VarDecl<? extends Type>> variables) {
+    public ForEachVar(List<VarDecl<? extends Type>> variables) {
         this.variables = variables;
         currentVariable = null;
     }
 
-    public ForEachVar(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Map<VarDecl<?>, Filter> op, Set<VarDecl<? extends Type>> variables, VarDecl<?> currentVariable) {
+    public ForEachVar(Stack<ForEachNode> forEachNodes, Stack<ForEachVar> forEachVars, Stack<ForEachThread> forEachThreads, Map<VarDecl<?>, Filter> op, List<VarDecl<? extends Type>> variables, VarDecl<?> currentVariable) {
         forEachVars.push(this);
         this.op = new HashMap<>();
         op.forEach((variable, filter) -> this.op.put(variable, filter.duplicate(forEachNodes, forEachVars, forEachThreads)));

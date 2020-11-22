@@ -24,6 +24,7 @@ import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
+import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 
 import java.io.File;
@@ -37,32 +38,31 @@ public class XcfaCli {
 	private final String[] args;
 
 	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
-	String model;
+	File model;
 
 	@Parameter(names = "--mcm", description = "Path of the input MCM model", required = true)
-	String mcm;
+	File mcm;
 
-	@Parameter(names = "--poolsize", description = "Size of the thread pool (1 by default)", required = false)
+	@Parameter(names = "--poolsize", description = "Size of the thread pool")
 	Integer threadPoolSize = 1;
 
-	@Parameter(names = "--print-cex", description = "Print counterexample as cex.dot", required = false)
-	boolean printcex;
+	@Parameter(names = "--cex", description = "Dotfile name of counterexample")
+	File cex = null;
 
-	@Parameter(names = "--all-states", description = "Print all resulting states as .dot files", required = false)
-	boolean allstates;
+	@Parameter(names = "--states-dir", description = "Print all resulting states as .dot files in this directory")
+	File statesDir = null;
 
-	@Parameter(names = "--insitu-filtering", description = "Enables in-situ filtering for memory model violations", required = false)
-	boolean insitu;
+	@Parameter(names = "--insitu-filtering", description = "Enables in-situ filtering for memory model violations")
+	boolean insitu = false;
 
-	@Parameter(names = "--no-print", description = "Don't write anything", required = false)
-	boolean noPrint;
-
-	@Parameter(names = "--max-depth", description = "Maximal depth of exploration in any thread (0 for unlimited depth)", required = false)
+	@Parameter(names = "--max-depth", description = "Maximal depth of exploration in any thread (0 for unlimited depth)")
 	Integer maxdepth = 0;
+
+	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
+	Long timeS = Long.MAX_VALUE;
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
-
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -88,11 +88,13 @@ public class XcfaCli {
 			return;
 		}
 
+		XcfaStatelessSettings settings = new XcfaStatelessSettings(threadPoolSize, statesDir, insitu, maxdepth, timeS);
+
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = loadModel();
 			final MCM mcm = loadMcm(xcfa);
-			if(StatelessMC.check(xcfa, mcm, threadPoolSize, printcex, allstates, insitu, maxdepth, noPrint)) {
+			if(StatelessMC.check(xcfa, mcm, cex, settings)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
 			}
 			else {
@@ -106,12 +108,12 @@ public class XcfaCli {
 	}
 
 	private XCFA loadModel() throws IOException {
-		try(InputStream inputStream = new FileInputStream(new File(model))) {
+		try(InputStream inputStream = new FileInputStream(model)) {
 			return XcfaDslManager.createXcfa(inputStream);
 		}
 	}
 	private MCM loadMcm(XCFA xcfa) throws IOException {
-		try(InputStream inputStream = new FileInputStream(new File(mcm))) {
+		try(InputStream inputStream = new FileInputStream(mcm)) {
 			return McmDslManager.createMCM(inputStream, xcfa.getProcesses(), xcfa.getGlobalVars());
 		}
 	}
