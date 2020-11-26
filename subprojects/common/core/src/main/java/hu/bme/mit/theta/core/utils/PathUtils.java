@@ -230,7 +230,7 @@ public class PathUtils {
 					final VarDecl<T> varDecl = constDecl.getVarDecl();
 					final int index = constDecl.getIndex();
 					final int nPrimes = index - indexing.get(varDecl);
-					checkArgument(nPrimes >= 0);
+					checkArgument(nPrimes >= 0, "Indexing mismatch on declaration");
 					final Expr<T> varRef = varDecl.getRef();
 					if (nPrimes == 0) {
 						return varRef;

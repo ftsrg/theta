@@ -121,7 +121,8 @@ public final class XtaCli {
 		try {
 			return checker.check(UnitPrec.getInstance());
 		} catch (final Exception ex) {
-			throw new Exception("Error while running algorithm: " + ex.getMessage(), ex);
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
 		}
 	}
 
