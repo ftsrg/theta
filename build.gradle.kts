@@ -10,7 +10,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.inf.theta"
-    version = "2.4.2"
+    version = "2.8.0"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -34,16 +34,12 @@ tasks {
 
         dependsOn(reportTasks.flatMap { it.dependsOn })
 
-        sourceDirectories = files(reportTasks.map { it.allSourceDirs })
-        classDirectories = files(reportTasks.map { it.allClassDirs })
+        sourceDirectories.setFrom(files(reportTasks.map { it.allSourceDirs }))
+        classDirectories.setFrom(files(reportTasks.map { it.allClassDirs }))
         val allExecutionData = files(reportTasks.map { it.executionData })
         // We only set executionData for declaring dependencies during task graph construction,
         // subprojects without tests will be filtered out in doFirst.
-        executionData = allExecutionData
-
-        doFirst {
-            executionData = allExecutionData.filter { it.exists() }
-        }
+        executionData.setFrom(allExecutionData.filter { it.exists() })
     }
 
     // Dummy test task for generating coverage report after ./gradlew test and ./gradlew check.

@@ -147,9 +147,9 @@ final class CfaProcessSymbol implements Symbol, Scope {
 			result.add(symbol);
 		}
 
-		checkArgument(nInitLocs == 1, "Exactly one initial location must be specififed");
-		checkArgument(nFinalLocs == 1, "Exactly one final location must be specififed");
-		checkArgument(nErrorLocs == 1, "Exactly one error location must be specififed");
+		checkArgument(nInitLocs == 1, "Exactly one initial location must be specified");
+		checkArgument(nFinalLocs <= 1, "At most one final location must be specified");
+		checkArgument(nErrorLocs <= 1, "At most one error location must be specified");
 
 		return result;
 	}

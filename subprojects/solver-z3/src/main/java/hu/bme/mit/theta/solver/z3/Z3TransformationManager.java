@@ -45,4 +45,9 @@ final class Z3TransformationManager {
 		return exprTransformer.toTerm(expr);
 	}
 
+	public void reset() {
+		typeTransformer.reset();
+		// declTransformer does not have to be resetted
+		exprTransformer.reset();
+	}
 }

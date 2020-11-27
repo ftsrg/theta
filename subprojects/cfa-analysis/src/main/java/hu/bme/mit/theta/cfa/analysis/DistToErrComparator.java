@@ -41,13 +41,15 @@ public class DistToErrComparator implements ArgNodeComparator {
 	private final int errorWeight;
 	private final int depthWeight;
 	private final CFA cfa;
+	private final Loc errLoc;
 
-	public DistToErrComparator(final CFA cfa) {
-		this(cfa, 1, 0);
+	public DistToErrComparator(final CFA cfa, final Loc errLoc) {
+		this(cfa, errLoc, 1, 0);
 	}
 
-	public DistToErrComparator(final CFA cfa, final int errorWeight, final int depthWeight) {
+	public DistToErrComparator(final CFA cfa, final Loc errLoc, final int errorWeight, final int depthWeight) {
 		this.cfa = cfa;
+		this.errLoc = errLoc;
 		this.errorWeight = errorWeight;
 		this.depthWeight = depthWeight;
 		distancesToError = null;
@@ -74,16 +76,16 @@ public class DistToErrComparator implements ArgNodeComparator {
 
 	private int getDistanceToError(final Loc loc) {
 		if (distancesToError == null) {
-			distancesToError = calculateDistancesToError(cfa);
+			distancesToError = calculateDistancesToError(cfa, errLoc);
 		}
 		return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
 	}
 
-	static Map<Loc, Integer> calculateDistancesToError(final CFA cfa) {
+	static Map<Loc, Integer> calculateDistancesToError(final CFA cfa, final Loc errLoc) {
 		List<Loc> queue = new LinkedList<>();
 		final Map<Loc, Integer> distancesToError = new HashMap<>();
-		queue.add(cfa.getErrorLoc());
-		distancesToError.put(cfa.getErrorLoc(), 0);
+		queue.add(errLoc);
+		distancesToError.put(errLoc, 0);
 		int distance = 1;
 
 		while (!queue.isEmpty()) {

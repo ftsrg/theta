@@ -26,7 +26,7 @@ Quoted from [Á. Hajdu and Z. Micskei - Efficient Strategies for CEGAR-Based Mod
 ## Options
 
 Note that not all options might be available in all tools.
-The available options are presented in the help screen of each tool.
+The available options, along with their default values are presented in the help screen (`--help`) of each tool.
 
 ### `--domain`
 
