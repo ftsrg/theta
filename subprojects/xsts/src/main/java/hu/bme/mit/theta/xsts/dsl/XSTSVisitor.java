@@ -177,25 +177,25 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr<?>> {
 		if (ctx.ops.size() == 1) return visitAndExpr(ctx.ops.get(0));
 		List<Expr<BoolType>> ops = new ArrayList<>();
 		for (XstsDslParser.AndExprContext child : ctx.ops) {
-			ops.add(visitAndExpr(child));
+			ops.add(cast(visitAndExpr(child),Bool()));
 		}
 		return Or(ops);
 	}
 
 	@Override
-	public Expr<BoolType> visitAndExpr(XstsDslParser.AndExprContext ctx) {
+	public Expr<?> visitAndExpr(XstsDslParser.AndExprContext ctx) {
 		if (ctx.ops.size() == 1) return visitNotExpr(ctx.ops.get(0));
 		List<Expr<BoolType>> ops = new ArrayList<>();
 		for (XstsDslParser.NotExprContext child : ctx.ops) {
-			ops.add(visitNotExpr(child));
+			ops.add(cast(visitNotExpr(child),Bool()));
 		}
 		return And(ops);
 	}
 
 	@Override
-	public Expr<BoolType> visitNotExpr(XstsDslParser.NotExprContext ctx) {
-		if (ctx.ops.size() > 0) return Not(visitNotExpr(ctx.ops.get(0)));
-		else return cast(visitEqExpr(ctx.eqExpr()),Bool());
+	public Expr<?> visitNotExpr(XstsDslParser.NotExprContext ctx) {
+		if (ctx.ops.size() > 0) return Not(cast(visitNotExpr(ctx.ops.get(0)),Bool()));
+		else return visitEqExpr(ctx.eqExpr());
 	}
 
 	@Override
