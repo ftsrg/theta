@@ -16,6 +16,7 @@ import hu.bme.mit.theta.analysis.pred.*;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.ItpRefToProd2ExplPredPrec;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
@@ -42,7 +43,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 public class XstsConfigBuilder {
 
 	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, PROD
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, PROD, PROD_AUTO
 	}
 
 	public enum Refinement {
@@ -243,7 +244,7 @@ public class XstsConfigBuilder {
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
-		} else if (domain == Domain.PROD) {
+		} else if (domain == Domain.PROD || domain==domain.PROD_AUTO) {
 			final PredAbstractors.PredAbstractor predAbstractor = PredAbstractors.cartesianAbstractor(solver);
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, solver));
 			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis
@@ -263,22 +264,35 @@ public class XstsConfigBuilder {
 			Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
 			final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
+			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner;
+			switch (domain) {
+				case PROD:
+					precRefiner = ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter);
+					break;
+				case PROD_AUTO:
+					precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter);
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							"Unknown domain " + domain);
+			}
+
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-							JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solver),
-							JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-							JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solver),
-							JoiningPrecRefiner.create(ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter)), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				default:
 					throw new UnsupportedOperationException(
