@@ -113,8 +113,8 @@ final class StmtToExprTransformer {
 		@Override
 		public StmtUnfoldResult visit(NonDetStmt nonDetStmt, VarIndexing indexing) {
 
-			List<Expr<BoolType>> choices = new ArrayList<Expr<BoolType>>();
-			List<VarIndexing> indexings = new ArrayList<VarIndexing>();
+			List<Expr<BoolType>> choices = new ArrayList<>();
+			List<VarIndexing> indexings = new ArrayList<>();
 			VarIndexing jointIndexing = indexing;
 			int count = 0;
 			VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
@@ -126,11 +126,11 @@ final class StmtToExprTransformer {
 				jointIndexing = jointIndexing.join(result.indexing);
 			}
 			Set<VarDecl<?>> vars = ExprUtils.getVars(choices);
-			List<Expr<BoolType>> branchExprs = new ArrayList<Expr<BoolType>>();
+			List<Expr<BoolType>> branchExprs = new ArrayList<>();
 			for (int i = 0; i < choices.size(); i++) {
-				List<Expr<BoolType>> exprs = new ArrayList<Expr<BoolType>>();
+				List<Expr<BoolType>> exprs = new ArrayList<>();
 				exprs.add(choices.get(i));
-				for (VarDecl decl : vars) {
+				for (VarDecl<?> decl : vars) {
 					int currentBranchIndex = indexings.get(i).get(decl);
 					int jointIndex = jointIndexing.get(decl);
 					if (currentBranchIndex < jointIndex) {
