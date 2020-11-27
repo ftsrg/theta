@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -64,7 +65,6 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
  */
 public class StsCli {
 	private static final String JAR_NAME = "theta-sts-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -104,6 +104,9 @@ public class StsCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public StsCli(final String[] args) {
@@ -132,6 +135,11 @@ public class StsCli {
 			return;
 		}
 
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
@@ -144,9 +152,7 @@ public class StsCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -186,7 +192,8 @@ public class StsCli {
 
 	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
 		try {
-			return new StsConfigBuilder(domain, refinement, solverFactory).initPrec(initPrec).search(search)
+			return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.initPrec(initPrec).search(search)
 					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -212,6 +219,7 @@ public class StsCli {
 			}
 			writer.cell(sts.getVars().size());
 			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.newRow();
 		}
 	}
 
@@ -219,6 +227,7 @@ public class StsCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
@@ -231,9 +240,9 @@ public class StsCli {
 		}
 	}
 
-	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) {
+	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
-		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, solverFactory);
+		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
@@ -241,8 +250,6 @@ public class StsCli {
 			for (Valuation state : concrTrace.getStates()) {
 				printWriter.println(state.toString());
 			}
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();

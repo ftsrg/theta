@@ -73,8 +73,12 @@ final class Z3TypeTransformer {
 			final com.microsoft.z3.Sort elemSort = toSort(arrayType.getElemType());
 			return context.mkArraySort(indexSort, elemSort);
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Unsupporte type: " + type.getClass().getSimpleName());
 		}
+	}
+
+	public void reset() {
+		bvSorts.clear();
 	}
 
 }

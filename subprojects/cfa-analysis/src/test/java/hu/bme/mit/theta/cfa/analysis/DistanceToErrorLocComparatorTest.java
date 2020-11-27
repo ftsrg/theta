@@ -49,7 +49,7 @@ public class DistanceToErrorLocComparatorTest {
 		builder.createEdge(loc2, locFinal, stmt);
 
 		final CFA cfa = builder.build();
-		final Map<Loc, Integer> distancesToError = DistToErrComparator.calculateDistancesToError(cfa);
+		final Map<Loc, Integer> distancesToError = DistToErrComparator.calculateDistancesToError(cfa, cfa.getErrorLoc().get());
 
 		Assert.assertEquals(0, (int) distancesToError.get(locErr));
 		Assert.assertEquals(2, (int) distancesToError.get(loc0));

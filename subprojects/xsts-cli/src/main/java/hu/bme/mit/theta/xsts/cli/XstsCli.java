@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.*;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -44,7 +45,6 @@ import java.util.stream.Stream;
 public class XstsCli {
 
 	private static final String JAR_NAME = "theta-xsts-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -93,6 +93,9 @@ public class XstsCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public XstsCli(final String[] args) {
@@ -121,6 +124,11 @@ public class XstsCli {
 			return;
 		}
 
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XSTS xsts = loadModel();
@@ -139,9 +147,7 @@ public class XstsCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -176,8 +182,9 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
-			return new XstsConfigBuilder(domain, refinement, solverFactory).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).search(search).predSplit(predSplit).logger(logger).build(xsts);
+			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.search(search).predSplit(predSplit).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
@@ -201,6 +208,7 @@ public class XstsCli {
 				writer.cell("");
 			}
 			writer.cell(sts.getVars().size());
+			writer.newRow();
 		}
 	}
 
@@ -208,6 +216,7 @@ public class XstsCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
@@ -220,18 +229,16 @@ public class XstsCli {
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) {
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 		//TODO remove temp vars, replace int values with literals
 
 		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, solverFactory, xsts);
+		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();

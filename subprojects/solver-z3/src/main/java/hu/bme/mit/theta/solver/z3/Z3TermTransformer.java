@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
@@ -117,6 +118,7 @@ final class Z3TermTransformer {
 
 	public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
 								 final List<Decl<?>> vars) {
+		checkNotNull(model, "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
 		final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
 		final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
 		pushParams(vars, paramDecls);
@@ -381,7 +383,7 @@ final class Z3TermTransformer {
 			final Supplier<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 0);
+			checkArgument(args.length == 0, "Number of arguments must be zero");
 			return function.get();
 		};
 	}
@@ -390,7 +392,7 @@ final class Z3TermTransformer {
 			final UnaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 1);
+			checkArgument(args.length == 1, "Number of arguments must be one");
 			final Expr<?> op = transform(args[0], model, vars);
 			return function.apply(op);
 		};
@@ -400,7 +402,7 @@ final class Z3TermTransformer {
 			final BinaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 2);
+			checkArgument(args.length == 2, "Number of arguments must be two");
 			final Expr<?> op1 = transform(args[0], model, vars);
 			final Expr<?> op2 = transform(args[1], model, vars);
 			return function.apply(op1, op2);
@@ -411,7 +413,7 @@ final class Z3TermTransformer {
 			final TernaryOperator<Expr<?>> function) {
 		return (term, model, vars) -> {
 			final com.microsoft.z3.Expr[] args = term.getArgs();
-			checkArgument(args.length == 3);
+			checkArgument(args.length == 3, "Number of arguments must be three");
 			final Expr<?> op1 = transform(args[0], model, vars);
 			final Expr<?> op2 = transform(args[1], model, vars);
 			final Expr<?> op3 = transform(args[1], model, vars);

@@ -98,7 +98,9 @@ public interface Solver {
 	}
 
 	/**
-	 * Reset the solver state.
+	 * Reset the solver state. It should be only used as a last resort. Try using
+	 * {@link #push()} and {@link #pop()} instead. See also {@link hu.bme.mit.theta.solver.utils.WithPushPop}
+	 * which implements try with resources pattern.
 	 */
 	void reset();
 

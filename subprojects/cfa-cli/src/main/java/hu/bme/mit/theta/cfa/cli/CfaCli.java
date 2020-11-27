@@ -15,11 +15,12 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -49,6 +50,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -57,25 +59,15 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
  */
 public class CfaCli {
 	private static final String JAR_NAME = "theta-cfa-cli.jar";
-	private final SolverFactory solverFactory = Z3SolverFactory.getInstance();
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -93,6 +85,9 @@ public class CfaCli {
 
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
+
+	@Parameter(names = "--errorloc", description = "Error (target) location")
+	String errorLoc = "";
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
@@ -130,6 +125,9 @@ public class CfaCli {
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
 
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
 	private Logger logger;
 
 	public CfaCli(final String[] args) {
@@ -158,6 +156,11 @@ public class CfaCli {
 			return;
 		}
 
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
@@ -173,7 +176,22 @@ public class CfaCli {
 				return;
 			}
 
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa);
+			CFA.Loc errLoc = null;
+			if (cfa.getErrorLoc().isPresent()) {
+				errLoc = cfa.getErrorLoc().get();
+			}
+			if (!errorLoc.isEmpty()) {
+				errLoc = null;
+				for (CFA.Loc running : cfa.getLocs()) {
+					if (running.getName().equals(errorLoc)) {
+						errLoc = running;
+					}
+				}
+				checkNotNull(errLoc, "Location '" + errorLoc + "' not found in CFA");
+			}
+
+			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
@@ -182,9 +200,7 @@ public class CfaCli {
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
-		}
-		if (benchmarkMode) {
-			writer.newRow();
+			System.exit(1);
 		}
 	}
 
@@ -204,11 +220,12 @@ public class CfaCli {
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa) throws Exception {
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(domain, refinement, solverFactory).precGranularity(precGranularity).search(search)
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(logger).build(cfa);
+					.pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
@@ -239,6 +256,7 @@ public class CfaCli {
 			} else {
 				writer.cell("");
 			}
+			writer.newRow();
 		}
 	}
 
@@ -246,6 +264,7 @@ public class CfaCli {
 		final String message = ex.getMessage() == null ? "" : ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+			writer.newRow();
 		} else {
 			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
 			if (stacktrace) {
@@ -258,16 +277,14 @@ public class CfaCli {
 		}
 	}
 
-	private void writeCex(final Unsafe<?, ?> status) {
+	private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
 		try {
 			printWriter = new PrintWriter(file);
 			printWriter.write(concrTrace.toString());
-		} catch (final FileNotFoundException e) {
-			printError(e);
 		} finally {
 			if (printWriter != null) {
 				printWriter.close();

@@ -26,21 +26,22 @@ import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.common.Utils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Large block encoding (LBE) implementation for CFA LTS. It maps each path
  * (with no branching) into a single action.
  */
 public final class CfaLbeLts implements CfaLts {
 
-	private static final class LazyHolder {
-		private static final CfaLbeLts INSTANCE = new CfaLbeLts();
+	private final Loc targetLoc;
+
+	private CfaLbeLts(Loc targetLoc) {
+		this.targetLoc = checkNotNull(targetLoc, "Target location must be given for LBE encoder.");
 	}
 
-	private CfaLbeLts() {
-	}
-
-	public static CfaLbeLts getInstance() {
-		return LazyHolder.INSTANCE;
+	public static CfaLbeLts of(Loc targetLoc) {
+		return new CfaLbeLts(targetLoc);
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public final class CfaLbeLts implements CfaLts {
 			final List<Edge> edges = new LinkedList<>();
 			edges.add(edge);
 			Loc running = edge.getTarget();
-			while (running.getInEdges().size() == 1 && running.getOutEdges().size() == 1) {
+			while (running.getInEdges().size() == 1 && running.getOutEdges().size() == 1 && !running.equals(targetLoc)) {
 				final Edge next = Utils.singleElementOf(running.getOutEdges());
 				edges.add(next);
 				running = next.getTarget();
