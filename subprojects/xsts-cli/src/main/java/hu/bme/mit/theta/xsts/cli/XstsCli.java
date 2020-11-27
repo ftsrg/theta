@@ -87,7 +87,7 @@ public class XstsCli {
 	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
-	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
+	@Parameter(names = "--metrics", description = "Print metrics about the XSTS without running the algorithm")
 	boolean metrics = false;
 
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
