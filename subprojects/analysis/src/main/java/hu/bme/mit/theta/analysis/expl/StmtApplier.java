@@ -189,8 +189,8 @@ final class StmtApplier {
 			return apply(stmt.getStmts().get(successIndex), val, approximate);
 		} else if (approximate) {
 			apply(stmt.getStmts().get(successIndex), val, approximate);
-			List<Decl> toRemove = new ArrayList<Decl>();
-			for (Decl decl : val.getDecls()) {
+			List<Decl<?>> toRemove = new ArrayList<Decl<?>>();
+			for (Decl<?> decl : val.getDecls()) {
 				for (MutableValuation subVal : valuations) {
 					if (!val.eval(decl).equals(subVal.eval(decl))) {
 						toRemove.add(decl);
@@ -198,7 +198,7 @@ final class StmtApplier {
 					}
 				}
 			}
-			for (Decl decl : toRemove) val.remove(decl);
+			for (Decl<?> decl : toRemove) val.remove(decl);
 			return ApplyResult.SUCCESS;
 		} else {
 			return ApplyResult.FAILURE;
