@@ -15,7 +15,7 @@ public class VarPoolUtil {
     private static ArrayDeque<VarDecl<IntType>> intPool=new ArrayDeque<VarDecl<IntType>>();
     private static int counter=0;
 
-    public static VarDecl requestInt(){
+    public static VarDecl<IntType> requestInt(){
         if(intPool.isEmpty()) return Decls.Var("temp"+counter++,Int());
         else return intPool.remove();
     }
