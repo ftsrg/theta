@@ -66,9 +66,9 @@ public abstract class XcfaChecker {
         }
         // TODO rework to rememberExploredStates
         if (discardAlreadyExploredStates()) {
-            exploredStates = null;
-        } else {
             exploredStates = new HashSet<>();
+        } else {
+            exploredStates = null;
         }
     }
 
