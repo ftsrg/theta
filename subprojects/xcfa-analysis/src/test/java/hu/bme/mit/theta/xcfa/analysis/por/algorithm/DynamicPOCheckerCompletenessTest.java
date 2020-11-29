@@ -54,8 +54,10 @@ public class DynamicPOCheckerCompletenessTest {
     public static Collection<Object[]> data() {
         // TODO create inverse filter
         // everything except big
-        return new ArrayList<>();
-        //return FileListHelper.tests("atomic, mutex, function, loop, threads, safe, unsafe");
+        // TODO there can be an issue with trace equivalency checking
+        //     I do not want non-deterministically failing test, and this might be one
+        //     The problem is that a POR trace might not be minimal if unsafe
+        return FileListHelper.tests("atomic, mutex, function, loop, threads, safe");
     }
 
     @Test
@@ -77,27 +79,39 @@ public class DynamicPOCheckerCompletenessTest {
         var reference = XcfaChecker.createChecker(xcfa, referenceConfig.build());
         var sut = XcfaChecker.createChecker(xcfa, sutConfig.build());
 
+        var refResult = reference.check();
+        var sutResult = sut.check();
         var ref = reference.getTraces();
         var result = sut.getTraces();
 
+        System.out.println("Statistics on num execution paths:");
+        System.out.println("Exhaustive: " + ref.size());
+        System.out.println("Dynamic parital order reduction: " + result.size());
+
+        // C0
+        Assert.assertEquals(ref.isEmpty(), result.isEmpty());
+
+        Assert.assertEquals("Expected safety result to match", refResult.isSafe(), sutResult.isSafe());
+
+        // PORs set of execution paths is a subset of exhaustive search
         for (var path : result) {
-            boolean good = false;
+            boolean match = false;
             for (var candidate : ref) {
                 var t1 = candidate.getActions();
                 var t2 = path.getActions();
                 if (t1.size() != t2.size())
                     continue;
-                good = true;
+                match = true;
                 for (int i = 0; i < t1.size(); i++) { // good when every pair of transitions match
                     if (!TransitionUtils.equals(t1.get(i), t2.get(i))) {
-                        good = false;
+                        match = false;
                     }
                 }
-                if (good) {
+                if (match) {
                     break;
                 }
             }
-            Assert.assertTrue("Largely unexpected: a path is is DPOR, but not in explicit state graph.", good);
+            Assert.assertTrue("Largely unexpected: a path is is DPOR, but not in explicit state graph.", match);
         }
 
         // The real question.
@@ -111,18 +125,45 @@ public class DynamicPOCheckerCompletenessTest {
         );
     }
 
-    /** Checks whether two paths are stuttering equivalent
+    /** Checks whether two paths are stuttering equivalent.
      * Assumes that DependencyUtils is used for checking dependencies
      *   in partial order reduction!
      * (Checking dependency uses over-approximation)
+     * Unsafety creates bit of an issue (the stuttering equivalency holds, but one trace sizes can mismatch)
       */
     private boolean equivalent(Trace<ExplState, Transition> trace1, Trace<ExplState, Transition> trace2) {
+        // The process of making two runs equivalent by swapping consecutive transitions: (a,b,... are transitions)
+        // Reach a,b,c from c,b,a
+        // get "a" to the good place
+        // swap b,a: c,a,b
+        // swap a,c: a,c,b
+        // fix "b"
+        // swap c,b: a,b,c
+
+        // There can be a transition that is not part of the other trace.
+        // This should only be allowed if the trace is unsafe, because we never go further after getting an error.
+        // TODO Currently the safety of the run is not checked, so this can return false positive.
+        // Reach a,b,c (goal) from b,d,a,c
+        // fix "a"
+        // swap d,a: b,a,d,c
+        // swap b,a: a,b,d,c
+        // fix "b"
+        // fix "c"
+        // swap d,c: a,b,c,d
+        // Note that "d" is never checked against anything
+
+        // We also assume that one trace must be a subsequence of the other
+
         List<Transition> goalPath = trace1.getActions();
         List<Transition> path = trace2.getActions();
-        if (goalPath.size() != path.size()) {
-            return false;
-        }
         // try to order path as it was in goalPath
+        Assert.assertEquals(path.size(), goalPath.size()); // TODO remove if issue around unsafety is solved
+        // path can bubble beyond last element (only when an error was reached)
+        if (path.size() < goalPath.size()) {
+            var s = path;
+            path = goalPath;
+            goalPath = s;
+        }
         // copy to prevent any nasty side effects within the trace
         path = new ArrayList<>(path);
         for (int goalIdx = 0; goalIdx < goalPath.size(); goalIdx++) {
@@ -133,8 +174,9 @@ public class DynamicPOCheckerCompletenessTest {
                     break;
                 }
             }
-            if (idx == path.size()) // not found
+            if (idx == path.size()) { // one trace must be the subsequence of the other
                 return false;
+            }
             Preconditions.checkState(goalIdx <= idx);
             // bubble path[idx] to path[goalIdx]
             for (int j = idx; j > goalIdx; j--) {

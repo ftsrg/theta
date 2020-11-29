@@ -133,7 +133,7 @@ public abstract class XcfaChecker {
     /** Pushes the node to the stack if not explored before */
     private void tryPushNode(DfsNodeBase node) {
         ImmutableExplState state = node.getState();
-        if (!discardAlreadyExploredStates()) {
+        if (discardAlreadyExploredStates()) {
             if (exploredStates.contains(state)) {
                 // do not process node
                 return;
@@ -192,8 +192,10 @@ public abstract class XcfaChecker {
 
                 if (!node.isSafe()) {
                     // catch first unsafe property found
-                    if (config.forceIterate() && result.isSafe()) {
-                        result = Tracer.unsafe(dfsStack);
+                    if (config.forceIterate()) {
+                        if (result.isSafe()) {
+                            result = Tracer.unsafe(dfsStack);
+                        }
                     } else {
                         return Tracer.unsafe(dfsStack);
                     }

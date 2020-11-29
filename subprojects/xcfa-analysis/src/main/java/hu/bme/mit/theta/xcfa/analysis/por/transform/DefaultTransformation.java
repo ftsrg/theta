@@ -33,7 +33,7 @@ public class DefaultTransformation extends EmptyTransformation {
      * Circular dependency in Builder pattern -> save the stmts
      * Mapped to the old process, so it can be transformed
      */
-    private Map<InternalNotifyStmt, XCFA.Process> internalNotifyStmts = new HashMap<>();
+    private final Map<InternalNotifyStmt, XCFA.Process> internalNotifyStmts = new HashMap<>();
 
     public DefaultTransformation(XCFA old, Config config) {
         super(old);

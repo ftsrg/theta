@@ -42,9 +42,9 @@ public class DynamicPOCheckerTest {
 
     @Parameters()
     public static Collection<Object[]> data() {
-        return new ArrayList<>();
+//        return new ArrayList<>();
 
-//        return FileListHelper.tests("All");
+        return FileListHelper.tests("All");
     }
 
     @Test

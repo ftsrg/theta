@@ -25,7 +25,16 @@ class EmptyTransformation {
         this.old = old;
     }
 
+    private static final HashMap<XCFA, XCFA> xcfas = new HashMap<>();
     public final XCFA build() {
+        if (xcfas.containsKey(old)) { // TODO dangerous! Used by DPORCompletenessTest and only minor perf improvement
+            // (Dangerous, because different build hooks (and configs) *could* create different XCFA, but here it is
+            // forgotten...)
+            // Used by DPORCompletenessTest to cross-check two different configs with the same XCFA.
+            // However, the XCFAs are transformed separately, which would create different XCFAs, and transition
+            // edges won't match.
+            return xcfas.get(old);
+        }
         var builder = XCFA.builder();
         old.getProcesses().forEach(
                 p -> builder.addProcess(transformed(builder, p))
@@ -35,6 +44,7 @@ class EmptyTransformation {
         beforeBuild(builder);
         var result = builder.build();
         afterBuild(result);
+        xcfas.put(old, result);
         return result;
     }
 

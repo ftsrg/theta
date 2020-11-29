@@ -184,10 +184,10 @@ class FileListHelper {
         if (c.multiThreadSupported()) {
             result.addAll(Arrays.asList(
                     new Object[]{"/partialorder-test.xcfa", false},
-                    new Object[]{"/partialorder-test2.xcfa", false},
                     new Object[]{"/partialorder-test3.xcfa", false},
                     new Object[]{"/partialorder-test4.xcfa", false},
-                    new Object[]{"/partialorder-min-test.xcfa", false}
+                    new Object[]{"/partialorder-min-test.xcfa", false},
+                    new Object[]{"/slightly-parallel.xcfa", true}
                     ));
             if (c.stateGraphLoopSupported()) {
                 result.add(new Object[]{"/partialorder-test2.xcfa", false});
