@@ -99,6 +99,7 @@ public class XstsConfigBuilder {
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private int maxEnum = 0;
+	private int maxPredCount = 0;
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
@@ -125,6 +126,11 @@ public class XstsConfigBuilder {
 
 	public XstsConfigBuilder maxEnum(final int maxEnum) {
 		this.maxEnum = maxEnum;
+		return this;
+	}
+
+	public XstsConfigBuilder maxPredCount(final int maxPredCount) {
+		this.maxPredCount = maxPredCount;
 		return this;
 	}
 
@@ -270,7 +276,7 @@ public class XstsConfigBuilder {
 					precRefiner = ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter);
 					break;
 				case PROD_AUTO:
-					precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter);
+					precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, maxPredCount);
 					break;
 				default:
 					throw new UnsupportedOperationException(
