@@ -6,11 +6,13 @@ import java.util.Collection;
 public abstract class PnmlNode {
 
 	private final String name;
+	private final String id;
 	private final Collection<PnmlArc> inArcs;
 	private final Collection<PnmlArc> outArcs;
 
-	protected PnmlNode(String name) {
+	protected PnmlNode(final String name, final String id) {
 		this.name = name;
+		this.id = id;
 		this.inArcs = new ArrayList<>();
 		this.outArcs = new ArrayList<>();
 	}
@@ -18,6 +20,8 @@ public abstract class PnmlNode {
 	public String getName() {
 		return name;
 	}
+
+	public String getId() { return id; }
 
 	public void addInArc(final PnmlArc inArc){
 		inArcs.add(inArc);

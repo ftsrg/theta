@@ -29,6 +29,9 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import hu.bme.mit.theta.xsts.pnml.PnmlParser;
+import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
+import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -171,11 +174,18 @@ public class XstsCli {
 	private XSTS loadModel() throws Exception {
 		InputStream propStream = null;
 		try {
-			if (property.endsWith(".prop")) propStream = new FileInputStream(property);
-			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
-			try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
-				return XstsDslManager.createXsts(inputStream);
+			if (model.endsWith(".pnml")) {
+				final PnmlNet pnmlNet = PnmlParser.parse(model);
+				final XSTS xsts = PnmlToXSTS.createXSTS(pnmlNet);
+				return null;
+			} else {
+				if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+				else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
+				try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
+					return XstsDslManager.createXsts(inputStream);
+				}
 			}
+
 		} catch (Exception ex) {
 			throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
 		} finally {
