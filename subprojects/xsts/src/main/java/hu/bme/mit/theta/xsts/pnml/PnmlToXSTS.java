@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
@@ -16,20 +17,20 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.TypeDecl;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
 
+import java.io.InputStream;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class PnmlToXSTS {
 
 	private  PnmlToXSTS(){
 	}
 
-	public static XSTS createXSTS(final PnmlNet net){
-
+	public static XSTS createXSTS(final PnmlNet net, final InputStream propStream){
 		final Map<String, VarDecl<IntType>> placeIdToVar = new HashMap<>();
 
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
@@ -86,7 +87,32 @@ public class PnmlToXSTS {
 		final Map<VarDecl<?>, TypeDecl> varToType = ImmutableMap.of();
 		final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
-		return new XSTS(types,varToType,ctrlVars,init,tran,env,initExpr,True());
+		final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
+		final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
+		final String property = stripPropFromPropFile(propertyFile);
+
+		final CoreDslManager dslManager = new CoreDslManager();
+		for(VarDecl<?> decl: placeIdToVar.values()){
+			dslManager.declare(decl);
+		}
+		final Expr<BoolType> propExpr = cast(dslManager.parseExpr(property),Bool());
+		System.out.println(tran);
+		System.out.println(propExpr);
+		return new XSTS(types,varToType,ctrlVars,init,tran,env,initExpr,propExpr);
+	}
+
+	private static String stripPropFromPropFile(final String propertyFile){
+		int startingCurlyIndex = -1;
+		int endingCurlyIndex = propertyFile.length();
+		for(int i=0;i<propertyFile.length();i++){
+			if(propertyFile.charAt(i)=='{'){
+				if (startingCurlyIndex == -1) startingCurlyIndex=i+1;
+			}
+			if(propertyFile.charAt(i)=='}'){
+				endingCurlyIndex=i;
+			}
+		}
+		return propertyFile.substring(startingCurlyIndex,endingCurlyIndex);
 	}
 
 }

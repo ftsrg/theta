@@ -174,13 +174,14 @@ public class XstsCli {
 	private XSTS loadModel() throws Exception {
 		InputStream propStream = null;
 		try {
+			if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
+
 			if (model.endsWith(".pnml")) {
 				final PnmlNet pnmlNet = PnmlParser.parse(model);
-				final XSTS xsts = PnmlToXSTS.createXSTS(pnmlNet);
-				return null;
+				return PnmlToXSTS.createXSTS(pnmlNet, propStream);
 			} else {
-				if (property.endsWith(".prop")) propStream = new FileInputStream(property);
-				else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
+
 				try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
 					return XstsDslManager.createXsts(inputStream);
 				}
