@@ -112,6 +112,7 @@ public class PnmlToXSTS {
 				endingCurlyIndex=i;
 			}
 		}
+		checkArgument(startingCurlyIndex>-1 && endingCurlyIndex<propertyFile.length(),"Illegally formatted property %s",propertyFile);
 		return propertyFile.substring(startingCurlyIndex,endingCurlyIndex);
 	}
 
