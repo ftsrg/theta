@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.core.stmt;
 
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
@@ -14,8 +15,8 @@ public final class OrtStmt implements Stmt {
 	private volatile int hashCode = 0;
 
 	private OrtStmt(final List<Stmt> stmts) {
-		this.stmts = stmts;
-		if (stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
+		if (stmts.isEmpty()) this.stmts= ImmutableList.of(SkipStmt.getInstance());
+		else this.stmts = stmts;
 	}
 
 	public static OrtStmt of(final List<Stmt> stmts) {
