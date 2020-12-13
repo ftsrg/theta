@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.stateless;
 
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraph;
+import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraphExecutor;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -26,7 +26,7 @@ import java.util.Optional;
 
 public final class StatelessMC {
     public static boolean check(XCFA xcfa, MCM mcm, File cex, XcfaStatelessSettings settings) throws IOException {
-        Optional<ExecutionGraph> violator = ExecutionGraph.execute(xcfa, mcm, settings);
+        Optional<ExecutionGraphExecutor> violator = ExecutionGraphExecutor.execute(xcfa, mcm, settings);
         if(violator.isPresent()) {
             if(cex != null) {
                 violator.get().printGraph(new FileWriter(cex));

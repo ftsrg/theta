@@ -1,71 +1,68 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph;
 
-import hu.bme.mit.theta.common.Datalog;
-import hu.bme.mit.theta.mcm.MCM;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.common.datalog.DatalogArgument;
+import hu.bme.mit.theta.common.datalog.StringDatalogArgument;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XcfaState;
-import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
+import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.atoms.Thread;
+import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.atoms.Var;
+import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.atoms.Write;
 
-import java.io.Writer;
-import java.util.Optional;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class ExecutionGraph implements Runnable{
-    // STATIC FIELDS AND METHODS
-    private static XcfaStatelessSettings settings;
-    private static XCFA xcfa;
-    private static MCM mcm;
-    private static ThreadPoolExecutor threadPool;
-    private static ExecutionGraph violator;
+public class ExecutionGraph {
+    private final ExecutionGraphDatabase executionGraphDatabase;
+    private final Map<VarDecl<? extends Type>, Var> varLut;
+    private final Map<XCFA.Process, Thread> threadLut;
+    private final Thread initialThread;
+    private final Set<Write> initialWrites;
+    private final Map<XCFA.Process, DatalogArgument> lastNode;
 
-    public static Optional<ExecutionGraph> execute(XCFA xcfa, MCM mcm, XcfaStatelessSettings settings) {
-        ExecutionGraph.settings = settings;
-        ExecutionGraph.xcfa = xcfa;
-        ExecutionGraph.mcm = mcm;
-        ExecutionGraph.threadPool= new ThreadPoolExecutor(settings.getThreadPoolSize(), settings.getThreadPoolSize(), 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-        ExecutionGraph.violator = null;
-        ExecutionGraph root = new ExecutionGraph(xcfa.initialState());
-        root.start();
-        try {
-            if(!threadPool.awaitTermination(settings.getTimeS(), TimeUnit.SECONDS)) {
-                threadPool.shutdownNow();
+    ExecutionGraph(XcfaState initialState) {
+        this.executionGraphDatabase = ExecutionGraphDatabase.createExecutionGraph();
+        this.varLut = new LinkedHashMap<>();
+        this.threadLut = new LinkedHashMap<>();
+        this.initialWrites = new LinkedHashSet<>();
+        this.initialThread = new Thread();
+        this.lastNode = new LinkedHashMap<>();
+        for (VarDecl<? extends Type> globalVar : initialState.getXcfa().getGlobalVars()) {
+            this.varLut.putIfAbsent(globalVar, new Var());
+            addInitialWrite(new Write(initialState.getXcfa().getInitValue(globalVar)), this.varLut.get(globalVar));
+        }
+    }
+
+    private void addInitialWrite(Write write, Var var) {
+        initialWrites.add(write);
+        executionGraphDatabase.getNodeLabels().addFact(TupleN.of(write, new StringDatalogArgument("w")));
+        executionGraphDatabase.getThreadMapping().addFact(TupleN.of(write, initialThread));
+        executionGraphDatabase.getVarMapping().addFact(TupleN.of(write, var));
+    }
+
+    public void addWrite(XCFA.Process process, VarDecl<? extends Type> varDecl, LitExpr<?> litExpr) {
+        varLut.putIfAbsent(varDecl, new Var());
+        Write write = new Write(litExpr);
+        if(!threadLut.containsKey(process)) {
+            threadLut.put(process, new Thread());
+            for (Write initialWrite : initialWrites) {
+                executionGraphDatabase.getEdgeLabels().addFact(TupleN.of(initialWrite, write, new StringDatalogArgument("po")));
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } else {
+            executionGraphDatabase.getEdgeLabels().addFact(TupleN.of(lastNode.get(process), write, new StringDatalogArgument("po")));
         }
-        return Optional.ofNullable(violator);
+        lastNode.put(process, write);
+        executionGraphDatabase.getNodeLabels().addFact(TupleN.of(write, new StringDatalogArgument("W")));
+        executionGraphDatabase.getThreadMapping().addFact(TupleN.of(write, threadLut.get(process)));
+        executionGraphDatabase.getVarMapping().addFact(TupleN.of(write, varLut.get(varDecl)));
+
+        executionGraphDatabase.getRevisitables().getElements().stream().filter(objects -> objects.get(0));
     }
 
-    // MEMBERS
-    private final XcfaState currentState;
-    private final Datalog edgeDb;
-    private final Datalog.Relation labelledEdge;
-    private final Datalog.Relation labelledNode;
-
-    private ExecutionGraph(XcfaState initialState) {
-        this.currentState = initialState;
-        this.edgeDb = Datalog.createProgram();
-        this.labelledEdge = this.edgeDb.createRelation(3);
-        this.labelledNode = this.edgeDb.createRelation(2);
-
-    }
-
-    @Override
-    public void run() {
-
-    }
-
-    public void printGraph(Writer writer) {
-
-    }
-
-
-    private void start() {
-        if(!Thread.currentThread().isInterrupted()) {
-            threadPool.execute(this);
-        }
-    }
 
 }
