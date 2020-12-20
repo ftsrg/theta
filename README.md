@@ -54,11 +54,11 @@ The table below shows the architecture and the projects.
 Each project contains a README.md in its root directory describing its purpose in more detail.
 
 |  | Common | CFA | STS | XTA | XSTS |
-|--|--|--|--|--|--|
-| **Tools** |  | [`cfa-cli`](subprojects/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
+|---|---|---|---|---|---|
+| **Tools** | [`solver-smtlib-cli`](subprojects/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
 | **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
 | **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
-| **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3) |
+| **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3), [`solver-smtlib`](subprojects/solver-smtlib) |
 
 ## Extend Theta
 
