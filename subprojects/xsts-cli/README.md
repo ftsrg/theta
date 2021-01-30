@@ -48,6 +48,7 @@ All arguments are optional, except `--model` and `--property`.
 * `--loglevel`: Detailedness of logging.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
 * `--version`: Print version info (in this case `--model` and `--property` is of course not required).
+* `--metrics`: Print metrics about the XSTS model (number of variables and statements).
 
 The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
 
