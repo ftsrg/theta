@@ -19,6 +19,8 @@ import hu.bme.mit.theta.xsts.pnml.elements.*;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -89,14 +91,33 @@ public class PnmlToXSTS {
 
 		final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
 		final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
-		final String property = stripPropFromPropFile(propertyFile);
+		final String property = stripPropFromPropFile(propertyFile).trim();
 
-		final CoreDslManager dslManager = new CoreDslManager();
-		for(VarDecl<?> decl: placeIdToVar.values()){
-			dslManager.declare(decl);
+		final Pattern pattern = Pattern.compile("([0-9]+\\s)*[0-9]+");
+		final Matcher matcher = pattern.matcher(property);
+		System.out.println(matcher.matches());
+
+		final Expr<BoolType> propExpr;
+		if(matcher.matches()){
+			final String[] valueStrings = property.split("\\s");
+			final Integer[] values = Arrays.stream(valueStrings).map(Integer::parseInt).toArray(Integer[]::new);
+			System.out.println(values.length+" "+net.getPlaces().size());
+			checkArgument(values.length == net.getPlaces().size());
+			final List<Expr<BoolType>> exprs = new ArrayList<>();
+			for(int i=0;i<values.length;i++){
+				exprs.add(Eq(placeIdToVar.get(net.getPlaces().get(i).getId()).getRef(),Int(values[i])));
+			}
+			propExpr=Not(And(exprs));
+		} else {
+			final CoreDslManager dslManager = new CoreDslManager();
+			for(VarDecl<?> decl: placeIdToVar.values()){
+				dslManager.declare(decl);
+			}
+			propExpr = cast(dslManager.parseExpr(property),Bool());
 		}
-		final Expr<BoolType> propExpr = cast(dslManager.parseExpr(property),Bool());
-		System.out.println(tran);
+
+
+		System.out.println(initExpr);
 		System.out.println(propExpr);
 		return new XSTS(types,varToType,ctrlVars,init,tran,env,initExpr,propExpr);
 	}
