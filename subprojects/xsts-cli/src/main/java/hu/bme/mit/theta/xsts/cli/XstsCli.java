@@ -69,6 +69,9 @@ public class XstsCli {
 	@Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
 	String property;
 
+	@Parameter(names = {"--initialMarking"}, description = "Initial marking of the Petri net")
+	String initialMarking="";
+
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
 
@@ -178,7 +181,7 @@ public class XstsCli {
 			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
 
 			if (model.endsWith(".pnml")) {
-				final PnmlNet pnmlNet = PnmlParser.parse(model);
+				final PnmlNet pnmlNet = PnmlParser.parse(model,initialMarking);
 				return PnmlToXSTS.createXSTS(pnmlNet, propStream);
 			} else {
 
