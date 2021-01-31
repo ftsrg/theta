@@ -4,6 +4,7 @@ This project contains the Extended Symbolic Transition System (XSTS) formalism. 
 
 * Classes to represent XSTSs.
 * A domain specific language (DSL) to parse XSTSs from a textual representation.
+* A frontend that can parse Petri net models described in the [PNML](http://www.pnml.org/) format (experimental).
 
 ### Related projects
 
@@ -237,3 +238,7 @@ This is equivalent to the following state machine:
 ![State machine](state_machine.png)
 
 Note how incoming and outgoing events are described as boolean variables and handled in environmental transitions.
+
+### PNML frontend (experimental)
+
+The PNML frontend can parse Petri net models described in the [PNML](http://www.pnml.org/) format and automatically transform them to equivalent XSTS models. Currently standard, discrete Petri nets are supported with weighted arcs.

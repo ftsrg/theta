@@ -69,7 +69,7 @@ public class XstsCli {
 	@Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
 	String property;
 
-	@Parameter(names = {"--initialMarking"}, description = "Initial marking of the Petri net")
+	@Parameter(names = {"--initialmarking"}, description = "Initial marking of the Petri net")
 	String initialMarking="";
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
