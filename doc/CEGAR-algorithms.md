@@ -37,6 +37,7 @@ The domain controls the abstract information that is being tracked about the sys
 * `PRED_SPLIT`: Boolean predicate abstraction, but states are [split]((https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf)) into sub-states along disjunctions.
 * `EXPL`: [Explicit-value abstraction]((https://link.springer.com/chapter/10.1007/978-3-642-37057-1_11)) keeps track of concrete values, but only for a (continuously expanded) set of variables.
 * `PROD`: Product abstraction, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates.
+* `PROD_AUTO`: Automatic product abstraction, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly. Other variables are also tracked explicitly if they appear in a given number of predicates (defined with the `--maxpredcount` option).
 
 Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
 Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
@@ -54,7 +55,7 @@ More information on the abstract domains can be found in Section 2.2.1 and 3.1.3
 Controls the initial precision of the abstraction (e.g., what predicates or variables are tracked initially).
 
 * `EMPTY`: Start with an empty initial precision.
-* `ALLVARS`: Tracks all variables from the beginning. Available for CFA if `--domain` is `EXPL`.
+* `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--domain` is `EXPL`.
 * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--domain` is `PRED_*`.
 * `PROP`: Available for XSTS. Tracks variables from the property if `--domain` is `EXPL` and predicates from the property if `--domain` is `PRED_*`.
 * `CTRL`: Available for XSTS if `--domain` is `PROD` or `EXPL`. Tracks all control variables.
@@ -88,6 +89,11 @@ Maximal number of states to be enumerated when performing explicit-value analysi
 If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain (or that variable is deterministically assigned).
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
+
+### `--maxpredcount`
+
+Available for XSTS.
+The number of predicates a variable has to appear in before it is tracked explicitly when the `PRED_AUTO` domain is used.
 
 ### `--refinement`
 
