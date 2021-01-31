@@ -241,4 +241,4 @@ Note how incoming and outgoing events are described as boolean variables and han
 
 ### PNML frontend (experimental)
 
-The PNML frontend can parse Petri net models described in the [PNML](http://www.pnml.org/) format and automatically transform them to equivalent XSTS models. Currently standard, discrete Petri nets are supported with weighted arcs.
+The PNML frontend can parse Petri net models described in the [PNML](http://www.pnml.org/) format and automatically transform them to equivalent XSTS models. Currently standard, discrete Petri nets are supported with weighted arcs. For examples, see the [test models](../xsts-analysis/src/test/resources/model/pnml).
