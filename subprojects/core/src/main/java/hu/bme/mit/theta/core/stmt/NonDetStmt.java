@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.stmt;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
@@ -14,8 +16,8 @@ public final class NonDetStmt implements Stmt {
 	private volatile int hashCode = 0;
 
 	private NonDetStmt(final List<Stmt> stmts) {
-		this.stmts = stmts;
-		if (stmts.isEmpty()) stmts.add(SkipStmt.getInstance());
+		if (stmts.isEmpty()) this.stmts= ImmutableList.of(SkipStmt.getInstance());
+		else this.stmts = stmts;
 	}
 
 	public static NonDetStmt of(final List<Stmt> stmts) {

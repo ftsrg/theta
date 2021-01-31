@@ -29,6 +29,9 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import hu.bme.mit.theta.xsts.pnml.PnmlParser;
+import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
+import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -66,8 +69,14 @@ public class XstsCli {
 	@Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
 	String property;
 
+	@Parameter(names = {"--initialmarking"}, description = "Initial marking of the Petri net")
+	String initialMarking="";
+
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
+
+	@Parameter(names = "--maxpredcount", description = "Maximal number of times a variable can appear in predicates before switching to explicit tracking (0: unlimited)")
+	Integer maxPredCount = 0;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -86,6 +95,9 @@ public class XstsCli {
 
 	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
+
+	@Parameter(names = "--metrics", description = "Print metrics about the XSTS without running the algorithm")
+	boolean metrics = false;
 
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
@@ -129,6 +141,12 @@ public class XstsCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XSTS xsts = loadModel();
+
+			if (metrics) {
+				XstsMetrics.printMetrics(logger, xsts);
+				return;
+			}
+
 			final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
@@ -161,9 +179,17 @@ public class XstsCli {
 		try {
 			if (property.endsWith(".prop")) propStream = new FileInputStream(property);
 			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
-			try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
-				return XstsDslManager.createXsts(inputStream);
+
+			if (model.endsWith(".pnml")) {
+				final PnmlNet pnmlNet = PnmlParser.parse(model,initialMarking);
+				return PnmlToXSTS.createXSTS(pnmlNet, propStream);
+			} else {
+
+				try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
+					return XstsDslManager.createXsts(inputStream);
+				}
 			}
+
 		} catch (Exception ex) {
 			throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
 		} finally {
@@ -174,7 +200,7 @@ public class XstsCli {
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.maxEnum(maxEnum).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.maxEnum(maxEnum).maxPredCount(maxPredCount).initPrec(initPrec).pruneStrategy(pruneStrategy)
 					.search(search).predSplit(predSplit).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -221,7 +247,6 @@ public class XstsCli {
 	}
 
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
-		//TODO remove temp vars, replace int values with literals
 
 		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
 		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);

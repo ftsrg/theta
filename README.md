@@ -27,6 +27,7 @@ Currently, the following tools are available (follow the links for more informat
 * [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
 * [`theta-xsts-cli`](subprojects/xsts-cli): Verification of safety properties in eXtended Symbolic Transition Systems (XSTS) using CEGAR-based algorithms.
   * [Gamma](https://github.com/ftsrg/gamma) is a statechart composition framework, that supports theta-xsts-cli as a backend to verify collaborating state machines.
+  * theta-xsts-cli natively supports Petri net models in the [PNML](http://www.pnml.org/) format (experimental).
 
 ## Overview of the architecture
 
