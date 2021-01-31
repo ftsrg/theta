@@ -42,13 +42,14 @@ Note that the model must be given as the first positional argument (without `--m
 
 All arguments are optional, except `--model` and `--property`.
 
-* `--model`: Path of the input XSTS model (mandatory).
-* `--property`: Input property as a string or a file (*.prop) (mandatory).
+* `--model`: Path of the input XSTS model (mandatory). Can also accept PNML files with the `*.pnml` extension.
+* `--property`: Input property as a string or a file (*.prop) (mandatory). For PNML models an unsafe target marking can also be described by listing the values of each place in their order of definition separated with spaces.
 * `--cex`: Output file where the counterexample is written (if the result is unsafe). If the argument is not given (default) the counterexample is not printed. Use `CON` (Windows) or `/dev/stdout` (Linux) as argument to print to the standard output.
 * `--loglevel`: Detailedness of logging.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
 * `--version`: Print version info (in this case `--model` and `--property` is of course not required).
 * `--metrics`: Print metrics about the XSTS model (number of variables and statements).
+* `--initialmarking`: Can be used with the PNML frontend. Override the initial markings of the places. Format: list the values to be assigned to each place in the order of their definition in the PNML file separated with spaces. 
 
 The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
 
