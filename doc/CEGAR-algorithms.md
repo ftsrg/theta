@@ -55,7 +55,7 @@ More information on the abstract domains can be found in Section 2.2.1 and 3.1.3
 Controls the initial precision of the abstraction (e.g., what predicates or variables are tracked initially).
 
 * `EMPTY`: Start with an empty initial precision.
-* `ALLVARS`: Tracks all variables from the beginning. Available for CFA if `--domain` is `EXPL`.
+* `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--domain` is `EXPL`.
 * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--domain` is `PRED_*`.
 * `PROP`: Available for XSTS. Tracks variables from the property if `--domain` is `EXPL` and predicates from the property if `--domain` is `PRED_*`.
 * `CTRL`: Available for XSTS if `--domain` is `PROD` or `EXPL`. Tracks all control variables.
