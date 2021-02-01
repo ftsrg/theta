@@ -7,8 +7,8 @@ The project contains:
 
 ### Related projects
 
-* [`cfa-analysis`](../cfa-analysis/README.md): CFA specific analysis modules enabling the algorithms to operate on them.
-* [`cfa-cli`](../cfa-cli/README.md): An executable (command line) tool for running analyses on CFAs.
+* [`cfa-analysis`](../../cfa-analysis/README.md): CFA specific analysis modules enabling the algorithms to operate on them.
+* [`cfa-cli`](../../cfa-cli/README.md): An executable (command line) tool for running analyses on CFAs.
 
 ## CFA formalism
 

@@ -18,10 +18,10 @@ For more information about the CFA formalism and its supported language elements
 
 1. First, get the tool.
     * The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
-    * You can also [build](../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-cfa-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-cfa-cli.jar_.
+    * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-cfa-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-cfa-cli.jar_.
     * Alternatively, you can use our docker image (see below).
 2. Running the tool requires Java (JRE) 11.
-3. The tool also requires the [Z3 SMT solver libraries](../../doc/Build.md) to be available on `PATH`.
+3. The tool also requires the [Z3 SMT solver libraries](../../../doc/Build.md) to be available on `PATH`.
 4. The tool can be executed with `java -jar theta-cfa-cli.jar [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
@@ -52,10 +52,10 @@ All arguments are optional, except `--model`.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`.
 * `--metrics`: Print metrics about the CFA without running the algorithm.
 * `--visualize`: Visualize the CFA without running the algorithm.
-If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../doc/Build.md) has to be available on `PATH`.
+If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../../doc/Build.md) has to be available on `PATH`.
 Otherwise, the output is simply in `dot` format.
 
-The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
+The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
 * `--version`: Print version info (in this case `--model` is of course not required).
 
 ### For developer usage
