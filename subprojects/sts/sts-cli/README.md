@@ -12,10 +12,10 @@ For more information about the STS formalism and its supported language elements
 
 1. First, get the tool.
     * The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
-    * You can also [build](../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-sts-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-sts-cli.jar_.
+    * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-sts-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-sts-cli.jar_.
     * Alternatively, you can use our docker image (see below).
 2. Running the tool requires Java (JRE) 11.
-3. The tool also requires the [Z3 SMT solver libraries](../../doc/Build.md) to be available on `PATH`.
+3. The tool also requires the [Z3 SMT solver libraries](../../../doc/Build.md) to be available on `PATH`.
 4. The tool can be executed with `java -jar theta-sts-cli.jar [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
@@ -45,7 +45,7 @@ All arguments are optional, except `--model`.
     * Possible values (from the least to the most detailed): `RESULT`, `MAINSTEP`, `SUBSTEP` (default), `INFO`, `DETAIL`, `VERBOSE`
 * `--version`: Print version info (in this case `--model` is of course not required).
 
-The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
+The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
 
 ### For developer usage
 

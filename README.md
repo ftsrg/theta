@@ -19,13 +19,13 @@ Theta can both serve as a model checking backend, and also includes ready-to-use
 Tools are concrete instantiations of the framework to solve a certain problem using the built-in algorithms.
 Currently, the following tools are available (follow the links for more information).
 
-* [`theta-cfa-cli`](subprojects/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
+* [`theta-cfa-cli`](subprojects/cfa/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
   * [Gazer](https://github.com/ftsrg/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli, also giving support towards [SV-COMP](https://sv-comp.sosy-lab.org/2021/).
   * [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
-* [`theta-sts-cli`](subprojects/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
+* [`theta-sts-cli`](subprojects/sts/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
   * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
-* [`theta-xta-cli`](subprojects/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
-* [`theta-xsts-cli`](subprojects/xsts-cli): Verification of safety properties in eXtended Symbolic Transition Systems (XSTS) using CEGAR-based algorithms.
+* [`theta-xta-cli`](subprojects/xta/xta-cli): Verification of [Uppaal](http://www.uppaal.org/) timed automata (XTA).
+* [`theta-xsts-cli`](subprojects/xsts/xsts-cli): Verification of safety properties in eXtended Symbolic Transition Systems (XSTS) using CEGAR-based algorithms.
   * [Gamma](https://github.com/ftsrg/gamma) is a statechart composition framework, that supports theta-xsts-cli as a backend to verify collaborating state machines.
   * theta-xsts-cli natively supports Petri net models in the [PNML](http://www.pnml.org/) format (experimental).
 
@@ -56,10 +56,10 @@ Each project contains a README.md in its root directory describing its purpose i
 
 |  | Common | CFA | STS | XTA | XSTS |
 |--|--|--|--|--|--|
-| **Tools** |  | [`cfa-cli`](subprojects/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
-| **Analyses** | [`analysis`](subprojects/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
-| **Formalisms** | [`core`](subprojects/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
-| **SMT solvers** | [`solver`](subprojects/solver), [`solver-z3`](subprojects/solver-z3) |
+| **Tools** |  | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
+| **Analyses** | [`analysis`](subprojects/core/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
+| **Formalisms** | [`core`](subprojects/core/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
+| **SMT solvers** | [`solver`](subprojects/core/solver), [`solver-z3`](subprojects/solver-z3) |
 
 ## Extend Theta
 
