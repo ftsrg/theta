@@ -9,7 +9,7 @@ COPY . theta
 WORKDIR /theta
 RUN ./gradlew clean && \
     ./gradlew theta-xsts-cli:build && \
-    mv subprojects/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /theta-xsts-cli.jar
+    mv subprojects/xsts/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /theta-xsts-cli.jar
 WORKDIR /
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"

@@ -9,7 +9,7 @@ COPY . theta
 WORKDIR /theta
 RUN ./gradlew clean && \
     ./gradlew theta-cfa-cli:build && \
-    mv subprojects/cfa-cli/build/libs/theta-cfa-cli-*-all.jar /theta-cfa-cli.jar
+    mv subprojects/cfa/cfa-cli/build/libs/theta-cfa-cli-*-all.jar /theta-cfa-cli.jar
 WORKDIR /
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
