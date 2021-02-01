@@ -15,10 +15,10 @@ For more information about the XSTS formalism and its supported language element
 
 1. First, get the tool.
     * The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
-    * You can also [build](../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-xsts-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-xsts-cli.jar_.
+    * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-xsts-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-xsts-cli.jar_.
     * Alternatively, you can use our docker image (see below).
 2. Running the tool requires Java (JRE) 11.
-3. The tool also requires the [Z3 SMT solver libraries](../../doc/Build.md) to be available on `PATH`.
+3. The tool also requires the [Z3 SMT solver libraries](../../../doc/Build.md) to be available on `PATH`.
 4. The tool can be executed with `java -jar theta-xsts-cli.jar [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
@@ -51,7 +51,7 @@ All arguments are optional, except `--model` and `--property`.
 * `--metrics`: Print metrics about the XSTS model (number of variables and statements).
 * `--initialmarking`: Can be used with the PNML frontend. Override the initial markings of the places. Format: list the values to be assigned to each place in the order of their definition in the PNML file separated with spaces. 
 
-The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../doc/CEGAR-algorithms.md).
+The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
 
 ### For developer usage
 
