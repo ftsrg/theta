@@ -1,11 +1,11 @@
 rootProject.name = "theta"
 
 include(
-        "core/analysis",
-        "core/common",
-        "core/core",
-        "core/solver",
-        "core/solver-z3",
+        "common/analysis",
+        "common/common",
+        "common/core",
+        "common/solver",
+        "common/solver-z3",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
