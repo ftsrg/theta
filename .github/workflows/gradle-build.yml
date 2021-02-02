@@ -17,4 +17,5 @@ jobs:
       run: ./gradlew build
     - name: Send test coverage to Codacy
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report
-      env: CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
