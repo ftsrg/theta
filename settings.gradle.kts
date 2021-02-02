@@ -1,27 +1,32 @@
 rootProject.name = "theta"
 
 include(
-        "analysis",
-        "cfa",
-        "cfa-analysis",
-        "cfa-cli",
-        "common",
-        "core",
-        "solver",
-        "solver-z3",
-        "sts",
-        "sts-analysis",
-        "sts-cli",
-        "xta",
-        "xta-analysis",
-        "xta-cli",
-        "xsts",
-        "xsts-analysis",
-        "xsts-cli"
+        "common/analysis",
+        "common/common",
+        "common/core",
+        "common/solver",
+        "common/solver-z3",
+
+        "cfa/cfa",
+        "cfa/cfa-analysis",
+        "cfa/cfa-cli",
+
+        "sts/sts",
+        "sts/sts-analysis",
+        "sts/sts-cli",
+
+        "xta/xta",
+        "xta/xta-analysis",
+        "xta/xta-cli",
+
+        "xsts/xsts",
+        "xsts/xsts-analysis",
+        "xsts/xsts-cli"
 )
 
 for (project in rootProject.children) {
-    val projectName = project.name
-    project.projectDir = file("subprojects/$projectName")
+    val projectPath = project.name
+    val projectName = projectPath.split("/").last()
+    project.projectDir = file("subprojects/$projectPath")
     project.name = "${rootProject.name}-$projectName"
 }
