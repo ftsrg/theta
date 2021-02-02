@@ -36,7 +36,7 @@ Theta can be divided into the following four layers.
 * **Formalisms**: The core elements of Theta are the formalisms, which represent models of real life systems (e.g., software, hardware, protocols).
 Formalisms are usually low level, mathematical representations based on first order logic expressions and graph like structures.
 Formalisms can also support higher level languages that can be mapped to that particular formalism by a language front-end (consisting of a specific parser and possibly reductions for simplification of the model).
-The common features of the different formalisms reside in the [`core`](subprojects/core) project (e.g., expressions and statements) and each formalism has its own project.
+The common features of the different formalisms reside in the [`core`](subprojects/common) project (e.g., expressions and statements) and each formalism has its own project.
 Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts) / [`xsts`](subprojects/xsts)), control-flow automata ([`cfa`](subprojects/cfa)) and timed automata ([`xta`](subprojects/xta)).
 * **Analysis back-end**: The analysis back-end provides the verification algorithms that can formally prove whether a model meets certain requirements.
 There is an interpreter for each formalism, providing a common interface towards the algorithms (e.g., calculating initial states and successors).
@@ -57,9 +57,9 @@ Each project contains a README.md in its root directory describing its purpose i
 |  | Common | CFA | STS | XTA | XSTS |
 |--|--|--|--|--|--|
 | **Tools** |  | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts-cli) | [`xta-cli`](subprojects/xta-cli) | [`xsts-cli`](subprojects/xsts-cli) |
-| **Analyses** | [`analysis`](subprojects/core/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
-| **Formalisms** | [`core`](subprojects/core/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
-| **SMT solvers** | [`solver`](subprojects/core/solver), [`solver-z3`](subprojects/solver-z3) |
+| **Analyses** | [`analysis`](subprojects/common/analysis) | [`cfa-analysis`](subprojects/cfa-analysis) | [`sts-analysis`](subprojects/sts-analysis) | [`xta-analysis`](subprojects/xta-analysis) | [`xsts-analysis`](subprojects/xsts-analysis) |
+| **Formalisms** | [`core`](subprojects/common/core), [`common`](subprojects/common) | [`cfa`](subprojects/cfa) | [`sts`](subprojects/sts) | [`xta`](subprojects/xta) | [`xsts`](subprojects/xsts) |
+| **SMT solvers** | [`solver`](subprojects/common/solver), [`solver-z3`](subprojects/solver-z3) |
 
 ## Extend Theta
 
