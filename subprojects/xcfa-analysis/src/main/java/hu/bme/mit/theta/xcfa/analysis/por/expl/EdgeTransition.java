@@ -94,9 +94,9 @@ public final class EdgeTransition implements Transition {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        EdgeTransition that = (EdgeTransition) o;
-        return Objects.equals(edge, that.edge);
+        if (o == null || !(o instanceof Transition)) return false;
+        Transition that = (Transition) o;
+        return that.equals(innerTransition);
     }
 
     @Override

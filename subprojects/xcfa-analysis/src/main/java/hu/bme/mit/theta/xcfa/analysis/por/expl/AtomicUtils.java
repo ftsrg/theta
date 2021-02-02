@@ -35,7 +35,7 @@ final class AtomicUtils {
             state.setUnsafe("Atomic end outside atomic transition");
             return;
         }
-        Preconditions.checkState(state.getAtomicLock() == process, "An (atomic end) transition ran from a different process");
+        Preconditions.checkState(state.getAtomicLock() == process, "An (atomic end) transition ran from a process different from the one in atomic region");
         state.setAtomicLock(null);
     }
 

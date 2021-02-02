@@ -60,8 +60,14 @@ final class CallUtils {
 
         state.modifyIndexing(process, oldProcedure, -1);
         processState.pop();
-        if (whereToSaveResultUnindexed != null && result.isPresent())
+        if (whereToSaveResultUnindexed != null && result.isPresent()) {
             state.putValue(whereToSaveResultUnindexed, (Optional)result);
+
+        } else {
+            if (whereToSaveResultUnindexed != null || result.isPresent()) {
+                assert(false);
+            }
+        }
     }
 
     private static List<Optional<LitExpr<? extends Type>>> evalParams(ExplStateMutatorInterface state, CallStmt callStmt) {

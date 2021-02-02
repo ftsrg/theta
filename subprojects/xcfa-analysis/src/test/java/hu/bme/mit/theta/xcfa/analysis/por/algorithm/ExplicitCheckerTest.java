@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
@@ -42,16 +42,15 @@ public class ExplicitCheckerTest {
 
 	@Parameters()
 	public static Collection<Object[]> data() {
-		return new ArrayList<>();
-
-//		return FileListHelper.tests("All");
+		return FileListHelper.tests("All");
 	}
 
 	@Test
 	public void test() throws IOException {
 		System.out.println("Testing " + filepath);
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+		XCFA _xcfa = XcfaDslManager.createXcfa(inputStream);
+		XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
 		var checker = XcfaChecker.createChecker(xcfa, XcfaChecker.getSimpleExplicit().build());
 		Assert.assertTrue(checker instanceof ExplicitChecker);
 		SafetyResult<? extends State, ? extends Action> result = checker.check();

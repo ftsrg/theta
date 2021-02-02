@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis.por.expl;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,9 +62,15 @@ public final class TransitionUtils {
                 processState.isOutmostCall());
     }
 
+    private static final Map<XCFA.Process.Procedure.Edge, EdgeTransition> edgeCache = new HashMap<>();
+
     private static EdgeTransition getEdge(XCFA.Process process, XCFA.Process.Procedure.Edge edge) {
-        // TODO cache results
-        return new EdgeTransition(process, edge);
+        if (edgeCache.containsKey(edge)) {
+            return edgeCache.get(edge);
+        }
+        var result = new EdgeTransition(process, edge);
+        edgeCache.put(edge, result);
+        return result;
     }
 
     private static Stream<Transition> getTransitionsInternal(

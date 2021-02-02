@@ -96,6 +96,7 @@ final class DynamicPOChecker extends XcfaChecker {
             return true;
         if (DependencyUtils.depends(tr1, tr2))
             return true;
+        // transitive closure
         for (int k = i+1; k < j; k++) {
             if (happensBefore(i, k) &&
                     happensBefore(k, j))
@@ -170,7 +171,6 @@ final class DynamicPOChecker extends XcfaChecker {
             } else {
                 oldState.expand();
             }
-            break;
         }
     }
 

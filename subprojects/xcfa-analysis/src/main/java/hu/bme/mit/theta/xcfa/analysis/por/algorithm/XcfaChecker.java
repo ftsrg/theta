@@ -114,7 +114,7 @@ public abstract class XcfaChecker {
             System.err.println("Warning! Probably bad configuration: not all traces will be stored, because program" +
                     "might stop DFS when finding an unsafe property.");
         }
-        var xcfa = new DefaultTransformation(_xcfa, config).build();
+        XCFA xcfa = new DefaultTransformation(_xcfa, config).build();
         if (config.isAmpleSet()) {
             return new POChecker(xcfa, config);
         } else if (config.isPartialOrder()) {
@@ -169,6 +169,8 @@ public abstract class XcfaChecker {
      * Returns whether the given XCFA is safe.
      */
     public final SafetyResult<ExplState, Transition> check() {
+        int finishedCtr = 0;
+        int allCtr = 0;
 
         tryPushNode(initialNode(ImmutableExplState.initialState(xcfa)));
 
@@ -187,8 +189,10 @@ public abstract class XcfaChecker {
                 }
             } else {
 
-                if (node.isFinished())
+                if (node.isFinished()) {
+                    finishedCtr++;
                     onFinished(dfsStack);
+                }
 
                 if (!node.isSafe()) {
                     // catch first unsafe property found
@@ -197,12 +201,15 @@ public abstract class XcfaChecker {
                             result = Tracer.unsafe(dfsStack);
                         }
                     } else {
+                        System.out.println("Iterated through " + allCtr + " states, " + finishedCtr + " paths before returning unsafe");
                         return Tracer.unsafe(dfsStack);
                     }
                 }
+                allCtr++;
                 popNode(node);
             }
         }
+        System.out.println("Iterated through " + allCtr + " states, " + finishedCtr + " paths");
         return result;
     }
 

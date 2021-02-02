@@ -1,0 +1,184 @@
+var global1 : int
+var global2 : int
+var flag : bool
+main process ___ThreadFunction0 {
+    main procedure globalwrite() {
+        var global1read2_tmp_0 : int
+        var global1read2_tmp1_1 : int
+        var global1read2_tmp2_2 : int
+        init loc loca
+        loc loc0
+        loc locb
+        loc locc
+        final loc loc1
+
+        loca -> locb {
+            atomic-begin
+        }
+        locb -> loca {
+            assume flag
+            atomic-end
+        }
+
+        locb -> locc {
+            assume not flag
+            flag := true
+            atomic-end
+        }
+
+        locc -> loc0 {
+            global1 := 1
+            global2 := 2
+        }
+        loc0 -> loc1 {
+            flag := false
+        }
+    }
+}
+process ___ThreadFunction1 {
+    main procedure globalwrite() {
+        var global1read2_tmp_0 : int
+        var global1read2_tmp1_1 : int
+        var global1read2_tmp2_2 : int
+        init loc loca
+        loc loc0
+        loc locb
+        loc locc
+        final loc loc1
+
+        loca -> locb {
+            atomic-begin
+        }
+        locb -> loca {
+            assume flag
+            atomic-end
+        }
+
+        locb -> locc {
+            assume not flag
+            flag := true
+            atomic-end
+        }
+
+        locc -> loc0 {
+            global1 := 3
+            global2 := 4
+        }
+        loc0 -> loc1 {
+            flag := false
+        }
+    }
+}
+process ___ThreadFunction2 {
+    main procedure globalread() {
+        loc loc0
+        final loc loc1
+        init loc loca
+        loc locb
+        loc locc
+        loc locx
+        error loc loce
+        loca -> locb {
+            atomic-begin
+        }
+        locb -> loca {
+            assume flag
+            atomic-end
+        }
+
+        locb -> locc {
+            assume not flag
+            flag := true
+            atomic-end
+        }
+
+        locc -> locx {
+            assume global1 = 3
+        }
+        locc -> loc1 {
+            assume not (global1 = 3)
+            flag := false
+        }
+        locx -> loc1 {
+            assume global2 = 4
+            flag := false
+        }
+        locx -> loce {
+            assume not (global2 = 4)
+        }
+    }
+}
+process ___ThreadFunction3 {
+    main procedure globalread() {
+        loc loc0
+        final loc loc1
+        init loc loca
+        loc locb
+        loc locc
+        loc locx
+        error loc loce
+        loca -> locb {
+            atomic-begin
+        }
+        locb -> loca {
+            assume flag
+            atomic-end
+        }
+        locb -> locc {
+            assume not flag
+            flag := true
+            atomic-end
+        }
+        locc -> locx {
+            assume global1 = 0
+        }
+        locc -> loc1 {
+            assume not (global1 = 0)
+            flag := false
+        }
+        locx -> loc1 {
+            assume global2 = 0
+            flag := false
+        }
+        locx -> loce {
+            assume not (global2 = 0)
+        }
+    }
+}
+process ___ThreadFunction4 {
+    main procedure globalread() {
+        loc loc0
+        final loc loc1
+        init loc loca
+        loc locb
+        loc locc
+        loc locx
+        error loc loce
+        loca -> locb {
+            atomic-begin
+        }
+        locb -> loca {
+            assume flag
+            atomic-end
+        }
+        locb -> locc {
+            assume not flag
+            flag := true
+            atomic-end
+        }
+        locc -> locx {
+            assume global1 = 1
+        }
+        locc -> loc1 {
+            assume not (global1 = 1)
+            flag := false
+        }
+        locx -> loc1 {
+            assume global2 = 2
+            flag := false
+        }
+        locx -> loce {
+            assume not (global2 = 2)
+        }
+    }
+}

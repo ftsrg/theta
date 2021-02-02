@@ -155,7 +155,7 @@ class FileListHelper {
         }
     }
 
-    public static void mutexes(ArrayList<Object[]> result, Config c) {
+    public static void mutexes(ArrayList<Object[]> result, Config c) { // hobbitses
         if (c.mutexSupported()) {
             if (c.multiThreadSupported()) {
                 result.addAll(Arrays.asList(
@@ -187,7 +187,9 @@ class FileListHelper {
                     new Object[]{"/partialorder-test3.xcfa", false},
                     new Object[]{"/partialorder-test4.xcfa", false},
                     new Object[]{"/partialorder-min-test.xcfa", false},
-                    new Object[]{"/slightly-parallel.xcfa", true}
+                    new Object[]{"/slightly-parallel.xcfa", true},
+                    new Object[]{"/slightly-parallel-2.xcfa", true},
+                    new Object[]{"/slightly-parallel-3.xcfa", true}
                     ));
             if (c.stateGraphLoopSupported()) {
                 result.add(new Object[]{"/partialorder-test2.xcfa", false});
@@ -199,8 +201,10 @@ class FileListHelper {
         }
         result.addAll(Arrays.asList(
                 new Object[]{"/simple-test.xcfa", true},
+                new Object[]{"/dpor-cex-1.xcfa", true},
+                new Object[]{"/test.xcfa", true},
                 new Object[]{"/deadlock.xcfa", false}
-                ));
+        ));
 
         result = filterSafe(result, c);
         result = filterUnsafe(result, c);

@@ -24,16 +24,13 @@ import hu.bme.mit.theta.xcfa.analysis.por.expl.Transition;
 import hu.bme.mit.theta.xcfa.analysis.por.expl.TransitionUtils;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class POChecker extends XcfaChecker {
 
     private static class AmpleSetFactory {
-        // pre(Pi)
         private final Collection<ProcessTransitions> allTransitionsByProcess;
 
         public AmpleSetFactory(XCFA xcfa) {
@@ -41,26 +38,39 @@ public class POChecker extends XcfaChecker {
         }
 
         private void collectDependingProcesses(ProcessTransitions t, Collection<XCFA.Process> alreadyProcessed,
-                                               Collection<XCFA.Process> result) {
+                                               Set<XCFA.Process> result) {
             t.transitionStream().forEach(tr->collectDependingProcesses(tr, alreadyProcessed, result));
         }
 
+        private final Map<Transition, Collection<XCFA.Process>> dependingProcessCache = new HashMap<>();
+
         private void collectDependingProcesses(Transition t, Collection<XCFA.Process> alreadyProcessed,
-                                               Collection<XCFA.Process> result) {
-            for (var x : allTransitionsByProcess) {
-                if (alreadyProcessed.contains(x.getProcess())) {
-                    continue;
+                                               Set<XCFA.Process> result) {
+            Collection<XCFA.Process> collection;
+            if (!dependingProcessCache.containsKey(t)) {
+                var res = new HashSet<XCFA.Process>();
+                for (var x : allTransitionsByProcess) {
+                    //if (alreadyProcessed.contains(x.getProcess())) {
+                    //    continue;
+                    //}
+                    //if (result.contains(x.getProcess())) {
+                    //    continue;
+                    //}
+                    if (x.getProcess() == t.getProcess()) {
+                        continue;
+                    }
+                    if (DependencyUtils.depends(x, t)) {
+                        res.add(x.getProcess());
+                    }
                 }
-                if (result.contains(x.getProcess())) {
-                    continue;
-                }
-                if (x.getProcess() == t.getProcess()) {
-                    continue;
-                }
-                if (DependencyUtils.depends(x, t)) {
-                    result.add(x.getProcess());
-                }
+                dependingProcessCache.put(t, res);
+                collection = res;
+            } else {
+                collection = dependingProcessCache.get(t);
             }
+
+            collection.stream().filter(x->!alreadyProcessed.contains(x))
+                    .forEach(result::add);
         }
 
         // input is a non empty set of enabled transitions
@@ -78,23 +88,22 @@ public class POChecker extends XcfaChecker {
 
             // add dependencies transitively
             while (!notYetProcessed.isEmpty()) {
-                XCFA.Process toBeProcessed = notYetProcessed.iterator().next();
-                ampleSet.add(toBeProcessed);
+                XCFA.Process nextProcess = notYetProcessed.iterator().next();
+                ampleSet.add(nextProcess);
 
-                notYetProcessed.remove(toBeProcessed);
-                for (ProcessTransitions enabledProcess : enabledProcesses) {
-                    collectDependingProcesses(enabledProcess, ampleSet, notYetProcessed);
-                }
+                notYetProcessed.remove(nextProcess);
+                var nextProcessTransition = enabledProcesses.stream().filter(x->x.getProcess()==nextProcess).findAny();
+                nextProcessTransition.ifPresent(processTransitions -> collectDependingProcesses(processTransitions, ampleSet, notYetProcessed));
 
                 // Add disabled transitions' dependencies, which may activate the transition.
                 // More precisely: all processes' transitions that may enable this disabled transition.
                 // Look at partialorder-test.xcfa for more information
-                for (ProcessTransitions enabledProcess : enabledProcesses) {
-                    enabledProcess.disabledStream()
+                nextProcessTransition.ifPresent(t->t.disabledStream()
                             .forEach(
+                                // TODO collect enabling transitions, not depending ones
                                 tr -> collectDependingProcesses(tr, ampleSet, notYetProcessed)
-                            );
-                }
+                            )
+                );
             }
             return ampleSet;
         }
@@ -103,15 +112,18 @@ public class POChecker extends XcfaChecker {
         public Collection<XCFA.Process> returnAmpleSet(ImmutableExplState expl) {
             Collection<ExecutableTransitionBase> enabled = ExecutableTransitionUtils.getExecutableTransitions(expl)
                     .collect(Collectors.toUnmodifiableList());
-            if (enabled.isEmpty()) {
+            if (enabled.isEmpty()) { // C0
                 return Collections.emptySet();
             }
             return collectAmpleSet(expl);
         }
     }
 
+    AmpleSetFactory factory;
+
     POChecker(XCFA xcfa, Config config) {
         super(xcfa,config);
+        factory = new AmpleSetFactory(xcfa);
     }
 
     @Override
@@ -136,7 +148,7 @@ public class POChecker extends XcfaChecker {
         DfsNode(ImmutableExplState state, @Nullable Transition lastTransition) {
             super(state, lastTransition);
             collectTransitions(state,
-                    new AmpleSetFactory(xcfa).returnAmpleSet(state)
+                    factory.returnAmpleSet(state)
             ).forEach(this::push);
         }
 

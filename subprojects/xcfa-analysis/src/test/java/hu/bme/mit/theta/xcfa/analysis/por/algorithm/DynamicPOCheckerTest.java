@@ -19,7 +19,9 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.analysis.por.transform.DefaultTransformation;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.utils.XcfaEdgeSplitterTransformation;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +53,8 @@ public class DynamicPOCheckerTest {
     public void test() throws IOException {
         System.out.println("Testing " + filepath);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
-        XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
+        XCFA _xcfa = XcfaDslManager.createXcfa(inputStream);
+        XCFA xcfa = XcfaEdgeSplitterTransformation.transform(_xcfa);
         var checker = XcfaChecker.createChecker(xcfa, XcfaChecker.getSimpleDPOR().build());
         Assert.assertTrue(checker instanceof DynamicPOChecker);
 

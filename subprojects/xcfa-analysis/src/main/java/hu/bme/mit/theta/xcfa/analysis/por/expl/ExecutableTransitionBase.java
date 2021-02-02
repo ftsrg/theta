@@ -103,7 +103,7 @@ public class ExecutableTransitionBase implements Transition, TransitionExecutorI
         return transition.toString();
     }
 
-    Transition getInternalTransition() {
+    public Transition getInternalTransition() {
         return transition;
     }
 

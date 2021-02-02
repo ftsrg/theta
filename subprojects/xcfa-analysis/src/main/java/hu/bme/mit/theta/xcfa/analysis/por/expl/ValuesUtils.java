@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
@@ -77,6 +79,8 @@ final class ValuesUtils {
             IndexedConstDecl<? extends Type> x = var.getConstDecl(0);
             if (x.getType() == IntType.getInstance()) {
                 builder.put(x, IntExprs.Int(0));
+            } else if (x.getType() == BoolType.getInstance()) {
+                builder.put(x, BoolExprs.False());
             } else if (x.getType() == SyntheticType.getInstance()){
                 builder.put(x, SyntheticLitExpr.unlocked());
             }
