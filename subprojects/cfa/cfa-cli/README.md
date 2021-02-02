@@ -54,9 +54,9 @@ All arguments are optional, except `--model`.
 * `--visualize`: Visualize the CFA without running the algorithm.
 If the extension of the output file is `pdf`, `png` or `svg` an automatic visualization is performed, for which [GraphViz](../../../doc/Build.md) has to be available on `PATH`.
 Otherwise, the output is simply in `dot` format.
+* `--version`: Print version info (in this case `--model` is of course not required).
 
 The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
-* `--version`: Print version info (in this case `--model` is of course not required).
 
 ### For developer usage
 
