@@ -90,6 +90,10 @@ public class CfaTest {
 
 				{ "src/test/resources/arithmetic-int.cfa",  EXPL, SEQ_ITP, false, 13 },
 
+				{ "src/test/resources/arithmetic-mod.cfa",  PRED_CART, SEQ_ITP, true, 0 },
+
+				{ "src/test/resources/arithmetic-mod.cfa",  EXPL, BW_BIN_ITP, true, 0 },
+
 				{ "src/test/resources/arrays.cfa", PRED_CART, SEQ_ITP, false, 8 },
 
 				{ "src/test/resources/arrays.cfa", PRED_BOOL, BW_BIN_ITP, false, 8 },
