@@ -201,8 +201,13 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitEqExpr(XstsDslParser.EqExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			if (ctx.oper.EQ() != null) return Eq(visitRelationExpr(ctx.ops.get(0)), visitRelationExpr(ctx.ops.get(1)));
-			else return Neq(visitRelationExpr(ctx.ops.get(0)), visitRelationExpr(ctx.ops.get(1)));
+			try{
+				if (ctx.oper.EQ() != null) return Eq(visitRelationExpr(ctx.ops.get(0)), visitRelationExpr(ctx.ops.get(1)));
+				else return Neq(visitRelationExpr(ctx.ops.get(0)), visitRelationExpr(ctx.ops.get(1)));
+			} catch(Exception ex){
+				throw new ParseException(ctx,ex.getMessage());
+			}
+
 		} else return visitRelationExpr(ctx.ops.get(0));
 	}
 
@@ -214,15 +219,20 @@ public class XSTSVisitor extends XstsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitRelationExpr(XstsDslParser.RelationExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			if (ctx.oper.LEQ() != null) {
-				return Leq(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
-			} else if (ctx.oper.GEQ() != null) {
-				return Geq(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
-			} else if (ctx.oper.LT() != null) {
-				return Lt(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
-			} else if (ctx.oper.GT() != null) {
-				return Gt(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
-			} else throw new ParseException(ctx, "Unsupported operation '" + ctx.oper.getText() + "'");
+			try{
+				if (ctx.oper.LEQ() != null) {
+					return Leq(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
+				} else if (ctx.oper.GEQ() != null) {
+					return Geq(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
+				} else if (ctx.oper.LT() != null) {
+					return Lt(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
+				} else if (ctx.oper.GT() != null) {
+					return Gt(visitAdditiveExpr(ctx.ops.get(0)), visitAdditiveExpr(ctx.ops.get(1)));
+				} else throw new ParseException(ctx, "Unsupported operation '" + ctx.oper.getText() + "'");
+			} catch (Exception ex){
+				throw new ParseException(ctx,ex.getMessage());
+			}
+
 		} else return visitAdditiveExpr(ctx.ops.get(0));
 	}
 
