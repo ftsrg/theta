@@ -110,7 +110,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
 
 //				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
 
@@ -184,13 +184,29 @@ public class XstsTest {
 
 				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.PROD}
+				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.PROD},
 
 //				{ "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 //				{ "src/test/resources/model/ort2.xsts", "src/test/resources/property/ort2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 //				{ "src/test/resources/model/crossroad_composite.xsts", "src/test/resources/property/both_green.prop", true, XstsConfigBuilder.Domain.EXPL}
+
+				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.PROD},
+
+				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.PROD_AUTO},
+
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD},
+
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
 
 		});
 	}
@@ -210,7 +226,7 @@ public class XstsTest {
 				e.printStackTrace();
 			}
 
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).logger(logger).build(xsts);
+			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).logger(logger).build(xsts);
 			final SafetyResult<?, ?> status = configuration.check();
 			if (safe) {
 				assertTrue(status.isSafe());
