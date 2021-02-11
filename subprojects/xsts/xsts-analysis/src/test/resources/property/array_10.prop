@@ -1,0 +1,3 @@
+prop {
+    arr[10]!=true
+}
