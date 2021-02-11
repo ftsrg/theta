@@ -1,0 +1,11 @@
+var arr: [integer] -> boolean = [<integer>default<-false]
+ctrl var n: integer = 0
+
+trans{
+    n:=n+1;
+    arr:=arr[n<-true];
+}
+
+init{}
+
+env{}
