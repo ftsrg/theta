@@ -39,9 +39,9 @@ Example:
 
 The XSTS formalism contains the following built-in types: 
 
-- `integer`: Mathematical, unbounded SMT integers.
-- `boolean`: Booleans.
-- `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
+* `integer`: Mathematical, unbounded SMT integers.
+* `boolean`: Booleans.
+* `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 
 Previously declared custom types can also be used in variable declarations.
 Variables can be declared the following way:
