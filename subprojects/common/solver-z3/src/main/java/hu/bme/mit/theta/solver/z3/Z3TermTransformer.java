@@ -418,7 +418,7 @@ final class Z3TermTransformer {
 			checkArgument(args.length == 3, "Number of arguments must be three");
 			final Expr<?> op1 = transform(args[0], model, vars);
 			final Expr<?> op2 = transform(args[1], model, vars);
-			final Expr<?> op3 = transform(args[1], model, vars);
+			final Expr<?> op3 = transform(args[2], model, vars);
 			return function.apply(op1, op2, op3);
 		};
 	}
