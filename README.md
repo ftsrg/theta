@@ -20,7 +20,7 @@ Tools are concrete instantiations of the framework to solve a certain problem us
 Currently, the following tools are available (follow the links for more information).
 
 * [`theta-cfa-cli`](subprojects/cfa/cfa-cli): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
-  * [Gazer](https://github.com/ftsrg/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli, also giving support towards [SV-COMP](https://sv-comp.sosy-lab.org/2021/).
+  * [Gazer](https://github.com/ftsrg/gazer) is an [LLVM](https://llvm.org/)-based frontend to verify C programs using theta-cfa-cli, also giving support towards [SV-COMP](https://sv-comp.sosy-lab.org/2021/). See our [tool paper at TACAS](https://ftsrg.mit.bme.hu/theta/publications/tacas2021.pdf) for more information.
   * [PLCverif](https://cern.ch/plcverif) is a tool developed at CERN for the formal specification and verification of PLC (Programmable Logic Controller) programs, supporting theta-cfa-cli as one of its verification backends.
 * [`theta-sts-cli`](subprojects/sts/sts-cli): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
   * theta-sts-cli natively supports the [AIGER format](http://fmv.jku.at/aiger/) of the [Hardware Model Checking Competition (HWMCC)](http://fmv.jku.at/hwmcc/).
