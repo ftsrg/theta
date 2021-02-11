@@ -37,7 +37,13 @@ Example:
 
 ### Variable declarations
 
-The XSTS formalism contains the following built-in types: `integer`, `boolean`. Previously declared custom types can also be used in variable declarations.
+The XSTS formalism contains the following built-in types: 
+
+- `integer`: Mathematical, unbounded SMT integers.
+- `boolean`: Booleans.
+- `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
+
+Previously declared custom types can also be used in variable declarations.
 Variables can be declared the following way:
 
 `var <name> : <type>`
@@ -60,6 +66,18 @@ ctrl var x : integer = 0
 ```
 
 All variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
+
+### Expressions
+
+Expressions of the XSTS can include the following:
+
+- Identifiers (variables).
+- Literals, e.g., `true`, `false` (boolean), `0`, `123` (integer).
+    - Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<integer>default <- 75]`.
+- Comparison, e.g., `==`, `!=`, `<`, `>`, `<=`, `>=`.
+- Boolean operators, e.g., `&&`, `||`, `!`, `->`.
+- Arithmetic, e.g., `+`, `-`, `/`, `*`, `%`.
+- Array read (`a[i]`) and write (`a[i <- v]`).
 
 ### Transitions
 
