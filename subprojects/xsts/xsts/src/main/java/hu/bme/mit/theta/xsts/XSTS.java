@@ -14,57 +14,52 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
 	private final Collection<VarDecl<?>> vars;
-	private final Collection<TypeDecl> types;
 	private final Map<VarDecl<?>, TypeDecl> varToType;
 	private final Set<VarDecl<?>> ctrlVars;
 
-	private final NonDetStmt transitions;
-	private final NonDetStmt envAction;
-	private final NonDetStmt initAction;
+	private final NonDetStmt tran;
+	private final NonDetStmt env;
+	private final NonDetStmt init;
 
 	private final Expr<BoolType> initFormula;
 	private final Expr<BoolType> prop;
 
-	public NonDetStmt getInitAction() { return initAction; }
+	public NonDetStmt getInit() { return init; }
 
 	public Collection<VarDecl<?>> getVars() {
 		return vars;
-	}
-
-	public Collection<TypeDecl> getTypes() {
-		return types;
 	}
 
 	public Map<VarDecl<?>, TypeDecl> getVarToType() { return varToType; }
 
 	public Expr<BoolType> getProp() { return prop; }
 
-	public NonDetStmt getTransitions() {
-		return transitions;
+	public NonDetStmt getTran() {
+		return tran;
 	}
 
 	public Expr<BoolType> getInitFormula() { return initFormula; }
 
-	public NonDetStmt getEnvAction() {
-		return envAction;
+	public NonDetStmt getEnv() {
+		return env;
 	}
 
 	public Set<VarDecl<?>> getCtrlVars() { return ctrlVars; }
 
-	public XSTS(final Collection<TypeDecl> types, final Map<VarDecl<?>, TypeDecl> varToType, final Set<VarDecl<?>> ctrlVars, final NonDetStmt initAction, final NonDetStmt transitions, final NonDetStmt envAction, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
-		this.transitions = checkNotNull(transitions);
+	public XSTS(final Map<VarDecl<?>, TypeDecl> varToType, final Set<VarDecl<?>> ctrlVars, final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+		this.tran = checkNotNull(tran);
+		this.init = checkNotNull(init);
+		this.env = checkNotNull(env);
 		this.initFormula = checkNotNull(initFormula);
-		this.envAction = checkNotNull(envAction);
 		this.prop = checkNotNull(prop);
-		this.initAction = checkNotNull(initAction);
-		this.types = types;
 		this.varToType = varToType;
 		this.ctrlVars = ctrlVars;
+
 		final Set<VarDecl<?>> tmpVars = new HashSet<>();
 		tmpVars.addAll(varToType.keySet());
-		tmpVars.addAll(StmtUtils.getVars(transitions));
-		tmpVars.addAll(StmtUtils.getVars(envAction));
-		tmpVars.addAll(StmtUtils.getVars(initAction));
+		tmpVars.addAll(StmtUtils.getVars(tran));
+		tmpVars.addAll(StmtUtils.getVars(env));
+		tmpVars.addAll(StmtUtils.getVars(init));
 		tmpVars.addAll(ExprUtils.getVars(initFormula));
 		tmpVars.addAll(ExprUtils.getVars(prop));
 		this.vars = Collections.unmodifiableCollection(tmpVars);

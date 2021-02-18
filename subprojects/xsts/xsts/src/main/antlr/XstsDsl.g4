@@ -3,170 +3,16 @@ grammar XstsDsl;
 xsts:
     typeDeclarations+=typeDeclaration*
     variableDeclarations+=variableDeclaration (variableDeclarations+=variableDeclaration)*
-    transitions=tran
-    initAction=init
-    envAction=env
+    tran=tranSet
+    init=initSet
+    env=envSet
     PROP LCURLY prop=expr RCURLY;
 
-action:
-    assumeAction|
-    assignAction|
-    havocAction|
-    nonDetAction|
-    ortAction
-    ;
-
-tran:
-    TRAN nonDet
-;
-
-env:
-    ENV nonDet
-;
-
-init:
-    INIT nonDet
-;
-
-ortAction:
-    ORT LCURLY branches+=sequentialAction RCURLY (LCURLY branches+=sequentialAction RCURLY)*
-;
-
-nonDetAction:
-    CHOICE nonDet
-;
-
-nonDet:
-    LCURLY choices+=sequentialAction RCURLY (NONDET_OR LCURLY choices+=sequentialAction RCURLY)*
-;
-
-sequentialAction:
-    (actions+=action)*;
-
-assumeAction:
-    ASSUME cond=expr SEMICOLON;
-
-assignAction:
-    lhs=ID ASSIGN rhs=expr SEMICOLON;
-
-havocAction:
-    HAVOC name=ID SEMICOLON;
-
-expr:
-    iteExpression
-;
-
-iteExpression:
-    implyExpression |
-    IF cond=expr THEN then=expr ELSE elze=expr
-;
-
-implyExpression:
-	ops+=orExpr (IMPLIES ops+=orExpr)?
-;
-
-orExpr:
-	ops+=andExpr (OR ops+=andExpr)*
-;
-
-andExpr:
-	ops+=notExpr (AND ops+=notExpr)*
-;
-
-notExpr:
-	eqExpr|
-	NOT ops+=notExpr
-;
-
-eqExpr:
-	ops+=relationExpr (oper=eqOperator ops+=relationExpr)?
-;
-
-eqOperator:
-	EQ|NEQ
-;
-
-relationExpr:
-	ops+=additiveExpr (oper=relationOperator ops+=additiveExpr)?
-;
-
-relationOperator:
-	LT|GT|LEQ|GEQ
-;
-
-additiveExpr:
-	ops+=multiplicativeExpr (opers+=additiveOperator ops+=multiplicativeExpr)*
-;
-
-additiveOperator:
-	PLUS|MINUS
-;
-
-multiplicativeExpr:
-	ops+=negExpr (opers+=multiplicativeOperator ops+=negExpr)*
-;
-
-multiplicativeOperator:
-	MUL|DIV|MOD
-;
-
-negExpr:
-	accessorExpr|
-	MINUS ops+=negExpr
-;
-
-accessorExpr:
-    op=primaryExpr (acc=access)?
-;
-
-access:
-    readIndex=arrayReadAccess|
-    writeIndex=arrayWriteAccess
-;
-
-arrayReadAccess:
-	LBRACK index=expr RBRACK
-	;
-
-arrayWriteAccess:
-	LBRACK index=expr LARROW elem=expr RBRACK
-	;
-
-primaryExpr:
-	value|
-	parenExpr
-;
-
-value:
-    literal|reference;
-
-literal:
-    INTLIT|BOOLLIT|arrLitExpr
-    ;
-
-parenExpr:
-	LPAREN ops+=expr RPAREN
-;
-
-arrLitExpr
-    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=typeName GT)? DEFAULT LARROW elseExpr=expr RBRACK
-    |   LBRACK LT indexType=typeName GT DEFAULT LARROW elseExpr=expr RBRACK
-    ;
+// D E C L A R A T I O N S
 
 variableDeclaration:
-    CTRL? VAR name=ID DP type=typeName  (EQUALS initValue=value)?;
+    CTRL? VAR name=ID DP ttype=type  (EQUALS initValue=expr)?;
 
-reference:
-    name=ID;
-
-typeName:
-    INT|BOOL|arrayType|customType;
-
-customType:
-    name=ID;
-
-arrayType:
-    LBRACK indexType=typeName RBRACK RARROW elemType=typeName;
 
 typeDeclaration:
     TYPE name=ID DP LCURLY literals+=typeLiteral (COMMA literals+=typeLiteral)* RCURLY;
@@ -174,56 +20,398 @@ typeDeclaration:
 typeLiteral:
     name=ID;
 
-CTRL: 'ctrl';
-ORT: 'ort';
-IF: 'if';
-THEN: 'then';
-ELSE: 'else';
-TRAN: 'trans';
-INIT: 'init';
-ENV: 'env';
-PROP: 'prop';
-HAVOC: 'havoc';
-CHOICE: 'choice';
-NONDET_OR: 'or';
-SEMICOLON: ';';
-ASSUME: 'assume';
-AND: '&&';
-OR: '||';
-IMPLIES: '=>';
-LARROW: '<-';
-RARROW: '->';
-NOT: '!';
-EQ: '==';
-NEQ: '!=';
-LT: '<';
-GT: '>';
-LEQ: '<=';
-GEQ: '>=';
-PLUS: '+';
-MINUS: '-';
-MUL: '*';
-DIV: '/';
-MOD: '%';
-LPAREN: '(';
-RPAREN: ')';
-PRIME: '\'';
-ASSIGN: ':=';
-EQUALS: '=';
-VAR: 'var';
-INT: 'integer';
-BOOL: 'boolean';
-DP: ':';
-COMMA: ',';
-TYPE: 'type';
-LCURLY: '{';
-RCURLY: '}';
-LBRACK: '[';
-RBRACK: ']';
-INTLIT: [0-9]+;
-DEFAULT: 'default';
-BOOLLIT: 'true' | 'false';
-ID: [a-zA-Z_][a-zA-Z0-9_]*;
-WS: (' '| '\t' | '\n' | '\r') -> skip;
-COMMENT: '/*' .*? '*/' -> skip;
-LINE_COMMENT: '//' ~[\r\n]* -> skip;
+CTRL
+    :   'ctrl'
+    ;
+
+VAR
+    :   'var'
+    ;
+
+TYPE
+    :   'type'
+    ;
+
+// T Y P E S
+
+type:	boolType
+	|	intType
+	|	arrayType
+	|   customType
+	;
+
+boolType
+	:	BOOLTYPE
+	;
+
+intType
+	:	INTTYPE
+	;
+
+arrayType
+	:	LBRACK indexType=type RBRACK RARROW elemType=type
+	;
+
+customType
+    :   name=ID
+    ;
+
+BOOLTYPE
+	:	'boolean'
+	;
+
+INTTYPE
+	:	'integer'
+	;
+
+// E X P R E S S I O N S
+
+expr:   iteExpr
+    ;
+
+iteExpr
+    :   iffExpr
+    |   IF cond=expr THEN then=expr ELSE elze=expr
+    ;
+
+iffExpr
+	:	leftOp=implyExpr (IFF rightOp=iffExpr)?
+	;
+
+implyExpr
+	:	leftOp=orExpr (IMPLY rightOp=implyExpr)?
+	;
+
+orExpr
+	:	ops+=xorExpr (OR ops+=xorExpr)*
+	;
+
+xorExpr
+	:	leftOp=andExpr (XOR rightOp=xorExpr)?
+	;
+
+andExpr
+	:	ops+=notExpr (AND ops+=notExpr)*
+	;
+
+notExpr
+	:	equalityExpr
+	|	NOT op=equalityExpr
+	;
+
+equalityExpr
+	:	leftOp=relationExpr (oper=(EQ | NEQ) rightOp=relationExpr)?
+	;
+
+relationExpr
+	:	leftOp=additiveExpr (oper=(LT | LEQ | GT | GEQ) rightOp=additiveExpr)?
+	;
+
+additiveExpr
+	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS) ops+=multiplicativeExpr)*
+	;
+
+multiplicativeExpr
+	:	ops+=unaryExpr (opers+=(MUL | DIV | MOD | REM) ops+=unaryExpr)*
+	;
+
+unaryExpr
+	:	accessorExpr
+	|	oper=(PLUS | MINUS) op=unaryExpr
+	;
+
+accessorExpr
+	:	op=primaryExpr (accesses+=access)*
+	;
+
+access
+    :	readIndex=arrayReadAccess
+    |	writeIndex=arrayWriteAccess
+    ;
+
+arrayReadAccess
+	:	LBRACK index=expr RBRACK
+	;
+
+arrayWriteAccess
+	:	LBRACK index=expr LARROW elem=expr RBRACK
+	;
+
+primaryExpr
+	:	trueExpr
+	|	falseExpr
+	|	intLitExpr
+	|	arrLitExpr
+	|	idExpr
+	|	parenExpr
+	;
+
+trueExpr
+	:	TRUE
+	;
+
+falseExpr
+	:	FALSE
+	;
+
+intLitExpr
+	:	value=INTLIT
+	;
+
+arrLitExpr
+    :   LBRACK (indexExpr+=expr LARROW valueExpr+=expr COMMA)+ (LT indexType=type GT)? DEFAULT LARROW elseExpr=expr RBRACK
+    |   LBRACK LT indexType=type GT DEFAULT LARROW elseExpr=expr RBRACK
+    ;
+
+idExpr
+	:	id=ID
+	;
+
+parenExpr
+	:	LPAREN op=expr RPAREN
+	;
+
+
+////
+
+IF	:	'if'
+	;
+
+THEN:	'then'
+	;
+
+ELSE:	'else'
+	;
+
+IFF	:	'iff'
+	;
+
+IMPLY
+	:	'=>'
+	;
+
+OR	:	'||'
+	;
+
+AND	:	'&&'
+	;
+
+XOR	:	'xor'
+	;
+
+NOT	:	'!'
+	;
+
+EQ	:	'=='
+	;
+
+NEQ	:	'!='
+	;
+
+LT	:	'<'
+	;
+
+LEQ	:	'<='
+	;
+
+GT	:	'>'
+	;
+
+GEQ	:	'>='
+	;
+
+PLUS:	'+'
+	;
+
+MINUS
+	:	'-'
+	;
+
+MUL	:	'*'
+	;
+
+DIV	:	'/'
+	;
+
+MOD	:	'%'
+	;
+
+REM	:	'rem'
+	;
+
+TRUE:	'true'
+	;
+
+FALSE
+	:	'false'
+	;
+
+DEFAULT
+    :   'default'
+    ;
+
+
+// S T A T E M E N T S
+
+stmt:	assignStmt
+	|	havocStmt
+	|	assumeStmt
+	|   nonDetStmt
+	|   blockStmt
+	;
+
+nonDetStmt
+    :   CHOICE blocks+=blockStmt (NONDET_OR blocks+=blockStmt)*
+    ;
+
+blockStmt
+    :   LCURLY subStmt=seqStmt RCURLY
+    ;
+
+seqStmt:
+    (stmts+=stmt)*;
+
+assignStmt
+	:	lhs=ID ASSIGN value=expr SEMICOLON
+	;
+
+havocStmt
+	:	HAVOC lhs=ID SEMICOLON
+	;
+
+assumeStmt
+	:	ASSUME cond=expr SEMICOLON
+	;
+
+
+//
+
+ASSIGN
+	:	':='
+	;
+
+HAVOC
+	:	'havoc'
+	;
+
+ASSUME
+	:	'assume'
+	;
+
+CHOICE
+    :   'choice'
+    ;
+
+NONDET_OR
+    :   'or'
+    ;
+
+LCURLY
+    :   '{'
+    ;
+
+RCURLY
+    :   '}'
+    ;
+
+
+// T R A N S I T I O N S
+
+tranSet
+    :   TRAN transitionSet
+    ;
+
+envSet
+    :   ENV transitionSet
+    ;
+
+initSet
+    :   INIT transitionSet
+    ;
+
+transitionSet
+    :   blocks+=blockStmt (NONDET_OR blocks+=blockStmt)*
+    ;
+
+TRAN
+    :   'trans'
+    ;
+
+INIT
+    :   'init'
+    ;
+
+ENV
+    :   'env'
+    ;
+
+
+// B A S I C   T O K E N S
+
+DP
+    :   ':'
+    ;
+
+EQUALS
+    :   '='
+    ;
+
+PROP
+    :   'prop'
+    ;
+
+SEMICOLON
+    :   ';'
+    ;
+
+LARROW
+    :   '<-'
+    ;
+
+RARROW
+    :   '->'
+    ;
+
+LPAREN
+    :   '('
+    ;
+
+RPAREN
+    :   ')'
+    ;
+
+PRIME
+    :   '\''
+    ;
+
+COMMA
+    :   ','
+    ;
+
+LBRACK
+    :   '['
+    ;
+
+RBRACK
+    :   ']'
+    ;
+
+INTLIT
+    :   [0-9]+
+    ;
+
+ID
+    :   [a-zA-Z_][a-zA-Z0-9_]*
+    ;
+
+WS
+    :   (' '| '\t' | '\n' | '\r') -> skip
+    ;
+
+COMMENT
+    :   '/*' .*? '*/' -> skip
+    ;
+
+LINE_COMMENT
+    :   '//' ~[\r\n]* -> skip
+    ;
