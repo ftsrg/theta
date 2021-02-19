@@ -1,6 +1,6 @@
 # Building Theta
 
-Theta uses Java 11, therefore JDK 11 is required to build Theta.
+Theta uses Java (JDK) 11 with [Gradle 6](https://gradle.org/) as a build system.
 Currently, we use [OpenJDK 11](https://openjdk.java.net/projects/jdk/11/) (see instructions for [Windows](https://stackoverflow.com/questions/52511778/how-to-install-openjdk-11-on-windows) and [Ubuntu](https://www.linuxuprising.com/2019/01/how-to-install-openjdk-11-in-ubuntu.html)).
 We are mainly developing on Windows, but we also test Theta on Linux.
 Theta can be built from the command line, but you can also import it into [IntelliJ IDEA](https://www.jetbrains.com/idea/).
@@ -17,10 +17,14 @@ Install it, or just execute `Download-VCredist.ps1`, which will download the req
 If you have a different OS, you should download the appropriate [Z3 binary for version 4.5.0](https://github.com/Z3Prover/z3/releases/tag/z3-4.5.0).
 These libraries should be available on `PATH` for the executable tools.
 
+*Troubleshooting*:
+* If Z3 gives an assertion error (unreachable code reached), your Z3 version may not be correct.
+
 **GraphViz:**
 Theta can export graphs in _dot_ format and automatically convert them to images.
 For this, [GraphViz](http://www.graphviz.org/) has to be installed and _dot_ (or _dot.exe_ on Windows) has to be on the `PATH`.
 
 ## Building from the command line
 
-Theta can be built from the command line by simply executing `gradlew.bat build` (Windows) or `./gradlew build` (Linux), where `build` is the name of the task that will compile all projects and run the tests.
+Theta can be built from the command line by simply executing `gradlew.bat build` (Windows) or `./gradlew build` (Linux) from the root of the repository, where `build` is the name of the task that will compile all projects and run the tests.
+On Linux make sure you _do not_ use `gradle build` as it executes your globally installed Gradle tool which might not be the appropriate version.

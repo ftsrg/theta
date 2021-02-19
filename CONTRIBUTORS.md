@@ -1,10 +1,12 @@
 # Contributors to Theta
 
-Initial design and implementation by [Tamás Tóth](https://inf.mit.bme.hu/en/members/totht) and [Ákos Hajdu](https://hajduakos.github.io).
+Initial design and implementation by [Tamás Tóth](https://github.com/tothtamas28) and [Ákos Hajdu](https://github.com/hajduakos).
 
 Contributors:
-* [Gábor Szárnyas](https://inf.mit.bme.hu/en/members/szarnyasg)
-* [Kristóf Marussy](https://inf.mit.bme.hu/en/members/marussyk)
-* Levente Bajczi
-* Mihály Dobos-Kovács
-* Milán Mondok
+* [Gábor Szárnyas](https://github.com/szarnyasg)
+* [Kristóf Marussy](https://github.com/kris7t)
+* [Levente Bajczi](https://github.com/leventeBajczi)
+* [Mihály Dobos-Kovács](https://github.com/as3810t)
+* [Milán Mondok](https://github.com/mondokm)
+* [Dániel Szekeres](https://github.com/szdan97)
+* [László Radnai](https://github.com/radl97)

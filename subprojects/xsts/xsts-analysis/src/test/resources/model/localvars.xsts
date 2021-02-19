@@ -1,0 +1,15 @@
+var a: integer = 0
+
+trans {
+    a:=0;
+} or {
+    local var a: integer;
+    a:=1;
+}
+
+init {
+    local var a: integer;
+    a:=1;
+}
+
+env {}
