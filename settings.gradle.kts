@@ -5,10 +5,10 @@ include(
         "common/common",
         "common/core",
 
-        "common/solver",
-        "common/solver-z3",
-        "common/solver-smtlib",
-        "common/solber-smtlib-cli"
+        "solver/solver",
+        "solver/solver-z3",
+        "solver/solver-smtlib",
+        "solver/solver-smtlib-cli",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
