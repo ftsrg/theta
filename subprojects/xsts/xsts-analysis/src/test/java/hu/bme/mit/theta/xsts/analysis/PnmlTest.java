@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import hu.bme.mit.theta.analysis.algorithm.*;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
@@ -28,13 +27,15 @@ import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 import org.junit.Test;
-
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class PnmlTest {
@@ -66,7 +67,7 @@ public class PnmlTest {
 	}
 
 	@Test
-	public void test() throws IOException {
+	public void test() {
 
 		try {
 

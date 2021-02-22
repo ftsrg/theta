@@ -26,9 +26,8 @@ public final class XstsDslManager {
 		final CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 		final XstsDslParser parser = new XstsDslParser(tokenStream);
 		final XstsDslParser.XstsContext model = parser.xsts();
-		final XSTSVisitor visitor = new XSTSVisitor();
-		visitor.visitXsts(model);
+		final XstsSpecification xstsSpecification = new XstsSpecification(model);
 
-		return visitor.getXsts();
+		return xstsSpecification.instantiate();
 	}
 }
