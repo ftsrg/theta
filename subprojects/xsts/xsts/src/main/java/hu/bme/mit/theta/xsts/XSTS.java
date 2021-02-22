@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.xsts.dsl.TypeDecl;
+import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
 
 import java.util.*;
 
@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
 	private final Collection<VarDecl<?>> vars;
-	private final Map<VarDecl<?>, TypeDecl> varToType;
+	private final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType;
 	private final Set<VarDecl<?>> ctrlVars;
 
 	private final NonDetStmt tran;
@@ -30,7 +30,7 @@ public final class XSTS {
 		return vars;
 	}
 
-	public Map<VarDecl<?>, TypeDecl> getVarToType() { return varToType; }
+	public Map<VarDecl<?>, XstsTypeDeclSymbol> getVarToType() { return varToType; }
 
 	public Expr<BoolType> getProp() { return prop; }
 
@@ -46,7 +46,7 @@ public final class XSTS {
 
 	public Set<VarDecl<?>> getCtrlVars() { return ctrlVars; }
 
-	public XSTS(final Map<VarDecl<?>, TypeDecl> varToType, final Set<VarDecl<?>> ctrlVars, final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+	public XSTS(final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType, final Set<VarDecl<?>> ctrlVars, final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env, final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
 		this.tran = checkNotNull(tran);
 		this.init = checkNotNull(init);
 		this.env = checkNotNull(env);

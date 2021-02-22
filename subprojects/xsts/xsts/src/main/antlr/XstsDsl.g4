@@ -340,7 +340,7 @@ initSet
     ;
 
 transitionSet
-    :   blocks+=blockStmt (NONDET_OR blocks+=blockStmt)*
+    :   stmts+=stmt (NONDET_OR stmts+=stmt)*
     ;
 
 TRAN

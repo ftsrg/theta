@@ -9,7 +9,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
-import hu.bme.mit.theta.xsts.dsl.TypeDecl;
+import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
+import hu.bme.mit.theta.xsts.dsl.XstsTypeLiteralSymbol;
 
 import java.util.List;
 import java.util.Optional;
@@ -79,11 +80,13 @@ public final class XstsStateSequence {
 			Optional<LitExpr<?>> val = state.eval(decl);
 			if (val.isPresent()) {
 				if (xsts.getVarToType().containsKey(decl)) {
-					TypeDecl type = xsts.getVarToType().get(decl);
+					XstsTypeDeclSymbol type = xsts.getVarToType().get(decl);
 					IntLitExpr intValue = (IntLitExpr) val.get();
-					int index = type.getIntValues().indexOf(intValue.getValue());
-					assert index != -1;
-					sb.add(String.format("(%s %s)", decl.getName(), type.getLiterals().get(index)));
+					var optSymbol = type.getLiterals().stream()
+							.filter(symbol -> symbol.getIntValue().equals(intValue))
+							.findFirst();
+					if(!optSymbol.isPresent()) throw new RuntimeException(String.format("Unknown literal value %s for type %s",intValue,type.getName()));
+					sb.add(String.format("(%s %s)", decl.getName(), optSymbol.get().getName()));
 				} else {
 					sb.add(String.format("(%s %s)", decl.getName(), val.get()));
 				}
