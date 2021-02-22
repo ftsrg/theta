@@ -5,8 +5,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.*;
-import hu.bme.mit.theta.analysis.algorithm.cegar.*;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -14,7 +14,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
@@ -23,25 +22,13 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.SequenceInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -252,14 +239,8 @@ public class XstsCli {
 		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
 		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
 		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
+		try (PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.write(concrTrace.toString());
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
-			}
 		}
 	}
 
