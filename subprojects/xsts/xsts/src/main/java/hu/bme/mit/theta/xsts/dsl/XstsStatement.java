@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;

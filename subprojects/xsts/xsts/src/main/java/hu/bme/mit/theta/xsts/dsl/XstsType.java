@@ -1,10 +1,8 @@
 package hu.bme.mit.theta.xsts.dsl;
 
 import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
