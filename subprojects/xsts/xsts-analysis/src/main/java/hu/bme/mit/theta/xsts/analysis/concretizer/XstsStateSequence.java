@@ -84,7 +84,7 @@ public final class XstsStateSequence {
 					var optSymbol = type.getLiterals().stream()
 							.filter(symbol -> symbol.getIntValue().equals(intValue))
 							.findFirst();
-					if(!optSymbol.isPresent()) throw new RuntimeException(String.format("Unknown literal value %s for type %s",intValue,type.getName()));
+					assert optSymbol.isPresent();
 					sb.add(String.format("(%s %s)", decl.getName(), optSymbol.get().getName()));
 				} else {
 					sb.add(String.format("(%s %s)", decl.getName(), val.get()));
