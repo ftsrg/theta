@@ -10,15 +10,17 @@ xsts:
 
 // D E C L A R A T I O N S
 
-variableDeclaration:
-    CTRL? VAR name=ID DP ttype=type  (EQUALS initValue=expr)?;
+variableDeclaration
+    :   CTRL? VAR name=ID DP ttype=type  (EQUALS initValue=expr)?
+    ;
 
+typeDeclaration
+    :   TYPE name=ID DP LCURLY literals+=typeLiteral (COMMA literals+=typeLiteral)* RCURLY
+    ;
 
-typeDeclaration:
-    TYPE name=ID DP LCURLY literals+=typeLiteral (COMMA literals+=typeLiteral)* RCURLY;
-
-typeLiteral:
-    name=ID;
+typeLiteral
+    :   name=ID
+    ;
 
 CTRL
     :   'ctrl'
@@ -265,11 +267,16 @@ nonDetStmt
     ;
 
 blockStmt
-    :   LCURLY subStmt=seqStmt RCURLY
+    :   LCURLY (varDecls+=localVarDecl)* subStmt=seqStmt RCURLY
     ;
 
-seqStmt:
-    (stmts+=stmt)*;
+localVarDecl
+    :   LOCAL VAR name=ID DP ttype=type
+    ;
+
+seqStmt
+    :   (stmts+=stmt)*
+    ;
 
 assignStmt
 	:	lhs=ID ASSIGN value=expr SEMICOLON
@@ -314,6 +321,9 @@ RCURLY
     :   '}'
     ;
 
+LOCAL
+    :   'local'
+    ;
 
 // T R A N S I T I O N S
 
