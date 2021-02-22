@@ -15,27 +15,26 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import hu.bme.mit.theta.analysis.algorithm.*;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
-
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class XstsTest {
@@ -206,13 +205,19 @@ public class XstsTest {
 
 				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD},
 
-				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD_AUTO},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
 
 		});
 	}
 
 	@Test
-	public void test() throws IOException {
+	public void test() {
 
 		try {
 

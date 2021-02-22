@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xsts.pnml;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -127,8 +126,7 @@ public class PnmlParser {
 			target.addInArc(arc);
 		}
 
-		final PnmlNet net = new PnmlNet(places,transitions);
-		return net;
+		return new PnmlNet(places,transitions);
 
 	}
 
