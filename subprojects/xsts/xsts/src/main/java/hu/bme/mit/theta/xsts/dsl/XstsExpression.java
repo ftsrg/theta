@@ -433,7 +433,7 @@ final class XstsExpression {
 			final T2 valueType;
 
 			if(ctx.indexType != null) {
-				indexType = (T1) new XstsType(ctx.indexType).instantiate();
+				indexType = (T1) new XstsType(currentScope,ctx.indexType).instantiate(env);
 			}
 			else {
 				indexType = (T1) ctx.indexExpr.get(0).accept(this).getType();
