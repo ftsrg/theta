@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
