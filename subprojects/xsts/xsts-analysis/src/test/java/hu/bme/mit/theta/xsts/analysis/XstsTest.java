@@ -15,7 +15,18 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static org.junit.Assert.assertTrue;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
+import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,19 +34,8 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import hu.bme.mit.theta.analysis.algorithm.*;
-import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import org.junit.Test;
 
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class XstsTest {
@@ -218,7 +218,7 @@ public class XstsTest {
 	}
 
 	@Test
-	public void test() throws IOException {
+	public void test() {
 
 		try {
 

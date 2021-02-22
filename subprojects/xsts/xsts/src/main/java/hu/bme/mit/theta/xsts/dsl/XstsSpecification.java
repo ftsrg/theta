@@ -5,18 +5,20 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class XstsSpecification implements Scope {
@@ -41,10 +43,6 @@ public class XstsSpecification implements Scope {
 	@Override
 	public Optional<? extends Symbol> resolve(String name) {
 		return symbolTable.get(name);
-	}
-
-	private void checkIfTempVar(String name) {
-		if (tempVarPattern.matcher(name).matches()) throw new RuntimeException(name + " is reserved!");
 	}
 
 	public XSTS instantiate(){
@@ -74,12 +72,16 @@ public class XstsSpecification implements Scope {
 		}
 
 		for(var varDeclContext: context.variableDeclarations){
+			if (tempVarPattern.matcher(varDeclContext.name.getText()).matches()){
+				throw new ParseException(varDeclContext, "Variable name '" + varDeclContext.name.getText() + "' is reserved!");
+			}
+
 			final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable,varDeclContext);
 			symbolTable.add(symbol);
 
 			final VarDecl<?> var = symbol.instantiate(env);
 			final Optional<? extends Symbol> typeDeclSymbol = typeTable.get(varDeclContext.ttype.getText());
-			if (!typeDeclSymbol.isEmpty()) {
+			if (typeDeclSymbol.isPresent()) {
 				varToType.put(var, (XstsTypeDeclSymbol) typeDeclSymbol.get());
 			}
 			if(varDeclContext.CTRL()!=null) ctrlVars.add(var);

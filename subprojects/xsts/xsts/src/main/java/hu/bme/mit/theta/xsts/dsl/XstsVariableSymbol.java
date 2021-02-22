@@ -4,7 +4,7 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.VariableDeclarationContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Var;

@@ -6,7 +6,7 @@ import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.TransitionSetContext;
 
 import java.util.List;
 import java.util.stream.Collectors;
