@@ -206,7 +206,13 @@ public class XstsTest {
 
 				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD},
 
-				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PROD_AUTO},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
 
 		});
 	}
