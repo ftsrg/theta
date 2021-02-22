@@ -5,6 +5,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Expr;
@@ -43,15 +44,17 @@ import static java.util.stream.Collectors.toList;
 final class XstsExpression {
 
 	private final Scope scope;
+	private final SymbolTable typeTable;
 	private final ExprContext context;
 
-	public XstsExpression(final Scope scope, final ExprContext context) {
+	public XstsExpression(final Scope scope, final SymbolTable typeTable, final ExprContext context) {
 		this.scope = checkNotNull(scope);
+		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
 	}
 
 	public Expr<?> instantiate(final Env env) {
-		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope, env);
+		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope, typeTable, env);
 		final Expr<?> expr = context.accept(visitor);
 		if (expr == null) {
 			throw new AssertionError();
@@ -63,10 +66,12 @@ final class XstsExpression {
 	private static final class ExprCreatorVisitor extends XstsDslBaseVisitor<Expr<?>> {
 
 		private Scope currentScope;
+		private final SymbolTable typeTable;
 		private final Env env;
 
-		private ExprCreatorVisitor(final Scope scope, final Env env) {
+		private ExprCreatorVisitor(final Scope scope, final SymbolTable typeTable, final Env env) {
 			currentScope = checkNotNull(scope);
+			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);
 		}
 
@@ -433,7 +438,7 @@ final class XstsExpression {
 			final T2 valueType;
 
 			if(ctx.indexType != null) {
-				indexType = (T1) new XstsType(currentScope,ctx.indexType).instantiate(env);
+				indexType = (T1) new XstsType(typeTable,ctx.indexType).instantiate(env);
 			}
 			else {
 				indexType = (T1) ctx.indexExpr.get(0).accept(this).getType();
@@ -453,14 +458,20 @@ final class XstsExpression {
 		}
 
 		@Override
-		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
+		public Expr<?> visitIdExpr(final IdExprContext ctx) {
 			Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 			if (optSymbol.isEmpty()) {
 				throw new ParseException(ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
 			}
 			final Symbol symbol = optSymbol.get();
-			final Decl<?> decl = (Decl<?>) env.eval(symbol);
-			return decl.getRef();
+			final Object val = env.eval(symbol);
+			if (val instanceof IntLitExpr) return (IntLitExpr) val;
+			else if (val instanceof Decl) {
+				final Decl<?> decl = (Decl<?>) val;
+				return decl.getRef();
+			}
+			throw new ParseException(ctx, "Identifier '" + ctx.id.getText() + "' does not refer to a valid expression");
+
 		}
 
 		@Override

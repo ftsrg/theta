@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.dsl;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Type;
@@ -18,16 +19,16 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XstsType {
 
-	private final Scope scope;
+	private final SymbolTable typeTable;
 	private final TypeContext context;
 
-	public XstsType(final Scope scope, final TypeContext context) {
-		this.scope = checkNotNull(scope);
+	public XstsType(final SymbolTable typeTable, final TypeContext context) {
+		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
 	}
 
 	public Type instantiate(final Env env) {
-		final TypeCreatorVisitor typeCreatorVisitor = new TypeCreatorVisitor(scope,env);
+		final TypeCreatorVisitor typeCreatorVisitor = new TypeCreatorVisitor(typeTable,env);
 		final Type result = context.accept(typeCreatorVisitor);
 		if (result == null) {
 			throw new AssertionError();
@@ -38,17 +39,17 @@ final class XstsType {
 
 	private static class TypeCreatorVisitor extends XstsDslBaseVisitor<Type> {
 
-		private final Scope scope;
+		private final SymbolTable typeTable;
 		private final Env env;
 
-		public TypeCreatorVisitor(final Scope scope, final Env env) {
-			this.scope = checkNotNull(scope);
+		public TypeCreatorVisitor(final SymbolTable typeTable, final Env env) {
+			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);
 		}
 
 		@Override
 		public Type visitCustomType(CustomTypeContext ctx) {
-			Optional<? extends Symbol> optSymbol = scope.resolve(ctx.name.getText());
+			Optional<? extends Symbol> optSymbol = typeTable.get(ctx.name.getText());
 			if (optSymbol.isEmpty()) {
 				throw new ParseException(ctx, "Type '" + ctx.name.getText() + "' cannot be resolved");
 			}
