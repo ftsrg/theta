@@ -10,7 +10,6 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
-import hu.bme.mit.theta.xsts.dsl.XstsTypeLiteralSymbol;
 
 import java.util.List;
 import java.util.Optional;

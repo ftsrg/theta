@@ -4,11 +4,9 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsTypeDeclSymbol implements Symbol {
