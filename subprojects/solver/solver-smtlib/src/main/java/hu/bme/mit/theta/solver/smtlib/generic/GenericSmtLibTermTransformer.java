@@ -480,6 +480,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var funcLit = (FuncLitExpr<?, ?>) toFuncLitExpr(model.getTerm(name), model);
             return funcLit.getResult();
         }
+        else if(ctx.symbol().getText().startsWith("bv")) {
+            final var value = ctx.symbol().getText().substring(2);
+            final var bvSize = Integer.parseInt(ctx.index().get(0).getText());
+            return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(value), bvSize);
+        }
         else {
             return transformSymbol(ctx.symbol(), model, vars);
         }

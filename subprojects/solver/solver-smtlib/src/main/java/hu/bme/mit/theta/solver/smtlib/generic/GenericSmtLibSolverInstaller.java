@@ -77,22 +77,10 @@ public final class GenericSmtLibSolverInstaller extends BaseSmtLibSolverInstalle
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path home, final String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-
-        final var installDir = home.resolve(version);
-        if(!Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is not installed");
-        }
-
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
         try {
             final var solverFilePath = solverFile(installDir);
             final var solverPathStr = Files.readAllLines(solverFilePath, StandardCharsets.UTF_8).get(0);
-            final var solverArgsPath = argsFile(installDir);
-            final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
-
             return GenericSmtLibSolverFactory.create(Path.of(solverPathStr), solverArgs);
         }
         catch (IOException e) {

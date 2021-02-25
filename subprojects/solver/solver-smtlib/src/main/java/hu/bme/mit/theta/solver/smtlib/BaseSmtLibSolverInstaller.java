@@ -1,9 +1,12 @@
 package hu.bme.mit.theta.solver.smtlib;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.z3.Z3SmtLibSolverFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,6 +123,28 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     }
 
     @Override
+    public final SolverFactory getSolverFactory(final Path home, final String version) throws SmtLibSolverInstallerException {
+        checkNotNull(home);
+        checkArgument(Files.exists(home));
+        checkVersion(version);
+
+        final var installDir = home.resolve(version);
+        if(!Files.exists(installDir)) {
+            throw new SmtLibSolverInstallerException("The version is not installed");
+        }
+
+        try {
+            final var solverArgsPath = argsFile(installDir);
+            final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
+
+            return getSolverFactory(installDir, version, solverArgs);
+        }
+        catch (IOException e) {
+            throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
+        }
+    }
+
+    @Override
     public final String getInfo(Path home, String version) throws SmtLibSolverInstallerException {
         checkNotNull(home);
         checkArgument(Files.exists(home));
@@ -176,6 +201,7 @@ public abstract class BaseSmtLibSolverInstaller implements SmtLibSolverInstaller
     protected abstract String getSolverName() throws SmtLibSolverInstallerException;
     protected abstract void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException;
     protected abstract void uninstallSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException;
+    protected abstract SolverFactory getSolverFactory(final Path installDir, final String version, final String[] args) throws SmtLibSolverInstallerException;
     protected abstract String[] getDefaultSolverArgs(final String version) throws SmtLibSolverInstallerException;
 
     protected final void checkName(final String version) throws SmtLibSolverInstallerException {

@@ -1,12 +1,13 @@
 package hu.bme.mit.theta.solver.smtlib.cvc4;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.SemVer;
+import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.BaseSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
+import hu.bme.mit.theta.solver.smtlib.z3.Z3SmtLibSolverFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -69,26 +70,9 @@ public class CVC4SmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
     }
 
     @Override
-    public SolverFactory getSolverFactory(Path home, String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-
-        final var installDir = home.resolve(version);
-        if(!Files.exists(installDir)) {
-            throw new SmtLibSolverInstallerException("The version is not installed");
-        }
-
-        try {
-            final var solverFilePath = installDir.resolve(getSolverBinaryName());
-            final var solverArgsPath = argsFile(installDir);
-            final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8).toArray(String[]::new);
-
-            return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
-        }
-        catch (IOException e) {
-            throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
-        }
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = installDir.resolve("bin").resolve(getSolverBinaryName());
+        return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override

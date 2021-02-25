@@ -8,6 +8,7 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.cvc4.CVC4SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.mathsat.MathSATSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.z3.Z3SmtLibSolverInstaller;
 
 import java.io.IOException;
@@ -40,6 +41,7 @@ public final class SmtLibSolverManager {
     static {
         registerInstaller("z3", Z3SmtLibSolverInstaller.class);
         registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
+        registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
