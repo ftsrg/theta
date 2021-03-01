@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
@@ -149,7 +150,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PROD},
 
-				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL},
 
@@ -175,7 +176,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
+//				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 //				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PROD},
 
@@ -211,38 +212,35 @@ public class XstsTest {
 
 				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PROD_AUTO},
+
+				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
+
 
 		});
 	}
 
 	@Test
-	public void test() {
+	public void test() throws IOException {
 
-		try {
+		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
-			final Logger logger = new ConsoleLogger(Level.SUBSTEP);
-
-			XSTS xsts = null;
-
-			try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
-				xsts = XstsDslManager.createXsts(inputStream);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).logger(logger).build(xsts);
-			final SafetyResult<?, ?> status = configuration.check();
-			if (safe) {
-				assertTrue(status.isSafe());
-			} else {
-				assertTrue(status.isUnsafe());
-			}
-
-		} catch (Exception e){
-			e.printStackTrace();
+		XSTS xsts;
+		try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
+			xsts = XstsDslManager.createXsts(inputStream);
 		}
 
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).logger(logger).build(xsts);
+		final SafetyResult<?, ?> status = configuration.check();
+		if (safe) {
+			assertTrue(status.isSafe());
+		} else {
+			assertTrue(status.isUnsafe());
+		}
 	}
 
 }
