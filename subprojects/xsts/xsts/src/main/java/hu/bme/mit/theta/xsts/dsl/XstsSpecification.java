@@ -1,9 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
-import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
@@ -21,7 +18,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class XstsSpecification implements Scope {
+public class XstsSpecification implements DynamicScope {
 
 	private final SymbolTable symbolTable;
 	private final SymbolTable typeTable;
@@ -36,7 +33,7 @@ public class XstsSpecification implements Scope {
 	}
 
 	@Override
-	public Optional<? extends Scope> enclosingScope() {
+	public Optional<? extends DynamicScope> enclosingScope() {
 		return Optional.empty();
 	}
 
@@ -55,13 +52,13 @@ public class XstsSpecification implements Scope {
 		for(var typeDeclContext: context.typeDeclarations){
 			final List<XstsTypeLiteralSymbol> literals = new ArrayList<>();
 			for(var literalContext: typeDeclContext.literals){
-				var optSymbol = symbolTable.get(literalContext.name.getText());
+				var optSymbol = resolve(literalContext.name.getText());
 				if(optSymbol.isPresent()){
 					literals.add((XstsTypeLiteralSymbol) optSymbol.get());
 				} else {
 					var symbol = new XstsTypeLiteralSymbol(literalContext.name.getText());
 					literals.add(symbol);
-					symbolTable.add(symbol);
+					declare(symbol);
 					env.define(symbol,symbol.instantiate());
 				}
 			}
@@ -77,7 +74,7 @@ public class XstsSpecification implements Scope {
 			}
 
 			final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable,varDeclContext);
-			symbolTable.add(symbol);
+			declare(symbol);
 
 			final VarDecl<?> var = symbol.instantiate(env);
 			final Optional<? extends Symbol> typeDeclSymbol = typeTable.get(varDeclContext.ttype.getText());
@@ -100,5 +97,15 @@ public class XstsSpecification implements Scope {
 		final Expr<BoolType> prop = cast(new XstsExpression(this,typeTable,context.prop).instantiate(env),Bool());
 
 		return new XSTS(varToType,ctrlVars,initSet,tranSet,envSet,initFormula,prop);
+	}
+
+	@Override
+	public void declare(Symbol symbol) {
+		symbolTable.add(symbol);
+	}
+
+	@Override
+	public void declareAll(Collection<? extends Symbol> symbols) {
+		symbolTable.addAll(symbols);
 	}
 }

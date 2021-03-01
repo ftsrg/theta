@@ -26,11 +26,11 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public class XstsStatement {
 
-	private final Scope scope;
+	private final DynamicScope scope;
 	private final SymbolTable typeTable;
 	private final StmtContext context;
 
-	public XstsStatement(final Scope scope, final SymbolTable typeTable, final StmtContext context) {
+	public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context) {
 		this.scope = checkNotNull(scope);
 		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
@@ -48,25 +48,19 @@ public class XstsStatement {
 
 	private static final class StmtCreatorVisitor extends XstsDslBaseVisitor<Stmt> {
 
-		private Scope currentScope;
+		private DynamicScope currentScope;
 		private final SymbolTable typeTable;
 		private final Env env;
 
-		public StmtCreatorVisitor(final Scope scope, final SymbolTable typeTable, final Env env) {
+		public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env) {
 			this.currentScope = checkNotNull(scope);
 			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);
 		}
 
-		private void push(final List<VarDecl<?>> localDecls) {
-			final BasicScope scope = new BasicScope(currentScope);
+		private void push() {
+			currentScope = new BasicDynamicScope(currentScope);
 			env.push();
-			for (final VarDecl<?> localDecl : localDecls) {
-				final Symbol symbol = DeclSymbol.of(localDecl);
-				scope.declare(symbol);
-				env.define(symbol, localDecl);
-			}
-			currentScope = scope;
 		}
 
 		private void pop() {
@@ -133,29 +127,37 @@ public class XstsStatement {
 		}
 
 		@Override
-		public Stmt visitBlockStmt(BlockStmtContext ctx) {
-			if(ctx.varDecls.size()>0){
-				final List<VarDecl<?>> localDecls = ctx.varDecls.stream()
-						.map(d -> createLocalVarDecl(d)).collect(Collectors.toList());
-
-				push(localDecls);
-
-				final Stmt subStmt = ctx.subStmt.accept(this);
-
-				pop();
-
-				return subStmt;
-			} else {
-				return ctx.subStmt.accept(this);
-			}
-
-		}
-
-		private VarDecl<?> createLocalVarDecl(LocalVarDeclContext ctx){
+		public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
 			final String name = ctx.name.getText();
 			final Type type = new XstsType(typeTable,ctx.ttype).instantiate(env);
-			return Decls.Var(name,type);
+			var decl = Decls.Var(name,type);
+
+			final Symbol symbol = DeclSymbol.of(decl);
+			currentScope.declare(symbol);
+			env.define(symbol, decl);
+
+			if(ctx.initValue==null){
+				return SkipStmt.getInstance();
+			} else {
+				var expr = new XstsExpression(currentScope,typeTable,ctx.initValue).instantiate(env);
+				if (expr.getType().equals(decl.getType())) {
+					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
+					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
+					return Assign(tVar, tExpr);
+				} else {
+					throw new IllegalArgumentException("Type of " + decl + " is incompatilbe with " + expr);
+				}
+			}
 		}
+
+		@Override
+		public Stmt visitBlockStmt(BlockStmtContext ctx) {
+			push();
+			final Stmt subStmt = ctx.subStmt.accept(this);
+			pop();
+			return subStmt;
+		}
+
 	}
 
 }

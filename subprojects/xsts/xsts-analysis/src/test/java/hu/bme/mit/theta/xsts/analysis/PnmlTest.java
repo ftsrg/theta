@@ -29,8 +29,12 @@ import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,33 +71,25 @@ public class PnmlTest {
 	}
 
 	@Test
-	public void test() {
+	public void test() throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
 
-		try {
+		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
-			final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+		final PnmlNet pnmlNet = PnmlParser.parse(filePath,initialMarking);
 
-			final PnmlNet pnmlNet = PnmlParser.parse(filePath,initialMarking);
-
-			XSTS xsts = null;
-
-			try (InputStream propStream = new ByteArrayInputStream(("prop { " + targetMarking + " }").getBytes())) {
-				xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
-			final SafetyResult<?, ?> status = configuration.check();
-			if (safe) {
-				assertTrue(status.isSafe());
-			} else {
-				assertTrue(status.isUnsafe());
-			}
-
-		} catch (Exception e){
-			e.printStackTrace();
+		XSTS xsts;
+		try (InputStream propStream = new ByteArrayInputStream(("prop { " + targetMarking + " }").getBytes())) {
+			xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
 		}
+
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
+		final SafetyResult<?, ?> status = configuration.check();
+		if (safe) {
+			assertTrue(status.isSafe());
+		} else {
+			assertTrue(status.isUnsafe());
+		}
+
 
 	}
 
