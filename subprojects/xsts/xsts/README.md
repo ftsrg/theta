@@ -56,9 +56,9 @@ When using product abstraction (`PROD`), variables tagged as control variables a
 
 `ctrl var <name> : <type>`
 
-Local variables can be declared at the top of blocks with the `local` keyword. (These variables cannot be flagged as `ctrl` and can have no initial value assigned to them.)
+Local variables can be declared with the `local` keyword. (These variables cannot be flagged as `ctrl`.) As these declarations are statements, they must end with semicolons.
 
-`{ local var <name> : <type> }`
+`local var <name> : <type>`
 
 Examples:
 
@@ -67,6 +67,7 @@ var a : integer
 var b : boolean = false
 var c : Color = RED
 ctrl var x : integer = 0
+local var y : integer = x + 2; 
 ```
 
 All variable names matching the pattern `temp([0-9])+` are reserved for use by the model checker.
@@ -90,10 +91,11 @@ The behaviour of XSTSs can be described using transitions. A transition is an at
     * assignments of the form `<varname> := <expr>`, where `<varname>` is the name of a variable and `<expr>` is an expression of the same type
     * assumptions of the form `assume <expr>`, where `<expr>` is a boolean expression
     * havocs of the form `havoc <varname>`
+    * local variable declarations
 * composite statements:
     * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 1 or more branches
     * sequences of the form `<statement> <statement> <statement>`
-    * blocks that can include local variable declarations
+    * blocks
     
 Only those branches of a choice statement are considered for execution, of which all contained assumptions evaluate to true.
 
@@ -105,7 +107,7 @@ choice {
     assume y<2;
     x := x+y;
 } or {
-    local var z: integer
+    local var z: integer = x + 4;
     z := 2;
     choice {
         assume true;

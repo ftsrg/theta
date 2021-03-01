@@ -2,10 +2,7 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Expr;
@@ -44,11 +41,11 @@ import static java.util.stream.Collectors.toList;
 
 final class XstsExpression {
 
-	private final Scope scope;
+	private final DynamicScope scope;
 	private final SymbolTable typeTable;
 	private final ExprContext context;
 
-	public XstsExpression(final Scope scope, final SymbolTable typeTable, final ExprContext context) {
+	public XstsExpression(final DynamicScope scope, final SymbolTable typeTable, final ExprContext context) {
 		this.scope = checkNotNull(scope);
 		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
@@ -66,11 +63,11 @@ final class XstsExpression {
 
 	private static final class ExprCreatorVisitor extends XstsDslBaseVisitor<Expr<?>> {
 
-		private Scope currentScope;
+		private DynamicScope currentScope;
 		private final SymbolTable typeTable;
 		private final Env env;
 
-		private ExprCreatorVisitor(final Scope scope, final SymbolTable typeTable, final Env env) {
+		private ExprCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env) {
 			currentScope = checkNotNull(scope);
 			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);

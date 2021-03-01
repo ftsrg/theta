@@ -255,7 +255,8 @@ DEFAULT
 
 // S T A T E M E N T S
 
-stmt:	assignStmt
+stmt:	localVarDeclStmt
+    |   assignStmt
 	|	havocStmt
 	|	assumeStmt
 	|   nonDetStmt
@@ -267,11 +268,11 @@ nonDetStmt
     ;
 
 blockStmt
-    :   LCURLY (varDecls+=localVarDecl)* subStmt=seqStmt RCURLY
+    :   LCURLY subStmt=seqStmt RCURLY
     ;
 
-localVarDecl
-    :   LOCAL VAR name=ID DP ttype=type
+localVarDeclStmt
+    :   LOCAL VAR name=ID DP ttype=type (EQUALS initValue=expr)? SEMICOLON
     ;
 
 seqStmt
