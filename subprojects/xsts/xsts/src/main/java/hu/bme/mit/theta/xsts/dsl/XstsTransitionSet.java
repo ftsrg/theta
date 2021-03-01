@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import hu.bme.mit.theta.common.dsl.DynamicScope;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -15,11 +16,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XstsTransitionSet {
 
-	private final Scope scope;
+	private final DynamicScope scope;
 	private final SymbolTable typeTable;
 	private final TransitionSetContext context;
 
-	public XstsTransitionSet(final Scope scope, final SymbolTable typeTable, final TransitionSetContext context) {
+	public XstsTransitionSet(final DynamicScope scope, final SymbolTable typeTable, final TransitionSetContext context) {
 		this.scope = checkNotNull(scope);
 		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
