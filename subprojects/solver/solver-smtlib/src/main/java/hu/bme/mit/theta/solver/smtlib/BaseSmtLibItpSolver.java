@@ -73,27 +73,28 @@ public abstract class BaseSmtLibItpSolver<T extends SmtLibItpMarker> implements 
         return markers.toCollection();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void add(final ItpMarker marker, final Expr<BoolType> assertion) {
         checkNotNull(marker);
         checkNotNull(assertion);
-        checkArgument(marker instanceof SmtLibItpMarker);
+        checkNotNull((T) marker);
         checkArgument(markers.toCollection().contains(marker));
 
         final var consts = ExprUtils.getConstants(assertion);
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
-        final var itpMarker = (SmtLibItpMarker) marker;
+        final var itpMarker = (T) marker;
         final var term = transformationManager.toTerm(assertion);
         itpMarker.add(assertion, term);
 
-        add(marker, assertion, consts, term);
+        add(itpMarker, assertion, consts, term);
 
         clearState();
     }
 
-    protected abstract void add(final ItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term);
+    protected abstract void add(final T marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term);
 
     @Override
     public SolverStatus check() {

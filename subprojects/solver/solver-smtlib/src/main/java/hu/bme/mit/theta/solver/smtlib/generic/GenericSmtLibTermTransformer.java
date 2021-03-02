@@ -411,7 +411,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         } else if (funAppTransformer.containsKey(funName)) { // known function application
             return funAppTransformer.get(funName).apply(funParams, funAppParams, model, vars);
         } else { // custom function application
-            checkArgument(funParams.size() == 0, "Custom unary function application cannot vahe parameter");
+            checkArgument(funParams.size() == 0, "Custom unary function application cannot have parameter");
             checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
 
             return createFuncAppExpr(funName, funAppParams.get(0), model, vars);

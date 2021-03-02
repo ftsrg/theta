@@ -73,7 +73,7 @@ public final class Z3SmtLibItpSolver extends BaseSmtLibItpSolver<Z3SmtLibItpMark
     }
 
     @Override
-    protected void add(final ItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term) {
+    protected void add(final Z3SmtLibItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
     }
 

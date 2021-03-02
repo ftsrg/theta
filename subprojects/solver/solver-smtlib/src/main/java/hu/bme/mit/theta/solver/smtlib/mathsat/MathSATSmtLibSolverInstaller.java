@@ -144,7 +144,7 @@ public class MathSATSmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = installDir.resolve("bin").resolve(getSolverBinaryName());
-        return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return MathSATSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override
