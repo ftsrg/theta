@@ -17,6 +17,9 @@ Install it, or just execute `Download-VCredist.ps1`, which will download the req
 If you have a different OS, you should download the appropriate [Z3 binary for version 4.5.0](https://github.com/Z3Prover/z3/releases/tag/z3-4.5.0).
 These libraries should be available on `PATH` for the executable tools.
 
+*Troubleshooting*:
+* If Z3 gives an assertion error (unreachable code reached), your Z3 version may not be correct.
+
 **GraphViz:**
 Theta can export graphs in _dot_ format and automatically convert them to images.
 For this, [GraphViz](http://www.graphviz.org/) has to be installed and _dot_ (or _dot.exe_ on Windows) has to be on the `PATH`.
