@@ -15,9 +15,13 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
+import java.io.*;
+import java.util.Set;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -25,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -43,12 +48,6 @@ import hu.bme.mit.theta.xta.testgen.XtaTest;
 import hu.bme.mit.theta.xta.testgen.XtaTestGenerator;
 import hu.bme.mit.theta.xta.testgen.XtaTestPrinter;
 import hu.bme.mit.theta.xta.testgen.XtaTestVisualizer;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
 
 public final class XtaCli {
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -75,6 +74,12 @@ public final class XtaCli {
 
 	@Parameter(names = {"--header", "-h"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
+
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	boolean stacktrace = false;
+
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
 
 	@Parameter(names = {"--testgen", "-t"}, description = "Generate tests to all locations")
 	boolean testGeneration = false;
@@ -117,13 +122,16 @@ public final class XtaCli {
 			return;
 		}
 
+		if (versionInfo) {
+			CliUtils.printVersion(System.out);
+			return;
+		}
+
 		try {
 			final XtaSystem system = loadModel();
 			final SafetyChecker<? extends XtaState<?>, ? extends XtaAction, UnitPrec> checker =
 					LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, searchStrategy);
-			final SafetyResult<? extends XtaState<?>, ? extends XtaAction> result =
-					checker.check(UnitPrec.getInstance());
-
+			final SafetyResult<? extends XtaState<?>, ? extends XtaAction> result = check(checker);
 			if (testGeneration) {
 				ARG<? extends XtaState<?>, ? extends XtaAction> arg = result.getArg();
 				LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
@@ -144,18 +152,32 @@ public final class XtaCli {
 			} else {
 				printResult(result);
 			}
-
 			if (dotfile != null) {
 				writeVisualStatus(result, dotfile);
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
+			System.exit(1);
 		}
 	}
 
-	private XtaSystem loadModel() throws IOException {
-		try (InputStream inputStream = new FileInputStream(model)) {
-			return XtaDslManager.createSystem(inputStream);
+	private SafetyResult<? extends XtaState<?>, ? extends XtaAction>
+			check(SafetyChecker<? extends XtaState<?>, ? extends XtaAction, UnitPrec> checker) throws Exception {
+		try {
+			return checker.check(UnitPrec.getInstance());
+		} catch (final Exception ex) {
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+		}
+	}
+
+	private XtaSystem loadModel() throws Exception {
+		try {
+			try (InputStream inputStream = new FileInputStream(model)) {
+				return XtaDslManager.createSystem(inputStream);
+			}
+		} catch (Exception ex) {
+			throw new Exception("Could not parse XTA: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -172,10 +194,17 @@ public final class XtaCli {
 		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
-			writer.newRow();
 		} else {
-			System.out.println("Exception occured: " + ex.getClass().getSimpleName());
-			System.out.println("Message: " + ex.getMessage());
+			System.out.println(ex.getClass().getSimpleName() + " occurred, message: " + message);
+			if (stacktrace) {
+				final StringWriter errors = new StringWriter();
+				ex.printStackTrace(new PrintWriter(errors));
+				System.out.println("Trace:");
+				System.out.println(errors);
+			}
+			else {
+				System.out.println("Use --stacktrace for stack trace");
+			}
 		}
 	}
 
@@ -193,4 +222,5 @@ public final class XtaCli {
 	private void visualizeTests(Set<? extends XtaTest<?, ?>> tests) {
 		XtaTestVisualizer.visualizeTests(tests);
 	}
+
 }
