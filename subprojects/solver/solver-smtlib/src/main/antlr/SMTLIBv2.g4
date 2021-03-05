@@ -74,6 +74,7 @@ model_response
     : model_response_fun
     | model_response_fun_rec
     | model_response_funs_rec
+    | model_response_mathsat
     ;
 
 model_response_fun
@@ -86,6 +87,10 @@ model_response_fun_rec
 
 model_response_funs_rec
     : ParOpen CMD_DefineFunsRec ParOpen function_dec+ ParClose ParOpen term+ ParClose ParClose
+    ;
+
+model_response_mathsat
+    : ParOpen symbol term ParClose
     ;
 
 function_def
