@@ -3,6 +3,8 @@ package hu.bme.mit.theta.solver.smtlib.parser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.solver.smtlib.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_mathsatContext;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
@@ -26,6 +28,16 @@ public class GetModelResponse implements SpecificResponse {
             @Override
             public Tuple2<String, String> visitModel_response_fun(Model_response_funContext ctx) {
                 return Tuple2.of(extractString(ctx.function_def().symbol()), extractString(ctx.function_def()));
+            }
+
+            @Override
+            public Tuple2<String, String> visitModel_response_mathsat(Model_response_mathsatContext ctx) {
+                final var functionDef = String.format(
+                    "%s () (_ theta_type unknown) %s",
+                    extractString(ctx.symbol()),
+                    extractString(ctx.term())
+                );
+                return Tuple2.of(extractString(ctx.symbol()), functionDef);
             }
 
             @Override
