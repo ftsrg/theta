@@ -61,7 +61,7 @@ public class ExecutionGraph {
         executionGraphDatabase.getThreadMapping().addFact(TupleN.of(write, threadLut.get(process)));
         executionGraphDatabase.getVarMapping().addFact(TupleN.of(write, varLut.get(varDecl)));
 
-        executionGraphDatabase.getRevisitables().getElements().stream().filter(objects -> objects.get(0));
+        //executionGraphDatabase.getRevisitables().getElements().stream().filter(objects -> objects.get(0));
     }
 
 

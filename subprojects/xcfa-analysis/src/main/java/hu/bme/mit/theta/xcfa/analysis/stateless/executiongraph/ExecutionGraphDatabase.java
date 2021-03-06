@@ -73,7 +73,7 @@ public final class ExecutionGraphDatabase extends Datalog {
     }
 
     public Relation getVolatileNodes() {
-        return volatileNodes;
+        return null;//volatileNodes;
     }
 
     public Relation getThreadMapping() {
@@ -85,6 +85,6 @@ public final class ExecutionGraphDatabase extends Datalog {
     }
 
     public Relation getRevisitables() {
-        return revisitables;
+        return null;//revisitables;
     }
 }
