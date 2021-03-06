@@ -75,7 +75,7 @@ final class WrittenVarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collectio
     @Override
     public Void visit(AtomicBeginStmt atomicBeginStmt, Collection<VarDecl<?>> param) {
         // TODO collect all variables that are accessed from here?
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override

@@ -75,7 +75,6 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(AtomicEndStmt atomicEndStmt, Collection<VarDecl<?>> param) {
-		// TODO return list of all variables touched by any stmt that can be accessed from here?
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 

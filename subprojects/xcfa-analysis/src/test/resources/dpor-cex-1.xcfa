@@ -1,0 +1,31 @@
+var global : int
+process ___ThreadFunction1 {
+    main procedure global1read() {
+        var read1 : int
+        init loc loc0
+        final loc loc1
+        loc0 -> loc1 {
+            read1 := global
+        }
+    }
+}
+process ___ThreadFunction2 {
+    main procedure global1read() {
+        var read2 : int
+        init loc loc0
+        final loc loc1
+        loc0 -> loc1 {
+            read2 := global
+        }
+    }
+}
+main process ___ThreadFunction3 {
+    main procedure global1write() {
+        init loc loc0
+        final loc loc1
+        loc0 -> loc1 {
+            global := global + 1
+            global := global + 1
+        }
+    }
+}
