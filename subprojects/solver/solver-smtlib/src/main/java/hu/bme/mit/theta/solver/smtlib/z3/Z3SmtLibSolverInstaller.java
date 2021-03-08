@@ -132,7 +132,7 @@ public class Z3SmtLibSolverInstaller extends BaseSmtLibSolverInstaller {
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = installDir.resolve("bin").resolve(getSolverBinaryName());
-        return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0);
     }
 
     @Override

@@ -9,21 +9,22 @@ import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTransformationManager;
-import hu.bme.mit.theta.solver.smtlib.z3.Z3SmtLibItpSolver;
 
 import java.nio.file.Path;
 
 public class MathSATSmtLibSolverFactory implements SolverFactory {
     private final Path solverPath;
     private final String[] args;
+    private final boolean itpSupported;
 
-    private MathSATSmtLibSolverFactory(Path solverPath, String[] args) {
+    private MathSATSmtLibSolverFactory(Path solverPath, String[] args, boolean itpSupported) {
         this.solverPath = solverPath;
         this.args = args;
+        this.itpSupported = itpSupported;
     }
 
-    public static MathSATSmtLibSolverFactory create(Path solverPath, String[] args) {
-        return new MathSATSmtLibSolverFactory(solverPath, args);
+    public static MathSATSmtLibSolverFactory create(Path solverPath, String[] args, boolean itpSupported) {
+        return new MathSATSmtLibSolverFactory(solverPath, args, itpSupported);
     }
 
     @Override
@@ -48,11 +49,16 @@ public class MathSATSmtLibSolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        final var symbolTable = new GenericSmtLibSymbolTable();
-        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
+        if(itpSupported) {
+            final var symbolTable = new GenericSmtLibSymbolTable();
+            final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+            final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+            final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-        return new MathSATSmtLibItpSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+            return new MathSATSmtLibItpSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        }
+        else {
+            throw new UnsupportedOperationException("MathSAT interpolation supported above 5.4.0");
+        }
     }
 }
