@@ -22,7 +22,11 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
@@ -46,6 +50,19 @@ public final class XCFA {
 		processes = ImmutableList.copyOf(builder.processes);
 		processes.forEach(process -> process.parent = this);
 		mainProcess = builder.mainProcess;
+	}
+
+	public static XCFA createXCFA(InputStream dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	public static XCFA createXCFA(String dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	public static XCFA createXCFA(SSAProvider ssa) {
+		//TODO
+		return XCFA.builder().build();
 	}
 
 	public static Builder builder() {
