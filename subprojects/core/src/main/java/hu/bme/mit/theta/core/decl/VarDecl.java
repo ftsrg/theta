@@ -38,6 +38,10 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 		indexToConst = new HashMap<>();
 	}
 
+	public static <DeclType extends Type> VarDecl<DeclType> copyOf(VarDecl<DeclType> from) {
+		return new VarDecl<>(from.getName(), from.getType());
+	}
+
 	public IndexedConstDecl<DeclType> getConstDecl(final int index) {
 		checkArgument(index >= 0);
 		IndexedConstDecl<DeclType> constDecl = indexToConst.get(index);
