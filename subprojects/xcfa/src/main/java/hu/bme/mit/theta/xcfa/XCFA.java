@@ -16,13 +16,17 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.IRType;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
 import java.io.IOException;
@@ -30,12 +34,13 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
  *
- * TODO add type checks around parameters and return value passing
+ * TODO add IRType checks around parameters and return value passing
  *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
 public final class XCFA {
@@ -61,8 +66,33 @@ public final class XCFA {
 	}
 
 	public static XCFA createXCFA(SSAProvider ssa) {
-		//TODO
-		return XCFA.builder().build();
+		XCFA.Builder builder = new XCFA.Builder();
+		for (Tuple3<String, IRType, String> globalVariable : ssa.getGlobalVariables()) {
+			builder.globalVars.put(createVariable(globalVariable.get1(), globalVariable.get2()), createConstant(globalVariable.get2(), globalVariable.get3()));
+		}
+		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
+		Map<Process.Builder, String> processBuilders = new HashMap<>();
+		for (Tuple3<String, IRType, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
+			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
+			for (String process : handleProcedure(function, procedureBuilder)) {
+				Process.Builder processBuilder = Process.builder();
+				processBuilder.setName(process);
+				processBuilders.put(processBuilder, function.get1());
+			}
+			Process.Procedure procedure = procedureBuilder.build();
+			procedures.put(function.get1(), procedure);
+		}
+
+		processBuilders.forEach((processBuilder, mainProcedureName) -> {
+			procedures.forEach((procedureName, procedure) -> {
+				Process.Procedure proc = new Process.Procedure(procedure);
+				processBuilder.addProcedure(proc);
+				if(procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
+			});
+			builder.addProcess(processBuilder.build());
+		});
+
+		return builder.build();
 	}
 
 	public static Builder builder() {
@@ -198,6 +228,22 @@ public final class XCFA {
 				edges.forEach(edge -> edge.parent = this);
 				result = builder.result;
 				name = builder.name;
+			}
+
+			public Procedure(Procedure procedure) {
+				//TODO: really deep copy?
+				rtype = procedure.rtype;
+				params = ImmutableList.copyOf(procedure.params);
+				localVars = ImmutableMap.copyOf(procedure.localVars);
+				locs = ImmutableList.copyOf(procedure.locs);
+				locs.forEach(location -> location.parent = this);
+				initLoc = procedure.initLoc;
+				errorLoc = procedure.errorLoc;
+				finalLoc = procedure.finalLoc;
+				edges = ImmutableList.copyOf(procedure.edges);
+				edges.forEach(edge -> edge.parent = this);
+				result = procedure.result;
+				name = procedure.name;
 			}
 
 			public static Builder builder() {

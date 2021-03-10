@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.ir;
 
-public enum Type {
+public enum IRType {
     INTEGER32,
     FLOAT64
 }

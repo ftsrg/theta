@@ -13,13 +13,13 @@ public interface SSAProvider {
     /*
      * Format: Tuple3<Name, Type, Value>
      */
-    Collection<Tuple3<String, Type, String>> getGlobalVariables();
+    Collection<Tuple3<String, IRType, String>> getGlobalVariables();
 
     /*
      * Format: Tuple3<Name, RetType, Tuple2<Type, Name>[0..*]>
      * Not sure: param always of type Type
      */
-    Collection<Tuple3<String, Type, List<Tuple2<Type, String>>>> getFunctions();
+    Collection<Tuple3<String, IRType, List<Tuple2<IRType, String>>>> getFunctions();
 
     /*
      * Format: name
@@ -29,5 +29,5 @@ public interface SSAProvider {
     /*
      * Format: Tuple4<Opcode, RetVar, Tuple2<VarType, Name>[0..*], lineNumber>
      */
-    List<Tuple4<OpCode, Optional<String>, List<Tuple2<Optional<Type>, String>>, Integer>> getInstructions(String blockName);
+    List<Tuple4<OpCode, Optional<String>, List<Tuple2<Optional<IRType>, String>>, Integer>> getInstructions(String blockName);
 }
