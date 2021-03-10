@@ -13,15 +13,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -34,6 +26,7 @@ import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import org.antlr.v4.codegen.model.Loop;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -284,6 +277,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Stmt visit(OrtStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public Stmt visit(LoopStmt stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -402,6 +400,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -441,6 +442,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -480,6 +484,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 

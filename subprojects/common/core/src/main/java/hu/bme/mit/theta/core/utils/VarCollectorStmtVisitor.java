@@ -82,4 +82,10 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 		return null;
 	}
 
+	@Override
+	public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
+		ExprUtils.collectVars(stmt.getIterations(),vars);
+		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(),vars);
+	}
+
 }

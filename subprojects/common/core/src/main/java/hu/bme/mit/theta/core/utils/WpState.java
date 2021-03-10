@@ -162,6 +162,9 @@ public final class WpState {
 		public WpState visit(OrtStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
+		public WpState visit(LoopStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
 			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
 			final int constCount = state.constCount;
@@ -209,6 +212,9 @@ public final class WpState {
 
 		@Override
 		public WpState visit(OrtStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+		@Override
+		public WpState visit(LoopStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {

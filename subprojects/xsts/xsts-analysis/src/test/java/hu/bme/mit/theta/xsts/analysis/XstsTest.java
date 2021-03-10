@@ -218,7 +218,11 @@ public class XstsTest {
 
 				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
+				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.PROD_AUTO},
+
+				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.PROD_AUTO}
 
 
 		});

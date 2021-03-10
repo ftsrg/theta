@@ -261,6 +261,7 @@ stmt:	localVarDeclStmt
 	|	assumeStmt
 	|   nonDetStmt
 	|   blockStmt
+	|   loopStmt
 	;
 
 nonDetStmt
@@ -269,6 +270,10 @@ nonDetStmt
 
 blockStmt
     :   LCURLY subStmt=seqStmt RCURLY
+    ;
+
+loopStmt
+    :   LOOP iter=expr subStmt=blockStmt
     ;
 
 localVarDeclStmt
@@ -308,6 +313,10 @@ ASSUME
 
 CHOICE
     :   'choice'
+    ;
+
+LOOP
+    :   'loop'
     ;
 
 NONDET_OR

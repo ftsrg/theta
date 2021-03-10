@@ -4,13 +4,11 @@ import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
@@ -23,6 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class XstsStatement {
 
@@ -80,7 +80,7 @@ public class XstsStatement {
 		@Override
 		public Stmt visitAssumeStmt(final AssumeStmtContext ctx) {
 			final XstsExpression expression = new XstsExpression(currentScope, typeTable, ctx.cond);
-			final Expr<BoolType> expr = TypeUtils.cast(expression.instantiate(env), Bool());
+			final Expr<BoolType> expr = cast(expression.instantiate(env), Bool());
 			return Assume(expr);
 		}
 
@@ -110,6 +110,13 @@ public class XstsStatement {
 				stmts.add(stmt);
 			}
 			return NonDetStmt.of(stmts);
+		}
+
+		@Override
+		public Stmt visitLoopStmt(LoopStmtContext ctx) {
+			final Expr<IntType> iterations = cast(new XstsExpression(currentScope, typeTable, ctx.iter).instantiate(env),Int());
+			final Stmt stmt = ctx.subStmt.accept(this);
+			return LoopStmt.of(stmt,iterations);
 		}
 
 		@Override

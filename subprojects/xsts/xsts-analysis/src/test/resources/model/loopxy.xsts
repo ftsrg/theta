@@ -1,0 +1,20 @@
+ctrl var x: integer = 0
+
+trans {
+    choice{
+        x:=3;
+    } or {
+        x:=3;
+    }
+    local var y: integer = 0;
+    loop (x*x/x){
+        y:=y+1;
+    }
+    loop (y){
+        x:=x-1;
+    }
+}
+
+init{}
+
+env{}
