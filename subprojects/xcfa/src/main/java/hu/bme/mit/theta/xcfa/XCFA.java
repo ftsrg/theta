@@ -231,18 +231,37 @@ public final class XCFA {
 			}
 
 			public Procedure(Procedure procedure) {
-				//TODO: really deep copy?
 				rtype = procedure.rtype;
-				params = ImmutableList.copyOf(procedure.params);
-				localVars = ImmutableMap.copyOf(procedure.localVars);
-				locs = ImmutableList.copyOf(procedure.locs);
+
+				List<VarDecl<?>> paramCollectList = new ArrayList<>();
+				procedure.params.forEach(varDecl -> paramCollectList.add(VarDecl.copyOf(varDecl)));
+				params = ImmutableList.copyOf(paramCollectList);
+
+				Map<VarDecl<?>, LitExpr<?>> localVarsCollectList = new HashMap<>();
+				procedure.localVars.forEach((varDecl, litExpr) -> localVarsCollectList.put(VarDecl.copyOf(varDecl), litExpr));
+				localVars = ImmutableMap.copyOf(localVarsCollectList);
+
+				Map<Location, Location> newLocLut = new HashMap<>();
+
+				List<Location> locsCollectList = new ArrayList<>();
+				procedure.locs.forEach(loc -> {
+					Location location = Location.copyOf(loc);
+					locsCollectList.add(location);
+					newLocLut.put(loc, location);
+				});
+				locs = ImmutableList.copyOf(locsCollectList);
 				locs.forEach(location -> location.parent = this);
-				initLoc = procedure.initLoc;
-				errorLoc = procedure.errorLoc;
-				finalLoc = procedure.finalLoc;
-				edges = ImmutableList.copyOf(procedure.edges);
+
+				initLoc = newLocLut.get(procedure.initLoc);
+				errorLoc = newLocLut.get(procedure.errorLoc);
+				finalLoc = newLocLut.get(procedure.finalLoc);
+
+				List<Edge> edgeCollectList = new ArrayList<>();
+				procedure.edges.forEach(edge -> edgeCollectList.add(Edge.copyOf(edge, newLocLut)));
+				edges = ImmutableList.copyOf(edgeCollectList);
 				edges.forEach(edge -> edge.parent = this);
-				result = procedure.result;
+
+				result = VarDecl.copyOf(procedure.result);
 				name = procedure.name;
 			}
 
@@ -321,6 +340,10 @@ public final class XCFA {
 					incomingEdges = new ArrayList<>();
 				}
 
+				public static Location copyOf(final Location from){
+					return new Location(from.getName(), Map.copyOf(from.dictionary));
+				}
+
 				public String getName() {
 					return name;
 				}
@@ -376,6 +399,10 @@ public final class XCFA {
 					this.stmts = ImmutableList.copyOf(stmts);
 					source.outgoingEdges.add(this);
 					target.incomingEdges.add(this);
+				}
+
+				public static Edge copyOf(Edge edge, Map<Location, Location> locationLut) {
+					return new Edge(locationLut.get(edge.source), locationLut.get(edge.target), edge.stmts);
 				}
 
 				public Location getSource() {
