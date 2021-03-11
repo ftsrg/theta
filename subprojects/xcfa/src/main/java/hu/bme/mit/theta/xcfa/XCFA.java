@@ -66,15 +66,18 @@ public final class XCFA {
 	}
 
 	public static XCFA createXCFA(SSAProvider ssa) {
+		Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
 		XCFA.Builder builder = new XCFA.Builder();
 		for (Tuple3<String, IRType, String> globalVariable : ssa.getGlobalVariables()) {
-			builder.globalVars.put(createVariable(globalVariable.get1(), globalVariable.get2()), createConstant(globalVariable.get2(), globalVariable.get3()));
+			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
+			globalVarLut.put(globalVariable.get1(), variable);
+			builder.globalVars.put(variable, createConstant(globalVariable.get2(), globalVariable.get3()));
 		}
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();
 		for (Tuple3<String, IRType, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
 			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
-			for (String process : handleProcedure(function, procedureBuilder)) {
+			for (String process : handleProcedure(function, procedureBuilder, ssa, globalVarLut)) {
 				Process.Builder processBuilder = Process.builder();
 				processBuilder.setName(process);
 				processBuilders.put(processBuilder, function.get1());
@@ -231,6 +234,7 @@ public final class XCFA {
 			}
 
 			public Procedure(Procedure procedure) {
+				parent = null; // ProcessBuilder will fill out this field
 				rtype = procedure.rtype;
 
 				List<VarDecl<?>> paramCollectList = new ArrayList<>();
