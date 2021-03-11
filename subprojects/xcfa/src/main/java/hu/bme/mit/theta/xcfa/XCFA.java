@@ -75,7 +75,7 @@ public final class XCFA {
 		}
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();
-		for (Tuple3<String, IRType, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
+		for (Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
 			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
 			for (String process : handleProcedure(function, procedureBuilder, ssa, globalVarLut)) {
 				Process.Builder processBuilder = Process.builder();
@@ -565,6 +565,7 @@ public final class XCFA {
 					return new Procedure(this);
 				}
 
+				// TODO: constant return?
 				public void setResult(VarDecl<?> result) {
 					this.result = result;
 				}

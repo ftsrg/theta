@@ -19,7 +19,7 @@ public interface SSAProvider {
      * Format: Tuple3<Name, RetType, Tuple2<Type, Name>[0..*]>
      * Not sure: param always of type Type
      */
-    Collection<Tuple3<String, IRType, List<Tuple2<IRType, String>>>> getFunctions();
+    Collection<Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>>> getFunctions();
 
     /*
      * Format: name
