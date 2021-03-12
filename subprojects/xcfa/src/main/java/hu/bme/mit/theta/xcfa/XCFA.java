@@ -75,9 +75,12 @@ public final class XCFA {
 		}
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();
+		processBuilders.put(Process.builder(), "main");
 		for (Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
 			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
-			for (String process : handleProcedure(function, procedureBuilder, ssa, globalVarLut)) {
+			Collection<String> processes = new ArrayList<>();
+			handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes);
+			for (String process : processes) {
 				Process.Builder processBuilder = Process.builder();
 				processBuilder.setName(process);
 				processBuilders.put(processBuilder, function.get1());
