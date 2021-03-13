@@ -71,7 +71,7 @@ public final class XCFA {
 		for (Tuple3<String, IRType, String> globalVariable : ssa.getGlobalVariables()) {
 			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
 			globalVarLut.put(globalVariable.get1(), variable);
-			builder.globalVars.put(variable, createConstant(globalVariable.get2(), globalVariable.get3()));
+			builder.globalVars.put(variable, createConstant(globalVariable.get3()));
 		}
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();

@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface InstructionHandler {
 
-    void handleInstruction(Tuple4<OpCode, Optional<String>, List<Tuple2<Optional<IRType>, String>>, Integer> instruction);
+    void handleInstruction(Tuple4<OpCode, Optional<Tuple2<IRType, String>>, List<Tuple2<Optional<IRType>, String>>, Integer> instruction);
 
     void reinitClass(String block);
 }

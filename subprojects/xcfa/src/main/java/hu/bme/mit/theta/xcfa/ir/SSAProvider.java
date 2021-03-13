@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface SSAProvider {
 
     /*
-     * Format: Tuple3<Name, Type, Value>
+     * Format: Tuple3<Name, Type, Type_Value>
      */
     Collection<Tuple3<String, IRType, String>> getGlobalVariables();
 
@@ -29,5 +29,5 @@ public interface SSAProvider {
     /*
      * Format: Tuple4<Opcode, RetVar, Tuple2<VarType, Name>[0..*], lineNumber>
      */
-    List<Tuple4<OpCode, Optional<String>, List<Tuple2<Optional<IRType>, String>>, Integer>> getInstructions(String blockName);
+    List<Tuple4<OpCode, Optional<Tuple2<IRType, String>>, List<Tuple2<Optional<IRType>, String>>, Integer>> getInstructions(String blockName);
 }

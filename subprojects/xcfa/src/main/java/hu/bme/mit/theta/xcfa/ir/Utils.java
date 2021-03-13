@@ -45,14 +45,16 @@ public class Utils {
         return Var(name, t);
     }
 
-    public static LitExpr<? extends Type> createConstant(IRType type, String value) {
-        switch (type) {
-            case INTEGER32: return IntLitExpr.of(new BigInteger(value));
-            case FLOAT64:
-                float v = Float.parseFloat(value);
+    public static LitExpr<? extends Type> createConstant(String value) {
+        String[] arguments = value.split(" ");
+        checkState(arguments.length == 2, "Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\"");
+        switch (arguments[0]) {
+            case "i32": return IntLitExpr.of(new BigInteger(arguments[1]));
+            case "f64":
+                float v = Float.parseFloat(arguments[1]);
                 return RatLitExpr.of(BigInteger.valueOf((long)(v*(1 << FLOAT_DIGITS))), BigInteger.valueOf(1 << FLOAT_DIGITS));
             default:
-                throw new IllegalStateException("Unexpected value: " + type);
+                throw new IllegalStateException("Unexpected value: " + arguments[0]);
         }
     }
 
@@ -104,7 +106,7 @@ public class Utils {
         // Handling instructions
         for (String block : locationLut.keySet()) {
             instructionHandler.reinitClass(block);
-            for (Tuple4<OpCode, Optional<String>, List<Tuple2<Optional<IRType>, String>>, Integer> instruction : ssa.getInstructions(block)) {
+            for (Tuple4<OpCode, Optional<Tuple2<IRType, String>>, List<Tuple2<Optional<IRType>, String>>, Integer> instruction : ssa.getInstructions(block)) {
                 instructionHandler.handleInstruction(instruction);
             }
         }
