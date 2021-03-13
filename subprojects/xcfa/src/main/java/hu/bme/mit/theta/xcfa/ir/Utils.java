@@ -31,16 +31,16 @@ public class Utils {
 
     private static final int FLOAT_DIGITS = 5;
 
-    public static Type createType(IRType type) {
+    public static Type createType(String type) {
         switch (type) {
-            case INTEGER32: return Int();
-            case FLOAT64:   return Rat();
+            case "i32": return Int();
+            case "f64":   return Rat();
             default:
                 throw new IllegalStateException("Unexpected value: " + type);
         }
     }
 
-    public static VarDecl<? extends Type> createVariable(String name, IRType type) {
+    public static VarDecl<? extends Type> createVariable(String name, String type) {
         Type t = createType(type);
         return Var(name, t);
     }
@@ -59,7 +59,7 @@ public class Utils {
     }
 
     public static void handleProcedure(
-            Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>> function,
+            Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
             XCFA.Process.Procedure.Builder procedureBuilder,
             SSAProvider ssa,
             Map<String, VarDecl<?>> globalVarLut,
@@ -68,7 +68,7 @@ public class Utils {
         Map<String, VarDecl<?>> localVarLut = new HashMap<>();
 
         // Adding params
-        for (Tuple2<IRType, String> param : function.get3()) {
+        for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());
             procedureBuilder.createParam(var);
             localVarLut.put(param.get2(), var);
@@ -106,7 +106,7 @@ public class Utils {
         // Handling instructions
         for (String block : locationLut.keySet()) {
             instructionHandler.reinitClass(block);
-            for (Tuple4<OpCode, Optional<Tuple2<IRType, String>>, List<Tuple2<Optional<IRType>, String>>, Integer> instruction : ssa.getInstructions(block)) {
+            for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(block)) {
                 instructionHandler.handleInstruction(instruction);
             }
         }

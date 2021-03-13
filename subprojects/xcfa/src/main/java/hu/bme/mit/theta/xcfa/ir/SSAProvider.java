@@ -16,7 +16,7 @@ public interface SSAProvider {
      * Type: The type of the global variable, mapped to the IRType enum
      * Type_Value: The type and value of the global variable in a String, with a space in between (type is assumed to be in the LLVM printed format)
      */
-    Collection<Tuple3<String, IRType, String>> getGlobalVariables();
+    Collection<Tuple3<String, String, String>> getGlobalVariables();
 
     /*
      * Format: Tuple3<Name, RetType[0..1], Tuple2<Type, Name>[0..*]>
@@ -25,7 +25,7 @@ public interface SSAProvider {
      * Type: The type of the parameter
      * Name: The name of the parameter (generated or declared)
      */
-    Collection<Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>>> getFunctions();
+    Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> getFunctions();
 
     /*
      * Format: name
@@ -41,5 +41,5 @@ public interface SSAProvider {
      * VarType: Variable type *if argument is a variable*, empty otherwise
      * VarName: Variable name *if argument is a variable*, `type SPACE value` if constant, `value` if anything else (block, function, etc)
      */
-    List<Tuple4<OpCode, Optional<Tuple2<IRType, String>>, List<Tuple2<Optional<IRType>, String>>, Integer>> getInstructions(String blockName);
+    List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String blockName);
 }

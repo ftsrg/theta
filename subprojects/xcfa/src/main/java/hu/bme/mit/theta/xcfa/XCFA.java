@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.ir.IRType;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
 import java.io.IOException;
@@ -68,7 +67,7 @@ public final class XCFA {
 	public static XCFA createXCFA(SSAProvider ssa) {
 		Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
 		XCFA.Builder builder = new XCFA.Builder();
-		for (Tuple3<String, IRType, String> globalVariable : ssa.getGlobalVariables()) {
+		for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
 			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
 			globalVarLut.put(globalVariable.get1(), variable);
 			builder.globalVars.put(variable, createConstant(globalVariable.get3()));
@@ -76,7 +75,7 @@ public final class XCFA {
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();
 		processBuilders.put(Process.builder(), "main");
-		for (Tuple3<String, Optional<IRType>, List<Tuple2<IRType, String>>> function : ssa.getFunctions()) {
+		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
 			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
 			Collection<String> processes = new ArrayList<>();
 			handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes);
