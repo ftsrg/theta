@@ -67,7 +67,7 @@ public class LlvmIrProvider implements SSAProvider {
 
         for(int f = 0; f < numOfFunctions; f++) {
             String functionName = JniGetFunctionName(f);
-            Optional<String> retType = Optional.of(JniGetFunctionRetType(f)); // TODO make this really optional? (->when void)
+            String retType = JniGetFunctionRetType(f); // TODO make this really optional? (->when void)
             int numOfParams = JniGetNumOfFunctionParameters(f);
 
             ArrayList<Tuple2<String, String>> parameters = new ArrayList<>();
@@ -76,7 +76,11 @@ public class LlvmIrProvider implements SSAProvider {
                 String paramName = JniGetParameterName(f, p);
                 parameters.add(Tuple2.of(paramType, paramName));
             }
-            functions.add(Tuple3.of(functionName, retType, parameters));
+            if(retType.equals("void")) {
+                functions.add(Tuple3.of(functionName, Optional.of(retType), parameters));
+            } else {
+                functions.add(Tuple3.of(functionName, Optional.empty(), parameters));
+            }
         }
         return functions;
     }
@@ -123,10 +127,18 @@ public class LlvmIrProvider implements SSAProvider {
             for(int o = 0; o < numOfOperands; o++) {
                 String varType = JniGetInstructionOperandVarType(functionIndex, basicBlockIndex, i, o); // TODO make it optional
                 String varName = JniGetInstructionOperandVarName(functionIndex, basicBlockIndex, i, o);
-                instructionOperands.add(Tuple2.of(Optional.of(varType), varName));
+                if(varType.equals("constant")) {
+                    instructionOperands.add(Tuple2.of(Optional.empty(), varName));
+                } else {
+                    instructionOperands.add(Tuple2.of(Optional.of(varType), varName));
+                }
             }
 
-            instructions.add(Tuple4.of(opcode, Optional.of(Tuple2.of(retType, retVar)), instructionOperands, lineNumber));
+            if(retType.equals("")) {
+                instructions.add(Tuple4.of(opcode, Optional.empty(), instructionOperands, lineNumber));
+            } else {
+                instructions.add(Tuple4.of(opcode, Optional.of(Tuple2.of(retType, retVar)), instructionOperands, lineNumber));
+            }
         }
 
         return instructions;
