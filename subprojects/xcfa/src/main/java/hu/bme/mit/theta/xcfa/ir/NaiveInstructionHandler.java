@@ -4,6 +4,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -20,8 +21,10 @@ import java.math.BigInteger;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 public class NaiveInstructionHandler implements InstructionHandler{
@@ -119,25 +122,39 @@ public class NaiveInstructionHandler implements InstructionHandler{
         // TODO
     }
 
+    /*
+     * var = phi [expr label]*
+     */
     private void phi(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
-        checkState(instruction.get3().size() % 2 == 1, "Phi node should have an odd number of arguments");
-        checkState(instruction.get3().get(0).get1().isPresent(), "Return type must be present in phi node!");
-        VarDecl<?> phiVar = createVariable(block +"_"+ cnt++, instruction.get3().get(0).get1().get());
+        checkState(instruction.get3().size() % 2 == 0, "Phi node should have an even number of arguments");
+        checkState(instruction.get2().isPresent(), "Return var must be present!");
+        VarDecl<?> phiVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
         procedureBuilder.getLocalVars().put(phiVar, null);
         localVarLut.put(phiVar.getName(), phiVar);
-        for(int i = 0; i < (instruction.get3().size() + 1) / 2; ++i) {
-            String blockName = instruction.get3().get(2*i + 1).get2();
-            Expr<?> value = getExpr(instruction, 2*i + 2);
+        valueLut.put(instruction.get2().get().get2(), phiVar.getRef());
+        for(int i = 0; i < (instruction.get3().size()) / 2; ++i) {
+            String blockName = instruction.get3().get(2*i).get2();
+            Expr<?> value = getExpr(instruction, 2*i + 1);
             checkState(terminatorEdges.containsKey(Tuple2.of(block, blockName)), "Edge does not exist!");
             terminatorEdges.get(Tuple2.of(block, blockName)).get3().add(Assign(phiVar, value));
         }
     }
 
-
+    /*
+     * var = cmp expr expr
+     */
     private void cmp(Map<String, Expr<?>> valueLut, Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhsExpr = getExpr(instruction, paramSize - 2);
+        Expr<?> rhsExpr = getExpr(instruction, paramSize - 1);
+
+        checkState(lhsExpr.getType() == IntType.getInstance(), "Cmp must compare integer types!");
+        checkState(rhsExpr.getType() == IntType.getInstance(), "Cmp must compare integer types!");
+
+        //noinspection unchecked
+        Expr<IntType> lhs = (Expr<IntType>) lhsExpr;
+        //noinspection unchecked
+        Expr<IntType> rhs = (Expr<IntType>) rhsExpr;
 
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
         switch(instruction.get3().get(0).get2()) {
@@ -154,6 +171,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
     }
 
 
+    /*
+     * store expr expr
+     */
     private void store(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
         checkState(paramSize == 2, "Store should have two arguments");
@@ -165,99 +185,145 @@ public class NaiveInstructionHandler implements InstructionHandler{
         lastLoc = loc;
     }
 
+    /*
+     * var = load expr
+     */
     private void load(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         checkState(instruction.get3().size() >= 2);
         checkState(instruction.get2().isPresent(), "Load must load into a variable");
-        valueLut.put(instruction.get2().get().get2(), localVarLut.get(instruction.get3().get(1).get2()).getRef());
+        valueLut.put(instruction.get2().get().get2(), localVarLut.get(instruction.get3().get(0).get2()).getRef());
     }
 
+    /*
+     * var = alloca
+     */
     private void alloca(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         checkState(instruction.get2().isPresent(), "Alloca must have a variable tied to it");
-        VarDecl<?> var = createVariable(instruction.get2().get().get2(), "i32");
+        VarDecl<?> var = createVariable(instruction.get2().get().get2(), instruction.get2().get().get1());
         procedureBuilder.getLocalVars().put(var, null);
         localVarLut.put(instruction.get2().get().get2(), var);
         valueLut.put(instruction.get2().get().get2(), var.getRef());
     }
 
+    /*
+     * var = rem expr expr
+     * var : int
+     * expr : int
+     */
     private void rem(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
+        checkState(lhs.getType() == IntType.getInstance(), "Rem only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
-        valueLut.put(instruction.get2().get().get2(), Rem(lhs, rhs));
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Rem((Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
+    /*
+     * var = div expr expr
+     * var : int
+     * expr : int
+     */
     private void div(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
+        checkState(lhs.getType() == IntType.getInstance(), "Div only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Div only supports integer types!");
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
-        valueLut.put(instruction.get2().get().get2(), Div(lhs, rhs));
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Div((Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
+    /*
+     * var = mul expr expr
+     * var : int
+     * expr : int
+     */
     private void mul(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
+        checkState(lhs.getType() == IntType.getInstance(), "Mul only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Mul only supports integer types!");
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
-        valueLut.put(instruction.get2().get().get2(), Mul(lhs, rhs));
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Mul((Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
+    /*
+     * var = sub expr expr
+     * var : int
+     * expr : int
+     */
     private void sub(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
+        checkState(lhs.getType() == IntType.getInstance(), "Sub only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Sub only supports integer types!");
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
-        valueLut.put(instruction.get2().get().get2(), Sub(lhs, rhs));
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Sub((Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
+    /*
+     * var = add expr expr
+     * var : int
+     * expr : int
+     */
     private void add(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        Expr<IntType> lhs = getExpr(instruction, paramSize - 2);
-        Expr<IntType> rhs = getExpr(instruction, paramSize - 1);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
+        checkState(lhs.getType() == IntType.getInstance(), "Add only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Add only supports integer types!");
         checkState(instruction.get2().isPresent(), "Instruction must have return variable");
-        valueLut.put(instruction.get2().get().get2(), Add(lhs, rhs));
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Add((Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
-    private Expr<IntType> getExpr(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction, int i) {
-        Expr<IntType> expr;
-        Tuple2<Optional<String>, String> param1 = instruction.get3().get(i);
-        if (param1.get1().isEmpty()) {
-            //noinspection unchecked
-            expr = (Expr<IntType>) createConstant(param1.get2());
-        } else {
-            //noinspection unchecked
-            expr = (Expr<IntType>) valueLut.get(param1.get2());
-        }
-        return expr;
-    }
-
+    /*
+     * sw var label [const label]*
+     * TODO: 3rd param?
+     * var: int
+     * const: int
+     */
     private void sw(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         checkState(instruction.get3().size() % 2 == 0, "Switch has wrong number of arguments");
+        Expr<?> varExpr = getExpr(instruction, 0);
+        checkState(varExpr.getType() == IntType.getInstance(), "Var has to be an integer!");
         //noinspection unchecked
-        Expr<IntType> expr = (Expr<IntType>) valueLut.get(instruction.get3().get(0).get2());
+        Expr<IntType> var = (Expr<IntType>) varExpr;
         Expr<BoolType> defaultBranch = null;
         for (int i = 0; i < (instruction.get3().size() / 2) - 1; ++i) {
             XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(2 + 2*i + 1).get2());
-            checkState(valueLut.get(instruction.get3().get(0).get2()).getType() instanceof IntType, "Only IntTypes are supported!");
-            IntEqExpr eq = Eq(expr, getExpr(instruction, 2 + 2 * i));
+            Expr<?> constExpr = getExpr(instruction, 2 + 2 * i);
+            checkState(constExpr.getType() == IntType.getInstance(), "Constant has to be an integer!");
+            //noinspection unchecked
+            IntEqExpr eq = Eq(var, (Expr<IntType>) constExpr);
             if(defaultBranch == null) defaultBranch = eq;
             else defaultBranch = BoolExprs.Or(defaultBranch, eq);
             AssumeStmt assume = Assume(eq);
             terminatorEdges.put(Tuple2.of(block, loc.getName()), Tuple3.of(lastLoc, loc, new ArrayList<>(List.of(assume))));
         }
         XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(1).get2());
-        checkState(valueLut.get(instruction.get3().get(1).get2()).getType() instanceof IntType, "Only IntTypes are supported!");
         XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
         procedureBuilder.addEdge(edge);
         lastLoc = finalLoc;
     }
 
+    /*
+     * br label;
+     * br expr label label;
+     */
     private void br(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         switch(instruction.get3().size()) {
             case 1:
@@ -269,11 +335,13 @@ public class NaiveInstructionHandler implements InstructionHandler{
                 XCFA.Process.Procedure.Location loc1 = locationLut.get(instruction.get3().get(1).get2());
                 XCFA.Process.Procedure.Location loc2 = locationLut.get(instruction.get3().get(2).get2());
 
-                checkState(valueLut.get(instruction.get3().get(0).get2()).getType() instanceof IntType, "Only IntTypes are supported!");
+                Expr<?> lhs = getExpr(instruction, 0);
+                Expr<?> rhs = createConstant("i32 0");
+                checkState(lhs.getType() == rhs.getType() && rhs.getType() == IntType.getInstance(), "Both expressions should be int types!");
                 //noinspection unchecked
-                AssumeStmt assume1 = Assume(Neq((Expr<IntType>) valueLut.get(instruction.get3().get(0).get2()), IntLitExpr.of(BigInteger.valueOf(0))));
+                AssumeStmt assume1 = Assume(Neq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
                 //noinspection unchecked
-                AssumeStmt assume2 = Assume(Eq((Expr<IntType>) valueLut.get(instruction.get3().get(0).get2()), IntLitExpr.of(BigInteger.valueOf(0))));
+                AssumeStmt assume2 = Assume(Eq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
                 terminatorEdges.put(Tuple2.of(block, loc1.getName()), Tuple3.of(lastLoc, loc1, new ArrayList<>(List.of(assume1))));
                 terminatorEdges.put(Tuple2.of(block, loc2.getName()), Tuple3.of(lastLoc, loc2, new ArrayList<>(List.of(assume2))));
                 break;
@@ -283,13 +351,17 @@ public class NaiveInstructionHandler implements InstructionHandler{
         lastLoc = finalLoc;
     }
 
+    /*
+     * ret;
+     * ret expr;
+     */
     private void ret(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         List<Stmt> stmts = new ArrayList<>();
         switch(instruction.get3().size()) {
-            case 0: break;
+            case 0: checkState(retVar.isEmpty(), "Not returning a value from non-void function!"); break;
             case 1:
-                checkState(retVar.isPresent(), "Returning a value from non-void function!");
-                Stmt assignStmt = Assign(retVar.get(), getExpr(instruction, 0));
+                checkState(retVar.isPresent(), "Returning a value from void function!");
+                Stmt assignStmt = Assign(retVar.get(), cast(getExpr(instruction, 0), retVar.get().getType()));
                 stmts.add(assignStmt);
                 break;
             default:
@@ -300,10 +372,21 @@ public class NaiveInstructionHandler implements InstructionHandler{
         lastLoc = finalLoc;
     }
 
-    private static <T extends Type> Stmt Assign(VarDecl<T> varDecl, Expr<? extends Type> constant) {
+    private <T extends Type> Stmt Assign(VarDecl<T> varDecl, Expr<? extends Type> expr) {
+        checkState(varDecl.getType() == expr.getType(), "Cannot assign different types of expressions!");
         //noinspection unchecked
-        return Stmts.Assign(varDecl, (Expr<T>)constant);
+        return Stmts.Assign(varDecl, (Expr<T>) expr);
     }
 
+    private Expr<? extends Type> getExpr(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction, int i) {
+        Expr<? extends Type> expr;
+        Tuple2<Optional<String>, String> param1 = instruction.get3().get(i);
+        if (param1.get1().isEmpty()) {
+            expr = createConstant(param1.get2());
+        } else {
+            expr = valueLut.get(param1.get2());
+        }
+        return expr;
+    }
 
 }
