@@ -77,9 +77,9 @@ public class LlvmIrProvider implements SSAProvider {
                 parameters.add(Tuple2.of(paramType, paramName));
             }
             if(retType.equals("void")) {
-                functions.add(Tuple3.of(functionName, Optional.of(retType), parameters));
-            } else {
                 functions.add(Tuple3.of(functionName, Optional.empty(), parameters));
+            } else {
+                functions.add(Tuple3.of(functionName, Optional.of(retType), parameters));
             }
         }
         return functions;
@@ -125,7 +125,7 @@ public class LlvmIrProvider implements SSAProvider {
             int numOfOperands = JniGetInstructionNumOfOperands(functionIndex, basicBlockIndex, i);
             ArrayList<Tuple2<Optional<String>, String>> instructionOperands = new ArrayList<>();
             for(int o = 0; o < numOfOperands; o++) {
-                String varType = JniGetInstructionOperandVarType(functionIndex, basicBlockIndex, i, o); // TODO make it optional
+                String varType = JniGetInstructionOperandVarType(functionIndex, basicBlockIndex, i, o);
                 String varName = JniGetInstructionOperandVarName(functionIndex, basicBlockIndex, i, o);
                 if(varType.equals("constant")) {
                     instructionOperands.add(Tuple2.of(Optional.empty(), varName));

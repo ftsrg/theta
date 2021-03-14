@@ -32,11 +32,10 @@ public class Utils {
     private static final int FLOAT_DIGITS = 5;
 
     public static Type createType(String type) {
-        switch (type) {
-            case "i32": return Int();
-            case "f64":   return Rat();
-            default:
-                throw new IllegalStateException("Unexpected value: " + type);
+        if(type.startsWith("i32")) {
+            return Int();
+        } else {
+            throw new IllegalStateException("Unexpected value: " + type);
         }
     }
 
@@ -49,6 +48,7 @@ public class Utils {
         String[] arguments = value.split(" ");
         checkState(arguments.length == 2, "Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\"");
         switch (arguments[0]) {
+            case "i32*":
             case "i32": return IntLitExpr.of(new BigInteger(arguments[1]));
             case "f64":
                 float v = Float.parseFloat(arguments[1]);
@@ -68,6 +68,7 @@ public class Utils {
         Map<String, VarDecl<?>> localVarLut = new HashMap<>();
 
         // Adding params
+        // TODO: unify with variables from `alloca`
         for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());
             procedureBuilder.createParam(var);

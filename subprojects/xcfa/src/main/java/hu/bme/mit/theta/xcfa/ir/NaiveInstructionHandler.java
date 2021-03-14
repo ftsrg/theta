@@ -16,6 +16,7 @@ import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -43,7 +44,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private String block;
 
 
-    private Map<Tuple2<String, String>, Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
+    private final Map<Tuple2<String, String>, Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
 
     public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XCFA.Process.Procedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XCFA.Process.Procedure.Location finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XCFA.Process.Procedure.Location> locationLut) {
         this.function = function;
@@ -119,7 +120,15 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
         String funcName = instruction.get3().get(paramSize - 2).get2();
-        // TODO
+//        switch(funcName) {
+//            default:
+                System.out.println("Function call");
+                if(instruction.get2().isPresent()) System.out.println("\tResVar: " + instruction.get2().get());
+                System.out.println("\tName: " + funcName);
+                System.out.println("\tParams: ");
+                for(int i = 0 ; i < paramSize - 1; ++i) System.out.println("\t\t" + instruction.get3().get(i));
+//                break;
+//        }
     }
 
     /*
@@ -189,7 +198,6 @@ public class NaiveInstructionHandler implements InstructionHandler{
      * var = load expr
      */
     private void load(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
-        checkState(instruction.get3().size() >= 2);
         checkState(instruction.get2().isPresent(), "Load must load into a variable");
         valueLut.put(instruction.get2().get().get2(), localVarLut.get(instruction.get3().get(0).get2()).getRef());
     }
