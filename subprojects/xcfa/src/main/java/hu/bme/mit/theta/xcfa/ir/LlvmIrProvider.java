@@ -8,14 +8,14 @@ import hu.bme.mit.theta.common.Tuple4;
 
 public class LlvmIrProvider implements SSAProvider {
     static {
-        System.loadLibrary("irParser");
+        System.loadLibrary("jni_proto");
     }
 
     private Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     private native void JniParseIr(String irFilename);
 
-    LlvmIrProvider(String irFilename) {
+    public LlvmIrProvider(String irFilename) {
         JniParseIr(irFilename);
         bbNamefuncIndexLut = new HashMap<>();
 
@@ -50,7 +50,7 @@ public class LlvmIrProvider implements SSAProvider {
             globalVarList.add(globalVar);
         }
         return globalVarList; */
-        return null;
+        return new ArrayList<>();
     }
 
     private native int JniGetFunctionsNum();

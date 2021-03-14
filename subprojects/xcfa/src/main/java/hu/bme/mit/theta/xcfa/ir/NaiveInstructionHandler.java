@@ -176,6 +176,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         VarDecl<?> var = createVariable(instruction.get2().get().get2(), "i32");
         procedureBuilder.getLocalVars().put(var, null);
         localVarLut.put(instruction.get2().get().get2(), var);
+        valueLut.put(instruction.get2().get().get2(), var.getRef());
     }
 
     private void rem(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
