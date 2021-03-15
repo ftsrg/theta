@@ -4,7 +4,6 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -13,16 +12,12 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -30,13 +25,13 @@ import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 public class NaiveInstructionHandler implements InstructionHandler{
     private XCFA.Process.Procedure.Location lastLoc;
-    private Map<String, Expr<?>> valueLut;
     private Integer cnt;
     private final Tuple3<String, java.util.Optional<String>, List<Tuple2<String, String>>> function;
     private final XCFA.Process.Procedure.Builder procedureBuilder;
     private final SSAProvider ssa;
     private final Collection<String> processes;
     private final Map<String, VarDecl<?>> localVarLut;
+    private final Map<String, Expr<?>> valueLut;
     private final hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location finalLoc;
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private final Optional<VarDecl<? extends Type>> retVar;
@@ -55,12 +50,12 @@ public class NaiveInstructionHandler implements InstructionHandler{
         this.finalLoc = finalLoc;
         this.retVar = retVar;
         this.locationLut = locationLut;
+        this.valueLut = new HashMap<>();
     }
 
     @Override
     public void reinitClass(String block) {
         this.block = block;
-        valueLut = new HashMap<>();
         cnt = 0;
         lastLoc = locationLut.get(block);
     }
@@ -103,7 +98,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
                 store(instruction);
                 break;
             case "icmp":
-                cmp(valueLut, instruction);
+                cmp(instruction);
                 break;
             case "phi":
                 phi(instruction);
@@ -152,7 +147,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     /*
      * var = cmp expr expr
      */
-    private void cmp(Map<String, Expr<?>> valueLut, Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
+    private void cmp(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
         Expr<?> lhsExpr = getExpr(instruction, paramSize - 2);
         Expr<?> rhsExpr = getExpr(instruction, paramSize - 1);
@@ -186,12 +181,21 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private void store(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
         checkState(paramSize == 2, "Store should have two arguments");
-        XCFA.Process.Procedure.Location loc = new XCFA.Process.Procedure.Location(block + "_" + cnt++, new HashMap<>());
-        Stmt stmt = Assign(localVarLut.get(instruction.get3().get(0).get2()), getExpr(instruction, paramSize - 1));
-        XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(stmt));
-        procedureBuilder.addLoc(loc);
-        procedureBuilder.addEdge(edge);
-        lastLoc = loc;
+        String lhs = instruction.get3().get(0).get2();
+        String rhs = instruction.get3().get(1).get2();
+        if(localVarLut.containsKey(lhs) && !valueLut.containsKey(lhs)) { // function param
+            procedureBuilder.getLocalVars().remove(localVarLut.get(rhs));
+            localVarLut.put(rhs, localVarLut.get(lhs));
+            valueLut.put(rhs, localVarLut.get(lhs).getRef());
+            valueLut.put(lhs, localVarLut.get(lhs).getRef());
+        } else {
+            XCFA.Process.Procedure.Location loc = new XCFA.Process.Procedure.Location(block + "_" + cnt++, new HashMap<>());
+            Stmt stmt = Assign(localVarLut.get(instruction.get3().get(1).get2()), getExpr(instruction, 0));
+            XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(stmt));
+            procedureBuilder.addLoc(loc);
+            procedureBuilder.addEdge(edge);
+            lastLoc = loc;
+        }
     }
 
     /*
@@ -345,7 +349,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
                 Expr<?> lhs = getExpr(instruction, 0);
                 Expr<?> rhs = createConstant("i32 0");
-                checkState(lhs.getType() == rhs.getType() && rhs.getType() == IntType.getInstance(), "Both expressions should be int types!");
+                boolean lhsType = lhs.getType() == IntType.getInstance() || lhs.getType() == BoolType.getInstance();
+                boolean rhsType = rhs.getType() == IntType.getInstance() || rhs.getType() == BoolType.getInstance();
+                checkState(lhsType && rhsType, "Both expressions should be int or bool types!");
                 //noinspection unchecked
                 AssumeStmt assume1 = Assume(Neq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
                 //noinspection unchecked

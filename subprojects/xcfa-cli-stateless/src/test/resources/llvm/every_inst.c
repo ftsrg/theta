@@ -1,5 +1,5 @@
-int ifoo(int a, int*b) {
-    *b = a;
+int ifoo(int a, int b) {
+    b = a;
     return -1;
 }
 
@@ -34,5 +34,5 @@ int main() {
     int i = a || b;
 
     foo();
-    return ifoo(a, &b);
+    return ifoo(a, b);
 }

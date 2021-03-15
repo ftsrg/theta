@@ -32,7 +32,7 @@ public class Utils {
     private static final int FLOAT_DIGITS = 5;
 
     public static Type createType(String type) {
-        if(type.startsWith("i32")) {
+        if(type.startsWith("i")) {
             return Int();
         } else {
             throw new IllegalStateException("Unexpected value: " + type);
@@ -90,7 +90,7 @@ public class Utils {
 
         // Adding blocks and first location
         List<String> blocks = ssa.getBlocks(function.get1());
-        Map<String, XCFA.Process.Procedure.Location> locationLut = new HashMap<>();
+        Map<String, XCFA.Process.Procedure.Location> locationLut = new LinkedHashMap<>();
         boolean first = true;
         for (String block : blocks) {
             XCFA.Process.Procedure.Location loc = new XCFA.Process.Procedure.Location(block, new HashMap<>());

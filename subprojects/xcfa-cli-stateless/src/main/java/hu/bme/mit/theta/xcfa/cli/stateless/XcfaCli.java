@@ -69,6 +69,7 @@ public class XcfaCli {
 	public static void main(final String[] args) {
 		LlvmIrProvider provider = new LlvmIrProvider("subprojects/xcfa-cli-stateless/src/test/resources/llvm/every_inst.bc");
 		XCFA xcfa = XCFA.createXCFA(provider);
+		return;
 //		final XcfaCli mainApp = new XcfaCli(args);
 //		mainApp.run();
 	}
