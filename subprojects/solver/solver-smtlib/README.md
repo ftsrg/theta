@@ -44,11 +44,11 @@ The components above are integrated into a working solver implementation with Th
 
 ### Generic interface implementation
 
-The interfaces above have a default, generic implementation that works with solvers that follow the SMT-LIB standard fully. These generic classes can be found in the `hu.bme.mit.theta.solver.smtlib.generic` package.
+The interfaces above have a default, generic implementation that works with solvers that follow the SMT-LIB standard fully. These generic classes can be found in the `hu.bme.mit.theta.solver.smtlib.impl.generic` package.
 
 ### Solver specific implementations
 
 Right now, the solver-smtlib subproject supports the following solvers. Each package contains the specialization of the interfaces above that communicate with the said solver:
 
-- **Z3** (`hu.bme.mit.theta.solver.smtlib.z3`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, functions), and supports interpolation as well (binary, sequential and tree interpolation) up to version 4.7.
-- **CVC4** (`hu.bme.mit.theta.solver.smtlib.cvc4`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).
+- **Z3** (`hu.bme.mit.theta.solver.smtlib.impl.z3`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, functions), and supports interpolation as well (binary, sequential and tree interpolation) up to version 4.7.
+- **CVC4** (`hu.bme.mit.theta.solver.smtlib.impl.cvc4`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).

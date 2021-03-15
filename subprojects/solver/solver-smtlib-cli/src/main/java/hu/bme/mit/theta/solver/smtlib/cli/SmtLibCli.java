@@ -8,8 +8,8 @@ import com.beust.jcommander.Parameters;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverInstallerException;
-import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 
 import java.awt.Desktop;
 import java.io.IOException;
