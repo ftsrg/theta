@@ -15,24 +15,27 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
+//TODO: retVar not necessary, params not only variables
 public class CallStmt extends XcfaCallStmt {
 	private final VarDecl<?> var;
-	private final List<VarDecl<?>> params;
+	private final List<Expr<?>> params;
 	private static final String STMT_LABEL = "call";
 
 	// not final due to circular dependency while building
 	private XCFA.Process.Procedure procedure;
 
-	public CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
+	public CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<Expr<?>> params) {
 		this.var = var;
 		this.procedure = procedure;
 		this.params = params;
@@ -46,7 +49,7 @@ public class CallStmt extends XcfaCallStmt {
 		return var;
 	}
 
-	public List<VarDecl<?>> getParams() {
+	public List<Expr<?>> getParams() {
 		return params;
 	}
 
@@ -61,6 +64,10 @@ public class CallStmt extends XcfaCallStmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(STMT_LABEL).add(procedure.getName()).toString();
+		LispStringBuilder call = Utils.lispStringBuilder(STMT_LABEL).add(var == null ? "void" : var.getName()).add(procedure.getName());
+		for (Expr<?> param : params) {
+			call.add(param);
+		}
+		return call.toString();
 	}
 }

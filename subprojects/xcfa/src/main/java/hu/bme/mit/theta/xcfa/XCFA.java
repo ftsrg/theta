@@ -16,16 +16,25 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.InstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
@@ -46,6 +55,60 @@ public final class XCFA {
 		processes = ImmutableList.copyOf(builder.processes);
 		processes.forEach(process -> process.parent = this);
 		mainProcess = builder.mainProcess;
+	}
+
+	public static XCFA createXCFA(InputStream dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	public static XCFA createXCFA(String dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	public static XCFA createXCFA(SSAProvider ssa) {
+		Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
+		XCFA.Builder builder = new XCFA.Builder();
+		for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
+			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
+			globalVarLut.put(globalVariable.get1(), variable);
+			builder.globalVars.put(variable, createConstant(globalVariable.get3()));
+		}
+		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
+		Map<Process.Builder, String> processBuilders = new HashMap<>();
+		List<InstructionHandler> instructionHandlers = new ArrayList<>();
+		Process.Builder mainProcBuilder = Process.builder();
+		mainProcBuilder.setName("main");
+		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
+		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
+			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
+			procedureBuilder.setName(function.get1());
+			Collection<String> processes = new ArrayList<>();
+			instructionHandlers.add(handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes));
+			for (String process : processes) {
+				Process.Builder processBuilder = Process.builder();
+				processBuilder.setName(process);
+				processBuilders.put(processBuilder, function.get1());
+			}
+			Process.Procedure procedure = procedureBuilder.build();
+			procedures.put(function.get1(), procedure);
+		}
+
+		processBuilders.forEach((processBuilder, mainProcedureName) -> {
+			procedures.forEach((procedureName, procedure) -> {
+				Process.Procedure proc = new Process.Procedure(procedure);
+				processBuilder.addProcedure(proc);
+				if(procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
+			});
+			Process proc = processBuilder.build();
+			builder.addProcess(proc);
+			if(processBuilder == mainProcBuilder) builder.setMainProcess(proc);
+		});
+
+		for (InstructionHandler instructionHandler : instructionHandlers) {
+			instructionHandler.substituteProcedures(procedures);
+		}
+
+		return builder.build();
 	}
 
 	public static Builder builder() {
@@ -76,13 +139,22 @@ public final class XCFA {
 			else if (e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size() - 1);
 		}
 		builder.setInitLoc(initLoc);
-		builder.setErrorLoc(errorLoc);
+		if(errorLoc != null) builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
 		return builder.build();
 	}
 
 	public List<VarDecl<? extends Type>> getGlobalVars() {
 		return List.copyOf(globalVars.keySet());
+	}
+	public String toDot() {
+		StringBuilder ret = new StringBuilder("digraph G{\n");
+		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
+			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar)).append("\";\n");
+		}
+		ret.append(getMainProcess().toDot());
+		ret.append("}\n");
+		return ret.toString();
 	}
 
 	public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
@@ -120,6 +192,18 @@ public final class XCFA {
 
 		public static Builder builder() {
 			return new Builder();
+		}
+
+		public String toDot() {
+			StringBuilder ret = new StringBuilder();
+			int cnt = 0;
+			for (Procedure procedure : getProcedures()) {
+				ret.append("subgraph cluster").append(cnt++).append("{\n");
+				ret.append(procedure.toDot());
+				ret.append("}\n");
+			}
+			ret.append("}\n");
+			return ret.toString();
 		}
 
 		public List<VarDecl<?>> getParams() {
@@ -163,7 +247,7 @@ public final class XCFA {
 
 			private final List<VarDecl<?>> params;
 
-			private final Map<VarDecl<?>, LitExpr<?>> localVars;
+			private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
 
 			private final List<Location> locs;
 			private final Location initLoc;
@@ -187,8 +271,65 @@ public final class XCFA {
 				name = builder.name;
 			}
 
+			public Procedure(Procedure procedure) {
+				parent = null; // ProcessBuilder will fill out this field
+				rtype = procedure.rtype;
+
+				List<VarDecl<?>> paramCollectList = new ArrayList<>();
+				procedure.params.forEach(varDecl -> paramCollectList.add(VarDecl.copyOf(varDecl)));
+				params = ImmutableList.copyOf(paramCollectList);
+
+				Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
+				procedure.localVars.forEach((varDecl, litExpr) -> localVarsCollectList.put(VarDecl.copyOf(varDecl), litExpr));
+				localVars = ImmutableMap.copyOf(localVarsCollectList);
+
+				Map<Location, Location> newLocLut = new HashMap<>();
+
+				List<Location> locsCollectList = new ArrayList<>();
+				procedure.locs.forEach(loc -> {
+					Location location = Location.copyOf(loc);
+					locsCollectList.add(location);
+					newLocLut.put(loc, location);
+				});
+				locs = ImmutableList.copyOf(locsCollectList);
+				locs.forEach(location -> location.parent = this);
+
+				initLoc = newLocLut.get(procedure.initLoc);
+				errorLoc = newLocLut.get(procedure.errorLoc);
+				finalLoc = newLocLut.get(procedure.finalLoc);
+
+				List<Edge> edgeCollectList = new ArrayList<>();
+				procedure.edges.forEach(edge -> edgeCollectList.add(Edge.copyOf(edge, newLocLut)));
+				edges = ImmutableList.copyOf(edgeCollectList);
+				edges.forEach(edge -> edge.parent = this);
+
+				result = procedure.result == null ? null : VarDecl.copyOf(procedure.result);
+				name = procedure.name;
+			}
+
 			public static Builder builder() {
 				return new Builder();
+			}
+
+			public String toDot() {
+				StringBuilder ret = new StringBuilder();
+				for (Location location : getLocs()) {
+					ret.append("\"").append(location.getName()).append("\"");
+					if(location.isErrorLoc()) ret.append("[xlabel=err]");
+					else if(location.isEndLoc()) ret.append("[xlabel=final]");
+					else if(getInitLoc() == location) ret.append("[xlabel=start]");
+					ret.append(";\n");
+				}
+				for (Edge edge : getEdges()) {
+					ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
+					ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
+					for (Stmt stmt : edge.getStmts()) {
+						ret.append(stmt.toString());
+						ret.append(", ");
+					}
+					ret.append("\"];\n");
+				}
+				return ret.toString();
 			}
 
 			public Type getRtype() {
@@ -203,7 +344,7 @@ public final class XCFA {
 				return List.copyOf(localVars.keySet());
 			}
 
-			public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
+			public Optional<LitExpr<?>> getInitValue(VarDecl<?> varDecl) {
 				return localVars.get(varDecl);
 			}
 
@@ -260,6 +401,10 @@ public final class XCFA {
 					this.dictionary = dictionary;
 					outgoingEdges = new ArrayList<>();
 					incomingEdges = new ArrayList<>();
+				}
+
+				public static Location copyOf(final Location from){
+					return new Location(from.getName(), Map.copyOf(from.dictionary));
 				}
 
 				public String getName() {
@@ -319,6 +464,10 @@ public final class XCFA {
 					target.incomingEdges.add(this);
 				}
 
+				public static Edge copyOf(Edge edge, Map<Location, Location> locationLut) {
+					return new Edge(locationLut.get(edge.source), locationLut.get(edge.target), edge.stmts);
+				}
+
 				public Location getSource() {
 					return source;
 				}
@@ -355,7 +504,7 @@ public final class XCFA {
 				 */
 				private static final String RESULT_NAME = "result";
 				private final List<VarDecl<?>> params;
-				private final Map<VarDecl<?>, LitExpr<?>> localVars;
+				private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
 				private final List<Location> locs;
 				private final List<Edge> edges;
 				private boolean built;
@@ -385,6 +534,11 @@ public final class XCFA {
 				}
 
 				public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
+					checkNotBuilt();
+					if (isResultVariable(var.getName())) setResult(var);
+					localVars.put(var, Optional.ofNullable(initValue));
+				}
+				public void createVar(final VarDecl<?> var, final Optional<LitExpr<?>> initValue) {
 					checkNotBuilt();
 					if (isResultVariable(var.getName())) setResult(var);
 					localVars.put(var, initValue);
@@ -419,7 +573,7 @@ public final class XCFA {
 					return Collections.unmodifiableList(params);
 				}
 
-				public Map<VarDecl<?>, LitExpr<?>> getLocalVars() {
+				public Map<VarDecl<?>, Optional<LitExpr<?>>> getLocalVars() {
 					return localVars;
 				}
 
@@ -474,6 +628,7 @@ public final class XCFA {
 					return new Procedure(this);
 				}
 
+				// TODO: constant return?
 				public void setResult(VarDecl<?> result) {
 					this.result = result;
 				}

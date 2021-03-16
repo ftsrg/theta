@@ -20,12 +20,14 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,8 +71,14 @@ public class XcfaCli {
 	}
 
 	public static void main(final String[] args) {
-		final XcfaCli mainApp = new XcfaCli(args);
-		mainApp.run();
+		LlvmIrProvider provider = new LlvmIrProvider("subprojects/xcfa-cli-stateless/src/test/resources/llvm/example_branch.bc");
+		XCFA xcfa = XCFA.createXCFA(provider);
+		System.out.println(xcfa.toDot());
+		CFA cfa = xcfa.createCFA();
+		System.out.println("======");
+		System.out.println(cfa.toString());
+//		final XcfaCli mainApp = new XcfaCli(args);
+//		mainApp.run();
 	}
 
 	private void run() {

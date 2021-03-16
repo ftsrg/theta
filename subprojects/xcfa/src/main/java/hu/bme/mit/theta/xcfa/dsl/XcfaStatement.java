@@ -129,14 +129,14 @@ final class XcfaStatement {
 			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
 			XCFA.Process.Procedure procedure = (XCFA.Process.Procedure) calleeSymbol.instantiate();
 
-			List<VarDecl<?>> params = new ArrayList<>();
+			List<Expr<?>> params = new ArrayList<>();
 
 			if (ctx.params != null) {
 				ctx.params.forEach(token -> {
 					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
 					checkState(optionalSymbol.isPresent());
-					final InstantiatableSymbol<?> varSymbol = (InstantiatableSymbol<?>) optionalSymbol.get();
-					params.add((VarDecl<?>) varSymbol.instantiate());
+					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
+					params.add(((VarDecl<?>) varSymbol.instantiate()).getRef()); // TODO: is this sound?
 
 				});
 			}
