@@ -135,7 +135,7 @@ public final class XCFA {
 			else if (e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size() - 1);
 		}
 		builder.setInitLoc(initLoc);
-		builder.setErrorLoc(errorLoc);
+		if(errorLoc != null) builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
 		return builder.build();
 	}

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -63,6 +64,10 @@ public class CallStmt extends XcfaCallStmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(STMT_LABEL).add(procedure.getName()).toString();
+		LispStringBuilder call = Utils.lispStringBuilder(STMT_LABEL).add(var == null ? "void" : var.getName()).add(procedure.getName());
+		for (Expr<?> param : params) {
+			call.add(param);
+		}
+		return call.toString();
 	}
 }

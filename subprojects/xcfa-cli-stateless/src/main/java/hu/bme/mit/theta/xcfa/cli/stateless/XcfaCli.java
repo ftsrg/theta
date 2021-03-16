@@ -19,6 +19,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
@@ -67,9 +68,12 @@ public class XcfaCli {
 	}
 
 	public static void main(final String[] args) {
-		LlvmIrProvider provider = new LlvmIrProvider("subprojects/xcfa-cli-stateless/src/test/resources/llvm/every_inst.bc");
+		LlvmIrProvider provider = new LlvmIrProvider("subprojects/xcfa-cli-stateless/src/test/resources/llvm/example_branch.bc");
 		XCFA xcfa = XCFA.createXCFA(provider);
 		System.out.println(xcfa.toDot());
+		CFA cfa = xcfa.createCFA();
+		System.out.println("======");
+		System.out.println(cfa.toString());
 //		final XcfaCli mainApp = new XcfaCli(args);
 //		mainApp.run();
 	}
