@@ -46,10 +46,8 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
-		// TODO this only lists the passed parameters, not
-		//     the variables where the procedure stores them.
-		//     This is not a problem for xcfa-analysis, because only globals are important.
-		param.addAll(stmt.getParams());
+//		param.addAll(stmt.getParams());
+		// TODO: really nothing expects variables here?
 		return null;
 	}
 

@@ -73,7 +73,7 @@ final class CallUtils {
     private static List<Optional<LitExpr<? extends Type>>> evalParams(ExplStateMutatorInterface state, CallStmt callStmt) {
         List<Optional<LitExpr<? extends Type>>> callerParameters = new ArrayList<>();
         for (var x: callStmt.getParams()) {
-            callerParameters.add(state.eval(x.getRef()).map(z->z));
+            callerParameters.add(state.eval(x).map(z->z));
         }
         return callerParameters;
     }

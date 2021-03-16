@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.InstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
 import java.io.IOException;
@@ -74,11 +75,15 @@ public final class XCFA {
 		}
 		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
 		Map<Process.Builder, String> processBuilders = new HashMap<>();
-		processBuilders.put(Process.builder(), "main");
+		List<InstructionHandler> instructionHandlers = new ArrayList<>();
+		Process.Builder mainProcBuilder = Process.builder();
+		mainProcBuilder.setName("main");
+		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
 		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
 			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
+			procedureBuilder.setName(function.get1());
 			Collection<String> processes = new ArrayList<>();
-			handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes);
+			instructionHandlers.add(handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes));
 			for (String process : processes) {
 				Process.Builder processBuilder = Process.builder();
 				processBuilder.setName(process);
@@ -94,8 +99,14 @@ public final class XCFA {
 				processBuilder.addProcedure(proc);
 				if(procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
 			});
-			builder.addProcess(processBuilder.build());
+			Process proc = processBuilder.build();
+			builder.addProcess(proc);
+			if(processBuilder == mainProcBuilder) builder.setMainProcess(proc);
 		});
+
+		for (InstructionHandler instructionHandler : instructionHandlers) {
+			instructionHandler.endProcedure(procedures);
+		}
 
 		return builder.build();
 	}
@@ -211,7 +222,7 @@ public final class XCFA {
 
 			private final List<VarDecl<?>> params;
 
-			private final Map<VarDecl<?>, LitExpr<?>> localVars;
+			private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
 
 			private final List<Location> locs;
 			private final Location initLoc;
@@ -243,7 +254,7 @@ public final class XCFA {
 				procedure.params.forEach(varDecl -> paramCollectList.add(VarDecl.copyOf(varDecl)));
 				params = ImmutableList.copyOf(paramCollectList);
 
-				Map<VarDecl<?>, LitExpr<?>> localVarsCollectList = new HashMap<>();
+				Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
 				procedure.localVars.forEach((varDecl, litExpr) -> localVarsCollectList.put(VarDecl.copyOf(varDecl), litExpr));
 				localVars = ImmutableMap.copyOf(localVarsCollectList);
 
@@ -267,7 +278,7 @@ public final class XCFA {
 				edges = ImmutableList.copyOf(edgeCollectList);
 				edges.forEach(edge -> edge.parent = this);
 
-				result = VarDecl.copyOf(procedure.result);
+				result = procedure.result == null ? null : VarDecl.copyOf(procedure.result);
 				name = procedure.name;
 			}
 
@@ -287,7 +298,7 @@ public final class XCFA {
 				return localVars.keySet();
 			}
 
-			public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
+			public Optional<LitExpr<?>> getInitValue(VarDecl<?> varDecl) {
 				return localVars.get(varDecl);
 			}
 
@@ -447,7 +458,7 @@ public final class XCFA {
 				 */
 				private static final String RESULT_NAME = "result";
 				private final List<VarDecl<?>> params;
-				private final Map<VarDecl<?>, LitExpr<?>> localVars;
+				private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
 				private final List<Location> locs;
 				private final List<Edge> edges;
 				private boolean built;
@@ -477,6 +488,11 @@ public final class XCFA {
 				}
 
 				public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
+					checkNotBuilt();
+					if (isResultVariable(var.getName())) setResult(var);
+					localVars.put(var, Optional.ofNullable(initValue));
+				}
+				public void createVar(final VarDecl<?> var, final Optional<LitExpr<?>> initValue) {
 					checkNotBuilt();
 					if (isResultVariable(var.getName())) setResult(var);
 					localVars.put(var, initValue);
@@ -511,7 +527,7 @@ public final class XCFA {
 					return Collections.unmodifiableList(params);
 				}
 
-				public Map<VarDecl<?>, LitExpr<?>> getLocalVars() {
+				public Map<VarDecl<?>, Optional<LitExpr<?>>> getLocalVars() {
 					return localVars;
 				}
 

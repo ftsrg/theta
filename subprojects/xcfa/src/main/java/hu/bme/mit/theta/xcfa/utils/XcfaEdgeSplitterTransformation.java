@@ -46,7 +46,7 @@ public final class XcfaEdgeSplitterTransformation {
 					builderPc.createParam(origParam);
 				}
 				for (var origVar : origPc.getLocalVars()) {
-					builderPc.createVar(origVar, origPc.getInitValue(origVar));
+					builderPc.createVar(origVar, origPc.getInitValue(origVar).isPresent() ? origPc.getInitValue(origVar).get() : null);
 				}
 				builderPc.setRtype(origPc.getRtype());
 				builderPc.setResult(origPc.getResult());

@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -46,19 +47,25 @@ public class Utils {
 
     public static LitExpr<? extends Type> createConstant(String value) {
         String[] arguments = value.split(" ");
-        checkState(arguments.length == 2, "Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\"");
-        switch (arguments[0]) {
-            case "i32*":
-            case "i32": return IntLitExpr.of(new BigInteger(arguments[1]));
-            case "f64":
-                float v = Float.parseFloat(arguments[1]);
-                return RatLitExpr.of(BigInteger.valueOf((long)(v*(1 << FLOAT_DIGITS))), BigInteger.valueOf(1 << FLOAT_DIGITS));
-            default:
-                throw new IllegalStateException("Unexpected value: " + arguments[0]);
+        if(arguments.length != 2) {
+            System.err.println("Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
+            return null;
+        }
+
+        switch(arguments[1]) {
+            case "true": arguments[1] = "1"; break;
+            case "false": arguments[1] = "0"; break;
+            default: break;
+        }
+
+        if(arguments[0].startsWith("i")) {
+            return IntLitExpr.of(new BigInteger(arguments[1]));
+        } else {
+            throw new IllegalStateException("Unexpected value: " + arguments[0]);
         }
     }
 
-    public static void handleProcedure(
+    public static InstructionHandler handleProcedure(
             Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
             XCFA.Process.Procedure.Builder procedureBuilder,
             SSAProvider ssa,
@@ -111,6 +118,6 @@ public class Utils {
                 instructionHandler.handleInstruction(instruction);
             }
         }
-
+        return instructionHandler;
     }
 }

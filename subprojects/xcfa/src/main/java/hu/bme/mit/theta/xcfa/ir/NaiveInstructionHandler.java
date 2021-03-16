@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
 
@@ -37,6 +38,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private final Optional<VarDecl<? extends Type>> retVar;
     private final Map<String, XCFA.Process.Procedure.Location> locationLut;
     private String block;
+    private Map<CallStmt, String> callStmts = new HashMap<>();
 
 
     private final Map<Tuple2<String, String>, Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
@@ -58,6 +60,24 @@ public class NaiveInstructionHandler implements InstructionHandler{
         this.block = block;
         cnt = 0;
         lastLoc = locationLut.get(block);
+    }
+
+    private XCFA.Process.Procedure emptyProc(String name) {
+        XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
+        XCFA.Process.Procedure.Location loc1 = new XCFA.Process.Procedure.Location("loc", null);
+        XCFA.Process.Procedure.Location loc2 = new XCFA.Process.Procedure.Location("loc", null);
+        builder.addLoc(loc1);
+        builder.addLoc(loc2);
+        builder.setFinalLoc(loc2);
+        builder.setInitLoc(loc1);
+        builder.setName(name);
+        return builder.build();
+    }
+
+
+    @Override
+    public void endProcedure(Map<String, XCFA.Process.Procedure> procedures) {
+        callStmts.forEach((callStmt, s) -> callStmt.setProcedure(procedures.getOrDefault(s, emptyProc(s))));
     }
 
     @Override
@@ -106,24 +126,33 @@ public class NaiveInstructionHandler implements InstructionHandler{
             case "call":
                 call(instruction);
                 break;
+            case "zext":
+                load(instruction);
+                break;
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.get1());
         }
     }
 
-
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        String funcName = instruction.get3().get(paramSize - 2).get2();
-//        switch(funcName) {
-//            default:
-                System.out.println("Function call");
-                if(instruction.get2().isPresent()) System.out.println("\tResVar: " + instruction.get2().get());
-                System.out.println("\tName: " + funcName);
-                System.out.println("\tParams: ");
-                for(int i = 0 ; i < paramSize - 1; ++i) System.out.println("\t\t" + instruction.get3().get(i));
-//                break;
-//        }
+        XCFA.Process.Procedure.Location newLoc = new XCFA.Process.Procedure.Location(block + "_" + cnt++, new HashMap<>());
+        String funcName = instruction.get3().get(paramSize - 1).get2();
+        VarDecl<?> callVar = null;
+        if(instruction.get2().isPresent()) {
+            callVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
+            procedureBuilder.getLocalVars().put(callVar, Optional.empty());
+            localVarLut.put(callVar.getName(), callVar);
+            localVarLut.put(instruction.get2().get().get2(), callVar);
+            valueLut.put(instruction.get2().get().get2(), callVar.getRef());
+        }
+        List<Expr<?>> exprs = new ArrayList<>();
+        for(int i = 0 ; i < paramSize - 1; ++i) {
+            Expr<? extends Type> expr = getExpr(instruction, i);
+            if(expr != null) exprs.add(expr);
+        }
+        CallStmt stmt = new CallStmt(callVar, null, exprs);
+        callStmts.put(stmt, funcName);
     }
 
     /*
@@ -133,14 +162,17 @@ public class NaiveInstructionHandler implements InstructionHandler{
         checkState(instruction.get3().size() % 2 == 0, "Phi node should have an even number of arguments");
         checkState(instruction.get2().isPresent(), "Return var must be present!");
         VarDecl<?> phiVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
-        procedureBuilder.getLocalVars().put(phiVar, null);
+        procedureBuilder.getLocalVars().put(phiVar, Optional.empty());
         localVarLut.put(phiVar.getName(), phiVar);
+        localVarLut.put(instruction.get2().get().get2(), phiVar);
         valueLut.put(instruction.get2().get().get2(), phiVar.getRef());
         for(int i = 0; i < (instruction.get3().size()) / 2; ++i) {
-            String blockName = instruction.get3().get(2*i).get2();
-            Expr<?> value = getExpr(instruction, 2*i + 1);
-            checkState(terminatorEdges.containsKey(Tuple2.of(block, blockName)), "Edge does not exist!");
-            terminatorEdges.get(Tuple2.of(block, blockName)).get3().add(Assign(phiVar, value));
+            String blockName = instruction.get3().get(2*i + 1).get2();
+            Expr<?> value = getExpr(instruction, 2*i );
+            Tuple2<String, String> key = Tuple2.of(blockName, block);
+            Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XCFA.Process.Procedure.Location("", null), new XCFA.Process.Procedure.Location("", null), new ArrayList<>()));
+            val.get3().add(Assign(phiVar, value));
+            terminatorEdges.put(key, val);
         }
     }
 
@@ -212,7 +244,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private void alloca(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         checkState(instruction.get2().isPresent(), "Alloca must have a variable tied to it");
         VarDecl<?> var = createVariable(instruction.get2().get().get2(), instruction.get2().get().get1());
-        procedureBuilder.getLocalVars().put(var, null);
+        procedureBuilder.getLocalVars().put(var, Optional.empty());
         localVarLut.put(instruction.get2().get().get2(), var);
         valueLut.put(instruction.get2().get().get2(), var.getRef());
     }
@@ -324,7 +356,10 @@ public class NaiveInstructionHandler implements InstructionHandler{
             if(defaultBranch == null) defaultBranch = eq;
             else defaultBranch = BoolExprs.Or(defaultBranch, eq);
             AssumeStmt assume = Assume(eq);
-            terminatorEdges.put(Tuple2.of(block, loc.getName()), Tuple3.of(lastLoc, loc, new ArrayList<>(List.of(assume))));
+            Tuple2<String, String> key = Tuple2.of(block, loc.getName());
+            List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc, new ArrayList<>())).get3();
+            stmts.add(assume);
+            terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
         }
         XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(1).get2());
         XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
@@ -356,8 +391,14 @@ public class NaiveInstructionHandler implements InstructionHandler{
                 AssumeStmt assume1 = Assume(Neq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
                 //noinspection unchecked
                 AssumeStmt assume2 = Assume(Eq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
-                terminatorEdges.put(Tuple2.of(block, loc1.getName()), Tuple3.of(lastLoc, loc1, new ArrayList<>(List.of(assume1))));
-                terminatorEdges.put(Tuple2.of(block, loc2.getName()), Tuple3.of(lastLoc, loc2, new ArrayList<>(List.of(assume2))));
+                Tuple2<String, String> key = Tuple2.of(block, loc1.getName());
+                List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc1, new ArrayList<>())).get3();
+                stmts.add(assume1);
+                terminatorEdges.put(key, Tuple3.of(lastLoc, loc1, stmts));
+                key = Tuple2.of(block, loc2.getName());
+                stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc1, new ArrayList<>())).get3();
+                stmts.add(assume2);
+                terminatorEdges.put(key, Tuple3.of(lastLoc, loc2, stmts));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.get3().size());
@@ -387,9 +428,11 @@ public class NaiveInstructionHandler implements InstructionHandler{
     }
 
     private <T extends Type> Stmt Assign(VarDecl<T> varDecl, Expr<? extends Type> expr) {
-        checkState(varDecl.getType() == expr.getType(), "Cannot assign different types of expressions!");
+        boolean lhsOk = varDecl.getType() == IntType.getInstance() || varDecl.getType() == BoolType.getInstance();
+        boolean rhsOk = expr.getType() == IntType.getInstance() || expr.getType() == BoolType.getInstance();
+        checkState(lhsOk && rhsOk, "Cannot assign different types of expressions!");
         //noinspection unchecked
-        return Stmts.Assign(varDecl, (Expr<T>) expr);
+        return Stmts.Assign((VarDecl<IntType>) varDecl, (Expr<IntType>) expr);
     }
 
     private Expr<? extends Type> getExpr(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction, int i) {
