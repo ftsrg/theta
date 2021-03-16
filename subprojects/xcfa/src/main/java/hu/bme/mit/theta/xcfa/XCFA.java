@@ -40,7 +40,7 @@ import static hu.bme.mit.theta.xcfa.ir.Utils.*;
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
  *
- * TODO add IRType checks around parameters and return value passing
+ * TODO add type checks around parameters and return value passing
  *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
 public final class XCFA {
@@ -105,7 +105,7 @@ public final class XCFA {
 		});
 
 		for (InstructionHandler instructionHandler : instructionHandlers) {
-			instructionHandler.endProcedure(procedures);
+			instructionHandler.substituteProcedures(procedures);
 		}
 
 		return builder.build();
@@ -138,6 +138,16 @@ public final class XCFA {
 		builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
 		return builder.build();
+	}
+
+	public String toDot() {
+		StringBuilder ret = new StringBuilder("digraph G{\n");
+		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
+			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar)).append("\";\n");
+		}
+		ret.append(getMainProcess().toDot());
+		ret.append("}\n");
+		return ret.toString();
 	}
 
 	public Set<VarDecl<? extends Type>> getGlobalVars() {
@@ -179,6 +189,18 @@ public final class XCFA {
 
 		public static Builder builder() {
 			return new Builder();
+		}
+
+		public String toDot() {
+			StringBuilder ret = new StringBuilder();
+			int cnt = 0;
+			for (Procedure procedure : getProcedures()) {
+				ret.append("subgraph cluster").append(cnt++).append("{\n");
+				ret.append(procedure.toDot());
+				ret.append("}\n");
+			}
+			ret.append("}\n");
+			return ret.toString();
 		}
 
 		public List<VarDecl<?>> getParams() {
@@ -284,6 +306,27 @@ public final class XCFA {
 
 			public static Builder builder() {
 				return new Builder();
+			}
+
+			public String toDot() {
+				StringBuilder ret = new StringBuilder();
+				for (Location location : getLocs()) {
+					ret.append("\"").append(location.getName()).append("\"");
+					if(location.isErrorLoc()) ret.append("[xlabel=err]");
+					else if(location.isEndLoc()) ret.append("[xlabel=final]");
+					else if(getInitLoc() == location) ret.append("[xlabel=start]");
+					ret.append(";\n");
+				}
+				for (Edge edge : getEdges()) {
+					ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
+					ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
+					for (Stmt stmt : edge.getStmts()) {
+						ret.append(stmt.toString());
+						ret.append(", ");
+					}
+					ret.append("\"];\n");
+				}
+				return ret.toString();
 			}
 
 			public Type getRtype() {

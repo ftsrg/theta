@@ -14,5 +14,7 @@ public interface InstructionHandler {
 
     void reinitClass(String block);
 
-    void endProcedure(Map<String, XCFA.Process.Procedure> procedures);
+    void substituteProcedures(Map<String, XCFA.Process.Procedure> procedures);
+
+    void endProcedure();
 }

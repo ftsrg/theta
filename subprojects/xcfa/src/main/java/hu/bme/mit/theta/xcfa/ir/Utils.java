@@ -118,6 +118,7 @@ public class Utils {
                 instructionHandler.handleInstruction(instruction);
             }
         }
+        instructionHandler.endProcedure();
         return instructionHandler;
     }
 }

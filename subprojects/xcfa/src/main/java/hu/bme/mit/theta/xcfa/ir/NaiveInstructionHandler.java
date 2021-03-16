@@ -74,9 +74,16 @@ public class NaiveInstructionHandler implements InstructionHandler{
         return builder.build();
     }
 
+    @Override
+    public void endProcedure() {
+        terminatorEdges.forEach((_obj, edgeTup) -> {
+            XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
+            procedureBuilder.addEdge(edge);
+        });
+    }
 
     @Override
-    public void endProcedure(Map<String, XCFA.Process.Procedure> procedures) {
+    public void substituteProcedures(Map<String, XCFA.Process.Procedure> procedures) {
         callStmts.forEach((callStmt, s) -> callStmt.setProcedure(procedures.getOrDefault(s, emptyProc(s))));
     }
 
@@ -153,6 +160,10 @@ public class NaiveInstructionHandler implements InstructionHandler{
         }
         CallStmt stmt = new CallStmt(callVar, null, exprs);
         callStmts.put(stmt, funcName);
+        XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, newLoc, List.of(stmt));
+        procedureBuilder.addLoc(newLoc);
+        procedureBuilder.addEdge(edge);
+        lastLoc = newLoc;
     }
 
     /*
@@ -170,7 +181,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             String blockName = instruction.get3().get(2*i + 1).get2();
             Expr<?> value = getExpr(instruction, 2*i );
             Tuple2<String, String> key = Tuple2.of(blockName, block);
-            Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XCFA.Process.Procedure.Location("", null), new XCFA.Process.Procedure.Location("", null), new ArrayList<>()));
+            Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XCFA.Process.Procedure.Location(key.get1(), null), new XCFA.Process.Procedure.Location(key.get2(), null), new ArrayList<>()));
             val.get3().add(Assign(phiVar, value));
             terminatorEdges.put(key, val);
         }
@@ -375,8 +386,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
         switch(instruction.get3().size()) {
             case 1:
                 XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(0).get2());
-                XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, new ArrayList<>());
-                procedureBuilder.addEdge(edge);
+                Tuple2<String, String> key = Tuple2.of(block, loc.getName());
+                List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc, new ArrayList<>())).get3();
+                terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
                 break;
             case 3:
                 XCFA.Process.Procedure.Location loc1 = locationLut.get(instruction.get3().get(1).get2());
@@ -387,12 +399,13 @@ public class NaiveInstructionHandler implements InstructionHandler{
                 boolean lhsType = lhs.getType() == IntType.getInstance() || lhs.getType() == BoolType.getInstance();
                 boolean rhsType = rhs.getType() == IntType.getInstance() || rhs.getType() == BoolType.getInstance();
                 checkState(lhsType && rhsType, "Both expressions should be int or bool types!");
-                //noinspection unchecked
+                //noinspection unchecked                XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, new ArrayList<>());
+
                 AssumeStmt assume1 = Assume(Neq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
                 //noinspection unchecked
                 AssumeStmt assume2 = Assume(Eq((Expr<IntType>) lhs, (Expr<IntType>) rhs));
-                Tuple2<String, String> key = Tuple2.of(block, loc1.getName());
-                List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc1, new ArrayList<>())).get3();
+                key = Tuple2.of(block, loc1.getName());
+                stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc1, new ArrayList<>())).get3();
                 stmts.add(assume1);
                 terminatorEdges.put(key, Tuple3.of(lastLoc, loc1, stmts));
                 key = Tuple2.of(block, loc2.getName());
