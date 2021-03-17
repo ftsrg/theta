@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.impl.yices2.Yices2SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverInstaller;
@@ -42,6 +43,7 @@ public final class SmtLibSolverManager {
         registerInstaller("z3", Z3SmtLibSolverInstaller.class);
         registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
         registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
+        registerInstaller("yices2", Yices2SmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
