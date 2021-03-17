@@ -27,10 +27,10 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.ir.InstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
@@ -115,7 +115,26 @@ public final class XCFA {
 		return new Builder();
 	}
 
-	public XcfaState initialState() {
+    public static XCFA fromFile(File model) throws IOException {
+		if(!model.exists()) throw new FileNotFoundException();
+		if(model.getName().endsWith(".xcfa")) {
+			try(InputStream is = new FileInputStream(model)) {
+				return createXCFA(is);
+			}
+		} else if ( model.getName().endsWith(".ll") || model.getName().endsWith(".bc") ){
+			return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
+		} else if ( model.getName().endsWith(".c") || model.getName().endsWith(".i") ) {
+			throw new RuntimeException(".c or .i files are not yet supported.");
+		} else {
+			String[] split = model.getName().split("\\.");
+			if(split.length > 0)
+				throw new RuntimeException("File type " + split[split.length-1] + " not supported.");
+			throw new RuntimeException("File does not have an extension.");
+
+		}
+    }
+
+    public XcfaState initialState() {
 		return new XcfaState(this);
 	}
 

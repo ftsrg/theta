@@ -42,8 +42,14 @@ public class XcfaCli {
 	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
 	File model;
 
-	@Parameter(names = "--mcm", description = "Path of the input MCM model", required = true)
+	@Parameter(names = "--mcm", description = "Path of the input MCM model")
 	File mcm;
+
+	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
+	boolean printxcfa;
+
+	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
+	boolean printcfa;
 
 	@Parameter(names = "--poolsize", description = "Size of the thread pool")
 	Integer threadPoolSize = 1;
@@ -71,14 +77,8 @@ public class XcfaCli {
 	}
 
 	public static void main(final String[] args) {
-		LlvmIrProvider provider = new LlvmIrProvider("subprojects/xcfa-cli-stateless/src/test/resources/llvm/example_branch.bc");
-		XCFA xcfa = XCFA.createXCFA(provider);
-		System.out.println(xcfa.toDot());
-		CFA cfa = xcfa.createCFA();
-		System.out.println("======");
-		System.out.println(cfa.toString());
-//		final XcfaCli mainApp = new XcfaCli(args);
-//		mainApp.run();
+		final XcfaCli mainApp = new XcfaCli(args);
+		mainApp.run();
 	}
 
 	private void run() {
@@ -100,7 +100,16 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA xcfa = loadModel();
+			final XCFA xcfa = XCFA.fromFile(model);
+
+			if (printxcfa) {
+				System.out.println(xcfa.toDot());
+				return;
+			} else if (printcfa) {
+				System.out.println(xcfa.createCFA());
+				return;
+			}
+
 			final MCM mcm = loadMcm(xcfa);
 			if(StatelessMC.check(xcfa, mcm, cex, settings)) {
 				System.out.println("VERIFICATION SUCCESSFUL");
@@ -115,11 +124,6 @@ public class XcfaCli {
 		}
 	}
 
-	private XCFA loadModel() throws IOException {
-		try(InputStream inputStream = new FileInputStream(model)) {
-			return XcfaDslManager.createXcfa(inputStream);
-		}
-	}
 	private MCM loadMcm(XCFA xcfa) throws IOException {
 		try(InputStream inputStream = new FileInputStream(mcm)) {
 			return McmDslManager.createMCM(inputStream, xcfa.getProcesses(), xcfa.getGlobalVars());
