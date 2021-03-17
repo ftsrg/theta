@@ -55,7 +55,7 @@ public class GetModelResponse implements SpecificResponse {
         return model;
     }
 
-    private static String extractString(final ParserRuleContext ctx) {
+    public static String extractString(final ParserRuleContext ctx) {
         return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }
