@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFAProcedure;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
@@ -127,7 +127,7 @@ final class XcfaStatement {
 			checkState(opt.isPresent(), "Callee not found: " + callee);
 			final InstantiatableSymbol<?> calleeSymbol = (InstantiatableSymbol<?>) opt.get();
 			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
-			XCFA.Process.Procedure procedure = (XCFA.Process.Procedure) calleeSymbol.instantiate();
+			XCFAProcedure procedure = (XCFAProcedure) calleeSymbol.instantiate();
 
 			List<Expr<?>> params = new ArrayList<>();
 

@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFAProcedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
@@ -25,25 +25,25 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 public class NaiveInstructionHandler implements InstructionHandler{
-    private XCFA.Process.Procedure.Location lastLoc;
+    private XCFAProcedure.Location lastLoc;
     private Integer cnt;
     private final Tuple3<String, java.util.Optional<String>, List<Tuple2<String, String>>> function;
-    private final XCFA.Process.Procedure.Builder procedureBuilder;
+    private final XCFAProcedure.Builder procedureBuilder;
     private final SSAProvider ssa;
     private final Collection<String> processes;
     private final Map<String, VarDecl<?>> localVarLut;
     private final Map<String, Expr<?>> valueLut;
-    private final hu.bme.mit.theta.xcfa.XCFA.Process.Procedure.Location finalLoc;
+    private final XCFAProcedure.Location finalLoc;
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private final Optional<VarDecl<? extends Type>> retVar;
-    private final Map<String, XCFA.Process.Procedure.Location> locationLut;
+    private final Map<String, XCFAProcedure.Location> locationLut;
     private String block;
     private Map<CallStmt, String> callStmts = new HashMap<>();
 
 
-    private final Map<Tuple2<String, String>, Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
+    private final Map<Tuple2<String, String>, Tuple3<XCFAProcedure.Location, XCFAProcedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
 
-    public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XCFA.Process.Procedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XCFA.Process.Procedure.Location finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XCFA.Process.Procedure.Location> locationLut) {
+    public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XCFAProcedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XCFAProcedure.Location finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XCFAProcedure.Location> locationLut) {
         this.function = function;
         this.procedureBuilder = procedureBuilder;
         this.ssa = ssa;
@@ -62,10 +62,10 @@ public class NaiveInstructionHandler implements InstructionHandler{
         lastLoc = locationLut.get(block);
     }
 
-    private XCFA.Process.Procedure emptyProc(String name) {
-        XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
-        XCFA.Process.Procedure.Location loc1 = new XCFA.Process.Procedure.Location("loc", null);
-        XCFA.Process.Procedure.Location loc2 = new XCFA.Process.Procedure.Location("loc", null);
+    private XCFAProcedure emptyProc(String name) {
+        XCFAProcedure.Builder builder = XCFAProcedure.builder();
+        XCFAProcedure.Location loc1 = new XCFAProcedure.Location("loc", null);
+        XCFAProcedure.Location loc2 = new XCFAProcedure.Location("loc", null);
         builder.addLoc(loc1);
         builder.addLoc(loc2);
         builder.setFinalLoc(loc2);
@@ -77,13 +77,13 @@ public class NaiveInstructionHandler implements InstructionHandler{
     @Override
     public void endProcedure() {
         terminatorEdges.forEach((_obj, edgeTup) -> {
-            XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
+            XCFAProcedure.Edge edge = new XCFAProcedure.Edge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
             procedureBuilder.addEdge(edge);
         });
     }
 
     @Override
-    public void substituteProcedures(Map<String, XCFA.Process.Procedure> procedures) {
+    public void substituteProcedures(Map<String, XCFAProcedure> procedures) {
         callStmts.forEach((callStmt, s) -> callStmt.setProcedure(procedures.getOrDefault(s, emptyProc(s))));
     }
 
@@ -143,7 +143,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        XCFA.Process.Procedure.Location newLoc = new XCFA.Process.Procedure.Location(block + "_" + cnt++, new HashMap<>());
+        XCFAProcedure.Location newLoc = new XCFAProcedure.Location(block + "_" + cnt++, new HashMap<>());
         String funcName = instruction.get3().get(paramSize - 1).get2();
         VarDecl<?> callVar = null;
         if(instruction.get2().isPresent()) {
@@ -160,7 +160,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         }
         CallStmt stmt = new CallStmt(callVar, null, exprs);
         callStmts.put(stmt, funcName);
-        XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, newLoc, List.of(stmt));
+        XCFAProcedure.Edge edge = new XCFAProcedure.Edge(lastLoc, newLoc, List.of(stmt));
         procedureBuilder.addLoc(newLoc);
         procedureBuilder.addEdge(edge);
         lastLoc = newLoc;
@@ -181,7 +181,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             String blockName = instruction.get3().get(2*i + 1).get2();
             Expr<?> value = getExpr(instruction, 2*i );
             Tuple2<String, String> key = Tuple2.of(blockName, block);
-            Tuple3<XCFA.Process.Procedure.Location, XCFA.Process.Procedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XCFA.Process.Procedure.Location(key.get1(), null), new XCFA.Process.Procedure.Location(key.get2(), null), new ArrayList<>()));
+            Tuple3<XCFAProcedure.Location, XCFAProcedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XCFAProcedure.Location(key.get1(), null), new XCFAProcedure.Location(key.get2(), null), new ArrayList<>()));
             val.get3().add(Assign(phiVar, value));
             terminatorEdges.put(key, val);
         }
@@ -232,9 +232,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
             valueLut.put(rhs, localVarLut.get(lhs).getRef());
             valueLut.put(lhs, localVarLut.get(lhs).getRef());
         } else {
-            XCFA.Process.Procedure.Location loc = new XCFA.Process.Procedure.Location(block + "_" + cnt++, new HashMap<>());
+            XCFAProcedure.Location loc = new XCFAProcedure.Location(block + "_" + cnt++, new HashMap<>());
             Stmt stmt = Assign(localVarLut.get(instruction.get3().get(1).get2()), getExpr(instruction, 0));
-            XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(stmt));
+            XCFAProcedure.Edge edge = new XCFAProcedure.Edge(lastLoc, loc, List.of(stmt));
             procedureBuilder.addLoc(loc);
             procedureBuilder.addEdge(edge);
             lastLoc = loc;
@@ -359,7 +359,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         Expr<IntType> var = (Expr<IntType>) varExpr;
         Expr<BoolType> defaultBranch = null;
         for (int i = 0; i < (instruction.get3().size() / 2) - 1; ++i) {
-            XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(2 + 2*i + 1).get2());
+            XCFAProcedure.Location loc = locationLut.get(instruction.get3().get(2 + 2*i + 1).get2());
             Expr<?> constExpr = getExpr(instruction, 2 + 2 * i);
             checkState(constExpr.getType() == IntType.getInstance(), "Constant has to be an integer!");
             //noinspection unchecked
@@ -372,8 +372,8 @@ public class NaiveInstructionHandler implements InstructionHandler{
             stmts.add(assume);
             terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
         }
-        XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(1).get2());
-        XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
+        XCFAProcedure.Location loc = locationLut.get(instruction.get3().get(1).get2());
+        XCFAProcedure.Edge edge = new XCFAProcedure.Edge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
         procedureBuilder.addEdge(edge);
         lastLoc = finalLoc;
     }
@@ -385,14 +385,14 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private void br(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         switch(instruction.get3().size()) {
             case 1:
-                XCFA.Process.Procedure.Location loc = locationLut.get(instruction.get3().get(0).get2());
+                XCFAProcedure.Location loc = locationLut.get(instruction.get3().get(0).get2());
                 Tuple2<String, String> key = Tuple2.of(block, loc.getName());
                 List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc, new ArrayList<>())).get3();
                 terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
                 break;
             case 3:
-                XCFA.Process.Procedure.Location loc1 = locationLut.get(instruction.get3().get(1).get2());
-                XCFA.Process.Procedure.Location loc2 = locationLut.get(instruction.get3().get(2).get2());
+                XCFAProcedure.Location loc1 = locationLut.get(instruction.get3().get(1).get2());
+                XCFAProcedure.Location loc2 = locationLut.get(instruction.get3().get(2).get2());
 
                 Expr<?> lhs = getExpr(instruction, 0);
                 Expr<?> rhs = createConstant("i32 0");
@@ -435,7 +435,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.get3().size());
         }
-        XCFA.Process.Procedure.Edge edge = new XCFA.Process.Procedure.Edge(lastLoc, finalLoc, stmts);
+        XCFAProcedure.Edge edge = new XCFAProcedure.Edge(lastLoc, finalLoc, stmts);
         procedureBuilder.addEdge(edge);
         lastLoc = finalLoc;
     }

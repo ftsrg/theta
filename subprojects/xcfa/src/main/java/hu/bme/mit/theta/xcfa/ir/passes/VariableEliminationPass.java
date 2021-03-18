@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.ir.passes;
 
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFAProcedure;
 
 /*
  * This class provides a variable elimination pass.
@@ -12,7 +12,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
  */
 public class VariableEliminationPass implements ProcedurePass {
     @Override
-    public XCFA.Process.Procedure.Builder run(XCFA.Process.Procedure.Builder builder) {
+    public XCFAProcedure.Builder run(XCFAProcedure.Builder builder) {
         return null;
     }
 }

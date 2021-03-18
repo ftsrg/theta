@@ -2,7 +2,7 @@ package hu.bme.mit.theta.xcfa.ir;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple4;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFAProcedure;
 
 import java.util.List;
 import java.util.Map;
@@ -14,7 +14,7 @@ public interface InstructionHandler {
 
     void reinitClass(String block);
 
-    void substituteProcedures(Map<String, XCFA.Process.Procedure> procedures);
+    void substituteProcedures(Map<String, XCFAProcedure> procedures);
 
     void endProcedure();
 }

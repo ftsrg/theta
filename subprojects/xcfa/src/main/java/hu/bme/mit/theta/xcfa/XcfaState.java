@@ -5,7 +5,6 @@ import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
@@ -29,13 +28,13 @@ public class XcfaState {
 
     private final XCFA xcfa;
 
-    private final List<XCFA.Process> enabledProcesses;
+    private final List<XCFAProcess> enabledProcesses;
     private final MutablePartitionedValuation valuation;
-    private final Map<XCFA.Process, Stack<XcfaStackFrame>> stackFrames;
-    private final Map<XCFA.Process, Integer> partitions;
-    private XCFA.Process currentlyAtomic;
+    private final Map<XCFAProcess, Stack<XcfaStackFrame>> stackFrames;
+    private final Map<XCFAProcess, Integer> partitions;
+    private XCFAProcess currentlyAtomic;
 
-    private final Map<XCFA.Process, Set<XcfaStackFrame>> offers;
+    private final Map<XCFAProcess, Set<XcfaStackFrame>> offers;
 
     XcfaState(XCFA xcfa) {
         this.xcfa = xcfa;
@@ -60,15 +59,15 @@ public class XcfaState {
         recalcOffers();
     }
 
-    public List<XCFA.Process> getEnabledProcesses() {
+    public List<XCFAProcess> getEnabledProcesses() {
         return enabledProcesses;
     }
 
-    public Map<XCFA.Process, Integer> getPartitions() {
+    public Map<XCFAProcess, Integer> getPartitions() {
         return partitions;
     }
 
-    public Map<XCFA.Process, Stack<XcfaStackFrame>> getStackFrames() {
+    public Map<XCFAProcess, Stack<XcfaStackFrame>> getStackFrames() {
         return stackFrames;
     }
 
@@ -76,7 +75,7 @@ public class XcfaState {
         return valuation;
     }
 
-    public XCFA.Process getCurrentlyAtomic() {
+    public XCFAProcess getCurrentlyAtomic() {
         return currentlyAtomic;
     }
 
@@ -84,11 +83,11 @@ public class XcfaState {
         return xcfa;
     }
 
-    public Map<XCFA.Process, Set<XcfaStackFrame>> getOffers() {
+    public Map<XCFAProcess, Set<XcfaStackFrame>> getOffers() {
         return offers;
     }
 
-    public void setCurrentlyAtomic(XCFA.Process currentlyAtomic) {
+    public void setCurrentlyAtomic(XCFAProcess currentlyAtomic) {
         checkState(currentlyAtomic == null || enabledProcesses.contains(currentlyAtomic), "The atomic process is not enabled!");
         this.currentlyAtomic = currentlyAtomic;
     }
@@ -101,13 +100,13 @@ public class XcfaState {
         return valuation.eval(decl);
     }
 
-    public void setEnabledProcesses(Collection<XCFA.Process> processes) {
+    public void setEnabledProcesses(Collection<XCFAProcess> processes) {
         enabledProcesses.clear();
         enabledProcesses.addAll(processes);
     }
 
     void acceptOffer(XcfaStackFrame frame) {
-        XCFA.Process proc = frame.getProcess();
+        XCFAProcess proc = frame.getProcess();
         checkState(offers.getOrDefault(proc, new HashSet<>()).contains(frame), "Stack frame is not currently offered!");
         XcfaStackFrame lastFrame = null;
         if(!stackFrames.get(proc).empty()) {
@@ -152,22 +151,22 @@ public class XcfaState {
             collectOffers(currentlyAtomic);
         }
         else {
-            for (XCFA.Process enabledProcess : enabledProcesses) {
+            for (XCFAProcess enabledProcess : enabledProcesses) {
                 collectOffers(enabledProcess);
             }
         }
 
     }
 
-    private void collectOffers(XCFA.Process enabledProcess) {
+    private void collectOffers(XCFAProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
         if(last != null && last.getStmt() instanceof CallStmt) {
-            XCFA.Process.Procedure procedure = ((CallStmt) last.getStmt()).getProcedure();
+            XCFAProcedure procedure = ((CallStmt) last.getStmt()).getProcedure();
             collectProcedureOffers(enabledProcess, procedure);
         }
         else if(last == null || last.isLastStmt()) {
-            XCFA.Process.Procedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
-            for (XCFA.Process.Procedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
+            XCFAProcedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
+            for (XCFAProcedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
                 boolean canExecute = true;
                 for (Stmt stmt : outgoingEdge.getStmts()) {
                     if(stmt instanceof AssumeStmt) {
@@ -192,8 +191,8 @@ public class XcfaState {
         }
     }
 
-    private void collectProcedureOffers(XCFA.Process enabledProcess, XCFA.Process.Procedure procedure) {
-        for (XCFA.Process.Procedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
+    private void collectProcedureOffers(XCFAProcess enabledProcess, XCFAProcedure procedure) {
+        for (XCFAProcedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
             XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0));
             if(edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
             xcfaStackFrame.setNewProcedure();

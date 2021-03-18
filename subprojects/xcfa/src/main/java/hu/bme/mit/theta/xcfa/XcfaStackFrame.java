@@ -4,12 +4,12 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 class XcfaStackFrame {
     private final XcfaState owner;
-    private final XCFA.Process.Procedure.Edge edge;
+    private final XCFAProcedure.Edge edge;
     private Stmt stmt;
     private boolean lastStmt;
     private boolean newProcedure;
 
-    XcfaStackFrame(XcfaState owner, XCFA.Process.Procedure.Edge edge, Stmt stmt) {
+    XcfaStackFrame(XcfaState owner, XCFAProcedure.Edge edge, Stmt stmt) {
         this.owner = owner;
         this.edge = edge;
         this.stmt = stmt;
@@ -17,7 +17,7 @@ class XcfaStackFrame {
         this.newProcedure = false;
     }
 
-    public XCFA.Process.Procedure.Edge getEdge() {
+    public XCFAProcedure.Edge getEdge() {
         return edge;
     }
 
@@ -41,7 +41,7 @@ class XcfaStackFrame {
         return new XcfaStackFrame(newOwner, edge, stmt);
     }
 
-    public XCFA.Process getProcess() {
+    public XCFAProcess getProcess() {
         return edge.getParent().getParent();
     }
 

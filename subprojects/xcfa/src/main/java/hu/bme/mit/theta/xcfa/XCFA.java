@@ -16,13 +16,10 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -74,18 +71,18 @@ public final class XCFA {
 
 		}
 
-		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
-		Map<Process.Builder, String> processBuilders = new HashMap<>();
+		Map<String, XCFAProcedure> procedures = new LinkedHashMap<>();
+		Map<XCFAProcess.Builder, String> processBuilders = new HashMap<>();
 		List<InstructionHandler> instructionHandlers = new ArrayList<>();
 
-		Process.Builder mainProcBuilder = Process.builder();
+		XCFAProcess.Builder mainProcBuilder = XCFAProcess.builder();
 		mainProcBuilder.setName("main");
 		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
 
 		// Creating procedures
 		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
 
-			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
+			XCFAProcedure.Builder procedureBuilder = XCFAProcedure.builder();
 			procedureBuilder.setName(function.get1());
 
 			Collection<String> processes = new ArrayList<>();
@@ -94,13 +91,13 @@ public final class XCFA {
 
 			for (String process : processes) {
 
-				Process.Builder processBuilder = Process.builder();
+				XCFAProcess.Builder processBuilder = XCFAProcess.builder();
 				processBuilder.setName(process);
 				processBuilders.put(processBuilder, function.get1());
 
 			}
 
-			Process.Procedure procedure = procedureBuilder.build();
+			XCFAProcedure procedure = procedureBuilder.build();
 			procedures.put(function.get1(), procedure);
 		}
 
@@ -110,21 +107,21 @@ public final class XCFA {
 		}
 
 		// Instantiating procedures, each with a copy of each procedure.
-		for (Map.Entry<Process.Builder, String> entry : processBuilders.entrySet()) {
-			Process.Builder processBuilder = entry.getKey();
+		for (Map.Entry<XCFAProcess.Builder, String> entry : processBuilders.entrySet()) {
+			XCFAProcess.Builder processBuilder = entry.getKey();
 			String mainProcedureName = entry.getValue();
 
-			for (Map.Entry<String, Process.Procedure> e : procedures.entrySet()) {
+			for (Map.Entry<String, XCFAProcedure> e : procedures.entrySet()) {
 				String procedureName = e.getKey();
-				Process.Procedure procedure = e.getValue();
+				XCFAProcedure procedure = e.getValue();
 
-				Process.Procedure proc = new Process.Procedure(procedure);
+				XCFAProcedure proc = new XCFAProcedure(procedure);
 				processBuilder.addProcedure(proc);
 				if (procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
 
 			}
 
-			Process proc = processBuilder.build();
+			XCFAProcess proc = processBuilder.build();
 			builder.addProcess(proc);
 
 			if (processBuilder == mainProcBuilder) builder.setMainProcess(proc);
@@ -172,13 +169,13 @@ public final class XCFA {
 
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> globalVars;
 
-	private final List<Process> processes;
-	private final Process mainProcess;
+	private final List<XCFAProcess> processes;
+	private final XCFAProcess mainProcess;
 
 	private XCFA(Builder builder) {
 		globalVars = builder.globalVars;
 		processes = ImmutableList.copyOf(builder.processes);
-		processes.forEach(process -> process.parent = this);
+		processes.forEach(process -> process.setParent(this));
 		mainProcess = builder.mainProcess;
 	}
 
@@ -186,8 +183,8 @@ public final class XCFA {
 	 * Returns the equivalent CFA, if it exists.
 	 */
 	public CFA createCFA() {
-		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
-		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
+		checkState(getProcesses().size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
+		checkState(getMainProcess().getProcedures().size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
 
 		CFA.Builder builder = CFA.builder();
 		CFA.Loc initLoc = null;
@@ -196,26 +193,26 @@ public final class XCFA {
 
 		int tmpcnt = 0;
 
-		for (Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
+		for (XCFAProcedure.Edge e : getMainProcess().getMainProcedure().getEdges()) {
 
 			List<CFA.Loc> locations = new ArrayList<>();
 			// Adding source
-			locations.add(builder.createLoc(e.source.name));
+			locations.add(builder.createLoc(e.getSource().getName()));
 			// Adding intermediate locations (CFAs can only have one per edge)
 			for (int i = 1; i < e.getStmts().size(); ++i) {
 				locations.add(builder.createLoc("tmp" + tmpcnt++));
 			}
 			// Adding target
-			locations.add(builder.createLoc(e.target.name));
+			locations.add(builder.createLoc(e.getTarget().getName()));
 			// Adding edges
 			for (int i = 0; i < e.getStmts().size(); ++i) {
-				checkState( ! (e.stmts.get(i) instanceof XcfaStmt), "XCFA statement " + e.stmts.get(i) + " is not supported!");
-				builder.createEdge(locations.get(i), locations.get(i + 1), e.stmts.get(i));
+				checkState( ! (e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
+				builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
 			}
 			// Deciding if the source or target is any special location
-			if (e.source == mainProcess.mainProcedure.initLoc) initLoc = locations.get(0);
-			if (e.target == mainProcess.mainProcedure.errorLoc) errorLoc = locations.get(locations.size() - 1);
-			else if (e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size() - 1);
+			if (e.getSource() == getMainProcess().getMainProcedure().getInitLoc()) initLoc = locations.get(0);
+			if (e.getTarget() == getMainProcess().getMainProcedure().getErrorLoc()) errorLoc = locations.get(locations.size() - 1);
+			else if (e.getTarget() == getMainProcess().getMainProcedure().getFinalLoc()) finalLoc = locations.get(locations.size() - 1);
 		}
 		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(initLoc);
@@ -254,543 +251,19 @@ public final class XCFA {
 		return globalVars.get(varDecl);
 	}
 
-	public List<Process> getProcesses() {
+	public List<XCFAProcess> getProcesses() {
 		return processes;
 	}
 
-	public Process getMainProcess() {
+	public XCFAProcess getMainProcess() {
 		return mainProcess;
-	}
-
-	/*
-	 * Process subclass
-	 */
-	@SuppressWarnings("unused")
-	public static final class Process implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Process {
-		private XCFA parent;
-		private final List<VarDecl<?>> params;
-
-		private final Map<VarDecl<?>, LitExpr<?>> threadLocalVars;
-
-		private final List<Procedure> procedures;
-		private final Procedure mainProcedure;
-		private static final String LABEL = "process";
-
-		private final String name;
-
-		private Process(final Builder builder) {
-			params = ImmutableList.copyOf(builder.params);
-			threadLocalVars = builder.threadLocalVars;
-			procedures = ImmutableList.copyOf(builder.procedures);
-			procedures.forEach(procedure -> procedure.parent = this);
-			mainProcedure = builder.mainProcedure;
-			name = builder.name;
-		}
-
-		public static Builder builder() {
-			return new Builder();
-		}
-
-		public String toDot() {
-			StringBuilder ret = new StringBuilder();
-			int cnt = 0;
-			for (Procedure procedure : getProcedures()) {
-				ret.append("subgraph cluster").append(cnt++).append("{\n");
-				ret.append(procedure.toDot());
-				ret.append("}\n");
-			}
-			return ret.toString();
-		}
-
-		public List<VarDecl<?>> getParams() {
-			return params;
-		}
-
-		public List<VarDecl<?>> getThreadLocalVars() {
-			return List.copyOf(threadLocalVars.keySet());
-		}
-
-		public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
-			return threadLocalVars.get(varDecl);
-		}
-
-		public List<Procedure> getProcedures() {
-			return procedures;
-		}
-
-		public Procedure getMainProcedure() {
-			return mainProcedure;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder().add(LABEL).add(name).toString();
-		}
-
-		public XCFA getParent() {
-			return parent;
-		}
-
-		public static final class Procedure {
-			private Process parent;
-			private final String name;
-			private final Type rtype;
-			private final VarDecl<? extends Type> result;
-
-			private final List<VarDecl<?>> params;
-
-			private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
-
-			private final List<Location> locs;
-			private final Location initLoc;
-			private final Location errorLoc;
-			private final Location finalLoc;
-
-			private final List<Edge> edges;
-
-			private Procedure(final Builder builder) {
-				rtype = builder.rtype;
-				params = ImmutableList.copyOf(builder.params);
-				localVars = builder.localVars;
-				locs = ImmutableList.copyOf(builder.locs);
-				locs.forEach(location -> location.parent = this);
-				initLoc = builder.initLoc;
-				errorLoc = builder.errorLoc;
-				finalLoc = builder.finalLoc;
-				edges = ImmutableList.copyOf(builder.edges);
-				edges.forEach(edge -> edge.parent = this);
-				result = builder.result;
-				name = builder.name;
-			}
-
-			public Procedure(Procedure procedure) {
-				parent = null; // ProcessBuilder will fill out this field
-				rtype = procedure.rtype;
-
-				List<VarDecl<?>> paramCollectList = new ArrayList<>();
-				procedure.params.forEach(varDecl -> paramCollectList.add(VarDecl.copyOf(varDecl)));
-				params = ImmutableList.copyOf(paramCollectList);
-
-				Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
-				procedure.localVars.forEach((varDecl, litExpr) -> localVarsCollectList.put(VarDecl.copyOf(varDecl), litExpr));
-				localVars = ImmutableMap.copyOf(localVarsCollectList);
-
-				Map<Location, Location> newLocLut = new HashMap<>();
-
-				List<Location> locsCollectList = new ArrayList<>();
-				procedure.locs.forEach(loc -> {
-					Location location = Location.copyOf(loc);
-					locsCollectList.add(location);
-					newLocLut.put(loc, location);
-				});
-				locs = ImmutableList.copyOf(locsCollectList);
-				locs.forEach(location -> location.parent = this);
-
-				initLoc = newLocLut.get(procedure.initLoc);
-				errorLoc = newLocLut.get(procedure.errorLoc);
-				finalLoc = newLocLut.get(procedure.finalLoc);
-
-				List<Edge> edgeCollectList = new ArrayList<>();
-				procedure.edges.forEach(edge -> edgeCollectList.add(Edge.copyOf(edge, newLocLut)));
-				edges = ImmutableList.copyOf(edgeCollectList);
-				edges.forEach(edge -> edge.parent = this);
-
-				result = procedure.result == null ? null : VarDecl.copyOf(procedure.result);
-				name = procedure.name;
-			}
-
-			public static Builder builder() {
-				return new Builder();
-			}
-
-			public String toDot() {
-				StringBuilder ret = new StringBuilder();
-				for (Location location : getLocs()) {
-					ret.append("\"").append(location.getName()).append("\"");
-					if(location.isErrorLoc()) ret.append("[xlabel=err]");
-					else if(location.isEndLoc()) ret.append("[xlabel=final]");
-					else if(getInitLoc() == location) ret.append("[xlabel=start]");
-					ret.append(";\n");
-				}
-				for (Edge edge : getEdges()) {
-					ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
-					ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
-					for (Stmt stmt : edge.getStmts()) {
-						ret.append(stmt.toString());
-						ret.append(", ");
-					}
-					ret.append("\"];\n");
-				}
-				return ret.toString();
-			}
-
-			public Type getRtype() {
-				return rtype;
-			}
-
-			public List<VarDecl<?>> getParams() {
-				return params;
-			}
-
-			public List<VarDecl<?>> getLocalVars() {
-				return List.copyOf(localVars.keySet());
-			}
-
-			public Optional<LitExpr<?>> getInitValue(VarDecl<?> varDecl) {
-				return localVars.get(varDecl);
-			}
-
-			public List<Location> getLocs() {
-				return locs;
-			}
-
-			public Location getInitLoc() {
-				return initLoc;
-			}
-
-			public Location getErrorLoc() {
-				return errorLoc;
-			}
-
-			public Location getFinalLoc() {
-				return finalLoc;
-			}
-
-			public List<Edge> getEdges() {
-				return edges;
-			}
-
-			public VarDecl<? extends Type> getResult() {
-				return result;
-			}
-
-			public String getName() {
-				return name;
-			}
-
-			@Override
-			public String toString() {
-				return name;
-			}
-
-			public Process getParent() {
-				return parent;
-			}
-
-			public static final class Location {
-				private Procedure parent;
-				private final String name;
-				private boolean isErrorLoc = false;
-				private boolean isEndLoc = false;
-
-				private final Map<String, String> dictionary;
-
-				private final List<Edge> incomingEdges;
-				private final List<Edge> outgoingEdges;
-
-				public Location(final String name, final Map<String, String> dictionary) {
-					this.name = checkNotNull(name);
-					this.dictionary = dictionary;
-					outgoingEdges = new ArrayList<>();
-					incomingEdges = new ArrayList<>();
-				}
-
-				public static Location copyOf(final Location from){
-					return new Location(from.getName(), Map.copyOf(from.dictionary));
-				}
-
-				public String getName() {
-					return name;
-				}
-
-				public Map<String, String> getDictionary() {
-					return dictionary;
-				}
-
-				public List<Edge> getIncomingEdges() {
-					return Collections.unmodifiableList(incomingEdges);
-				}
-
-				public List<Edge> getOutgoingEdges() {
-					return Collections.unmodifiableList(outgoingEdges);
-				}
-
-				@Override
-				public String toString() {
-					return name;
-				}
-
-				public boolean isErrorLoc() {
-					return isErrorLoc;
-				}
-
-				public void setErrorLoc(boolean errorLoc) {
-					isErrorLoc = errorLoc;
-				}
-
-				public boolean isEndLoc() {
-					return isEndLoc;
-				}
-
-				public void setEndLoc(boolean endLoc) {
-					isEndLoc = endLoc;
-				}
-
-				public Procedure getParent() {
-					return parent;
-				}
-			}
-
-			public static final class Edge {
-				private Procedure parent;
-				private final Location source;
-				private final Location target;
-
-				private final List<Stmt> stmts;
-
-				public Edge(final Location source, final Location target, final List<Stmt> stmts) {
-					this.source = checkNotNull(source);
-					this.target = checkNotNull(target);
-					this.stmts = ImmutableList.copyOf(stmts);
-					source.outgoingEdges.add(this);
-					target.incomingEdges.add(this);
-				}
-
-				public static Edge copyOf(Edge edge, Map<Location, Location> locationLut) {
-					return new Edge(locationLut.get(edge.source), locationLut.get(edge.target), edge.stmts);
-				}
-
-				public Location getSource() {
-					return source;
-				}
-
-				public Location getTarget() {
-					return target;
-				}
-
-				public List<Stmt> getStmts() {
-					return stmts;
-				}
-
-				@Override
-				public String toString() {
-					return Utils.lispStringBuilder("Edge").add(
-							Utils.lispStringBuilder("Source").add(source)
-					).add(
-							Utils.lispStringBuilder("Target").add(target)
-					).add(
-							Utils.lispStringBuilder("Stmts").addAll(stmts)
-					).toString();
-				}
-
-				public Procedure getParent() {
-					return parent;
-				}
-			}
-
-			public static final class Builder {
-				private static final String RESULT_NAME = "result";
-				private final List<VarDecl<?>> params;
-				private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
-				private final List<Location> locs;
-				private final List<Edge> edges;
-				private boolean built;
-				private String name;
-				private Type rtype;
-				private VarDecl<?> result;
-				private Location initLoc;
-				private Location errorLoc;
-				private Location finalLoc;
-
-				private Builder() {
-					params = new ArrayList<>();
-					localVars = new HashMap<>();
-					locs = new ArrayList<>();
-					edges = new ArrayList<>();
-					built = false;
-				}
-
-				public void createParam(final VarDecl<?> param) {
-					checkNotBuilt();
-					params.add(param);
-				}
-
-				public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
-					checkNotBuilt();
-					localVars.put(var, Optional.ofNullable(initValue));
-				}
-
-				public Location addLoc(Location loc) {
-					checkNotBuilt();
-					locs.add(loc);
-					return loc;
-				}
-
-				public void addEdge(Edge e) {
-					checkNotBuilt();
-					checkArgument(locs.contains(e.source), "Invalid source.");
-					checkArgument(locs.contains(e.target), "Invalid target.");
-					edges.add(e);
-				}
-
-				private void checkNotBuilt() {
-					checkState(!built, "A Procedure was already built.");
-				}
-
-				public Type getRtype() {
-					return rtype;
-				}
-
-				public void setRtype(final Type rtype) {
-					this.rtype = rtype;
-				}
-
-				public List<VarDecl<?>> getParams() {
-					return Collections.unmodifiableList(params);
-				}
-
-				public Map<VarDecl<?>, Optional<LitExpr<?>>> getLocalVars() {
-					return localVars;
-				}
-
-				public List<Location> getLocs() {
-					return Collections.unmodifiableList(locs);
-				}
-
-				public Location getInitLoc() {
-					return initLoc;
-				}
-
-				public void setInitLoc(final Location initLoc) {
-					checkNotBuilt();
-					checkArgument(locs.contains(initLoc), "Init location not present in XCFA.");
-					checkArgument(!initLoc.equals(errorLoc), "Init location cannot be the same as error location.");
-					checkArgument(finalLoc == null || !finalLoc.equals(initLoc), "Init location cannot be the same as final location.");
-					this.initLoc = initLoc;
-				}
-
-				public Location getErrorLoc() {
-					return errorLoc;
-				}
-
-				public void setErrorLoc(final Location errorLoc) {
-					checkNotBuilt();
-					checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
-					checkArgument(initLoc == null || !initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
-					checkArgument(finalLoc == null || !finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
-					this.errorLoc = errorLoc;
-					errorLoc.setErrorLoc(true);
-				}
-
-				public Location getFinalLoc() {
-					return finalLoc;
-				}
-
-				public void setFinalLoc(final Location finalLoc) {
-					checkNotBuilt();
-					checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
-					checkArgument(!finalLoc.equals(errorLoc), "Final location cannot be the same as error location.");
-					checkArgument(initLoc == null || !initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
-					this.finalLoc = finalLoc;
-					finalLoc.setEndLoc(true);
-				}
-
-				public Procedure build() {
-					checkState(initLoc != null, "Initial location must be set.");
-					checkState(finalLoc != null, "Final location must be set.");
-					checkState(finalLoc.outgoingEdges.isEmpty(), "Final location cannot have outgoing edges.");
-					if(errorLoc != null) checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
-					built = true;
-					return new Procedure(this);
-				}
-
-				public void setResult(VarDecl<?> result) {
-					this.result = result;
-				}
-
-				public String getName() {
-					return name;
-				}
-
-				public void setName(String name) {
-					this.name = name;
-				}
-			}
-		}
-
-		public static final class Builder {
-			private final List<VarDecl<?>> params;
-			private final Map<VarDecl<?>, LitExpr<?>> threadLocalVars;
-			private final List<Procedure> procedures;
-			private boolean built;
-			private Procedure mainProcedure;
-
-			private String name;
-
-			private Builder() {
-				built = false;
-				params = new ArrayList<>();
-				threadLocalVars = new HashMap<>();
-				procedures = new ArrayList<>();
-			}
-
-			private void checkNotBuilt() {
-				checkState(!built, "A Process was already built.");
-			}
-
-			public void createParam(final VarDecl<?> param) {
-				checkNotBuilt();
-				params.add(param);
-			}
-
-			public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
-				checkNotBuilt();
-				threadLocalVars.put(var, initValue);
-			}
-
-			public void addProcedure(final Procedure procedure) {
-				checkNotBuilt();
-				procedures.add(procedure);
-			}
-
-			public Procedure getMainProcedure() {
-				return mainProcedure;
-			}
-
-			public void setMainProcedure(final Procedure mainProcedure) {
-				checkNotBuilt();
-				checkArgument(procedures.contains(mainProcedure), "Procedures does not contain main procedure");
-				this.mainProcedure = mainProcedure;
-			}
-
-			public String getName() {
-				return name;
-			}
-
-			public void setName(final String name) {
-				checkNotBuilt();
-				this.name = name;
-			}
-
-			public Process build() {
-				checkNotBuilt();
-				checkState(mainProcedure != null, "Main procedure must be set.");
-				Process process = new Process(this);
-				built = true;
-				return process;
-			}
-		}
 	}
 
 	public static final class Builder {
 		private final Map<VarDecl<?>, LitExpr<?>> globalVars;
-		private final List<XCFA.Process> processes;
+		private final List<XCFAProcess> processes;
 		private boolean built;
-		private XCFA.Process mainProcess;
+		private XCFAProcess mainProcess;
 
 		private Builder() {
 			globalVars = new LinkedHashMap<>();
@@ -806,16 +279,16 @@ public final class XCFA {
 			globalVars.put(var, initValue);
 		}
 
-		public void addProcess(final Process process) {
+		public void addProcess(final XCFAProcess process) {
 			checkNotBuilt();
 			processes.add(process);
 		}
 
-		public Process getMainProcess() {
+		public XCFAProcess getMainProcess() {
 			return mainProcess;
 		}
 
-		public void setMainProcess(final Process mainProcess) {
+		public void setMainProcess(final XCFAProcess mainProcess) {
 			checkNotBuilt();
 			checkArgument(processes.contains(mainProcess), "Invalid main process.");
 			this.mainProcess = mainProcess;

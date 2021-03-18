@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XCFAProcedure;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
@@ -35,7 +35,7 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Procedure> implements Scope {
+final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFAProcedure> implements Scope {
 
 	private final XcfaProcessSymbol scope;
 	private final SymbolTable symbolTable;
@@ -46,7 +46,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 	private final List<XcfaVariableSymbol> variables;
 	private final List<XcfaLocationSymbol> locations;
 	private final List<XcfaEdge> edges;
-	private XCFA.Process.Procedure procedure = null;
+	private XCFAProcedure procedure = null;
 	private boolean startedBuilding = false;
 	private Set<CallStmt> incompleteInstantiations;
 
@@ -89,18 +89,18 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		incompleteInstantiations.add(stmt);
 	}
 
-	public XCFA.Process.Procedure instantiate() {
+	public XCFAProcedure instantiate() {
 		if (procedure != null) return procedure;
 		else if (startedBuilding) return null;
 		startedBuilding = true;
-		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
+		XCFAProcedure.Builder builder = XCFAProcedure.builder();
 		builder.setName(name);
 		builder.setRtype(rtype);
 		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		if (variables != null)
 			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		locations.forEach(xcfaLocationSymbol -> {
-			XCFA.Process.Procedure.Location loc = xcfaLocationSymbol.instantiate();
+			XCFAProcedure.Location loc = xcfaLocationSymbol.instantiate();
 			builder.addLoc(loc);
 			if (xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
 			else if (xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
