@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
@@ -37,13 +38,137 @@ import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 /**
- * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
+ * Represents an Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
- *
- * TODO add type checks around parameters and return value passing
- *   This would be useful for CallUtils, where there are multiple unchecked casts.
  */
+@SuppressWarnings("unused")
 public final class XCFA {
+
+	/*
+	 * Creates an XCFA from the provided InputStream using the XCFA DSL.
+	 */
+	public static XCFA createXCFA(InputStream dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	/*
+	 * Creates an XCFA from the provided String using the XCFA DSL
+	 */
+	public static XCFA createXCFA(String dsl) throws IOException {
+		return XcfaDslManager.createXcfa(dsl);
+	}
+
+	/*
+	 * Creates an XCFA from the provided SSAProvider using its getter methods.
+	 */
+	public static XCFA createXCFA(SSAProvider ssa) {
+		Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
+		XCFA.Builder builder = new XCFA.Builder();
+
+		// Creating global variables
+		for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
+
+			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
+			globalVarLut.put(globalVariable.get1(), variable);
+			builder.globalVars.put(variable, createConstant(globalVariable.get3()));
+
+		}
+
+		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
+		Map<Process.Builder, String> processBuilders = new HashMap<>();
+		List<InstructionHandler> instructionHandlers = new ArrayList<>();
+
+		Process.Builder mainProcBuilder = Process.builder();
+		mainProcBuilder.setName("main");
+		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
+
+		// Creating procedures
+		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
+
+			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
+			procedureBuilder.setName(function.get1());
+
+			Collection<String> processes = new ArrayList<>();
+
+			instructionHandlers.add(handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes));
+
+			for (String process : processes) {
+
+				Process.Builder processBuilder = Process.builder();
+				processBuilder.setName(process);
+				processBuilders.put(processBuilder, function.get1());
+
+			}
+
+			Process.Procedure procedure = procedureBuilder.build();
+			procedures.put(function.get1(), procedure);
+		}
+
+		// Letting procedures finish setting up their call statements (by providing them with a list of built procedures)
+		for (InstructionHandler instructionHandler : instructionHandlers) {
+			instructionHandler.substituteProcedures(procedures);
+		}
+
+		// Instantiating procedures, each with a copy of each procedure.
+		for (Map.Entry<Process.Builder, String> entry : processBuilders.entrySet()) {
+			Process.Builder processBuilder = entry.getKey();
+			String mainProcedureName = entry.getValue();
+
+			for (Map.Entry<String, Process.Procedure> e : procedures.entrySet()) {
+				String procedureName = e.getKey();
+				Process.Procedure procedure = e.getValue();
+
+				Process.Procedure proc = new Process.Procedure(procedure);
+				processBuilder.addProcedure(proc);
+				if (procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
+
+			}
+
+			Process proc = processBuilder.build();
+			builder.addProcess(proc);
+
+			if (processBuilder == mainProcBuilder) builder.setMainProcess(proc);
+
+		}
+
+		return builder.build();
+	}
+
+	/*
+	 * Creates an XCFA from the specified file.
+	 * This is the recommended method for getting an XCFA instance.
+	 * Supports .xcfa, .ll, .bc, .c and .i files.
+	 */
+    public static XCFA fromFile(File model) throws IOException {
+
+		if(!model.exists()) throw new FileNotFoundException();
+
+		if(model.getName().endsWith(".xcfa")) {
+			try(InputStream is = new FileInputStream(model)) {
+				return createXCFA(is);
+			}
+
+		}else if ( model.getName().endsWith(".ll") || model.getName().endsWith(".bc") ){
+			return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
+
+		} else if ( model.getName().endsWith(".c") || model.getName().endsWith(".i") ) {
+			throw new RuntimeException(".c or .i files are not yet supported.");
+
+		} else {
+			String[] split = model.getName().split("\\.");
+			if(split.length > 0)
+				throw new RuntimeException("File type " + split[split.length-1] + " not supported.");
+			throw new RuntimeException("File does not have an extension.");
+
+		}
+    }
+
+	/*
+	 * Returns a new XCFA.Builder instance
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> globalVars;
 
@@ -57,115 +182,52 @@ public final class XCFA {
 		mainProcess = builder.mainProcess;
 	}
 
-	public static XCFA createXCFA(InputStream dsl) throws IOException {
-		return XcfaDslManager.createXcfa(dsl);
-	}
-
-	public static XCFA createXCFA(String dsl) throws IOException {
-		return XcfaDslManager.createXcfa(dsl);
-	}
-
-	public static XCFA createXCFA(SSAProvider ssa) {
-		Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
-		XCFA.Builder builder = new XCFA.Builder();
-		for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
-			VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
-			globalVarLut.put(globalVariable.get1(), variable);
-			builder.globalVars.put(variable, createConstant(globalVariable.get3()));
-		}
-		Map<String, Process.Procedure> procedures = new LinkedHashMap<>();
-		Map<Process.Builder, String> processBuilders = new HashMap<>();
-		List<InstructionHandler> instructionHandlers = new ArrayList<>();
-		Process.Builder mainProcBuilder = Process.builder();
-		mainProcBuilder.setName("main");
-		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
-		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
-			Process.Procedure.Builder procedureBuilder = Process.Procedure.builder();
-			procedureBuilder.setName(function.get1());
-			Collection<String> processes = new ArrayList<>();
-			instructionHandlers.add(handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes));
-			for (String process : processes) {
-				Process.Builder processBuilder = Process.builder();
-				processBuilder.setName(process);
-				processBuilders.put(processBuilder, function.get1());
-			}
-			Process.Procedure procedure = procedureBuilder.build();
-			procedures.put(function.get1(), procedure);
-		}
-
-		processBuilders.forEach((processBuilder, mainProcedureName) -> {
-			procedures.forEach((procedureName, procedure) -> {
-				Process.Procedure proc = new Process.Procedure(procedure);
-				processBuilder.addProcedure(proc);
-				if(procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
-			});
-			Process proc = processBuilder.build();
-			builder.addProcess(proc);
-			if(processBuilder == mainProcBuilder) builder.setMainProcess(proc);
-		});
-
-		for (InstructionHandler instructionHandler : instructionHandlers) {
-			instructionHandler.substituteProcedures(procedures);
-		}
-
-		return builder.build();
-	}
-
-	public static Builder builder() {
-		return new Builder();
-	}
-
-    public static XCFA fromFile(File model) throws IOException {
-		if(!model.exists()) throw new FileNotFoundException();
-		if(model.getName().endsWith(".xcfa")) {
-			try(InputStream is = new FileInputStream(model)) {
-				return createXCFA(is);
-			}
-		} else if ( model.getName().endsWith(".ll") || model.getName().endsWith(".bc") ){
-			return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
-		} else if ( model.getName().endsWith(".c") || model.getName().endsWith(".i") ) {
-			throw new RuntimeException(".c or .i files are not yet supported.");
-		} else {
-			String[] split = model.getName().split("\\.");
-			if(split.length > 0)
-				throw new RuntimeException("File type " + split[split.length-1] + " not supported.");
-			throw new RuntimeException("File does not have an extension.");
-
-		}
-    }
-
-    public XcfaState initialState() {
-		return new XcfaState(this);
-	}
-
+	/*
+	 * Returns the equivalent CFA, if it exists.
+	 */
 	public CFA createCFA() {
 		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
 		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
+
 		CFA.Builder builder = CFA.builder();
 		CFA.Loc initLoc = null;
 		CFA.Loc errorLoc = null;
 		CFA.Loc finalLoc = null;
+
+		int tmpcnt = 0;
+
 		for (Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
+
 			List<CFA.Loc> locations = new ArrayList<>();
+			// Adding source
 			locations.add(builder.createLoc(e.source.name));
-			for (int i = 1; i < e.getStmts().size(); ++i)
-				locations.add(builder.createLoc(""));
+			// Adding intermediate locations (CFAs can only have one per edge)
+			for (int i = 1; i < e.getStmts().size(); ++i) {
+				locations.add(builder.createLoc("tmp" + tmpcnt++));
+			}
+			// Adding target
 			locations.add(builder.createLoc(e.target.name));
-			for (int i = 0; i < e.getStmts().size(); ++i)
+			// Adding edges
+			for (int i = 0; i < e.getStmts().size(); ++i) {
+				checkState( ! (e.stmts.get(i) instanceof XcfaStmt), "XCFA statement " + e.stmts.get(i) + " is not supported!");
 				builder.createEdge(locations.get(i), locations.get(i + 1), e.stmts.get(i));
+			}
+			// Deciding if the source or target is any special location
 			if (e.source == mainProcess.mainProcedure.initLoc) initLoc = locations.get(0);
 			if (e.target == mainProcess.mainProcedure.errorLoc) errorLoc = locations.get(locations.size() - 1);
 			else if (e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size() - 1);
 		}
+		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(initLoc);
 		if(errorLoc != null) builder.setErrorLoc(errorLoc);
 		builder.setFinalLoc(finalLoc);
+
 		return builder.build();
 	}
 
-	public List<VarDecl<? extends Type>> getGlobalVars() {
-		return List.copyOf(globalVars.keySet());
-	}
+	/*
+	 * Returns the XCFA as its graphviz representation
+	 */
 	public String toDot() {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
 		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
@@ -176,18 +238,34 @@ public final class XCFA {
 		return ret.toString();
 	}
 
+	/*
+	 * Getters
+	 */
+
+	public XcfaState getInitialState() {
+		return new XcfaState(this);
+	}
+
+	public List<VarDecl<? extends Type>> getGlobalVars() {
+		return List.copyOf(globalVars.keySet());
+	}
+
 	public LitExpr<?> getInitValue(VarDecl<?> varDecl) {
 		return globalVars.get(varDecl);
 	}
 
 	public List<Process> getProcesses() {
-		return Collections.unmodifiableList(processes);
+		return processes;
 	}
 
 	public Process getMainProcess() {
 		return mainProcess;
 	}
 
+	/*
+	 * Process subclass
+	 */
+	@SuppressWarnings("unused")
 	public static final class Process implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Process {
 		private XCFA parent;
 		private final List<VarDecl<?>> params;
@@ -221,12 +299,11 @@ public final class XCFA {
 				ret.append(procedure.toDot());
 				ret.append("}\n");
 			}
-			ret.append("}\n");
 			return ret.toString();
 		}
 
 		public List<VarDecl<?>> getParams() {
-			return Collections.unmodifiableList(params);
+			return params;
 		}
 
 		public List<VarDecl<?>> getThreadLocalVars() {
@@ -238,7 +315,7 @@ public final class XCFA {
 		}
 
 		public List<Procedure> getProcedures() {
-			return Collections.unmodifiableList(procedures);
+			return procedures;
 		}
 
 		public Procedure getMainProcedure() {
@@ -356,7 +433,7 @@ public final class XCFA {
 			}
 
 			public List<VarDecl<?>> getParams() {
-				return Collections.unmodifiableList(params);
+				return params;
 			}
 
 			public List<VarDecl<?>> getLocalVars() {
@@ -368,7 +445,7 @@ public final class XCFA {
 			}
 
 			public List<Location> getLocs() {
-				return Collections.unmodifiableList(locs);
+				return locs;
 			}
 
 			public Location getInitLoc() {
@@ -384,7 +461,7 @@ public final class XCFA {
 			}
 
 			public List<Edge> getEdges() {
-				return Collections.unmodifiableList(edges);
+				return edges;
 			}
 
 			public VarDecl<? extends Type> getResult() {
@@ -496,7 +573,7 @@ public final class XCFA {
 				}
 
 				public List<Stmt> getStmts() {
-					return Collections.unmodifiableList(stmts);
+					return stmts;
 				}
 
 				@Override
@@ -516,11 +593,6 @@ public final class XCFA {
 			}
 
 			public static final class Builder {
-				/* result is a special variable name, which contains the value that
-				 * will be returned to the caller function.
-				 * Currently *_RES_VAR is understood as a result variable.
-				 * This is because Gazer uses this too.
-				 */
 				private static final String RESULT_NAME = "result";
 				private final List<VarDecl<?>> params;
 				private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
@@ -533,11 +605,6 @@ public final class XCFA {
 				private Location initLoc;
 				private Location errorLoc;
 				private Location finalLoc;
-
-				private boolean isResultVariable(String varName) {
-					// the first is for Gazer
-					return varName.endsWith("RES_VAR") || varName.equals(RESULT_NAME);
-				}
 
 				private Builder() {
 					params = new ArrayList<>();
@@ -554,13 +621,7 @@ public final class XCFA {
 
 				public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
 					checkNotBuilt();
-					if (isResultVariable(var.getName())) setResult(var);
 					localVars.put(var, Optional.ofNullable(initValue));
-				}
-				public void createVar(final VarDecl<?> var, final Optional<LitExpr<?>> initValue) {
-					checkNotBuilt();
-					if (isResultVariable(var.getName())) setResult(var);
-					localVars.put(var, initValue);
 				}
 
 				public Location addLoc(Location loc) {
@@ -647,7 +708,6 @@ public final class XCFA {
 					return new Procedure(this);
 				}
 
-				// TODO: constant return?
 				public void setResult(VarDecl<?> result) {
 					this.result = result;
 				}

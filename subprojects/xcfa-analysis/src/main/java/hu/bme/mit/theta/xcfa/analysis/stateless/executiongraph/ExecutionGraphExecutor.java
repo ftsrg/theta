@@ -24,7 +24,7 @@ public class ExecutionGraphExecutor implements Runnable{
         ExecutionGraphExecutor.mcm = mcm;
         ExecutionGraphExecutor.threadPool= new ThreadPoolExecutor(settings.getThreadPoolSize(), settings.getThreadPoolSize(), 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         ExecutionGraphExecutor.violator = null;
-        ExecutionGraphExecutor root = new ExecutionGraphExecutor(xcfa.initialState());
+        ExecutionGraphExecutor root = new ExecutionGraphExecutor(xcfa.getInitialState());
         root.start();
         try {
             if(!threadPool.awaitTermination(settings.getTimeS(), TimeUnit.SECONDS)) {

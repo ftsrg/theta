@@ -16,14 +16,12 @@
 package hu.bme.mit.theta.xcfa;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -89,7 +87,7 @@ public final class XcfaStateTest {
 
 	@Test
 	public void test() {
-		XcfaState state = xcfa.initialState();
+		XcfaState state = xcfa.getInitialState();
 		StmtVisitor visitor = new StmtVisitor();
 		int lastProcId = 0;
 outerloop:
