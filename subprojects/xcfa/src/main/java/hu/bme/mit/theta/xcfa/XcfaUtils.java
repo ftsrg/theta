@@ -70,7 +70,7 @@ public class XcfaUtils {
 
             VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
             globalVarLut.put(globalVariable.get1(), variable);
-            builder.getGlobalVars().put(variable, createConstant(globalVariable.get3()));
+            builder.getGlobalVars().put(variable, Optional.ofNullable(createConstant(globalVariable.get3())));
 
         }
 
