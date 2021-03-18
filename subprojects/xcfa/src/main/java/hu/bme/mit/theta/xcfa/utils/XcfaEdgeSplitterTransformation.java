@@ -67,7 +67,7 @@ public final class XcfaEdgeSplitterTransformation {
 			}
 		}
 		for (var origVar : original.getGlobalVars()) {
-			builder.createVar(origVar, original.getInitValue(origVar));
+			builder.addGlobalVar(origVar, original.getInitValue(origVar).orElse(null));
 		}
 		for (var q : postBuildData) {
 			var pc = origToNewProcedure.get(q.oldPc);

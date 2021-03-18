@@ -20,14 +20,12 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.common.CliUtils;
-import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
 import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
-import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -100,7 +98,7 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA xcfa = XCFA.fromFile(model);
+			final XCFA xcfa = XcfaUtils.fromFile(model);
 
 			if (printxcfa) {
 				System.out.println(xcfa.toDot());

@@ -34,7 +34,7 @@ public class ExecutionGraph {
         this.lastNode = new LinkedHashMap<>();
         for (VarDecl<? extends Type> globalVar : initialState.getXcfa().getGlobalVars()) {
             this.varLut.putIfAbsent(globalVar, new Var());
-            addInitialWrite(new Write(initialState.getXcfa().getInitValue(globalVar)), this.varLut.get(globalVar));
+            addInitialWrite(new Write(initialState.getXcfa().getInitValue(globalVar).orElseThrow()), this.varLut.get(globalVar));
         }
     }
 

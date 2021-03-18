@@ -51,9 +51,8 @@ public class XcfaState {
         });
         currentlyAtomic = null;
         for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
-            LitExpr<?> litExpr;
-            if((litExpr = xcfa.getInitValue(globalVar)) != null) {
-                valuation.put(globalid, globalVar, litExpr);
+            if(xcfa.getInitValue(globalVar).isPresent()) {
+                valuation.put(globalid, globalVar, xcfa.getInitValue(globalVar).get());
             }
         }
         recalcOffers();

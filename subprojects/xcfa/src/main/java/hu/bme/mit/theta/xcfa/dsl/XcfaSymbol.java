@@ -76,7 +76,7 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 	public XCFA instantiate() {
 		if (xcfa != null) return xcfa;
 		XCFA.Builder builder = XCFA.builder();
-		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
+		vars.forEach(xcfaVariableSymbol -> builder.addGlobalVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		processes.forEach(xcfaProcessSymbol -> {
 			XcfaProcess process;
 			builder.addProcess(process = xcfaProcessSymbol.instantiate());
