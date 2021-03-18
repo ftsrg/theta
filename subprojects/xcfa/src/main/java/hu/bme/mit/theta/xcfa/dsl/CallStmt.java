@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
 
 import java.util.List;
 
@@ -33,9 +33,9 @@ public class CallStmt extends XcfaCallStmt {
 	private static final String STMT_LABEL = "call";
 
 	// not final due to circular dependency while building
-	private XCFAProcedure procedure;
+	private XcfaProcedure procedure;
 
-	public CallStmt(VarDecl<?> var, XCFAProcedure procedure, List<Expr<?>> params) {
+	public CallStmt(VarDecl<?> var, XcfaProcedure procedure, List<Expr<?>> params) {
 		this.var = var;
 		this.procedure = procedure;
 		this.params = params;
@@ -53,11 +53,11 @@ public class CallStmt extends XcfaCallStmt {
 		return params;
 	}
 
-	public XCFAProcedure getProcedure() {
+	public XcfaProcedure getProcedure() {
 		return procedure;
 	}
 
-	public void setProcedure(XCFAProcedure procedure) {
+	public void setProcedure(XcfaProcedure procedure) {
 		checkState(this.procedure == null);
 		this.procedure = procedure;
 	}

@@ -13,19 +13,19 @@ import static com.google.common.base.Preconditions.*;
  * Process subclass
  */
 @SuppressWarnings("unused")
-public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Process {
+public final class XcfaProcess implements hu.bme.mit.theta.mcm.graphfilter.interfaces.Process {
     private XCFA parent;
     private final List<VarDecl<?>> params;
 
     private final Map<VarDecl<?>, LitExpr<?>> threadLocalVars;
 
-    private final List<XCFAProcedure> procedures;
-    private final XCFAProcedure mainProcedure;
+    private final List<XcfaProcedure> procedures;
+    private final XcfaProcedure mainProcedure;
     private static final String LABEL = "process";
 
     private final String name;
 
-    private XCFAProcess(final Builder builder) {
+    private XcfaProcess(final Builder builder) {
         params = ImmutableList.copyOf(builder.params);
         threadLocalVars = builder.threadLocalVars;
         procedures = ImmutableList.copyOf(builder.procedures);
@@ -41,7 +41,7 @@ public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.inter
     public String toDot() {
         StringBuilder ret = new StringBuilder();
         int cnt = 0;
-        for (XCFAProcedure procedure : getProcedures()) {
+        for (XcfaProcedure procedure : getProcedures()) {
             ret.append("subgraph cluster").append(cnt++).append("{\n");
             ret.append(procedure.toDot());
             ret.append("}\n");
@@ -61,11 +61,11 @@ public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.inter
         return threadLocalVars.get(varDecl);
     }
 
-    public List<XCFAProcedure> getProcedures() {
+    public List<XcfaProcedure> getProcedures() {
         return procedures;
     }
 
-    public XCFAProcedure getMainProcedure() {
+    public XcfaProcedure getMainProcedure() {
         return mainProcedure;
     }
 
@@ -89,9 +89,9 @@ public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.inter
     public static final class Builder {
         private final List<VarDecl<?>> params;
         private final Map<VarDecl<?>, LitExpr<?>> threadLocalVars;
-        private final List<XCFAProcedure> procedures;
+        private final List<XcfaProcedure> procedures;
         private boolean built;
-        private XCFAProcedure mainProcedure;
+        private XcfaProcedure mainProcedure;
 
         private String name;
 
@@ -116,16 +116,16 @@ public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.inter
             threadLocalVars.put(var, initValue);
         }
 
-        public void addProcedure(final XCFAProcedure procedure) {
+        public void addProcedure(final XcfaProcedure procedure) {
             checkNotBuilt();
             procedures.add(procedure);
         }
 
-        public XCFAProcedure getMainProcedure() {
+        public XcfaProcedure getMainProcedure() {
             return mainProcedure;
         }
 
-        public void setMainProcedure(final XCFAProcedure mainProcedure) {
+        public void setMainProcedure(final XcfaProcedure mainProcedure) {
             checkNotBuilt();
             checkArgument(procedures.contains(mainProcedure), "Procedures does not contain main procedure");
             this.mainProcedure = mainProcedure;
@@ -140,10 +140,10 @@ public final class XCFAProcess implements hu.bme.mit.theta.mcm.graphfilter.inter
             this.name = name;
         }
 
-        public XCFAProcess build() {
+        public XcfaProcess build() {
             checkNotBuilt();
             checkState(mainProcedure != null, "Main procedure must be set.");
-            XCFAProcess process = new XCFAProcess(this);
+            XcfaProcess process = new XcfaProcess(this);
             built = true;
             return process;
         }

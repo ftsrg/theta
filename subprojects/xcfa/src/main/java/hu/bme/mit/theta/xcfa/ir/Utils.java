@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -56,7 +56,7 @@ public class Utils {
 
     public static InstructionHandler handleProcedure(
             Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
-            XCFAProcedure.Builder procedureBuilder,
+            XcfaProcedure.Builder procedureBuilder,
             SSAProvider ssa,
             Map<String, VarDecl<?>> globalVarLut,
             Collection<String> processes) {
@@ -71,7 +71,7 @@ public class Utils {
         }
 
         // Adding final location
-        XCFAProcedure.Location finalLoc = new XCFAProcedure.Location(function.get1() + "_final", new HashMap<>());
+        XcfaProcedure.Location finalLoc = new XcfaProcedure.Location(function.get1() + "_final", new HashMap<>());
         procedureBuilder.addLoc(finalLoc);
         procedureBuilder.setFinalLoc(finalLoc);
 
@@ -85,10 +85,10 @@ public class Utils {
 
         // Adding blocks and first location
         List<String> blocks = ssa.getBlocks(function.get1());
-        Map<String, XCFAProcedure.Location> locationLut = new LinkedHashMap<>();
+        Map<String, XcfaProcedure.Location> locationLut = new LinkedHashMap<>();
         boolean first = true;
         for (String block : blocks) {
-            XCFAProcedure.Location loc = new XCFAProcedure.Location(block, new HashMap<>());
+            XcfaProcedure.Location loc = new XcfaProcedure.Location(block, new HashMap<>());
             locationLut.put(block, loc);
             procedureBuilder.addLoc(loc);
             if(first) {

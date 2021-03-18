@@ -110,18 +110,18 @@ public final class XcfaDslTest {
 		Assert.assertEquals(globalVarCount, xcfa.getGlobalVars().size());
 		Assert.assertEquals(processCount, xcfa.getProcesses().size());
 		for (int i = 0; i < xcfa.getProcesses().size(); ++i) {
-			XCFAProcess process = xcfa.getProcesses().get(i);
+			XcfaProcess process = xcfa.getProcesses().get(i);
 			Assert.assertEquals((long) processVarCount[i], process.getThreadLocalVars().size());
 			Assert.assertEquals((long) processParamCount[i], process.getParams().size());
 			Assert.assertEquals((long) procedureCount[i], process.getProcedures().size());
 			for (int j = 0; j < process.getProcedures().size(); ++j) {
-				XCFAProcedure procedure = process.getProcedures().get(j);
+				XcfaProcedure procedure = process.getProcedures().get(j);
 				Assert.assertEquals((long) procedureVarCount[i][j], procedure.getLocalVars().size());
 				Assert.assertEquals((long) procedureParamCount[i][j], procedure.getParams().size());
 				Assert.assertEquals((long) locCount[i][j], procedure.getLocs().size());
 				Assert.assertEquals((long) edgeCount[i][j], procedure.getEdges().size());
 				for (int k = 0; k < procedure.getEdges().size(); ++k) {
-					XCFAProcedure.Edge edge = procedure.getEdges().get(k);
+					XcfaProcedure.Edge edge = procedure.getEdges().get(k);
 					Assert.assertEquals((long) statementCount[i][j][k], edge.getStmts().size());
 				}
 			}

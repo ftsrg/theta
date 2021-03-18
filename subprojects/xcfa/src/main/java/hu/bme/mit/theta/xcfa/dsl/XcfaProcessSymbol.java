@@ -20,8 +20,8 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
-import hu.bme.mit.theta.xcfa.XCFAProcess;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcess;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
 
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-final class XcfaProcessSymbol extends InstantiatableSymbol<XCFAProcess> implements Scope {
+final class XcfaProcessSymbol extends InstantiatableSymbol<XcfaProcess> implements Scope {
 
 	private final XcfaSymbol scope;
 	private final String name;
@@ -38,7 +38,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFAProcess> implemen
 	private final List<XcfaVariableSymbol> vars;
 	private final List<XcfaProcedureSymbol> procedures;
 	private final SymbolTable symbolTable;
-	private XCFAProcess process = null;
+	private XcfaProcess process = null;
 
 	XcfaProcessSymbol(final XcfaSymbol scope, final XcfaDslParser.ProcessDeclContext context) {
 		this.scope = scope;
@@ -93,13 +93,13 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFAProcess> implemen
 		}
 	}
 
-	public XCFAProcess instantiate() {
+	public XcfaProcess instantiate() {
 		if (process != null) return process;
-		XCFAProcess.Builder builder = XCFAProcess.builder();
+		XcfaProcess.Builder builder = XcfaProcess.builder();
 		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		procedures.forEach(xcfaProcedureSymbol -> {
-			XCFAProcedure procedure;
+			XcfaProcedure procedure;
 			builder.addProcedure(procedure = xcfaProcedureSymbol.instantiate());
 			if (xcfaProcedureSymbol.isMain()) builder.setMainProcedure(procedure);
 		});

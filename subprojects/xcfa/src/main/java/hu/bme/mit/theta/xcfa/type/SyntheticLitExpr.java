@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
-import hu.bme.mit.theta.xcfa.XCFAProcess;
+import hu.bme.mit.theta.xcfa.XcfaProcess;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -41,8 +41,8 @@ import java.util.Optional;
  */
 public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implements LitExpr<SyntheticType> {
 
-	private final XCFAProcess lockedOn;
-	private final ImmutableSet<XCFAProcess> blockedProcesses;
+	private final XcfaProcess lockedOn;
+	private final ImmutableSet<XcfaProcess> blockedProcesses;
 	/**
 	 * num == -1 -> invalid state, error reached
 	 * num == 0 -> valid state, unlocked
@@ -60,7 +60,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		if (lockedOn != null)
 			Preconditions.checkState(!blockedProcesses.contains(lockedOn));
 	}
-	private SyntheticLitExpr(XCFAProcess lockedOn, int num, ImmutableSet<XCFAProcess> blockedProcesses) {
+	private SyntheticLitExpr(XcfaProcess lockedOn, int num, ImmutableSet<XcfaProcess> blockedProcesses) {
 		if (num > 0)
 			this.lockedOn = lockedOn;
 		else
@@ -79,7 +79,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return lockedOn != null;
 	}
 
-	public XCFAProcess getOwnerProcess() {
+	public XcfaProcess getOwnerProcess() {
 		return lockedOn;
 	}
 
@@ -88,7 +88,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	}
 
 	/** Releases lock, adds process to waitSet */
-	public Optional<SyntheticLitExpr> enterWait(XCFAProcess waitOn) {
+	public Optional<SyntheticLitExpr> enterWait(XcfaProcess waitOn) {
 		if (!isLocked()) {
 			// wait should be called when locked on the mutex.
 			return invalid();
@@ -102,7 +102,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		Preconditions.checkState(num == 1, "Wait/notify with non-reentrant" +
 				" usage of locks is not supported .");
 		return Optional.of(new SyntheticLitExpr(null, 0,
-				ImmutableSet.<XCFAProcess>builder()
+				ImmutableSet.<XcfaProcess>builder()
 						.addAll(blockedProcesses)
 						.add(waitOn).build()
 		));
@@ -112,7 +112,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	 * Optional.empty() means the transition is disabled.
 	 * Bottom is on bad lock usage.
 	 */
-	public Optional<SyntheticLitExpr> exitWait(XCFAProcess waitOn) {
+	public Optional<SyntheticLitExpr> exitWait(XcfaProcess waitOn) {
 		if (blockedProcesses.contains(waitOn)) {
 			return Optional.empty();
 		}
@@ -125,7 +125,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return Optional.of(new SyntheticLitExpr(waitOn, num+1, blockedProcesses));
 	}
 
-	public Optional<SyntheticLitExpr> signalAll(XCFAProcess calledFrom) {
+	public Optional<SyntheticLitExpr> signalAll(XcfaProcess calledFrom) {
 		return Optional.of(new SyntheticLitExpr(lockedOn, num, ImmutableSet.of()));
 	}
 
@@ -134,14 +134,14 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 	 * Unit transition of a signal/notify stmt.
 	 * processToWake==null is special case: it's active only when there is no active edge.
 	 */
-	public Optional<SyntheticLitExpr> tryWakeProcess(XCFAProcess calledFrom, XCFAProcess processToWake) {
+	public Optional<SyntheticLitExpr> tryWakeProcess(XcfaProcess calledFrom, XcfaProcess processToWake) {
 		if (processToWake == null) {
 			if (blockedProcesses.isEmpty())
 				return Optional.of(this);
 			return Optional.empty();
 		}
 		if (blockedProcesses.contains(processToWake)) {
-			var builder = ImmutableSet.<XCFAProcess>builder();
+			var builder = ImmutableSet.<XcfaProcess>builder();
 			blockedProcesses.forEach(p -> {
 				if (p != processToWake)
 					builder.add(p);
@@ -165,7 +165,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return LazyHolder.INSTANCE;
 	}
 
-	public Optional<SyntheticLitExpr> lock(XCFAProcess lockOn) {
+	public Optional<SyntheticLitExpr> lock(XcfaProcess lockOn) {
 		Preconditions.checkState(!blockedProcesses.contains(lockOn),
 				"Error! Probably a lock stmt between enterWait and exitWait on the same process.");
 		if (lockedOn == null) {
@@ -176,7 +176,7 @@ public final class SyntheticLitExpr extends NullaryExpr<SyntheticType> implement
 		return Optional.empty();
 	}
 
-	public Optional<SyntheticLitExpr> unlock(XCFAProcess unlockOn) {
+	public Optional<SyntheticLitExpr> unlock(XcfaProcess unlockOn) {
 		Preconditions.checkState(!blockedProcesses.contains(unlockOn),
 				"Error! Probably an unlock stmt between enterWait and exitWait on the same process.");
 		if (lockedOn == null) {

@@ -71,18 +71,18 @@ public final class XCFA {
 
 		}
 
-		Map<String, XCFAProcedure> procedures = new LinkedHashMap<>();
-		Map<XCFAProcess.Builder, String> processBuilders = new HashMap<>();
+		Map<String, XcfaProcedure> procedures = new LinkedHashMap<>();
+		Map<XcfaProcess.Builder, String> processBuilders = new HashMap<>();
 		List<InstructionHandler> instructionHandlers = new ArrayList<>();
 
-		XCFAProcess.Builder mainProcBuilder = XCFAProcess.builder();
+		XcfaProcess.Builder mainProcBuilder = XcfaProcess.builder();
 		mainProcBuilder.setName("main");
 		processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
 
 		// Creating procedures
 		for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
 
-			XCFAProcedure.Builder procedureBuilder = XCFAProcedure.builder();
+			XcfaProcedure.Builder procedureBuilder = XcfaProcedure.builder();
 			procedureBuilder.setName(function.get1());
 
 			Collection<String> processes = new ArrayList<>();
@@ -91,13 +91,13 @@ public final class XCFA {
 
 			for (String process : processes) {
 
-				XCFAProcess.Builder processBuilder = XCFAProcess.builder();
+				XcfaProcess.Builder processBuilder = XcfaProcess.builder();
 				processBuilder.setName(process);
 				processBuilders.put(processBuilder, function.get1());
 
 			}
 
-			XCFAProcedure procedure = procedureBuilder.build();
+			XcfaProcedure procedure = procedureBuilder.build();
 			procedures.put(function.get1(), procedure);
 		}
 
@@ -107,21 +107,21 @@ public final class XCFA {
 		}
 
 		// Instantiating procedures, each with a copy of each procedure.
-		for (Map.Entry<XCFAProcess.Builder, String> entry : processBuilders.entrySet()) {
-			XCFAProcess.Builder processBuilder = entry.getKey();
+		for (Map.Entry<XcfaProcess.Builder, String> entry : processBuilders.entrySet()) {
+			XcfaProcess.Builder processBuilder = entry.getKey();
 			String mainProcedureName = entry.getValue();
 
-			for (Map.Entry<String, XCFAProcedure> e : procedures.entrySet()) {
+			for (Map.Entry<String, XcfaProcedure> e : procedures.entrySet()) {
 				String procedureName = e.getKey();
-				XCFAProcedure procedure = e.getValue();
+				XcfaProcedure procedure = e.getValue();
 
-				XCFAProcedure proc = new XCFAProcedure(procedure);
+				XcfaProcedure proc = new XcfaProcedure(procedure);
 				processBuilder.addProcedure(proc);
 				if (procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
 
 			}
 
-			XCFAProcess proc = processBuilder.build();
+			XcfaProcess proc = processBuilder.build();
 			builder.addProcess(proc);
 
 			if (processBuilder == mainProcBuilder) builder.setMainProcess(proc);
@@ -169,8 +169,8 @@ public final class XCFA {
 
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> globalVars;
 
-	private final List<XCFAProcess> processes;
-	private final XCFAProcess mainProcess;
+	private final List<XcfaProcess> processes;
+	private final XcfaProcess mainProcess;
 
 	private XCFA(Builder builder) {
 		globalVars = builder.globalVars;
@@ -193,7 +193,7 @@ public final class XCFA {
 
 		int tmpcnt = 0;
 
-		for (XCFAProcedure.Edge e : getMainProcess().getMainProcedure().getEdges()) {
+		for (XcfaProcedure.Edge e : getMainProcess().getMainProcedure().getEdges()) {
 
 			List<CFA.Loc> locations = new ArrayList<>();
 			// Adding source
@@ -251,19 +251,19 @@ public final class XCFA {
 		return globalVars.get(varDecl);
 	}
 
-	public List<XCFAProcess> getProcesses() {
+	public List<XcfaProcess> getProcesses() {
 		return processes;
 	}
 
-	public XCFAProcess getMainProcess() {
+	public XcfaProcess getMainProcess() {
 		return mainProcess;
 	}
 
 	public static final class Builder {
 		private final Map<VarDecl<?>, LitExpr<?>> globalVars;
-		private final List<XCFAProcess> processes;
+		private final List<XcfaProcess> processes;
 		private boolean built;
-		private XCFAProcess mainProcess;
+		private XcfaProcess mainProcess;
 
 		private Builder() {
 			globalVars = new LinkedHashMap<>();
@@ -279,16 +279,16 @@ public final class XCFA {
 			globalVars.put(var, initValue);
 		}
 
-		public void addProcess(final XCFAProcess process) {
+		public void addProcess(final XcfaProcess process) {
 			checkNotBuilt();
 			processes.add(process);
 		}
 
-		public XCFAProcess getMainProcess() {
+		public XcfaProcess getMainProcess() {
 			return mainProcess;
 		}
 
-		public void setMainProcess(final XCFAProcess mainProcess) {
+		public void setMainProcess(final XcfaProcess mainProcess) {
 			checkNotBuilt();
 			checkArgument(processes.contains(mainProcess), "Invalid main process.");
 			this.mainProcess = mainProcess;

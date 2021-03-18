@@ -12,8 +12,8 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
 
-public final class XCFAProcedure {
-    private XCFAProcess parent;
+public final class XcfaProcedure {
+    private XcfaProcess parent;
     private final String name;
     private final Type rtype;
     private final VarDecl<? extends Type> result;
@@ -29,7 +29,7 @@ public final class XCFAProcedure {
 
     private final List<Edge> edges;
 
-    private XCFAProcedure(final Builder builder) {
+    private XcfaProcedure(final Builder builder) {
         rtype = builder.rtype;
         params = ImmutableList.copyOf(builder.params);
         localVars = builder.localVars;
@@ -44,7 +44,7 @@ public final class XCFAProcedure {
         name = builder.name;
     }
 
-    public XCFAProcedure(XCFAProcedure procedure) {
+    public XcfaProcedure(XcfaProcedure procedure) {
         parent = null; // ProcessBuilder will fill out this field
         rtype = procedure.rtype;
 
@@ -154,16 +154,16 @@ public final class XCFAProcedure {
         return name;
     }
 
-    public XCFAProcess getParent() {
+    public XcfaProcess getParent() {
         return parent;
     }
 
-    public void setParent(XCFAProcess xcfaProcess) {
+    public void setParent(XcfaProcess xcfaProcess) {
         this.parent = xcfaProcess;
     }
 
     public static final class Location {
-        private XCFAProcedure parent;
+        private XcfaProcedure parent;
         private final String name;
         private boolean isErrorLoc = false;
         private boolean isEndLoc = false;
@@ -221,13 +221,13 @@ public final class XCFAProcedure {
             isEndLoc = endLoc;
         }
 
-        public XCFAProcedure getParent() {
+        public XcfaProcedure getParent() {
             return parent;
         }
     }
 
     public static final class Edge {
-        private XCFAProcedure parent;
+        private XcfaProcedure parent;
         private final Location source;
         private final Location target;
 
@@ -268,7 +268,7 @@ public final class XCFAProcedure {
             ).toString();
         }
 
-        public XCFAProcedure getParent() {
+        public XcfaProcedure getParent() {
             return parent;
         }
     }
@@ -380,14 +380,14 @@ public final class XCFAProcedure {
             finalLoc.setEndLoc(true);
         }
 
-        public XCFAProcedure build() {
+        public XcfaProcedure build() {
             checkState(initLoc != null, "Initial location must be set.");
             checkState(finalLoc != null, "Final location must be set.");
             checkState(finalLoc.outgoingEdges.isEmpty(), "Final location cannot have outgoing edges.");
             if (errorLoc != null)
                 checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
             built = true;
-            return new XCFAProcedure(this);
+            return new XcfaProcedure(this);
         }
 
         public void setResult(VarDecl<?> result) {

@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 
 import java.util.ArrayList;
@@ -26,12 +26,12 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class XcfaEdge implements Instantiatable<XCFAProcedure.Edge> {
+public class XcfaEdge implements Instantiatable<XcfaProcedure.Edge> {
 
 	private final XcfaLocationSymbol source;
 	private final XcfaLocationSymbol target;
 	private final List<XcfaStatement> stmts;
-	private XCFAProcedure.Edge built = null;
+	private XcfaProcedure.Edge built = null;
 
 	XcfaEdge(final XcfaProcedureSymbol scope, final XcfaDslParser.EdgeContext context) {
 		Optional<? extends Symbol> opt = scope.resolve(context.source.getText());
@@ -46,11 +46,11 @@ public class XcfaEdge implements Instantiatable<XCFAProcedure.Edge> {
 	}
 
 	@Override
-	public XCFAProcedure.Edge instantiate() {
+	public XcfaProcedure.Edge instantiate() {
 		if (built != null) return built;
 		List<Stmt> stmts = new ArrayList<>();
 		this.stmts.forEach(xcfaStatement -> stmts.add(xcfaStatement.instantiate()));
-		return built = new XCFAProcedure.Edge(source.instantiate(), target.instantiate(), stmts);
+		return built = new XcfaProcedure.Edge(source.instantiate(), target.instantiate(), stmts);
 	}
 
 	public List<XcfaStatement> getStatements() {

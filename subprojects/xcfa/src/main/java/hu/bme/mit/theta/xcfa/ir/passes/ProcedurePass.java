@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.xcfa.ir.passes;
 
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
 
 public interface ProcedurePass {
 
-    XCFAProcedure.Builder run(XCFAProcedure.Builder builder);
+    XcfaProcedure.Builder run(XcfaProcedure.Builder builder);
 
 }

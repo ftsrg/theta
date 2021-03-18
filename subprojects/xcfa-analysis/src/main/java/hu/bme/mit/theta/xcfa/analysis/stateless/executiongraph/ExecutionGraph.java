@@ -6,7 +6,7 @@ import hu.bme.mit.theta.common.datalog.StringDatalogArgument;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.XCFAProcess;
+import hu.bme.mit.theta.xcfa.XcfaProcess;
 import hu.bme.mit.theta.xcfa.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.atoms.Thread;
 import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.atoms.Var;
@@ -20,10 +20,10 @@ import java.util.Set;
 public class ExecutionGraph {
     private final ExecutionGraphDatabase executionGraphDatabase;
     private final Map<VarDecl<? extends Type>, Var> varLut;
-    private final Map<XCFAProcess, Thread> threadLut;
+    private final Map<XcfaProcess, Thread> threadLut;
     private final Thread initialThread;
     private final Set<Write> initialWrites;
-    private final Map<XCFAProcess, DatalogArgument> lastNode;
+    private final Map<XcfaProcess, DatalogArgument> lastNode;
 
     ExecutionGraph(XcfaState initialState) {
         this.executionGraphDatabase = ExecutionGraphDatabase.createExecutionGraph();
@@ -45,7 +45,7 @@ public class ExecutionGraph {
         executionGraphDatabase.getVarMapping().addFact(TupleN.of(write, var));
     }
 
-    public void addWrite(XCFAProcess process, VarDecl<? extends Type> varDecl, LitExpr<?> litExpr) {
+    public void addWrite(XcfaProcess process, VarDecl<? extends Type> varDecl, LitExpr<?> litExpr) {
         varLut.putIfAbsent(varDecl, new Var());
         Write write = new Write(litExpr);
         if(!threadLut.containsKey(process)) {

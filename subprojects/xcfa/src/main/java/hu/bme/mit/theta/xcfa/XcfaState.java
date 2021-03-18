@@ -28,13 +28,13 @@ public class XcfaState {
 
     private final XCFA xcfa;
 
-    private final List<XCFAProcess> enabledProcesses;
+    private final List<XcfaProcess> enabledProcesses;
     private final MutablePartitionedValuation valuation;
-    private final Map<XCFAProcess, Stack<XcfaStackFrame>> stackFrames;
-    private final Map<XCFAProcess, Integer> partitions;
-    private XCFAProcess currentlyAtomic;
+    private final Map<XcfaProcess, Stack<XcfaStackFrame>> stackFrames;
+    private final Map<XcfaProcess, Integer> partitions;
+    private XcfaProcess currentlyAtomic;
 
-    private final Map<XCFAProcess, Set<XcfaStackFrame>> offers;
+    private final Map<XcfaProcess, Set<XcfaStackFrame>> offers;
 
     XcfaState(XCFA xcfa) {
         this.xcfa = xcfa;
@@ -59,15 +59,15 @@ public class XcfaState {
         recalcOffers();
     }
 
-    public List<XCFAProcess> getEnabledProcesses() {
+    public List<XcfaProcess> getEnabledProcesses() {
         return enabledProcesses;
     }
 
-    public Map<XCFAProcess, Integer> getPartitions() {
+    public Map<XcfaProcess, Integer> getPartitions() {
         return partitions;
     }
 
-    public Map<XCFAProcess, Stack<XcfaStackFrame>> getStackFrames() {
+    public Map<XcfaProcess, Stack<XcfaStackFrame>> getStackFrames() {
         return stackFrames;
     }
 
@@ -75,7 +75,7 @@ public class XcfaState {
         return valuation;
     }
 
-    public XCFAProcess getCurrentlyAtomic() {
+    public XcfaProcess getCurrentlyAtomic() {
         return currentlyAtomic;
     }
 
@@ -83,11 +83,11 @@ public class XcfaState {
         return xcfa;
     }
 
-    public Map<XCFAProcess, Set<XcfaStackFrame>> getOffers() {
+    public Map<XcfaProcess, Set<XcfaStackFrame>> getOffers() {
         return offers;
     }
 
-    public void setCurrentlyAtomic(XCFAProcess currentlyAtomic) {
+    public void setCurrentlyAtomic(XcfaProcess currentlyAtomic) {
         checkState(currentlyAtomic == null || enabledProcesses.contains(currentlyAtomic), "The atomic process is not enabled!");
         this.currentlyAtomic = currentlyAtomic;
     }
@@ -100,13 +100,13 @@ public class XcfaState {
         return valuation.eval(decl);
     }
 
-    public void setEnabledProcesses(Collection<XCFAProcess> processes) {
+    public void setEnabledProcesses(Collection<XcfaProcess> processes) {
         enabledProcesses.clear();
         enabledProcesses.addAll(processes);
     }
 
     void acceptOffer(XcfaStackFrame frame) {
-        XCFAProcess proc = frame.getProcess();
+        XcfaProcess proc = frame.getProcess();
         checkState(offers.getOrDefault(proc, new HashSet<>()).contains(frame), "Stack frame is not currently offered!");
         XcfaStackFrame lastFrame = null;
         if(!stackFrames.get(proc).empty()) {
@@ -151,22 +151,22 @@ public class XcfaState {
             collectOffers(currentlyAtomic);
         }
         else {
-            for (XCFAProcess enabledProcess : enabledProcesses) {
+            for (XcfaProcess enabledProcess : enabledProcesses) {
                 collectOffers(enabledProcess);
             }
         }
 
     }
 
-    private void collectOffers(XCFAProcess enabledProcess) {
+    private void collectOffers(XcfaProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
         if(last != null && last.getStmt() instanceof CallStmt) {
-            XCFAProcedure procedure = ((CallStmt) last.getStmt()).getProcedure();
+            XcfaProcedure procedure = ((CallStmt) last.getStmt()).getProcedure();
             collectProcedureOffers(enabledProcess, procedure);
         }
         else if(last == null || last.isLastStmt()) {
-            XCFAProcedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
-            for (XCFAProcedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
+            XcfaProcedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
+            for (XcfaProcedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
                 boolean canExecute = true;
                 for (Stmt stmt : outgoingEdge.getStmts()) {
                     if(stmt instanceof AssumeStmt) {
@@ -191,8 +191,8 @@ public class XcfaState {
         }
     }
 
-    private void collectProcedureOffers(XCFAProcess enabledProcess, XCFAProcedure procedure) {
-        for (XCFAProcedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
+    private void collectProcedureOffers(XcfaProcess enabledProcess, XcfaProcedure procedure) {
+        for (XcfaProcedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
             XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0));
             if(edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
             xcfaStackFrame.setNewProcedure();

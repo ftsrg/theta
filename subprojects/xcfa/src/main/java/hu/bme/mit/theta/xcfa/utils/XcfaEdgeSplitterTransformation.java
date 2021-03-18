@@ -3,10 +3,10 @@ package hu.bme.mit.theta.xcfa.utils;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFAProcess;
-import hu.bme.mit.theta.xcfa.XCFAProcedure;
-import hu.bme.mit.theta.xcfa.XCFAProcedure.Edge;
-import hu.bme.mit.theta.xcfa.XCFAProcedure.Location;
+import hu.bme.mit.theta.xcfa.XcfaProcess;
+import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.XcfaProcedure.Edge;
+import hu.bme.mit.theta.xcfa.XcfaProcedure.Location;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
@@ -31,12 +31,12 @@ public final class XcfaEdgeSplitterTransformation {
 	// reuses variables and stmts
 	private XCFA alt_transform(XCFA original) {
 		XCFA.Builder builder = XCFA.builder();
-		Map<XCFAProcedure, XCFAProcedure> origToNewProcedure = new HashMap<>();
-		for (XCFAProcess origPs: original.getProcesses()) {
-			XCFAProcess.Builder builderPs = XCFAProcess.builder();
+		Map<XcfaProcedure, XcfaProcedure> origToNewProcedure = new HashMap<>();
+		for (XcfaProcess origPs: original.getProcesses()) {
+			XcfaProcess.Builder builderPs = XcfaProcess.builder();
 			builderPs.setName(origPs.getName());
-			for (XCFAProcedure origPc : origPs.getProcedures()) {
-				XCFAProcedure.Builder builderPc = XCFAProcedure.builder();
+			for (XcfaProcedure origPc : origPs.getProcedures()) {
+				XcfaProcedure.Builder builderPc = XcfaProcedure.builder();
 				builderPc.setName(origPc.getName());
 				var locMap = addLocations(builderPc, origPc);
 				for (var origEdge : origPc.getEdges()) {
@@ -84,7 +84,7 @@ public final class XcfaEdgeSplitterTransformation {
 		return x;
 	}
 	
-	private Map<Location, Location> addLocations(XCFAProcedure.Builder builder, XCFAProcedure orig) {
+	private Map<Location, Location> addLocations(XcfaProcedure.Builder builder, XcfaProcedure orig) {
 		Map<Location, Location> locMap = new HashMap<>();
 		for (var origLoc : orig.getLocs()) {
 			Location loc = new Location(origLoc.getName(), origLoc.getDictionary());
@@ -104,8 +104,8 @@ public final class XcfaEdgeSplitterTransformation {
 	
 	private static class CallStmtWithOldProcedure {
 		private final CallStmt stmt;
-		private final XCFAProcedure oldPc;
-		public CallStmtWithOldProcedure(CallStmt stmt, XCFAProcedure oldPc) {
+		private final XcfaProcedure oldPc;
+		public CallStmtWithOldProcedure(CallStmt stmt, XcfaProcedure oldPc) {
 			this.stmt = stmt;
 			this.oldPc = oldPc;
 		}
@@ -131,7 +131,7 @@ public final class XcfaEdgeSplitterTransformation {
 		}
 	}
 
-	private void addEdge(Map<Location, Location> locMap, XCFAProcedure.Builder builder, Edge origEdge) {
+	private void addEdge(Map<Location, Location> locMap, XcfaProcedure.Builder builder, Edge origEdge) {
 		var source = locMap.get(origEdge.getSource());
 		var target = locMap.get(origEdge.getTarget());
 		var stmts = origEdge.getStmts();
