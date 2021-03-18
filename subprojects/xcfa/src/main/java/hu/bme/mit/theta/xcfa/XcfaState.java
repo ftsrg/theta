@@ -164,8 +164,8 @@ public class XcfaState {
             collectProcedureOffers(enabledProcess, procedure);
         }
         else if(last == null || last.isLastStmt()) {
-            XcfaProcedure.Location sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
-            for (XcfaProcedure.Edge outgoingEdge : sourceLoc.getOutgoingEdges()) {
+            XcfaLocation sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
+            for (XcfaEdge outgoingEdge : sourceLoc.getOutgoingEdges()) {
                 boolean canExecute = true;
                 for (Stmt stmt : outgoingEdge.getStmts()) {
                     if(stmt instanceof AssumeStmt) {
@@ -191,7 +191,7 @@ public class XcfaState {
     }
 
     private void collectProcedureOffers(XcfaProcess enabledProcess, XcfaProcedure procedure) {
-        for (XcfaProcedure.Edge edge : procedure.getInitLoc().getOutgoingEdges()) {
+        for (XcfaEdge edge : procedure.getInitLoc().getOutgoingEdges()) {
             XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0));
             if(edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
             xcfaStackFrame.setNewProcedure();

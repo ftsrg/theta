@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.XcfaLocation;
 import hu.bme.mit.theta.xcfa.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
@@ -100,7 +101,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		if (variables != null)
 			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>)xcfaVariableSymbol.getInitExpr().instantiate())));
 		locations.forEach(xcfaLocationSymbol -> {
-			XcfaProcedure.Location loc = xcfaLocationSymbol.instantiate();
+			XcfaLocation loc = xcfaLocationSymbol.instantiate();
 			builder.addLoc(loc);
 			if (xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
 			else if (xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);

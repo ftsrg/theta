@@ -5,8 +5,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.XcfaProcess;
 import hu.bme.mit.theta.xcfa.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.XcfaProcedure.Edge;
-import hu.bme.mit.theta.xcfa.XcfaProcedure.Location;
+import hu.bme.mit.theta.xcfa.XcfaEdge;
+import hu.bme.mit.theta.xcfa.XcfaLocation;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public final class XcfaEdgeSplitterTransformation {
 				for (var origVar : origPc.getLocalVars()) {
 					builderPc.createVar(origVar, origPc.getInitValue(origVar).isPresent() ? origPc.getInitValue(origVar).get() : null);
 				}
-				builderPc.setRtype(origPc.getRtype());
+				builderPc.setRtype(origPc.getRetType());
 				builderPc.setResult(origPc.getResult());
 				var pc = builderPc.build();
 				builderPs.addProcedure(pc);
@@ -84,10 +84,10 @@ public final class XcfaEdgeSplitterTransformation {
 		return x;
 	}
 	
-	private Map<Location, Location> addLocations(XcfaProcedure.Builder builder, XcfaProcedure orig) {
-		Map<Location, Location> locMap = new HashMap<>();
+	private Map<XcfaLocation, XcfaLocation> addLocations(XcfaProcedure.Builder builder, XcfaProcedure orig) {
+		Map<XcfaLocation, XcfaLocation> locMap = new HashMap<>();
 		for (var origLoc : orig.getLocs()) {
-			Location loc = new Location(origLoc.getName(), origLoc.getDictionary());
+			XcfaLocation loc = new XcfaLocation(origLoc.getName(), origLoc.getDictionary());
 			locMap.put(origLoc, loc);
 			builder.addLoc(loc);
 			
@@ -131,26 +131,26 @@ public final class XcfaEdgeSplitterTransformation {
 		}
 	}
 
-	private void addEdge(Map<Location, Location> locMap, XcfaProcedure.Builder builder, Edge origEdge) {
+	private void addEdge(Map<XcfaLocation, XcfaLocation> locMap, XcfaProcedure.Builder builder, XcfaEdge origEdge) {
 		var source = locMap.get(origEdge.getSource());
 		var target = locMap.get(origEdge.getTarget());
 		var stmts = origEdge.getStmts();
 		if (stmts.size() == 0) {
-			builder.addEdge(new Edge(source, target, listOf(SkipStmt.getInstance())));
+			builder.addEdge(new XcfaEdge(source, target, listOf(SkipStmt.getInstance())));
 //		} else if (stmts.size() == 1) {
 //			builder.addEdge(new Edge(source, target, stmts));
 		} else {
-			Location lastLoc = source;
+			XcfaLocation lastLoc = source;
 			// all but last edge
 			for (var i = 0; i < stmts.size()-1; i++) {
 				var stmt = stmts.get(i);
-				Location loc = new Location("_" + source.getName() + "_" + target.getName() + "_" + i, source.getDictionary());
+				XcfaLocation loc = new XcfaLocation("_" + source.getName() + "_" + target.getName() + "_" + i, source.getDictionary());
 				builder.addLoc(loc);
-				builder.addEdge(new Edge(lastLoc, loc, listOf(copyStmt(stmt))));
+				builder.addEdge(new XcfaEdge(lastLoc, loc, listOf(copyStmt(stmt))));
 				lastLoc = loc;
 			}
 			// last edge
-			builder.addEdge(new Edge(lastLoc, target, listOf(copyStmt(stmts.get(stmts.size()-1)))));
+			builder.addEdge(new XcfaEdge(lastLoc, target, listOf(copyStmt(stmts.get(stmts.size()-1)))));
 		}
 	}
 }

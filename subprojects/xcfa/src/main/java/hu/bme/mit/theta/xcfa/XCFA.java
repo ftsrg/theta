@@ -58,7 +58,7 @@ public final class XCFA {
 
 		int tmpcnt = 0;
 
-		for (XcfaProcedure.Edge e : getMainProcess().getMainProcedure().getEdges()) {
+		for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {
 
 			List<CFA.Loc> locations = new ArrayList<>();
 			// Adding source

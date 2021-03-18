@@ -121,7 +121,7 @@ public final class XcfaDslTest {
 				Assert.assertEquals((long) locCount[i][j], procedure.getLocs().size());
 				Assert.assertEquals((long) edgeCount[i][j], procedure.getEdges().size());
 				for (int k = 0; k < procedure.getEdges().size(); ++k) {
-					XcfaProcedure.Edge edge = procedure.getEdges().get(k);
+					XcfaEdge edge = procedure.getEdges().get(k);
 					Assert.assertEquals((long) statementCount[i][j][k], edge.getStmts().size());
 				}
 			}

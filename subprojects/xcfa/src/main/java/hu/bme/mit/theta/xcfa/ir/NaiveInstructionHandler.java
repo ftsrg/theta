@@ -13,6 +13,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.xcfa.XcfaEdge;
+import hu.bme.mit.theta.xcfa.XcfaLocation;
 import hu.bme.mit.theta.xcfa.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
@@ -25,7 +27,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 public class NaiveInstructionHandler implements InstructionHandler{
-    private XcfaProcedure.Location lastLoc;
+    private XcfaLocation lastLoc;
     private Integer cnt;
     private final Tuple3<String, java.util.Optional<String>, List<Tuple2<String, String>>> function;
     private final XcfaProcedure.Builder procedureBuilder;
@@ -33,17 +35,17 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private final Collection<String> processes;
     private final Map<String, VarDecl<?>> localVarLut;
     private final Map<String, Expr<?>> valueLut;
-    private final XcfaProcedure.Location finalLoc;
+    private final XcfaLocation finalLoc;
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private final Optional<VarDecl<? extends Type>> retVar;
-    private final Map<String, XcfaProcedure.Location> locationLut;
+    private final Map<String, XcfaLocation> locationLut;
     private String block;
     private Map<CallStmt, String> callStmts = new HashMap<>();
 
 
-    private final Map<Tuple2<String, String>, Tuple3<XcfaProcedure.Location, XcfaProcedure.Location, List<Stmt>>> terminatorEdges = new HashMap<>();
+    private final Map<Tuple2<String, String>, Tuple3<XcfaLocation, XcfaLocation, List<Stmt>>> terminatorEdges = new HashMap<>();
 
-    public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XcfaProcedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XcfaProcedure.Location finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XcfaProcedure.Location> locationLut) {
+    public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XcfaProcedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XcfaLocation finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XcfaLocation> locationLut) {
         this.function = function;
         this.procedureBuilder = procedureBuilder;
         this.ssa = ssa;
@@ -64,8 +66,8 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     private XcfaProcedure emptyProc(String name) {
         XcfaProcedure.Builder builder = XcfaProcedure.builder();
-        XcfaProcedure.Location loc1 = new XcfaProcedure.Location("loc", null);
-        XcfaProcedure.Location loc2 = new XcfaProcedure.Location("loc", null);
+        XcfaLocation loc1 = new XcfaLocation("loc", null);
+        XcfaLocation loc2 = new XcfaLocation("loc", null);
         builder.addLoc(loc1);
         builder.addLoc(loc2);
         builder.setFinalLoc(loc2);
@@ -77,7 +79,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     @Override
     public void endProcedure() {
         terminatorEdges.forEach((_obj, edgeTup) -> {
-            XcfaProcedure.Edge edge = new XcfaProcedure.Edge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
+            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
             procedureBuilder.addEdge(edge);
         });
     }
@@ -143,7 +145,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        XcfaProcedure.Location newLoc = new XcfaProcedure.Location(block + "_" + cnt++, new HashMap<>());
+        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
         String funcName = instruction.get3().get(paramSize - 1).get2();
         VarDecl<?> callVar = null;
         if(instruction.get2().isPresent()) {
@@ -160,7 +162,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         }
         CallStmt stmt = new CallStmt(callVar, null, exprs);
         callStmts.put(stmt, funcName);
-        XcfaProcedure.Edge edge = new XcfaProcedure.Edge(lastLoc, newLoc, List.of(stmt));
+        XcfaEdge edge = new XcfaEdge(lastLoc, newLoc, List.of(stmt));
         procedureBuilder.addLoc(newLoc);
         procedureBuilder.addEdge(edge);
         lastLoc = newLoc;
@@ -181,7 +183,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             String blockName = instruction.get3().get(2*i + 1).get2();
             Expr<?> value = getExpr(instruction, 2*i );
             Tuple2<String, String> key = Tuple2.of(blockName, block);
-            Tuple3<XcfaProcedure.Location, XcfaProcedure.Location, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XcfaProcedure.Location(key.get1(), null), new XcfaProcedure.Location(key.get2(), null), new ArrayList<>()));
+            Tuple3<XcfaLocation, XcfaLocation, List<Stmt>> val = terminatorEdges.getOrDefault(key, Tuple3.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>()));
             val.get3().add(Assign(phiVar, value));
             terminatorEdges.put(key, val);
         }
@@ -232,9 +234,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
             valueLut.put(rhs, localVarLut.get(lhs).getRef());
             valueLut.put(lhs, localVarLut.get(lhs).getRef());
         } else {
-            XcfaProcedure.Location loc = new XcfaProcedure.Location(block + "_" + cnt++, new HashMap<>());
+            XcfaLocation loc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
             Stmt stmt = Assign(localVarLut.get(instruction.get3().get(1).get2()), getExpr(instruction, 0));
-            XcfaProcedure.Edge edge = new XcfaProcedure.Edge(lastLoc, loc, List.of(stmt));
+            XcfaEdge edge = new XcfaEdge(lastLoc, loc, List.of(stmt));
             procedureBuilder.addLoc(loc);
             procedureBuilder.addEdge(edge);
             lastLoc = loc;
@@ -359,7 +361,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         Expr<IntType> var = (Expr<IntType>) varExpr;
         Expr<BoolType> defaultBranch = null;
         for (int i = 0; i < (instruction.get3().size() / 2) - 1; ++i) {
-            XcfaProcedure.Location loc = locationLut.get(instruction.get3().get(2 + 2*i + 1).get2());
+            XcfaLocation loc = locationLut.get(instruction.get3().get(2 + 2*i + 1).get2());
             Expr<?> constExpr = getExpr(instruction, 2 + 2 * i);
             checkState(constExpr.getType() == IntType.getInstance(), "Constant has to be an integer!");
             //noinspection unchecked
@@ -372,8 +374,8 @@ public class NaiveInstructionHandler implements InstructionHandler{
             stmts.add(assume);
             terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
         }
-        XcfaProcedure.Location loc = locationLut.get(instruction.get3().get(1).get2());
-        XcfaProcedure.Edge edge = new XcfaProcedure.Edge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
+        XcfaLocation loc = locationLut.get(instruction.get3().get(1).get2());
+        XcfaEdge edge = new XcfaEdge(lastLoc, loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
         procedureBuilder.addEdge(edge);
         lastLoc = finalLoc;
     }
@@ -385,14 +387,14 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private void br(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         switch(instruction.get3().size()) {
             case 1:
-                XcfaProcedure.Location loc = locationLut.get(instruction.get3().get(0).get2());
+                XcfaLocation loc = locationLut.get(instruction.get3().get(0).get2());
                 Tuple2<String, String> key = Tuple2.of(block, loc.getName());
                 List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc, new ArrayList<>())).get3();
                 terminatorEdges.put(key, Tuple3.of(lastLoc, loc, stmts));
                 break;
             case 3:
-                XcfaProcedure.Location loc1 = locationLut.get(instruction.get3().get(1).get2());
-                XcfaProcedure.Location loc2 = locationLut.get(instruction.get3().get(2).get2());
+                XcfaLocation loc1 = locationLut.get(instruction.get3().get(1).get2());
+                XcfaLocation loc2 = locationLut.get(instruction.get3().get(2).get2());
 
                 Expr<?> lhs = getExpr(instruction, 0);
                 Expr<?> rhs = createConstant("i32 0");
@@ -435,7 +437,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.get3().size());
         }
-        XcfaProcedure.Edge edge = new XcfaProcedure.Edge(lastLoc, finalLoc, stmts);
+        XcfaEdge edge = new XcfaEdge(lastLoc, finalLoc, stmts);
         procedureBuilder.addEdge(edge);
         lastLoc = finalLoc;
     }
