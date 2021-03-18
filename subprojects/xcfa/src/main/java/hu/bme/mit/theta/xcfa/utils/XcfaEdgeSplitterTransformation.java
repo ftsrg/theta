@@ -58,7 +58,7 @@ public final class XcfaEdgeSplitterTransformation {
 				}
 			}
 			for (var origVar : origPs.getThreadLocalVars()) {
-				builderPs.createVar(origVar, origPs.getInitValue(origVar));
+				builderPs.createVar(origVar, origPs.getInitValue(origVar).orElse(null));
 			}
 			var ps = builderPs.build();
 			builder.addProcess(ps);
