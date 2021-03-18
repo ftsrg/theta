@@ -260,7 +260,17 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        return transformTerm(parser.function_def().term(), model, HashBiMap.create());
+        final var funcDef = parser.function_def();
+        final var paramDecls = funcDef.sorted_var().stream()
+            .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
+            .collect(toList());
+
+        final var vars = HashBiMap.<ParamDecl<?>, String>create();
+        pushParams(paramDecls, vars);
+        final var expr = transformTerm(funcDef.term(), model, vars);
+        popParams(paramDecls, vars);
+
+        return expr;
     }
 
     @Override
