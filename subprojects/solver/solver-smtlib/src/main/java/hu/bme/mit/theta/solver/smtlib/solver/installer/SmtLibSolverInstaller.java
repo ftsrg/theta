@@ -57,8 +57,6 @@ public interface SmtLibSolverInstaller {
 
                 Files.createDirectory(installDir);
 
-                installSolver(installDir, version);
-
                 final var solverArgsPath = argsFile(installDir);
                 Files.writeString(solverArgsPath, String.join("\n", getDefaultSolverArgs(version)), StandardCharsets.UTF_8);
 
@@ -70,6 +68,8 @@ public interface SmtLibSolverInstaller {
                     String.format("name=%s\n", name),
                     StandardCharsets.UTF_8
                 );
+
+                installSolver(installDir, version);
 
                 logger.write(Logger.Level.MAINSTEP, "Installation finished\n");
             }
@@ -227,7 +227,7 @@ public interface SmtLibSolverInstaller {
         }
 
         protected final void checkVersion(final String version) throws SmtLibSolverInstallerException {
-            if(!version.matches("^[0-9]+(\\.[0-9]+)*$")) {
+            if(!version.matches("^[a-zA-Z0-9_.-]+$")) {
                 throw new SmtLibSolverInstallerException("Unsupported version format: " + version);
             }
         }
