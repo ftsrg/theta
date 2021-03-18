@@ -75,7 +75,6 @@ public class Utils {
         Map<String, VarDecl<?>> localVarLut = new HashMap<>();
 
         // Adding params
-        // TODO: unify with variables from `alloca`
         for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());
             procedureBuilder.createParam(var);
