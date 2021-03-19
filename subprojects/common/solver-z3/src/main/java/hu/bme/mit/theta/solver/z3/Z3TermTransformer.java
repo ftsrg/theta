@@ -186,8 +186,10 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
-		final var value = intNum.getBigInteger();
-		return Int(value);
+		final var val = intNum.getInt64();
+		return Int(BigInteger.valueOf(val));
+//		final var value = intNum.getBigInteger();
+//		return Int(value);
 	}
 
 	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term) {
