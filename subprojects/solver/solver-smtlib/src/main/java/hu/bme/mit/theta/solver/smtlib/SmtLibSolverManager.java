@@ -47,6 +47,7 @@ public final class SmtLibSolverManager {
         registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
         registerInstaller("yices2", Yices2SmtLibSolverInstaller.class);
         registerInstaller("boolector", BoolectorSmtLibSolverInstaller.class);
+        registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
