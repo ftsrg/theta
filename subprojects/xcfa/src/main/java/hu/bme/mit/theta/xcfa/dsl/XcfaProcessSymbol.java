@@ -20,8 +20,8 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcessDeclContext;
 

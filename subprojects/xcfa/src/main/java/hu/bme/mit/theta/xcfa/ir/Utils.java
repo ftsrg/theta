@@ -7,8 +7,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.xcfa.XcfaLocation;
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
 import java.util.*;

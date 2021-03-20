@@ -2,7 +2,7 @@ package hu.bme.mit.theta.xcfa.ir;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple4;
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
 import java.util.Map;

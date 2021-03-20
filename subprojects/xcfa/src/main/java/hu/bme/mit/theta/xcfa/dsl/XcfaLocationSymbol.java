@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.xcfa.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 
 import java.util.HashMap;

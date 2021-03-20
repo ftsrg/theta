@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.xcfa.SyntheticType;
-import hu.bme.mit.theta.xcfa.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.Objects;
 import java.util.Optional;

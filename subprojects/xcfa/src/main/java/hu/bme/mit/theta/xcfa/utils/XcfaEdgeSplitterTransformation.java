@@ -2,11 +2,11 @@ package hu.bme.mit.theta.xcfa.utils;
 
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XcfaProcess;
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.XcfaEdge;
-import hu.bme.mit.theta.xcfa.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;

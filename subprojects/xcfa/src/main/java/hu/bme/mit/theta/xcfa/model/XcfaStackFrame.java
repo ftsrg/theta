@@ -1,8 +1,8 @@
-package hu.bme.mit.theta.xcfa;
+package hu.bme.mit.theta.xcfa.model;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
 
-class XcfaStackFrame {
+public class XcfaStackFrame {
     private final XcfaState owner;
     private final XcfaEdge edge;
     private Stmt stmt;

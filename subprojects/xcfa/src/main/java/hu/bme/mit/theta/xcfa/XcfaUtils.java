@@ -7,6 +7,9 @@ import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.ir.InstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.io.*;
 import java.util.*;

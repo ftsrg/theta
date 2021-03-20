@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless;
 
 import hu.bme.mit.theta.mcm.MCM;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph.ExecutionGraphExecutor;
 
 import java.io.File;

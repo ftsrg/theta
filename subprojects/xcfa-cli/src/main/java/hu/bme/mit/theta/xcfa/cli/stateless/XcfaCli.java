@@ -22,7 +22,7 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;

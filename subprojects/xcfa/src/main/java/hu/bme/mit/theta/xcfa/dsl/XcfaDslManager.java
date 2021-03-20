@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.xcfa.XCFA;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SpecContext;

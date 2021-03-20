@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa;
+package hu.bme.mit.theta.xcfa.model;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;

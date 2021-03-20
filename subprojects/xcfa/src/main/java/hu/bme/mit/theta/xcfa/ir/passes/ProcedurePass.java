@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.ir.passes;
 
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 public interface ProcedurePass {
 

@@ -25,12 +25,12 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class XcfaEdge implements Instantiatable<hu.bme.mit.theta.xcfa.XcfaEdge> {
+public class XcfaEdge implements Instantiatable<hu.bme.mit.theta.xcfa.model.XcfaEdge> {
 
 	private final XcfaLocationSymbol source;
 	private final XcfaLocationSymbol target;
 	private final List<XcfaStatement> stmts;
-	private hu.bme.mit.theta.xcfa.XcfaEdge built = null;
+	private hu.bme.mit.theta.xcfa.model.XcfaEdge built = null;
 
 	XcfaEdge(final XcfaProcedureSymbol scope, final XcfaDslParser.EdgeContext context) {
 		Optional<? extends Symbol> opt = scope.resolve(context.source.getText());
@@ -45,11 +45,11 @@ public class XcfaEdge implements Instantiatable<hu.bme.mit.theta.xcfa.XcfaEdge> 
 	}
 
 	@Override
-	public hu.bme.mit.theta.xcfa.XcfaEdge instantiate() {
+	public hu.bme.mit.theta.xcfa.model.XcfaEdge instantiate() {
 		if (built != null) return built;
 		List<Stmt> stmts = new ArrayList<>();
 		this.stmts.forEach(xcfaStatement -> stmts.add(xcfaStatement.instantiate()));
-		return built = new hu.bme.mit.theta.xcfa.XcfaEdge(source.instantiate(), target.instantiate(), stmts);
+		return built = new hu.bme.mit.theta.xcfa.model.XcfaEdge(source.instantiate(), target.instantiate(), stmts);
 	}
 
 	public List<XcfaStatement> getStatements() {

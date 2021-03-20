@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa;
+package hu.bme.mit.theta.xcfa.model;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;

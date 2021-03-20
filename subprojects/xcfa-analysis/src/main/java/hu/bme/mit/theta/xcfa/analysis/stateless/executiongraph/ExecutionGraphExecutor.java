@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.xcfa.analysis.stateless.executiongraph;
 
 import hu.bme.mit.theta.mcm.MCM;
-import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XcfaState;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
 
 import java.io.Writer;

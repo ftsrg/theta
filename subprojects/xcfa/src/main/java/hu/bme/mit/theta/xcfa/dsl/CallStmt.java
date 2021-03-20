@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.xcfa.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
 

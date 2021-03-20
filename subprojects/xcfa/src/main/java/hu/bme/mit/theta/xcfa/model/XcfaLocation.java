@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa;
+package hu.bme.mit.theta.xcfa.model;
 
 import java.util.ArrayList;
 import java.util.Collections;

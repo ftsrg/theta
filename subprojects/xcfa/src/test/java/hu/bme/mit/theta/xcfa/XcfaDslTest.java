@@ -16,6 +16,10 @@
 package hu.bme.mit.theta.xcfa;
 
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
