@@ -10,6 +10,9 @@ import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
+import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
+import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
 import java.io.*;
 import java.util.*;
@@ -61,10 +64,19 @@ public class XcfaUtils {
         return XcfaDslManager.createXcfa(dsl);
     }
 
+
     /*
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      */
     public static XCFA createXCFA(SSAProvider ssa) {
+        return createXCFA(ssa, List.of(), List.of(), List.of());
+    }
+
+    /*
+     * Creates an XCFA from the provided SSAProvider using its getter methods.
+     * Runs the specified passes when a specific stage is complete.
+     */
+    public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses) {
         Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
         XCFA.Builder builder = XCFA.builder();
 
@@ -103,6 +115,10 @@ public class XcfaUtils {
 
             }
 
+            for (ProcedurePass pass : procedurePasses) {
+                procedureBuilder = pass.run(procedureBuilder);
+            }
+
             XcfaProcedure procedure = procedureBuilder.build();
             procedures.put(function.get1(), procedure);
         }
@@ -127,11 +143,19 @@ public class XcfaUtils {
 
             }
 
+            for (ProcessPass pass : processPasses) {
+                processBuilder = pass.run(processBuilder);
+            }
+
             XcfaProcess proc = processBuilder.build();
             builder.addProcess(proc);
 
             if (processBuilder == mainProcBuilder) builder.setMainProcess(proc);
 
+        }
+
+        for (XcfaPass pass : xcfaPasses) {
+            builder = pass.run(builder);
         }
 
         return builder.build();
