@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -35,4 +36,6 @@ public abstract class XcfaCallStmt extends XcfaStmt {
 
 	// needed for core.utils.VarCollector
 	public abstract List<Expr<?>> getParams();
+	public abstract VarDecl<?> getResultVar();
+
 }

@@ -11,6 +11,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.VariableEliminationPass;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
@@ -69,7 +70,7 @@ public class XcfaUtils {
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      */
     public static XCFA createXCFA(SSAProvider ssa) {
-        return createXCFA(ssa, List.of(), List.of(), List.of());
+        return createXCFA(ssa, List.of(), List.of(), List.of(VariableEliminationPass.getInstance()));
     }
 
     /*

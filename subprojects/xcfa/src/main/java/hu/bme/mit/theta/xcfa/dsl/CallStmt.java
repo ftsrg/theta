@@ -26,7 +26,6 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-//TODO: retVar not necessary, params not only variables
 public class CallStmt extends XcfaCallStmt {
 	private final VarDecl<?> var;
 	private final List<Expr<?>> params;
