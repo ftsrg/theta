@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.passes;
+package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
