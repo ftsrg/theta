@@ -37,6 +37,6 @@ public abstract class XcfaCallStmt extends XcfaStmt {
 	// needed for core.utils.VarCollector
 	public abstract List<Expr<?>> getParams();
 	public abstract VarDecl<?> getResultVar();
-	public abstract Object getProc();
 
+	public abstract void setVoid();
 }

@@ -27,7 +27,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public class CallStmt extends XcfaCallStmt {
-	private final VarDecl<?> var;
+	private VarDecl<?> var; // for later optimization
 	private final List<Expr<?>> params;
 	private static final String STMT_LABEL = "call";
 
@@ -49,8 +49,8 @@ public class CallStmt extends XcfaCallStmt {
 	}
 
 	@Override
-	public Object getProc() {
-		return procedure;
+	public void setVoid() {
+		var = null;
 	}
 
 	public List<Expr<?>> getParams() {

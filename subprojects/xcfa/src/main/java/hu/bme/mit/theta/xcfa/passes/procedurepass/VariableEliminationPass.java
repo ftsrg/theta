@@ -10,7 +10,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.*;
@@ -52,7 +51,7 @@ public class VariableEliminationPass implements ProcedurePass {
     private Set<VarDecl<?>> localVars;
     private Map<VarDecl<?>, Integer> lhsUse;
     private Map<VarDecl<?>, Map<XcfaEdge, Set<Stmt>>> lhsEdges;
-    private Set<VarDecl<?>> noMove;
+    private Set<VarDecl<?>> noDelete;
 
     @Override
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
@@ -60,7 +59,7 @@ public class VariableEliminationPass implements ProcedurePass {
 
         lhsUse = new HashMap<>();
         lhsEdges = new HashMap<>();
-        noMove = new HashSet<>();
+        noDelete = new HashSet<>();
 
         for (XcfaEdge edge : builder.getEdges()) {
             for (Stmt stmt : edge.getStmts()) {
@@ -69,7 +68,7 @@ public class VariableEliminationPass implements ProcedurePass {
         }
 
         lhsUse.forEach((varDecl, integer) -> {
-            if (!noMove.contains(varDecl)) {
+            if (!noDelete.contains(varDecl)) {
                 lhsEdges.get(varDecl).forEach((xcfaEdge, stmts) -> {
                     List<Stmt> newStmts = new ArrayList<>(xcfaEdge.getStmts());
                     for (Stmt stmt : stmts) {
@@ -102,7 +101,7 @@ public class VariableEliminationPass implements ProcedurePass {
             List<VarDecl<?>> rhsVars = collectVars(stmt.getCond());
             for (VarDecl<?> rhsVar : rhsVars) {
                 if (localVars.contains(rhsVar)) {
-                    noMove.add(rhsVar);
+                    noDelete.add(rhsVar);
                 }
             }
             return null;
@@ -122,7 +121,7 @@ public class VariableEliminationPass implements ProcedurePass {
             List<VarDecl<?>> rhsVars = collectVars(stmt.getExpr());
             for (VarDecl<?> rhsVar : rhsVars) {
                 if (localVars.contains(rhsVar)) {
-                    noMove.add(rhsVar);
+                    noDelete.add(rhsVar);
                 }
             }
             return null;
@@ -165,13 +164,17 @@ public class VariableEliminationPass implements ProcedurePass {
         public R visit(XcfaCallStmt stmt, XcfaEdge edge) {
             VarDecl<?> lhs =  stmt.getResultVar();
             if (localVars.contains(lhs)) {
-                noMove.add(lhs);
+                if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashMap<>());
+                Set<Stmt> stmts = lhsEdges.get(lhs).getOrDefault(edge, new HashSet<>());
+                stmts.add(stmt);
+                lhsEdges.get(lhs).put(edge, stmts);
+                lhsUse.put(lhs, lhsUse.getOrDefault(lhs, 0) + 1);
             }
             for (Expr<?> param : stmt.getParams()) {
                 List<VarDecl<?>> rhsVars = collectVars(param);
                 for (VarDecl<?> rhsVar : rhsVars) {
                     if (localVars.contains(rhsVar)) {
-                        noMove.add(rhsVar);
+                        noDelete.add(rhsVar);
                     }
                 }
             }
@@ -183,10 +186,10 @@ public class VariableEliminationPass implements ProcedurePass {
             VarDecl<?> rhs =  storeStmt.getRhs();
             VarDecl<?> lhs =  storeStmt.getRhs();
             if (localVars.contains(lhs)) {
-                noMove.add(lhs);
+                noDelete.add(lhs);
             }
             if (localVars.contains(rhs)) {
-                noMove.add(rhs);
+                noDelete.add(rhs);
             }
             return null;
         }
@@ -196,10 +199,10 @@ public class VariableEliminationPass implements ProcedurePass {
             VarDecl<?> lhs =  loadStmt.getLhs();
             VarDecl<?> rhs =  loadStmt.getRhs();
             if (localVars.contains(lhs)) {
-                noMove.add(lhs);
+                noDelete.add(lhs);
             }
             if (localVars.contains(rhs)) {
-                noMove.add(rhs);
+                noDelete.add(rhs);
             }
             return null;
         }
@@ -283,7 +286,7 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public Stmt visit(XcfaStmt xcfaStmt, Stmt param) {
-            return null;
+            return xcfaStmt.accept(this, param);
         }
 
         @Override
@@ -303,8 +306,8 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public Stmt visit(XcfaCallStmt stmt, Stmt param) {
-            XcfaProcedure proc = (XcfaProcedure) stmt.getProc();
-            return new CallStmt(null, proc, stmt.getParams());
+            stmt.setVoid();
+            return stmt;
         }
 
         @Override

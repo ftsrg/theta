@@ -78,7 +78,22 @@ public final class XcfaProcedure {
     }
 
     public String toDot() {
-        StringBuilder ret = new StringBuilder();
+        StringBuilder ret = new StringBuilder("label=\"");
+        ret.append(name).append("(");
+        params.forEach((varDecl) -> {
+            ret.append(varDecl);
+            ret.append(",");
+        });
+        ret.append(")\"\n");
+        ret.append("\"").append(name).append(" vars: {");
+        localVars.forEach((varDecl, litExpr) -> {
+            ret.append(varDecl);
+            if(litExpr.isPresent()) {
+                ret.append(" = ").append(litExpr);
+            }
+            ret.append(",");
+        });
+        ret.append("}\";\n");
         for (XcfaLocation location : getLocs()) {
             ret.append("\"").append(location.getName()).append("\"");
             if (location.isErrorLoc()) ret.append("[xlabel=err]");
