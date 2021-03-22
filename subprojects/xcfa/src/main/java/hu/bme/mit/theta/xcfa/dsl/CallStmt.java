@@ -48,6 +48,11 @@ public class CallStmt extends XcfaCallStmt {
 		return var;
 	}
 
+	@Override
+	public Object getProc() {
+		return procedure;
+	}
+
 	public List<Expr<?>> getParams() {
 		return params;
 	}

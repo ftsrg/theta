@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -18,9 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 /*
  * This class provides a variable elimination pass.
- * It gets rid of two types of redundant variables:
- *  -   Variables that are assigned exactly once and then exclusively used (read) without a branch in-between
- *      - Exception: procedure calls, due to potential side effects
+ * It gets rid of redundant variables:
  *  -   Variables that are assigned exactly once and then never used (read).
  *      - Exception: return variable
  */
@@ -50,33 +49,17 @@ public class VariableEliminationPass implements ProcedurePass {
         }
     }
 
-    private static Set<XcfaEdge> collectDeterministicEdges(XcfaEdge xcfaEdge) {
-        XcfaLocation loc = xcfaEdge.getTarget();
-        Set<XcfaEdge> edges = new HashSet<>();
-        edges.add(xcfaEdge);
-        while(loc.getOutgoingEdges().size() == 1) {
-            XcfaEdge edge = loc.getOutgoingEdges().get(0);
-            loc = edge.getTarget();
-            edges.add(edge);
-        }
-        return edges;
-    }
-
     private Set<VarDecl<?>> localVars;
-    private Map<VarDecl<?>, Integer> rhsUse;
     private Map<VarDecl<?>, Integer> lhsUse;
-    private Map<VarDecl<?>, Set<XcfaEdge>> lhsEdges;
-    private Map<VarDecl<?>, Set<XcfaEdge>> rhsEdges;
+    private Map<VarDecl<?>, Map<XcfaEdge, Set<Stmt>>> lhsEdges;
     private Set<VarDecl<?>> noMove;
 
     @Override
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         localVars = builder.getLocalVars().keySet();
 
-        rhsUse = new HashMap<>();
         lhsUse = new HashMap<>();
         lhsEdges = new HashMap<>();
-        rhsEdges = new HashMap<>();
         noMove = new HashSet<>();
 
         for (XcfaEdge edge : builder.getEdges()) {
@@ -87,15 +70,20 @@ public class VariableEliminationPass implements ProcedurePass {
 
         lhsUse.forEach((varDecl, integer) -> {
             if (!noMove.contains(varDecl)) {
-                Set<XcfaEdge> deterministicEdges = null;
-                for (XcfaEdge xcfaEdge : lhsEdges.get(varDecl)) {
-                    if(deterministicEdges == null) deterministicEdges = collectDeterministicEdges(xcfaEdge);
-                    else deterministicEdges.retainAll(collectDeterministicEdges(xcfaEdge));
-                }
-                if (deterministicEdges != null && deterministicEdges.containsAll(lhsEdges.get(varDecl)) && (!rhsEdges.containsKey(varDecl) || deterministicEdges.containsAll(rhsEdges.get(varDecl)))){
-                    // TODO: do actual removal
-                    System.out.println(varDecl + " can be removed!");
-                }
+                lhsEdges.get(varDecl).forEach((xcfaEdge, stmts) -> {
+                    List<Stmt> newStmts = new ArrayList<>(xcfaEdge.getStmts());
+                    for (Stmt stmt : stmts) {
+                        Stmt newStmt = stmt.accept(new RemoveLhsVisitor(), stmt);
+                        int i = newStmts.indexOf(stmt);
+                        newStmts.remove(i);
+                        if(newStmt != null) newStmts.add(i, newStmt);
+                    }
+                    XcfaEdge newEdge = new XcfaEdge(xcfaEdge.getSource(), xcfaEdge.getTarget(), newStmts);
+                    int i = builder.getEdges().indexOf(xcfaEdge);
+                    builder.getEdges().remove(i);
+                    builder.getEdges().add(i, newEdge);
+                });
+                builder.getLocalVars().remove(varDecl);
             }
         });
 
@@ -111,23 +99,30 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public R visit(AssumeStmt stmt, XcfaEdge edge) {
+            List<VarDecl<?>> rhsVars = collectVars(stmt.getCond());
+            for (VarDecl<?> rhsVar : rhsVars) {
+                if (localVars.contains(rhsVar)) {
+                    noMove.add(rhsVar);
+                }
+            }
             return null;
         }
 
         @Override
         public <DeclType extends Type> R visit(AssignStmt<DeclType> stmt, XcfaEdge edge) {
             VarDecl<?> lhs = stmt.getVarDecl();
-            List<VarDecl<?>> rhsVars = collectVars(stmt.getExpr());
+
             if (localVars.contains(lhs)) {
-                if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashSet<>());
-                lhsEdges.get(lhs).add(edge);
+                if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashMap<>());
+                Set<Stmt> stmts = lhsEdges.get(lhs).getOrDefault(edge, new HashSet<>());
+                stmts.add(stmt);
+                lhsEdges.get(lhs).put(edge, stmts);
                 lhsUse.put(lhs, lhsUse.getOrDefault(lhs, 0) + 1);
             }
+            List<VarDecl<?>> rhsVars = collectVars(stmt.getExpr());
             for (VarDecl<?> rhsVar : rhsVars) {
                 if (localVars.contains(rhsVar)) {
-                    if(!rhsEdges.containsKey(lhs)) rhsEdges.put(rhsVar, new HashSet<>());
-                    rhsEdges.get(rhsVar).add(edge);
-                    rhsUse.put(rhsVar, rhsUse.getOrDefault(rhsVar, 0) + 1);
+                    noMove.add(rhsVar);
                 }
             }
             return null;
@@ -137,8 +132,10 @@ public class VariableEliminationPass implements ProcedurePass {
         public <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, XcfaEdge edge) {
             VarDecl<?> lhs =  stmt.getVarDecl();
             if (localVars.contains(lhs)) {
-                if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashSet<>());
-                lhsEdges.get(lhs).add(edge);
+                if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashMap<>());
+                Set<Stmt> stmts = lhsEdges.get(lhs).getOrDefault(edge, new HashSet<>());
+                stmts.add(stmt);
+                lhsEdges.get(lhs).put(edge, stmts);
                 lhsUse.put(lhs, lhsUse.getOrDefault(lhs, 0) + 1);
             }
             return null;
@@ -169,6 +166,14 @@ public class VariableEliminationPass implements ProcedurePass {
             VarDecl<?> lhs =  stmt.getResultVar();
             if (localVars.contains(lhs)) {
                 noMove.add(lhs);
+            }
+            for (Expr<?> param : stmt.getParams()) {
+                List<VarDecl<?>> rhsVars = collectVars(param);
+                for (VarDecl<?> rhsVar : rhsVars) {
+                    if (localVars.contains(rhsVar)) {
+                        noMove.add(rhsVar);
+                    }
+                }
             }
             return null;
         }
@@ -251,6 +256,119 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public R visit(XcfaInternalNotifyStmt enterWaitStmt, XcfaEdge edge) {
+            return null;
+        }
+    }
+
+    private static class RemoveLhsVisitor implements XcfaStmtVisitor<Stmt, Stmt> {
+        @Override
+        public Stmt visit(SkipStmt stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(AssumeStmt stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public <DeclType extends Type> Stmt visit(AssignStmt<DeclType> stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(XcfaStmt xcfaStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(SequenceStmt stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(NonDetStmt stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(OrtStmt stmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(XcfaCallStmt stmt, Stmt param) {
+            XcfaProcedure proc = (XcfaProcedure) stmt.getProc();
+            return new CallStmt(null, proc, stmt.getParams());
+        }
+
+        @Override
+        public Stmt visit(StoreStmt storeStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(LoadStmt loadStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(FenceStmt fenceStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(AtomicBeginStmt atomicBeginStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(AtomicEndStmt atomicEndStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(NotifyAllStmt notifyAllStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(NotifyStmt notifyStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(WaitStmt waitStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(MtxLockStmt lockStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(MtxUnlockStmt unlockStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(ExitWaitStmt exitWaitStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(EnterWaitStmt enterWaitStmt, Stmt param) {
+            return null;
+        }
+
+        @Override
+        public Stmt visit(XcfaInternalNotifyStmt enterWaitStmt, Stmt param) {
             return null;
         }
     }
