@@ -3,27 +3,16 @@ package hu.bme.mit.theta.solver.smtlib.impl.boolector;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverFactory;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
-import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.nio.channels.Channels;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
-import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
@@ -83,9 +72,9 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName());
-        return CVC4SmtLibSolverFactory.create(solverFilePath, solverArgs);
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName());
+        return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override

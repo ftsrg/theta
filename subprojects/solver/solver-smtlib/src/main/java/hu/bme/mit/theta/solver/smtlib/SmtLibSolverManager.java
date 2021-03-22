@@ -95,7 +95,7 @@ public final class SmtLibSolverManager {
         return genericInstaller.get1();
     }
 
-    public void install(final String solver, final String version, final String name, final boolean installUnsupported) throws SmtLibSolverInstallerException {
+    public void install(final String solver, final String version, final String name, final Path solverPath, final boolean installUnsupported) throws SmtLibSolverInstallerException {
         checkArgument(!solver.equals(genericInstaller.get1()));
 
         if(!installers.containsKey(solver)) {
@@ -114,7 +114,12 @@ public final class SmtLibSolverManager {
             throw new SmtLibSolverInstallerException(e);
         }
 
-        installers.get(solver).install(installDir, getVersionString(solver, version, false), getVersionString(solver, name, false));
+        if(solverPath != null) {
+            installers.get(solver).install(installDir, getVersionString(solver, version, false), getVersionString(solver, name, false), solverPath);
+        }
+        else {
+            installers.get(solver).install(installDir, getVersionString(solver, version, false), getVersionString(solver, name, false));
+        }
     }
 
     public void installGeneric(final String version, final Path solverPath, final String[] args) throws SmtLibSolverInstallerException {

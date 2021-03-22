@@ -59,8 +59,8 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = installDir.resolve(getSolverBinaryName(version));
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
         return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 

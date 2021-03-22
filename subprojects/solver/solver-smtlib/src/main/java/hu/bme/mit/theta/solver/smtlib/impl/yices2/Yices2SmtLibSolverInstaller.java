@@ -99,8 +99,8 @@ public class Yices2SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = installDir.resolve("bin").resolve(getSolverBinaryName());
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName());
         return Yices2SmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 

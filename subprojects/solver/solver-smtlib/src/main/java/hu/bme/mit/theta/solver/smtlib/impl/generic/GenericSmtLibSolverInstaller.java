@@ -32,7 +32,7 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     public void install(final Path home, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         this.solverPath = solverPath;
         this.solverArgs = solverArgs;
-        super.install(home, version, version);
+        super.install(home, version, version, solverPath);
     }
 
     @Override
@@ -77,15 +77,8 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        try {
-            final var solverFilePath = solverFile(installDir);
-            final var solverPathStr = Files.readAllLines(solverFilePath, StandardCharsets.UTF_8).get(0);
-            return GenericSmtLibSolverFactory.create(Path.of(solverPathStr), solverArgs);
-        }
-        catch (IOException e) {
-            throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
-        }
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) {
+        return GenericSmtLibSolverFactory.create(solverPath, solverArgs);
     }
 
     @Override
