@@ -11,11 +11,25 @@ public class LlvmIrProvider implements SSAProvider {
         System.loadLibrary("jni_proto");
     }
 
-    private Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
+    private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     private native void JniParseIr(String irFilename);
 
     public LlvmIrProvider(String irFilename) {
+        this(irFilename, false, false);
+    }
+
+    private native void JniEnableFunctionInlining();
+    private native void JniEnableGlobalVariableInlining();
+
+    public LlvmIrProvider(String irFilename, Boolean functionInlining, Boolean globalVarInlining) {
+        if(functionInlining) {
+            JniEnableFunctionInlining();
+        }
+        if(globalVarInlining) {
+            JniEnableGlobalVariableInlining();
+        }
+
         JniParseIr(irFilename);
         bbNamefuncIndexLut = new HashMap<>();
 
