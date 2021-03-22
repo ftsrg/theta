@@ -11,11 +11,25 @@ public class LlvmIrProvider implements SSAProvider {
         System.loadLibrary("jni_proto");
     }
 
-    private Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
+    private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     private native void JniParseIr(String irFilename);
 
     public LlvmIrProvider(String irFilename) {
+        this(irFilename, false, false);
+    }
+
+    private native void JniEnableFunctionInlining();
+    private native void JniEnableGlobalVariableInlining();
+
+    public LlvmIrProvider(String irFilename, Boolean functionInlining, Boolean globalVarInlining) {
+        if(functionInlining) {
+            JniEnableFunctionInlining();
+        }
+        if(globalVarInlining) {
+            JniEnableGlobalVariableInlining();
+        }
+
         JniParseIr(irFilename);
         bbNamefuncIndexLut = new HashMap<>();
 
@@ -32,25 +46,27 @@ public class LlvmIrProvider implements SSAProvider {
 
     }
 
-    // Format: Tuple3<Name, Type, Value>
+    private native int JniGetGlobalVariablesNum();
+    private native String JniGetGlobalVariableName(int gvIndex);
+    private native String JniGetGlobalVariableType(int gvIndex);
+    private native String JniGetGlobalVariableValue(int gvIndex);
+
+    // Format: Tuple3<Name, Type, Initial Value>
     @Override
     public Collection<Tuple3<String, String, String>> getGlobalVariables() {
-        // TODO
-        /*
         int numOfGlobalVar = JniGetGlobalVariablesNum();
-        Tuple3<String, IRType, String> globalVar;
-        ArrayList<Tuple3<String, IRType, String>> globalVarList = new ArrayList<Tuple3<String, IRType, String>>();
+        Tuple3<String, String, String> globalVar;
+        ArrayList<Tuple3<String, String, String>> globalVarList = new ArrayList<Tuple3<String, String, String>>();
 
         for(int i = 0; i < numOfGlobalVar; i++) {
-            globalVar = new Tuple3<>(
+            globalVar = Tuple3.of(
                 JniGetGlobalVariableName(i),
                 JniGetGlobalVariableType(i),
                 JniGetGlobalVariableValue(i)
             );
             globalVarList.add(globalVar);
         }
-        return globalVarList; */
-        return new ArrayList<>();
+        return globalVarList;
     }
 
     private native int JniGetFunctionsNum();
