@@ -32,25 +32,27 @@ public class LlvmIrProvider implements SSAProvider {
 
     }
 
-    // Format: Tuple3<Name, Type, Value>
+    private native int JniGetGlobalVariablesNum();
+    private native String JniGetGlobalVariableName(int gvIndex);
+    private native String JniGetGlobalVariableType(int gvIndex);
+    private native String JniGetGlobalVariableValue(int gvIndex);
+
+    // Format: Tuple3<Name, Type, Initial Value>
     @Override
     public Collection<Tuple3<String, String, String>> getGlobalVariables() {
-        // TODO
-        /*
         int numOfGlobalVar = JniGetGlobalVariablesNum();
-        Tuple3<String, IRType, String> globalVar;
-        ArrayList<Tuple3<String, IRType, String>> globalVarList = new ArrayList<Tuple3<String, IRType, String>>();
+        Tuple3<String, String, String> globalVar;
+        ArrayList<Tuple3<String, String, String>> globalVarList = new ArrayList<Tuple3<String, String, String>>();
 
         for(int i = 0; i < numOfGlobalVar; i++) {
-            globalVar = new Tuple3<>(
+            globalVar = Tuple3.of(
                 JniGetGlobalVariableName(i),
                 JniGetGlobalVariableType(i),
                 JniGetGlobalVariableValue(i)
             );
             globalVarList.add(globalVar);
         }
-        return globalVarList; */
-        return new ArrayList<>();
+        return globalVarList;
     }
 
     private native int JniGetFunctionsNum();

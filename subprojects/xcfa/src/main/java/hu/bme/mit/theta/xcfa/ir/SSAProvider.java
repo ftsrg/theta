@@ -13,9 +13,9 @@ public interface SSAProvider {
     /*
      * Format: Tuple3<Name, Type, Type_Value>
      * Name: The declared name of the global variable
-     * Type: The type of the global variable, mapped to the IRType enum
+     * Type: The type of the global variable
      * Type_Value: The type and value of the global variable in a String, with a space in between (type is assumed to be in the LLVM printed format)
-     */
+     * */
     Collection<Tuple3<String, String, String>> getGlobalVariables();
 
     /*
