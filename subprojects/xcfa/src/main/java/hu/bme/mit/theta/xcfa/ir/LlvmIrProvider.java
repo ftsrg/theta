@@ -16,18 +16,18 @@ public class LlvmIrProvider implements SSAProvider {
     private native void JniParseIr(String irFilename);
 
     public LlvmIrProvider(String irFilename) {
-        this(irFilename, false, false);
+        this(irFilename, false, true);
     }
 
-    private native void JniEnableFunctionInlining();
-    private native void JniEnableGlobalVariableInlining();
+    private native void JniEnableInlining();
+    private native void JniDisableCleanupPasses();
 
-    public LlvmIrProvider(String irFilename, Boolean functionInlining, Boolean globalVarInlining) {
-        if(functionInlining) {
-            JniEnableFunctionInlining();
+    public LlvmIrProvider(String irFilename, Boolean inlining, Boolean cleanup) {
+        if(inlining) {
+            JniEnableInlining();
         }
-        if(globalVarInlining) {
-            JniEnableGlobalVariableInlining();
+        if(!cleanup) {
+            JniDisableCleanupPasses();
         }
 
         JniParseIr(irFilename);
