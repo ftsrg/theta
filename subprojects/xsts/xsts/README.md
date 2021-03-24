@@ -96,6 +96,7 @@ The behaviour of XSTSs can be described using transitions. A transition is an at
     * nondeterministic choices of the form `choice { <statement> } or { <statement> }`, with 1 or more branches
     * sequences of the form `<statement> <statement> <statement>`
     * blocks
+    * loops of the form `loop(<intexpr>){ <statement> }`, where `<intexpr>` has to be evaluable before the start of the loop and `<statement>` must not affect the value of `<intexpr>` (experimental)
     
 Only those branches of a choice statement are considered for execution, of which all contained assumptions evaluate to true.
 
