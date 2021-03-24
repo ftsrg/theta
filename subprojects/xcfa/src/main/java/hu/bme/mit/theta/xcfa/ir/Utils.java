@@ -23,11 +23,10 @@ public class Utils {
     private static final int FLOAT_DIGITS = 5;
 
     public static Type createType(String type) {
-        if(type.startsWith("i")) {
-            return Int();
-        } else {
-            throw new IllegalStateException("Unexpected value: " + type);
+        if(!type.startsWith("i")) {
+            System.err.println("Unexpected value type: " + type);
         }
+        return Int();
     }
 
     public static VarDecl<? extends Type> createVariable(String name, String type) {
@@ -39,7 +38,7 @@ public class Utils {
         String[] arguments = value.split(" ");
         if(arguments.length != 2) {
             System.err.println("Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
-            return null;
+            return IntLitExpr.of(BigInteger.ZERO);
         }
 
         switch(arguments[1]) {
@@ -48,11 +47,10 @@ public class Utils {
             default: break;
         }
 
-        if(arguments[0].startsWith("i")) {
-            return IntLitExpr.of(new BigInteger(arguments[1]));
-        } else {
-            throw new IllegalStateException("Unexpected value: " + arguments[0]);
+        if(!arguments[0].startsWith("i")) {
+            System.err.println("Unexpected value type: " + arguments[0]);
         }
+        return IntLitExpr.of(new BigInteger(arguments[1]));
     }
 
     public static InstructionHandler handleProcedure(
@@ -62,7 +60,7 @@ public class Utils {
             Map<String, VarDecl<?>> globalVarLut,
             Collection<String> processes) {
 
-        Map<String, VarDecl<?>> localVarLut = new HashMap<>();
+        Map<String, VarDecl<?>> localVarLut = new HashMap<>(globalVarLut);
 
         // Adding params
         for (Tuple2<String, String> param : function.get3()) {

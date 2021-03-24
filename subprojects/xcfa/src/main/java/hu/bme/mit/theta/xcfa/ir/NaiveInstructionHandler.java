@@ -55,6 +55,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         this.retVar = retVar;
         this.locationLut = locationLut;
         this.valueLut = new HashMap<>();
+        localVarLut.forEach((s, varDecl) -> valueLut.put(s, varDecl.getRef()));
     }
 
     @Override
@@ -135,6 +136,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             case "call":
                 call(instruction);
                 break;
+            case "bitcast":
             case "zext":
                 load(instruction);
                 break;
@@ -145,8 +147,10 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
-        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
         String funcName = instruction.get3().get(paramSize - 1).get2();
+        if(funcName.startsWith("llvm")) return;
+        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+
         VarDecl<?> callVar = null;
         if(instruction.get2().isPresent()) {
             callVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());

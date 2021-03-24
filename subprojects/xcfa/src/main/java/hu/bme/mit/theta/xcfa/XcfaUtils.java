@@ -40,7 +40,7 @@ public class XcfaUtils {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
 
         } else if (model.getName().endsWith(".c") || model.getName().endsWith(".i")) {
-            throw new RuntimeException(".c or .i files are not yet supported.");
+            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true));
 
         } else {
             String[] split = model.getName().split("\\.");
