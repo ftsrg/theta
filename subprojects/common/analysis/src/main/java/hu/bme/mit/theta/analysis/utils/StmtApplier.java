@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expl;
+package hu.bme.mit.theta.analysis.utils;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-final class StmtApplier {
+public final class StmtApplier {
 
 	public enum ApplyResult {
 		FAILURE, SUCCESS, BOTTOM
