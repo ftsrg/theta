@@ -17,10 +17,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2StmtOptimizer;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.ItpRefToProd2ExplPredPrec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -253,9 +250,8 @@ public class XstsConfigBuilder {
 			return XstsConfig.create(checker, prec);
 		} else if (domain == Domain.PROD || domain==domain.PROD_AUTO) {
 			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
-					Prod2StmtOptimizer.create(
-							ExplStmtOptimizer.getInstance(),
-							PredStmtOptimizer.getInstance()
+					Prod2ExplPredStmtOptimizer.create(
+							ExplStmtOptimizer.getInstance()
 					)));
 			final PredAbstractors.PredAbstractor predAbstractor = PredAbstractors.cartesianAbstractor(solver);
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, solver));
