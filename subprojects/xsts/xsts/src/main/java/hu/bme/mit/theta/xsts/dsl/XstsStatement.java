@@ -137,24 +137,28 @@ public class XstsStatement {
 		public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
 			final String name = ctx.name.getText();
 			final Type type = new XstsType(typeTable,ctx.ttype).instantiate(env);
-			var decl = Decls.Var(name,type);
-
+			final var decl = Decls.Var(name,type);
 			final Symbol symbol = DeclSymbol.of(decl);
-			currentScope.declare(symbol);
-			env.define(symbol, decl);
 
+
+			final Stmt result;
 			if(ctx.initValue==null){
-				return SkipStmt.getInstance();
+				result = SkipStmt.getInstance();
 			} else {
 				var expr = new XstsExpression(currentScope,typeTable,ctx.initValue).instantiate(env);
 				if (expr.getType().equals(decl.getType())) {
 					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
 					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
-					return Assign(tVar, tExpr);
+					result = Assign(tVar, tExpr);
 				} else {
 					throw new IllegalArgumentException("Type of " + decl + " is incompatilbe with " + expr);
 				}
 			}
+
+			currentScope.declare(symbol);
+			env.define(symbol, decl);
+
+			return result;
 		}
 
 		@Override
