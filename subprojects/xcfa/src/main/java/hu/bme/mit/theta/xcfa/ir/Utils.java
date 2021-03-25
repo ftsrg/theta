@@ -54,7 +54,7 @@ public class Utils {
     }
 
     public static InstructionHandler handleProcedure(
-            Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
+            Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
             XcfaProcedure.Builder procedureBuilder,
             SSAProvider ssa,
             Map<String, VarDecl<?>> globalVarLut,
@@ -96,7 +96,7 @@ public class Utils {
             }
         }
 
-        InstructionHandler instructionHandler = new NaiveInstructionHandler(function, procedureBuilder, ssa, processes, localVarLut, finalLoc, retVar, locationLut);
+        InstructionHandler instructionHandler = new NaiveInstructionHandler(functions, function, procedureBuilder, ssa, processes, localVarLut, finalLoc, retVar, locationLut);
 
         // Handling instructions
         for (String block : locationLut.keySet()) {

@@ -1,10 +1,9 @@
+volatile int a;
 int adder(int a, int b) {
     int c = a; int d = b;
-    return c+d;
+    return adder(c, d);
 }
-#include <stdio.h>
 int main() {
-    int a, b;
-    scanf("%d, %d", &a, &b);
+    volatile int b;
     return adder(a,b);
 }

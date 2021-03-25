@@ -4,6 +4,8 @@ int x;
 
 int main() {
     x = 2;
-    scanf("%d", &x);
-    return ++x;
+    int a;
+    scanf("%d", &a);
+    printf("%d", a);
+    return a+++x;
 }

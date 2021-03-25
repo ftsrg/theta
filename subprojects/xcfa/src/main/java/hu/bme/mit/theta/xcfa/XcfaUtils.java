@@ -106,7 +106,7 @@ public class XcfaUtils {
 
             Collection<String> processes = new ArrayList<>();
 
-            instructionHandlers.add(handleProcedure(function, procedureBuilder, ssa, globalVarLut, processes));
+            instructionHandlers.add(handleProcedure(ssa.getFunctions(), function, procedureBuilder, ssa, globalVarLut, processes));
 
             for (String process : processes) {
 

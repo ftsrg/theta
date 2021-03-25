@@ -19,6 +19,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.mcm.MCM;
 import hu.bme.mit.theta.mcm.dsl.McmDslManager;
@@ -89,6 +91,20 @@ public class XcfaCli {
 			return;
 		}
 
+		if(model.getName().endsWith(".cfa")) {
+			try {
+				CFA cfa = CfaDslManager.createCfa(new FileInputStream(model));
+				System.out.println(cfa);
+				System.out.println("PARSING SUCCESSFUL");
+				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
+				System.out.println("CFA-data varCount " + cfa.getVars().size());
+				System.out.println("CFA-data varCount " + cfa.getLocs().size());
+				return;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
 			return;
@@ -104,7 +120,12 @@ public class XcfaCli {
 				System.out.println(xcfa.toDot());
 				return;
 			} else if (printcfa) {
-				System.out.println(xcfa.createCFA());
+				CFA cfa = xcfa.createCFA();
+				System.out.println(cfa);
+				System.out.println("PARSING SUCCESSFUL");
+				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
+				System.out.println("CFA-data varCount " + cfa.getVars().size());
+				System.out.println("CFA-data varCount " + cfa.getLocs().size());
 				return;
 			}
 

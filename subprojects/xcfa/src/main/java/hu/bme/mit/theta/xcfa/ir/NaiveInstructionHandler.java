@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -22,11 +23,14 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 public class NaiveInstructionHandler implements InstructionHandler{
+    private final Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions;
     private XcfaLocation lastLoc;
     private Integer cnt;
     private final Tuple3<String, java.util.Optional<String>, List<Tuple2<String, String>>> function;
@@ -35,6 +39,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
     private final Collection<String> processes;
     private final Map<String, VarDecl<?>> localVarLut;
     private final Map<String, Expr<?>> valueLut;
+    private final Set<String> ptrs;
     private final XcfaLocation finalLoc;
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private final Optional<VarDecl<? extends Type>> retVar;
@@ -45,7 +50,8 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     private final Map<Tuple2<String, String>, Tuple3<XcfaLocation, XcfaLocation, List<Stmt>>> terminatorEdges = new HashMap<>();
 
-    public NaiveInstructionHandler(Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XcfaProcedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XcfaLocation finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XcfaLocation> locationLut) {
+    public NaiveInstructionHandler(Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function, XcfaProcedure.Builder procedureBuilder, SSAProvider ssa, Collection<String> processes, Map<String, VarDecl<?>> localVarLut, XcfaLocation finalLoc, Optional<VarDecl<? extends Type>> retVar, Map<String, XcfaLocation> locationLut) {
+        this.functions = functions;
         this.function = function;
         this.procedureBuilder = procedureBuilder;
         this.ssa = ssa;
@@ -55,6 +61,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
         this.retVar = retVar;
         this.locationLut = locationLut;
         this.valueLut = new HashMap<>();
+        this.ptrs = new HashSet<>();
         localVarLut.forEach((s, varDecl) -> valueLut.put(s, varDecl.getRef()));
     }
 
@@ -90,86 +97,133 @@ public class NaiveInstructionHandler implements InstructionHandler{
         callStmts.forEach((callStmt, s) -> callStmt.setProcedure(procedures.getOrDefault(s, emptyProc(s))));
     }
 
+    private int instrCnt = 0;
+
     @Override
     public void handleInstruction(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         checkState(!(lastLoc.isEndLoc() || lastLoc.isErrorLoc()), "No instruction can occur after a final or error location!");
-        switch(instruction.get1()) {
-            case "ret":
-                ret(instruction);
-                break;
-            case "br":
-                br(instruction);
-                break;
-            case "switch":
-                sw(instruction);
-                break;
-            case "add":
-                add(instruction);
-                break;
-            case "sub":
-                sub(instruction);
-                break;
-            case "mul":
-                mul(instruction);
-                break;
-            case "sdiv":
-                div(instruction);
-                break;
-            case "srem":
-                rem(instruction);
-                break;
-            case "alloca":
-                alloca(instruction);
-                break;
-            case "load":
-                load(instruction);
-                break;
-            case "store":
-                store(instruction);
-                break;
-            case "icmp":
-                cmp(instruction);
-                break;
-            case "phi":
-                phi(instruction);
-                break;
-            case "call":
-                call(instruction);
-                break;
-            case "bitcast":
-            case "zext":
-                load(instruction);
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + instruction.get1());
+        try {
+            switch(instruction.get1()) {
+                case "ret":
+                    ret(instruction);
+                    break;
+                case "br":
+                    br(instruction);
+                    break;
+                case "switch":
+                    sw(instruction);
+                    break;
+                case "and":
+                    and(instruction);
+                    break;
+                case "or":
+                    or(instruction);
+                    break;
+                case "add":
+                    add(instruction);
+                    break;
+                case "sub":
+                    sub(instruction);
+                    break;
+                case "mul":
+                    mul(instruction);
+                    break;
+                case "sdiv":
+                    div(instruction);
+                    break;
+                case "srem":
+                    rem(instruction);
+                    break;
+                case "alloca":
+                    alloca(instruction);
+                    break;
+                case "load":
+                    load(instruction);
+                    break;
+                case "store":
+                    store(instruction);
+                    break;
+                case "icmp":
+                    cmp(instruction);
+                    break;
+                case "phi":
+                    phi(instruction);
+                    break;
+                case "call":
+                    call(instruction);
+                    break;
+                case "select":
+                    select(instruction);
+                    break;
+                case "bitcast":
+                case "zext":
+                    load(instruction);
+                    break;
+                case "unreachable":
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + instruction.get1());
+            }
+            instrCnt++;
+        } catch (Throwable throwable) {
+            System.err.println("Error with instruction #" + instrCnt + ": " + instruction.toString());
+            throwable.printStackTrace();
         }
     }
 
     private void call(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
         int paramSize = instruction.get3().size();
         String funcName = instruction.get3().get(paramSize - 1).get2();
-        if(funcName.startsWith("llvm")) return;
-        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
 
-        VarDecl<?> callVar = null;
-        if(instruction.get2().isPresent()) {
-            callVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
-            procedureBuilder.getLocalVars().put(callVar, Optional.empty());
-            localVarLut.put(callVar.getName(), callVar);
-            localVarLut.put(instruction.get2().get().get2(), callVar);
-            valueLut.put(instruction.get2().get().get2(), callVar.getRef());
+        if(functions.stream().anyMatch(objects -> objects.get1().equals(funcName) && objects.get3().size() == paramSize-1)) { // known function
+            XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+
+            VarDecl<?> callVar = null;
+            if (instruction.get2().isPresent()) {
+                callVar = createVariable(block + "_" + cnt++, instruction.get2().get().get1());
+                procedureBuilder.getLocalVars().put(callVar, Optional.empty());
+                localVarLut.put(callVar.getName(), callVar);
+                localVarLut.put(instruction.get2().get().get2(), callVar);
+                valueLut.put(instruction.get2().get().get2(), callVar.getRef());
+            }
+            List<Expr<?>> exprs = new ArrayList<>();
+            for (int i = 0; i < paramSize - 1; ++i) {
+                Expr<? extends Type> expr = getExpr(instruction, i);
+                if (expr != null) exprs.add(expr);
+            }
+            CallStmt stmt = new CallStmt(callVar, null, exprs);
+            callStmts.put(stmt, funcName);
+            XcfaEdge edge = new XcfaEdge(lastLoc, newLoc, List.of(stmt));
+            procedureBuilder.addLoc(newLoc);
+            procedureBuilder.addEdge(edge);
+            lastLoc = newLoc;
+        } else {
+            if(instruction.get2().isPresent()) { // assigning the value
+                VarDecl<?> callVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
+                procedureBuilder.getLocalVars().put(callVar, Optional.empty());
+                localVarLut.put(callVar.getName(), callVar);
+                localVarLut.put(instruction.get2().get().get2(), callVar);
+                valueLut.put(instruction.get2().get().get2(), callVar.getRef());
+                XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+                XcfaEdge edge = new XcfaEdge(lastLoc, newLoc, List.of(Havoc(callVar)));
+                procedureBuilder.addLoc(newLoc);
+                procedureBuilder.addEdge(edge);
+                lastLoc = newLoc;
+            }
+            for (int i = 0; i < instruction.get3().size(); ++i) {   // using a pointer
+                if(localVarLut.containsKey(instruction.get3().get(i).get2())) {
+                    Expr<?> expr = getExpr(instruction, i);
+                    if (expr instanceof RefExpr<?> && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>) {
+                        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+                        XcfaEdge edge = new XcfaEdge(lastLoc, newLoc, List.of(Havoc((VarDecl<?>) ((RefExpr<?>) expr).getDecl())));
+                        procedureBuilder.addLoc(newLoc);
+                        procedureBuilder.addEdge(edge);
+                        lastLoc = newLoc;
+                    }
+                }
+            }
+
         }
-        List<Expr<?>> exprs = new ArrayList<>();
-        for(int i = 0 ; i < paramSize - 1; ++i) {
-            Expr<? extends Type> expr = getExpr(instruction, i);
-            if(expr != null) exprs.add(expr);
-        }
-        CallStmt stmt = new CallStmt(callVar, null, exprs);
-        callStmts.put(stmt, funcName);
-        XcfaEdge edge = new XcfaEdge(lastLoc, newLoc, List.of(stmt));
-        procedureBuilder.addLoc(newLoc);
-        procedureBuilder.addEdge(edge);
-        lastLoc = newLoc;
     }
 
     /*
@@ -191,6 +245,28 @@ public class NaiveInstructionHandler implements InstructionHandler{
             val.get3().add(Assign(phiVar, value));
             terminatorEdges.put(key, val);
         }
+    }
+
+    /*
+     * var = select cond expr expr
+     */
+    private void select(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
+        checkState(instruction.get2().isPresent(), "Return var must be present!");
+        VarDecl<?> condVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
+        procedureBuilder.getLocalVars().put(condVar, Optional.empty());
+        localVarLut.put(condVar.getName(), condVar);
+        localVarLut.put(instruction.get2().get().get2(), condVar);
+        valueLut.put(instruction.get2().get().get2(), condVar.getRef());
+
+        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+        //noinspection unchecked
+        XcfaEdge edge1 = new XcfaEdge(lastLoc, newLoc, List.of(Assume((Expr<BoolType>) getExpr(instruction, 0)), Assign(condVar, getExpr(instruction, 1))));
+        //noinspection unchecked
+        XcfaEdge edge2 = new XcfaEdge(lastLoc, newLoc, List.of(Assume((Expr<BoolType>) getExpr(instruction, 0)), Assign(condVar, getExpr(instruction, 2))));
+        procedureBuilder.addLoc(newLoc);
+        procedureBuilder.addEdge(edge1);
+        procedureBuilder.addEdge(edge2);
+        lastLoc = newLoc;
     }
 
     /*
@@ -265,6 +341,59 @@ public class NaiveInstructionHandler implements InstructionHandler{
         localVarLut.put(instruction.get2().get().get2(), var);
         valueLut.put(instruction.get2().get().get2(), var.getRef());
     }
+
+    /*
+     * var = and expr expr
+     * var : int
+     * expr : int
+     */
+    private void and(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
+        int paramSize = instruction.get3().size();
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        if(lhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            lhs = Neq((Expr<IntType>) lhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
+        if(rhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            rhs = Neq((Expr<IntType>) rhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+        checkState(lhs.getType() == BoolType.getInstance(), "And only supports boolean types!");
+        checkState(rhs.getType() == BoolType.getInstance(), "And only supports boolean types!");
+        checkState(instruction.get2().isPresent(), "Instruction must have return variable");
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), BoolExprs.And((Expr<BoolType>) lhs, (Expr<BoolType>) rhs));
+    }
+
+
+    /*
+     * var = or expr expr
+     * var : int
+     * expr : int
+     */
+    private void or(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
+        int paramSize = instruction.get3().size();
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        if(lhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            lhs = Neq((Expr<IntType>) lhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
+        if(rhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            rhs = Neq((Expr<IntType>) rhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+
+
+        checkState(lhs.getType() == BoolType.getInstance(), "Or only supports boolean types!");
+        checkState(rhs.getType() == BoolType.getInstance(), "Or only supports boolean types!");
+        checkState(instruction.get2().isPresent(), "Instruction must have return variable");
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), Or((Expr<BoolType>) lhs, (Expr<BoolType>) rhs));
+    }
+
+
 
     /*
      * var = rem expr expr
@@ -371,7 +500,7 @@ public class NaiveInstructionHandler implements InstructionHandler{
             //noinspection unchecked
             IntEqExpr eq = Eq(var, (Expr<IntType>) constExpr);
             if(defaultBranch == null) defaultBranch = eq;
-            else defaultBranch = BoolExprs.Or(defaultBranch, eq);
+            else defaultBranch = Or(defaultBranch, eq);
             AssumeStmt assume = Assume(eq);
             Tuple2<String, String> key = Tuple2.of(block, loc.getName());
             List<Stmt> stmts = terminatorEdges.getOrDefault(key, Tuple3.of(lastLoc, loc, new ArrayList<>())).get3();
