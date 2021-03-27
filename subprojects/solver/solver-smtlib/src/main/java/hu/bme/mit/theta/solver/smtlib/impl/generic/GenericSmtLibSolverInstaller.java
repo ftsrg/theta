@@ -69,14 +69,6 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     }
 
     @Override
-    public void reinstall(final Path home, final String version) throws SmtLibSolverInstallerException {
-        checkNotNull(home);
-        checkArgument(Files.exists(home));
-        checkVersion(version);
-        throw new SmtLibSolverInstallerException("Unsupported operation for generic solvers");
-    }
-
-    @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) {
         return GenericSmtLibSolverFactory.create(solverPath, solverArgs);
     }

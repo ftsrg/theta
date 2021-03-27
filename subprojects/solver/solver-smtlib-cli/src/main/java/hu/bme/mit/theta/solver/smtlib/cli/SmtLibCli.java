@@ -77,14 +77,6 @@ public class SmtLibCli {
         String solver;
     }
 
-    @Parameters(commandDescription = "Reinstalls the solver")
-    static class ReinstallCommand {
-        static final String COMMAND = "reinstall";
-
-        @Parameter(description = "The solver to reinstall (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
-        String solver;
-    }
-
     @Parameters(commandDescription = "Prints info about the solver")
     static class GetInfoCommand {
         static final String COMMAND = "get-info";
@@ -134,7 +126,6 @@ public class SmtLibCli {
         final var installCommand = new InstallCommand();
         final var installGenericCommand = new InstallGenericCommand();
         final var uninstallCommand = new UninstallCommand();
-        final var reinstallCommand = new ReinstallCommand();
         final var getInfoCommand = new GetInfoCommand();
         final var editArgsCommand = new EditArgsCommand();
         final var listInstalledCommand = new ListInstalledCommand();
@@ -145,7 +136,6 @@ public class SmtLibCli {
             .addCommand(InstallCommand.COMMAND, installCommand)
             .addCommand(InstallGenericCommand.COMMAND, installGenericCommand)
             .addCommand(UninstallCommand.COMMAND, uninstallCommand)
-            .addCommand(ReinstallCommand.COMMAND, reinstallCommand)
             .addCommand(GetInfoCommand.COMMAND, getInfoCommand)
             .addCommand(EditArgsCommand.COMMAND, editArgsCommand)
             .addCommand(ListInstalledCommand.COMMAND, listInstalledCommand)
@@ -207,11 +197,6 @@ public class SmtLibCli {
                 case UninstallCommand.COMMAND: {
                     final var solver = decodeVersionString(uninstallCommand.solver);
                     smtLibSolverManager.uninstall(solver.get1(), solver.get2());
-                    return;
-                }
-                case ReinstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(reinstallCommand.solver);
-                    smtLibSolverManager.reinstall(solver.get1(), solver.get2());
                     return;
                 }
                 case GetInfoCommand.COMMAND: {
