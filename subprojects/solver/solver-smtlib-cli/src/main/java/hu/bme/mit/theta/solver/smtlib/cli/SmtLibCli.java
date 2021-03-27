@@ -77,6 +77,17 @@ public class SmtLibCli {
         String solver;
     }
 
+    @Parameters(commandDescription = "Renames one installed solver version")
+    static class RenameCommand {
+        static final String COMMAND = "rename";
+
+        @Parameter(description = "The solver to reinstall (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
+        String solver;
+
+        @Parameter(names = "--name", description = "Rename the solver version to this custom name (<solver_name>:<name>).", required = true)
+        String name;
+    }
+
     @Parameters(commandDescription = "Prints info about the solver")
     static class GetInfoCommand {
         static final String COMMAND = "get-info";
@@ -126,6 +137,7 @@ public class SmtLibCli {
         final var installCommand = new InstallCommand();
         final var installGenericCommand = new InstallGenericCommand();
         final var uninstallCommand = new UninstallCommand();
+        final var renameCommand = new RenameCommand();
         final var getInfoCommand = new GetInfoCommand();
         final var editArgsCommand = new EditArgsCommand();
         final var listInstalledCommand = new ListInstalledCommand();
@@ -136,6 +148,7 @@ public class SmtLibCli {
             .addCommand(InstallCommand.COMMAND, installCommand)
             .addCommand(InstallGenericCommand.COMMAND, installGenericCommand)
             .addCommand(UninstallCommand.COMMAND, uninstallCommand)
+            .addCommand(RenameCommand.COMMAND, renameCommand)
             .addCommand(GetInfoCommand.COMMAND, getInfoCommand)
             .addCommand(EditArgsCommand.COMMAND, editArgsCommand)
             .addCommand(ListInstalledCommand.COMMAND, listInstalledCommand)
@@ -197,6 +210,11 @@ public class SmtLibCli {
                 case UninstallCommand.COMMAND: {
                     final var solver = decodeVersionString(uninstallCommand.solver);
                     smtLibSolverManager.uninstall(solver.get1(), solver.get2());
+                    return;
+                }
+                case RenameCommand.COMMAND: {
+                    final var solver = decodeVersionString(renameCommand.solver);
+                    smtLibSolverManager.rename(solver.get1(), solver.get2(), renameCommand.name);
                     return;
                 }
                 case GetInfoCommand.COMMAND: {

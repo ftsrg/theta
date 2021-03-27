@@ -142,6 +142,14 @@ public final class SmtLibSolverManager {
         installers.get(solver).uninstall(home.resolve(solver), getVersionString(solver, version, true));
     }
 
+    public void rename(final String solver, final String version, final String name) throws SmtLibSolverInstallerException {
+        if(!installers.containsKey(solver)) {
+            throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
+        }
+
+        installers.get(solver).rename(home.resolve(solver), getVersionString(solver, version, true), name);
+    }
+
     public String getInfo(final String solver, final String version) throws SmtLibSolverInstallerException {
         if(!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
@@ -211,7 +219,8 @@ public final class SmtLibSolverManager {
             return version;
         }
         else {
-            final var versions = installed ? getInstalledVersions(solver) : getSupportedVersions(solver);
+            final var supportedVersions = getSupportedVersions(solver);
+            final var versions = installed ? getInstalledVersions(solver).stream().filter(supportedVersions::contains).collect(Collectors.toList()) : supportedVersions;
             if(versions.size() > 0) {
                 return versions.get(0);
             }
