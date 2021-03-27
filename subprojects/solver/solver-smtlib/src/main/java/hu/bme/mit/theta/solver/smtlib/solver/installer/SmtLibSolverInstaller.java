@@ -6,8 +6,10 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +24,8 @@ public interface SmtLibSolverInstaller {
     void install(Path home, String version, String name, Path solverPath) throws SmtLibSolverInstallerException;
 
     void uninstall(Path home, String version) throws SmtLibSolverInstallerException;
+
+    void rename(Path home, String version, String name) throws SmtLibSolverInstallerException;
 
     String getInfo(Path home, String version) throws SmtLibSolverInstallerException;
 
@@ -131,6 +135,31 @@ public interface SmtLibSolverInstaller {
         }
 
         @Override
+        public void rename(final Path home, final String version, final String name) throws SmtLibSolverInstallerException {
+            checkNotNull(home);
+            checkArgument(Files.exists(home));
+            checkVersion(version);
+            checkName(name);
+
+            final var installDir = getInstallDir(home, version);
+            if(!Files.exists(installDir)) {
+                throw new SmtLibSolverInstallerException("The version is not installed");
+            }
+
+            final var newInstallDir = getInstallDir(home, name);
+            if(Files.exists(newInstallDir)) {
+                throw new SmtLibSolverInstallerException("The chosen name is already used");
+            }
+
+            try {
+                Files.move(installDir, newInstallDir);
+            }
+            catch (IOException e) {
+                throw new SmtLibSolverInstallerException(String.format("Error renaming solver: %s", e.getMessage()), e);
+            }
+        }
+
+        @Override
         public final SolverFactory getSolverFactory(final Path home, final String version) throws SmtLibSolverInstallerException {
             checkNotNull(home);
             checkArgument(Files.exists(home));
@@ -221,9 +250,9 @@ public interface SmtLibSolverInstaller {
         protected abstract SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] args) throws SmtLibSolverInstallerException;
         protected abstract String[] getDefaultSolverArgs(final String version) throws SmtLibSolverInstallerException;
 
-        protected final void checkName(final String version) throws SmtLibSolverInstallerException {
-            if(!version.matches("^[a-zA-Z0-9_.-]+$")) {
-                throw new SmtLibSolverInstallerException("Unsupported name format: " + version);
+        protected final void checkName(final String name) throws SmtLibSolverInstallerException {
+            if(!name.matches("^[a-zA-Z0-9_.-]+$") || name.matches("latest")) {
+                throw new SmtLibSolverInstallerException("Unsupported name format: " + name);
             }
         }
 
