@@ -142,14 +142,6 @@ public final class SmtLibSolverManager {
         installers.get(solver).uninstall(home.resolve(solver), getVersionString(solver, version, true));
     }
 
-    public void reinstall(final String solver, final String version) throws SmtLibSolverInstallerException {
-        if(!installers.containsKey(solver)) {
-            throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
-        }
-
-        installers.get(solver).reinstall(home.resolve(solver), getVersionString(solver, version, true));
-    }
-
     public String getInfo(final String solver, final String version) throws SmtLibSolverInstallerException {
         if(!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));

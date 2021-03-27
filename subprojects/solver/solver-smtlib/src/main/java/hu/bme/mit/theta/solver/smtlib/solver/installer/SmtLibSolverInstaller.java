@@ -23,8 +23,6 @@ public interface SmtLibSolverInstaller {
 
     void uninstall(Path home, String version) throws SmtLibSolverInstallerException;
 
-    void reinstall(Path home, String version) throws SmtLibSolverInstallerException;
-
     String getInfo(Path home, String version) throws SmtLibSolverInstallerException;
 
     Path getArgsFile(Path home, String version) throws SmtLibSolverInstallerException;
@@ -133,37 +131,6 @@ public interface SmtLibSolverInstaller {
         }
 
         @Override
-        public void reinstall(Path home, String version) throws SmtLibSolverInstallerException {
-            checkNotNull(home);
-            checkArgument(Files.exists(home));
-            checkName(version);
-
-            final String solverVersion;
-            try {
-                final var installDir = getInstallDir(home, version);
-                final var solverInfoPath = infoFile(installDir);
-                final var solverInfo = Files
-                    .readAllLines(solverInfoPath, StandardCharsets.UTF_8).stream()
-                    .filter(l -> l.startsWith("version="))
-                    .map(l -> l.substring("version=".length()))
-                    .findAny();
-
-                if(solverInfo.isPresent()) {
-                    solverVersion = solverInfo.get();
-                }
-                else {
-                    throw new SmtLibSolverInstallerException("The solver installation is corrupted");
-                }
-            }
-            catch (IOException e) {
-                throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
-            }
-
-            uninstall(home, version);
-            install(home, solverVersion, version);
-        }
-
-        @Override
         public final SolverFactory getSolverFactory(final Path home, final String version) throws SmtLibSolverInstallerException {
             checkNotNull(home);
             checkArgument(Files.exists(home));
@@ -233,7 +200,7 @@ public interface SmtLibSolverInstaller {
         }
 
         @Override
-        public final List<String> getInstalledVersions(Path home) throws SmtLibSolverInstallerException {
+        public final List<String> getInstalledVersions(Path home) {
             checkNotNull(home);
 
             if(Files.exists(home)) {
