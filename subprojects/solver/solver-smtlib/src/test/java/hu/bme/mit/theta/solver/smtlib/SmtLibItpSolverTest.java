@@ -30,7 +30,7 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,7 +67,7 @@ public final class SmtLibItpSolverTest {
 		Path home = Files.createTempDirectory("theta-solver");
 
 		solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-		solverManager.install("z3", "4.5.0", "4.5.0", false);
+		solverManager.install("z3", "4.5.0", "4.5.0", null, false);
 
 		solverFactory = solverManager.getSolverFactory("z3", "latest");
 	}

@@ -5,10 +5,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSolverFactory;
-import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +43,7 @@ public class SmtLibSolverBVTest {
         Path home = Files.createTempDirectory("theta-solver");
 
         solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        solverManager.install("z3", "latest", "latest", false);
+        solverManager.install("z3", "latest", "latest", null, false);
     }
 
     @AfterClass

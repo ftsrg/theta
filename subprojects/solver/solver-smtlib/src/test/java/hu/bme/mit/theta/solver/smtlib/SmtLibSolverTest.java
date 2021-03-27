@@ -22,9 +22,10 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibSymbolTable;
-import hu.bme.mit.theta.solver.smtlib.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.manager.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public final class SmtLibSolverTest {
         Path home = Files.createTempDirectory("theta-solver");
 
         solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        solverManager.install("z3", "latest", "latest", false);
+        solverManager.install("z3", "latest", "latest", null, false);
 
         solverFactory = solverManager.getSolverFactory("z3", "latest");
     }
@@ -219,7 +220,7 @@ public final class SmtLibSolverTest {
         final Expr<ArrayType<IntType, IntType>> val = optVal.get();
         assertTrue(val instanceof ArrayLitExpr);
         var valLit = (ArrayLitExpr<IntType, IntType>)val;
-        assertEquals(2, valLit.getElements().size());
+        assertTrue(2 <= valLit.getElements().size());
         assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
         assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
     }
