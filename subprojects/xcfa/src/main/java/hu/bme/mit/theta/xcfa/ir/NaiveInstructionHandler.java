@@ -24,6 +24,8 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -118,6 +120,9 @@ public class NaiveInstructionHandler implements InstructionHandler{
                     break;
                 case "or":
                     or(instruction);
+                    break;
+                case "xor":
+                    xor(instruction);
                     break;
                 case "add":
                     add(instruction);
@@ -249,24 +254,21 @@ public class NaiveInstructionHandler implements InstructionHandler{
 
     /*
      * var = select cond expr expr
+     * var : int
+     * expr : int
      */
     private void select(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
-        checkState(instruction.get2().isPresent(), "Return var must be present!");
-        VarDecl<?> condVar = createVariable(block +"_"+ cnt++, instruction.get2().get().get1());
-        procedureBuilder.getLocalVars().put(condVar, Optional.empty());
-        localVarLut.put(condVar.getName(), condVar);
-        localVarLut.put(instruction.get2().get().get2(), condVar);
-        valueLut.put(instruction.get2().get().get2(), condVar.getRef());
+        int paramSize = instruction.get3().size();
+        Expr<?> cond = getExpr(instruction, paramSize - 3);
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
 
-        XcfaLocation newLoc = new XcfaLocation(block + "_" + cnt++, new HashMap<>());
+        checkState(cond.getType() == BoolType.getInstance(), "Select cond only supports boolean types!");
+        checkState(lhs.getType() == IntType.getInstance(), "Select arg only supports integer types!");
+        checkState(rhs.getType() == IntType.getInstance(), "Select arg only supports integer types!");
+        checkState(instruction.get2().isPresent(), "Instruction must have return variable");
         //noinspection unchecked
-        XcfaEdge edge1 = new XcfaEdge(lastLoc, newLoc, List.of(Assume((Expr<BoolType>) getExpr(instruction, 0)), Assign(condVar, getExpr(instruction, 1))));
-        //noinspection unchecked
-        XcfaEdge edge2 = new XcfaEdge(lastLoc, newLoc, List.of(Assume((Expr<BoolType>) getExpr(instruction, 0)), Assign(condVar, getExpr(instruction, 2))));
-        procedureBuilder.addLoc(newLoc);
-        procedureBuilder.addEdge(edge1);
-        procedureBuilder.addEdge(edge2);
-        lastLoc = newLoc;
+        valueLut.put(instruction.get2().get().get2(), Ite((Expr<BoolType>) cond, (Expr<IntType>) lhs, (Expr<IntType>) rhs));
     }
 
     /*
@@ -342,6 +344,29 @@ public class NaiveInstructionHandler implements InstructionHandler{
         valueLut.put(instruction.get2().get().get2(), var.getRef());
     }
 
+    /*
+     * var = xor expr expr
+     * var : int
+     * expr : int
+     */
+    private void xor(Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction) {
+        int paramSize = instruction.get3().size();
+        Expr<?> lhs = getExpr(instruction, paramSize - 2);
+        if(lhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            lhs = Neq((Expr<IntType>) lhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+        Expr<?> rhs = getExpr(instruction, paramSize - 1);
+        if(rhs.getType() == IntType.getInstance()) {
+            //noinspection unchecked
+            rhs = Neq((Expr<IntType>) rhs, (Expr<IntType>) createConstant("i1 0"));
+        }
+        checkState(lhs.getType() == BoolType.getInstance(), "And only supports boolean types!");
+        checkState(rhs.getType() == BoolType.getInstance(), "And only supports boolean types!");
+        checkState(instruction.get2().isPresent(), "Instruction must have return variable");
+        //noinspection unchecked
+        valueLut.put(instruction.get2().get().get2(), BoolExprs.Xor((Expr<BoolType>) lhs, (Expr<BoolType>) rhs));
+    }
     /*
      * var = and expr expr
      * var : int

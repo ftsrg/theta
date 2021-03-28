@@ -98,7 +98,7 @@ public class XcfaCli {
 				System.out.println("PARSING SUCCESSFUL");
 				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
 				System.out.println("CFA-data varCount " + cfa.getVars().size());
-				System.out.println("CFA-data varCount " + cfa.getLocs().size());
+				System.out.println("CFA-data locCount " + cfa.getLocs().size());
 				return;
 			} catch (IOException e) {
 				e.printStackTrace();
