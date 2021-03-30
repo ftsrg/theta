@@ -10,18 +10,18 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpMarkerTree;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
+import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibInterpolant;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpPattern;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
-import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
     private boolean topMostContainsAssertions = false;
@@ -63,6 +62,8 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
         markers.add(marker);
         return marker;
     }
+
+
 
     @Override
     public void add(ItpMarker marker, Expr<BoolType> assertion) {
@@ -89,12 +90,27 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
         topMostContainsAssertions = true;
 
         for(final var marker : markers.toCollection()) {
-            final var term = String.format("(and %s)", String.join(" ", marker.getTerms().stream().map(Tuple2::get2).collect(Collectors.toUnmodifiableList())));
+            final var terms = marker.getTerms();
+            if(terms.size() == 0) {
+                issueGeneralCommand(String.format("(assert (! true :named %s))", marker.getMarkerName()));
+            }
+            else {
+                final var term = String.format("(and %s)", String.join(" ", marker.getTerms().stream().map(Tuple2::get2).collect(Collectors.toUnmodifiableList())));
 
-            issueGeneralCommand(String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
+                issueGeneralCommand(String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
+            }
         }
 
         return super.check();
+    }
+
+    @Override
+    public void push() {
+        if(topMostContainsAssertions) {
+            issueGeneralCommand("(pop 1)"); // Topmost frame contains marker assertions
+            topMostContainsAssertions = false;
+        }
+        super.push(); // Topmost frame contains marker assertions
     }
 
     @Override
@@ -119,11 +135,11 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
         final List<Expr<BoolType>> itpList = new LinkedList<>();
 
         solverBinary.issueCommand(String.format("(get-interpolant %s)", term));
-        for(var i = 0; i < markerCount - 1; i++) {
+        for(var i = 0; i < markerCount; i++) {
             final var res = parseItpResponse(solverBinary.readResponse());
             itpList.add(termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
         }
-        itpList.add(False());
+        // itpList.add(False());
 
         final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
         buildItpMapFormList(z3ItpPattern.getRoot(), itpList, itpMap);
@@ -136,7 +152,6 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
 
         final Z3SmtLibItpMarker marker = markerTree.getMarker();
         opTerms.add(marker.getMarkerName());
-        //opTerms.addAll(marker.getTerms().stream().map(Tuple2::get2).collect(Collectors.toUnmodifiableList()));
 
         for (final var child : markerTree.getChildren()) {
             final var childTerm = patternToTerm(child);

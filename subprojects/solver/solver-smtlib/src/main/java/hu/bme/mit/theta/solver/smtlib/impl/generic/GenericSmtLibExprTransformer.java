@@ -361,19 +361,35 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformAnd(final AndExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
-            .map(this::toTerm)
-            .toArray(String[]::new);
-
-        return String.format("(and %s)", String.join(" ", opTerms));
-    }
-
-    protected String transformOr(final OrExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "true";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(or %s)", String.join(" ", opTerms));
+            return String.format("(and %s)", String.join(" ", opTerms));
+        }
+    }
+
+    protected String transformOr(final OrExpr expr) {
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "false";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
+                .map(this::toTerm)
+                .toArray(String[]::new);
+
+            return String.format("(or %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformExists(final ExistsExpr expr) {
@@ -424,11 +440,19 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformRatAdd(final RatAddExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "0.0";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(+ %s)", String.join(" ", opTerms));
+            return String.format("(+ %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformRatSub(final RatSubExpr expr) {
@@ -444,11 +468,19 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformRatMul(final RatMulExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "1.0";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(* %s)", String.join(" ", opTerms));
+            return String.format("(* %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformRatDiv(final RatDivExpr expr) {
@@ -484,15 +516,28 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
      */
 
     protected String transformIntLit(final IntLitExpr expr) {
-        return expr.getValue().toString();
+        if(expr.getValue().compareTo(BigInteger.ZERO) < 0) {
+            return String.format("(- %s)", expr.getValue().abs().toString());
+        }
+        else {
+            return expr.getValue().toString();
+        }
     }
 
     protected String transformIntAdd(final IntAddExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "0";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(+ %s)", String.join(" ", opTerms));
+            return String.format("(+ %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformIntSub(final IntSubExpr expr) {
@@ -508,15 +553,23 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformIntMul(final IntMulExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return "1";
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(* %s)", String.join(" ", opTerms));
+            return String.format("(* %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformIntDiv(final IntDivExpr expr) {
-        return String.format("(/ %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        return String.format("(div %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformIntMod(final IntModExpr expr) {
@@ -597,11 +650,19 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformBvAdd(final BvAddExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(bvadd %s)", String.join(" ", opTerms));
+            return String.format("(bvadd %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformBvSub(final BvSubExpr expr) {
@@ -617,11 +678,19 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformBvMul(final BvMulExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, expr.getType().getSize()));
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(bvmul %s)", String.join(" ", opTerms));
+            return String.format("(bvmul %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformBvUDiv(final BvUDivExpr expr) {
@@ -645,27 +714,51 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformBvAnd(final BvAndExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.TWO.pow(expr.getType().getSize()).subtract(BigInteger.ONE), expr.getType().getSize()));
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(bvand %s)", String.join(" ", opTerms));
+            return String.format("(bvand %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformBvOr(final BvOrExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(bvor %s)", String.join(" ", opTerms));
+            return String.format("(bvor %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformBvXor(final BvXorExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
+        if(expr.getArity() == 1) {
+            return toTerm(expr.getOps().get(0));
+        }
+        else if(expr.getArity() == 0) {
+            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+        }
+        else {
+            final String[] opTerms = expr.getOps().stream()
                 .map(this::toTerm)
                 .toArray(String[]::new);
 
-        return String.format("(bvxor %s)", String.join(" ", opTerms));
+            return String.format("(bvxor %s)", String.join(" ", opTerms));
+        }
     }
 
     protected String transformBvNot(final BvNotExpr expr) {

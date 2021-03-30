@@ -67,7 +67,7 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName());
+        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
         return CVC4SmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
