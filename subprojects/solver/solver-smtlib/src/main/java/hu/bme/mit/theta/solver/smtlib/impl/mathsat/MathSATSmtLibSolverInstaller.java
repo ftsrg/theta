@@ -129,7 +129,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
     @Override
     protected String[] getDefaultSolverArgs(String version) throws SmtLibSolverInstallerException {
-        return new String[] {  };
+        return new String[] { "-theory.bv.eager=false" };
     }
 
     @Override

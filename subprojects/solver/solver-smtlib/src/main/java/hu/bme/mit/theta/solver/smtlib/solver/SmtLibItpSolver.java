@@ -147,7 +147,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         }
         assertions.pop(n);
         declarationStack.pop(n);
-        issueGeneralCommand("(pop 1)");
+        issueGeneralCommand(String.format("(pop %d)", n));
         clearState();
     }
 

@@ -141,6 +141,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             put("-", exprMinusOperator());
             put("*", exprMultiaryOperator(MulExpr::create2));
             put("div", exprBinaryOperator(DivExpr::create2));
+            put("/", exprBinaryOperator(DivExpr::create2));
             put("mod", exprBinaryOperator(ModExpr::create2));
             put("rem", exprBinaryOperator(RemExpr::create2));
 

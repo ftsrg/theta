@@ -89,7 +89,8 @@ public final class SmtLibSolverManager {
 
     }
 
-    public static SmtLibSolverManager create(final Path home, final Logger logger) {
+    public static SmtLibSolverManager create(final Path home, final Logger logger) throws IOException {
+        createIfNotExists(home);
         return new SmtLibSolverManager(home, logger);
     }
 
@@ -230,5 +231,12 @@ public final class SmtLibSolverManager {
                 throw new SmtLibSolverInstallerException(String.format("There are no %s versions of solver: %s", installed ? "installed" : "supported", solver));
             }
         }
+    }
+
+    private static Path createIfNotExists(final Path path) throws IOException {
+        if(!Files.exists(path)) {
+            Files.createDirectory(path);
+        }
+        return path;
     }
 }
