@@ -5,6 +5,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.yices2.Yices2SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
@@ -48,6 +49,7 @@ public final class SmtLibSolverManager {
         registerInstaller("yices2", Yices2SmtLibSolverInstaller.class);
         registerInstaller("boolector", BoolectorSmtLibSolverInstaller.class);
         registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
+        registerInstaller("princess", PrincessSmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
