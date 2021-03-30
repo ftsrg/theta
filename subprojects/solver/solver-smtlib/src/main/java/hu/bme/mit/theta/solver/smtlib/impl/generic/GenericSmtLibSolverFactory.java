@@ -9,10 +9,10 @@ import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import java.nio.file.Path;
 
 public class GenericSmtLibSolverFactory implements SolverFactory {
-    private final Path solverPath;
-    private final String[] args;
+    protected final Path solverPath;
+    protected final String[] args;
 
-    private GenericSmtLibSolverFactory(Path solverPath, String[] args) {
+    protected GenericSmtLibSolverFactory(Path solverPath, String[] args) {
         this.solverPath = solverPath;
         this.args = args;
     }
@@ -43,6 +43,6 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        throw new UnsupportedOperationException("GenericSmtLibSolver does not support interpolation");
+        throw new UnsupportedOperationException("The generic driver does not support interpolation");
     }
 }

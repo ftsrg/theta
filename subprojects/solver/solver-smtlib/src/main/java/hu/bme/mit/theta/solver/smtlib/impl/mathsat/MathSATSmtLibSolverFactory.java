@@ -1,50 +1,24 @@
 package hu.bme.mit.theta.solver.smtlib.impl.mathsat;
 
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
 
 import java.nio.file.Path;
 
-public class MathSATSmtLibSolverFactory implements SolverFactory {
-    private final Path solverPath;
-    private final String[] args;
+public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
     private final boolean itpSupported;
 
     private MathSATSmtLibSolverFactory(Path solverPath, String[] args, boolean itpSupported) {
-        this.solverPath = solverPath;
-        this.args = args;
+        super(solverPath, args);
         this.itpSupported = itpSupported;
     }
 
     public static MathSATSmtLibSolverFactory create(Path solverPath, String[] args, boolean itpSupported) {
         return new MathSATSmtLibSolverFactory(solverPath, args, itpSupported);
-    }
-
-    @Override
-    public Solver createSolver() {
-        final var symbolTable = new GenericSmtLibSymbolTable();
-        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
-
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
-    }
-
-    @Override
-    public UCSolver createUCSolver() {
-        final var symbolTable = new GenericSmtLibSymbolTable();
-        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
-
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
     }
 
     @Override
