@@ -3,7 +3,6 @@ package hu.bme.mit.theta.solver.smtlib.impl.boolector;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
@@ -74,7 +73,7 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName());
-        return GenericSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return BoolectorSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override
