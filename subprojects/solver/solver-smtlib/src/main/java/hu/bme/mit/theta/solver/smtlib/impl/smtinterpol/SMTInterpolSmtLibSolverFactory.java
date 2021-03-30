@@ -47,7 +47,12 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        throw new UnsupportedOperationException("CVC4 does not support interpolation");
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
+
+        return new SMTInterpolSmtLibItpSolver(symbolTable, transformationManager, termTransformer, solverBinary);
     }
 
     private Path getJavaBinary() {

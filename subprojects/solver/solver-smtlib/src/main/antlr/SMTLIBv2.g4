@@ -54,6 +54,7 @@ specific_success_response
     : check_sat_response
     | get_unsat_core_response
     | get_model_response
+    | get_interpolants_response_smtinterpol
     ;
 
 check_sat_response
@@ -99,6 +100,10 @@ function_def
 
 function_dec
     : ParOpen symbol ParOpen sorted_var* ParClose sort ParClose
+    ;
+
+get_interpolants_response_smtinterpol
+    : ParOpen term* ParClose
     ;
 
 // Parser Rules End
