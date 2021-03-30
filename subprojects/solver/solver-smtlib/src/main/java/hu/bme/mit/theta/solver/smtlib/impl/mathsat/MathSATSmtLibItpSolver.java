@@ -11,6 +11,7 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibInterpolant;
+import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpPattern;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
@@ -49,7 +50,7 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
     @Override
     public ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root) {
         checkNotNull(root);
-        return MathSATSmtLibItpPattern.of(root);
+        return SmtLibItpPattern.of(root);
     }
 
     @Override
@@ -68,8 +69,9 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
-        checkArgument(pattern instanceof MathSATSmtLibItpPattern);
-        final var mathsatItpPattern = (MathSATSmtLibItpPattern) pattern;
+        checkArgument(pattern instanceof SmtLibItpPattern);
+        @SuppressWarnings("unchecked")
+        final var mathsatItpPattern = (SmtLibItpPattern<MathSATSmtLibItpMarker>) pattern;
 
         final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
         buildItpMapFromTree(mathsatItpPattern.getRoot(), itpMap);
