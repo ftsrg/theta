@@ -12,6 +12,7 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibInterpolant;
+import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpPattern;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
@@ -53,7 +54,7 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
     @Override
     public ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root) {
         checkNotNull(root);
-        return Z3SmtLibItpPattern.of(root);
+        return SmtLibItpPattern.of(root);
     }
 
     @Override
@@ -108,8 +109,9 @@ public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
-        checkArgument(pattern instanceof Z3SmtLibItpPattern);
-        final var z3ItpPattern = (Z3SmtLibItpPattern) pattern;
+        checkArgument(pattern instanceof SmtLibItpPattern);
+        @SuppressWarnings("unchecked")
+        final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
 
         final var term = patternToTerm(z3ItpPattern.getRoot());
         final var markerCount = getMarkerCount(z3ItpPattern.getRoot());

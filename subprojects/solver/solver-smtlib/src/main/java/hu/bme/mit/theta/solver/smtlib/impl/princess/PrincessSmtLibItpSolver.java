@@ -11,12 +11,11 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
-import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibItpMarker;
-import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibItpPattern;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibInterpolant;
+import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpPattern;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
@@ -56,7 +55,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     @Override
     public ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root) {
         checkNotNull(root);
-        return PrincessSmtLibItpPattern.of(root);
+        return SmtLibItpPattern.of(root);
     }
 
     @Override
@@ -78,8 +77,9 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
-        checkArgument(pattern instanceof PrincessSmtLibItpPattern);
-        final var princessItpPattern = (PrincessSmtLibItpPattern) pattern;
+        checkArgument(pattern instanceof SmtLibItpPattern);
+        @SuppressWarnings("unchecked")
+        final var princessItpPattern = (SmtLibItpPattern<PrincessSmtLibItpMarker>) pattern;
 
         final var term = patternToTerm(princessItpPattern.getRoot());
 
