@@ -6,6 +6,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
 
@@ -41,16 +42,26 @@ public final class XcfaProcedure {
         name = builder.name;
     }
 
-    public XcfaProcedure(XcfaProcedure procedure) {
+    public XcfaProcedure(XcfaProcedure procedure, Map<CallStmt, CallStmt> newCallStmts) {
         parent = null; // ProcessBuilder will fill out this field
         retType = procedure.retType;
 
+        Map<VarDecl<?>, VarDecl<?>> newVarLut = new HashMap<>();
+
         List<VarDecl<?>> paramCollectList = new ArrayList<>();
-        procedure.params.forEach(varDecl -> paramCollectList.add(VarDecl.copyOf(varDecl)));
+        procedure.params.forEach(varDecl -> {
+            VarDecl<?> newVar = VarDecl.copyOf(varDecl);
+            paramCollectList.add(newVar);
+            newVarLut.put(varDecl, newVar);
+        });
         params = ImmutableList.copyOf(paramCollectList);
 
         Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
-        procedure.localVars.forEach((varDecl, litExpr) -> localVarsCollectList.put(VarDecl.copyOf(varDecl), litExpr));
+        procedure.localVars.forEach((varDecl, litExpr) -> {
+            VarDecl<?> newVar = VarDecl.copyOf(varDecl);
+            localVarsCollectList.put(newVar, litExpr);
+            newVarLut.put(varDecl, newVar);
+        });
         localVars = ImmutableMap.copyOf(localVarsCollectList);
 
         Map<XcfaLocation, XcfaLocation> newLocLut = new HashMap<>();
@@ -69,7 +80,7 @@ public final class XcfaProcedure {
         finalLoc = newLocLut.get(procedure.finalLoc);
 
         List<XcfaEdge> edgeCollectList = new ArrayList<>();
-        procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut)));
+        procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut, newVarLut, newCallStmts)));
         edges = ImmutableList.copyOf(edgeCollectList);
         edges.forEach(edge -> edge.setParent(this));
 

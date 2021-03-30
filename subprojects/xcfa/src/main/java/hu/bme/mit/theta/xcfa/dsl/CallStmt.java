@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -64,6 +65,11 @@ public class CallStmt extends XcfaCallStmt {
 	public void setProcedure(XcfaProcedure procedure) {
 		checkState(this.procedure == null);
 		this.procedure = procedure;
+	}
+
+	@Override
+	public XcfaCallStmt of(VarDecl<?> var, List<Expr<?>> params) {
+		return new CallStmt(var, null, params);
 	}
 
 	@Override

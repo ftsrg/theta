@@ -186,10 +186,6 @@ outerloop:
 			throw new UnsupportedOperationException("Not supported yet.");
 		}
 
-		@Override
-		public Void visit(XcfaInternalNotifyStmt enterWaitStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
 
 		@Override
 		public Void visit(SkipStmt stmt, XcfaStackFrame param) {

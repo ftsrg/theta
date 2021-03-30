@@ -85,11 +85,6 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R>{
     }
 
     @Override
-    public R visit(XcfaInternalNotifyStmt enterWaitStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
     public R visit(SkipStmt stmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }

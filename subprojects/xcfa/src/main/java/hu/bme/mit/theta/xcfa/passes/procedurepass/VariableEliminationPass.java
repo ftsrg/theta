@@ -257,10 +257,6 @@ public class VariableEliminationPass implements ProcedurePass {
             return null;
         }
 
-        @Override
-        public R visit(XcfaInternalNotifyStmt enterWaitStmt, XcfaEdge edge) {
-            return null;
-        }
     }
 
     private static class RemoveLhsVisitor implements XcfaStmtVisitor<Stmt, Stmt> {
@@ -370,9 +366,5 @@ public class VariableEliminationPass implements ProcedurePass {
             return null;
         }
 
-        @Override
-        public Stmt visit(XcfaInternalNotifyStmt enterWaitStmt, Stmt param) {
-            return null;
-        }
     }
 }

@@ -1,32 +1,33 @@
 package hu.bme.mit.theta.xcfa.ir;
 
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Tuple3;
-import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
-import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class Utils {
 
-    private static final int FLOAT_DIGITS = 5;
-
     public static Type createType(String type) {
-        if(!type.startsWith("i")) {
-            System.err.println("Unexpected value type: " + type);
+        switch(type) {
+            case "i32":
+            case "i16":
+            case "i8":
+                return Int();
+            case "i1":  return Bool();
+            default: throw new RuntimeException("Type " + type + " not known!");
         }
-        return Int();
     }
 
     public static VarDecl<? extends Type> createVariable(String name, String type) {
@@ -53,59 +54,16 @@ public class Utils {
         return IntLitExpr.of(new BigInteger(arguments[1]));
     }
 
-    public static InstructionHandler handleProcedure(
-            Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function,
-            XcfaProcedure.Builder procedureBuilder,
-            SSAProvider ssa,
-            Map<String, VarDecl<?>> globalVarLut,
-            Collection<String> processes) {
-
-        Map<String, VarDecl<?>> localVarLut = new HashMap<>(globalVarLut);
-
-        // Adding params
-        for (Tuple2<String, String> param : function.get3()) {
-            VarDecl<?> var = createVariable(param.get2(), param.get1());
-            procedureBuilder.createParam(var);
-            localVarLut.put(param.get2(), var);
-        }
-
-        // Adding final location
-        XcfaLocation finalLoc = new XcfaLocation(function.get1() + "_final", new HashMap<>());
-        procedureBuilder.addLoc(finalLoc);
-        procedureBuilder.setFinalLoc(finalLoc);
-
-        // Adding return variable
-        Optional<VarDecl<? extends Type>> retVar = Optional.empty();
-        if(function.get2().isPresent()) {
-            retVar = Optional.of(createVariable(function.get1() + "_ret", function.get2().get()));
-            procedureBuilder.setRtype(createType(function.get2().get()));
-            procedureBuilder.setResult(retVar.get());
-        }
-
-        // Adding blocks and first location
-        List<String> blocks = ssa.getBlocks(function.get1());
-        Map<String, XcfaLocation> locationLut = new LinkedHashMap<>();
-        boolean first = true;
-        for (String block : blocks) {
-            XcfaLocation loc = new XcfaLocation(block, new HashMap<>());
-            locationLut.put(block, loc);
-            procedureBuilder.addLoc(loc);
-            if(first) {
-                procedureBuilder.setInitLoc(loc);
-                first = false;
-            }
-        }
-
-        InstructionHandler instructionHandler = new NaiveInstructionHandler(functions, function, procedureBuilder, ssa, processes, localVarLut, finalLoc, retVar, locationLut);
-
-        // Handling instructions
-        for (String block : locationLut.keySet()) {
-            instructionHandler.reinitClass(block);
-            for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(block)) {
-                instructionHandler.handleInstruction(instruction);
-            }
-        }
-        instructionHandler.endProcedure();
-        return instructionHandler;
+    public static XcfaProcedure createEmptyProc(String name) {
+        XcfaProcedure.Builder builder = XcfaProcedure.builder();
+        XcfaLocation loc1 = new XcfaLocation("loc", null);
+        XcfaLocation loc2 = new XcfaLocation("loc", null);
+        builder.addLoc(loc1);
+        builder.addLoc(loc2);
+        builder.setFinalLoc(loc2);
+        builder.setInitLoc(loc1);
+        builder.setName(name);
+        return builder.build();
     }
+
 }

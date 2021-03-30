@@ -2,9 +2,16 @@ package hu.bme.mit.theta.xcfa;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
-import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.common.Tuple4;
+import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
-import hu.bme.mit.theta.xcfa.ir.InstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
+import hu.bme.mit.theta.xcfa.ir.handlers.InstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.handlers.InstructionHandlerManager;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.BuiltState;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.model.XCFA;
@@ -17,8 +24,6 @@ import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
 import java.io.*;
 import java.util.*;
-
-import static hu.bme.mit.theta.xcfa.ir.Utils.*;
 
 @SuppressWarnings("unused")
 public class XcfaUtils {
@@ -78,87 +83,50 @@ public class XcfaUtils {
      * Runs the specified passes when a specific stage is complete.
      */
     public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses) {
-        Map<String, VarDecl<?>> globalVarLut = new HashMap<>();
-        XCFA.Builder builder = XCFA.builder();
+        BuiltState builtState = new BuiltState();
+        GlobalState globalState = new GlobalState(ssa);
 
-        // Creating global variables
-        for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
-
-            VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
-            globalVarLut.put(globalVariable.get1(), variable);
-            builder.getGlobalVars().put(variable, Optional.ofNullable(createConstant(globalVariable.get3())));
-
-        }
-
-        Map<String, XcfaProcedure> procedures = new LinkedHashMap<>();
-        Map<XcfaProcess.Builder, String> processBuilders = new HashMap<>();
-        List<InstructionHandler> instructionHandlers = new ArrayList<>();
-
-        XcfaProcess.Builder mainProcBuilder = XcfaProcess.builder();
-        mainProcBuilder.setName("main");
-        processBuilders.put(mainProcBuilder, mainProcBuilder.getName());
-
-        // Creating procedures
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
+            FunctionState functionState = new FunctionState(globalState, function);
 
-            XcfaProcedure.Builder procedureBuilder = XcfaProcedure.builder();
-            procedureBuilder.setName(function.get1());
+            for (String block : ssa.getBlocks(function.get1())) {
+                BlockState blockState = new BlockState(functionState, block);
+                InstructionHandlerManager instructionHandlerManager = new InstructionHandlerManager();
+                for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(block)) {
+                    try {
+                        InstructionHandler instructionHandler = instructionHandlerManager.createInstructionHandlers();
+                        instructionHandler.handleInstruction(new Instruction(instruction), globalState, functionState, blockState);
+                    } catch (ReflectiveOperationException e) {
+                        e.printStackTrace();
+                    }
 
-            Collection<String> processes = new ArrayList<>();
-
-            instructionHandlers.add(handleProcedure(ssa.getFunctions(), function, procedureBuilder, ssa, globalVarLut, processes));
-
-            for (String process : processes) {
-
-                XcfaProcess.Builder processBuilder = XcfaProcess.builder();
-                processBuilder.setName(process);
-                processBuilders.put(processBuilder, function.get1());
-
+                }
             }
 
-            for (ProcedurePass pass : procedurePasses) {
-                procedureBuilder = pass.run(procedureBuilder);
+            functionState.finalizeFunctionState(builtState);
+
+            for (ProcedurePass procedurePass : procedurePasses) {
+                procedurePass.run(functionState.getProcedureBuilder());
             }
 
-            XcfaProcedure procedure = procedureBuilder.build();
-            procedures.put(function.get1(), procedure);
+            builtState.getProcedures().put(function.get1(), functionState.getProcedureBuilder().build());
         }
 
-        // Letting procedures finish setting up their call statements (by providing them with a list of built procedures)
-        for (InstructionHandler instructionHandler : instructionHandlers) {
-            instructionHandler.substituteProcedures(procedures);
-        }
+        globalState.getProcesses().forEach((s, builder) -> {
+            Map<CallStmt, CallStmt> newCallStmts = new HashMap<>();
+            builtState.getProcedures().forEach((s1, xcfaProcedure) -> {
+                XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure, newCallStmts);
+                builder.addProcedure(procedure);
+                if(procedure.getName().equals("main")) builder.setMainProcedure(procedure);
+            });
+            newCallStmts.forEach((callStmt, callStmt2) -> globalState.getCallStmts().put(callStmt2, globalState.getCallStmts().get(callStmt)));
+            XcfaProcess built = builder.build();
+            builtState.getProcesses().put(s, built);
+            globalState.getBuilder().addProcess(built);
+        });
 
-        // Instantiating procedures, each with a copy of each procedure.
-        for (Map.Entry<XcfaProcess.Builder, String> entry : processBuilders.entrySet()) {
-            XcfaProcess.Builder processBuilder = entry.getKey();
-            String mainProcedureName = entry.getValue();
-
-            for (Map.Entry<String, XcfaProcedure> e : procedures.entrySet()) {
-                String procedureName = e.getKey();
-                XcfaProcedure procedure = e.getValue();
-
-                XcfaProcedure proc = new XcfaProcedure(procedure);
-                processBuilder.addProcedure(proc);
-                if (procedureName.equals(mainProcedureName)) processBuilder.setMainProcedure(proc);
-
-            }
-
-            for (ProcessPass pass : processPasses) {
-                processBuilder = pass.run(processBuilder);
-            }
-
-            XcfaProcess proc = processBuilder.build();
-            builder.addProcess(proc);
-
-            if (processBuilder == mainProcBuilder) builder.setMainProcess(proc);
-
-        }
-
-        for (XcfaPass pass : xcfaPasses) {
-            builder = pass.run(builder);
-        }
-
-        return builder.build();
+        globalState.finalizeGlobalState(builtState);
+        globalState.getBuilder().setMainProcess(builtState.getProcesses().get("main"));
+        return globalState.getBuilder().build();
     }
 }

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class XcfaCallStmt extends XcfaStmt {
 	@Override
@@ -37,6 +38,8 @@ public abstract class XcfaCallStmt extends XcfaStmt {
 	// needed for core.utils.VarCollector
 	public abstract List<Expr<?>> getParams();
 	public abstract VarDecl<?> getResultVar();
+
+	public abstract XcfaCallStmt of(VarDecl<?> var, List<Expr<?>> params);
 
 	public abstract void setVoid();
 }
