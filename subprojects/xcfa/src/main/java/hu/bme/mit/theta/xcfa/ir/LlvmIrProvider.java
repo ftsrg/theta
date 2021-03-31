@@ -14,7 +14,7 @@ public class LlvmIrProvider implements SSAProvider {
     private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     public LlvmIrProvider(String irFilename) {
-        this(irFilename, false, true);
+        this(irFilename, true, false);
     }
 
     public LlvmIrProvider(String irFilename, Boolean inlining, Boolean cleanup) {

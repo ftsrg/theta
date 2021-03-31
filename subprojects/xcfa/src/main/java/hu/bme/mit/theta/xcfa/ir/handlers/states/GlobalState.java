@@ -31,13 +31,9 @@ public class GlobalState {
 
         // Creating global variables
         for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
-            try {
-                VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
-                globalVars.put(globalVariable.get1(), variable);
-                builder.getGlobalVars().put(variable, Optional.of(createConstant(globalVariable.get3())));
-            } catch(RuntimeException re) {
-                re.printStackTrace();
-            }
+            VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
+            globalVars.put(globalVariable.get1(), variable);
+            builder.getGlobalVars().put(variable, Optional.of(createConstant(globalVariable.get3())));
         }
 
         XcfaProcess.Builder mainProcBuilder = XcfaProcess.builder();

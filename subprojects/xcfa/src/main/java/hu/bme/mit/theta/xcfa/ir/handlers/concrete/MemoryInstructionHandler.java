@@ -53,7 +53,6 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
 
     private void load(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
-        checkState(op.getType() == IntType.getInstance(), "Only integer values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
         checkState(functionState.getLocalVars().containsKey(op.getName()), "Load must load a variable!");
         functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
@@ -65,12 +64,10 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
 
     private void store(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
-        Argument op2 = instruction.getArguments().get(0);
-        checkState(op1.getType() == IntType.getInstance(), "Only integer values are allowed!");
-        checkState(op2.getType() == IntType.getInstance(), "Only integer values are allowed!");
+        Argument op2 = instruction.getArguments().get(1);
         checkState(functionState.getLocalVars().containsKey(op2.getName()), "Store must store into a variable!");
 
-        Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(op1.getName());
+        Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(op2.getName());
         if(oldVar.get2() > 1) {
             functionState.getLocalVars().put(op2.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() - 1));
         }

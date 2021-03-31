@@ -11,18 +11,13 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
 import java.util.Map;
 
+import static hu.bme.mit.theta.xcfa.ir.Utils.createConstant;
+
 public class ConstantArgument extends Argument{
     private final LitExpr<?> expr;
 
     ConstantArgument(String type, String name) {
-        switch(type) {
-            case "i32":
-            case "i16":
-            case "i8":
-                this.expr = IntLitExpr.of(new BigInteger(name)); break;
-            case "i1": this.expr = BoolLitExpr.of(name.equals("true")); break;
-            default: throw new RuntimeException("Type " + type + " not known!");
-        }
+        this.expr = createConstant(type + " " + name);
     }
 
     @Override

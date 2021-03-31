@@ -31,6 +31,6 @@ public abstract class Argument {
                     return new ConstantArgument(split[0], split[1]);
             }
         }
-        else return new StringArgument(null, split[1]);
+        else return new StringArgument(null, split[0]);
     }
 }

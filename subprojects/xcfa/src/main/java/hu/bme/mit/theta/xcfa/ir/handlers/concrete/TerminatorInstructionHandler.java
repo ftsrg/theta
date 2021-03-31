@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -48,6 +49,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             case "switch":
                 sw(instruction, globalState, functionState, blockState);
                 break;
+            case "unreachable":
+                unreachable(instruction, globalState, functionState, blockState);
             case "indirectbr":
             case "invoke":
             case "callbr":
@@ -55,13 +58,21 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             case "catchswitch":
             case "catchret":
             case "cleanupret":
-            case "unreachable":
                 break;
             default:
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
 
+    }
+
+    private void unreachable(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        XcfaLocation errLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
+        functionState.getProcedureBuilder().addLoc(errLoc);
+        functionState.getProcedureBuilder().setErrorLoc(errLoc);
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, List.of());
+        functionState.getProcedureBuilder().addEdge(edge);
+        blockState.setLastLocation(errLoc);
     }
 
     private void ret(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {

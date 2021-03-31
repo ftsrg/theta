@@ -93,7 +93,7 @@ public final class XCFA {
 	public String toDot() {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
 		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
-			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar)).append("\";\n");
+			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar).get()).append("\";\n");
 		}
 		ret.append(getMainProcess().toDot());
 		ret.append("}\n");

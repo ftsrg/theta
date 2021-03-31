@@ -45,7 +45,7 @@ public class XcfaUtils {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
 
         } else if (model.getName().endsWith(".c") || model.getName().endsWith(".i")) {
-            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true));
+            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), false, true));
 
         } else {
             String[] split = model.getName().split("\\.");
@@ -75,7 +75,7 @@ public class XcfaUtils {
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      */
     public static XCFA createXCFA(SSAProvider ssa) {
-        return createXCFA(ssa, List.of(), List.of(), List.of(VariableEliminationPass.getInstance()));
+        return createXCFA(ssa, List.of(), List.of(), List.of(/*VariableEliminationPass.getInstance()*/));
     }
 
     /*

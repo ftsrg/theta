@@ -38,6 +38,8 @@ public class FunctionState {
         values = new HashMap<>();
         interBlockEdges = new HashMap<>();
 
+        globalState.getGlobalVars().forEach((s, varDecl) -> localVars.put(s, Tuple2.of(varDecl, 1)));
+
         // Adding params
         for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());

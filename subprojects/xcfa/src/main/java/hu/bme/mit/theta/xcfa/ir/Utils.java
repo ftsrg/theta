@@ -3,6 +3,8 @@ package hu.bme.mit.theta.xcfa.ir;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -26,12 +28,13 @@ public class Utils {
             case "i8":
                 return Int();
             case "i1":  return Bool();
-            default: throw new RuntimeException("Type " + type + " not known!");
+            default: new RuntimeException("Type " + type + " not known! (Using int instead)").printStackTrace(); return Int();
         }
     }
 
     public static VarDecl<? extends Type> createVariable(String name, String type) {
-        Type t = createType(type);
+        Type t;
+        t = createType(type);
         return Var(name, t);
     }
 
@@ -42,16 +45,14 @@ public class Utils {
             return IntLitExpr.of(BigInteger.ZERO);
         }
 
-        switch(arguments[1]) {
-            case "true": arguments[1] = "1"; break;
-            case "false": arguments[1] = "0"; break;
-            default: break;
+        switch(arguments[0]) {
+            case "i32":
+            case "i16":
+            case "i8":
+                return IntLitExpr.of(new BigInteger(arguments[1]));
+            case "i1":  return BoolLitExpr.of(arguments[1].equals("true"));
+            default: new RuntimeException("Type " + arguments[0] + " not known! (Using int(0) instead)").printStackTrace(); return IntLitExpr.of(BigInteger.ZERO);
         }
-
-        if(!arguments[0].startsWith("i")) {
-            System.err.println("Unexpected value type: " + arguments[0]);
-        }
-        return IntLitExpr.of(new BigInteger(arguments[1]));
     }
 
     public static XcfaProcedure createEmptyProc(String name) {

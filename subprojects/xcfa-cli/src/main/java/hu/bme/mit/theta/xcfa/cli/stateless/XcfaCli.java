@@ -91,20 +91,6 @@ public class XcfaCli {
 			return;
 		}
 
-		if(model.getName().endsWith(".cfa")) {
-			try {
-				CFA cfa = CfaDslManager.createCfa(new FileInputStream(model));
-				System.out.println(cfa);
-				System.out.println("PARSING SUCCESSFUL");
-				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
-				System.out.println("CFA-data varCount " + cfa.getVars().size());
-				System.out.println("CFA-data locCount " + cfa.getLocs().size());
-				return;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
 			return;
@@ -122,10 +108,6 @@ public class XcfaCli {
 			} else if (printcfa) {
 				CFA cfa = xcfa.createCFA();
 				System.out.println(cfa);
-				System.out.println("PARSING SUCCESSFUL");
-				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
-				System.out.println("CFA-data varCount " + cfa.getVars().size());
-				System.out.println("CFA-data varCount " + cfa.getLocs().size());
 				return;
 			}
 

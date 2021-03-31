@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -11,7 +13,11 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 
+import java.math.BigInteger;
+
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class ConversionInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -71,9 +77,9 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
 
     private void zext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
-        checkState(op.getType() == IntType.getInstance(), "Only integer values are allowed!");
+        checkState(op.getType() == IntType.getInstance() || op.getType() == BoolType.getInstance(), "Only integer/boolean values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
+        functionState.getValues().put(instruction.getRetVar().get().getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()));
 
         if(functionState.getLocalVars().containsKey(op.getName())) {
             functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
@@ -82,9 +88,9 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
 
     private void sext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
-        checkState(op.getType() == IntType.getInstance(), "Only integer values are allowed!");
+        checkState(op.getType() == IntType.getInstance() || op.getType() == BoolType.getInstance(), "Only integer/boolean values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
+        functionState.getValues().put(instruction.getRetVar().get().getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()));
 
         if(functionState.getLocalVars().containsKey(op.getName())) {
             functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
@@ -130,6 +136,12 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
     }
 
     private void bitcast(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        throw new RuntimeException("Not yet implemented!");
+        Argument op = instruction.getArguments().get(0);
+        checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
+        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
+
+        if(functionState.getLocalVars().containsKey(op.getName())) {
+            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
+        }
     }
 }

@@ -7,20 +7,15 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import java.util.Map;
 
+import static hu.bme.mit.theta.xcfa.ir.Utils.createType;
+
 public class RegArgument extends Argument{
     private final String name;
     private final Type type;
 
     RegArgument(String type, String name) {
         this.name = name;
-        switch(type) {
-            case "i32":
-            case "i16":
-            case "i8":
-                this.type = IntType.getInstance(); break;
-            case "i1": this.type = BoolType.getInstance(); break;
-            default: throw new RuntimeException("Type " + type + " not known!");
-        }
+        this.type = createType(type);
     }
 
     @Override
