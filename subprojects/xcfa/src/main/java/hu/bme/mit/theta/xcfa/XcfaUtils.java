@@ -45,7 +45,7 @@ public class XcfaUtils {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
 
         } else if (model.getName().endsWith(".c") || model.getName().endsWith(".i")) {
-            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), false, true));
+            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true, true, true));
 
         } else {
             String[] split = model.getName().split("\\.");

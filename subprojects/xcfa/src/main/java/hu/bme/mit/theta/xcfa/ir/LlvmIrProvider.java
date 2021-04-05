@@ -14,15 +14,27 @@ public class LlvmIrProvider implements SSAProvider {
     private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     public LlvmIrProvider(String irFilename) {
-        this(irFilename, true, false);
+        this(irFilename, true, true, true, true);
     }
 
-    public LlvmIrProvider(String irFilename, Boolean inlining, Boolean cleanup) {
-        if(inlining) {
-            JniEnableInlining();
+    private native void JniParseIr(String irFilename);
+    private native void JniDisableInlining();
+    private native void JniDisableOptimizationPasses();
+    private native void JniDisableCleanupPasses();
+    private native void JniDisablePrintDebugIr();
+
+    public LlvmIrProvider(String irFilename, Boolean inlining, Boolean cleanup, Boolean optimization, Boolean debugPrintIr) {
+        if(!inlining) {
+            JniDisableInlining();
         }
         if(!cleanup) {
             JniDisableCleanupPasses();
+        }
+        if(!optimization) {
+            JniDisableOptimizationPasses();
+        }
+        if(!debugPrintIr) {
+            JniDisablePrintDebugIr();
         }
 
         JniParseIr(irFilename);
@@ -41,9 +53,6 @@ public class LlvmIrProvider implements SSAProvider {
 
     }
 
-    private native void JniParseIr(String irFilename);
-    private native void JniEnableInlining();
-    private native void JniDisableCleanupPasses();
     private native int JniGetGlobalVariablesNum();
     private native String JniGetGlobalVariableName(int gvIndex);
     private native String JniGetGlobalVariableType(int gvIndex);
