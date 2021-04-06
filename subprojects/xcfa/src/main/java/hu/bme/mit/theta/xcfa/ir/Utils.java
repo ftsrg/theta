@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -12,9 +13,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -22,7 +26,18 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 public class Utils {
 
     public static Type createType(String type) {
+        type = type.replaceAll("\\*", "");
+        String arrayPattern = "\\[([1-9][0-9]*) x (.*)]";
+        Pattern pattern = Pattern.compile(arrayPattern);
+        Matcher matcher = pattern.matcher(type);
+        if(matcher.find()) {
+            Integer size = Integer.parseInt(matcher.group(1)); // TODO: how to check bounds?
+            type = matcher.group(2);
+            return Array(Int(), createType(type));
+        }
+
         switch(type) {
+            case "i64":
             case "i32":
             case "i16":
             case "i8":
@@ -46,6 +61,7 @@ public class Utils {
         }
 
         switch(arguments[0]) {
+            case "i64":
             case "i32":
             case "i16":
             case "i8":

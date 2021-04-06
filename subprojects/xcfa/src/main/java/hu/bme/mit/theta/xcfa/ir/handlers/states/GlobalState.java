@@ -36,6 +36,8 @@ public class GlobalState {
             builder.getGlobalVars().put(variable, Optional.of(createConstant(globalVariable.get3())));
         }
 
+        procedures.addAll(ssa.getFunctions());
+
         XcfaProcess.Builder mainProcBuilder = XcfaProcess.builder();
         mainProcBuilder.setName("main");
         processes.put(mainProcBuilder.getName(), mainProcBuilder);

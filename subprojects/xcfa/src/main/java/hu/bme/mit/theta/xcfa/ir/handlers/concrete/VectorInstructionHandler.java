@@ -26,6 +26,7 @@ public class VectorInstructionHandler extends BaseInstructionHandler {
     }
 
     private void insertelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+
         throw new RuntimeException("Not yet implemented!");
     }
 

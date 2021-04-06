@@ -19,6 +19,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.arguments.StringArgument;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
+import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
@@ -131,6 +132,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 cast(expr2, expr1.getType())));
     }
 
+    // Phi nodes are the only possible place where an argument might not be known yet.
     private void phi(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Optional<RegArgument> retVar = instruction.getRetVar();
         checkState(retVar.isPresent(), "Return var must be present!");
@@ -144,7 +146,14 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
             Tuple3<XcfaLocation, XcfaLocation, List<Stmt>> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>()));
             checkState(phiVar.getType() == value.getType(), "phiVar and value has to be of the same type!");
-            val.get3().add(Assign(cast(phiVar, phiVar.getType()), cast(value.getExpr(functionState.getValues()), phiVar.getType())));
+            Stmt stmt;
+            Expr<?> expr;
+            if((expr = value.getExpr(functionState.getValues())) != null) {
+                stmt = Assign(cast(phiVar, phiVar.getType()), cast(expr, phiVar.getType()));
+            } else {
+                stmt = PlaceholderAssignmentStmt.of(phiVar, value);
+            }
+            val.get3().add(stmt);
             functionState.getInterBlockEdges().put(key, val);
         }
     }

@@ -7,6 +7,7 @@ import java.util.List;
 public class InstructionHandlerManager {
 
     private static final List<Class<? extends InstructionHandler>> defaultInstructionHandlers = List.of(
+            ArrayIntrinsicsHandler.class,
             TerminatorInstructionHandler.class,
             UnaryInstructionHandler.class,
             BinaryInstructionHandler.class,

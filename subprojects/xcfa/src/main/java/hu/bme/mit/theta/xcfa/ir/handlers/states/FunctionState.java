@@ -7,11 +7,13 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.CallStmt;
+import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -80,7 +82,13 @@ public class FunctionState {
 
     public void finalizeFunctionState(BuiltState builtState) {
         interBlockEdges.forEach((_obj, edgeTup) -> {
-            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), edgeTup.get3());
+            List<Stmt> stmts = edgeTup.get3().stream().map(stmt -> {
+                if(stmt instanceof PlaceholderAssignmentStmt) {
+                    return ((PlaceholderAssignmentStmt<?>) stmt).toAssignStmt(getValues());
+                }
+                return stmt;
+            }).collect(Collectors.toUnmodifiableList());
+            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), stmts);
             procedureBuilder.addEdge(edge);
         });
     }
