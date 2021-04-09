@@ -29,10 +29,7 @@ import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.stateless.StatelessMC;
 import hu.bme.mit.theta.xcfa.analysis.stateless.XcfaStatelessSettings;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 
 public class XcfaCli {
@@ -107,7 +104,11 @@ public class XcfaCli {
 				return;
 			} else if (printcfa) {
 				CFA cfa = xcfa.createCFA();
-				System.out.println(cfa);
+				File cfafile = new File(model.getAbsolutePath() + ".cfa");
+				try(BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))){
+					bw.write(cfa.toString());
+				}
+//				System.out.println(cfa);
 				System.out.println("PARSING SUCCESSFUL");
 				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
 				System.out.println("CFA-data varCount " + cfa.getVars().size());
