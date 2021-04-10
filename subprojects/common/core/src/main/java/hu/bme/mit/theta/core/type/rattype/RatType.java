@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public final class RatType
-		implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType>, Castable<RatType>{
+		implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType>{
 
 	private static final RatType INSTANCE = new RatType();
 	private static final int HASH_SEED = 385863;
@@ -112,13 +112,4 @@ public final class RatType
 		return RatExprs.Geq(leftOp, rightOp);
 	}
 
-	@Override
-	public <TargetType extends Type> Expr<TargetType> Cast(Expr<RatType> op, TargetType type) {
-		if (type instanceof IntType) {
-			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) RatExprs.ToInt(op);
-			return result;
-		} else {
-			throw new ClassCastException("Int cannot be cast to " + type);
-		}
-	}
 }

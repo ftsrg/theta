@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -26,7 +27,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public final class RatToIntExpr extends CastExpr<RatType, IntType> {
+public final class RatToIntExpr extends UnaryExpr<RatType, IntType> {
 
 	private static final int HASH_SEED = 4828;
 	private static final String OPERATOR_LABEL = "to_int";
