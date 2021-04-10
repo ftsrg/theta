@@ -18,8 +18,6 @@ package hu.bme.mit.theta.core.type.rattype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
