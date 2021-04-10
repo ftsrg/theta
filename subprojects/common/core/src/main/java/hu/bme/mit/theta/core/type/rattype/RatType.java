@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.abstracttype.Additive;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 
 public final class RatType
 		implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType>{

@@ -101,7 +101,21 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.*;
+import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
+import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class ExprSimplifier {
 
