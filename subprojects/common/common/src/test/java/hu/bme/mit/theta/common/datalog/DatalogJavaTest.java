@@ -17,8 +17,6 @@ package hu.bme.mit.theta.common.datalog;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
-import hu.bme.mit.theta.common.datalog.Datalog;
-import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -38,6 +36,8 @@ public final class DatalogJavaTest {
 	private final Datalog.Relation edge;
 	private final Datalog.Relation successor;
 	private final Datalog.Relation reflexive;
+	private Node firstSubgraph1;
+	private Node secondSubgraph1;
 
 	public DatalogJavaTest() {
 		datalog = Datalog.createProgram();
@@ -55,27 +55,24 @@ public final class DatalogJavaTest {
 		reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
 	}
 
-	private Node firstSubgraph1;
-	private Node secondSubgraph1;
-
 	@Test
 	public void testInitial() {
 		List<Node> firstSubgraph = new ArrayList<>();
-		for(int i = 0; i < 10; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			firstSubgraph.add(new Node('A', i));
-			if(i > 0) {
+			if (i > 0) {
 				edge.addFact(TupleN.of(firstSubgraph.get(i - 1), firstSubgraph.get(i)));
 			}
 		}
 		List<Node> secondSubgraph = new ArrayList<>();
-		for(int i = 0; i < 15; ++i) {
+		for (int i = 0; i < 15; ++i) {
 			secondSubgraph.add(new Node('B', i));
-			if(i > 0) {
+			if (i > 0) {
 				edge.addFact(TupleN.of(secondSubgraph.get(i - 1), secondSubgraph.get(i)));
 			}
 		}
 		assertEquals(0, reflexive.getElements().size());
-		assertEquals(45+105, successor.getElements().size());
+		assertEquals(45 + 105, successor.getElements().size());
 		firstSubgraph1 = firstSubgraph.get(0);
 		secondSubgraph1 = secondSubgraph.get(0);
 	}
@@ -85,10 +82,10 @@ public final class DatalogJavaTest {
 		testInitial();
 		edge.addFact(TupleN.of(firstSubgraph1, secondSubgraph1));
 		assertEquals(0, reflexive.getElements().size());
-		assertEquals(45+105+15, successor.getElements().size());
+		assertEquals(45 + 105 + 15, successor.getElements().size());
 		edge.addFact(TupleN.of(firstSubgraph1, firstSubgraph1));
 		assertEquals(1, reflexive.getElements().size());
-		assertEquals(45+105+15+1, successor.getElements().size());
+		assertEquals(45 + 105 + 15 + 1, successor.getElements().size());
 	}
 
 	private static class Node implements DatalogArgument {

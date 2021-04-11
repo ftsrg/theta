@@ -26,7 +26,7 @@ public final class TupleN<T> extends Tuple {
 	}
 
 	@SafeVarargs
-	public static <T> TupleN<T> of(final T ... content) {
+	public static <T> TupleN<T> of(final T... content) {
 		return new TupleN<T>(ImmutableList.copyOf(content));
 	}
 
@@ -36,27 +36,32 @@ public final class TupleN<T> extends Tuple {
 
 	public static <T> TupleN<T> of(final Tuple2<T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
+
 	public static <T> TupleN<T> of(final Tuple3<T, T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
+
 	public static <T> TupleN<T> of(final Tuple4<T, T, T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
+
 	public static <T> TupleN<T> of(final Tuple5<T, T, T, T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
+
 	public static <T> TupleN<T> of(final Tuple6<T, T, T, T, T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
+
 	public static <T> TupleN<T> of(final Tuple7<T, T, T, T, T, T, T> tuple) {
 		@SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
-		return ret; 
+		return ret;
 	}
 
 	public T get(int i) {

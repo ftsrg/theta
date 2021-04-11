@@ -15,16 +15,16 @@
  */
 package hu.bme.mit.theta.common.datalog;
 
-import hu.bme.mit.theta.common.datalog.Datalog;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +37,7 @@ public final class DatalogStringTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 				{"succ"},
-				{"trains"}	//this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
+				{"trains"}    //this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
 		});
 	}
 
