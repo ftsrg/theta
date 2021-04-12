@@ -112,6 +112,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.util.List;
@@ -193,6 +194,8 @@ final class Z3ExprTransformer {
 				.addCase(RatLeqExpr.class, this::transformRatLeq)
 
 				.addCase(RatLtExpr.class, this::transformRatLt)
+
+				.addCase(RatToIntExpr.class, this::transformRatToInt)
 
 				// Integers
 
@@ -520,6 +523,11 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 		return context.mkLt(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformRatToInt(final RatToIntExpr expr) {
+		final com.microsoft.z3.RealExpr opTerm = (com.microsoft.z3.RealExpr) toTerm(expr.getOp());
+		return context.mkReal2Int(opTerm);
 	}
 
 	/*

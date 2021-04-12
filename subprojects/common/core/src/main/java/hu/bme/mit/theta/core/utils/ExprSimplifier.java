@@ -114,6 +114,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class ExprSimplifier {
@@ -159,6 +160,8 @@ public final class ExprSimplifier {
 			.addCase(RatLeqExpr.class, ExprSimplifier::simplifyRatLeq)
 
 			.addCase(RatLtExpr.class, ExprSimplifier::simplifyRatLt)
+
+			.addCase(RatToIntExpr.class, ExprSimplifier::simplifyRatToInt)
 
 			// Integer
 
@@ -758,6 +761,17 @@ public final class ExprSimplifier {
 		}
 
 		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<IntType> simplifyRatToInt(final RatToIntExpr expr, final Valuation val) {
+		final Expr<RatType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof RatLitExpr) {
+			final RatLitExpr litOp = (RatLitExpr) op;
+			return litOp.toInt();
+		}
+
+		return expr.with(op);
 	}
 
 	/*

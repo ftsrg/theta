@@ -156,4 +156,7 @@ public final class RatExprs {
 		return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
+    public static RatToIntExpr ToInt(Expr<RatType> op) {
+		return RatToIntExpr.of(op);
+    }
 }

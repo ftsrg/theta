@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 
 import java.math.BigInteger;
 
@@ -186,4 +187,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 		return this.getNum().multiply(that.getDenom()).compareTo(this.getDenom().multiply(that.getNum()));
 	}
 
+    public IntLitExpr toInt() {
+		return IntLitExpr.of(num.divide(denom));
+    }
 }
