@@ -24,8 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.utils.StmtApplier;
-import hu.bme.mit.theta.analysis.utils.StmtApplier.ApplyResult;
+import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.model.MutableValuation;
