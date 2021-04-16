@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 
 public class EncodingTest {
@@ -30,7 +30,7 @@ public class EncodingTest {
 	}
 
 	private Set<String> getNextLocs(CfaLts lts, String loc) {
-		Set<String> locs = new HashSet<>();
+		Set<String> locs = Containers.createSet();
 		SS ss = new SS();
 		for (var act : lts.getEnabledActionsFor(CfaState.of(getLocByName(loc), ss))) {
 			locs.add(act.getTarget().getName());

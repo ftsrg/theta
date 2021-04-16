@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
@@ -42,7 +42,7 @@ public final class ARG<S extends State, A extends Action> {
 	final PartialOrd<S> partialOrd;
 
 	private ARG(final PartialOrd<S> partialOrd) {
-		initNodes = new HashSet<>();
+		initNodes = Containers.createSet();
 		this.partialOrd = partialOrd;
 		this.initialized = false;
 	}

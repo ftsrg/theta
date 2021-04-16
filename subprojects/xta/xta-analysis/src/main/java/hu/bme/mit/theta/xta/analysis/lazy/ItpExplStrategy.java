@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Analysis;
@@ -106,7 +106,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 		final ExplState concreteExpl = itpExplState.getConcrState();
 		final ExplState abstractExpl = itpExplState.getAbstrState();
 
-		final Collection<Decl<?>> newVars = new HashSet<>();
+		final Collection<Decl<?>> newVars = Containers.createSet();
 		newVars.addAll(interpolant.getDecls());
 		newVars.addAll(abstractExpl.getDecls());
 		final ImmutableValuation.Builder builder = ImmutableValuation.builder();

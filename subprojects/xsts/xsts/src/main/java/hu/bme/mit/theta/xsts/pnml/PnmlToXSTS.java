@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.pnml;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
@@ -31,7 +32,7 @@ public class PnmlToXSTS {
 	}
 
 	public static XSTS createXSTS(final PnmlNet net, final InputStream propStream){
-		final Map<String, VarDecl<IntType>> placeIdToVar = new HashMap<>();
+		final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
 
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 		// Create a variable for each place and initialize them

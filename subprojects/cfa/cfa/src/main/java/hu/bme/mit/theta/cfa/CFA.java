@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -176,7 +177,7 @@ public final class CFA {
 		private boolean built;
 
 		private Builder() {
-			locs = new HashSet<>();
+			locs = Containers.createSet();
 			edges = new LinkedList<>();
 			built = false;
 		}

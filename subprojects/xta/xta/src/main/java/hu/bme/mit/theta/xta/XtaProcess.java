@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xta;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -44,7 +45,7 @@ public final class XtaProcess {
     private XtaProcess(final XtaSystem system, final String name) {
         this.system = checkNotNull(system);
         this.name = checkNotNull(name);
-        locs = new HashSet<>();
+        locs = Containers.createSet();
         edges = new ArrayList<>();
 
         unmodLocs = Collections.unmodifiableCollection(locs);

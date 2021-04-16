@@ -10,8 +10,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -20,9 +20,9 @@ public final class CfaInitPrecs {
     private CfaInitPrecs() {}
 
     public static LocalCfaPrec<PredPrec> collectAssumesLocal(CFA cfa) {
-        Map<CFA.Loc, PredPrec> precs = new HashMap<>();
+        Map<CFA.Loc, PredPrec> precs = Containers.createMap();
         for (CFA.Loc l : cfa.getLocs()) {
-            Set<Expr<BoolType>> exprs = new HashSet<>();
+            Set<Expr<BoolType>> exprs = Containers.createSet();
             for (CFA.Edge e : l.getInEdges()) {
                 CFA.Edge running = e;
                 while (running != null) {
@@ -42,7 +42,7 @@ public final class CfaInitPrecs {
     }
 
     public static GlobalCfaPrec<PredPrec> collectAssumesGlobal(CFA cfa) {
-        Set<Expr<BoolType>> assumes = new HashSet<>();
+        Set<Expr<BoolType>> assumes = Containers.createSet();
         for (CFA.Edge e : cfa.getEdges()) {
             if (e.getStmt() instanceof AssumeStmt) {
                 AssumeStmt assumeStmt = (AssumeStmt)e.getStmt();

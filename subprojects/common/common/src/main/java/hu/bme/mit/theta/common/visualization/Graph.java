@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -44,7 +44,7 @@ public final class Graph {
 	public Graph(final String id, final String label) {
 		this.id = checkNotNull(id);
 		this.label = checkNotNull(label);
-		this.nodes = new HashMap<>();
+		this.nodes = Containers.createMap();
 		this.edges = new ArrayList<>();
 	}
 

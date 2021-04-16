@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +64,7 @@ public final class ExprUtils {
 	 * @return Set of atoms
 	 */
 	public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
-		final Set<Expr<BoolType>> atoms = new HashSet<>();
+		final Set<Expr<BoolType>> atoms = Containers.createSet();
 		collectAtoms(expr, atoms);
 		return atoms;
 	}
@@ -143,7 +143,7 @@ public final class ExprUtils {
 	 * @return Set of variables appearing in the expression
 	 */
 	public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		collectVars(expr, vars);
 		return vars;
 	}
@@ -155,7 +155,7 @@ public final class ExprUtils {
 	 * @return Set of variables appearing in the expressions
 	 */
 	public static Set<VarDecl<?>> getVars(final Iterable<? extends Expr<?>> exprs) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		collectVars(exprs, vars);
 		return vars;
 	}

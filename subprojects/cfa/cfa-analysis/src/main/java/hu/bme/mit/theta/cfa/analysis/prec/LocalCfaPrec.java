@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cfa.analysis.prec;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -80,7 +80,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 	public LocalCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {
 		checkNotNull(refinedPrecs);
 
-		final Map<Loc, P> refinedMapping = new HashMap<>(this.mapping);
+		final Map<Loc, P> refinedMapping = Containers.createMap(this.mapping);
 
 		for (final Entry<Loc, P> entry : refinedPrecs.entrySet()) {
 			final Loc loc = entry.getKey();

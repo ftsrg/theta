@@ -17,13 +17,13 @@ package hu.bme.mit.theta.analysis.utils;
 
 import java.awt.Color;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
@@ -76,7 +76,7 @@ public final class TraceVisualizer<S extends State, A extends Action> {
 	public Graph visualizeMerged(final Collection<? extends Trace<? extends S, ? extends A>> traces) {
 		final Graph graph = new Graph(TRACE_ID, TRACE_LABEL);
 
-		final Map<S, String> stateIds = new HashMap<>();
+		final Map<S, String> stateIds = Containers.createMap();
 
 		for (final Trace<? extends S, ? extends A> trace : traces) {
 			for (final S state : trace.getStates()) {

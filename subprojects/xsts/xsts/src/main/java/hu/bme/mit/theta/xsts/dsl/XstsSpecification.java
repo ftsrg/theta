@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.ParseException;
@@ -45,8 +46,8 @@ public class XstsSpecification implements DynamicScope {
 	public XSTS instantiate(){
 		final Env env = new Env();
 
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = new HashMap<>();
-		final Set<VarDecl<?>> ctrlVars = new HashSet<>();
+		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = Containers.createMap();
+		final Set<VarDecl<?>> ctrlVars = Containers.createSet();
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 
 		for(var typeDeclContext: context.typeDeclarations){
