@@ -75,6 +75,9 @@ public class XstsCli {
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
+	@Parameter(names = "--optimizestmts", description = "Turn statement optimization on or off")
+	OptimizeStmts optimizeStmts = OptimizeStmts.ON;
+
 	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
 	Logger.Level logLevel = Logger.Level.SUBSTEP;
 
@@ -199,7 +202,7 @@ public class XstsCli {
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.maxEnum(maxEnum).maxPredCount(maxPredCount).initPrec(initPrec).pruneStrategy(pruneStrategy)
-					.search(search).predSplit(predSplit).logger(logger).build(xsts);
+					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}

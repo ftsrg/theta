@@ -1,5 +1,6 @@
-package hu.bme.mit.theta.analysis;
+package hu.bme.mit.theta.analysis.stmtoptimizer;
 
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 public interface StmtOptimizer<S extends State>{

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.prod2.prod2explpred;
 
-import hu.bme.mit.theta.analysis.StmtOptimizer;
+import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;

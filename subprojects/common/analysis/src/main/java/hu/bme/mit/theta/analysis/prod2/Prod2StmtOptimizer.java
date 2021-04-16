@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.prod2;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.StmtOptimizer;
+import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 public class Prod2StmtOptimizer<S1 extends State, S2 extends State> implements StmtOptimizer<Prod2State<S1,S2>> {

@@ -18,6 +18,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
+import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -38,7 +39,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 public class XstsConfigBuilder {
 
 	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, PROD, PROD_AUTO
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, PROD
 	}
 
 	public enum Refinement {
@@ -89,6 +90,10 @@ public class XstsConfigBuilder {
 
 	}
 
+	public enum OptimizeStmts {
+		ON, OFF
+	}
+
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory solverFactory;
 	private final Domain domain;
@@ -99,6 +104,7 @@ public class XstsConfigBuilder {
 	private int maxPredCount = 0;
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
 
 	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -141,12 +147,23 @@ public class XstsConfigBuilder {
 		return this;
 	}
 
+	public XstsConfigBuilder optimizeStmts(final OptimizeStmts optimizeStmts) {
+		this.optimizeStmts = optimizeStmts;
+		return this;
+	}
+
 	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final Expr<BoolType> negProp = Not(xsts.getProp());
 
 		if (domain == Domain.EXPL) {
-			final LTS<XstsState<ExplState>, XstsAction> lts = XstsLts.create(xsts,XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
+			final LTS<XstsState<ExplState>, XstsAction> lts;
+			if(optimizeStmts == OptimizeStmts.ON){
+				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
+			} else {
+				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
+			}
+
 			final Predicate<XstsState<ExplState>> target = new XstsStatePredicate<ExplStatePredicate, ExplState>(new ExplStatePredicate(negProp, solver));
 			final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver, xsts.getInitFormula(), maxEnum));
 			final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
@@ -204,7 +221,14 @@ public class XstsConfigBuilder {
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
-			final LTS<XstsState<PredState>, XstsAction> lts = XstsLts.create(xsts,XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
+
+			final LTS<XstsState<PredState>, XstsAction> lts;
+			if(optimizeStmts == OptimizeStmts.ON){
+				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
+			} else {
+				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
+			}
+
 			final Predicate<XstsState<PredState>> target = new XstsStatePredicate<ExprStatePredicate, PredState>(new ExprStatePredicate(negProp, solver));
 			final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis.create(PredAnalysis.create(solver, predAbstractor,
 					xsts.getInitFormula()));
@@ -248,11 +272,17 @@ public class XstsConfigBuilder {
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
-		} else if (domain == Domain.PROD || domain==domain.PROD_AUTO) {
-			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
-					Prod2ExplPredStmtOptimizer.create(
-							ExplStmtOptimizer.getInstance()
-					)));
+		} else if (domain == Domain.PROD) {
+			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts;
+			if(optimizeStmts == OptimizeStmts.ON){
+				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
+						Prod2ExplPredStmtOptimizer.create(
+								ExplStmtOptimizer.getInstance()
+						)));
+			} else {
+				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
+			}
+
 			final PredAbstractors.PredAbstractor predAbstractor = PredAbstractors.cartesianAbstractor(solver);
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, solver));
 			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis
@@ -272,18 +302,7 @@ public class XstsConfigBuilder {
 			Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
 			final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
-			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner;
-			switch (domain) {
-				case PROD:
-					precRefiner = ItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter);
-					break;
-				case PROD_AUTO:
-					precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, maxPredCount);
-					break;
-				default:
-					throw new UnsupportedOperationException(
-							"Unknown domain " + domain);
-			}
+			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, maxPredCount);
 
 			switch (refinement) {
 				case FW_BIN_ITP:

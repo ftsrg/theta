@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.utils;
+package hu.bme.mit.theta.analysis.stmtoptimizer;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.Decl;
