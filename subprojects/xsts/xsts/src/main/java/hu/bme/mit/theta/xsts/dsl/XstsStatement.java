@@ -114,23 +114,15 @@ public class XstsStatement {
 
 		@Override
 		public Stmt visitLoopStmt(LoopStmtContext ctx) {
-			final Expr<IntType> iterations = cast(new XstsExpression(currentScope, typeTable, ctx.iter).instantiate(env),Int());
+			final String loopVarId = ctx.loopVar.getText();
+			final Symbol loopVarSymbol = currentScope.resolve(loopVarId).get();
+			@SuppressWarnings("unchecked") final VarDecl<IntType> var = (VarDecl<IntType>) env.eval(loopVarSymbol);
+
+			final Expr<IntType> from = cast(new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env),Int());
+			final Expr<IntType> to = cast(new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env),Int());
 			final Stmt stmt = ctx.subStmt.accept(this);
-			return LoopStmt.of(stmt,iterations);
-		}
 
-		@Override
-		public Stmt visitSeqStmt(SeqStmtContext ctx) {
-			if(ctx.stmts.size()==0) return SkipStmt.getInstance();
-			if(ctx.stmts.size()==1) return ctx.stmt.accept(this);
-
-			final List<Stmt> stmts = new ArrayList<>();
-			for(var stmtCtx: ctx.stmts){
-				final Stmt stmt = stmtCtx.accept(this);
-				stmts.add(stmt);
-			}
-			return SequenceStmt.of(stmts);
-
+			return LoopStmt.of(stmt,var,from,to);
 		}
 
 		@Override
@@ -164,9 +156,16 @@ public class XstsStatement {
 		@Override
 		public Stmt visitBlockStmt(BlockStmtContext ctx) {
 			push();
-			final Stmt subStmt = ctx.subStmt.accept(this);
+			if(ctx.stmts.size()==0) return SkipStmt.getInstance();
+			if(ctx.stmts.size()==1) return ctx.stmt.accept(this);
+
+			final List<Stmt> stmts = new ArrayList<>();
+			for(var stmtCtx: ctx.stmts){
+				final Stmt stmt = stmtCtx.accept(this);
+				stmts.add(stmt);
+			}
 			pop();
-			return subStmt;
+			return SequenceStmt.of(stmts);
 		}
 
 	}

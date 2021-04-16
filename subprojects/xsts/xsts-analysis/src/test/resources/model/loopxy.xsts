@@ -7,10 +7,9 @@ trans {
         x:=3;
     }
     local var y: integer = 0;
-    loop (x*x/x){
-        y:=y+1;
-    }
-    loop (y){
+    local var i: integer;
+    for i from 1 to x*x/x+1 do y:=y+1;
+    for i from 1 to y+1 do {
         x:=x-1;
     }
 }
