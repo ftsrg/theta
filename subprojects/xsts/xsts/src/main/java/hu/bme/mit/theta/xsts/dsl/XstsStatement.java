@@ -4,6 +4,7 @@ import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -114,15 +115,22 @@ public class XstsStatement {
 
 		@Override
 		public Stmt visitLoopStmt(LoopStmtContext ctx) {
+			push();
+
 			final String loopVarId = ctx.loopVar.getText();
-			final Symbol loopVarSymbol = currentScope.resolve(loopVarId).get();
-			@SuppressWarnings("unchecked") final VarDecl<IntType> var = (VarDecl<IntType>) env.eval(loopVarSymbol);
+			if(currentScope.resolve(loopVarId).isPresent()) throw new ParseException(ctx,String.format("Loop variable %s is already declared in this scope.",loopVarId));
+			final var decl = Decls.Var(loopVarId,Int());
+			final Symbol symbol = DeclSymbol.of(decl);
+			currentScope.declare(symbol);
+			env.define(symbol, decl);
 
 			final Expr<IntType> from = cast(new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env),Int());
 			final Expr<IntType> to = cast(new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env),Int());
 			final Stmt stmt = ctx.subStmt.accept(this);
 
-			return LoopStmt.of(stmt,var,from,to);
+			pop();
+
+			return LoopStmt.of(stmt,decl,from,to);
 		}
 
 		@Override
