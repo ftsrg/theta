@@ -53,6 +53,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 import static org.junit.Assert.assertEquals;
 
 import hu.bme.mit.theta.common.Tuple2;
@@ -253,6 +254,16 @@ public class EvaluationTest {
 		assertEquals(Int(0), evaluate(Rem(Int(-3), Int(-3))));
 		assertEquals(Int(0), evaluate(Rem(Int(-3), Int(3))));
 		assertEquals(Int(0), evaluate(Rem(Int(3), Int(3))));
+	}
+
+	@Test
+	public void testRatToInt() {
+		assertEquals(Int(1), evaluate(ToInt(Rat(4, 3))));
+		assertEquals(Int(1), evaluate(ToInt(Rat(3, 3))));
+		assertEquals(Int(0), evaluate(ToInt(Rat(2, 3))));
+		assertEquals(Int(-1), evaluate(ToInt(Rat(-4, 3))));
+		assertEquals(Int(-1), evaluate(ToInt(Rat(4, -3))));
+		assertEquals(Int(1), evaluate(ToInt(Rat(-4, -3))));
 	}
 
 	// rattype

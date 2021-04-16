@@ -74,6 +74,7 @@ import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
@@ -108,6 +109,7 @@ final class Z3TermTransformer {
 		environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
 		environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
 		environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
+		environment.put("to_int", exprUnaryOperator(RatToIntExpr::create));
 		environment.put("mod", exprBinaryOperator(IntModExpr::create));
 	}
 

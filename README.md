@@ -94,6 +94,6 @@ Supporters of the Theta project are listed below.
 * [Gedeon Richter’s](https://www.richter.hu/en-US/Pages/default.aspx) Talentum Foundation
 * Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2016](http://www.emet.gov.hu/felhivasok/nemzeti_tehetseg_program212/) (NTP-NFTÖ-16)
 * Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2018](http://www.emet.gov.hu/felhivasok/felhivas46/) (NTP-NFTÖ-18)
-* [CECRIS project](http://www.cecris-project.eu/)
-* [R5-COP project](http://www.r5-cop.eu/)
-* [Arrowhead Tools project](https://www.arrowhead.eu/arrowheadtools)
+* [CECRIS project](http://www.cecris-project.eu/) (EU FP7 324334)
+* [R5-COP project](http://www.r5-cop.eu/) (EU FP7 ARTEMIS 621447 and NRDI Fund NEMZ_12-1-2014-0003)
+* [Arrowhead Tools project](https://www.arrowhead.eu/arrowheadtools) (EU ECSEL 826452 and NRDI Fund 2019-2.1.3-NEMZ_ECSEL-2019-00003)
