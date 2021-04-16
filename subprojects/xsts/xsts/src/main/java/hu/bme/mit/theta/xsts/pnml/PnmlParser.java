@@ -119,7 +119,8 @@ public class PnmlParser {
 			checkNotNull(source,"Target node not found of arc "+id);
 
 			final XPathExpression toolspecificWeightExpr = xPath.compile("./toolspecific/weight/text()");
-			final int weight = ((Double) toolspecificWeightExpr.evaluate(arcElement,XPathConstants.NUMBER)).intValue();
+			final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,XPathConstants.NUMBER)).intValue();
+			final int weight = toolspecificWeight==0?1:toolspecificWeight;
 
 			final PnmlArc arc = new PnmlArc(id,weight,source,target);
 			source.addOutArc(arc);
