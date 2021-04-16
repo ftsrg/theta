@@ -13,12 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.utils;
+package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static hu.bme.mit.theta.analysis.utils.StmtApplier.ApplyResult.BOTTOM;
-import static hu.bme.mit.theta.analysis.utils.StmtApplier.ApplyResult.FAILURE;
-import static hu.bme.mit.theta.analysis.utils.StmtApplier.ApplyResult.SUCCESS;
+import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.BOTTOM;
+import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.FAILURE;
+import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.SUCCESS;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
@@ -34,13 +34,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import hu.bme.mit.theta.analysis.expl.StmtApplier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.analysis.utils.StmtApplier.ApplyResult;
+import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;

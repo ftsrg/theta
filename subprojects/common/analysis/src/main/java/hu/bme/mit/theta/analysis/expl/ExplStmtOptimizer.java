@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.analysis.StmtOptimizer;
-import hu.bme.mit.theta.analysis.utils.StmtUnroller;
+import hu.bme.mit.theta.analysis.utils.StmtSimplifier;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 public class ExplStmtOptimizer implements StmtOptimizer<ExplState> {
@@ -18,6 +18,6 @@ public class ExplStmtOptimizer implements StmtOptimizer<ExplState> {
 
     @Override
     public Stmt optimizeStmt(final ExplState state, final Stmt stmt) {
-        return StmtUnroller.unrollStmt(state,stmt);
+        return StmtSimplifier.simplifyStmt(state,stmt);
     }
 }
