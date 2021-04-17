@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cfa.analysis.prec;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -59,7 +59,7 @@ public final class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P 
 		// joining them to the old precision of the location
 
 		final LocalCfaPrec<P> genPrec = (LocalCfaPrec<P>) prec;
-		final Map<Loc, P> runningPrecs = new HashMap<>();
+		final Map<Loc, P> runningPrecs = Containers.createMap();
 		for (final CfaState<S> state : trace.getStates()) {
 			runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));
 		}

@@ -46,6 +46,7 @@ import com.microsoft.z3.*;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -88,7 +89,7 @@ final class Z3TermTransformer {
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
 
-		environment = new HashMap<>();
+		environment = Containers.createMap();
 		environment.put("true", exprNullaryOperator(TrueExpr::getInstance));
 		environment.put("false", exprNullaryOperator(FalseExpr::getInstance));
 		environment.put("not", exprUnaryOperator(NotExpr::create));

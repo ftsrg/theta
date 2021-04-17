@@ -17,7 +17,7 @@ package hu.bme.mit.theta.sts.aiger.utils;
 
 import static java.lang.System.lineSeparator;
 
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
@@ -73,7 +73,7 @@ public final class AigerVisualizer {
 	}
 
 	private static void appendWires(final AigerSystem system, final StringBuilder sb) {
-		final Set<AigerWire> wires = new HashSet<>();
+		final Set<AigerWire> wires = Containers.createSet();
 		system.getNodes().forEach(n -> wires.addAll(n.getInWires()));
 		system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
 		wires.addAll(system.getOutput().getInWires());

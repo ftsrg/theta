@@ -15,12 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.reachedset;
 
+import hu.bme.mit.theta.common.container.Containers;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -33,7 +34,7 @@ public final class Partition<T, K> {
 
 	private Partition(final Function<? super T, ? extends K> projection) {
 		this.projection = checkNotNull(projection);
-		classes = new HashMap<>();
+		classes = Containers.createMap();
 	}
 
 	public static <T, K> Partition<T, K> of(final Function<? super T, ? extends K> projection) {

@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.Optional;
 
@@ -59,8 +59,8 @@ public final class BoundFunc {
 
 	public BoundFunc merge(final BoundFunc that) {
 		checkNotNull(that);
-		final Map<VarDecl<RatType>, Integer> varToLower = new HashMap<>(this.varToLower);
-		final Map<VarDecl<RatType>, Integer> varToUpper = new HashMap<>(this.varToUpper);
+		final Map<VarDecl<RatType>, Integer> varToLower = Containers.createMap(this.varToLower);
+		final Map<VarDecl<RatType>, Integer> varToUpper = Containers.createMap(this.varToUpper);
 
 		that.varToLower.forEach((c, b) -> varToLower.merge(c, b, Integer::max));
 		that.varToUpper.forEach((c, b) -> varToUpper.merge(c, b, Integer::max));
@@ -160,14 +160,14 @@ public final class BoundFunc {
 
 		private Builder() {
 			this.boundFunction = null;
-			this.varToLower = new HashMap<>();
-			this.varToUpper = new HashMap<>();
+			this.varToLower = Containers.createMap();
+			this.varToUpper = Containers.createMap();
 		}
 
 		private Builder(final BoundFunc boundFunction) {
 			this.boundFunction = null;
-			this.varToLower = new HashMap<>(boundFunction.varToLower);
-			this.varToUpper = new HashMap<>(boundFunction.varToUpper);
+			this.varToLower = Containers.createMap(boundFunction.varToLower);
+			this.varToUpper = Containers.createMap(boundFunction.varToUpper);
 		}
 
 		public Builder remove(final VarDecl<RatType> varDecl) {

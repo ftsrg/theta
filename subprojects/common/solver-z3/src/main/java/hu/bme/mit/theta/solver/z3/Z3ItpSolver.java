@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +102,7 @@ final class Z3ItpSolver implements ItpSolver {
 			itpList.add(itpExpr);
 		}
 
-		final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
+		final Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
 		buildItpMapFormList(pattern, itpList, itpMap);
 
 		return new Z3Interpolant(itpMap);

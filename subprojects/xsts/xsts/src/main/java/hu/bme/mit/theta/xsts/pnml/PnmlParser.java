@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.pnml;
 
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -47,7 +48,7 @@ public class PnmlParser {
 		checkArgument(netList.getLength()==1,"Pnml model contains multiple nets");
 		final Element netElement = (Element) netList.item(0);
 
-		final Map<String, PnmlNode> idToNodeMap = new HashMap<>();
+		final Map<String, PnmlNode> idToNodeMap = Containers.createMap();
 		final List<PnmlPlace> places = new ArrayList<>();
 		final List<PnmlTransition> transitions = new ArrayList<>();
 

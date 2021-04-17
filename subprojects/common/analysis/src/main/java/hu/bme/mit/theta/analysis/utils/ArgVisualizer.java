@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 import java.awt.Color;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -78,7 +78,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 	public Graph visualize(final ARG<? extends S, ? extends A> arg) {
 		final Graph graph = new Graph(ARG_ID, ARG_LABEL);
 
-		final Set<ArgNode<? extends S, ? extends A>> traversed = new HashSet<>();
+		final Set<ArgNode<? extends S, ? extends A>> traversed = Containers.createSet();
 
 		for (final ArgNode<? extends S, ? extends A> initNode : arg.getInitNodes().collect(Collectors.toSet())) {
 			traverse(graph, initNode, traversed);

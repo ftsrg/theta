@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.sts.aiger.utils;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -45,7 +45,7 @@ public final class AigerCoi {
 	}
 
 	private static Set<AigerNode> getReachableNodes(final AigerSystem system) {
-		final Set<AigerNode> reached = new HashSet<>();
+		final Set<AigerNode> reached = Containers.createSet();
 		final Queue<AigerNode> queue = new ArrayDeque<>();
 		queue.add(system.getOutput());
 

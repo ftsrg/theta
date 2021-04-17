@@ -27,11 +27,10 @@ import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+
+import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -351,7 +350,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     private Collection<VarDecl<?>> collectVariablesInTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
-        var variables = new HashSet<VarDecl<?>>();
+        Set<VarDecl<?>> variables = Containers.createSet();
 
         for(var state : trace.getStates()) {
             ExprUtils.collectVars(state.toExpr(), variables);
@@ -507,7 +506,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         futureLiveVariables.set(stateCount - 1, Collections.emptySet());
         for(var i = stateCount - 2; i >= 0; i--) {
-            var vars = new HashSet<>(futureLiveVariables.get(i + 1));
+            var vars = Containers.createSet(futureLiveVariables.get(i + 1));
             vars.addAll(actionReadsVariables(trace.getAction(i)));
             vars.removeAll(actionWritesVariables(trace.getAction(i)));
             vars.removeAll(actionHavocsVariables(trace.getAction(i)));
@@ -523,7 +522,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         pastLiveVariables.set(0, Collections.emptySet());
         for(var i = 1; i < stateCount; i++) {
-            var vars = new HashSet<>(pastLiveVariables.get(i - 1));
+            var vars = Containers.createSet(pastLiveVariables.get(i - 1));
             vars.addAll(actionReadsVariables(trace.getAction(i - 1)));
             vars.addAll(actionWritesVariables(trace.getAction(i - 1)));
             vars.removeAll(actionHavocsVariables(trace.getAction(i - 1)));

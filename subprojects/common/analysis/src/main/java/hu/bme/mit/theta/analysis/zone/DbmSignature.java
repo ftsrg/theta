@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 		final ImmutableList.Builder<VarDecl<RatType>> indexToVarBuilder = ImmutableList.builder();
 		final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder = ImmutableMap.builder();
 
-		final Set<VarDecl<RatType>> addedVars = new HashSet<>();
+		final Set<VarDecl<RatType>> addedVars = Containers.createSet();
 
 		indexToVarBuilder.add(ZeroVar.getInstance());
 		varToIndexBuilder.put(ZeroVar.getInstance(), addedVars.size());

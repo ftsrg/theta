@@ -18,7 +18,7 @@ package hu.bme.mit.theta.core.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Optional;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ public final class NestedSubstitution implements Substitution {
 
 	@Override
 	public Collection<? extends Decl<?>> getDecls() {
-		final Set<Decl<?>> decls = new HashSet<>();
+		final Set<Decl<?>> decls = Containers.createSet();
 		decls.addAll(subst.getDecls());
 		decls.addAll(enclosingSubst.getDecls());
 		return decls;
