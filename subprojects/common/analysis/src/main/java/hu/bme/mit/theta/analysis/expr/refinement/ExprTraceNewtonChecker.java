@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-import org.antlr.v4.codegen.model.Loop;
 
 import java.util.ArrayList;
 import java.util.Collection;

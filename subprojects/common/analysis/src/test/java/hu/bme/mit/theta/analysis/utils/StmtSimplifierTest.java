@@ -40,7 +40,6 @@ public final class StmtSimplifierTest {
     private static final VarDecl<IntType> Y = Var("y", Int());
 
     private static final Tuple2<Decl<?>, LitExpr<?>> X_IS_1 = Tuple2.of(X, Int(1));
-    private static final Tuple2<Decl<?>, LitExpr<?>> X_IS_2 = Tuple2.of(X, Int(2));
     private static final Tuple2<Decl<?>, LitExpr<?>> Y_IS_2 = Tuple2.of(Y, Int(2));
 
     private static final Stmt SKIP = Skip();
