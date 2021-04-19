@@ -17,6 +17,7 @@ import java.math.BigInteger;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class ConversionInstructionHandler extends BaseInstructionHandler {
@@ -120,6 +121,13 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
     }
 
     private void fptoui(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        Argument op = instruction.getArguments().get(0);
+        checkState(op.getType() == RatType.getInstance(), "Only rational values are allowed!");
+        checkState(instruction.getRetVar().isPresent(), "Fptoui must load into a variable");
+
+        Expr<RatType> expr = cast(functionState.getValues().get(op.getName()), Rat());
+        functionState.getValues().put(instruction.getRetVar().get().getName(), );
+
         throw new RuntimeException("Not yet implemented!");
     }
 

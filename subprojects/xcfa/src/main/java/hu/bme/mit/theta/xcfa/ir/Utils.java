@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
@@ -24,6 +25,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class Utils {
+    private static final int doublePrecision = 1 << 8;
 
     public static Type createType(String type) {
         type = type.replaceAll("\\*", "");
@@ -37,6 +39,9 @@ public class Utils {
         }
 
         switch(type) {
+            case "double":
+            case "float":
+                return Rat();
             case "i64":
             case "i32":
             case "i16":
@@ -56,11 +61,14 @@ public class Utils {
     public static LitExpr<? extends Type> createConstant(String value) {
         String[] arguments = value.split(" ");
         if(arguments.length != 2) {
-            System.err.println("Contant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
+            System.err.println("Constant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
             return IntLitExpr.of(BigInteger.ZERO);
         }
 
         switch(arguments[0]) {
+            case "double":
+            case "float":
+                return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(arguments[1]) * doublePrecision)), BigInteger.valueOf(doublePrecision));
             case "i64":
             case "i32":
             case "i16":

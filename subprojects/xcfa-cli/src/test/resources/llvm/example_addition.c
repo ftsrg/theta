@@ -1,6 +1,6 @@
 int main() {
-    int a = 2;
-    int b = 3;
+    volatile float a = 2;
+    volatile double b = 3;
     int c = a+b;
-    return 0;
+    return c;
 }

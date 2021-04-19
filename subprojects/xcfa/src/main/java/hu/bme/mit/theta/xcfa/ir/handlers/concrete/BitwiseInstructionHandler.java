@@ -12,6 +12,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class BitwiseInstructionHandler extends BaseInstructionHandler {
