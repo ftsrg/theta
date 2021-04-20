@@ -87,19 +87,24 @@ public class XstsStatement {
 
 		@Override
 		public Stmt visitAssignStmt(final AssignStmtContext ctx) {
-			final String lhsId = ctx.lhs.getText();
-			final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
-			final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
+			try{
+				final String lhsId = ctx.lhs.getText();
+				final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
+				final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
 
-			final XstsExpression expression = new XstsExpression(currentScope, typeTable, ctx.value);
-			final Expr<?> expr = expression.instantiate(env);
+				final XstsExpression expression = new XstsExpression(currentScope, typeTable, ctx.value);
+				final Expr<?> expr = expression.instantiate(env);
 
-			if (expr.getType().equals(var.getType())) {
-				@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
-				@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
-				return Assign(tVar, tExpr);
-			} else {
-				throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);
+				if (expr.getType().equals(var.getType())) {
+					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
+					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
+					return Assign(tVar, tExpr);
+				} else {
+					throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);
+				}
+			}
+			catch (Exception e){
+				throw new ParseException(ctx,e.getMessage());
 			}
 		}
 
