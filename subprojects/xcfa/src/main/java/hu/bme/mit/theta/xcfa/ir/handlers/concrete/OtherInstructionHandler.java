@@ -4,13 +4,13 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
@@ -85,7 +85,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 Expr<? extends Type> expr = instruction.getArguments().get(i).getExpr(functionState.getValues());
                 if (expr != null) exprs.add(expr);
             }
-            CallStmt stmt = new CallStmt(callVar, null, exprs);
+            XcfaCallStmt stmt = new XcfaCallStmt(callVar, exprs, functionName.getName());
             globalState.getCallStmts().put(stmt, functionName.getName());
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(stmt));
             functionState.getProcedureBuilder().addLoc(newLoc);

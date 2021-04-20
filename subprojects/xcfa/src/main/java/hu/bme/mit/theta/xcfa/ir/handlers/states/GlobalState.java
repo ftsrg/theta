@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xcfa.ir.handlers.states;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
@@ -18,14 +17,12 @@ public class GlobalState {
     private final Map<String, VarDecl<?>> globalVars;
     private final Map<String, XcfaProcess.Builder> processes;
     private final List<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> procedures;
-    private final Map<CallStmt, String> callStmts;
     private final SSAProvider ssa;
 
     public GlobalState(SSAProvider ssa) {
         this.ssa = ssa;
         builder = XCFA.builder();
         this.globalVars = new HashMap<>();
-        this.callStmts = new HashMap<>();
         this.processes = new HashMap<>();
         this.procedures = new ArrayList<>();
 
@@ -45,7 +42,6 @@ public class GlobalState {
     }
 
     public void finalizeGlobalState(BuiltState builtState) {
-        callStmts.forEach((callStmt, s) -> callStmt.setProcedure(builtState.getProcedures().getOrDefault(s, createEmptyProc(s))));
     }
 
     public Map<String, VarDecl<?>> getGlobalVars() {
@@ -86,7 +82,4 @@ public class GlobalState {
         return builder;
     }
 
-    public Map<CallStmt, String> getCallStmts() {
-        return callStmts;
-    }
 }

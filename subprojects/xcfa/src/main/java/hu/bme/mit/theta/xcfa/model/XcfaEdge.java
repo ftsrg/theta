@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +28,11 @@ public final class XcfaEdge {
 
     private static final XcfaStmtVarReplacer varReplacer = new XcfaStmtVarReplacer();
 
-    public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut, Map<VarDecl<?>, VarDecl<?>> newVarLut, Map<CallStmt, CallStmt> newCallStmts) {
+    public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
         List<Stmt> newStmts = new ArrayList<>();
         for (Stmt stmt : edge.stmts) {
             Stmt stmt1 = stmt.accept(varReplacer, newVarLut);
             newStmts.add(stmt1);
-            if(stmt1 instanceof CallStmt) newCallStmts.put((CallStmt) stmt,(CallStmt) stmt1);
         }
         return new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
     }

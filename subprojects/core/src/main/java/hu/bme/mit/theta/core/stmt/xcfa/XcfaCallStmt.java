@@ -16,15 +16,30 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.common.LispStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 
 import java.util.List;
-import java.util.Map;
 
-public abstract class XcfaCallStmt extends XcfaStmt {
+public class XcfaCallStmt extends XcfaStmt {
+	private VarDecl<?> var;
+	private final List<Expr<?>> params;
+	private final String procedure;
+
+
+
+	private static final String STMT_LABEL = "call";
+
+	public XcfaCallStmt(VarDecl<?> var, List<Expr<?>> params, String procedure) {
+		this.var = var;
+		this.params = params;
+		this.procedure = procedure;
+	}
+
 	@Override
 	public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param) {
 		return visitor.visit(this, param);
@@ -35,11 +50,32 @@ public abstract class XcfaCallStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	// needed for core.utils.VarCollector
-	public abstract List<Expr<?>> getParams();
-	public abstract VarDecl<?> getResultVar();
+	public VarDecl<?> getVar() {
+		return var;
+	}
 
-	public abstract XcfaCallStmt of(VarDecl<?> var, List<Expr<?>> params);
+	public List<Expr<?>> getParams() {
+		return params;
+	}
 
-	public abstract void setVoid();
+	public String getProcedure() {
+		return procedure;
+	}
+
+	public void setVoid() {
+		var = null;
+	}
+
+	public XcfaCallStmt of(VarDecl<?> var, List<Expr<?>> params, String procedure) {
+		return new XcfaCallStmt(var, params, procedure);
+	}
+
+	@Override
+	public String toString() {
+		LispStringBuilder call = Utils.lispStringBuilder(STMT_LABEL).add(var == null ? "void" : var.getName()).add(procedure);
+		for (Expr<?> param : params) {
+			call.add(param);
+		}
+		return call.toString();
+	}
 }

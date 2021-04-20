@@ -49,13 +49,11 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 	private final List<XcfaEdge> edges;
 	private XcfaProcedure procedure = null;
 	private boolean startedBuilding = false;
-	private Set<CallStmt> incompleteInstantiations;
 
 	XcfaProcedureSymbol(final XcfaProcessSymbol scope, final XcfaDslParser.ProcedureDeclContext context) {
 		checkNotNull(context);
 		this.scope = checkNotNull(scope);
 		symbolTable = new SymbolTable();
-		incompleteInstantiations = new HashSet<>();
 		name = context.id.getText();
 		main = (context.main != null);
 		if (context.varDecls != null) {
@@ -86,10 +84,6 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 
 	////
 
-	void addIncompleteInstantiation(CallStmt stmt) {
-		incompleteInstantiations.add(stmt);
-	}
-
 	public XcfaProcedure instantiate() {
 		if (procedure != null) return procedure;
 		else if (startedBuilding) return null;
@@ -109,8 +103,6 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		});
 		edges.forEach(xcfaEdgeDefinition -> builder.addEdge(xcfaEdgeDefinition.instantiate()));
 		procedure = builder.build();
-		incompleteInstantiations.forEach(callStmt -> callStmt.setProcedure(procedure));
-		incompleteInstantiations = null;
 		return procedure;
 	}
 

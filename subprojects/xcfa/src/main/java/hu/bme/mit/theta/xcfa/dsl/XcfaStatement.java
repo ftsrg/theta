@@ -140,8 +140,7 @@ final class XcfaStatement {
 
 				});
 			}
-			final CallStmt callStmt = new CallStmt(var, procedure, params);
-			if (procedure == null) ((XcfaProcedureSymbol) calleeSymbol).addIncompleteInstantiation(callStmt);
+			final XcfaCallStmt callStmt = new XcfaCallStmt(var, params, procedure.getName());
 			return callStmt;
 		}
 

@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xcfa;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.InstructionHandler;
@@ -18,7 +17,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.VariableEliminationPass;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
@@ -113,13 +111,11 @@ public class XcfaUtils {
         }
 
         globalState.getProcesses().forEach((s, builder) -> {
-            Map<CallStmt, CallStmt> newCallStmts = new HashMap<>();
             builtState.getProcedures().forEach((s1, xcfaProcedure) -> {
-                XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure, newCallStmts);
+                XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure);
                 builder.addProcedure(procedure);
                 if(procedure.getName().equals("main")) builder.setMainProcedure(procedure);
             });
-            newCallStmts.forEach((callStmt, callStmt2) -> globalState.getCallStmts().put(callStmt2, globalState.getCallStmts().get(callStmt)));
             XcfaProcess built = builder.build();
             builtState.getProcesses().put(s, built);
             globalState.getBuilder().addProcess(built);

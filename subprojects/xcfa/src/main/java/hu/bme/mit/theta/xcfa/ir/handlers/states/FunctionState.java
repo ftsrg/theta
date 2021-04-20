@@ -5,8 +5,6 @@ import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -15,7 +13,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createType;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createVariable;

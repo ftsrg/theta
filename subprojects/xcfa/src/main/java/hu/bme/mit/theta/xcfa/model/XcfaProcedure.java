@@ -6,7 +6,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
 
@@ -42,7 +41,7 @@ public final class XcfaProcedure {
         name = builder.name;
     }
 
-    public XcfaProcedure(XcfaProcedure procedure, Map<CallStmt, CallStmt> newCallStmts) {
+    public XcfaProcedure(XcfaProcedure procedure) {
         parent = null; // ProcessBuilder will fill out this field
         retType = procedure.retType;
 
@@ -80,7 +79,7 @@ public final class XcfaProcedure {
         finalLoc = newLocLut.get(procedure.finalLoc);
 
         List<XcfaEdge> edgeCollectList = new ArrayList<>();
-        procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut, newVarLut, newCallStmts)));
+        procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut, newVarLut)));
         edges = ImmutableList.copyOf(edgeCollectList);
         edges.forEach(edge -> edge.setParent(this));
 

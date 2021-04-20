@@ -5,10 +5,10 @@ import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.xcfa.dsl.CallStmt;
 
 import java.util.*;
 
@@ -159,8 +159,9 @@ public class XcfaState {
 
     private void collectOffers(XcfaProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
-        if(last != null && last.getStmt() instanceof CallStmt) {
-            XcfaProcedure procedure = ((CallStmt) last.getStmt()).getProcedure();
+        if(last != null && last.getStmt() instanceof XcfaCallStmt) {
+            XcfaProcedure procedure = enabledProcess.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) last.getStmt()) .getProcedure())).findFirst().orElse(null);
+            checkState(procedure != null, "Procedure should not be null! Unknown procedure name?");
             collectProcedureOffers(enabledProcess, procedure);
         }
         else if(last == null || last.isLastStmt()) {
