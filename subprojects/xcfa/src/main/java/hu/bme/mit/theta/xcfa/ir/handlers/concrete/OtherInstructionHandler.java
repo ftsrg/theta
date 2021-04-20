@@ -86,7 +86,6 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 if (expr != null) exprs.add(expr);
             }
             XcfaCallStmt stmt = new XcfaCallStmt(callVar, exprs, functionName.getName());
-            globalState.getCallStmts().put(stmt, functionName.getName());
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(stmt));
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);

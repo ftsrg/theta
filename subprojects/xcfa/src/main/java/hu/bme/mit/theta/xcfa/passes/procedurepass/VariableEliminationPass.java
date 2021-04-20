@@ -161,7 +161,7 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public R visit(XcfaCallStmt stmt, XcfaEdge edge) {
-            VarDecl<?> lhs =  stmt.getResultVar();
+            VarDecl<?> lhs =  stmt.getVar();
             if (localVars.contains(lhs)) {
                 if(!lhsEdges.containsKey(lhs)) lhsEdges.put(lhs, new HashMap<>());
                 Set<Stmt> stmts = lhsEdges.get(lhs).getOrDefault(edge, new HashSet<>());

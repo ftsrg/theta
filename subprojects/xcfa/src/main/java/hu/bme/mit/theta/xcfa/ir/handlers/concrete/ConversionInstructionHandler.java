@@ -126,7 +126,7 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Fptoui must load into a variable");
 
         Expr<RatType> expr = cast(functionState.getValues().get(op.getName()), Rat());
-        functionState.getValues().put(instruction.getRetVar().get().getName(), );
+//        functionState.getValues().put(instruction.getRetVar().get().getName(), );
 
         throw new RuntimeException("Not yet implemented!");
     }

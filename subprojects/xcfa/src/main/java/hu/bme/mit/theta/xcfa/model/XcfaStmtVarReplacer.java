@@ -96,7 +96,7 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
         for (Expr<?> expr : exprs) {
             newExprs.add(replaceVars(expr, param));
         }
-        return stmt.of(param.getOrDefault(stmt.getResultVar(), stmt.getResultVar()), newExprs);
+        return stmt.of(param.getOrDefault(stmt.getVar(), stmt.getVar()), newExprs, stmt.getProcedure());
     }
 
     @Override
