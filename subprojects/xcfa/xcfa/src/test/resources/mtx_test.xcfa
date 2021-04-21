@@ -1,0 +1,38 @@
+var mtx : synthetic
+var cnd : synthetic
+main process process1{
+	main procedure mainProcedure(){
+		init loc l0
+		loc l1
+		loc l2
+		final loc lf
+
+        l0 -> l1 {
+            lock(mtx)
+        }
+        l1 -> l2 {
+            wait(cnd, mtx)
+        }
+        l2 -> lf {
+            unlock(mtx)
+        }
+	}
+}
+
+process process2{
+	main procedure mainProcedure(){
+		init loc l0
+		loc l1
+		loc l2
+		final loc lf
+        l0 -> l1 {
+            lock(mtx)
+        }
+        l1 -> l2 {
+            notify(cnd)
+        }
+        l2 -> lf {
+            unlock(mtx)
+        }
+	}
+}
