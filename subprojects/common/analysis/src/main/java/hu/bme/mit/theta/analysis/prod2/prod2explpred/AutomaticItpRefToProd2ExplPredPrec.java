@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
@@ -55,6 +56,9 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 					} else {
 						predCount.put(decl, predCount.get(decl) + 1);
 					}
+				}
+				if(decl.getType() == Bool()){
+					explPreferredVars.add(decl);
 				}
 				if (explPreferredVars.contains(decl)) {
 					explSelectedVars.add(decl);
