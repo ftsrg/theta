@@ -58,4 +58,15 @@ public interface SSAProvider {
 	 * VarName: Variable name *if argument is a variable*, `type SPACE value` if constant, `value` if anything else (block, function, etc)
 	 */
 	List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String blockName);
+
+	// Analysis results
+	/*
+	* Returns true, if the input program has any (non-opaque) struct types defined
+	* */
+	boolean hasStructs();
+
+	/*
+	* Returns true, if the program has any such bitwise boolean operators, that integer arithmetic won't suffice
+	* */
+	boolean shouldUseBitwiseArithmetics();
 }

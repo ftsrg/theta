@@ -210,4 +210,18 @@ public class LlvmIrProvider implements SSAProvider {
 		return instructions;
 	}
 
+	private native boolean JniGetStructAnalysisResult();
+
+	@Override
+	public boolean hasStructs() {
+		return JniGetStructAnalysisResult();
+	}
+
+	private native boolean JniGetBitwiseArithmeticAnalysisResult();
+
+	@Override
+	public boolean shouldUseBitwiseArithmetics() {
+		return JniGetBitwiseArithmeticAnalysisResult();
+	}
+
 }
