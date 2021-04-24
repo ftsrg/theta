@@ -19,15 +19,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -67,21 +64,30 @@ public final class XCFA {
 
 		int tmpcnt = 0;
 
+		Map<XcfaLocation, CFA.Loc> locationLUT = new HashMap<>();
+
+		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
+			locationLUT.put(loc, builder.createLoc(loc.getName()));
+		}
+
 		for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {
 
 			List<CFA.Loc> locations = new ArrayList<>();
 			// Adding source
-			locations.add(builder.createLoc(e.getSource().getName()));
+			locations.add(locationLUT.get(e.getSource()));
 			// Adding intermediate locations (CFAs can only have one per edge)
 			for (int i = 1; i < e.getStmts().size(); ++i) {
 				locations.add(builder.createLoc("tmp" + tmpcnt++));
 			}
 			// Adding target
-			locations.add(builder.createLoc(e.getTarget().getName()));
+			locations.add(locationLUT.get(e.getTarget()));
 			// Adding edges
 			for (int i = 0; i < e.getStmts().size(); ++i) {
 				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
 				builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
+			}
+			if (e.getStmts().size() == 0) {
+				builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
 			}
 			// Deciding if the source or target is any special location
 			if (e.getSource() == getMainProcess().getMainProcedure().getInitLoc()) initLoc = locations.get(0);
