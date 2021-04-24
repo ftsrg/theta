@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 
 import java.util.Iterator;
 
@@ -105,6 +106,23 @@ public final class TypeUtils {
 			return result;
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type BvType");
+		}
+	}
+
+	/**
+	 * Cast an expression to floating point type.
+	 *
+	 * @param expr Original expression
+	 * @return Casted expression
+	 */
+	public static Expr<FpType> castFp(final Expr<?> expr) {
+		checkNotNull(expr);
+
+		if (expr.getType() instanceof FpType) {
+			@SuppressWarnings("unchecked") final Expr<FpType> result = (Expr<FpType>) expr;
+			return result;
+		} else {
+			throw new ClassCastException("The type of expression " + expr + " is not of type FpType");
 		}
 	}
 
