@@ -96,7 +96,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
 
             VarDecl<?> callVar = null;
             if (instruction.getRetVar().isPresent()) {
-                callVar = Var("var_" + blockState.getName() + "_" + blockState.getBlockCnt(), instruction.getRetVar().get().getType());
+                callVar = Var(instruction.getRetVar().get().getName(), instruction.getRetVar().get().getType());
                 functionState.getProcedureBuilder().getLocalVars().put(callVar, Optional.empty());
                 functionState.getLocalVars().put(instruction.getRetVar().get().getName(), Tuple2.of(callVar, 1));
                 functionState.getValues().put(instruction.getRetVar().get().getName(), callVar.getRef());
@@ -129,7 +129,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
     }
 
     private Stmt havocVar(Argument reg, FunctionState functionState, BlockState blockState) {
-        VarDecl<?> callVar = Var("var_" + blockState.getName() + "_" + blockState.getBlockCnt(), reg.getType());
+        VarDecl<?> callVar = Var(reg.getName(), reg.getType());
         functionState.getProcedureBuilder().getLocalVars().put(callVar, Optional.empty());
         functionState.getLocalVars().put(reg.getName(), Tuple2.of(callVar, 1));
         functionState.getValues().put(reg.getName(), callVar.getRef());
@@ -156,7 +156,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
     private void phi(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Optional<RegArgument> retVar = instruction.getRetVar();
         checkState(retVar.isPresent(), "Return var must be present!");
-        VarDecl<?> phiVar = Var("var_" + blockState.getName() + "_" + blockState.getBlockCnt(), retVar.get().getType());
+        VarDecl<?> phiVar = Var(retVar.get().getName(), retVar.get().getType());
         functionState.getProcedureBuilder().getLocalVars().put(phiVar, Optional.empty());
         functionState.getLocalVars().put(retVar.get().getName(), Tuple2.of(phiVar, 1));
         functionState.getValues().put(retVar.get().getName(), phiVar.getRef());
