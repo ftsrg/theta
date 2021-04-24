@@ -92,7 +92,13 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
     private void call(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument functionName = instruction.getArguments().get(instruction.getArguments().size() - 1);
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
-        if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
+        if (functionName.getName().equals("__assert_fail")) {
+            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of());
+            functionState.getProcedureBuilder().addLoc(newLoc);
+            functionState.getProcedureBuilder().addEdge(edge);
+            blockState.setLastLocation(newLoc);
+            functionState.getProcedureBuilder().setErrorLoc(newLoc);
+        } else if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
 
             VarDecl<?> callVar = null;
             if (instruction.getRetVar().isPresent()) {
