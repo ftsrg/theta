@@ -19,14 +19,24 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 
 public class XcfaCli {
@@ -47,6 +57,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
+
+	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+	String cexfile = null;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -92,10 +105,52 @@ public class XcfaCli {
 				return;
 			}
 
+			CFA cfa = xcfa.createCFA();
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+			final SafetyResult<?, ?> status = check(configuration);
+
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(status.asUnsafe());
+			}
+
 			sw.stop();
 			System.out.println(sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 		} catch (final Throwable ex) {
 			ex.printStackTrace();
+		}
+	}
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+		try {
+			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance())
+					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.BFS)
+					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(10).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
+					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
+		} catch (final Exception ex) {
+			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+		}
+	}
+
+	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final Exception ex) {
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+		}
+	}
+
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		final File file = new File(cexfile);
+		PrintWriter printWriter = null;
+		try {
+			printWriter = new PrintWriter(file);
+			printWriter.write(concrTrace.toString());
+		} finally {
+			if (printWriter != null) {
+				printWriter.close();
+			}
 		}
 	}
 }
