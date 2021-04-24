@@ -29,7 +29,7 @@ import java.util.Optional;
 
 public class LlvmIrProvider implements SSAProvider {
 	static {
-		System.loadLibrary("jni_proto");
+		System.loadLibrary("theta-c-frontend");
 	}
 
 	private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
