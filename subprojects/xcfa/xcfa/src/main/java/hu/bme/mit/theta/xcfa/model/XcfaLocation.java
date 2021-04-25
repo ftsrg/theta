@@ -40,7 +40,11 @@ public final class XcfaLocation {
 	}
 
 	public static XcfaLocation copyOf(final XcfaLocation from) {
-		return new XcfaLocation(from.getName(), Map.copyOf(from.dictionary));
+		XcfaLocation xcfaLocation = new XcfaLocation(from.getName(), Map.copyOf(from.dictionary));
+		XcfaMetadata.lookupMetadata(from).forEach((s, o) -> {
+			XcfaMetadata.create(xcfaLocation, s, o);
+		});
+		return xcfaLocation;
 	}
 
 	public String getName() {

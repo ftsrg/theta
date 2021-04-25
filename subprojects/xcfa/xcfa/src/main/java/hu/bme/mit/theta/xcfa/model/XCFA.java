@@ -69,7 +69,6 @@ public final class XCFA {
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
 			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
 			locationLUT.put(loc, cfaLoc);
-			XcfaMetadata.create(loc, "cfaLoc", cfaLoc);
 		}
 
 		for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {
@@ -86,10 +85,12 @@ public final class XCFA {
 			// Adding edges
 			for (int i = 0; i < e.getStmts().size(); ++i) {
 				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
-				builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
+				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
+				XcfaMetadata.create(e, "cfaEdge", edge);
 			}
 			if (e.getStmts().size() == 0) {
-				builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
+				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
+				XcfaMetadata.create(e, "cfaEdge", edge);
 			}
 			// Deciding if the source or target is any special location
 			if (e.getSource() == getMainProcess().getMainProcedure().getInitLoc()) initLoc = locations.get(0);

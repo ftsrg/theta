@@ -62,6 +62,9 @@ public final class XcfaProcedure {
     }
 
     public XcfaProcedure(XcfaProcedure procedure) {
+        XcfaMetadata.lookupMetadata(procedure).forEach((s, o) -> {
+            XcfaMetadata.create(this, s, o);
+        });
         parent = null; // ProcessBuilder will fill out this field
         retType = procedure.retType;
 

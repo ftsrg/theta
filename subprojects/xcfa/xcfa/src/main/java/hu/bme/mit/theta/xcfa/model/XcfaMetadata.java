@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class XcfaMetadata<T,X> {
@@ -29,13 +30,13 @@ public class XcfaMetadata<T,X> {
 
 
 	public static <T> Set<Object> lookupMetadata(String key, T value) {
-		return lookupOwner.get(Tuple2.of(key,value));
+		return lookupOwner.getOrDefault(Tuple2.of(key,value), Set.of());
 	}
 	public static <X> Map<String, ?> lookupMetadata(X owner) {
-		return lookupKeyValue.get(owner);
+		return lookupKeyValue.getOrDefault(owner, Map.of());
 	}
-	public static <X> Object getMetadataValue(X owner, String key) {
-		return lookupKeyValue.get(owner).get(key);
+	public static <X> Optional<Object> getMetadataValue(X owner, String key) {
+		return Optional.ofNullable(lookupKeyValue.getOrDefault(owner, Map.of()).get(key));
 	}
 
 	public static <T,X> void create(X owner, String key, T value) {

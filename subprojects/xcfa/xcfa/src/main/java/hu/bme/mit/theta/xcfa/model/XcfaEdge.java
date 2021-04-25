@@ -49,7 +49,11 @@ public final class XcfaEdge {
 			Stmt stmt1 = stmt.accept(varReplacer, newVarLut);
 			newStmts.add(stmt1);
 		}
-		return new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
+		XcfaEdge xcfaEdge = new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
+		XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+			XcfaMetadata.create(xcfaEdge, s, o);
+		});
+		return xcfaEdge;
 	}
 
 	public XcfaLocation getSource() {
