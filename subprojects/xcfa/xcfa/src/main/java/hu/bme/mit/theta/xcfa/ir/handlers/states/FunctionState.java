@@ -18,12 +18,14 @@ package hu.bme.mit.theta.xcfa.ir.handlers.states;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
+import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.HashMap;
@@ -46,7 +48,7 @@ public class FunctionState {
     private final Set<VarDecl<?>> params;
     private final Map<String, Expr<?>> values;
     private final Map<String, XcfaLocation> locations;
-    private final Map<Tuple2<String, String>, Tuple3<XcfaLocation, XcfaLocation, List<Stmt>>> interBlockEdges;
+    private final Map<Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>> interBlockEdges;
 
     public FunctionState(GlobalState globalState, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function) {
         this.globalState = globalState;
@@ -107,6 +109,7 @@ public class FunctionState {
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
             XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), stmts);
+            if(edgeTup.get4() >= 0) XcfaMetadata.create(edge, "lineNumber", edge);
             procedureBuilder.addEdge(edge);
         });
     }
@@ -135,7 +138,7 @@ public class FunctionState {
         return locations;
     }
 
-    public Map<Tuple2<String, String>, Tuple3<XcfaLocation, XcfaLocation, List<Stmt>>> getInterBlockEdges() {
+    public Map<Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>> getInterBlockEdges() {
         return interBlockEdges;
     }
 

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
+import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -112,8 +113,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             case 1:
                 XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(0).getName());
                 Tuple2<String, String> key = Tuple2.of(blockState.getName(), loc.getName());
-                List<Stmt> stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(blockState.getLastLocation(), loc, new ArrayList<>())).get3();
-                functionState.getInterBlockEdges().put(key, Tuple3.of(blockState.getLastLocation(), loc, stmts));
+                List<Stmt> stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(blockState.getLastLocation(), loc, new ArrayList<>(), -1)).get3();
+                functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc, stmts, instruction.getLineNumber()));
                 break;
             case 3:
                 XcfaLocation loc1 = functionState.getLocations().get(instruction.getArguments().get(1).getName());
@@ -125,13 +126,13 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
                 AssumeStmt assume1 = Assume(cast(lhs, BoolType.getInstance()));
                 AssumeStmt assume2 = Assume(BoolExprs.Not(cast(lhs, BoolType.getInstance())));
                 key = Tuple2.of(blockState.getName(), loc1.getName());
-                stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(blockState.getLastLocation(), loc1, new ArrayList<>())).get3();
+                stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(blockState.getLastLocation(), loc1, new ArrayList<>(), -1)).get3();
                 stmts.add(assume1);
-                functionState.getInterBlockEdges().put(key, Tuple3.of(blockState.getLastLocation(), loc1, stmts));
+                functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc1, stmts, instruction.getLineNumber()));
                 key = Tuple2.of(blockState.getName(), loc2.getName());
-                stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(blockState.getLastLocation(), loc1, new ArrayList<>())).get3();
+                stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(blockState.getLastLocation(), loc1, new ArrayList<>(), -1)).get3();
                 stmts.add(assume2);
-                functionState.getInterBlockEdges().put(key, Tuple3.of(blockState.getLastLocation(), loc2, stmts));
+                functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc2, stmts, instruction.getLineNumber()));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
@@ -151,9 +152,9 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             else defaultBranch = Or(defaultBranch, eq);
             AssumeStmt assume = Assume(eq);
             Tuple2<String, String> key = Tuple2.of(blockState.getName(), loc.getName());
-            List<Stmt> stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(blockState.getLastLocation(), loc, new ArrayList<>())).get3();
+            List<Stmt> stmts = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(blockState.getLastLocation(), loc, new ArrayList<>(), -1)).get3();
             stmts.add(assume);
-            functionState.getInterBlockEdges().put(key, Tuple3.of(blockState.getLastLocation(), loc, stmts));
+            functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc, stmts, instruction.getLineNumber()));
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(Assume(BoolExprs.Not(defaultBranch))));

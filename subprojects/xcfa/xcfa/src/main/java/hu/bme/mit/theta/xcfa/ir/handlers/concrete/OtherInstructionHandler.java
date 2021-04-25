@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
+import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -174,7 +175,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
-            Tuple3<XcfaLocation, XcfaLocation, List<Stmt>> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple3.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>()));
+            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>(), -1));
             checkState(phiVar.getType() == value.getType(), "phiVar and value has to be of the same type!");
             Stmt stmt;
             Expr<?> expr;
