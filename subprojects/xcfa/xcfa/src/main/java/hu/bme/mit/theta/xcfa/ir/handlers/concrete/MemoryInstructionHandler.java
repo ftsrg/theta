@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
 import java.util.HashMap;
 import java.util.List;
@@ -97,6 +98,7 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
                 Stmt stmt = Assign(cast(var, var.getType()), cast(op1.getExpr(functionState.getValues()), var.getType()));
                 XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
+                if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
                 functionState.getProcedureBuilder().addLoc(loc);
                 functionState.getProcedureBuilder().addEdge(edge);
                 blockState.setLastLocation(loc);

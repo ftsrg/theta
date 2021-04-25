@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +81,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
         functionState.getProcedureBuilder().addLoc(errLoc);
         functionState.getProcedureBuilder().setErrorLoc(errLoc);
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, List.of());
+        if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);
     }
@@ -100,6 +102,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
                 throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
         }
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), functionState.getProcedureBuilder().getFinalLoc(), stmts);
+        if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
     }
@@ -154,6 +157,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
+        if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
     }

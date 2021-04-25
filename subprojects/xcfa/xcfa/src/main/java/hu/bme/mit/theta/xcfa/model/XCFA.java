@@ -67,7 +67,9 @@ public final class XCFA {
 		Map<XcfaLocation, CFA.Loc> locationLUT = new HashMap<>();
 
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
-			locationLUT.put(loc, builder.createLoc(loc.getName()));
+			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
+			locationLUT.put(loc, cfaLoc);
+			XcfaMetadata.create(loc, "cfaLoc", cfaLoc);
 		}
 
 		for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {

@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,6 +95,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
         if (functionName.getName().equals("__assert_fail")) {
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of());
+            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(newLoc);
@@ -114,6 +116,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             }
             XcfaCallStmt stmt = new XcfaCallStmt(callVar, exprs, functionName.getName());
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(stmt));
+            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(newLoc);
@@ -128,6 +131,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                     stmts.add(havocVar(argument, functionState, blockState));
             }
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, stmts);
+            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(newLoc);

@@ -7,6 +7,10 @@ single process. The project contains:
 * Classes to represent XCFAs.
 * A domain specific language (DSL) to parse XCFAs from a textual representation.
 
+Every _XCFA_ model consists of global variables and _XcfaProcess_ definitions. _XcfaProcesses_ consist of thread-local variables and _XcfaProcedure_ definitions. _XcfaProcedures_ are akin to the _CFA_ models, in the sense that they consist of local variables, _XcfaLocations_ and _XcfaEdges_; and _XcfaEdges_ contain zero or more statements.
+
+Semantically, the _XCFA_ formalism describes an _asynchronous_ system, where processes are constantly executing statements on enabled transitions nondeterministically, until no such process remains (which either means a deadlock situation, or a completed execution). Statements are always atomic, but groups of statements can also be specified to be atomic when enclosed among _AtomicBeginStmt_ and _AtomicEndStmt_ statements. After any number of executed _AtomicBeginStmts_ a single _AtomicEndStmt_ ends the atomic block, and an _AtomicEndStmt_ is no-op without a preceding _AtomicBeginStmt_.
+
 ### Related projects
 
 * [`cfa`](../cfa/README.md): The ancestor project of the XCFA formalism, it can represent single-process

@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +85,7 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
         Expr<?> expr = ArrayExprs.Write(cast(var.getRef(), ArrayType.of(Int(), val.getType())), cast(idx.getExpr(functionState.getValues()), Int()), cast(val.getExpr(functionState.getValues()), val.getType()));
         Stmt stmt = Assign(cast(var, var.getType()), cast(expr, var.getType()));
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
+        if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addLoc(loc);
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(loc);
