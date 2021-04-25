@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class XcfaMetadata<T,X> {
+public class XcfaMetadata {
 	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new HashMap<>();
 	private static final Map<Object, Map<String, Object>> lookupKeyValue = new HashMap<>();
 
