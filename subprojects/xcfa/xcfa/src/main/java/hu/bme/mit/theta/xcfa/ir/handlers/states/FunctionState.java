@@ -109,7 +109,7 @@ public class FunctionState {
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
             XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), stmts);
-            if(edgeTup.get4() >= 0) XcfaMetadata.create(edge, "lineNumber", edge);
+            if(edgeTup.get4() >= 0) XcfaMetadata.create(edge, "lineNumber", edgeTup.get4());
             procedureBuilder.addEdge(edge);
         });
     }
