@@ -57,41 +57,6 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R> {
     }
 
     @Override
-    public R visit(NotifyAllStmt notifyAllStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(NotifyStmt notifyStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(WaitStmt waitStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(MtxLockStmt lockStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(MtxUnlockStmt unlockStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(ExitWaitStmt exitWaitStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public R visit(EnterWaitStmt enterWaitStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
     public R visit(SkipStmt stmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }

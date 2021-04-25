@@ -72,36 +72,17 @@ public final class XcfaDslTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 
-				{"/peterson.xcfa",                              //filepath
-						6,                                      //globalVarCount
-						3,                                      //processCount
-						new Integer[]{0, 0, 0},                 //processVarCount
-						new Integer[]{0, 0, 0},                 //processParamCount
-						new Integer[]{3, 1, 1},                 //procedureCount
-						new Integer[][]{{0, 0, 0}, {0}, {0}},   //procedureVarCount
-						new Integer[][]{{0, 0, 0}, {0}, {0}},   //procedureParamCount
-						new Integer[][]{{4, 2, 2}, {8}, {8}},   //locCount
-						new Integer[][]{{3, 1, 1}, {8}, {8}},   //edgeCount
-						new Integer[][][]{
-								{{1, 1, 1}, {4}, {1}},
-								{{3, 1, 1, 1, 1, 1, 1, 1}},
-								{{3, 1, 1, 1, 1, 1, 1, 1}}
-						}   //statementCount
-				},
-				{"/mtx_test.xcfa",
-						2,
-						2,
-						new Integer[]{0, 0},
-						new Integer[]{0, 0},
-						new Integer[]{1, 1},
-						new Integer[][]{{0}, {0}},
-						new Integer[][]{{0}, {0}},
-						new Integer[][]{{4}, {4}},
-						new Integer[][]{{3}, {3}},
-						new Integer[][][]{
-								{{1, 1, 1}},
-								{{1, 1, 1}}
-						}
+				{"/simple.xcfa",                                //filepath
+						0,                                      //globalVarCount
+						1,                                      //processCount
+						new Integer[]{0},                       //processVarCount
+						new Integer[]{0},                       //processParamCount
+						new Integer[]{1},                       //procedureCount
+						new Integer[][]{{1}},                   //procedureVarCount
+						new Integer[][]{{0}},                   //procedureParamCount
+						new Integer[][]{{3}},                   //locCount
+						new Integer[][]{{3}},                   //edgeCount
+						new Integer[][][]{{{1, 2, 1}}}	        //statementCount
 				}
 		});
 	}

@@ -26,16 +26,9 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -176,40 +169,6 @@ public final class XcfaStateTest {
 			return null;
 		}
 
-		@Override
-		public Void visit(NotifyAllStmt notifyAllStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(NotifyStmt notifyStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(WaitStmt waitStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(MtxLockStmt lockStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(MtxUnlockStmt unlockStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(ExitWaitStmt exitWaitStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
-
-		@Override
-		public Void visit(EnterWaitStmt enterWaitStmt, XcfaStackFrame param) {
-			throw new UnsupportedOperationException("Not supported yet.");
-		}
 
 
 		@Override

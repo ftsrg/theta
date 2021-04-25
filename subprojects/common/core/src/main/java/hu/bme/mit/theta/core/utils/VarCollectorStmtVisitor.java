@@ -27,15 +27,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Expr;
@@ -76,48 +69,6 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(AtomicEndStmt atomicEndStmt, Collection<VarDecl<?>> param) {
-		return null;
-	}
-
-	@Override
-	public Void visit(NotifyAllStmt notifyAllStmt, Collection<VarDecl<?>> param) {
-		param.add(notifyAllStmt.getSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(NotifyStmt notifyStmt, Collection<VarDecl<?>> param) {
-		param.add(notifyStmt.getSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(WaitStmt waitStmt, Collection<VarDecl<?>> param) {
-		param.add(waitStmt.getCndSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(MtxLockStmt lockStmt, Collection<VarDecl<?>> param) {
-		param.add(lockStmt.getSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(MtxUnlockStmt unlockStmt, Collection<VarDecl<?>> param) {
-		param.add(unlockStmt.getSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(ExitWaitStmt exitWaitStmt, Collection<VarDecl<?>> param) {
-		param.add(exitWaitStmt.getSyncVar());
-		return null;
-	}
-
-	@Override
-	public Void visit(EnterWaitStmt enterWaitStmt, Collection<VarDecl<?>> param) {
-		param.add(enterWaitStmt.getSyncVar());
 		return null;
 	}
 

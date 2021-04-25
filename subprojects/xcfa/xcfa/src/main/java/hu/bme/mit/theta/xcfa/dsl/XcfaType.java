@@ -22,7 +22,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ArrayTypeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.BoolTypeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IntTypeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.RatTypeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SyntheticTypeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.TypeContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -78,10 +77,6 @@ final class XcfaType implements Instantiatable<Type> {
 			return Array(indexType, elemType);
 		}
 
-		@Override
-		public Type visitSyntheticType(final SyntheticTypeContext ctx) {
-			return SyntheticType.getInstance();
-		}
 	}
 
 }

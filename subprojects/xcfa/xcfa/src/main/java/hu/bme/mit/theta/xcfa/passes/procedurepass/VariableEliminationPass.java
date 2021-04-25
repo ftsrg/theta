@@ -29,16 +29,9 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -199,41 +192,6 @@ public class VariableEliminationPass implements ProcedurePass {
             return null;
         }
 
-        @Override
-        public Stmt visit(NotifyAllStmt notifyAllStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(NotifyStmt notifyStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(WaitStmt waitStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(MtxLockStmt lockStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(MtxUnlockStmt unlockStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(ExitWaitStmt exitWaitStmt, Stmt param) {
-            return null;
-        }
-
-        @Override
-        public Stmt visit(EnterWaitStmt enterWaitStmt, Stmt param) {
-            return null;
-        }
-
     }
 
     private class MyStmtVisitor<R> implements XcfaStmtVisitor<XcfaEdge, R> {
@@ -366,41 +324,6 @@ public class VariableEliminationPass implements ProcedurePass {
 
         @Override
         public R visit(AtomicEndStmt atomicEndStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(NotifyAllStmt notifyAllStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(NotifyStmt notifyStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(WaitStmt waitStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(MtxLockStmt lockStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(MtxUnlockStmt unlockStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(ExitWaitStmt exitWaitStmt, XcfaEdge edge) {
-            return null;
-        }
-
-        @Override
-        public R visit(EnterWaitStmt enterWaitStmt, XcfaEdge edge) {
             return null;
         }
 

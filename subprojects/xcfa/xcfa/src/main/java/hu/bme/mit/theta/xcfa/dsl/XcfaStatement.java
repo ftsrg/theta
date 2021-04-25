@@ -23,12 +23,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -204,71 +199,6 @@ final class XcfaStatement {
 		@Override
 		public Stmt visitAtomicEnd(final XcfaDslParser.AtomicEndContext ctx) {
 			return new AtomicEndStmt();
-		}
-
-		@Override
-		public Stmt visitWaitStmt(final XcfaDslParser.WaitStmtContext ctx) {
-			final String id1 = ctx.syncVar.getText();
-			final String id2 = ctx.mtxVar.getText();
-			Optional<? extends Symbol> opt1 = scope.resolve(id1);
-			Optional<? extends Symbol> opt2 = scope.resolve(id2);
-			checkState(opt1.isPresent());
-			checkState(opt2.isPresent());
-			final InstantiatableSymbol<?> symbol1 = (InstantiatableSymbol<?>) opt1.get();
-			final InstantiatableSymbol<?> symbol2 = (InstantiatableSymbol<?>) opt2.get();
-			final VarDecl<?> var1 = (VarDecl<?>) symbol1.instantiate();
-			final VarDecl<?> var2 = (VarDecl<?>) symbol2.instantiate();
-			return new WaitStmt(var1, var2);
-		}
-
-		@Override
-		public Stmt visitLegacyWaitStmt(final XcfaDslParser.LegacyWaitStmtContext ctx) {
-			final String id1 = ctx.syncVar.getText();
-			Optional<? extends Symbol> opt1 = scope.resolve(id1);
-			checkState(opt1.isPresent());
-			final InstantiatableSymbol<?> symbol1 = (InstantiatableSymbol<?>) opt1.get();
-			final VarDecl<?> var1 = (VarDecl<?>) symbol1.instantiate();
-			return new WaitStmt(var1);
-		}
-
-		@Override
-		public Stmt visitNotifyStmt(final XcfaDslParser.NotifyStmtContext ctx) {
-			final String lhsId = ctx.syncVar.getText();
-			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
-			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
-			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new NotifyStmt(lhs);
-		}
-
-		@Override
-		public Stmt visitNotifyAllStmt(final XcfaDslParser.NotifyAllStmtContext ctx) {
-			final String lhsId = ctx.syncVar.getText();
-			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
-			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
-			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new NotifyAllStmt(lhs);
-		}
-
-		@Override
-		public Stmt visitMtxLock(final XcfaDslParser.MtxLockContext ctx) {
-			final String lhsId = ctx.mtxVar.getText();
-			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
-			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
-			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxLockStmt(lhs);
-		}
-
-		@Override
-		public Stmt visitMtxUnlock(final XcfaDslParser.MtxUnlockContext ctx) {
-			final String lhsId = ctx.mtxVar.getText();
-			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
-			final InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
-			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
-			return new MtxUnlockStmt(lhs);
 		}
 
 	}

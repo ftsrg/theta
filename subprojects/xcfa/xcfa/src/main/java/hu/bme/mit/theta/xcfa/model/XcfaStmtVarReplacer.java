@@ -28,16 +28,9 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.EnterWaitStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ExitWaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxLockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.MtxUnlockStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyAllStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.NotifyStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.WaitStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -174,42 +167,5 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
         return atomicEndStmt;
     }
 
-    @Override
-    public Stmt visit(NotifyAllStmt notifyAllStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new NotifyAllStmt(param.getOrDefault(notifyAllStmt.getSyncVar(), notifyAllStmt.getSyncVar()));
-    }
-
-    @Override
-    public Stmt visit(NotifyStmt notifyStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new NotifyStmt(param.getOrDefault(notifyStmt.getSyncVar(), notifyStmt.getSyncVar()));
-    }
-
-    @Override
-    public Stmt visit(WaitStmt waitStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new WaitStmt(
-                param.getOrDefault(waitStmt.getCndSyncVar(), waitStmt.getCndSyncVar()),
-                waitStmt.getMtxSyncVar().isPresent() ? param.getOrDefault(waitStmt.getMtxSyncVar().get(), waitStmt.getMtxSyncVar().get()) : null
-        );
-    }
-
-    @Override
-    public Stmt visit(MtxLockStmt lockStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new MtxLockStmt(param.getOrDefault(lockStmt.getSyncVar(), lockStmt.getSyncVar()));
-    }
-
-    @Override
-    public Stmt visit(MtxUnlockStmt unlockStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new MtxUnlockStmt(param.getOrDefault(unlockStmt.getSyncVar(), unlockStmt.getSyncVar()));
-    }
-
-    @Override
-    public Stmt visit(ExitWaitStmt exitWaitStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new ExitWaitStmt(param.getOrDefault(exitWaitStmt.getSyncVar(), exitWaitStmt.getSyncVar()));
-    }
-
-    @Override
-    public Stmt visit(EnterWaitStmt enterWaitStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new EnterWaitStmt(param.getOrDefault(enterWaitStmt.getSyncVar(), enterWaitStmt.getSyncVar()));
-    }
 
 }

@@ -94,7 +94,6 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
-	|	syntheticType
 	;
 
 typeList
@@ -121,10 +120,6 @@ arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
 	;
 
-syntheticType
-	:	SYNTHETIC
-	;
-
 BOOLTYPE
 	:	'bool'
 	;
@@ -135,10 +130,6 @@ INTTYPE
 
 RATTYPE
 	:	'rat'
-	;
-
-SYNTHETIC
-	:	'synthetic'
 	;
 
 // E X P R E S S I O N S
@@ -371,12 +362,6 @@ stmt:	assignStmt
 	|	procCallStmt
 	|   atomicBegin
 	|	atomicEnd
-	|	legacyWaitStmt
-	|	waitStmt
-	|	notifyStmt
-	|	notifyAllStmt
-	|   mtxLock
-	|   mtxUnlock
 	;
 
 stmtList
@@ -422,31 +407,6 @@ atomicBegin
 atomicEnd
 	:	ATOMICEND
 	;
-
-waitStmt
-	: WAIT LPAREN syncVar=ID COMMA mtxVar=ID RPAREN
-	;
-
-legacyWaitStmt
-	: WAIT LPAREN syncVar=ID RPAREN
-	;
-	
-notifyStmt
-	: NOTIFY LPAREN syncVar=ID RPAREN
-	;
-	
-notifyAllStmt
-	: NOTIFYALL LPAREN syncVar=ID RPAREN
-	;
-
-mtxLock
-    : LOCK LPAREN mtxVar=ID RPAREN
-    ;
-
-mtxUnlock
-    : UNLOCK LPAREN mtxVar=ID RPAREN
-    ;
-
 //
 
 ASSIGN
@@ -479,25 +439,6 @@ ATOMICBEGIN
 ATOMICEND
 	:	'atomic-end'
 	;
-
-WAIT:	'wait'
-	;
-
-NOTIFY
-	:	'notify'
-	;
-
-NOTIFYALL
-	:	'notifyAll'
-	;
-
-LOCK
-    :   'lock'
-    ;
-
-UNLOCK
-    :   'unlock'
-    ;
 
 ATOMICTYPE
 	:	'atomic'
