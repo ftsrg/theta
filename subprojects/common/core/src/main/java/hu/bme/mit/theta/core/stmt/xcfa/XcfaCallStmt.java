@@ -23,17 +23,30 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class XcfaCallStmt extends XcfaStmt {
 	private static final String STMT_LABEL = "call";
-	private final List<Expr<?>> params;
+	private final LinkedHashMap<Expr<?>, Direction> params;
+	private final Map<Direction, List<Expr<?>>> paramTypes;
 	private final String procedure;
-	private VarDecl<?> var;
+	public enum Direction{
+		IN,
+		OUT,
+		INOUT
+	}
 
-	public XcfaCallStmt(VarDecl<?> var, List<Expr<?>> params, String procedure) {
-		this.var = var;
+	public XcfaCallStmt(LinkedHashMap<Expr<?>, Direction> params, String procedure) {
 		this.params = params;
+		this.paramTypes = new HashMap<>();
+		this.paramTypes.put(Direction.IN, new ArrayList<>());
+		this.paramTypes.put(Direction.OUT, new ArrayList<>());
+		this.paramTypes.put(Direction.INOUT, new ArrayList<>());
+		this.params.forEach((expr, direction) -> paramTypes.get(direction).add(expr));
 		this.procedure = procedure;
 	}
 
@@ -47,32 +60,27 @@ public class XcfaCallStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getVar() {
-		return var;
+	public LinkedHashMap<Expr<?>, Direction> getParams() {
+		return params;
 	}
 
-	public List<Expr<?>> getParams() {
-		return params;
+	public Map<Direction, List<Expr<?>>> getParamTypes() {
+		return paramTypes;
 	}
 
 	public String getProcedure() {
 		return procedure;
 	}
 
-	public void setVoid() {
-		var = null;
-	}
-
-	public XcfaCallStmt of(VarDecl<?> var, List<Expr<?>> params, String procedure) {
-		return new XcfaCallStmt(var, params, procedure);
+	public XcfaCallStmt of(LinkedHashMap<Expr<?>, Direction> params, String procedure) {
+		return new XcfaCallStmt(params, procedure);
 	}
 
 	@Override
 	public String toString() {
-		LispStringBuilder call = Utils.lispStringBuilder(STMT_LABEL).add(var == null ? "void" : var.getName()).add(procedure);
-		for (Expr<?> param : params) {
-			call.add(param);
-		}
+		LispStringBuilder call = Utils.lispStringBuilder(STMT_LABEL).add(procedure);
+		params.forEach((expr, direction) ->
+			call.add(Utils.lispStringBuilder().add(expr).add(direction)));
 		return call.toString();
 	}
 }

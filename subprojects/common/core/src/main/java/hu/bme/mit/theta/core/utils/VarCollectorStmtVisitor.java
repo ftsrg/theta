@@ -41,10 +41,10 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
-		for (Expr<?> e : stmt.getParams()) {
+		stmt.getParams().forEach((e, direction) -> {
 			if (e instanceof RefExpr<?> && ((RefExpr<?>) e).getDecl() instanceof VarDecl<?>)
 				param.add((VarDecl<?>) ((RefExpr<?>) e).getDecl());
-		}
+		});
 		return null;
 	}
 

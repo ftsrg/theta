@@ -397,8 +397,14 @@ returnStmt
 	;
 
 procCallStmt
-	:	(lhs=ID ASSIGN)? CALL funcName=ID LPAREN (params+=ID)?(COMMA params+=ID)* RPAREN
+	:	CALL funcName=ID LPAREN (params+=ID directions+=direction)?(COMMA params+=ID directions+=direction)* RPAREN
 	;
+
+direction
+    :   IN
+    |   OUT
+    |   INOUT
+    ;
 
 atomicBegin
 	:	ATOMICBEGIN
@@ -443,6 +449,16 @@ ATOMICEND
 ATOMICTYPE
 	:	'atomic'
 	;
+
+IN  :   'in'
+    ;
+
+OUT :   'out'
+    ;
+
+INOUT
+    :   'inout'
+    ;
 
 // B A S I C   T O K E N S
 

@@ -36,8 +36,10 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +48,9 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.IN;
+import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.INOUT;
+import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.OUT;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
@@ -119,33 +124,33 @@ final class XcfaStatement {
 		public Stmt visitProcCallStmt(final XcfaDslParser.ProcCallStmtContext ctx) {
 			final String callee = ctx.funcName.getText();
 
-			final VarDecl<?> var;
-			if (ctx.lhs != null) {
-				final String lhsId = ctx.lhs.getText();
-				Optional<? extends Symbol> opt = scope.resolve(lhsId);
-				checkState(opt.isPresent());
-				InstantiatableSymbol<?> lhsSymbol = (InstantiatableSymbol<?>) opt.get();
-				var = (VarDecl<?>) lhsSymbol.instantiate();
-			} else var = null;
-
 			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent(), "Callee not found: " + callee);
 			final InstantiatableSymbol<?> calleeSymbol = (InstantiatableSymbol<?>) opt.get();
 			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
 			XcfaProcedure procedure = (XcfaProcedure) calleeSymbol.instantiate();
 
-			List<Expr<?>> params = new ArrayList<>();
+			LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> params = new LinkedHashMap<>();
 
 			if (ctx.params != null) {
-				ctx.params.forEach(token -> {
+				List<Token> tokens = ctx.params;
+				for (int i = 0; i < tokens.size(); i++) {
+					Token token = tokens.get(i);
 					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
 					checkState(optionalSymbol.isPresent());
 					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
-					params.add(((VarDecl<?>) varSymbol.instantiate()).getRef());
+					XcfaCallStmt.Direction dir;
+					switch(ctx.directions.get(i).getText()) {
+						case "in": dir = IN; break;
+						case "out": dir = OUT; break;
+						default:
+						case "inout": dir = INOUT; break;
+					}
+					params.put(((VarDecl<?>) varSymbol.instantiate()).getRef(), dir);
 
-				});
+				}
 			}
-			final XcfaCallStmt callStmt = new XcfaCallStmt(var, params, procedure.getName());
+			final XcfaCallStmt callStmt = new XcfaCallStmt(params, procedure.getName());
 			return callStmt;
 		}
 

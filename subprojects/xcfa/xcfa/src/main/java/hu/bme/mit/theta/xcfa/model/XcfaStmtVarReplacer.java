@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -124,12 +125,12 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
 
     @Override
     public Stmt visit(XcfaCallStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        List<Expr<?>> exprs = stmt.getParams();
-        List<Expr<?>> newExprs = new ArrayList<>();
-        for (Expr<?> expr : exprs) {
-            newExprs.add(replaceVars(expr, param));
-        }
-        return stmt.of(param.getOrDefault(stmt.getVar(), stmt.getVar()), newExprs, stmt.getProcedure());
+        LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> exprs = stmt.getParams();
+        LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> newExprs = new LinkedHashMap<>();
+        exprs.forEach((expr, direction) ->
+            newExprs.put(replaceVars(expr, param), direction)
+        );
+        return stmt.of(newExprs, stmt.getProcedure());
     }
 
     @Override
