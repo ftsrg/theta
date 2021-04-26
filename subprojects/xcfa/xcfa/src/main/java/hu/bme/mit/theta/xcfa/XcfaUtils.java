@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
+import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
@@ -51,7 +52,7 @@ public class XcfaUtils {
      * This is the recommended method for getting an XCFA instance.
      * Supports .xcfa, .ll, .bc, .c and .i files.
      */
-    public static XCFA fromFile(File model) throws IOException {
+    public static XCFA fromFile(File model, ArithmeticType arithmeticType) throws IOException {
 
         if (!model.exists()) throw new FileNotFoundException();
 
@@ -61,10 +62,10 @@ public class XcfaUtils {
             }
 
         } else if (model.getName().endsWith(".ll") || model.getName().endsWith(".bc")) {
-            return createXCFA(new LlvmIrProvider(model.getAbsolutePath()));
+            return createXCFA(new LlvmIrProvider(model.getAbsolutePath()), arithmeticType);
 
         } else if (model.getName().endsWith(".c") || model.getName().endsWith(".i")) {
-            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true, true, true));
+            return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true, true, true), arithmeticType);
 
         } else {
             String[] split = model.getName().split("\\.");
@@ -93,17 +94,17 @@ public class XcfaUtils {
     /*
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      */
-    public static XCFA createXCFA(SSAProvider ssa) {
-        return createXCFA(ssa, List.of(), List.of(), List.of(/*VariableEliminationPass.getInstance()*/));
+    public static XCFA createXCFA(SSAProvider ssa, ArithmeticType arithmeticType) {
+        return createXCFA(ssa, List.of(), List.of(), List.of(), arithmeticType);
     }
 
     /*
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      * Runs the specified passes when a specific stage is complete.
      */
-    public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses) {
+    public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
         BuiltState builtState = new BuiltState();
-        GlobalState globalState = new GlobalState(ssa);
+        GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
             FunctionState functionState = new FunctionState(globalState, function);

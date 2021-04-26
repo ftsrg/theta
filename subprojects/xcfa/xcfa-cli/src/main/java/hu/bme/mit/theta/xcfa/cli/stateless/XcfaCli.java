@@ -34,6 +34,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
+import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.*;
@@ -48,6 +49,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
 	boolean printxcfa;
+
+	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
+	ArithmeticType arithmeticType = ArithmeticType.efficient;
 
 	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
 	boolean printcfa;
@@ -87,7 +91,7 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA xcfa = XcfaUtils.fromFile(model);
+			final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
 
 			if (printxcfa) {
 				System.out.println(xcfa.toDot());
