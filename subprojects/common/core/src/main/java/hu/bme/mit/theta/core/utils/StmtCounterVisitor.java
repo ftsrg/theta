@@ -55,6 +55,11 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	}
 
 	@Override
+	public Integer visit(LoopStmt stmt, Void param) {
+		return stmt.accept(this,null)+1;
+	}
+
+	@Override
 	public Integer visit(OrtStmt stmt, Void param) {
 		int count = 0;
 		for (var subStmt: stmt.getStmts()){

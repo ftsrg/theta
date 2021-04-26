@@ -15,10 +15,11 @@
  */
 package hu.bme.mit.theta.common;
 
+import hu.bme.mit.theta.common.container.Containers;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -55,7 +56,7 @@ public final class DispatchTable2<P, R> {
 		private boolean built;
 
 		private Builder() {
-			cases = new HashMap<>();
+			cases = Containers.createMap();
 			defaultCase = null;
 			built = false;
 		}

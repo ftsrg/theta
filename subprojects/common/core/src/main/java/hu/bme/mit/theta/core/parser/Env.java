@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -78,7 +78,7 @@ public final class Env {
 
 		private Frame(final Frame parent) {
 			this.parent = parent;
-			symbolToValue = new HashMap<>();
+			symbolToValue = Containers.createMap();
 		}
 
 		public void define(final String symbol, final Object value) {

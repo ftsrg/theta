@@ -19,8 +19,8 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -105,14 +105,14 @@ public final class IndexedVars {
 		private boolean built;
 
 		private Builder() {
-			varSets = new HashMap<>();
+			varSets = Containers.createMap();
 			built = false;
 		}
 
 		public void add(final int i, final VarDecl<?> varDecl) {
 			checkState(!built, "Already built.");
 			if (!varSets.containsKey(i)) {
-				varSets.put(i, new HashSet<>());
+				varSets.put(i, Containers.createSet());
 			}
 			varSets.get(i).add(varDecl);
 		}
@@ -124,7 +124,7 @@ public final class IndexedVars {
 			}
 
 			if (!varSets.containsKey(i)) {
-				varSets.put(i, new HashSet<>());
+				varSets.put(i, Containers.createSet());
 			}
 			varSets.get(i).addAll(varDecls);
 		}

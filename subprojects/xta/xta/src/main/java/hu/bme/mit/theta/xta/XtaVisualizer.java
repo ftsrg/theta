@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xta;
 
 import java.awt.Color;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -44,7 +44,7 @@ public final class XtaVisualizer {
 
 	public static Graph visualize(final XtaSystem system) {
 		final Graph graph = new Graph("System", XTA_LABEL);
-		final Map<Object, String> ids = new HashMap<>();
+		final Map<Object, String> ids = Containers.createMap();
 		for (final XtaProcess process : system.getProcesses()) {
 			traverseProcess(process, graph, ids);
 		}
@@ -53,7 +53,7 @@ public final class XtaVisualizer {
 
 	public static Graph visualize(final XtaProcess process) {
 		final Graph graph = new Graph(process.getName(), XTA_LABEL);
-		final Map<Object, String> ids = new HashMap<>();
+		final Map<Object, String> ids = Containers.createMap();
 		traverseProcess(process, graph, ids);
 		return graph;
 	}

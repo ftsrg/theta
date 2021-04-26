@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.cfa.analysis.utils;
 
 import java.awt.Color;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +56,7 @@ public final class CfaVisualizer {
 
 	public static Graph visualize(final CFA cfa) {
 		final Graph graph = new Graph(CFA_ID, CFA_LABEL);
-		final Map<Loc, String> ids = new HashMap<>();
+		final Map<Loc, String> ids = Containers.createMap();
 		addVars(graph, cfa);
 		for (final Loc loc : cfa.getLocs()) {
 			addLocation(graph, cfa, loc, ids);

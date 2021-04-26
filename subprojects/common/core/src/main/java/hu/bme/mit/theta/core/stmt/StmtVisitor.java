@@ -33,4 +33,6 @@ public interface StmtVisitor<P, R> {
 
 	R visit(OrtStmt stmt, P param);
 
+	R visit(LoopStmt stmt, P param);
+
 }

@@ -29,7 +29,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -129,7 +129,7 @@ public class ExplStmtTransFuncTest {
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
 
-		final Map<Integer, Integer> solverCallsToExpectedStates = new HashMap<>();
+		final Map<Integer, Integer> solverCallsToExpectedStates = Containers.createMap();
 		solverCallsToExpectedStates.put(1, 1);
 		solverCallsToExpectedStates.put(2, 1);
 		solverCallsToExpectedStates.put(3, 3);

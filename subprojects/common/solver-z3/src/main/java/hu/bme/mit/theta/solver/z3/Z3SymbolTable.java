@@ -42,19 +42,19 @@ final class Z3SymbolTable {
 	}
 
 	public com.microsoft.z3.FuncDecl getSymbol(final ConstDecl<?> constDecl) {
-		checkArgument(definesConst(constDecl), "Declaration " + constDecl + " not found in symbol table");
+		checkArgument(definesConst(constDecl), "Declaration %s not found in symbol table",constDecl);
 		return constToSymbol.get(constDecl);
 	}
 
 	public ConstDecl<?> getConst(final com.microsoft.z3.FuncDecl symbol) {
-		checkArgument(definesSymbol(symbol), "Symbol " + symbol + " not found in symbol table");
+		checkArgument(definesSymbol(symbol), "Symbol %s not found in symbol table",symbol);
 		return constToSymbol.inverse().get(symbol);
 	}
 
 	public void put(final ConstDecl<?> constDecl, final com.microsoft.z3.FuncDecl symbol) {
 		checkNotNull(constDecl);
 		checkNotNull(symbol);
-		checkState(!constToSymbol.containsKey(constDecl), "Constant " + constDecl + " not found.");
+		checkState(!constToSymbol.containsKey(constDecl), "Constant %s not found.",constDecl);
 		constToSymbol.put(constDecl, symbol);
 	}
 

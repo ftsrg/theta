@@ -4,15 +4,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -155,6 +147,11 @@ public class SpState {
 
         @Override
         public SpState visit(OrtStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public SpState visit(LoopStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
     }

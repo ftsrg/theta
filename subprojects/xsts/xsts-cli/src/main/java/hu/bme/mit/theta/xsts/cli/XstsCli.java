@@ -8,12 +8,16 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
@@ -71,6 +75,9 @@ public class XstsCli {
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
+	@Parameter(names = "--optimizestmts", description = "Turn statement optimization on or off")
+	OptimizeStmts optimizeStmts = OptimizeStmts.ON;
+
 	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
 	Logger.Level logLevel = Logger.Level.SUBSTEP;
 
@@ -91,6 +98,9 @@ public class XstsCli {
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
+
+	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
+	String dotfile = null;
 
 	private Logger logger;
 
@@ -141,6 +151,9 @@ public class XstsCli {
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe(), xsts);
 			}
+			if (dotfile != null) {
+				writeVisualStatus(status, dotfile);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 			System.exit(1);
@@ -189,7 +202,7 @@ public class XstsCli {
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.maxEnum(maxEnum).maxPredCount(maxPredCount).initPrec(initPrec).pruneStrategy(pruneStrategy)
-					.search(search).predSplit(predSplit).logger(logger).build(xsts);
+					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
@@ -242,6 +255,13 @@ public class XstsCli {
 		try (PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.write(concrTrace.toString());
 		}
+	}
+
+	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+			throws FileNotFoundException {
+		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 
 }

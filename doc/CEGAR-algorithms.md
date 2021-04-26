@@ -36,8 +36,7 @@ The domain controls the abstract information that is being tracked about the sys
 * `PRED_BOOL`: [Boolean predicate abstraction](https://link.springer.com/article/10.1007/s10009-002-0095-0) keeps track of arbitrary Boolean combination of predicates.
 * `PRED_SPLIT`: Boolean predicate abstraction, but states are [split]((https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf)) into sub-states along disjunctions.
 * `EXPL`: [Explicit-value abstraction]((https://link.springer.com/chapter/10.1007/978-3-642-37057-1_11)) keeps track of concrete values, but only for a (continuously expanded) set of variables.
-* `PROD`: Product abstraction, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates.
-* `PROD_AUTO`: Automatic product abstraction, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly. Other variables are also tracked explicitly if they appear in a given number of predicates (defined with the `--maxpredcount` option).
+* `EXPL_PRED_CARD`, `EXPL_PRED_SPLIT` and `EXPL_PRED_BOOL`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Other variables are also tracked explicitly if they appear in a given number of predicates (defined with the `--maxpredcount` option).
 
 Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
 Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
@@ -58,7 +57,7 @@ Controls the initial precision of the abstraction (e.g., what predicates or vari
 * `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--domain` is `EXPL`.
 * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--domain` is `PRED_*`.
 * `PROP`: Available for XSTS. Tracks variables from the property if `--domain` is `EXPL` and predicates from the property if `--domain` is `PRED_*`.
-* `CTRL`: Available for XSTS if `--domain` is `PROD` or `EXPL`. Tracks all control variables.
+* `CTRL`: Available for XSTS if `--domain` is `EXPL` or `EXPL_PRED_*`. Tracks all control variables.
 
 We observed that usually the `EMPTY` initial precision yields good performance: the algorithm can automatically determine the precision.
 However, if the system is mostly deterministic, it might be suitable to track all variables from the beginning.
@@ -93,7 +92,7 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 ### `--maxpredcount`
 
 Available for XSTS.
-The number of predicates a variable has to appear in before it is tracked explicitly when the `PRED_AUTO` domain is used.
+The number of predicates a variable has to appear in before it is tracked explicitly when `--domain` is `EXPL_PRED_*`. Default is `0` (unlimited).
 
 ### `--refinement`
 

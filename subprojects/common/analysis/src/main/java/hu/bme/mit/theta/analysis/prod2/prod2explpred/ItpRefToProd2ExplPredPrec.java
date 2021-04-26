@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,8 +34,8 @@ public final class ItpRefToProd2ExplPredPrec implements RefutationToPrec<Prod2Pr
 	@Override
 	public Prod2Prec<ExplPrec, PredPrec> toPrec(ItpRefutation refutation, int index) {
 		final Collection<Expr<BoolType>> exprs = exprSplitter.apply(refutation.get(index));
-		Set<VarDecl<?>> explSelectedVars = new HashSet<>();
-		Set<Expr<BoolType>> predSelectedExprs = new HashSet<>();
+		Set<VarDecl<?>> explSelectedVars = Containers.createSet();
+		Set<Expr<BoolType>> predSelectedExprs = Containers.createSet();
 		for (var expr : exprs) {
 			final Set<VarDecl<?>> containedVars = ExprUtils.getVars(expr);
 			boolean allExpl = true;

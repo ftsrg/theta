@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xta;
 
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -40,8 +41,8 @@ public final class XtaSystem {
 
 	private XtaSystem() {
 		processes = new ArrayList<>();
-		dataVars = new HashSet<>();
-		clockVars = new HashSet<>();
+		dataVars = Containers.createSet();
+		clockVars = Containers.createSet();
 		initVal = new MutableValuation();
 
 		unmodProcesses = Collections.unmodifiableList(processes);

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -58,7 +58,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		inEdge = Optional.empty();
 		outEdges = new ArrayList<>();
 		coveringNode = Optional.empty();
-		coveredNodes = new HashSet<>();
+		coveredNodes = Containers.createSet();
 		expanded = false;
 	}
 

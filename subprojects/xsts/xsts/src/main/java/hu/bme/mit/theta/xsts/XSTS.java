@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts;
 
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -55,7 +56,7 @@ public final class XSTS {
 		this.varToType = varToType;
 		this.ctrlVars = ctrlVars;
 
-		final Set<VarDecl<?>> tmpVars = new HashSet<>();
+		final Set<VarDecl<?>> tmpVars = Containers.createSet();
 		tmpVars.addAll(varToType.keySet());
 		tmpVars.addAll(StmtUtils.getVars(tran));
 		tmpVars.addAll(StmtUtils.getVars(env));

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -38,7 +38,7 @@ public final class ImpactReachedSet<S extends State, A extends Action, K> implem
 
 	private ImpactReachedSet(final Function<? super S, ? extends K> partitioning) {
 		this.partitioning = checkNotNull(partitioning);
-		partitions = new HashMap<>();
+		partitions = Containers.createMap();
 	}
 
 	public static <S extends State, A extends Action, K> ImpactReachedSet<S, A, K> create(

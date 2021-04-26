@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -100,7 +100,7 @@ public final class BasicSubstitution implements Substitution {
 		private boolean built;
 
 		private Builder() {
-			this(new HashMap<>());
+			this(Containers.createMap());
 		}
 
 		private Builder(final Map<Decl<?>, Expr<?>> declToExpr) {

@@ -17,7 +17,7 @@ package hu.bme.mit.theta.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +83,7 @@ public class DistToErrComparator implements ArgNodeComparator {
 
 	static Map<Loc, Integer> calculateDistancesToError(final CFA cfa, final Loc errLoc) {
 		List<Loc> queue = new LinkedList<>();
-		final Map<Loc, Integer> distancesToError = new HashMap<>();
+		final Map<Loc, Integer> distancesToError = Containers.createMap();
 		queue.add(errLoc);
 		distancesToError.put(errLoc, 0);
 		int distance = 1;

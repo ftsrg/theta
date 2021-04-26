@@ -50,6 +50,9 @@ All arguments are optional, except `--model` and `--property`.
 * `--version`: Print version info (in this case `--model` and `--property` is of course not required).
 * `--metrics`: Print metrics about the XSTS model (number of variables and statements).
 * `--initialmarking`: Can be used with the PNML frontend. Override the initial markings of the places. Format: list the values to be assigned to each place in the order of their definition in the PNML file separated with spaces. 
+* `--visualize`: Visualize the result of the analysis (the reachability graph if the model is safe, or a counterexample trace if it is unsafe). Prints to the dotfile given as parameter.
+* `--optimizestmts`: The algorithm can optimize stmts by detecting failing assumptions and unreachable branches of choices.
+    * Possible values: `ON` (default), `OFF`.
 
 The arguments related to the algorithm are described in more detail (along with best practices) in [CEGAR-algorithms.md](../../../doc/CEGAR-algorithms.md).
 

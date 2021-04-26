@@ -41,14 +41,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.ArraySort;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Model;
+import com.microsoft.z3.*;
 
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -91,7 +89,7 @@ final class Z3TermTransformer {
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
 
-		environment = new HashMap<>();
+		environment = Containers.createMap();
 		environment.put("true", exprNullaryOperator(TrueExpr::getInstance));
 		environment.put("false", exprNullaryOperator(FalseExpr::getInstance));
 		environment.put("not", exprUnaryOperator(NotExpr::create));
@@ -188,8 +186,13 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
-		final var value = intNum.getBigInteger();
-		return Int(value);
+		try{
+			final var value = intNum.getInt64();
+			return Int(BigInteger.valueOf(value));
+		} catch (Z3Exception ex){
+			final var value = intNum.getBigInteger();
+			return Int(value);
+		}
 	}
 
 	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term) {

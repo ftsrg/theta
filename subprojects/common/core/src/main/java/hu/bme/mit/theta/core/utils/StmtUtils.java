@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +37,7 @@ public final class StmtUtils {
 	 * @return Variables
 	 */
 	public static Set<VarDecl<?>> getVars(final Stmt stmt) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		return vars;
 	}
@@ -49,7 +49,7 @@ public final class StmtUtils {
 	 * @return Variables
 	 */
 	public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		stmts.forEach(s -> s.accept(VarCollectorStmtVisitor.getInstance(), vars));
 		return vars;
 	}

@@ -12,7 +12,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 
 public final class Prod2ExplPredStrengtheningOperator implements StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
@@ -30,7 +30,7 @@ public final class Prod2ExplPredStrengtheningOperator implements StrengtheningOp
 	@Override
 	public Collection<Prod2State<ExplState, PredState>> strengthen(Collection<Prod2State<ExplState, PredState>> prod2States, Prod2Prec<ExplPrec, PredPrec> prec) {
 
-		Set<Prod2State<ExplState, PredState>> validStates = new HashSet<>();
+		Set<Prod2State<ExplState, PredState>> validStates = Containers.createSet();
 
 		for (Prod2State<ExplState, PredState> prod2State : prod2States) {
 
@@ -45,7 +45,7 @@ public final class Prod2ExplPredStrengtheningOperator implements StrengtheningOp
 
 		}
 		if (validStates.size() < prod2States.size()) {
-			var removed = new HashSet<>();
+			var removed = Containers.createSet();
 			for (var state : prod2States) {
 				if (!validStates.contains(state)) removed.add(state);
 			}

@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import hu.bme.mit.theta.analysis.expl.StmtApplier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

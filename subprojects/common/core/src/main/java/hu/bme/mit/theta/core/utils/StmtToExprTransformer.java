@@ -20,23 +20,12 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -150,6 +139,10 @@ final class StmtToExprTransformer {
 		public StmtUnfoldResult visit(OrtStmt ortStmt, VarIndexing indexing) {
 			throw new UnsupportedOperationException();
 		}
-	}
 
+		@Override
+		public StmtUnfoldResult visit(LoopStmt stmt, VarIndexing indexing) {
+			throw new UnsupportedOperationException(String.format("Loop statement %s was not unrolled",stmt));
+		}
+	}
 }
