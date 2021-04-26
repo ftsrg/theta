@@ -57,7 +57,7 @@ Controls the initial precision of the abstraction (e.g., what predicates or vari
 * `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--domain` is `EXPL`.
 * `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--domain` is `PRED_*`.
 * `PROP`: Available for XSTS. Tracks variables from the property if `--domain` is `EXPL` and predicates from the property if `--domain` is `PRED_*`.
-* `CTRL`: Available for XSTS if `--domain` is `PROD` or `EXPL`. Tracks all control variables.
+* `CTRL`: Available for XSTS if `--domain` is `EXPL` or `EXPL_PRED_*`. Tracks all control variables.
 
 We observed that usually the `EMPTY` initial precision yields good performance: the algorithm can automatically determine the precision.
 However, if the system is mostly deterministic, it might be suitable to track all variables from the beginning.
@@ -92,7 +92,7 @@ In general, values between `5` to `50` perform well (see Section 3.1.1 of [our J
 ### `--maxpredcount`
 
 Available for XSTS.
-The number of predicates a variable has to appear in before it is tracked explicitly when the `PRED_AUTO` domain is used.
+The number of predicates a variable has to appear in before it is tracked explicitly when `--domain` is `EXPL_PRED_*`. Default is `0` (unlimited).
 
 ### `--refinement`
 
