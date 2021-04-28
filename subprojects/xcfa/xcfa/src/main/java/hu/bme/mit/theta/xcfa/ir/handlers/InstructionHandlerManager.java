@@ -28,12 +28,14 @@ import hu.bme.mit.theta.xcfa.ir.handlers.concrete.OtherInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.TerminatorInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.UnaryInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.VectorInstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.handlers.concrete.checks.PointerArithmeticCheck;
 
 import java.util.List;
 
 public class InstructionHandlerManager {
 
     private static final List<Class<? extends InstructionHandler>> defaultInstructionHandlers = List.of(
+            PointerArithmeticCheck.class,
             ArrayIntrinsicsHandler.class,
             TerminatorInstructionHandler.class,
             UnaryInstructionHandler.class,
@@ -46,6 +48,7 @@ public class InstructionHandlerManager {
             OtherInstructionHandler.class
     );
     private static final List<Class<? extends InstructionHandler>> bitvectorInstructionHandlers = List.of(
+            PointerArithmeticCheck.class,
             BitvectorInstructionHandler.class,
             ArrayIntrinsicsHandler.class,
             TerminatorInstructionHandler.class,
