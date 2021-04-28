@@ -10,7 +10,7 @@ void foo() {
 
 int main() {
     int a;
-    scanf("%d", foo);
+    scanf("%d", &a);
     if(a) {
         printf("if\n");
     }

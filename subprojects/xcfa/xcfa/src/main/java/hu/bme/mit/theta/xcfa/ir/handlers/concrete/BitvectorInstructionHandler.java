@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
@@ -26,6 +27,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -75,11 +77,92 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
             case "srem":
                 srem(instruction, globalState, functionState, blockState);
                 break;
+            case "trunc":
+                trunc(instruction, globalState, functionState, blockState);
+                break;
+            case "zext":
+                zext(instruction, globalState, functionState, blockState);
+                break;
+            case "sext":
+                sext(instruction, globalState, functionState, blockState);
+                break;
+            case "fptoui":
+                fptoui(instruction, globalState, functionState, blockState);
+                break;
+            case "fptosi":
+                fptosi(instruction, globalState, functionState, blockState);
+                break;
+            case "uitofp":
+                uitofp(instruction, globalState, functionState, blockState);
+                break;
+            case "sitofp":
+                sitofp(instruction, globalState, functionState, blockState);
+                break;
+            case "bitcast":
+                bitcast(instruction, globalState, functionState, blockState);
+                break;
             default:
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
 
+    }
+
+    private void trunc(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        Argument op1 = instruction.getArguments().get(0);
+
+        checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+        BigInteger newSize = BigInteger.valueOf(((BvType) instruction.getRetVar().get().getType()).getSize());
+        BigInteger oldSize = BigInteger.valueOf(((BvType) op1.getType()).getSize());
+        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Extract(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), IntLitExpr.of(oldSize.subtract(newSize)), IntLitExpr.of(oldSize)));
+    }
+
+    private void zext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        Argument op1 = instruction.getArguments().get(0);
+
+        checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+        //TODO: bool exprs?
+        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ZExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()));
+    }
+
+    private void sext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        Argument op1 = instruction.getArguments().get(0);
+
+        checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()));
+    }
+
+    private void fptoui(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    private void fptosi(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    private void uitofp(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    private void sitofp(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    private void bitcast(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        Argument op1 = instruction.getArguments().get(0);
+
+        checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+        BigInteger newSize = BigInteger.valueOf(((BvType) instruction.getRetVar().get().getType()).getSize());
+        BigInteger oldSize = BigInteger.valueOf(((BvType) op1.getType()).getSize());
+        if(newSize.subtract(oldSize).signum() == 1) {
+            zext(instruction, globalState, functionState, blockState);
+        } else {
+            trunc(instruction, globalState, functionState, blockState);
+        }
     }
 
 

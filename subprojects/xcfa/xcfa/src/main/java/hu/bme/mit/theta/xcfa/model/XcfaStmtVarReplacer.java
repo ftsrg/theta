@@ -54,6 +54,12 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarDecl<?>>, Stmt> {
 
     public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<VarDecl<?>, VarDecl<?>> varLut) {
+        if (expr instanceof RefExpr<?>) {
+            if (((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>) {
+                return cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+            }
+        }
+
         List<? extends Expr<?>> ops = expr.getOps();
         List<Expr<?>> newOps = new ArrayList<>();
         for (Expr<?> op : ops) {

@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 
 import java.util.*;
 
@@ -87,6 +88,8 @@ public final class XCFA {
 				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
 				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
 				XcfaMetadata.create(e, "cfaEdge", edge);
+				Set<VarDecl<?>> vars = StmtUtils.getVars(e.getStmts().get(i));
+				System.out.println(vars);
 			}
 			if (e.getStmts().size() == 0) {
 				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());

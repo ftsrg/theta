@@ -105,10 +105,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
 
             VarDecl<?> callVar = null;
             if (instruction.getRetVar().isPresent()) {
-                callVar = Var(instruction.getRetVar().get().getName(), instruction.getRetVar().get().getType());
-                functionState.getProcedureBuilder().getLocalVars().put(callVar, Optional.empty());
-                functionState.getLocalVars().put(instruction.getRetVar().get().getName(), Tuple2.of(callVar, 1));
-                functionState.getValues().put(instruction.getRetVar().get().getName(), callVar.getRef());
+                callVar =  getOrCreateVar(functionState, instruction.getRetVar().get());
             }
             LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> exprs = new LinkedHashMap<>();
             if(callVar != null) exprs.put(callVar.getRef(), XcfaCallStmt.Direction.OUT);
@@ -142,10 +139,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
     }
 
     private Stmt havocVar(Argument reg, FunctionState functionState, BlockState blockState) {
-        VarDecl<?> callVar = Var(reg.getName(), reg.getType());
-        functionState.getProcedureBuilder().getLocalVars().put(callVar, Optional.empty());
-        functionState.getLocalVars().put(reg.getName(), Tuple2.of(callVar, 1));
-        functionState.getValues().put(reg.getName(), callVar.getRef());
+        VarDecl<?> callVar = getOrCreateVar(functionState, reg);
         return Havoc(callVar);
     }
 
@@ -158,6 +152,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType().equals(op2.getType()), "Select only supports common types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         Expr<?> expr1 = op1.getExpr(functionState.getValues());
+        //TODO: what to do, when null?
         Expr<?> expr2 = op2.getExpr(functionState.getValues());
         functionState.getValues().put(instruction.getRetVar().get().getName(), Ite(
                 cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),
@@ -165,14 +160,37 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 cast(expr2, expr1.getType())));
     }
 
+    private VarDecl<?> getOrCreateVar(FunctionState functionState, Argument regArgument) {
+        VarDecl<?> var;
+        Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
+        if(objects == null) {
+            var = Var(regArgument.getName(), regArgument.getType());
+            functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+            functionState.getLocalVars().put(regArgument.getName(), Tuple2.of(var, 1));
+            functionState.getValues().put(regArgument.getName(), var.getRef());
+            return var;
+        } else if (!objects.get1().getType().equals(regArgument.getType())) {
+            String typedName = regArgument.getName() + "_" + regArgument.getType().toString();
+            objects = functionState.getLocalVars().get(typedName);
+            if(objects == null) {
+                var = Var(typedName, regArgument.getType());
+                functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+                functionState.getLocalVars().put(typedName, Tuple2.of(var, 1));
+                functionState.getValues().put(typedName, var.getRef());
+                return var;
+            }
+            else return objects.get1();
+        }
+        else{
+            return objects.get1();
+        }
+    }
+
     // Phi nodes are the only possible place where an argument might not be known yet.
     private void phi(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Optional<RegArgument> retVar = instruction.getRetVar();
         checkState(retVar.isPresent(), "Return var must be present!");
-        VarDecl<?> phiVar = Var(retVar.get().getName(), retVar.get().getType());
-        functionState.getProcedureBuilder().getLocalVars().put(phiVar, Optional.empty());
-        functionState.getLocalVars().put(retVar.get().getName(), Tuple2.of(phiVar, 1));
-        functionState.getValues().put(retVar.get().getName(), phiVar.getRef());
+        VarDecl<?> phiVar = getOrCreateVar(functionState, retVar.get());
         for (int i = 0; i < (instruction.getArguments().size()) / 2; ++i) {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
