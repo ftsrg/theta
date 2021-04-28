@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.dsl.XcfaDslManager;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
+import hu.bme.mit.theta.xcfa.ir.Utils;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.InstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.InstructionHandlerManager;
@@ -103,6 +104,7 @@ public class XcfaUtils {
      * Runs the specified passes when a specific stage is complete.
      */
     public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
+        Utils.arithmeticType = arithmeticType;
         BuiltState builtState = new BuiltState();
         GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
@@ -111,7 +113,7 @@ public class XcfaUtils {
 
             for (String block : ssa.getBlocks(function.get1())) {
                 BlockState blockState = new BlockState(functionState, block);
-                InstructionHandlerManager instructionHandlerManager = new InstructionHandlerManager();
+                InstructionHandlerManager instructionHandlerManager = new InstructionHandlerManager(arithmeticType);
                 for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(block)) {
                     try {
                         InstructionHandler instructionHandler = instructionHandlerManager.createInstructionHandlers();

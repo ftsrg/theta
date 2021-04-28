@@ -146,7 +146,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
         for (int i = 0; i < (instruction.getArguments().size() / 2) - 1; ++i) {
             XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(2 + 2 * i + 1).getName());
             Expr<?> constExpr = instruction.getArguments().get(2 + 2 * i).getExpr(functionState.getValues());
-            checkState(varExpr.getType() == constExpr.getType(), "variable and constant should be of the same type!");
+            checkState(varExpr.getType().equals(constExpr.getType()), "variable and constant should be of the same type!");
             EqExpr<?> eq = AbstractExprs.Eq(cast(varExpr, constExpr.getType()), cast(constExpr, constExpr.getType()));
             if (defaultBranch == null) defaultBranch = eq;
             else defaultBranch = Or(defaultBranch, eq);

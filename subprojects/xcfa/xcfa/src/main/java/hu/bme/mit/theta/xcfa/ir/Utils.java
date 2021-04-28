@@ -20,8 +20,10 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
@@ -37,6 +39,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class Utils {
     private static final int doublePrecision = 1 << 8;
+    public static ArithmeticType arithmeticType;
 
     public static Type createType(String type) {
         type = type.replaceAll("\\*", "");
@@ -44,7 +47,7 @@ public class Utils {
         Pattern pattern = Pattern.compile(arrayPattern);
         Matcher matcher = pattern.matcher(type);
         if (matcher.find()) {
-            Integer size = Integer.parseInt(matcher.group(1)); // TODO: how to check bounds?
+            Integer size = Integer.parseInt(matcher.group(1));
             type = matcher.group(2);
             return Array(Int(), createType(type));
         }
@@ -54,14 +57,19 @@ public class Utils {
             case "float":
                 return Rat();
             case "i64":
+                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(64);
             case "i32":
+                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
             case "i16":
+                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(16);
             case "i8":
+                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(8);
                 return Int();
             case "i1":
                 return Bool();
             default:
-                new RuntimeException("Type " + type + " not known! (Using int instead)").printStackTrace();
+                new RuntimeException("Type " + type + " not known! (Using 32 bit int instead)").printStackTrace();
+                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
                 return Int();
         }
     }
@@ -84,14 +92,19 @@ public class Utils {
             case "float":
                 return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(arguments[1]) * doublePrecision)), BigInteger.valueOf(doublePrecision));
             case "i64":
+                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 64);
             case "i32":
+                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 32);
             case "i16":
+                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 16);
             case "i8":
+                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 8);
                 return IntLitExpr.of(new BigInteger(arguments[1]));
             case "i1":
                 return BoolLitExpr.of(arguments[1].equals("true"));
             default:
-                new RuntimeException("Type " + arguments[0] + " not known! (Using int(0) instead)").printStackTrace();
+                new RuntimeException("Type " + arguments[0] + " not known! (Using int32(0) instead)").printStackTrace();
+                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger("0"), 32);
                 return IntLitExpr.of(BigInteger.ZERO);
         }
     }

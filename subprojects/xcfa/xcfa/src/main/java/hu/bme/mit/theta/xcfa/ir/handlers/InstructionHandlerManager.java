@@ -16,9 +16,11 @@
 
 package hu.bme.mit.theta.xcfa.ir.handlers;
 
+import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.AggregateInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.ArrayIntrinsicsHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BinaryInstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BitvectorInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BitwiseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.ConversionInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.MemoryInstructionHandler;
@@ -43,10 +45,28 @@ public class InstructionHandlerManager {
             ConversionInstructionHandler.class,
             OtherInstructionHandler.class
     );
+    private static final List<Class<? extends InstructionHandler>> bitvectorInstructionHandlers = List.of(
+            BitvectorInstructionHandler.class,
+            ArrayIntrinsicsHandler.class,
+            TerminatorInstructionHandler.class,
+            UnaryInstructionHandler.class,
+            BinaryInstructionHandler.class,
+            BitwiseInstructionHandler.class,
+            VectorInstructionHandler.class,
+            AggregateInstructionHandler.class,
+            MemoryInstructionHandler.class,
+            ConversionInstructionHandler.class,
+            OtherInstructionHandler.class
+    );
     private final List<Class<? extends InstructionHandler>> instructionHandlers;
 
-    public InstructionHandlerManager() {
-        this.instructionHandlers = defaultInstructionHandlers;
+    public InstructionHandlerManager(ArithmeticType arithmeticType) {
+        if(arithmeticType == ArithmeticType.bitvector) {
+            this.instructionHandlers = bitvectorInstructionHandlers;
+        }
+        else {
+            this.instructionHandlers = defaultInstructionHandlers;
+        }
     }
 
     public InstructionHandlerManager(List<Class<? extends InstructionHandler>> instructionHandlers) {

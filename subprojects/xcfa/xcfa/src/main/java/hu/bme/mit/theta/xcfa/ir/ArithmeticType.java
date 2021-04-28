@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.ir;
 
 public enum ArithmeticType {
 	integer,
-	integer_modulo,
-	bitwise,
+//	integer_modulo,
+	bitvector,
 	efficient
 }

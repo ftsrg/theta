@@ -45,9 +45,9 @@ public class GlobalState {
 
     public GlobalState(SSAProvider ssa, ArithmeticType arithmeticType) {
         this.ssa = ssa;
-        if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()) arithmeticType = ArithmeticType.bitwise;
+        if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()) arithmeticType = ArithmeticType.bitvector;
         else if(arithmeticType == ArithmeticType.efficient) arithmeticType = ArithmeticType.integer;
-        checkState(!ssa.shouldUseBitwiseArithmetics() || arithmeticType == ArithmeticType.bitwise, "There are statements in the source not mappable to integer arithmetic");
+        checkState(!ssa.shouldUseBitwiseArithmetics() || arithmeticType == ArithmeticType.bitvector, "There are statements in the source not mappable to integer arithmetic");
         this.arithmeticType = arithmeticType;
         builder = XCFA.builder();
         this.globalVars = new HashMap<>();

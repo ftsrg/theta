@@ -45,7 +45,7 @@ public class UnaryInstructionHandler extends BaseInstructionHandler {
     private void fneg(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
 
-        checkState(op1.getType() == RatType.getInstance(), "Fneg only supports integer types!");
+        checkState(op1.getType() == RatType.getInstance(), "Fneg only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Neg(cast(op1.getExpr(functionState.getValues()), RatType.getInstance())));
 
