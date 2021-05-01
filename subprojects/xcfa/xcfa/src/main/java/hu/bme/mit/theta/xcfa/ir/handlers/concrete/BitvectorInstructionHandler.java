@@ -163,6 +163,9 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         } else {
             trunc(instruction, globalState, functionState, blockState);
         }
+        if (functionState.getLocalVars().containsKey(op1.getName())) {
+            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op1.getName()));
+        }
     }
 
 

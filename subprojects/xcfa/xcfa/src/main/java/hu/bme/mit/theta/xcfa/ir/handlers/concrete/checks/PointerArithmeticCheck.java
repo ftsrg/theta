@@ -29,7 +29,7 @@ public class PointerArithmeticCheck extends BaseInstructionHandler {
 			case "getelementptr":
 			case "ptrtoint":
 			case "inttoptr":
-				throw new UnsupportedOperationException("Pointer arithmetic is not yet supported!");
+				throw new UnsupportedOperationException("Pointer arithmetic or structs are not yet supported!");
 			default:
 				super.handleInstruction(instruction, globalState, functionState, blockState);
 				break;

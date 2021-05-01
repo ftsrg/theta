@@ -80,9 +80,10 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
     private void store(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
-        checkState(functionState.getLocalVars().containsKey(op2.getName()), "Store must store into a variable!");
 
         Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(op2.getName());
+        checkState(functionState.getLocalVars().containsKey(op2.getName()) || functionState.getParams().contains(oldVar.get1()), "Store must store into a variable!");
+
         if (oldVar.get2() > 1) {
             functionState.getLocalVars().put(op2.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() - 1));
         } else if (oldVar.get2() == 1) {
