@@ -94,14 +94,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
     private void call(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument functionName = instruction.getArguments().get(instruction.getArguments().size() - 1);
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
-        if (functionName.getName().equals("__assert_fail")) {
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of());
-            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
-            functionState.getProcedureBuilder().addLoc(newLoc);
-            functionState.getProcedureBuilder().addEdge(edge);
-            blockState.setLastLocation(newLoc);
-            functionState.getProcedureBuilder().setErrorLoc(newLoc);
-        } else if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
+        if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
 
             VarDecl<?> callVar = null;
             if (instruction.getRetVar().isPresent()) {
@@ -119,7 +112,6 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
-            blockState.setLastLocation(newLoc);
         } else {
             List<Stmt> stmts = new ArrayList<>();
             if (instruction.getRetVar().isPresent()) {
@@ -134,8 +126,8 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
-            blockState.setLastLocation(newLoc);
         }
+        blockState.setLastLocation(newLoc);
     }
 
     private Stmt havocVar(Argument reg, FunctionState functionState, BlockState blockState) {

@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +36,7 @@ import static hu.bme.mit.theta.xcfa.ir.Utils.createVariable;
 public class GlobalState {
     private final XCFA.Builder builder;
     private final Map<String, VarDecl<?>> globalVars;
-    private final Map<String, XcfaProcess.Builder> processes;
+    private final Map<String, String> processes;
     private final List<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> procedures;
     private final SSAProvider ssa;
     private final ArithmeticType arithmeticType;
@@ -63,9 +62,7 @@ public class GlobalState {
 
         procedures.addAll(ssa.getFunctions());
 
-        XcfaProcess.Builder mainProcBuilder = XcfaProcess.builder();
-        mainProcBuilder.setName("main");
-        processes.put(mainProcBuilder.getName(), mainProcBuilder);
+        processes.put("main", "main");
 
     }
 
@@ -80,12 +77,12 @@ public class GlobalState {
         this.globalVars.put(name, globalVar);
     }
 
-    public Map<String, XcfaProcess.Builder> getProcesses() {
+    public Map<String, String> getProcesses() {
         return processes;
     }
 
-    public void addProcess(String name, XcfaProcess.Builder process) {
-        this.processes.put(name, process);
+    public void addProcess(String name, String mainProcedureName) {
+        this.processes.put(name, mainProcedureName);
     }
 
     public int getGlobalCounter() {

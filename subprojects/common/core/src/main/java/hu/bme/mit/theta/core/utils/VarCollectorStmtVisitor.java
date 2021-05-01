@@ -27,11 +27,13 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
@@ -134,6 +136,21 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 		for (Stmt subStmt : stmt.getStmts()) {
 			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		}
+		return null;
+	}
+
+	@Override
+	public Void visit(FenceStmt fenceStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(JoinThreadStmt joinThreadStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(StartThreadStmt startThreadStmt, Collection<VarDecl<?>> param) {
 		return null;
 	}
 }

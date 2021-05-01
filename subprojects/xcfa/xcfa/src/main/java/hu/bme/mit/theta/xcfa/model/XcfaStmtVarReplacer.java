@@ -29,7 +29,9 @@ import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
@@ -172,6 +174,16 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     @Override
     public Stmt visit(AtomicEndStmt atomicEndStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return atomicEndStmt;
+    }
+
+    @Override
+    public Stmt visit(StartThreadStmt startThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return new StartThreadStmt(startThreadStmt.getKey(), startThreadStmt.getThreadName(), replaceVars(startThreadStmt.getParam(), param));
+    }
+
+    @Override
+    public Stmt visit(JoinThreadStmt joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return joinThreadStmt;
     }
 
 

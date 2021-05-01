@@ -134,14 +134,15 @@ public class XcfaUtils {
             builtState.getProcedures().put(function.get1(), functionState.getProcedureBuilder().build());
         }
 
-        globalState.getProcesses().forEach((s, builder) -> {
+        globalState.getProcesses().forEach((handle, mainProcedure) -> {
+            XcfaProcess.Builder builder = XcfaProcess.builder();
             builtState.getProcedures().forEach((s1, xcfaProcedure) -> {
                 XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure);
                 builder.addProcedure(procedure);
-                if (procedure.getName().equals("main")) builder.setMainProcedure(procedure);
+                if (procedure.getName().equals(mainProcedure)) builder.setMainProcedure(procedure);
             });
             XcfaProcess built = builder.build();
-            builtState.getProcesses().put(s, built);
+            builtState.getProcesses().put(handle, built);
             globalState.getBuilder().addProcess(built);
         });
 

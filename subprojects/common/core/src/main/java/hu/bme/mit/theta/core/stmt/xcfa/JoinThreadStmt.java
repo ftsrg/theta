@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package hu.bme.mit.theta.core.stmt.xcfa;
 
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
-public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
+public class JoinThreadStmt extends XcfaStmt {
+	private final String key;
 
-	R visit(XcfaCallStmt stmt, P param);
+	public JoinThreadStmt(String key) {
+		this.key = key;
+	}
 
-	R visit(StoreStmt storeStmt, P param);
+	@Override
+	public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 
-	R visit(LoadStmt loadStmt, P param);
+	@Override
+	public <P, R> R accept(XcfaStmtVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 
-	R visit(FenceStmt fenceStmt, P param);
-
-	R visit(AtomicBeginStmt atomicBeginStmt, P param);
-
-	R visit(AtomicEndStmt atomicEndStmt, P param);
-
-	R visit(StartThreadStmt startThreadStmt, P param);
-
-	R visit(JoinThreadStmt joinThreadStmt, P param);
-
+	public String getKey() {
+		return key;
+	}
 }
