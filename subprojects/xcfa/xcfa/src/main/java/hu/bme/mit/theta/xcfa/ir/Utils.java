@@ -16,18 +16,23 @@
 
 package hu.bme.mit.theta.xcfa.ir;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +41,7 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class Utils {
     private static final int doublePrecision = 1 << 8;
@@ -81,10 +87,14 @@ public class Utils {
     }
 
     public static LitExpr<? extends Type> createConstant(String value) {
+        return createConstant(Int(), value);
+    }
+    public static LitExpr<? extends Type> createConstant(Type type, String value) {
         String[] arguments = value.split(" ");
         if (arguments.length != 2) {
             System.err.println("Constant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
-            return IntLitExpr.of(BigInteger.ZERO);
+            return getDefaultValue(type);
+
         }
 
         switch (arguments[0]) {
@@ -107,6 +117,15 @@ public class Utils {
                 if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger("0"), 32);
                 return IntLitExpr.of(BigInteger.ZERO);
         }
+    }
+
+    private static LitExpr<? extends Type> getDefaultValue(Type type) {
+        if(type instanceof RatType) return RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE);
+        else if(type instanceof ArrayType) return ArrayLitExpr.of(
+                List.of(Tuple2.of(IntLitExpr.of(BigInteger.ZERO), cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()))),
+                cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()),
+                ArrayType.of(Int(), ((ArrayType<?,?>)type).getElemType()));
+        return IntLitExpr.of(BigInteger.ZERO);
     }
 
     public static XcfaProcedure createEmptyProc(String name) {

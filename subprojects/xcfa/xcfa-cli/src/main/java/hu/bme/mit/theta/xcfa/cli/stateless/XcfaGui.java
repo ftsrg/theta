@@ -18,12 +18,13 @@ package hu.bme.mit.theta.xcfa.cli.stateless;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.XcfaStackFrame;
+import hu.bme.mit.theta.xcfa.model.XcfaState;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -48,16 +49,10 @@ import java.awt.GridBagLayout;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class XcfaGui extends JFrame {
-	private final XCFA xcfa;
+	private final XcfaState state;
 
 	private static final int width = 1680;
 	private static final int height = 1050;
@@ -67,7 +62,7 @@ public class XcfaGui extends JFrame {
 	private JComponent visualizationPanel;
 
 	public XcfaGui(XCFA xcfa) {
-		this.xcfa = xcfa;
+		this.state = xcfa.getInitialState();
 		this.setSize(width, height);
 		this.setResizable(false);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -96,12 +91,14 @@ public class XcfaGui extends JFrame {
 		namePanel.setLayout(new GridBagLayout());
 		namePanel.add(jLabel);
 		namePanel.setPreferredSize(new Dimension(width/4, 16));
+
 		jPanel.add(namePanel);
 		jPanel.add(createVariablePanel(process));
-		jPanel.add(visualizeChoices(process, process.getMainProcedure().getInitLoc()));
+		jPanel.add(visualizeChoices(process));
 		jPanel.add(createTraceLogPanel());
 
 		visualizationPanel.add(jPanel);
+		visualizationPanel.revalidate();
 	}
 
 	private static class AALabel extends JLabel {
@@ -191,20 +188,22 @@ public class XcfaGui extends JFrame {
 		return jScrollPane;
 	}
 
-	private JComponent visualizeChoices(XcfaProcess process, XcfaLocation initLoc) {
+	private JComponent visualizeChoices(XcfaProcess process) {
 		JPanel jPanel = new JPanel();
 		JScrollPane jScrollPane = new JScrollPane(jPanel);
 		jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 		jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		jScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		jScrollPane.setPreferredSize(new Dimension(width/4, 3*height/12 - 20));
-		for(int i = 0; i < 3; ++i) {
-			addChoice(jPanel,new XcfaEdge(new XcfaLocation("Loc" + i, null), new XcfaLocation("Loc" + (i + 1), null), List.of(Assign(Var("x", Int()), Int(25)), new XcfaCallStmt(new LinkedHashMap<>(Map.of(Var("y", Int()).getRef(), XcfaCallStmt.Direction.INOUT)), "proc1"))), 0);
+		for (XcfaStackFrame xcfaStackFrame : state.getOffers().get(process)) {
+			addChoice(jPanel, xcfaStackFrame);
 		}
 		return jScrollPane;
 	}
 
-	private void addChoice(JPanel jPanel, XcfaEdge edge, int i) {
+	private void addChoice(JPanel jPanel, XcfaStackFrame xcfaStackFrame) {
+		XcfaEdge edge = xcfaStackFrame.getEdge();
+		int i = edge.getStmts().indexOf(xcfaStackFrame.getStmt());
 		JPanel choice = new JPanel();
 		choice.setLayout(new BorderLayout());
 		choice.add(new AALabel(edge.getSource().getName(), Color.BLACK, -1), BorderLayout.LINE_START);
@@ -217,14 +216,19 @@ public class XcfaGui extends JFrame {
 			stmtpanel.add(new AALabel(stmt.toString(), Color.BLUE, 40));
 			stmtpanel.add(Box.createHorizontalGlue());
 			if(cnt++ == i) {
-				stmtpanel.add(new AAButton("Choose"));
+				AAButton choose = new AAButton("Choose");
+				stmtpanel.add(choose);
+				choose.addActionListener(actionEvent -> {
+					xcfaStackFrame.accept();
+					addThread("main2", state.getXcfa().getMainProcess());
+				} );
 			}
 			expressions.add(stmtpanel);
 		}
 		expressions.setBorder(new MatteBorder(0,1,0,1,Color.GRAY));
 		choice.add(expressions, BorderLayout.CENTER);
 		choice.add(new AALabel(edge.getTarget().getName(), Color.BLACK, -1), BorderLayout.LINE_END);
-		choice.setSize(width/4 - 10, 25);
+		choice.setMaximumSize(new Dimension(width/4 - 10, 25));
 		choice.setBorder(LineBorder.createBlackLineBorder());
 		jPanel.add(choice);
 	}

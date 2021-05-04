@@ -59,12 +59,20 @@ public final class XcfaLocation {
 		return Collections.unmodifiableList(incomingEdges);
 	}
 
+	public void removeIncomingEdge(XcfaEdge xcfaEdge) {
+		incomingEdges.remove(xcfaEdge);
+	}
+
 	void addIncomingEdge(XcfaEdge edge) {
 		incomingEdges.add(edge);
 	}
 
 	public List<XcfaEdge> getOutgoingEdges() {
 		return Collections.unmodifiableList(outgoingEdges);
+	}
+
+	public void removeOutgoingEdge(XcfaEdge xcfaEdge) {
+		outgoingEdges.remove(xcfaEdge);
 	}
 
 	void addOutgoingEdge(XcfaEdge edge) {

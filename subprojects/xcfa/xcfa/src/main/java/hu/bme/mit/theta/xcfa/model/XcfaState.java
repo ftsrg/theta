@@ -27,7 +27,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -57,20 +56,24 @@ public class XcfaState {
     private final Map<XcfaProcess, Set<XcfaStackFrame>> offers;
     private XcfaProcess currentlyAtomic;
 
+    //private final Collection<Consumer<XcfaProcess>> newProcessListeners;
+
     XcfaState(XCFA xcfa) {
         this.xcfa = xcfa;
-        enabledProcesses = new ArrayList<>(xcfa.getProcesses());
+        enabledProcesses = new ArrayList<>();
         valuation = new MutablePartitionedValuation();
         int globalid = valuation.createPartition();
         stackFrames = new LinkedHashMap<>();
         partitions = new LinkedHashMap<>();
         offers = new LinkedHashMap<>();
-        enabledProcesses.forEach(process -> {
-            stackFrames.put(process, new Stack<>());
-            partitions.put(process, valuation.createPartition());
-            offers.put(process, new LinkedHashSet<>());
-        });
         currentlyAtomic = null;
+        if(xcfa.isDynamic()) {
+            addNewEnabledProcess(xcfa.getMainProcess());
+        } else {
+            for (XcfaProcess process : xcfa.getProcesses()) {
+                addNewEnabledProcess(process);
+            }
+        }
         for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
             if (xcfa.getInitValue(globalVar).isPresent()) {
                 valuation.put(globalid, globalVar, xcfa.getInitValue(globalVar).get());
@@ -83,9 +86,11 @@ public class XcfaState {
         return enabledProcesses;
     }
 
-    public void setEnabledProcesses(Collection<XcfaProcess> processes) {
-        enabledProcesses.clear();
-        enabledProcesses.addAll(processes);
+    public void addNewEnabledProcess(XcfaProcess process) {
+        enabledProcesses.add(process);
+        stackFrames.put(process, new Stack<>());
+        partitions.put(process, valuation.createPartition());
+        offers.put(process, new LinkedHashSet<>());
     }
 
     public Map<XcfaProcess, Integer> getPartitions() {

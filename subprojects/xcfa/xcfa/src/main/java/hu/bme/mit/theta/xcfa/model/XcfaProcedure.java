@@ -357,5 +357,10 @@ public final class XcfaProcedure {
             return new XcfaProcedure(this);
         }
 
+        public void removeEdge(XcfaEdge xcfaEdge) {
+            edges.remove(xcfaEdge);
+            xcfaEdge.getTarget().removeIncomingEdge(xcfaEdge);
+            xcfaEdge.getSource().removeOutgoingEdge(xcfaEdge);
+        }
     }
 }

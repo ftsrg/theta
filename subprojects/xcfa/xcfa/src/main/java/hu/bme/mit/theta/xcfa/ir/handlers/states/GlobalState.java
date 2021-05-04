@@ -57,7 +57,7 @@ public class GlobalState {
         for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
             VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
             globalVars.put(globalVariable.get1(), variable);
-            builder.getGlobalVars().put(variable, Optional.of(createConstant(globalVariable.get3())));
+            builder.getGlobalVars().put(variable, Optional.of(createConstant(variable.getType(), globalVariable.get3())));
         }
 
         procedures.addAll(ssa.getFunctions());
