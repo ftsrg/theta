@@ -32,7 +32,7 @@ public class LlvmIrProvider implements SSAProvider {
 		System.loadLibrary("theta-c-frontend");
 	}
 
-	private final Map<String, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
+	private final Map<Tuple2<String, String>, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
 	public LlvmIrProvider(String irFilename) {
 		this(irFilename, true, true, true, true);
@@ -62,7 +62,7 @@ public class LlvmIrProvider implements SSAProvider {
 			int numOfBasicBlocks = JniGetNumOfBasicBlocks(f);
 
 			for (int b = 0; b < numOfBasicBlocks; b++) {
-				bbNamefuncIndexLut.put(JniGetBlockName(f, b), f);
+				bbNamefuncIndexLut.put(Tuple2.of(functionName, JniGetBlockName(f, b)), f);
 			}
 		}
 
@@ -177,8 +177,8 @@ public class LlvmIrProvider implements SSAProvider {
 	private native String JniGetInstructionOperandVarName(int functionIndex, int basicBlockIndex, int i, int o);
 
 	@Override
-	public List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String blockName) {
-		int functionIndex = bbNamefuncIndexLut.get(blockName);
+	public List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String funcName, String blockName) {
+		int functionIndex = bbNamefuncIndexLut.get(Tuple2.of(funcName, blockName));
 		int basicBlockIndex = JniGetBlockIndex(functionIndex, blockName);
 		int numOfInstructions = JniGetNumOfInstructions(functionIndex, basicBlockIndex);
 

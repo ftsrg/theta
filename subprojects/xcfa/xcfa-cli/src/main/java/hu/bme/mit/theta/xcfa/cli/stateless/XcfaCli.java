@@ -65,6 +65,9 @@ public class XcfaCli {
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
 
+	@Parameter(names = "--gui", description = "Show GUI")
+	boolean showGui = false;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -92,6 +95,12 @@ public class XcfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+
+
+			if(showGui) {
+				new XcfaGui(xcfa);
+				return;
+			}
 
 			if (printxcfa) {
 				System.out.println(xcfa.toDot());

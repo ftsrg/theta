@@ -109,12 +109,14 @@ public class XcfaUtils {
         GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
+            System.out.println("Now in function " + function.get1());
             FunctionState functionState = new FunctionState(globalState, function);
 
             for (String block : ssa.getBlocks(function.get1())) {
+                System.out.println("Now in block " + block);
                 BlockState blockState = new BlockState(functionState, block);
                 InstructionHandlerManager instructionHandlerManager = new InstructionHandlerManager(arithmeticType);
-                for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(block)) {
+                for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(function.get1(), block)) {
                     try {
                         InstructionHandler instructionHandler = instructionHandlerManager.createInstructionHandlers();
                         instructionHandler.handleInstruction(new Instruction(instruction), globalState, functionState, blockState);

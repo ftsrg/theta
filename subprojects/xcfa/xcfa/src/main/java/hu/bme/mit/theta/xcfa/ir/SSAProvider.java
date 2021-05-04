@@ -57,7 +57,7 @@ public interface SSAProvider {
 	 * VarType: Variable type *if argument is a variable*, empty otherwise
 	 * VarName: Variable name *if argument is a variable*, `type SPACE value` if constant, `value` if anything else (block, function, etc)
 	 */
-	List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String blockName);
+	List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String funcName, String blockName);
 
 	// Analysis results
 	/*

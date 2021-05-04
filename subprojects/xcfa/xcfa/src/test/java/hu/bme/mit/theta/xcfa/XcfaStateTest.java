@@ -27,7 +27,9 @@ import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
@@ -169,6 +171,15 @@ public final class XcfaStateTest {
 			return null;
 		}
 
+		@Override
+		public Void visit(StartThreadStmt startThreadStmt, XcfaStackFrame param) {
+			return null;
+		}
+
+		@Override
+		public Void visit(JoinThreadStmt joinThreadStmt, XcfaStackFrame param) {
+			return null;
+		}
 
 
 		@Override

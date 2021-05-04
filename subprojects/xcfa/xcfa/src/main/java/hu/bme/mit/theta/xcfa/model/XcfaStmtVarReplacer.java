@@ -58,7 +58,8 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<VarDecl<?>, VarDecl<?>> varLut) {
         if (expr instanceof RefExpr<?>) {
             if (((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>) {
-                return cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+                if(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()) == null) return expr;
+                else return cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
             }
         }
 
