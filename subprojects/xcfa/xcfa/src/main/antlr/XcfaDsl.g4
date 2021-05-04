@@ -17,7 +17,7 @@ grammar XcfaDsl;
 
 // S P E C I F I C A T I O N
 
-spec:	(varDecls+=varDecl | processDecls+=processDecl)*
+spec:	(STATIC | DYNAMIC) name=ID (varDecls+=varDecl | processDecls+=processDecl)*
 	;
 
 varDecl
@@ -76,6 +76,13 @@ ERROR
 LOC	:	'loc'
 	;
 
+STATIC
+    :   'static'
+    ;
+
+DYNAMIC
+    :   'dynamic'
+    ;
 
 // D E C L A R A T I O N S
 

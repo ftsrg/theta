@@ -39,12 +39,16 @@ public final class XCFA {
 	private final ImmutableMap<VarDecl<? extends Type>, Optional<LitExpr<?>>> globalVars;
 	private final ImmutableList<XcfaProcess> processes;
 	private final XcfaProcess mainProcess;
+	private final String name;
+	private final boolean dynamic;
 
 	private XCFA(Builder builder) {
 		globalVars = ImmutableMap.copyOf(builder.globalVars);
 		processes = ImmutableList.copyOf(builder.processes);
 		processes.forEach(process -> process.setParent(this));
 		mainProcess = builder.mainProcess;
+		name = builder.name;
+		dynamic = builder.dynamic;
 	}
 
 	public static Builder builder() {
@@ -114,6 +118,14 @@ public final class XCFA {
 	 * Getters
 	 */
 
+	public String getName() {
+		return name;
+	}
+
+	public boolean isDynamic() {
+		return dynamic;
+	}
+
 	/*
 	 * Returns the XCFA as its graphviz representation
 	 */
@@ -151,6 +163,8 @@ public final class XCFA {
 		private final Map<VarDecl<?>, Optional<LitExpr<?>>> globalVars;
 		private final List<XcfaProcess> processes;
 		private XcfaProcess mainProcess;
+		private String name;
+		private boolean dynamic;
 
 		private boolean built;
 
@@ -192,6 +206,16 @@ public final class XCFA {
 			checkNotBuilt();
 			checkArgument(processes.contains(mainProcess), "Invalid main process.");
 			this.mainProcess = mainProcess;
+		}
+
+		//name
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		//dynamic
+		public void setDynamic(boolean dynamic) {
+			this.dynamic = dynamic;
 		}
 
 		public XCFA build() {

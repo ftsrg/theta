@@ -33,6 +33,8 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 	private final SymbolTable symbolTable;
 	private final List<XcfaVariableSymbol> vars;
 	private final List<XcfaProcessSymbol> processes;
+	private final String name;
+	private final boolean dynamic;
 	private XCFA xcfa = null;
 
 	XcfaSymbol(final XcfaDslParser.SpecContext context) {
@@ -49,6 +51,8 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 			symbolTable.add(proc = new XcfaProcessSymbol(this, processDeclContext));
 			processes.add(proc);
 		});
+		name = context.name.getText();
+		dynamic = context.STATIC() == null;
 	}
 
 	/**
@@ -76,6 +80,8 @@ public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 	public XCFA instantiate() {
 		if (xcfa != null) return xcfa;
 		XCFA.Builder builder = XCFA.builder();
+		builder.setName(name);
+		builder.setDynamic(dynamic);
 		vars.forEach(xcfaVariableSymbol -> builder.addGlobalVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>) xcfaVariableSymbol.getInitExpr().instantiate())));
 		processes.forEach(xcfaProcessSymbol -> {
 			XcfaProcess process;

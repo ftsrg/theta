@@ -40,14 +40,11 @@ import java.util.Stack;
 import static com.google.common.base.Preconditions.checkState;
 
 /*
- * This class is used to represent the state of an XCFA program. Currently the following primitives are supported:
+ * This class is used to represent the state of an XCFA program. The following primitives are supported:
  *      - processes
  *      - procedures
  *      - AtomicBegin, AtomicEnd
- *      - Assignments
- * The following are *not* supported:
- *      - Mutex
- *      - CndSync
+ *      - StartThread, JoinThread
  */
 public class XcfaState {
 
