@@ -86,6 +86,11 @@ public class Utils {
         return Var(name, t);
     }
 
+    public static LitExpr<? extends Type> parseConstant(Type type, String value) {
+        if(type instanceof RatType) return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(value) * doublePrecision)), BigInteger.valueOf(doublePrecision));
+        return IntLitExpr.of(new BigInteger(value));
+    }
+
     public static LitExpr<? extends Type> createConstant(String value) {
         return createConstant(Int(), value);
     }

@@ -17,10 +17,27 @@
 package hu.bme.mit.theta.xcfa.cli.stateless;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.XcfaStackFrame;
@@ -33,6 +50,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -42,6 +60,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -49,7 +68,11 @@ import java.awt.GridBagLayout;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.util.Date;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import static hu.bme.mit.theta.xcfa.ir.Utils.parseConstant;
 
 public class XcfaGui extends JFrame {
 	private final XcfaState state;
@@ -60,6 +83,10 @@ public class XcfaGui extends JFrame {
 
 	private JTextArea logTextArea;
 	private JComponent visualizationPanel;
+	private final Map<VarDecl<?>, JLabel> values = new LinkedHashMap<>();
+
+	private final Map<XcfaProcess, JPanel> choicePanel = new LinkedHashMap<>();
+	private final Map<XcfaProcess, JPanel> tracePanel = new LinkedHashMap<>();
 
 	public XcfaGui(XCFA xcfa) {
 		this.state = xcfa.getInitialState();
@@ -77,28 +104,6 @@ public class XcfaGui extends JFrame {
 
 	private void log(String msg) {
 		logTextArea.append(new Date().toString() + "\t" + msg + "\n");
-	}
-
-	private void addThread(String name, XcfaProcess process) {
-		JPanel jPanel = new JPanel();
-		jPanel.setPreferredSize(new Dimension(width/4, 0));
-		jPanel.setMaximumSize(new Dimension(width/4, 3*height/4));
-		jPanel.setBorder(new LineBorder(Color.BLACK));
-
-		jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
-		AALabel jLabel = new AALabel(name, Color.BLACK, -1);
-		JPanel namePanel = new JPanel();
-		namePanel.setLayout(new GridBagLayout());
-		namePanel.add(jLabel);
-		namePanel.setPreferredSize(new Dimension(width/4, 16));
-
-		jPanel.add(namePanel);
-		jPanel.add(createVariablePanel(process));
-		jPanel.add(visualizeChoices(process));
-		jPanel.add(createTraceLogPanel());
-
-		visualizationPanel.add(jPanel);
-		visualizationPanel.revalidate();
 	}
 
 	private static class AALabel extends JLabel {
@@ -132,6 +137,48 @@ public class XcfaGui extends JFrame {
 		}
 	}
 
+	private void updateThread(XcfaProcess process) {
+		for (Component component : choicePanel.get(process).getComponents()) {
+			component.setVisible(false);
+		}
+		for (XcfaStackFrame xcfaStackFrame : state.getOffers().get(process)) {
+			addChoice(choicePanel.get(process), xcfaStackFrame);
+		}
+
+		updateVars();
+		this.revalidate();
+	}
+
+	private void addThread(String name, XcfaProcess process) {
+		JPanel jPanel = new JPanel();
+		jPanel.setPreferredSize(new Dimension(width/4, 0));
+		jPanel.setMaximumSize(new Dimension(width/4, 3*height/4));
+		jPanel.setBorder(new LineBorder(Color.BLACK));
+
+		jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
+		AALabel jLabel = new AALabel(name, Color.BLACK, -1);
+		JPanel namePanel = new JPanel();
+		namePanel.setLayout(new GridBagLayout());
+		namePanel.add(jLabel);
+		namePanel.setPreferredSize(new Dimension(width/4, 16));
+
+		jPanel.add(namePanel);
+		jPanel.add(createVariablePanel(process));
+		jPanel.add(visualizeChoices(process));
+		jPanel.add(createTraceLogPanel(process));
+
+		updateVars();
+		visualizationPanel.add(jPanel);
+		visualizationPanel.revalidate();
+	}
+
+	private void updateVars(){
+		values.forEach((varDecl, jLabel) -> {
+			Optional<? extends LitExpr<?>> value = state.getValuation().eval(varDecl);
+			jLabel.setText(value.isPresent() ? value.get().toString() : "?");
+		});
+	}
+
 	private int varLines = 0;
 	private void addVariable(JPanel jPanel, XcfaProcedure proc, VarDecl<?> var) {
 		JPanel varPanel = new JPanel();
@@ -140,7 +187,9 @@ public class XcfaGui extends JFrame {
 		varPanel.add(new AALabel((proc == null ? "" : (proc.getName() + ".")) + var.getName(), Color.BLACK, -1));
 		varPanel.add(new AALabel(" [" + var.getType().toString() + "] ", Color.GRAY, -1));
 		varPanel.add(Box.createHorizontalGlue());
-		varPanel.add(new AALabel("-1", Color.BLACK, -1));
+		AALabel aaLabel = new AALabel("?", Color.BLACK, -1);
+		varPanel.add(aaLabel);
+		values.put(var, aaLabel);
 		jPanel.add(varPanel);
 	}
 
@@ -177,19 +226,20 @@ public class XcfaGui extends JFrame {
 		jPanel.add(tracePanel);
 	}
 
-	private JComponent createTraceLogPanel() {
+	private JComponent createTraceLogPanel(XcfaProcess process) {
 		JPanel jPanel = new JPanel();
+		tracePanel.put(process, jPanel);
 		JScrollPane jScrollPane = new JScrollPane(jPanel);
 		jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 		jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		jScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		jScrollPane.setPreferredSize(new Dimension(width/4, 3*height/12 - 20));
-		addTraceLine(jPanel, new XcfaEdge(new XcfaLocation("Loc", null), new XcfaLocation("Loc" + 1, null), List.of()));
 		return jScrollPane;
 	}
 
 	private JComponent visualizeChoices(XcfaProcess process) {
 		JPanel jPanel = new JPanel();
+		choicePanel.put(process, jPanel);
 		JScrollPane jScrollPane = new JScrollPane(jPanel);
 		jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 		jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -219,8 +269,10 @@ public class XcfaGui extends JFrame {
 				AAButton choose = new AAButton("Choose");
 				stmtpanel.add(choose);
 				choose.addActionListener(actionEvent -> {
+					xcfaStackFrame.getStmt().accept(guiXcfaStmtVisitor, state.getPartitions().get(xcfaStackFrame.getProcess()));
 					xcfaStackFrame.accept();
-					addThread("main2", state.getXcfa().getMainProcess());
+					if(edge.getStmts().size() == i + 1) addTraceLine(tracePanel.get(xcfaStackFrame.getProcess()), edge);
+					updateThread(xcfaStackFrame.getProcess());
 				} );
 			}
 			expressions.add(stmtpanel);
@@ -269,5 +321,93 @@ public class XcfaGui extends JFrame {
 		JPanel jPanel = new JPanel();
 		jPanel.setPreferredSize(new Dimension(width / 5, 3*height/4));
 		return jPanel;
+	}
+
+	private GuiXcfaStmtVisitor<Integer, Void> guiXcfaStmtVisitor = new GuiXcfaStmtVisitor<>();
+
+	private class GuiXcfaStmtVisitor<P, R> implements XcfaStmtVisitor<P, R> {
+
+		@Override
+		public R visit(SkipStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(AssumeStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(AssignStmt<DeclType> stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(HavocStmt<DeclType> stmt, P param) {
+			String value = JOptionPane.showInputDialog(XcfaGui.this,"Give a new value for " + stmt.getVarDecl().getName() + " [" + stmt.getVarDecl().getType() + "]");
+			LitExpr<? extends hu.bme.mit.theta.core.type.Type> constant = parseConstant(stmt.getVarDecl().getType(), value);
+			state.addValuation((Integer)param, stmt.getVarDecl(), constant);
+			return null;
+		}
+
+		@Override
+		public R visit(XcfaStmt xcfaStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(SequenceStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(NonDetStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(OrtStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(XcfaCallStmt stmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(StoreStmt storeStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(LoadStmt loadStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(FenceStmt fenceStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(AtomicBeginStmt atomicBeginStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(AtomicEndStmt atomicEndStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(StartThreadStmt startThreadStmt, P param) {
+			return null;
+		}
+
+		@Override
+		public R visit(JoinThreadStmt joinThreadStmt, P param) {
+			return null;
+		}
 	}
 }
