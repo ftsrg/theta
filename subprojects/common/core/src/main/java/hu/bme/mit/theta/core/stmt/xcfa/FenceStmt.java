@@ -16,13 +16,38 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
 public class FenceStmt extends XcfaStmt {
+	private static final int HASH_SEED = 412;
+	private static final String STMT_LABEL = "fence";
 	private final String type;
+	private volatile int hashCode = 0;
 
 	public FenceStmt(String type) {
 		this.type = type;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + type.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj instanceof FenceStmt && ((FenceStmt) obj).getType().equals(type);
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(type).toString();
 	}
 
 	@Override

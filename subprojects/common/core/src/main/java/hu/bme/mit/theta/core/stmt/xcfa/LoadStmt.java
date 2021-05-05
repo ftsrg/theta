@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
@@ -26,6 +27,39 @@ public class LoadStmt extends XcfaStmt {
 	private final boolean atomic;
 	private final String ordering;
 
+
+	private static final int HASH_SEED = 415;
+	private static final String STMT_LABEL = "load";
+
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + lhs.hashCode();
+			result = 31 * result + rhs.hashCode();
+			result = 31 * result + (atomic ? 1 : 0) ;
+			result = 31 * result + ordering.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj instanceof LoadStmt
+				&& ((LoadStmt) obj).getLhs().equals(lhs)
+				&& ((LoadStmt) obj).getRhs().equals(rhs)
+				&& ((LoadStmt) obj).getOrdering().equals(ordering)
+				&& ((LoadStmt) obj).isAtomic() == atomic;
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(lhs).add(rhs).add(atomic).add(ordering).toString();
+	}
 	public LoadStmt(VarDecl<?> lhs, VarDecl<?> rhs, boolean atomic, String ordering) {
 		this.lhs = lhs;
 		this.rhs = rhs;

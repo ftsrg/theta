@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -24,6 +25,38 @@ public class StartThreadStmt extends XcfaStmt {
 	private final String key;
 	private final String threadName;
 	private final Expr<?> param;
+
+
+	private static final int HASH_SEED = 414;
+	private static final String STMT_LABEL = "start-thread";
+
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + key.hashCode();
+			result = 31 * result + threadName.hashCode();
+			result = 31 * result + param.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj instanceof StartThreadStmt
+				&& ((StartThreadStmt) obj).getKey().equals(key)
+				&& ((StartThreadStmt) obj).getThreadName().equals(threadName)
+				&& ((StartThreadStmt) obj).getParam().equals(param);
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).add(key).add(threadName).add(param).toString();
+	}
 
 	public StartThreadStmt(String key, String threadName, Expr<?> param) {
 		this.key = key;

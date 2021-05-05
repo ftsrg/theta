@@ -16,10 +16,37 @@
 
 package hu.bme.mit.theta.core.stmt.xcfa;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
 public class AtomicBeginStmt extends XcfaStmt {
+
+	private static final int HASH_SEED = 410;
+	private static final String STMT_LABEL = "atomic-begin";
+
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj instanceof AtomicBeginStmt;
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder(STMT_LABEL).toString();
+	}
+
 	@Override
 	public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param) {
 		return visitor.visit(this, param);

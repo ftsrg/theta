@@ -29,6 +29,29 @@ public class XcfaCallStmt extends XcfaStmt {
 	private final List<Expr<?>> params;
 	private final String procedure;
 
+	private static final int HASH_SEED = 417;
+
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + params.hashCode();
+			result = 31 * result + procedure.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj instanceof XcfaCallStmt
+				&& ((XcfaCallStmt) obj).getParams().equals(params)
+				&& ((XcfaCallStmt) obj).getProcedure().equals(procedure);
+	}
+
 	public XcfaCallStmt(List<Expr<?>> params, String procedure) {
 		this.params = params;
 		this.procedure = procedure;
