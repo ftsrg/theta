@@ -31,10 +31,16 @@ processDecl
 	;
 
 procedureDecl
-	:	(rtype=type)? (main=MAIN)? PROCEDURE id=ID LPAREN (paramDecls=declList)? RPAREN LBRAC
+	:	(main=MAIN)? PROCEDURE id=ID LPAREN (direction paramDecls+=decl (COMMA direction paramDecls+=decl)*)? RPAREN LBRAC
 			(varDecls+=varDecl | locs+=loc | edges+=edge)*
 		RBRAC
 	;
+
+direction
+    :   IN
+    |   OUT
+    |   INOUT
+    ;
 
 loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC (comments+=comment)* id=ID
 	;
@@ -138,6 +144,19 @@ INTTYPE
 RATTYPE
 	:	'rat'
 	;
+
+IN  :   'in'
+    |   'IN'
+    ;
+
+OUT :   'out'
+    |   'OUT'
+    ;
+
+INOUT
+    :   'inout'
+    |   'INOUT'
+    ;
 
 // E X P R E S S I O N S
 
@@ -365,7 +384,6 @@ stmt:	assignStmt
 	|   fenceStmt
 	|	havocStmt
 	|	assumeStmt
-	|	returnStmt
 	|	procCallStmt
 	|   atomicBegin
 	|	atomicEnd
@@ -399,19 +417,9 @@ assumeStmt
 	:	ASSUME cond=expr
 	;
 
-returnStmt
-	:	RETURN value=expr
-	;
-
 procCallStmt
-	:	CALL funcName=ID LPAREN (params+=expr directions+=direction)?(COMMA params+=expr directions+=direction)* RPAREN
+	:	CALL funcName=ID LPAREN (params+=expr)?(COMMA params+=expr)* RPAREN
 	;
-
-direction
-    :   IN
-    |   OUT
-    |   INOUT
-    ;
 
 atomicBegin
 	:	ATOMICBEGIN
@@ -456,19 +464,6 @@ ATOMICEND
 ATOMICTYPE
 	:	'atomic'
 	;
-
-IN  :   'in'
-    |   'IN'
-    ;
-
-OUT :   'out'
-    |   'OUT'
-    ;
-
-INOUT
-    :   'inout'
-    |   'INOUT'
-    ;
 
 // B A S I C   T O K E N S
 

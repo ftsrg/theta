@@ -105,9 +105,4 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R> {
     public R visit(JoinThreadStmt joinThreadStmt, P param){
         throw new UnsupportedOperationException("Not implemented.");
     }
-
-    @Override
-    public R visit(ReturnStmt returnStmt, P param) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
 }

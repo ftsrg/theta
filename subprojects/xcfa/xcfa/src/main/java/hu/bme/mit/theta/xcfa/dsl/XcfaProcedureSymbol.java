@@ -19,7 +19,6 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
@@ -33,7 +32,6 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> implements Scope {
 
@@ -41,7 +39,6 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 	private final SymbolTable symbolTable;
 	private final String name;
 	private final boolean main;
-	private final Type rtype;
 	private final List<XcfaParamSymbol> params;
 	private final List<XcfaVariableSymbol> variables;
 	private final List<XcfaLocationSymbol> locations;
@@ -60,7 +57,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 			declareAll(variables);
 		} else variables = null;
 		if (context.paramDecls != null) {
-			params = createParams(context.paramDecls.decls);
+			params = createParams(context.direction(), context.paramDecls);
 			declareAll(params);
 		} else params = null;
 
@@ -68,8 +65,6 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		declareAll(locations);
 
 		edges = createEdges(context.edges);
-		if (context.rtype != null) rtype = new XcfaType(context.rtype).instantiate();
-		else rtype = null;
 	}
 
 	@Override
@@ -89,11 +84,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		startedBuilding = true;
 		XcfaProcedure.Builder builder = XcfaProcedure.builder();
 		builder.setName(name);
-		builder.setRtype(rtype);
-		if(rtype != null) {
-			builder.setResult(Var("ret", rtype));
-		}
-		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
+		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.getDirection(), xcfaParamSymbol.instantiate()));
 		if (variables != null)
 			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>) xcfaVariableSymbol.getInitExpr().instantiate())));
 		locations.forEach(xcfaLocationSymbol -> {
@@ -140,10 +131,23 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		return result;
 	}
 
-	private List<XcfaParamSymbol> createParams(final List<XcfaDslParser.DeclContext> declContexts) {
+	private List<XcfaParamSymbol> createParams(List<XcfaDslParser.DirectionContext> direction, final List<XcfaDslParser.DeclContext> declContexts) {
 		final List<XcfaParamSymbol> result = new ArrayList<>();
-		for (final XcfaDslParser.DeclContext declContext : declContexts) {
-			final XcfaParamSymbol symbol = new XcfaParamSymbol(declContext);
+		for (int i = 0; i < declContexts.size(); i++) {
+			XcfaDslParser.DeclContext declContext = declContexts.get(i);
+			XcfaProcedure.Direction dir = XcfaProcedure.Direction.INOUT;
+			switch (direction.get(i).getText().toLowerCase()) {
+				case "in":
+					dir = XcfaProcedure.Direction.IN;
+					break;
+				case "out":
+					dir = XcfaProcedure.Direction.OUT;
+					break;
+				case "inout":
+					dir = XcfaProcedure.Direction.INOUT;
+					break;
+			}
+			final XcfaParamSymbol symbol = new XcfaParamSymbol(declContext, dir);
 			result.add(symbol);
 		}
 		return result;

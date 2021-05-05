@@ -53,7 +53,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XcfaProcess> implemen
 		if (context.paramDecls != null) {
 			context.paramDecls.decls.forEach(declContext -> {
 				XcfaParamSymbol paramSymbol;
-				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext, XcfaProcedure.Direction.IN));
 				params.add(paramSymbol);
 			});
 		}
@@ -118,7 +118,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XcfaProcess> implemen
 		if (context.paramDecls != null) {
 			context.paramDecls.decls.forEach(declContext -> {
 				XcfaParamSymbol paramSymbol;
-				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext, XcfaProcedure.Direction.IN));
 				params.add(paramSymbol);
 			});
 		}

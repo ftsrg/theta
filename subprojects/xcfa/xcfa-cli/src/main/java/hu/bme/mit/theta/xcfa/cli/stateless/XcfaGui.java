@@ -32,7 +32,6 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -209,7 +208,7 @@ public class XcfaGui extends JFrame {
 			for (VarDecl<?> localVar : procedure.getLocalVars()) {
 				addVariable(jPanel, procedure, localVar);
 			}
-			for (VarDecl<?> param : procedure.getParams()) {
+			for (VarDecl<?> param : procedure.getParams().keySet()) {
 				addVariable(jPanel, procedure, param);
 			}
 		}
@@ -415,11 +414,6 @@ public class XcfaGui extends JFrame {
 
 		@Override
 		public R visit(JoinThreadStmt joinThreadStmt, XcfaProcess param) {
-			return null;
-		}
-
-		@Override
-		public R visit(ReturnStmt returnStmt, XcfaProcess param) {
 			return null;
 		}
 	}

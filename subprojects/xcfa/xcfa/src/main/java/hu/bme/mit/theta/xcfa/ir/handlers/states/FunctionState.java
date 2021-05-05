@@ -65,7 +65,7 @@ public class FunctionState {
         // Adding params
         for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());
-            procedureBuilder.createParam(var);
+            procedureBuilder.createParam(XcfaProcedure.Direction.INOUT, var);
             localVars.put(param.get2(), Tuple2.of(var, 1));
             params.add(var);
         }

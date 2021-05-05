@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -26,8 +27,10 @@ final class XcfaParamSymbol extends InstantiatableSymbol<VarDecl<?>> {
 	private final String name;
 	private final XcfaType type;
 	private VarDecl<?> param = null;
+	private final XcfaProcedure.Direction direction;
 
-	XcfaParamSymbol(final XcfaDslParser.DeclContext context) {
+	XcfaParamSymbol(final XcfaDslParser.DeclContext context, XcfaProcedure.Direction direction) {
+		this.direction = direction;
 		checkNotNull(context);
 		name = context.name.getText();
 		type = new XcfaType(context.ttype);
@@ -43,4 +46,7 @@ final class XcfaParamSymbol extends InstantiatableSymbol<VarDecl<?>> {
 		return param = Var(name, type.instantiate());
 	}
 
+	public XcfaProcedure.Direction getDirection() {
+		return direction;
+	}
 }

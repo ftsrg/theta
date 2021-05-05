@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -141,45 +140,17 @@ public class XcfaState {
             lastFrame = stackFrames.get(proc).pop();
             System.out.println("Removing lastFrame " + lastFrame + " from the stack! Current size: " + stackFrames.get(proc).size());
         }
-        if (frame.getStmt() instanceof ReturnStmt && !stackFrames.get(proc).empty()) {
-            XcfaStackFrame beforeFrame =  stackFrames.get(proc).peek();
-            Stmt stmt = beforeFrame.getStmt();
-            checkState(stmt instanceof XcfaCallStmt, "New stack frame can only originate from an XcfaCallStmt!");
-            int cnt = 0;
-            Optional<XcfaProcedure> first = proc.getProcedures().stream().filter(procedure -> procedure.getName().equals(((XcfaCallStmt) stmt).getProcedure())).findFirst();
-            checkState(first.isPresent(), "No such procedure!");
-            XcfaProcedure procedure = first.get();
-            for (Map.Entry<Expr<?>, XcfaCallStmt.Direction> entry : ((XcfaCallStmt) stmt).getParams().entrySet()) {
-                Expr<?> expr = entry.getKey();
-                XcfaCallStmt.Direction direction = entry.getValue();
-                if(direction != XcfaCallStmt.Direction.IN) {
-                    checkState(expr instanceof RefExpr<?>, "OUT/INOUT params must be variables!");
-                    VarDecl<?> varDecl;
-                    if(cnt == 0) {
-                        varDecl = procedure.getResult();
-                        addValuation(partitions.get(proc), varDecl, ((ReturnStmt) frame.getStmt()).getExpr().eval(valuation));
-                    } else {
-                        varDecl = procedure.getParams().get(cnt - 1);
-                    }
-                    addValuation(partitions.get(proc), (VarDecl<?>) ((RefExpr<?>) expr).getDecl(), valuation.eval(varDecl).get());
-                }
-                ++cnt;
-            }
-            for (Map.Entry<VarDecl<?>, LitExpr<?>> entry : frame.getLocalVars().entrySet()) {
-                VarDecl<?> varDecl = entry.getKey();
-                LitExpr<?> litExpr = entry.getValue();
-                valuation.put(partitions.get(proc), varDecl, litExpr);
-            }
+        if (frame.isLastStmt() && frame.getEdge().getTarget().isEndLoc() && (!(frame.getStmt() instanceof XcfaCallStmt) || frame.isHandled()) && !stackFrames.get(proc).empty()) {
+            returnFromProcedure(frame, proc);
 
         }
 
         if (frame.isNewProcedure() && lastFrame != null) {
-            lastFrame.setHandled(true);
             stackFrames.get(proc).push(lastFrame);
             System.out.println("Adding lastFrame " + lastFrame + " to stack! Current size: " + stackFrames.get(proc).size());
         }
 
-        if (!(frame.isLastStmt() && frame.getEdge().getParent().getFinalLoc() == frame.getEdge().getTarget())) {
+        if (!(frame.isLastStmt() && frame.getEdge().getTarget().isEndLoc() && (!(frame.getStmt() instanceof XcfaCallStmt) || frame.isHandled()))) {
             stackFrames.get(proc).push(frame);
             System.out.println("Adding frame " + frame + " to stack! Current size: " + stackFrames.get(proc).size());
         } else if (stackFrames.get(proc).empty()) {
@@ -188,6 +159,31 @@ public class XcfaState {
         System.out.println();
 
         recalcOffers();
+    }
+
+    private void returnFromProcedure(XcfaStackFrame frame, XcfaProcess proc) {
+        XcfaStackFrame beforeFrame =  stackFrames.get(proc).peek();
+        Stmt stmt = beforeFrame.getStmt();
+        checkState(stmt instanceof XcfaCallStmt, "New stack frame can only originate from an XcfaCallStmt!");
+        int cnt = 0;
+        Optional<XcfaProcedure> first = proc.getProcedures().stream().filter(procedure -> procedure.getName().equals(((XcfaCallStmt) stmt).getProcedure())).findFirst();
+        checkState(first.isPresent(), "No such procedure!");
+        XcfaProcedure procedure = first.get();
+        for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> e : procedure.getParams().entrySet()) {
+            VarDecl<?> var = e.getKey();
+            XcfaProcedure.Direction direction = e.getValue();
+            if(direction != XcfaProcedure.Direction.IN) {
+                Expr<?> expr = ((XcfaCallStmt) stmt).getParams().get(cnt);
+                checkState(expr instanceof RefExpr<?>, "OUT/INOUT params must be variables!");
+                addValuation(partitions.get(proc), (VarDecl<?>) ((RefExpr<?>) expr).getDecl(), valuation.eval(var).get());
+            }
+            ++cnt;
+        }
+        for (Map.Entry<VarDecl<?>, LitExpr<?>> entry : frame.getLocalVars().entrySet()) {
+            VarDecl<?> varDecl = entry.getKey();
+            LitExpr<?> litExpr = entry.getValue();
+            valuation.put(partitions.get(proc), varDecl, litExpr);
+        }
     }
 
     public boolean test(Map<VarDecl<?>, LitExpr<?>> expected) {
@@ -214,7 +210,11 @@ public class XcfaState {
 
     private void collectOffers(XcfaProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
-        if (last != null && last.getStmt() instanceof XcfaCallStmt && !last.isHandled()) {
+        if(last != null && last.isLastStmt() && (!(last.getStmt() instanceof XcfaCallStmt) || last.isHandled()) && last.getEdge().getTarget().isEndLoc()) {
+            XcfaStackFrame pop = stackFrames.get(enabledProcess).pop();
+            returnFromProcedure(pop, enabledProcess);
+            collectOffers(enabledProcess);
+        } else if (last != null && last.getStmt() instanceof XcfaCallStmt && !last.isHandled()) {
             XcfaProcedure procedure = enabledProcess.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) last.getStmt()).getProcedure())).findFirst().orElse(null);
             checkState(procedure != null, "Procedure should not be null! Unknown procedure name?");
             Map<VarDecl<?>, LitExpr<?>> localVars = new HashMap<>();
@@ -223,15 +223,16 @@ public class XcfaState {
                 eval.ifPresent(litExpr -> localVars.put(localVar, litExpr));
             }
             int i = 0;
-            for (Map.Entry<Expr<?>, XcfaCallStmt.Direction> entry : ((XcfaCallStmt) last.getStmt()).getParams().entrySet()) {
-                Expr<?> expr = entry.getKey();
-                XcfaCallStmt.Direction direction = entry.getValue();
-                if(direction != XcfaCallStmt.Direction.OUT) {
-                    VarDecl<?> varDecl = procedure.getParams().get(i - 1);
-                    addValuation(partitions.get(enabledProcess), varDecl, expr.eval(valuation));
+            for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : procedure.getParams().entrySet()) {
+                VarDecl<?> key = entry.getKey();
+                XcfaProcedure.Direction direction = entry.getValue();
+                if(direction != XcfaProcedure.Direction.OUT) {
+                    Expr<?> expr = ((XcfaCallStmt) last.getStmt()).getParams().get(i);
+                    addValuation(partitions.get(enabledProcess), key, expr.eval(valuation));
                 }
                 ++i;
             }
+            last.setHandled(true);
             collectProcedureOffers(enabledProcess, procedure, localVars);
         } else if (last == null || last.isLastStmt()) {
             XcfaLocation sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();

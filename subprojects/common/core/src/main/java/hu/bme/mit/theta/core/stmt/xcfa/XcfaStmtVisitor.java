@@ -34,6 +34,4 @@ public interface XcfaStmtVisitor<P, R> extends StmtVisitor<P, R> {
 	R visit(StartThreadStmt startThreadStmt, P param);
 
 	R visit(JoinThreadStmt joinThreadStmt, P param);
-
-	R visit(ReturnStmt returnStmt, P param);
 }

@@ -9,7 +9,7 @@ main process p0 {
         final loc Lf
         L0 -> L1 {
             b := 2
-            call func(a OUT, 1 IN, b INOUT)
+            call func(a, 1, b)
         }
         L1 -> Lf {
             assume (a = 3)
@@ -18,14 +18,14 @@ main process p0 {
             assume not (a = 3)
         }
     }
-    int procedure func(a : int, b : int) {
-        var c : int
+    procedure func(IN a : int, INOUT b : int, OUT c : int) {
+        var d : int
         init loc L1
         final loc L2
         L1->L2 {
-            c := b
+            d := b
             b := 4
-            return a+c
+            c := a+d
         }
     }
 }

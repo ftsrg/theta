@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -43,7 +42,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -135,10 +133,10 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
 
     @Override
     public Stmt visit(XcfaCallStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> exprs = stmt.getParams();
-        LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> newExprs = new LinkedHashMap<>();
-        exprs.forEach((expr, direction) ->
-            newExprs.put(replaceVars(expr, param), direction)
+        List<Expr<?>> exprs = stmt.getParams();
+        List<Expr<?>> newExprs = new ArrayList<>();
+        exprs.forEach((expr) ->
+            newExprs.add(replaceVars(expr, param))
         );
         return stmt.of(newExprs, stmt.getProcedure());
     }
@@ -187,11 +185,4 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     public Stmt visit(JoinThreadStmt joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return joinThreadStmt;
     }
-
-    @Override
-    public Stmt visit(ReturnStmt returnStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new ReturnStmt(replaceVars(returnStmt.getExpr(), param));
-    }
-
-
 }

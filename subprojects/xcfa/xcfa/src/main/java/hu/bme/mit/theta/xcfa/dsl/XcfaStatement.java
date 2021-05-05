@@ -23,7 +23,6 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -37,7 +36,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,9 +45,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.IN;
-import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.INOUT;
-import static hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt.Direction.OUT;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
@@ -126,23 +122,15 @@ final class XcfaStatement {
 			checkState(opt.isPresent(), "Callee not found: " + callee);
 			final InstantiatableSymbol<?> calleeSymbol = (InstantiatableSymbol<?>) opt.get();
 
-			LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> params = new LinkedHashMap<>();
+			List<Expr<?>> params = new ArrayList<>();
 
 			if (ctx.params != null) {
 				List<XcfaDslParser.ExprContext> tokens = ctx.params;
 				for (int i = 0; i < tokens.size(); i++) {
-					XcfaCallStmt.Direction dir;
-					switch(ctx.directions.get(i).getText().toLowerCase()) {
-						case "in": dir = IN; break;
-						case "out": dir = OUT; break;
-						default:
-						case "inout": dir = INOUT; break;
-					}
-					params.put(new XcfaExpression(scope, tokens.get(i)).instantiate(), dir);
+					params.add(new XcfaExpression(scope, tokens.get(i)).instantiate());
 				}
 			}
-			final XcfaCallStmt callStmt = new XcfaCallStmt(params, calleeSymbol.getName());
-			return callStmt;
+			return new XcfaCallStmt(params, calleeSymbol.getName());
 		}
 
 		@Override
@@ -195,11 +183,6 @@ final class XcfaStatement {
 		@Override
 		public Stmt visitAtomicEnd(final XcfaDslParser.AtomicEndContext ctx) {
 			return new AtomicEndStmt();
-		}
-
-		@Override
-		public Stmt visitReturnStmt(XcfaDslParser.ReturnStmtContext ctx) {
-			return new ReturnStmt(new XcfaExpression(scope, ctx.expr()).instantiate());
 		}
 	}
 

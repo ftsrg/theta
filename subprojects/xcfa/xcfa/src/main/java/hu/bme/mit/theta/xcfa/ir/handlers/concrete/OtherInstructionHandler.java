@@ -42,7 +42,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -100,12 +99,12 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             if (instruction.getRetVar().isPresent()) {
                 callVar =  getOrCreateVar(functionState, instruction.getRetVar().get());
             }
-            LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> exprs = new LinkedHashMap<>();
-            if(callVar != null) exprs.put(callVar.getRef(), XcfaCallStmt.Direction.OUT);
+            List<Expr<?>> exprs = new ArrayList<>();
+            if(callVar != null) exprs.add(callVar.getRef());
             for (int i = 0; i < instruction.getArguments().size() - 1; ++i) {
                 Expr<? extends Type> expr = instruction.getArguments().get(i).getExpr(functionState.getValues());
                 Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(instruction.getArguments().get(i).getName());
-                if (expr != null) exprs.put(expr, (objects!=null && objects.get2() > 0) ? XcfaCallStmt.Direction.INOUT : XcfaCallStmt.Direction.IN);
+                if (expr != null) exprs.add(expr);
             }
             XcfaCallStmt stmt = new XcfaCallStmt(exprs, functionName.getName());
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(stmt));

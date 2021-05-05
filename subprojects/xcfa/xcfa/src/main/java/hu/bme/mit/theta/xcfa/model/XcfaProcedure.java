@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.Type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,9 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
 @SuppressWarnings("unused")
 public final class XcfaProcedure {
     private final String name;
-    private final Type retType;
-    private final VarDecl<? extends Type> result;
-    private final ImmutableList<VarDecl<?>> params;
+    private final ImmutableMap<VarDecl<?>, Direction> params;
     private final ImmutableMap<VarDecl<?>, Optional<LitExpr<?>>> localVars;
     private final ImmutableList<XcfaLocation> locs;
     private final XcfaLocation initLoc;
@@ -47,8 +46,7 @@ public final class XcfaProcedure {
     private XcfaProcess parent;
 
     private XcfaProcedure(final Builder builder) {
-        retType = builder.rtype;
-        params = ImmutableList.copyOf(builder.params);
+        params = ImmutableMap.copyOf(builder.params);
         localVars = ImmutableMap.copyOf(builder.localVars);
         locs = ImmutableList.copyOf(builder.locs);
         locs.forEach(location -> location.setParent(this));
@@ -57,7 +55,6 @@ public final class XcfaProcedure {
         finalLoc = builder.finalLoc;
         edges = ImmutableList.copyOf(builder.edges);
         edges.forEach(edge -> edge.setParent(this));
-        result = builder.result;
         name = builder.name;
     }
 
@@ -66,17 +63,16 @@ public final class XcfaProcedure {
             XcfaMetadata.create(this, s, o);
         });
         parent = null; // ProcessBuilder will fill out this field
-        retType = procedure.retType;
 
         Map<VarDecl<?>, VarDecl<?>> newVarLut = new HashMap<>();
 
-        List<VarDecl<?>> paramCollectList = new ArrayList<>();
-        procedure.params.forEach(varDecl -> {
+        Map<VarDecl<?>, Direction> paramCollectList = new LinkedHashMap<>();
+        procedure.params.forEach((varDecl, direction) -> {
             VarDecl<?> newVar = VarDecl.copyOf(varDecl);
-            paramCollectList.add(newVar);
+            paramCollectList.put(newVar, direction);
             newVarLut.put(varDecl, newVar);
         });
-        params = ImmutableList.copyOf(paramCollectList);
+        params = ImmutableMap.copyOf(paramCollectList);
 
         Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
         procedure.localVars.forEach((varDecl, litExpr) -> {
@@ -106,7 +102,6 @@ public final class XcfaProcedure {
         edges = ImmutableList.copyOf(edgeCollectList);
         edges.forEach(edge -> edge.setParent(this));
 
-        result = procedure.result == null ? null : VarDecl.copyOf(procedure.result);
         name = procedure.name;
     }
 
@@ -117,7 +112,8 @@ public final class XcfaProcedure {
     public String toDot() {
         StringBuilder ret = new StringBuilder("label=\"");
         ret.append(name).append("(");
-        params.forEach((varDecl) -> {
+        params.forEach((varDecl, direction) -> {
+            ret.append(direction).append(" ");
             ret.append(varDecl);
             ret.append(",");
         });
@@ -150,11 +146,7 @@ public final class XcfaProcedure {
         return ret.toString();
     }
 
-    public Type getRetType() {
-        return retType;
-    }
-
-    public List<VarDecl<?>> getParams() {
+    public Map<VarDecl<?>, Direction> getParams() {
         return params;
     }
 
@@ -186,10 +178,6 @@ public final class XcfaProcedure {
         return edges;
     }
 
-    public VarDecl<? extends Type> getResult() {
-        return result;
-    }
-
     public String getName() {
         return name;
     }
@@ -210,7 +198,7 @@ public final class XcfaProcedure {
     public static final class Builder {
         private static final String RESULT_NAME = "result";
 
-        private final List<VarDecl<?>> params;
+        private final Map<VarDecl<?>, Direction> params;
         private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
         private final List<XcfaLocation> locs;
         private final List<XcfaEdge> edges;
@@ -224,7 +212,7 @@ public final class XcfaProcedure {
         private boolean built;
 
         private Builder() {
-            params = new ArrayList<>();
+            params = new LinkedHashMap<>();
             localVars = new HashMap<>();
             locs = new ArrayList<>();
             edges = new ArrayList<>();
@@ -237,13 +225,13 @@ public final class XcfaProcedure {
 
 
         // params
-        public List<VarDecl<?>> getParams() {
+        public Map<VarDecl<?>, Direction> getParams() {
             return params;
         }
 
-        public void createParam(final VarDecl<?> param) {
+        public void createParam(final Direction direction, final VarDecl<?> param) {
             checkNotBuilt();
-            params.add(param);
+            params.put(param, direction);
         }
 
         // localVars
@@ -363,5 +351,11 @@ public final class XcfaProcedure {
             xcfaEdge.getTarget().removeIncomingEdge(xcfaEdge);
             xcfaEdge.getSource().removeOutgoingEdge(xcfaEdge);
         }
+    }
+
+    public enum Direction{
+        IN,
+        OUT,
+        INOUT
     }
 }
