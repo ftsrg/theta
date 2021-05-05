@@ -18,7 +18,7 @@ main process p0 {
             assume not (a = 3)
         }
     }
-    procedure func(IN a : int, INOUT b : int, OUT c : int) {
+    procedure func( OUT c : int, IN a : int, INOUT b : int) {
         var d : int
         init loc L1
         final loc L2

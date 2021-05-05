@@ -98,7 +98,13 @@ public class XcfaGui extends JFrame {
 		this.setTitle(title);
 		this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		JComponent mainPanel = createMainPanel();
-		addThread("main", xcfa.getMainProcess());
+		if(xcfa.isDynamic()) {
+			addThread("main", xcfa.getMainProcess());
+		} else {
+			for (XcfaProcess process : xcfa.getProcesses()) {
+				addThread(process.getName(), process);
+			}
+		}
 		this.setContentPane(mainPanel);
 		this.setVisible(true);
 	}
@@ -276,7 +282,7 @@ public class XcfaGui extends JFrame {
 					xcfaStackFrame.getStmt().accept(guiXcfaStmtVisitor, xcfaStackFrame.getProcess());
 					xcfaStackFrame.accept();
 					if(edge.getStmts().size() == i + 1) addTraceLine(tracePanel.get(xcfaStackFrame.getProcess()), edge);
-					updateThread(xcfaStackFrame.getProcess());
+					updateThreads();
 				} );
 			}
 			expressions.add(stmtpanel);
@@ -288,6 +294,12 @@ public class XcfaGui extends JFrame {
 		choice.setMaximumSize(new Dimension(width/4 - 10, edge.getStmts().size() * 25));
 		choice.setBorder(LineBorder.createBlackLineBorder());
 		jPanel.add(choice);
+	}
+
+	private void updateThreads() {
+		for (XcfaProcess process : state.getXcfa().getProcesses()) {
+			updateThread(process);
+		}
 	}
 
 	private JComponent createMainPanel() {
@@ -328,7 +340,7 @@ public class XcfaGui extends JFrame {
 		return jPanel;
 	}
 
-	private GuiXcfaStmtVisitor<Void> guiXcfaStmtVisitor = new GuiXcfaStmtVisitor<>();
+	private final GuiXcfaStmtVisitor<Void> guiXcfaStmtVisitor = new GuiXcfaStmtVisitor<>();
 
 	private class GuiXcfaStmtVisitor<R> implements XcfaStmtVisitor<XcfaProcess, R> {
 
