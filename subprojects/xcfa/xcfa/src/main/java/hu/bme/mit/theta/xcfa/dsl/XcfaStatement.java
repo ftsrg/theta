@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -36,9 +37,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -133,12 +132,8 @@ final class XcfaStatement {
 			LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> params = new LinkedHashMap<>();
 
 			if (ctx.params != null) {
-				List<Token> tokens = ctx.params;
+				List<XcfaDslParser.ExprContext> tokens = ctx.params;
 				for (int i = 0; i < tokens.size(); i++) {
-					Token token = tokens.get(i);
-					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
-					checkState(optionalSymbol.isPresent());
-					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
 					XcfaCallStmt.Direction dir;
 					switch(ctx.directions.get(i).getText()) {
 						case "in": dir = IN; break;
@@ -146,8 +141,7 @@ final class XcfaStatement {
 						default:
 						case "inout": dir = INOUT; break;
 					}
-					params.put(((VarDecl<?>) varSymbol.instantiate()).getRef(), dir);
-
+					params.put(new XcfaExpression(scope, tokens.get(i)).instantiate(), dir);
 				}
 			}
 			final XcfaCallStmt callStmt = new XcfaCallStmt(params, procedure.getName());
@@ -206,6 +200,10 @@ final class XcfaStatement {
 			return new AtomicEndStmt();
 		}
 
+		@Override
+		public Stmt visitReturnStmt(XcfaDslParser.ReturnStmtContext ctx) {
+			return new ReturnStmt(new XcfaExpression(scope, ctx.expr()).instantiate());
+		}
 	}
 
 }

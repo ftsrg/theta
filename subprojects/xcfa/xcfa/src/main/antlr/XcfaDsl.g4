@@ -404,7 +404,7 @@ returnStmt
 	;
 
 procCallStmt
-	:	CALL funcName=ID LPAREN (params+=ID directions+=direction)?(COMMA params+=ID directions+=direction)* RPAREN
+	:	CALL funcName=ID LPAREN (params+=expr directions+=direction)?(COMMA params+=expr directions+=direction)* RPAREN
 	;
 
 direction
@@ -458,13 +458,16 @@ ATOMICTYPE
 	;
 
 IN  :   'in'
+    |   'IN'
     ;
 
 OUT :   'out'
+    |   'OUT'
     ;
 
 INOUT
     :   'inout'
+    |   'INOUT'
     ;
 
 // B A S I C   T O K E N S

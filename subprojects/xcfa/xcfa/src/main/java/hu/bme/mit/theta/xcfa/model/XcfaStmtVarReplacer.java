@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -185,6 +186,11 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     @Override
     public Stmt visit(JoinThreadStmt joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return joinThreadStmt;
+    }
+
+    @Override
+    public Stmt visit(ReturnStmt returnStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return new ReturnStmt(replaceVars(returnStmt.getExpr(), param));
     }
 
 

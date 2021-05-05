@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli.stateless;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -31,6 +32,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -269,7 +271,7 @@ public class XcfaGui extends JFrame {
 				AAButton choose = new AAButton("Choose");
 				stmtpanel.add(choose);
 				choose.addActionListener(actionEvent -> {
-					xcfaStackFrame.getStmt().accept(guiXcfaStmtVisitor, state.getPartitions().get(xcfaStackFrame.getProcess()));
+					xcfaStackFrame.getStmt().accept(guiXcfaStmtVisitor, xcfaStackFrame.getProcess());
 					xcfaStackFrame.accept();
 					if(edge.getStmts().size() == i + 1) addTraceLine(tracePanel.get(xcfaStackFrame.getProcess()), edge);
 					updateThread(xcfaStackFrame.getProcess());
@@ -323,90 +325,97 @@ public class XcfaGui extends JFrame {
 		return jPanel;
 	}
 
-	private GuiXcfaStmtVisitor<Integer, Void> guiXcfaStmtVisitor = new GuiXcfaStmtVisitor<>();
+	private GuiXcfaStmtVisitor<Void> guiXcfaStmtVisitor = new GuiXcfaStmtVisitor<>();
 
-	private class GuiXcfaStmtVisitor<P, R> implements XcfaStmtVisitor<P, R> {
+	private class GuiXcfaStmtVisitor<R> implements XcfaStmtVisitor<XcfaProcess, R> {
 
 		@Override
-		public R visit(SkipStmt stmt, P param) {
+		public R visit(SkipStmt stmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(AssumeStmt stmt, P param) {
+		public R visit(AssumeStmt stmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(AssignStmt<DeclType> stmt, P param) {
+		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(AssignStmt<DeclType> stmt, XcfaProcess param) {
+			MutablePartitionedValuation valuation = state.getValuation();
+			valuation.put(state.getPartitions().get(param), stmt.getVarDecl(), stmt.getExpr().eval(valuation));
 			return null;
 		}
 
 		@Override
-		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(HavocStmt<DeclType> stmt, P param) {
+		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(HavocStmt<DeclType> stmt, XcfaProcess param) {
 			String value = JOptionPane.showInputDialog(XcfaGui.this,"Give a new value for " + stmt.getVarDecl().getName() + " [" + stmt.getVarDecl().getType() + "]");
 			LitExpr<? extends hu.bme.mit.theta.core.type.Type> constant = parseConstant(stmt.getVarDecl().getType(), value);
-			state.addValuation((Integer)param, stmt.getVarDecl(), constant);
+			state.addValuation(state.getPartitions().get(param), stmt.getVarDecl(), constant);
 			return null;
 		}
 
 		@Override
-		public R visit(XcfaStmt xcfaStmt, P param) {
+		public R visit(XcfaStmt xcfaStmt, XcfaProcess param) {
+			return xcfaStmt.accept(this, param);
+		}
+
+		@Override
+		public R visit(SequenceStmt stmt, XcfaProcess param) {
+			throw new UnsupportedOperationException("Not yet implemented!");
+		}
+
+		@Override
+		public R visit(NonDetStmt stmt, XcfaProcess param) {
+			throw new UnsupportedOperationException("Not yet implemented!");
+		}
+
+		@Override
+		public R visit(OrtStmt stmt, XcfaProcess param) {
+			throw new UnsupportedOperationException("Not yet implemented!");
+		}
+
+		@Override
+		public R visit(XcfaCallStmt stmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(SequenceStmt stmt, P param) {
+		public R visit(StoreStmt storeStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(NonDetStmt stmt, P param) {
+		public R visit(LoadStmt loadStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(OrtStmt stmt, P param) {
+		public R visit(FenceStmt fenceStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(XcfaCallStmt stmt, P param) {
+		public R visit(AtomicBeginStmt atomicBeginStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(StoreStmt storeStmt, P param) {
+		public R visit(AtomicEndStmt atomicEndStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(LoadStmt loadStmt, P param) {
+		public R visit(StartThreadStmt startThreadStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(FenceStmt fenceStmt, P param) {
+		public R visit(JoinThreadStmt joinThreadStmt, XcfaProcess param) {
 			return null;
 		}
 
 		@Override
-		public R visit(AtomicBeginStmt atomicBeginStmt, P param) {
-			return null;
-		}
-
-		@Override
-		public R visit(AtomicEndStmt atomicEndStmt, P param) {
-			return null;
-		}
-
-		@Override
-		public R visit(StartThreadStmt startThreadStmt, P param) {
-			return null;
-		}
-
-		@Override
-		public R visit(JoinThreadStmt joinThreadStmt, P param) {
+		public R visit(ReturnStmt returnStmt, XcfaProcess param) {
 			return null;
 		}
 	}

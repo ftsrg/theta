@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
@@ -185,6 +186,15 @@ public class XcfaState {
         if (last != null && last.getStmt() instanceof XcfaCallStmt) {
             XcfaProcedure procedure = enabledProcess.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) last.getStmt()).getProcedure())).findFirst().orElse(null);
             checkState(procedure != null, "Procedure should not be null! Unknown procedure name?");
+            int i = 0;
+            for (Map.Entry<Expr<?>, XcfaCallStmt.Direction> entry : ((XcfaCallStmt) last.getStmt()).getParams().entrySet()) {
+                Expr<?> expr = entry.getKey();
+                XcfaCallStmt.Direction direction = entry.getValue();
+                if(direction != XcfaCallStmt.Direction.OUT) {
+                    VarDecl<?> varDecl = procedure.getParams().get(i++);
+                    addValuation(partitions.get(enabledProcess), varDecl, expr.eval(valuation));
+                }
+            }
             collectProcedureOffers(enabledProcess, procedure);
         } else if (last == null || last.isLastStmt()) {
             XcfaLocation sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
