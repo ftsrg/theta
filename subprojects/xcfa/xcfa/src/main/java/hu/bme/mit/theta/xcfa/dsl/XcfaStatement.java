@@ -135,7 +135,7 @@ final class XcfaStatement {
 				List<XcfaDslParser.ExprContext> tokens = ctx.params;
 				for (int i = 0; i < tokens.size(); i++) {
 					XcfaCallStmt.Direction dir;
-					switch(ctx.directions.get(i).getText()) {
+					switch(ctx.directions.get(i).getText().toLowerCase()) {
 						case "in": dir = IN; break;
 						case "out": dir = OUT; break;
 						default:

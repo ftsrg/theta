@@ -16,7 +16,11 @@
 
 package hu.bme.mit.theta.xcfa.model;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.LitExpr;
+
+import java.util.Map;
 
 public class XcfaStackFrame {
 	private final XcfaState owner;
@@ -24,13 +28,19 @@ public class XcfaStackFrame {
 	private Stmt stmt;
 	private boolean lastStmt;
 	private boolean newProcedure;
+	private final Map<VarDecl<?>, LitExpr<?>> localVars;
 
-	XcfaStackFrame(XcfaState owner, XcfaEdge edge, Stmt stmt) {
+	XcfaStackFrame(XcfaState owner, XcfaEdge edge, Stmt stmt, Map<VarDecl<?>, LitExpr<?>> localVars) {
 		this.owner = owner;
 		this.edge = edge;
 		this.stmt = stmt;
 		this.lastStmt = false;
 		this.newProcedure = false;
+		this.localVars = localVars;
+	}
+
+	public Map<VarDecl<?>, LitExpr<?>> getLocalVars() {
+		return localVars;
 	}
 
 	public XcfaEdge getEdge() {
@@ -54,7 +64,7 @@ public class XcfaStackFrame {
 	}
 
 	XcfaStackFrame duplicate(XcfaState newOwner) {
-		return new XcfaStackFrame(newOwner, edge, stmt);
+		return new XcfaStackFrame(newOwner, edge, stmt, localVars);
 	}
 
 	public XcfaProcess getProcess() {

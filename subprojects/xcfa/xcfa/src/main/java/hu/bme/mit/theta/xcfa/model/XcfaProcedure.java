@@ -304,6 +304,7 @@ public final class XcfaProcedure {
 
         public void setResult(VarDecl<?> result) {
             this.result = result;
+            localVars.put(result, Optional.empty());
         }
 
         // initLoc

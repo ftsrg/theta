@@ -21,13 +21,16 @@ import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -138,6 +141,40 @@ public class XcfaState {
         if (!stackFrames.get(proc).empty()) {
             lastFrame = stackFrames.get(proc).pop();
         }
+        if (frame.getStmt() instanceof ReturnStmt && !stackFrames.get(proc).empty()) {
+            XcfaStackFrame beforeFrame =  stackFrames.get(proc).peek();
+            Stmt stmt = beforeFrame.getStmt() instanceof SkipStmt
+                    ? beforeFrame.getEdge().getStmts().get(beforeFrame.getEdge().getStmts().size() - 1)
+                    : beforeFrame.getEdge().getStmts().get(beforeFrame.getEdge().getStmts().indexOf(beforeFrame.getStmt()) - 1);
+            checkState(stmt instanceof XcfaCallStmt, "New stack frame can only originate from an XcfaCallStmt!");
+            int cnt = 0;
+            Optional<XcfaProcedure> first = proc.getProcedures().stream().filter(procedure -> procedure.getName().equals(((XcfaCallStmt) stmt).getProcedure())).findFirst();
+            checkState(first.isPresent(), "No such procedure!");
+            XcfaProcedure procedure = first.get();
+            for (Map.Entry<Expr<?>, XcfaCallStmt.Direction> entry : ((XcfaCallStmt) stmt).getParams().entrySet()) {
+                Expr<?> expr = entry.getKey();
+                XcfaCallStmt.Direction direction = entry.getValue();
+                if(direction != XcfaCallStmt.Direction.IN) {
+                    checkState(expr instanceof RefExpr<?>, "OUT/INOUT params must be variables!");
+                    VarDecl<?> varDecl;
+                    if(cnt == 0) {
+                        varDecl = procedure.getResult();
+                        addValuation(partitions.get(proc), varDecl, ((ReturnStmt) frame.getStmt()).getExpr().eval(valuation));
+                    } else {
+                        varDecl = procedure.getParams().get(cnt - 1);
+                    }
+                    addValuation(partitions.get(proc), (VarDecl<?>) ((RefExpr<?>) expr).getDecl(), valuation.eval(varDecl).get());
+                }
+                ++cnt;
+            }
+            for (Map.Entry<VarDecl<?>, LitExpr<?>> entry : frame.getLocalVars().entrySet()) {
+                VarDecl<?> varDecl = entry.getKey();
+                LitExpr<?> litExpr = entry.getValue();
+                valuation.put(partitions.get(proc), varDecl, litExpr);
+            }
+
+        }
+
         if (frame.isNewProcedure() && lastFrame != null) {
             if (lastFrame.isLastStmt()) {
                 lastFrame.setStmt(SkipStmt.getInstance());
@@ -183,19 +220,27 @@ public class XcfaState {
 
     private void collectOffers(XcfaProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
-        if (last != null && last.getStmt() instanceof XcfaCallStmt) {
+        if (last != null && last.getStmt() instanceof ReturnStmt) {
+                        
+        } else if (last != null && last.getStmt() instanceof XcfaCallStmt) {
             XcfaProcedure procedure = enabledProcess.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) last.getStmt()).getProcedure())).findFirst().orElse(null);
             checkState(procedure != null, "Procedure should not be null! Unknown procedure name?");
+            Map<VarDecl<?>, LitExpr<?>> localVars = new HashMap<>();
+            for (VarDecl<?> localVar : procedure.getLocalVars()) {
+                Optional<? extends LitExpr<?>> eval = valuation.eval(localVar);
+                eval.ifPresent(litExpr -> localVars.put(localVar, litExpr));
+            }
             int i = 0;
             for (Map.Entry<Expr<?>, XcfaCallStmt.Direction> entry : ((XcfaCallStmt) last.getStmt()).getParams().entrySet()) {
                 Expr<?> expr = entry.getKey();
                 XcfaCallStmt.Direction direction = entry.getValue();
                 if(direction != XcfaCallStmt.Direction.OUT) {
-                    VarDecl<?> varDecl = procedure.getParams().get(i++);
+                    VarDecl<?> varDecl = procedure.getParams().get(i - 1);
                     addValuation(partitions.get(enabledProcess), varDecl, expr.eval(valuation));
                 }
+                ++i;
             }
-            collectProcedureOffers(enabledProcess, procedure);
+            collectProcedureOffers(enabledProcess, procedure, localVars);
         } else if (last == null || last.isLastStmt()) {
             XcfaLocation sourceLoc = last == null ? enabledProcess.getMainProcedure().getInitLoc() : last.getEdge().getTarget();
             for (XcfaEdge outgoingEdge : sourceLoc.getOutgoingEdges()) {
@@ -207,7 +252,7 @@ public class XcfaState {
                     }
                 }
                 if (!canExecute) continue;
-                XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, outgoingEdge, outgoingEdge.getStmts().get(0));
+                XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, outgoingEdge, outgoingEdge.getStmts().get(0), last == null ? Map.of() : last.getLocalVars());
                 if (outgoingEdge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
                 offers.get(enabledProcess).add(xcfaStackFrame);
 
@@ -222,9 +267,9 @@ public class XcfaState {
         }
     }
 
-    private void collectProcedureOffers(XcfaProcess enabledProcess, XcfaProcedure procedure) {
+    private void collectProcedureOffers(XcfaProcess enabledProcess, XcfaProcedure procedure, Map<VarDecl<?>, LitExpr<?>> localVars) {
         for (XcfaEdge edge : procedure.getInitLoc().getOutgoingEdges()) {
-            XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0));
+            XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0), localVars);
             if (edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
             xcfaStackFrame.setNewProcedure();
             offers.get(enabledProcess).add(xcfaStackFrame);

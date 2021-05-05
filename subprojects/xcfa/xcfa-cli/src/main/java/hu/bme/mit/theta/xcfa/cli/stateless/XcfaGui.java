@@ -209,6 +209,9 @@ public class XcfaGui extends JFrame {
 			for (VarDecl<?> localVar : procedure.getLocalVars()) {
 				addVariable(jPanel, procedure, localVar);
 			}
+			for (VarDecl<?> param : procedure.getParams()) {
+				addVariable(jPanel, procedure, param);
+			}
 		}
 		return jScrollPane;
 	}
@@ -258,14 +261,14 @@ public class XcfaGui extends JFrame {
 		int i = edge.getStmts().indexOf(xcfaStackFrame.getStmt());
 		JPanel choice = new JPanel();
 		choice.setLayout(new BorderLayout());
-		choice.add(new AALabel(edge.getSource().getName(), Color.BLACK, -1), BorderLayout.LINE_START);
+		choice.add(new AALabel(edge.getSource().getName(), Color.BLACK, 15), BorderLayout.LINE_START);
 		JPanel expressions = new JPanel();
 		expressions.setLayout(new BoxLayout(expressions, BoxLayout.Y_AXIS));
 		int cnt = 0;
 		for (Stmt stmt : edge.getStmts()){
 			JPanel stmtpanel = new JPanel();
 			stmtpanel.setLayout(new BoxLayout(stmtpanel, BoxLayout.X_AXIS));
-			stmtpanel.add(new AALabel(stmt.toString(), Color.BLUE, 40));
+			stmtpanel.add(new AALabel(stmt.toString(), Color.BLUE, 20));
 			stmtpanel.add(Box.createHorizontalGlue());
 			if(cnt++ == i) {
 				AAButton choose = new AAButton("Choose");
@@ -281,8 +284,9 @@ public class XcfaGui extends JFrame {
 		}
 		expressions.setBorder(new MatteBorder(0,1,0,1,Color.GRAY));
 		choice.add(expressions, BorderLayout.CENTER);
-		choice.add(new AALabel(edge.getTarget().getName(), Color.BLACK, -1), BorderLayout.LINE_END);
-		choice.setMaximumSize(new Dimension(width/4 - 10, 25));
+		choice.add(new AALabel(edge.getTarget().getName(), Color.BLACK, 15), BorderLayout.LINE_END);
+		choice.setPreferredSize(new Dimension(width/4 - 10, edge.getStmts().size() * 25));
+		choice.setMaximumSize(new Dimension(width/4 - 10, edge.getStmts().size() * 25));
 		choice.setBorder(LineBorder.createBlackLineBorder());
 		jPanel.add(choice);
 	}

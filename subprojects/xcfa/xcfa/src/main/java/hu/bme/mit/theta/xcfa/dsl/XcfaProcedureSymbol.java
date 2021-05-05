@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> implements Scope {
 
@@ -89,6 +90,9 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XcfaProcedure> impl
 		XcfaProcedure.Builder builder = XcfaProcedure.builder();
 		builder.setName(name);
 		builder.setRtype(rtype);
+		if(rtype != null) {
+			builder.setResult(Var("ret", rtype));
+		}
 		if (params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		if (variables != null)
 			variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate(), (xcfaVariableSymbol.getInitExpr() == null ? null : (LitExpr<?>) xcfaVariableSymbol.getInitExpr().instantiate())));
