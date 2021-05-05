@@ -138,25 +138,20 @@ public class XcfaState {
         XcfaStackFrame lastFrame = null;
         if (!stackFrames.get(proc).empty()) {
             lastFrame = stackFrames.get(proc).pop();
-            System.out.println("Removing lastFrame " + lastFrame + " from the stack! Current size: " + stackFrames.get(proc).size());
         }
         if (frame.isLastStmt() && frame.getEdge().getTarget().isEndLoc() && (!(frame.getStmt() instanceof XcfaCallStmt) || frame.isHandled()) && !stackFrames.get(proc).empty()) {
             returnFromProcedure(frame, proc);
-
         }
 
         if (frame.isNewProcedure() && lastFrame != null) {
             stackFrames.get(proc).push(lastFrame);
-            System.out.println("Adding lastFrame " + lastFrame + " to stack! Current size: " + stackFrames.get(proc).size());
         }
 
         if (!(frame.isLastStmt() && frame.getEdge().getTarget().isEndLoc() && (!(frame.getStmt() instanceof XcfaCallStmt) || frame.isHandled()))) {
             stackFrames.get(proc).push(frame);
-            System.out.println("Adding frame " + frame + " to stack! Current size: " + stackFrames.get(proc).size());
         } else if (stackFrames.get(proc).empty()) {
             enabledProcesses.remove(proc);
         }
-        System.out.println();
 
         recalcOffers();
     }

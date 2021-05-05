@@ -9,8 +9,10 @@ main process p0 {
             a := 0
         }
         L1 -> L1 {
+            atomic-begin
             assume not (a = 21)
             a := a + 1
+            atomic-end
         }
         L1 -> Lf {
             assume (a = 21)

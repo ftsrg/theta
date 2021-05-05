@@ -69,10 +69,12 @@ import java.awt.GridBagLayout;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.xcfa.ir.Utils.parseConstant;
 
 public class XcfaGui extends JFrame {
@@ -186,10 +188,12 @@ public class XcfaGui extends JFrame {
 		});
 	}
 
-	private int varLines = 0;
+	private final Map<JPanel, Integer> varLines = new HashMap<>();
 	private void addVariable(JPanel jPanel, XcfaProcedure proc, VarDecl<?> var) {
 		JPanel varPanel = new JPanel();
-		if(varLines++ % 2 == 0) varPanel.setBackground(Color.LIGHT_GRAY);
+		Integer value = varLines.getOrDefault(jPanel, 0);
+		if(value % 2 == 0) varPanel.setBackground(Color.LIGHT_GRAY);
+		varLines.put(jPanel, value+1);
 		varPanel.setLayout(new BoxLayout(varPanel, BoxLayout.X_AXIS));
 		varPanel.add(new AALabel((proc == null ? "" : (proc.getName() + ".")) + var.getName(), Color.BLACK, -1));
 		varPanel.add(new AALabel(" [" + var.getType().toString() + "] ", Color.GRAY, -1));
@@ -223,10 +227,12 @@ public class XcfaGui extends JFrame {
 
 
 
-	private int traceLines = 0;
+	private final Map<XcfaProcess, Integer> traceLines = new HashMap<>();
 	private void addTraceLine(JPanel jPanel, XcfaEdge edge) {
 		JPanel tracePanel = new JPanel();
-		if(traceLines++ % 2 == 0) tracePanel.setBackground(Color.LIGHT_GRAY);
+		Integer value = traceLines.getOrDefault(edge.getParent().getParent(), 0);
+		if(value % 2 == 0) tracePanel.setBackground(Color.LIGHT_GRAY);
+		traceLines.put(edge.getParent().getParent(), value+1);
 		tracePanel.setLayout(new BoxLayout(tracePanel, BoxLayout.X_AXIS));
 		tracePanel.add(new AALabel(edge.getSource().getName(), Color.BLACK, -1));
 		tracePanel.add(Box.createHorizontalGlue());
@@ -346,16 +352,19 @@ public class XcfaGui extends JFrame {
 
 		@Override
 		public R visit(SkipStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
 		public R visit(AssumeStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
 		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(AssignStmt<DeclType> stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			MutablePartitionedValuation valuation = state.getValuation();
 			valuation.put(state.getPartitions().get(param), stmt.getVarDecl(), stmt.getExpr().eval(valuation));
 			return null;
@@ -363,6 +372,7 @@ public class XcfaGui extends JFrame {
 
 		@Override
 		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(HavocStmt<DeclType> stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			String value = JOptionPane.showInputDialog(XcfaGui.this,"Give a new value for " + stmt.getVarDecl().getName() + " [" + stmt.getVarDecl().getType() + "]");
 			LitExpr<? extends hu.bme.mit.theta.core.type.Type> constant = parseConstant(stmt.getVarDecl().getType(), value);
 			state.addValuation(state.getPartitions().get(param), stmt.getVarDecl(), constant);
@@ -391,41 +401,53 @@ public class XcfaGui extends JFrame {
 
 		@Override
 		public R visit(XcfaCallStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
 		public R visit(StoreStmt storeStmt, XcfaProcess param) {
+			log(param.getName() + " " + storeStmt);
 			return null;
 		}
 
 		@Override
-		public R visit(LoadStmt loadStmt, XcfaProcess param) {
+		public R visit(LoadStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
-		public R visit(FenceStmt fenceStmt, XcfaProcess param) {
+		public R visit(FenceStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
-		public R visit(AtomicBeginStmt atomicBeginStmt, XcfaProcess param) {
+		public R visit(AtomicBeginStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
+			state.setCurrentlyAtomic(param);
 			return null;
 		}
 
 		@Override
-		public R visit(AtomicEndStmt atomicEndStmt, XcfaProcess param) {
+		public R visit(AtomicEndStmt stmt, XcfaProcess param) {
+			log(param.getName() + " " + stmt);
+			state.setCurrentlyAtomic(null);
 			return null;
 		}
 
 		@Override
-		public R visit(StartThreadStmt startThreadStmt, XcfaProcess param) {
+		public R visit(StartThreadStmt stmt, XcfaProcess param) {
+			checkState(param.getParent().isDynamic(), "Only dynamic model XCFAs may have StartThreadStmts!");
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 
 		@Override
-		public R visit(JoinThreadStmt joinThreadStmt, XcfaProcess param) {
+		public R visit(JoinThreadStmt stmt, XcfaProcess param) {
+			checkState(param.getParent().isDynamic(), "Only dynamic model XCFAs may have JoinThreadStmts!");
+			log(param.getName() + " " + stmt);
 			return null;
 		}
 	}
