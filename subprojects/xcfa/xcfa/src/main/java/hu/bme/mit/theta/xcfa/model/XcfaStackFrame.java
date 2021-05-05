@@ -26,6 +26,7 @@ public class XcfaStackFrame {
 	private final XcfaState owner;
 	private final XcfaEdge edge;
 	private Stmt stmt;
+	private boolean handled;
 	private boolean lastStmt;
 	private boolean newProcedure;
 	private final Map<VarDecl<?>, LitExpr<?>> localVars;
@@ -36,6 +37,7 @@ public class XcfaStackFrame {
 		this.stmt = stmt;
 		this.lastStmt = false;
 		this.newProcedure = false;
+		this.handled = false;
 		this.localVars = localVars;
 	}
 
@@ -85,5 +87,13 @@ public class XcfaStackFrame {
 
 	public void setNewProcedure() {
 		this.newProcedure = true;
+	}
+
+	public boolean isHandled() {
+		return handled;
+	}
+
+	public void setHandled(boolean handled) {
+		this.handled = handled;
 	}
 }

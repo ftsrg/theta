@@ -36,7 +36,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -126,8 +125,6 @@ final class XcfaStatement {
 			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent(), "Callee not found: " + callee);
 			final InstantiatableSymbol<?> calleeSymbol = (InstantiatableSymbol<?>) opt.get();
-			checkState(calleeSymbol instanceof XcfaProcedureSymbol);
-			XcfaProcedure procedure = (XcfaProcedure) calleeSymbol.instantiate();
 
 			LinkedHashMap<Expr<?>, XcfaCallStmt.Direction> params = new LinkedHashMap<>();
 
@@ -144,7 +141,7 @@ final class XcfaStatement {
 					params.put(new XcfaExpression(scope, tokens.get(i)).instantiate(), dir);
 				}
 			}
-			final XcfaCallStmt callStmt = new XcfaCallStmt(params, procedure.getName());
+			final XcfaCallStmt callStmt = new XcfaCallStmt(params, calleeSymbol.getName());
 			return callStmt;
 		}
 

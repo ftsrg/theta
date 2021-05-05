@@ -19,7 +19,6 @@ package hu.bme.mit.theta.xcfa.model;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutablePartitionedValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -140,12 +139,11 @@ public class XcfaState {
         XcfaStackFrame lastFrame = null;
         if (!stackFrames.get(proc).empty()) {
             lastFrame = stackFrames.get(proc).pop();
+            System.out.println("Removing lastFrame " + lastFrame + " from the stack! Current size: " + stackFrames.get(proc).size());
         }
         if (frame.getStmt() instanceof ReturnStmt && !stackFrames.get(proc).empty()) {
             XcfaStackFrame beforeFrame =  stackFrames.get(proc).peek();
-            Stmt stmt = beforeFrame.getStmt() instanceof SkipStmt
-                    ? beforeFrame.getEdge().getStmts().get(beforeFrame.getEdge().getStmts().size() - 1)
-                    : beforeFrame.getEdge().getStmts().get(beforeFrame.getEdge().getStmts().indexOf(beforeFrame.getStmt()) - 1);
+            Stmt stmt = beforeFrame.getStmt();
             checkState(stmt instanceof XcfaCallStmt, "New stack frame can only originate from an XcfaCallStmt!");
             int cnt = 0;
             Optional<XcfaProcedure> first = proc.getProcedures().stream().filter(procedure -> procedure.getName().equals(((XcfaCallStmt) stmt).getProcedure())).findFirst();
@@ -176,22 +174,18 @@ public class XcfaState {
         }
 
         if (frame.isNewProcedure() && lastFrame != null) {
-            if (lastFrame.isLastStmt()) {
-                lastFrame.setStmt(SkipStmt.getInstance());
-            } else {
-                int i = lastFrame.getEdge().getStmts().indexOf(lastFrame.getStmt()) + 1;
-                Stmt stmt = lastFrame.getEdge().getStmts().get(i);
-                lastFrame.setStmt(stmt);
-                if (lastFrame.getEdge().getStmts().size() == i + 1) lastFrame.setLastStmt();
-            }
+            lastFrame.setHandled(true);
             stackFrames.get(proc).push(lastFrame);
+            System.out.println("Adding lastFrame " + lastFrame + " to stack! Current size: " + stackFrames.get(proc).size());
         }
 
         if (!(frame.isLastStmt() && frame.getEdge().getParent().getFinalLoc() == frame.getEdge().getTarget())) {
             stackFrames.get(proc).push(frame);
+            System.out.println("Adding frame " + frame + " to stack! Current size: " + stackFrames.get(proc).size());
         } else if (stackFrames.get(proc).empty()) {
             enabledProcesses.remove(proc);
         }
+        System.out.println();
 
         recalcOffers();
     }
@@ -220,9 +214,7 @@ public class XcfaState {
 
     private void collectOffers(XcfaProcess enabledProcess) {
         XcfaStackFrame last = stackFrames.get(enabledProcess).empty() ? null : stackFrames.get(enabledProcess).peek();
-        if (last != null && last.getStmt() instanceof ReturnStmt) {
-                        
-        } else if (last != null && last.getStmt() instanceof XcfaCallStmt) {
+        if (last != null && last.getStmt() instanceof XcfaCallStmt && !last.isHandled()) {
             XcfaProcedure procedure = enabledProcess.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) last.getStmt()).getProcedure())).findFirst().orElse(null);
             checkState(procedure != null, "Procedure should not be null! Unknown procedure name?");
             Map<VarDecl<?>, LitExpr<?>> localVars = new HashMap<>();
@@ -269,6 +261,15 @@ public class XcfaState {
 
     private void collectProcedureOffers(XcfaProcess enabledProcess, XcfaProcedure procedure, Map<VarDecl<?>, LitExpr<?>> localVars) {
         for (XcfaEdge edge : procedure.getInitLoc().getOutgoingEdges()) {
+            boolean canExecute = true;
+            for (Stmt stmt : edge.getStmts()) {
+                if (stmt instanceof AssumeStmt) {
+                    canExecute = ((BoolLitExpr) ((AssumeStmt) stmt).getCond().eval(valuation)).getValue();
+                    break;
+                }
+            }
+            if (!canExecute) continue;
+
             XcfaStackFrame xcfaStackFrame = new XcfaStackFrame(this, edge, edge.getStmts().get(0), localVars);
             if (edge.getStmts().size() == 1) xcfaStackFrame.setLastStmt();
             xcfaStackFrame.setNewProcedure();
