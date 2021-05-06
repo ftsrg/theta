@@ -17,7 +17,6 @@
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -89,7 +88,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
 
     private void ret(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         List<Stmt> stmts = new ArrayList<>();
-        VarDecl<?> retVar = functionState.getProcedureBuilder().getResult();
+        VarDecl<?> retVar = functionState.getProcedureBuilder().getRetType() == null ? null : functionState.getProcedureBuilder().getParams().keySet().iterator().next();
         switch (instruction.getArguments().size()) {
             case 0:
                 checkState(retVar == null, "Not returning a value from non-void function!");

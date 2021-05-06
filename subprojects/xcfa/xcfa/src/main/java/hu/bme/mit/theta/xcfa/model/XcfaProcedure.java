@@ -39,6 +39,7 @@ public final class XcfaProcedure {
     private final ImmutableMap<VarDecl<?>, Direction> params;
     private final ImmutableMap<VarDecl<?>, Optional<LitExpr<?>>> localVars;
     private final ImmutableList<XcfaLocation> locs;
+    private final Type retType;
     private final XcfaLocation initLoc;
     private final XcfaLocation errorLoc;
     private final XcfaLocation finalLoc;
@@ -56,6 +57,7 @@ public final class XcfaProcedure {
         edges = ImmutableList.copyOf(builder.edges);
         edges.forEach(edge -> edge.setParent(this));
         name = builder.name;
+        retType = builder.retType;
     }
 
     public XcfaProcedure(XcfaProcedure procedure) {
@@ -95,7 +97,9 @@ public final class XcfaProcedure {
 
         initLoc = newLocLut.get(procedure.initLoc);
         errorLoc = newLocLut.get(procedure.errorLoc);
+        if(errorLoc != null) errorLoc.setErrorLoc(true);
         finalLoc = newLocLut.get(procedure.finalLoc);
+        if(finalLoc != null) finalLoc.setEndLoc(true);
 
         List<XcfaEdge> edgeCollectList = new ArrayList<>();
         procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut, newVarLut)));
@@ -103,6 +107,7 @@ public final class XcfaProcedure {
         edges.forEach(edge -> edge.setParent(this));
 
         name = procedure.name;
+        retType = procedure.retType;
     }
 
     public static Builder builder() {
@@ -198,13 +203,12 @@ public final class XcfaProcedure {
     public static final class Builder {
         private static final String RESULT_NAME = "result";
 
-        private final Map<VarDecl<?>, Direction> params;
+        private final LinkedHashMap<VarDecl<?>, Direction> params;
         private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
         private final List<XcfaLocation> locs;
         private final List<XcfaEdge> edges;
+        private Type retType;
         private String name;
-        private Type rtype;
-        private VarDecl<?> result;
         private XcfaLocation initLoc;
         private XcfaLocation errorLoc;
         private XcfaLocation finalLoc;
@@ -225,7 +229,7 @@ public final class XcfaProcedure {
 
 
         // params
-        public Map<VarDecl<?>, Direction> getParams() {
+        public LinkedHashMap<VarDecl<?>, Direction> getParams() {
             return params;
         }
 
@@ -242,6 +246,15 @@ public final class XcfaProcedure {
         public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
             checkNotBuilt();
             localVars.put(var, Optional.ofNullable(initValue));
+        }
+
+        // rtype
+        public void setRetType(Type retType) {
+            this.retType = retType;
+        }
+
+        public Type getRetType() {
+            return retType;
         }
 
         // locs
@@ -274,25 +287,6 @@ public final class XcfaProcedure {
 
         public void setName(String name) {
             this.name = name;
-        }
-
-        // rtype
-        public Type getRtype() {
-            return rtype;
-        }
-
-        public void setRtype(final Type rtype) {
-            this.rtype = rtype;
-        }
-
-        // result
-        public VarDecl<?> getResult() {
-            return result;
-        }
-
-        public void setResult(VarDecl<?> result) {
-            this.result = result;
-            localVars.put(result, Optional.empty());
         }
 
         // initLoc

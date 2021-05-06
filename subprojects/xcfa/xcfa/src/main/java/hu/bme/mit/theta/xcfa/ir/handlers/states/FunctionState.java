@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.xcfa.ir.Utils.createType;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createVariable;
 
 public class FunctionState {
@@ -62,6 +61,15 @@ public class FunctionState {
 
         globalState.getGlobalVars().forEach((s, varDecl) -> localVars.put(s, Tuple2.of(varDecl, 1)));
 
+        // Adding return variable
+        if (function.get2().isPresent()) {
+            VarDecl<?> var = createVariable(function.get1() + "_ret", function.get2().get());
+            procedureBuilder.createParam(XcfaProcedure.Direction.OUT, var);
+            localVars.put(function.get1() + "_ret", Tuple2.of(var, 1));
+            params.add(var);
+            procedureBuilder.setRetType(var.getType());
+        }
+
         // Adding params
         for (Tuple2<String, String> param : function.get3()) {
             VarDecl<?> var = createVariable(param.get2(), param.get1());
@@ -74,13 +82,6 @@ public class FunctionState {
         XcfaLocation finalLoc = new XcfaLocation(function.get1() + "_final", new HashMap<>());
         procedureBuilder.addLoc(finalLoc);
         procedureBuilder.setFinalLoc(finalLoc);
-
-        // Adding return variable
-        if (function.get2().isPresent()) {
-            VarDecl<?> retVar = createVariable(function.get1() + "_ret", function.get2().get());
-            procedureBuilder.setRtype(createType(function.get2().get()));
-            procedureBuilder.setResult(retVar);
-        }
 
         // Adding blocks and first location
         List<String> blocks = globalState.getProvider().getBlocks(function.get1());

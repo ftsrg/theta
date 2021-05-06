@@ -82,12 +82,13 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         Argument op2 = instruction.getArguments().get(1);
 
         Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(op2.getName());
+        Tuple2<VarDecl<?>, Integer> potentialParam = functionState.getLocalVars().get(op1.getName());
         checkState(functionState.getLocalVars().containsKey(op2.getName()) || functionState.getParams().contains(oldVar.get1()), "Store must store into a variable!");
 
         if (oldVar.get2() > 1) {
             functionState.getLocalVars().put(op2.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() - 1));
         } else if (oldVar.get2() == 1) {
-            if (functionState.getParams().contains(oldVar.get1())) {
+            if (functionState.getParams().contains(potentialParam.get1())) {
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
                 functionState.getProcedureBuilder().getLocalVars().remove(var);
                 var = functionState.getLocalVars().get(op1.getName()).get1();
@@ -117,7 +118,7 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         checkState(retVar.isPresent(), "Alloca must have a variable tied to it");
         VarDecl<?> var = Var(retVar.get().getName(), retVar.get().getType());
         functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
-        functionState.getLocalVars().put(retVar.get().getName(), Tuple2.of(var, 0));
+        functionState.getLocalVars().put(retVar.get().getName(), Tuple2.of(var, 1));
         functionState.getValues().put(retVar.get().getName(), var.getRef());
     }
 }
