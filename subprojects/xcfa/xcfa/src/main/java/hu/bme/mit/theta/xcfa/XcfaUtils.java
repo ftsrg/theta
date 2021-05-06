@@ -107,6 +107,10 @@ public class XcfaUtils {
      * Runs the specified passes when a specific stage is complete.
      */
     public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
+        if(ssa.hasStructs()) {
+            throw new UnsupportedOperationException("Structs are not yet supported!");
+        }
+
         if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()){
             System.out.println("Using bitvector arithmetic!");
             arithmeticType = ArithmeticType.bitvector;
