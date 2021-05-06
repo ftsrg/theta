@@ -17,8 +17,11 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class EmptyEdgeRemovalPass implements ProcedurePass {
@@ -34,6 +37,21 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 				builder.removeEdge(edge.get());
 			}
 		}
+
+		notFound = false;
+		while(!notFound) {
+			notFound = true;
+			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().size() == 0).findFirst();
+			if(loc.isPresent()) {
+				notFound = false;
+				List<XcfaEdge> outgoingEdges = new ArrayList<>(loc.get().getOutgoingEdges());
+				for (XcfaEdge outgoingEdge : outgoingEdges) {
+					builder.removeEdge(outgoingEdge);
+				}
+				builder.getLocs().remove(loc.get());
+			}
+		}
+
 		return builder;
 	}
 }
