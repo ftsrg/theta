@@ -126,6 +126,7 @@ public class Utils {
 
     private static LitExpr<? extends Type> getDefaultValue(Type type) {
         if(type instanceof RatType) return RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE);
+        else if(type instanceof BvType) return BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize());
         else if(type instanceof ArrayType) return ArrayLitExpr.of(
                 List.of(Tuple2.of(IntLitExpr.of(BigInteger.ZERO), cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()))),
                 cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()),

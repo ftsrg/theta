@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private final static Collection<String> SVCOMP_ERROR_FUNCTIONS = List.of("__assert_fail", "__VERIFIER_error", "abort", "reach_error");
     private final static Collection<String> SVCOMP_NEWTHREAD_FUNCTIONS = List.of("pthread_create");
@@ -82,8 +80,6 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
         Argument handleName = instruction.getArguments().get(0);
         Argument functionName = instruction.getArguments().get(2);
-        checkState(!globalState.getProcesses().containsKey(handleName.getName()), "A thread handle should be single-use!");
-        globalState.getProcesses().put(handleName.getName(), functionName.getName());
         Argument param = instruction.getArguments().get(3);
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new StartThreadStmt(handleName.getName(), functionName.getName(), param.getExpr(functionState.getValues()))));
         if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());

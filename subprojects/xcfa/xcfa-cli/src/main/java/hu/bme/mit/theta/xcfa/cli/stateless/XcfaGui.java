@@ -279,7 +279,7 @@ public class XcfaGui extends JFrame {
 		for (Stmt stmt : edge.getStmts()){
 			JPanel stmtpanel = new JPanel();
 			stmtpanel.setLayout(new BoxLayout(stmtpanel, BoxLayout.X_AXIS));
-			stmtpanel.add(new AALabel(stmt.toString(), Color.BLUE, 20));
+			stmtpanel.add(new AALabel(stmt.toString(), Color.BLUE, 40));
 			stmtpanel.add(Box.createHorizontalGlue());
 			if(cnt++ == i) {
 				AAButton choose = new AAButton("Choose");

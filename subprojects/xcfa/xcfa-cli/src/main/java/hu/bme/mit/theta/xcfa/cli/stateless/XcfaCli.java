@@ -68,6 +68,9 @@ public class XcfaCli {
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
 
+	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
+	boolean parsing = false;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -95,6 +98,17 @@ public class XcfaCli {
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+
+			if(parsing) {
+				System.out.println("XCFA creation successful");
+				try{
+					CFA cfa = xcfa.createCFA();
+					System.out.println("CFA creation successful");
+				} catch(IllegalStateException ex) {
+					System.out.println("CFA creation unsuccessful. Reason: " + ex.getMessage());
+				}
+				return;
+			}
 
 
 			if(showGui) {

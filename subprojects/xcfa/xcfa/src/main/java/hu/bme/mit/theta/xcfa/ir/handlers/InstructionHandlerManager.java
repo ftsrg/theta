@@ -22,6 +22,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.concrete.ArrayIntrinsicsHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BinaryInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BitvectorInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BitwiseInstructionHandler;
+import hu.bme.mit.theta.xcfa.ir.handlers.concrete.BuiltinFunctionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.ConversionInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.MemoryInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.concrete.OtherInstructionHandler;
@@ -36,6 +37,7 @@ public class InstructionHandlerManager {
 
     private static final List<Class<? extends InstructionHandler>> defaultInstructionHandlers = List.of(
             PointerArithmeticCheck.class,
+            BuiltinFunctionHandler.class,
             ArrayIntrinsicsHandler.class,
             TerminatorInstructionHandler.class,
             UnaryInstructionHandler.class,
@@ -50,6 +52,7 @@ public class InstructionHandlerManager {
     private static final List<Class<? extends InstructionHandler>> bitvectorInstructionHandlers = List.of(
             PointerArithmeticCheck.class,
             BitvectorInstructionHandler.class,
+            BuiltinFunctionHandler.class,
             ArrayIntrinsicsHandler.class,
             TerminatorInstructionHandler.class,
             UnaryInstructionHandler.class,

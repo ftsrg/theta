@@ -36,7 +36,6 @@ import static hu.bme.mit.theta.xcfa.ir.Utils.createVariable;
 public class GlobalState {
     private final XCFA.Builder builder;
     private final Map<String, VarDecl<?>> globalVars;
-    private final Map<String, String> processes;
     private final List<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> procedures;
     private final SSAProvider ssa;
     private final ArithmeticType arithmeticType;
@@ -44,13 +43,10 @@ public class GlobalState {
 
     public GlobalState(SSAProvider ssa, ArithmeticType arithmeticType) {
         this.ssa = ssa;
-        if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()) arithmeticType = ArithmeticType.bitvector;
-        else if(arithmeticType == ArithmeticType.efficient) arithmeticType = ArithmeticType.integer;
-        checkState(!ssa.shouldUseBitwiseArithmetics() || arithmeticType == ArithmeticType.bitvector, "There are statements in the source not mappable to integer arithmetic");
         this.arithmeticType = arithmeticType;
         builder = XCFA.builder();
+        builder.setDynamic(true);
         this.globalVars = new HashMap<>();
-        this.processes = new HashMap<>();
         this.procedures = new ArrayList<>();
 
         // Creating global variables
@@ -61,9 +57,6 @@ public class GlobalState {
         }
 
         procedures.addAll(ssa.getFunctions());
-
-        processes.put("main", "main");
-
     }
 
     public void finalizeGlobalState(BuiltState builtState) {
@@ -75,14 +68,6 @@ public class GlobalState {
 
     public void addGlobalVar(String name, VarDecl<?> globalVar) {
         this.globalVars.put(name, globalVar);
-    }
-
-    public Map<String, String> getProcesses() {
-        return processes;
-    }
-
-    public void addProcess(String name, String mainProcedureName) {
-        this.processes.put(name, mainProcedureName);
     }
 
     public int getGlobalCounter() {

@@ -47,6 +47,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkState;
+
 @SuppressWarnings("unused")
 public class XcfaUtils {
     /*
@@ -105,16 +107,23 @@ public class XcfaUtils {
      * Runs the specified passes when a specific stage is complete.
      */
     public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
+        if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()){
+            System.out.println("Using bitvector arithmetic!");
+            arithmeticType = ArithmeticType.bitvector;
+        }
+        else if(arithmeticType == ArithmeticType.efficient) {
+            System.out.println("Using integer arithmetic!");
+            arithmeticType = ArithmeticType.integer;
+        }
+        checkState(!ssa.shouldUseBitwiseArithmetics() || arithmeticType == ArithmeticType.bitvector, "There are statements in the source not mappable to integer arithmetic");
         Utils.arithmeticType = arithmeticType;
         BuiltState builtState = new BuiltState();
         GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
-            System.out.println("Now in function " + function.get1());
             FunctionState functionState = new FunctionState(globalState, function);
 
             for (String block : ssa.getBlocks(function.get1())) {
-                System.out.println("Now in block " + block);
                 BlockState blockState = new BlockState(functionState, block);
                 InstructionHandlerManager instructionHandlerManager = new InstructionHandlerManager(arithmeticType);
                 for (Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer> instruction : ssa.getInstructions(function.get1(), block)) {
@@ -137,17 +146,15 @@ public class XcfaUtils {
             builtState.getProcedures().put(function.get1(), functionState.getProcedureBuilder().build());
         }
 
-        globalState.getProcesses().forEach((handle, mainProcedure) -> {
-            XcfaProcess.Builder builder = XcfaProcess.builder();
-            builtState.getProcedures().forEach((s1, xcfaProcedure) -> {
-                XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure);
-                builder.addProcedure(procedure);
-                if (procedure.getName().equals(mainProcedure)) builder.setMainProcedure(procedure);
-            });
-            XcfaProcess built = builder.build();
-            builtState.getProcesses().put(handle, built);
-            globalState.getBuilder().addProcess(built);
+        XcfaProcess.Builder builder = XcfaProcess.builder();
+        builtState.getProcedures().forEach((s1, xcfaProcedure) -> {
+            XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure);
+            builder.addProcedure(procedure);
+            if (procedure.getName().equals("main")) builder.setMainProcedure(procedure);
         });
+        XcfaProcess built = builder.build();
+        builtState.getProcesses().put("main", built);
+        globalState.getBuilder().addProcess(built);
 
         globalState.finalizeGlobalState(builtState);
         globalState.getBuilder().setMainProcess(builtState.getProcesses().get("main"));
