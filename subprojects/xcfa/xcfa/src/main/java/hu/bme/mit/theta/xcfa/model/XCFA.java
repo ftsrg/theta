@@ -67,9 +67,6 @@ public final class XCFA {
 		checkState(getMainProcess().getProcedures().size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
 
 		CFA.Builder builder = CFA.builder();
-		CFA.Loc initLoc = null;
-		CFA.Loc errorLoc = null;
-		CFA.Loc finalLoc = null;
 
 		int tmpcnt = 0;
 
@@ -101,17 +98,14 @@ public final class XCFA {
 				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
 				XcfaMetadata.create(e, "cfaEdge", edge);
 			}
-			// Deciding if the source or target is any special location
-			if (e.getSource() == getMainProcess().getMainProcedure().getInitLoc()) initLoc = locations.get(0);
-			if (e.getTarget() == getMainProcess().getMainProcedure().getErrorLoc())
-				errorLoc = locations.get(locations.size() - 1);
-			else if (e.getTarget() == getMainProcess().getMainProcedure().getFinalLoc())
-				finalLoc = locations.get(locations.size() - 1);
 		}
+		if(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc())==null)
+			locationLUT.put(getMainProcess().getMainProcedure().getFinalLoc(), builder.createLoc(getMainProcess().getMainProcedure().getFinalLoc().getName()));
+
 		// Setting special locations (initial and final locations are mandatory, error location is not)
-		builder.setInitLoc(initLoc);
-		if (errorLoc != null) builder.setErrorLoc(errorLoc);
-		builder.setFinalLoc(finalLoc);
+		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
+		if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null) builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
+		builder.setFinalLoc(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc()));
 
 		return builder.build();
 	}

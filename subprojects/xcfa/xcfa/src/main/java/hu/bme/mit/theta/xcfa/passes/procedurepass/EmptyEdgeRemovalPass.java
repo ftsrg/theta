@@ -41,7 +41,7 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 		notFound = false;
 		while(!notFound) {
 			notFound = true;
-			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().size() == 0).findFirst();
+			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && builder.getFinalLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().size() == 0).findFirst();
 			if(loc.isPresent()) {
 				notFound = false;
 				List<XcfaEdge> outgoingEdges = new ArrayList<>(loc.get().getOutgoingEdges());

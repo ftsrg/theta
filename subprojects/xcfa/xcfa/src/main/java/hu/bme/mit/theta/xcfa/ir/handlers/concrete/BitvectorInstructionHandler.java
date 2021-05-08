@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -320,10 +322,15 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
     private void and(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+
+        if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
+            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))));
+            return;
+        }
 
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
-        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
     }
 
@@ -331,6 +338,12 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
+
+        if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
+            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.Or(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))));
+            return;
+        }
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
@@ -340,10 +353,14 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
     private void xor(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
+        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
 
+        if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
+            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.Xor(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType())));
+            return;
+        }
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
-        checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Xor(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
 
     }
