@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
@@ -210,27 +211,36 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         checkState(op3.getType() == RatType.getInstance(), "Icmp only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         switch (op1.getName()) {
-            case "eq":
+            case "ueq":
+            case "oeq":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Eq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
                 break;
-            case "ne":
+            case "one":
+            case "une":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Neq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
                 break;
             case "ugt":
-            case "sgt":
+            case "ogt":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Gt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
                 break;
             case "uge":
-            case "sge":
+            case "oge":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Geq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
                 break;
             case "ult":
-            case "slt":
+            case "olt":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Lt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
                 break;
+            case "ole":
             case "ule":
-            case "sle":
                 functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Leq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                break;
+            case "ord":
+            case "true":
+                functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.True());
+                break;
+            case "false":
+                functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.False());
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + op1.getName());
