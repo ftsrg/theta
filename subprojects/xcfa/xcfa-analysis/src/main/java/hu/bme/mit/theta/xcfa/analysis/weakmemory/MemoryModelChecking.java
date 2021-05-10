@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.analysis;
+package hu.bme.mit.theta.xcfa.analysis.weakmemory;
 
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-public class XcfaAnalysis {
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
-	public static MemoryModelChecking createParametricAnalysis(XCFA xcfa) {
-		return new MemoryModelChecking(xcfa);
+public class MemoryModelChecking {
+
+	private final Map<VarDecl<?>, Tuple2<Set<LoadStmt>,Set<StoreStmt>>> accessors;
+
+	public MemoryModelChecking(final XCFA xcfa) {
+		accessors = new LinkedHashMap<>();
+		for (VarDecl<? extends Type> globalVar : xcfa.getGlobalVars()) {
+			accessors
+		}
 	}
-
 }
