@@ -52,15 +52,15 @@ final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDe
 
 	@Override
 	public Void visit(StoreStmt storeStmt, Collection<VarDecl<?>> param) {
-		param.add(storeStmt.getLhs());
-		param.add(storeStmt.getRhs());
+		param.add(storeStmt.getLocal());
+		param.add(storeStmt.getGlobal());
 		return null;
 	}
 
 	@Override
 	public Void visit(LoadStmt loadStmt, Collection<VarDecl<?>> param) {
-		param.add(loadStmt.getLhs());
-		param.add(loadStmt.getRhs());
+		param.add(loadStmt.getGlobal());
+		param.add(loadStmt.getLocal());
 		return null;
 	}
 

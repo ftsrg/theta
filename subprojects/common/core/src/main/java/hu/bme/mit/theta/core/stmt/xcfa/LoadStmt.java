@@ -22,8 +22,8 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
 public class LoadStmt extends XcfaStmt {
-	private final VarDecl<?> lhs;
-	private final VarDecl<?> rhs;
+	private final VarDecl<?> global;
+	private final VarDecl<?> local;
 	private final boolean atomic;
 	private final String ordering;
 
@@ -38,8 +38,8 @@ public class LoadStmt extends XcfaStmt {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + lhs.hashCode();
-			result = 31 * result + rhs.hashCode();
+			result = 31 * result + global.hashCode();
+			result = 31 * result + local.hashCode();
 			result = 31 * result + (atomic ? 1 : 0) ;
 			result = 31 * result + ordering.hashCode();
 			hashCode = result;
@@ -50,19 +50,19 @@ public class LoadStmt extends XcfaStmt {
 	@Override
 	public boolean equals(final Object obj) {
 		return obj instanceof LoadStmt
-				&& ((LoadStmt) obj).getLhs().equals(lhs)
-				&& ((LoadStmt) obj).getRhs().equals(rhs)
+				&& ((LoadStmt) obj).getGlobal().equals(global)
+				&& ((LoadStmt) obj).getLocal().equals(local)
 				&& ((LoadStmt) obj).getOrdering().equals(ordering)
 				&& ((LoadStmt) obj).isAtomic() == atomic;
 	}
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(STMT_LABEL).add(lhs).add(rhs).add(atomic).add(ordering).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).add(global).add(local).add(atomic).add(ordering).toString();
 	}
-	public LoadStmt(VarDecl<?> lhs, VarDecl<?> rhs, boolean atomic, String ordering) {
-		this.lhs = lhs;
-		this.rhs = rhs;
+	public LoadStmt(VarDecl<?> global, VarDecl<?> local, boolean atomic, String ordering) {
+		this.global = global;
+		this.local = local;
 		this.atomic = atomic;
 		this.ordering = ordering;
 	}
@@ -77,12 +77,12 @@ public class LoadStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public VarDecl<?> getLhs() {
-		return lhs;
+	public VarDecl<?> getGlobal() {
+		return global;
 	}
 
-	public VarDecl<?> getRhs() {
-		return rhs;
+	public VarDecl<?> getLocal() {
+		return local;
 	}
 
 	public boolean isAtomic() {
