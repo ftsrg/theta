@@ -30,10 +30,19 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 		boolean notFound = false;
 		while(!notFound) {
 			notFound = true;
-			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).findFirst();
+			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge ->
+					   xcfaEdge.getStmts().size() == 0
+					&& xcfaEdge.getTarget() != xcfaEdge.getSource()
+					&& !xcfaEdge.getTarget().isEndLoc()
+					&& !xcfaEdge.getTarget().isErrorLoc()
+			).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
-				edge.get().getTarget().getOutgoingEdges().forEach(xcfaEdge -> builder.addEdge(new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts())));
+				List<XcfaEdge> outgoingEdges = new ArrayList<>(edge.get().getTarget().getOutgoingEdges());
+				for (XcfaEdge xcfaEdge : outgoingEdges) {
+					if(xcfaEdge.getTarget() == xcfaEdge.getSource()) builder.addEdge(new XcfaEdge(edge.get().getSource(), edge.get().getSource(), xcfaEdge.getStmts()));
+					else builder.addEdge(new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts()));
+				}
 				builder.removeEdge(edge.get());
 			}
 		}
@@ -41,7 +50,7 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 		notFound = false;
 		while(!notFound) {
 			notFound = true;
-			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && builder.getFinalLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().size() == 0).findFirst();
+			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && builder.getFinalLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().stream().filter(xcfaEdge -> xcfaEdge.getSource() != xcfaEdge.getTarget()).findAny().isEmpty()).findFirst();
 			if(loc.isPresent()) {
 				notFound = false;
 				List<XcfaEdge> outgoingEdges = new ArrayList<>(loc.get().getOutgoingEdges());
