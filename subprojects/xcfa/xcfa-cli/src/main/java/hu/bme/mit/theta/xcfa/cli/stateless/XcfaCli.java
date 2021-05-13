@@ -34,6 +34,8 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
+import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -132,13 +134,25 @@ public class XcfaCli {
 				return;
 			}
 
-			CFA cfa = xcfa.createCFA();
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-			final SafetyResult<?, ?> status = check(configuration);
 
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(status.asUnsafe());
+			CFA cfa;
+			try {
+				cfa = xcfa.createCFA();
+			} catch(IllegalStateException e) {
+				System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
+				cfa = null;
 			}
+			if(cfa != null) {
+				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+				final SafetyResult<?, ?> status = check(configuration);
+
+				if (status.isUnsafe() && cexfile != null) {
+					writeCex(status.asUnsafe());
+				}
+			} else {
+				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
+			}
+
 
 			sw.stop();
 			System.out.println(sw.elapsed(TimeUnit.MILLISECONDS) + " ms");

@@ -1,9 +1,11 @@
 #include <pthread.h>
-void p0(void* param) {
+void* p0(void* param) {
     volatile int i = 0;
 }
-void p1(void* param) {
+void* p1(void* param) {
+    while(1) {
     volatile int j = 0;
+    }
 }
 
 int main() {
