@@ -55,7 +55,7 @@ public class StartThreadStmt extends XcfaStmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(STMT_LABEL).add(key).add(threadName).add(param).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).add(key).add(threadName).add(param == null ? "" : param).toString();
 	}
 
 	public StartThreadStmt(String key, String threadName, Expr<?> param) {
