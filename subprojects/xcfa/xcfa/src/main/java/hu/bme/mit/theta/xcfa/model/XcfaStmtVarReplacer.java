@@ -144,8 +144,8 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     @Override
     public Stmt visit(StoreStmt storeStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return new StoreStmt(
-                param.getOrDefault(storeStmt.getLhs(), storeStmt.getLhs()),
-                param.getOrDefault(storeStmt.getRhs(), storeStmt.getRhs()),
+                param.getOrDefault(storeStmt.getLocal(), storeStmt.getLocal()),
+                param.getOrDefault(storeStmt.getGlobal(), storeStmt.getGlobal()),
                 storeStmt.isAtomic(),
                 storeStmt.getOrdering()
         );
@@ -154,8 +154,8 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
     @Override
     public Stmt visit(LoadStmt loadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return new LoadStmt(
-                param.getOrDefault(loadStmt.getLhs(), loadStmt.getLhs()),
-                param.getOrDefault(loadStmt.getRhs(), loadStmt.getRhs()),
+                param.getOrDefault(loadStmt.getGlobal(), loadStmt.getGlobal()),
+                param.getOrDefault(loadStmt.getLocal(), loadStmt.getLocal()),
                 loadStmt.isAtomic(),
                 loadStmt.getOrdering()
         );
@@ -178,7 +178,7 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
 
     @Override
     public Stmt visit(StartThreadStmt startThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new StartThreadStmt(startThreadStmt.getKey(), startThreadStmt.getThreadName(), replaceVars(startThreadStmt.getParam(), param));
+        return new StartThreadStmt(startThreadStmt.getKey(), startThreadStmt.getThreadName(), startThreadStmt.getParam() == null ? null : replaceVars(startThreadStmt.getParam(), param));
     }
 
     @Override

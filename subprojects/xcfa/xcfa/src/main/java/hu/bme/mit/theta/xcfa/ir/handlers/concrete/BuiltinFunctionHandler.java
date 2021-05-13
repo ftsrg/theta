@@ -36,7 +36,7 @@ import java.util.List;
 
 public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private final static Collection<String> SVCOMP_ERROR_FUNCTIONS = List.of("__assert_fail", "__VERIFIER_error", "abort", "reach_error");
-    private final static Collection<String> SVCOMP_NEWTHREAD_FUNCTIONS = List.of("pthread_create");
+    private final static Collection<String> SVCOMP_NEWTHREAD_FUNCTIONS = List.of("theta_pthread_create");
     private final static Collection<String> SVCOMP_JOINTHREAD_FUNCTIONS = List.of("pthread_join");
     private final static Collection<String> SVCOMP_ATOMIC_BEGIN = List.of("__VERIFIER_atomic_begin");
     private final static Collection<String> SVCOMP_ATOMIC_END = List.of("__VERIFIER_atomic_end");
@@ -79,8 +79,8 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private void newthread(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
         Argument handleName = instruction.getArguments().get(0);
-        Argument functionName = instruction.getArguments().get(2);
-        Argument param = instruction.getArguments().get(3);
+        Argument functionName = instruction.getArguments().get(1);
+        Argument param = instruction.getArguments().get(2);
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new StartThreadStmt(handleName.getName(), functionName.getName(), param.getExpr(functionState.getValues()))));
         if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addLoc(newLoc);
