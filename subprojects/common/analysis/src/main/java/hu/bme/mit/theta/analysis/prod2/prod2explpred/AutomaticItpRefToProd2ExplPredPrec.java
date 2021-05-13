@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.analysis.prod2.prod2explpred;
 
+import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -21,7 +23,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
 	private final Set<VarDecl<?>> explPreferredVars;
-	private final Map<VarDecl<?>, Integer> predCount;
+	private final Map<VarDecl<?>, Set<Expr<BoolType>>> predCount;
 	private final ExprSplitter exprSplitter;
 	private final int maxPredCount;
 
@@ -44,26 +46,27 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 		Set<VarDecl<?>> explSelectedVars = new LinkedHashSet<>();
 		Set<Expr<BoolType>> predSelectedExprs = new LinkedHashSet<>();
 		for (var expr : exprs) {
-			final Set<VarDecl<?>> containedVars = ExprUtils.getVars(expr);
+			var atoms = ExprUtils.getAtoms(expr);
 			boolean allExpl = true;
-			for (var decl : containedVars) {
-				if(maxPredCount>0){
-					if (!predCount.containsKey(decl)) {
-						predCount.put(decl, 1);
-					}
-					if(predCount.get(decl)>=maxPredCount){
-						explPreferredVars.add(decl);
-					} else {
-						predCount.put(decl, predCount.get(decl) + 1);
-					}
+			for (var atom : atoms){
+				final Set<VarDecl<?>> containedVars = ExprUtils.getVars(atom);
+				for (var decl : containedVars) {
+					predCount.computeIfAbsent(decl,(k) -> new HashSet<Expr<BoolType>>()).add(atom);
 				}
+			}
+			final Set<VarDecl<?>> containedVars = ExprUtils.getVars(expr);
+			for(var decl:containedVars){
 				if(decl.getType() == Bool()){
+					explPreferredVars.add(decl);
+				}
+				if(predCount.get(decl).size()>=maxPredCount && maxPredCount!=0){
 					explPreferredVars.add(decl);
 				}
 				if (explPreferredVars.contains(decl)) {
 					explSelectedVars.add(decl);
 				} else allExpl = false;
 			}
+
 			if (!allExpl) predSelectedExprs.add(expr);
 		}
 		return Prod2Prec.of(ExplPrec.of(explSelectedVars), PredPrec.of(predSelectedExprs));

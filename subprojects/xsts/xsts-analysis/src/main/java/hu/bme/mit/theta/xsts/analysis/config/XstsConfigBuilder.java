@@ -38,7 +38,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 public class XstsConfigBuilder {
 
 	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED
 	}
 
 	public enum Refinement {
@@ -271,7 +271,7 @@ public class XstsConfigBuilder {
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
-		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT) {
+		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED) {
 			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts;
 			if(optimizeStmts == OptimizeStmts.ON){
 				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
@@ -282,27 +282,38 @@ public class XstsConfigBuilder {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
 			}
 
-			final PredAbstractors.PredAbstractor predAbstractor;
-			switch (domain) {
-				case EXPL_PRED_BOOL:
-					predAbstractor = PredAbstractors.booleanAbstractor(solver);
-					break;
-				case EXPL_PRED_SPLIT:
-					predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
-					break;
-				case EXPL_PRED_CART:
-					predAbstractor = PredAbstractors.cartesianAbstractor(solver);
-					break;
-				default:
-					throw new UnsupportedOperationException(domain + " domain is not supported.");
-			}
+			final Analysis<Prod2State<ExplState,PredState>,XstsAction,Prod2Prec<ExplPrec,PredPrec>> prod2Analysis;
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, solver));
-			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis
-					= XstsAnalysis.create(Prod2Analysis.create(
+			if(domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT){
+				final PredAbstractors.PredAbstractor predAbstractor;
+				switch (domain) {
+					case EXPL_PRED_BOOL:
+						predAbstractor = PredAbstractors.booleanAbstractor(solver);
+						break;
+					case EXPL_PRED_SPLIT:
+						predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+						break;
+					case EXPL_PRED_CART:
+						predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+						break;
+					default:
+						throw new UnsupportedOperationException(domain + " domain is not supported.");
+				}
+				prod2Analysis = Prod2Analysis.create(
 						ExplStmtAnalysis.create(solver, xsts.getInitFormula(), maxEnum),
 						PredAnalysis.create(solver, predAbstractor, xsts.getInitFormula()),
 						Prod2ExplPredPreStrengtheningOperator.create(),
-						Prod2ExplPredStrengtheningOperator.create(solver)));
+						Prod2ExplPredStrengtheningOperator.create(solver));
+			} else {
+				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(solver);
+				prod2Analysis = Prod2ExplPredAnalysis.create(
+						ExplAnalysis.create(solver, xsts.getInitFormula()),
+						PredAnalysis.create(solver, PredAbstractors.booleanAbstractor(solver), xsts.getInitFormula()),
+						Prod2ExplPredStrengtheningOperator.create(solver),
+						prodAbstractor);
+			}
+			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis = XstsAnalysis.create(prod2Analysis);
+
 			final ArgBuilder<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> argBuilder = ArgBuilder.create(lts, analysis, target,
 					true);
 			final Abstractor<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> abstractor = BasicAbstractor.builder(argBuilder)
