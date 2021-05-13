@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,99 @@ public class Datalog {
 		Relation ret = new Relation(n);
 		relations.add(ret);
 		return ret;
+	}
+
+	public Relation createTransitive(Relation simple) {
+		checkState(simple.arity == 2, "Only binary relations should have transitive closures!");
+		Relation path = createRelation(2);
+		Datalog.Variable var1, var2, var3;
+		path.addRule(
+				TupleN.of(
+						var1 = getVariable(),
+						var2 = getVariable()
+				),
+				Set.of(
+						Tuple2.of(
+								simple,
+								TupleN.of(var1, var2)
+						)
+				)
+		);
+		path.addRule(
+				TupleN.of(
+						var1 = getVariable(),
+						var2 = getVariable()
+				),
+				Set.of(
+						Tuple2.of(
+								path,
+								TupleN.of(
+										var1,
+										var3 = getVariable()
+								)
+						),
+						Tuple2.of(
+								path,
+								TupleN.of(
+										var3,
+										var2
+								)
+						)
+				)
+		);
+		return path;
+	}
+
+	public Relation createDisjunction(Iterable<Relation> relations) {
+		Integer arity = null;
+		for (Relation relation : relations) {
+			if(arity == null) arity = relation.getArity();
+			else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
+		}
+		checkState(arity != null, "At least one relation is necessary!");
+		Relation disjunction = createRelation(arity);
+		List<Variable> vars = new ArrayList<>();
+		for (int i = 0; i < arity; i++) {
+			vars.add(getVariable());
+		}
+		TupleN<Variable> varTuple = TupleN.of(vars);
+		for (Relation relation : relations) {
+			disjunction.addRule(
+					varTuple,
+					Set.of(
+							Tuple2.of(
+									relation,
+									varTuple
+							)
+					)
+			);
+		}
+		return disjunction;
+	}
+	public Relation createConjuction(Iterable<Relation> relations) {
+		Integer arity = null;
+		TupleN<Variable> varTuple = null;
+		Set<Tuple2<Relation, TupleN<Variable>>> deps = new LinkedHashSet<>();
+		for (Relation relation : relations) {
+			if(arity == null){
+				arity = relation.getArity();
+				List<Variable> vars = new ArrayList<>();
+				for (int i = 0; i < arity; i++) {
+					vars.add(getVariable());
+				}
+				varTuple = TupleN.of(vars);
+			}
+			else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
+
+			deps.add(Tuple2.of(relation, varTuple));
+		}
+		checkState(arity != null, "At least one relation is necessary!");
+		Relation conjuction = createRelation(arity);
+		conjuction.addRule(
+				varTuple,
+				deps
+		);
+		return conjuction;
 	}
 
 	public boolean isDebug() {
