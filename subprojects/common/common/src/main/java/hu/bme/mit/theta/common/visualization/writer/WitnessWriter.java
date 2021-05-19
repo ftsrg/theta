@@ -24,13 +24,14 @@ import java.time.LocalDateTime;
  * - All edge attributes, except labels are ignored.
  */
 public class WitnessWriter extends AbstractGraphWriter {
-	private String programHash;
-	private boolean isViolationWitness;
-	private String toolName = "theta"; // TODO maybe we should add the version number to this field as well
-	private String sourceCodeLang = "C";
-	private String architecture = "32bit"; // TODO add 64bit option later
-	private LocalDateTime creationTime;
-	private String specification;
+	private final String programHash;
+	private final boolean isViolationWitness;
+	private final String toolName = "theta"; // TODO maybe we should add the version number to this field as well
+	private final String sourceCodeLang = "C";
+	private final String architecture = "32bit"; // TODO add 64bit option later
+	private final LocalDateTime creationTime;
+	private final String specification;
+	private final String programFile;
 
 
 	public static WitnessWriter createViolationWitnessWriter(String programFile, String specification) {
@@ -40,7 +41,6 @@ public class WitnessWriter extends AbstractGraphWriter {
 
 	public static WitnessWriter createCorrectnessWitnessWriter(String programFile, String specification) {
 		WitnessWriter ww = new WitnessWriter(programFile, specification, false);
-
 		return ww;
 	}
 
@@ -49,6 +49,7 @@ public class WitnessWriter extends AbstractGraphWriter {
 		this.isViolationWitness = isViolationWitness;
 		this.specification = specification;
 		this.creationTime = LocalDateTime.now();
+		this.programFile = programFile;
 	}
 
 	@Override
@@ -56,6 +57,8 @@ public class WitnessWriter extends AbstractGraphWriter {
 		final StringBuilder sb = new StringBuilder();
 		printKeys(sb);
 		sb.append("<graph edgedefault=\"directed\">").append(System.lineSeparator());
+
+		printGraphKeyValues();
 
 		graph.getRootNodes().forEach(n -> printNode(n, sb));
 
@@ -94,6 +97,24 @@ public class WitnessWriter extends AbstractGraphWriter {
 			appendKeyWithDefaultValue(sb, "invariant", "string", "node", "invariant", "true");
 		}
 
+	}
+
+	private void printGraphKeyValues(StringBuilder sb) {
+		if(isViolationWitness) {
+			appendDataNode(sb,"witness-type","violation_witness");
+		} else {
+			appendDataNode(sb,"witness-type","correctness_witness");
+		}
+		appendDataNode(sb,"producer", toolName);
+		appendDataNode(sb,"sourcecodelang",sourceCodeLang);
+		appendDataNode(sb,"specification", specification);
+		appendDataNode(sb,"programfile",programFile);
+		appendDataNode(sb,"programhash",programHash);
+		appendDataNode(sb,"architecture",architecture);
+	}
+
+	private void appendDataNode(StringBuilder sb, String key, String value) {
+		sb.append("<data key=\"").append(key).append("\">").append(value).append("</data>").append(System.lineSeparator());
 	}
 
 	private void appendKeyLine(StringBuilder sb, String attrName, String attrType, String forElement, String id) {
