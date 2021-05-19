@@ -35,13 +35,11 @@ public class WitnessWriter extends AbstractGraphWriter {
 
 
 	public static WitnessWriter createViolationWitnessWriter(String programFile, String specification) {
-		WitnessWriter ww = new WitnessWriter(programFile, specification, true);
-		return ww;
+		return new WitnessWriter(programFile, specification, true);
 	}
 
 	public static WitnessWriter createCorrectnessWitnessWriter(String programFile, String specification) {
-		WitnessWriter ww = new WitnessWriter(programFile, specification, false);
-		return ww;
+		return new WitnessWriter(programFile, specification, false);
 	}
 
 	private WitnessWriter(String programFile, String specification, boolean isViolationWitness) {
@@ -58,7 +56,7 @@ public class WitnessWriter extends AbstractGraphWriter {
 		printKeys(sb);
 		sb.append("<graph edgedefault=\"directed\">").append(System.lineSeparator());
 
-		printGraphKeyValues();
+		printGraphKeyValues(sb);
 
 		graph.getRootNodes().forEach(n -> printNode(n, sb));
 
