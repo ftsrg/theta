@@ -1,11 +1,12 @@
 #include <pthread.h>
+#include <stdatomic.h>
+
+_Atomic int i;
 void* p0(void* param) {
-    volatile int i = 0;
+    atomic_store_explicit(&i, 1, memory_order_release);
 }
 void* p1(void* param) {
-    while(1) {
-    volatile int j = 0;
-    }
+    atomic_store_explicit(&i, atomic_read_explicit(&i, memory_order_acquire), memory_order_release);
 }
 
 int main() {
