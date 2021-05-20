@@ -11,6 +11,8 @@ Every _XCFA_ model consists of global variables and _XcfaProcess_ definitions. _
 
 Semantically, the _XCFA_ formalism describes an _asynchronous_ system, where processes are constantly executing statements on enabled transitions nondeterministically, until no such process remains (which either means a deadlock situation, or a completed execution). Statements are always atomic, but groups of statements can also be specified to be atomic when enclosed among _AtomicBeginStmt_ and _AtomicEndStmt_ statements. After any number of executed _AtomicBeginStmts_ a single _AtomicEndStmt_ ends the atomic block, and an _AtomicEndStmt_ is no-op without a preceding _AtomicBeginStmt_.
 
+_XCFA_ models can be _static_ or _dynamic_ depending on whether all threads are spawned on entry, or threads can spawn and await other threads. 
+
 ### Related projects
 
 * [`cfa`](../cfa/README.md): The ancestor project of the XCFA formalism, it can represent single-process
@@ -29,8 +31,6 @@ An XCFA is a process- and procedure-based collection of directed graphs (`V`, `L
     * assumptions of the form `assume expr`, where `expr` is a Boolean expression,
     * havocs of the form `havoc v`,
     * boundaries of atomic blocks `AtomicBegin`, `AtomicEnd`,
-    * synchronization primitives `Wait`, `Notify`, `NotifyAll`,
-    * mutex primitives `lock` and `unlock` (recursive),
     * memory operation primitives `Load`, `Store` with optional annotation of `atomic @ordering` where `ordering` is a
       memory ordering primitive,
     * call statements of the form `call proc` where `proc` is a referenced procedure (by name).
