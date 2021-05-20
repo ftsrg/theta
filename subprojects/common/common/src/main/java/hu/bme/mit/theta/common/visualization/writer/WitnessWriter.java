@@ -165,7 +165,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	private void printEdges(final Node node, final StringBuilder sb) {
 		for (final Edge edge : node.getOutEdges()) {
 			sb.append("<edge source=\"").append(edge.getSource().getId());
-			sb.append("\" target=\"").append(edge.getTarget().getId()).append(">").append(System.lineSeparator());
+			sb.append("\" target=\"").append(edge.getTarget().getId()).append("\">").append(System.lineSeparator());
 			sb.append(edge.getAttributes().getLabel()).append(System.lineSeparator()); // TODO tabs?
 			sb.append("</edge>").append(System.lineSeparator());
 		}
@@ -174,7 +174,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	private static String createTaskHash(String programFile) {
 		MessageDigest md = null;
 		try {
-			md = MessageDigest.getInstance("SHA256");
+			md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}

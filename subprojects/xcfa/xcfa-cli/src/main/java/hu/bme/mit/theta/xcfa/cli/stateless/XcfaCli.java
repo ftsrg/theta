@@ -32,9 +32,12 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
@@ -46,7 +49,7 @@ public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final String[] args;
 
-	@Parameter(names = "--model", description = "Path of the input XCFA model", required = true)
+	@Parameter(names = "--input", description = "Path of the input XCFA model, LLVM IR or C program", required = true)
 	File model;
 
 	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
@@ -66,6 +69,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
+
+	@Parameter(names = "--witness", description = "Write witness to a file")
+	String witnessfile = null;
 
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
@@ -149,6 +155,9 @@ public class XcfaCli {
 				if (status.isUnsafe() && cexfile != null) {
 					writeCex(status.asUnsafe());
 				}
+				if (status.isUnsafe() && witnessfile != null) {
+					writeViolationWitness(status.asUnsafe());
+				}
 			} else {
 				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
@@ -160,6 +169,7 @@ public class XcfaCli {
 			ex.printStackTrace();
 		}
 	}
+
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
 			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.NWT_IT_SP, Z3SolverFactory.getInstance())
@@ -194,4 +204,19 @@ public class XcfaCli {
 			}
 		}
 	}
+
+	private void writeViolationWitness(final SafetyResult.Unsafe<?, ?> status) {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		final File file = new File(witnessfile);
+		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
+		// TODO handle more input flags to get the parameters instead of hardcoding them
+		WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+		try {
+			ww.writeFile(witnessGraph, witnessfile);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
 }

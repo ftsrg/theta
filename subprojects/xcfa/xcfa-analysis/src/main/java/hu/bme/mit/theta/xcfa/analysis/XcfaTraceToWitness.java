@@ -32,8 +32,8 @@ public final class XcfaTraceToWitness {
 	private XcfaTraceToWitness() {}
 
 	public static Graph buildWitness(
-			final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
-		concreteTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
+			final Trace<CfaState<ExplState>, CfaAction> trace) {
+		concreteTrace = trace;
 		witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
 		addNodes();
@@ -120,8 +120,8 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="entry">true</data>
 	 */
 	private static void addWitnessEdge(int index, String label) {
-		witnessGraph.addEdge(concreteTrace.getAction(index).getSource().getName(),
-							concreteTrace.getAction(index).getTarget().getName(),
+		witnessGraph.addEdge(concreteTrace.getState(index).getLoc().getName()+"_c"+index,
+						concreteTrace.getState(index+1).getLoc().getName()+"_c"+(index+1),
 							new EdgeAttributes.Builder().label(label).build()
 							);
 	}
@@ -134,10 +134,9 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="entry">true</data>
 	 */
 	private static void addWitnessNode(int index, String label) {
-		witnessGraph.addNode( concreteTrace.getState(index).getLoc().getName()+"_c"+stateCounter,
+		witnessGraph.addNode( concreteTrace.getState(index).getLoc().getName()+"_c"+index,
 				new NodeAttributes.Builder().label(label).build()
 		);
-		stateCounter++;
 	}
 
 	/**
