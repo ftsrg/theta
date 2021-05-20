@@ -18,36 +18,41 @@ import java.time.LocalDateTime;
 
 /**
  * Class for writing graphs in the SV-Comp witness format.
+ * it accepts a graph, which will be the
  * Limitations:
  * - All node attributes, except labels are ignored.
  * - Composite nodes are ignored (handled the same as simple nodes.
  * - All edge attributes, except labels are ignored.
  */
-public class WitnessWriter extends AbstractGraphWriter {
+public final class WitnessWriter extends AbstractGraphWriter {
 	private final String programHash;
 	private final boolean isViolationWitness;
 	private final String toolName = "theta"; // TODO maybe we should add the version number to this field as well
 	private final String sourceCodeLang = "C";
-	private final String architecture = "32bit"; // TODO add 64bit option later
+	private final String architecture; // TODO add 64bit option later
 	private final LocalDateTime creationTime;
 	private final String specification;
 	private final String programFile;
 
-
-	public static WitnessWriter createViolationWitnessWriter(String programFile, String specification) {
-		return new WitnessWriter(programFile, specification, true);
+	public static WitnessWriter createViolationWitnessWriter(String programFile, String specification, boolean is64bit) {
+		return new WitnessWriter(programFile, specification, true, is64bit);
 	}
 
-	public static WitnessWriter createCorrectnessWitnessWriter(String programFile, String specification) {
-		return new WitnessWriter(programFile, specification, false);
+	public static WitnessWriter createCorrectnessWitnessWriter(String programFile, String specification, boolean is64bit) {
+		return new WitnessWriter(programFile, specification, false, is64bit);
 	}
 
-	private WitnessWriter(String programFile, String specification, boolean isViolationWitness) {
+	private WitnessWriter(String programFile, String specification, boolean isViolationWitness, boolean is64bit) {
 		programHash = createTaskHash(programFile);
 		this.isViolationWitness = isViolationWitness;
 		this.specification = specification;
 		this.creationTime = LocalDateTime.now();
 		this.programFile = programFile;
+		if(is64bit) {
+			this.architecture = "64bit";
+		} else {
+			this.architecture = "32bit";
+		}
 	}
 
 	@Override
