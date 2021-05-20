@@ -20,6 +20,8 @@ _XCFA_ models can be _static_ or _dynamic_ depending on whether all threads are 
   single-procedure programs.
 * [`xcfa-cli`](../xcfa-cli/README.md): An executable tool (command line) for running analyses on XCFAs. Currently only
   CFA-like XCFAs are supported.
+* [`xcfa-analysis`](../xcfa-analysis/README.md): The analyses that work on XCFAs: a BMC-like and a CEGAR based algorithm.
+* [`cat`](../cat/README.md): The memory modeling language that is used by the analyses above.
 
 ## XCFA formalism
 
