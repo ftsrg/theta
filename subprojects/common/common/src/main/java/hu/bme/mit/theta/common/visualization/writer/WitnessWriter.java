@@ -18,12 +18,14 @@ import java.time.LocalDateTime;
 
 /**
  * Class for writing graphs in the SV-Comp witness format.
- * it accepts a graph, which will be the
+ * it accepts a graph, which will be the content of the witness
+ * (labels of the graph have to already be in the witness format)
  * Limitations:
  * - All node attributes, except labels are ignored.
  * - Composite nodes are ignored (handled the same as simple nodes.
  * - All edge attributes, except labels are ignored.
  */
+// TODO make singleton similarly to other graph writers
 public final class WitnessWriter extends AbstractGraphWriter {
 	private final String programHash;
 	private final boolean isViolationWitness;
@@ -75,6 +77,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		return sb.toString();
 	}
 
+	// TODO should this be a bit more flexible or should we add keys we don't use for now, but we might use in the future?
 	private void printKeys(StringBuilder sb) {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>").append(System.lineSeparator());
 		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns/graphml\"").append(System.lineSeparator());
@@ -181,8 +184,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		try (InputStream is = Files.newInputStream(Paths.get(programFile));
 			 DigestInputStream dis = new DigestInputStream(is, md))
 		{
-			while (dis.read() != -1) {
-			}
+			while (dis.read() != -1) {}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
