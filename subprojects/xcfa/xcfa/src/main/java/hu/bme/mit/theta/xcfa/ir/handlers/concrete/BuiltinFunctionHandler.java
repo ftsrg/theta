@@ -20,9 +20,11 @@ import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
+import hu.bme.mit.theta.xcfa.ir.handlers.arguments.RegArgument;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
@@ -33,6 +35,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private final static Collection<String> SVCOMP_ERROR_FUNCTIONS = List.of("__assert_fail", "__VERIFIER_error", "abort", "reach_error");
@@ -40,6 +43,8 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private final static Collection<String> SVCOMP_JOINTHREAD_FUNCTIONS = List.of("pthread_join");
     private final static Collection<String> SVCOMP_ATOMIC_BEGIN = List.of("__VERIFIER_atomic_begin");
     private final static Collection<String> SVCOMP_ATOMIC_END = List.of("__VERIFIER_atomic_end");
+    private final static Collection<String> ATOMIC_READ = List.of("atomic_load_explicit");
+    private final static Collection<String> ATOMIC_WRITE = List.of("atomic_store_explicit");
 
 
     @Override
@@ -60,6 +65,12 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
                 return;
             } else if (SVCOMP_ATOMIC_END.contains(functionName)) {
                 atomicend(instruction, globalState, functionState, blockState);
+                return;
+            } else if (ATOMIC_READ.contains(functionName)) {
+                atomicread(instruction, globalState, functionState, blockState);
+                return;
+            } else if (ATOMIC_WRITE.contains(functionName)) {
+                atomicwrite(instruction, globalState, functionState, blockState);
                 return;
             }
         }
@@ -108,6 +119,22 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     }
 
     private void atomicend(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new AtomicEndStmt()));
+        if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        functionState.getProcedureBuilder().addLoc(newLoc);
+        functionState.getProcedureBuilder().addEdge(edge);
+        blockState.setLastLocation(newLoc);
+    }
+    private void atomicwrite(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of());
+        if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        functionState.getProcedureBuilder().addLoc(newLoc);
+        functionState.getProcedureBuilder().addEdge(edge);
+        blockState.setLastLocation(newLoc);
+    }
+    private void atomicread(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new AtomicEndStmt()));
         if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());

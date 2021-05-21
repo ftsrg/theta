@@ -6,10 +6,13 @@ single process. The project contains:
 
 * Classes to represent XCFAs.
 * A domain specific language (DSL) to parse XCFAs from a textual representation.
+* A program transformation method that takes LLVM IR and creates an XCFA. 
 
 Every _XCFA_ model consists of global variables and _XcfaProcess_ definitions. _XcfaProcesses_ consist of thread-local variables and _XcfaProcedure_ definitions. _XcfaProcedures_ are akin to the _CFA_ models, in the sense that they consist of local variables, _XcfaLocations_ and _XcfaEdges_; and _XcfaEdges_ contain zero or more statements.
 
 Semantically, the _XCFA_ formalism describes an _asynchronous_ system, where processes are constantly executing statements on enabled transitions nondeterministically, until no such process remains (which either means a deadlock situation, or a completed execution). Statements are always atomic, but groups of statements can also be specified to be atomic when enclosed among _AtomicBeginStmt_ and _AtomicEndStmt_ statements. After any number of executed _AtomicBeginStmts_ a single _AtomicEndStmt_ ends the atomic block, and an _AtomicEndStmt_ is no-op without a preceding _AtomicBeginStmt_.
+
+_XCFA_ models can be _static_ or _dynamic_ depending on whether all threads are spawned on entry, or threads can spawn and await other threads. 
 
 ### Related projects
 
@@ -17,6 +20,8 @@ Semantically, the _XCFA_ formalism describes an _asynchronous_ system, where pro
   single-procedure programs.
 * [`xcfa-cli`](../xcfa-cli/README.md): An executable tool (command line) for running analyses on XCFAs. Currently only
   CFA-like XCFAs are supported.
+* [`xcfa-analysis`](../xcfa-analysis/README.md): The analyses that work on XCFAs: a BMC-like and a CEGAR based algorithm.
+* [`cat`](../cat/README.md): The memory modeling language that is used by the analyses above.
 
 ## XCFA formalism
 
@@ -29,8 +34,6 @@ An XCFA is a process- and procedure-based collection of directed graphs (`V`, `L
     * assumptions of the form `assume expr`, where `expr` is a Boolean expression,
     * havocs of the form `havoc v`,
     * boundaries of atomic blocks `AtomicBegin`, `AtomicEnd`,
-    * synchronization primitives `Wait`, `Notify`, `NotifyAll`,
-    * mutex primitives `lock` and `unlock` (recursive),
     * memory operation primitives `Load`, `Store` with optional annotation of `atomic @ordering` where `ordering` is a
       memory ordering primitive,
     * call statements of the form `call proc` where `proc` is a referenced procedure (by name).
