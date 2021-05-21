@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Preconditions.checkState;
 
 public final class XcfaTraceToWitness {
-	private static int stateCounter = 0;
 	private static Trace<CfaState<ExplState>, CfaAction> concreteTrace;
 	private static Graph witnessGraph;
 	private XcfaTraceToWitness() {}
@@ -180,14 +179,18 @@ public final class XcfaTraceToWitness {
 	 * @return the value of varName in the explicit state
 	 */
 	private static String extractValueFromExplicitState(String explicitState, String varName) {
-		String pattern = "(.*)\\("+varName+" (re)\\)(.*)";
-		Pattern r = Pattern.compile(pattern);
-		Matcher m = r.matcher(explicitState);
-		if(m.find()) {
-			return m.group(2);
-		} else {
-			return null;
+		explicitState = explicitState.replaceFirst("\\(ExplState ", "");
+		explicitState = explicitState.substring(0, explicitState.length() - 1);
+		String[] pairs = explicitState.split("\n");
+		String value = null;
+		for (String pair : pairs) {
+			if(pair.contains("("+varName)) {
+				value = pair.replaceFirst("\\s*\\(", "(");
+				value = value.replaceFirst("\\("+varName+" ", "");
+				value = value.substring(0, value.length()-1);
+			}
 		}
+		return value;
 	}
 
 }

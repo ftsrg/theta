@@ -33,6 +33,8 @@ import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
@@ -72,6 +74,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--witness", description = "Write witness to a file")
 	String witnessfile = null;
+
+	@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
+	String dotwitnessfile = null;
 
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
@@ -152,11 +157,8 @@ public class XcfaCli {
 				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
 				final SafetyResult<?, ?> status = check(configuration);
 
-				if (status.isUnsafe() && cexfile != null) {
+				if (status.isUnsafe() && (cexfile != null || witnessfile != null || dotwitnessfile != null)) {
 					writeCex(status.asUnsafe());
-				}
-				if (status.isUnsafe() && witnessfile != null) {
-					writeViolationWitness(status.asUnsafe());
 				}
 			} else {
 				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
@@ -193,29 +195,33 @@ public class XcfaCli {
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
-		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			printWriter.write(concrTrace.toString());
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
+
+		if(cexfile!=null) {
+			final File file = new File(cexfile);
+			PrintWriter printWriter = null;
+			try {
+				printWriter = new PrintWriter(file);
+				printWriter.write(concrTrace.toString());
+			} finally {
+				if (printWriter != null) {
+					printWriter.close();
+				}
 			}
 		}
-	}
-
-	private void writeViolationWitness(final SafetyResult.Unsafe<?, ?> status) {
-		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
-		final File file = new File(witnessfile);
 		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
-		// TODO handle more input flags to get the parameters instead of hardcoding them
-		WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
-		try {
-			ww.writeFile(witnessGraph, witnessfile);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		if(witnessfile!=null) {
+			final File file = new File(witnessfile);
+			// TODO handle more input flags to get the parameters instead of hardcoding them
+			// TODO make WitnessWriter singleton
+			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+			try {
+				ww.writeFile(witnessGraph, witnessfile);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		if(dotwitnessfile!=null) {
+			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile);
 		}
 	}
 
