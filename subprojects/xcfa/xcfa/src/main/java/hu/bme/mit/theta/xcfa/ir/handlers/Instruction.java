@@ -63,4 +63,14 @@ public class Instruction {
     public Integer getLineNumber() {
         return lineNumber;
     }
+
+    @Override
+    public String toString() {
+        return "Instruction{" +
+                "opName='" + opName + '\'' +
+                ", retVar=" + retVar +
+                ", arguments=" + arguments +
+                ", lineNumber=" + lineNumber +
+                '}';
+    }
 }
