@@ -54,9 +54,6 @@ public class XcfaCli {
 	@Parameter(names = "--input", description = "Path of the input XCFA model, LLVM IR or C program", required = true)
 	File model;
 
-	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
-	boolean printxcfa;
-
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
 	ArithmeticType arithmeticType = ArithmeticType.efficient;
 
@@ -69,6 +66,9 @@ public class XcfaCli {
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
 
+	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
+	String printxcfa = null;
+
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
 
@@ -77,6 +77,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
 	String dotwitnessfile = null;
+
+	@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
+	String statisticsfile = null;
 
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
@@ -129,19 +132,18 @@ public class XcfaCli {
 				return;
 			}
 
-			if (printxcfa) {
-				System.out.println(xcfa.toDot());
-				return;
-			} else if (printcfa) {
+			if (printxcfa!=null) {
+				File xcfafile = new File(printxcfa);
+				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
+					bw.write(xcfa.toDot());
+				}
+			}
+			if (printcfa) {
 				CFA cfa = xcfa.createCFA();
 				File cfafile = new File(model.getAbsolutePath() + ".cfa");
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
 					bw.write(cfa.toString());
 				}
-				System.out.println("PARSING SUCCESSFUL");
-				System.out.println("CFA-data name " + model.getName().split("\\.")[0]);
-				System.out.println("CFA-data varCount " + cfa.getVars().size());
-				System.out.println("CFA-data varCount " + cfa.getLocs().size());
 				return;
 			}
 
@@ -157,6 +159,14 @@ public class XcfaCli {
 				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
 				final SafetyResult<?, ?> status = check(configuration);
 
+				if(statisticsfile!=null) {
+					File statistics = new File(statisticsfile);
+					BufferedWriter bw = new BufferedWriter(new FileWriter(statistics));
+					bw.write("input file name: " + model + System.lineSeparator());
+					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
+					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+					bw.close();
+				}
 				if (status.isUnsafe() && (cexfile != null || witnessfile != null || dotwitnessfile != null)) {
 					writeCex(status.asUnsafe());
 				}
