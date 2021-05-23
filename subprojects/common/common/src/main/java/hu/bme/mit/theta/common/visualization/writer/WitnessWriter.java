@@ -87,14 +87,16 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		appendKeyLine(sb, "sourcecodelang", "string", "graph","sourcecodelang");
 		appendKeyLine(sb, "creationTime", "string", "graph", "creationTime");
 		appendKeyLine(sb, "witness-type", "string", "graph","witness-type");
-		appendKeyLine(sb, "startline", "string", "edge","startline");
-		appendKeyLine(sb, "assumption", "string", "edge","assumption");
-		appendKeyLine(sb, "control", "string", "edge","control");
-		appendKeyLine(sb, "stmt", "string", "edge","stmt");
 		appendKeyLine(sb, "producer", "string","graph","producer");
 		appendKeyLine(sb, "architecture", "string","graph","architecture");
 		appendKeyLine(sb, "programHash", "string", "graph", "programhash");
 		appendKeyLine(sb, "specification", "string", "graph", "specification");
+		appendKeyLine(sb, "startline", "string", "edge","startline");
+		appendKeyLine(sb, "assumption", "string", "edge","assumption");
+		appendKeyLine(sb, "control", "string", "edge","control");
+		// these two are for us, they aren't sv-comp witness keys
+		appendKeyLine(sb, "stmt", "string", "edge","stmt");
+		appendKeyLine(sb,"expl-state","string","node","expl-state");
 
 		if(isViolationWitness) {
 			appendKeyWithDefaultValue(sb, "entry", "string", "node", "entry", "false");

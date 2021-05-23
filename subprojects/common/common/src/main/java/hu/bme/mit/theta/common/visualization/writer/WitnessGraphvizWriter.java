@@ -41,7 +41,12 @@ public final class WitnessGraphvizWriter extends AbstractGraphWriter {
 			EdgeAttributes edgeAttributes = edge.getAttributes();
 			String label = edgeAttributes.getLabel();
 			label = label.replace("\"", "\\\"");
-			modifiedGraph.addEdge(edge.getSource().getId(), edge.getTarget().getId(), EdgeAttributes.builder().label(label).build());
+			// graphviz throws a syntax error is node names have . in them, so we change them to _dot_
+			String source = edge.getSource().getId();
+			source = source.replace(".","_dot_");
+			String target = edge.getTarget().getId();
+			target = target.replace(".","_dot_");
+			modifiedGraph.addEdge(source, target, EdgeAttributes.builder().label(label).build());
 		}
 	}
 
@@ -50,6 +55,7 @@ public final class WitnessGraphvizWriter extends AbstractGraphWriter {
 		 String label = nodeAttributes.getLabel();
 		 label = n.getId() + ": " +label;
 		 label = label.replace("\"", "\\\"");
-		 modifiedGraph.addNode(n.getId(), NodeAttributes.builder().label(label).build());
+		 // graphviz throws a syntax error is node names have . in them, so we change them to _dot_
+		 modifiedGraph.addNode(n.getId().replace(".","_dot_"), NodeAttributes.builder().label(label).build());
 	}
 }
