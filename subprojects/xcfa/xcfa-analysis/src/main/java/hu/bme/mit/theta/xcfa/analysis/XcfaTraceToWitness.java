@@ -4,15 +4,11 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 
@@ -20,8 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -69,9 +63,9 @@ public final class XcfaTraceToWitness {
 					edgeLabel.append(varName).append(" == ").append(varValue).append(";");
 					edgeLabel.append("</data>").append(System.lineSeparator());
 				}
-			} // else if(actionStmt instanceof AssumeStmt) {}
+			}
 			// TODO from AssumeStmts we can make control statements, if we add some additional annotations to the XCFA
-			// TODO we might want to add AssigStmt-s as assumptions as well, although I need to check further example for that
+			// TODO check, when explState changes (can we add an assumption for all explState changes in general?)
 
 			// not an official witness data key, so no validator will use it, but it helps readability
 			edgeLabel.append("<data key=\"stmt\">").append(actionStmt.toString()).append("</data>");
@@ -107,8 +101,9 @@ public final class XcfaTraceToWitness {
 
 		if(hasLineNumberMetadata) {
 			checkState(lNumber.get() instanceof Integer, "a lineNumber metadata should only hold integer types");
-			lineNumber = (int) lNumber.get();
+			lineNumber = (Integer) lNumber.get();
 		}
+		System.out.println("Line number is " + lineNumber);
 		return lineNumber;
 	}
 
@@ -142,20 +137,30 @@ public final class XcfaTraceToWitness {
 	 * Adds nodes to the witness graph based on the concrete trace
 	 */
 	private static void addNodes() {
+		StringBuilder entryLabel = new StringBuilder();
+		entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
+		entryLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(0)
+				.getState().toString()).append("</data>").append(System.lineSeparator());
 		// add entry state as a node
-		addWitnessNode(0, "<data key=\"entry\">true</data>");
+		addWitnessNode(0, entryLabel.toString());
 
 		// we'll use here, that the cex is a state-action-state-action... chain (that's why we can use an index as key)
 		// (and that's the only way I could connect states and actions, as otherwise they are connected to locs/edges only)
 
 		// add the other states as nodes (except the last one)
 		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
-			addWitnessNode(i, "");
+			StringBuilder nodeLabel = new StringBuilder();
+			nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
+					.getState().toString()).append("</data>").append(System.lineSeparator());
+			addWitnessNode(i, nodeLabel.toString());
 		}
 
+		StringBuilder endLabel = new StringBuilder();
+		endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
+		endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size()-1)
+				.getState().toString()).append("</data>").append(System.lineSeparator());
 		// add violation (end) state/node
-		addWitnessNode(concreteTrace.getStates().size()-1, "<data key=\"violation\">true</data>");
-
+		addWitnessNode(concreteTrace.getStates().size()-1, endLabel.toString());
 	}
 
 	/**
