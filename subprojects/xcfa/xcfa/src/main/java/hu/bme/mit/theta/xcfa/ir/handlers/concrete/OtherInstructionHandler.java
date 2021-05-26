@@ -58,6 +58,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.getOrCreateVar;
 
 public class OtherInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -150,32 +151,6 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),
                 cast(expr1, expr1.getType()),
                 cast(expr2, expr1.getType())));
-    }
-
-    private VarDecl<?> getOrCreateVar(FunctionState functionState, Argument regArgument) {
-        VarDecl<?> var;
-        Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
-        if(objects == null) {
-            var = Var(regArgument.getName(), regArgument.getType());
-            functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
-            functionState.getLocalVars().put(regArgument.getName(), Tuple2.of(var, 1));
-            functionState.getValues().put(regArgument.getName(), var.getRef());
-            return var;
-        } else if (!objects.get1().getType().equals(regArgument.getType())) {
-            String typedName = regArgument.getName() + "_" + regArgument.getType().toString();
-            objects = functionState.getLocalVars().get(typedName);
-            if(objects == null) {
-                var = Var(typedName, regArgument.getType());
-                functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
-                functionState.getLocalVars().put(typedName, Tuple2.of(var, 1));
-                functionState.getValues().put(typedName, var.getRef());
-                return var;
-            }
-            else return objects.get1();
-        }
-        else{
-            return objects.get1();
-        }
     }
 
     // Phi nodes are the only possible place where an argument might not be known yet.

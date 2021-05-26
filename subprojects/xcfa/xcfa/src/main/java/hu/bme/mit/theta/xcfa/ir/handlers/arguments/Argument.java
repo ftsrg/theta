@@ -25,6 +25,8 @@ public abstract class Argument {
 
     public static Argument of(String type, String name) {
         if (!type.equals("")) {
+            if(type.contains("[local]"))
+                return new LocalArgument(type.replace(" [local]", ""), name);
             return new RegArgument(type, name);
         }
 
