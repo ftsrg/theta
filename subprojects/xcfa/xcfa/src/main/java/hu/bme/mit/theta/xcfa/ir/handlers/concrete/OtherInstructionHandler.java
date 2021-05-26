@@ -58,6 +58,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 import static hu.bme.mit.theta.xcfa.ir.Utils.getOrCreateVar;
 
 public class OtherInstructionHandler extends BaseInstructionHandler {
@@ -147,10 +148,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         Expr<?> expr1 = op1.getExpr(functionState.getValues());
         //TODO: what to do, when null?
         Expr<?> expr2 = op2.getExpr(functionState.getValues());
-        functionState.getValues().put(instruction.getRetVar().get().getName(), Ite(
-                cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),
-                cast(expr1, expr1.getType()),
-                cast(expr2, expr1.getType())));
+        foldExpression(instruction, functionState, blockState, null, Ite(cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),cast(expr1, expr1.getType()),cast(expr2, expr1.getType())), 0);
     }
 
     // Phi nodes are the only possible place where an argument might not be known yet.
@@ -188,34 +186,34 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         switch (op1.getName()) {
             case "ueq":
             case "oeq":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Eq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Eq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "one":
             case "une":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Neq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Neq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "ugt":
             case "ogt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Gt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Gt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "uge":
             case "oge":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Geq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Geq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "ult":
             case "olt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Lt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Lt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "ole":
             case "ule":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Leq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, RatExprs.Leq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
                 break;
             case "ord":
             case "true":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.True());
+                foldExpression(instruction, functionState, blockState, null, BoolExprs.True(), 0);
                 break;
             case "false":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.False());
+                foldExpression(instruction, functionState, blockState, null, BoolExprs.False(), 0);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + op1.getName());
@@ -233,26 +231,26 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         switch (op1.getName()) {
             case "eq":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Eq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Eq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             case "ne":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Neq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Neq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             case "ugt":
             case "sgt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Gt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Gt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             case "uge":
             case "sge":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Geq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Geq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             case "ult":
             case "slt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Lt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Lt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             case "ule":
             case "sle":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), Leq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())));
+                foldExpression(instruction, functionState, blockState, null, Leq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + op1.getName());

@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 
 public class UnaryInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -47,7 +48,7 @@ public class UnaryInstructionHandler extends BaseInstructionHandler {
 
         checkState(op1.getType() == RatType.getInstance(), "Fneg only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), RatExprs.Neg(cast(op1.getExpr(functionState.getValues()), RatType.getInstance())));
+        foldExpression(instruction, functionState, blockState, null, RatExprs.Neg(cast(op1.getExpr(functionState.getValues()), RatType.getInstance())), 0);
 
     }
 }

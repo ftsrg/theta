@@ -23,7 +23,6 @@ import hu.bme.mit.theta.xcfa.ir.Utils;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
-import hu.bme.mit.theta.xcfa.ir.handlers.arguments.LocalArgument;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.RegArgument;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
@@ -40,6 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 
 public class MemoryInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -73,29 +73,13 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         Argument op;
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
         Argument ret = instruction.getRetVar().get();
-        if(isatomic.getName().equals("atomic"))
+        if (isatomic.getName().equals("atomic"))
             op = instruction.getArguments().get(2);
         else
             op = instruction.getArguments().get(1);
         checkState(functionState.getLocalVars().containsKey(op.getName()), "Load must load a variable!");
 
-        if(ret instanceof LocalArgument ) {
-            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
-            VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
-            VarDecl<?> rhs = Utils.getOrCreateVar(functionState, op);
-            Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(rhs.getRef(), rhs.getType()));
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
-            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
-            functionState.getProcedureBuilder().addLoc(loc);
-            functionState.getProcedureBuilder().addEdge(edge);
-            blockState.setLastLocation(loc);
-        } else {
-            functionState.getValues().put(ret.getName(), functionState.getValues().get(op.getName()));
-
-            Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(op.getName());
-
-            functionState.getLocalVars().put(ret.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() + 1));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), Utils.getOrCreateVar(functionState, op).getRef(), 1);
     }
 
     private void store(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {

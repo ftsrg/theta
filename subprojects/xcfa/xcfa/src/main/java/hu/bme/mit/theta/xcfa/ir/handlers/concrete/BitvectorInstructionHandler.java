@@ -34,6 +34,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 
 public class BitvectorInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -117,7 +118,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         BigInteger newSize = BigInteger.valueOf(((BvType) instruction.getRetVar().get().getType()).getSize());
         BigInteger oldSize = BigInteger.valueOf(((BvType) op1.getType()).getSize());
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Extract(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), IntLitExpr.of(oldSize.subtract(newSize)), IntLitExpr.of(oldSize)));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Extract(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), IntLitExpr.of(oldSize.subtract(newSize)), IntLitExpr.of(oldSize)), 0);
     }
 
     private void zext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -126,7 +127,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         //TODO: bool exprs?
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ZExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.ZExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()), 0);
     }
 
     private void sext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -134,7 +135,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
 
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.SExt(cast(op1.getExpr(functionState.getValues()), (BvType)op1.getType()), (BvType)instruction.getRetVar().get().getType()), 0);
     }
 
     private void fptoui(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -182,34 +183,34 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         switch (op1.getName()) {
             case "eq":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Eq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.Eq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "ne":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Neq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.Neq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "ugt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.UGt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.UGt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "sgt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SGt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.SGt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "uge":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.UGeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.UGeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "sge":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SGeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.SGeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "ult":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ULt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.ULt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "slt":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SLt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.SLt(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "ule":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ULeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.ULeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             case "sle":
-                functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SLeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())));
+                foldExpression(instruction, functionState, blockState, null, BvExprs.SLeq(cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op3.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + op1.getName());
@@ -223,7 +224,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.URem(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.URem(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
     }
 
     private void srem(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -233,7 +234,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SRem(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.SRem(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
     }
 
     private void udiv(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -243,7 +244,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.UDiv(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.UDiv(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
     }
 
     private void sdiv(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -253,7 +254,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.SDiv(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.SDiv(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
     }
 
     private void mul(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -263,7 +264,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Mul(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Mul(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))), 0);
     }
 
     private void sub(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -273,7 +274,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Sub(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Sub(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
     }
 
     private void add(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -283,7 +284,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Add(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Add(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))), 0);
     }
 
     private void shl(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -293,7 +294,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ShiftLeft(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.ShiftLeft(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
 
     }
 
@@ -304,7 +305,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.LogicShiftRight(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.LogicShiftRight(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
 
     }
 
@@ -315,7 +316,7 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.ArithShiftRight(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.ArithShiftRight(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType())), 0);
 
     }
 
@@ -325,13 +326,13 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
 
         if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
-            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))));
+            foldExpression(instruction, functionState, blockState, null, BoolExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))), 0);
             return;
         }
 
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.And(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))), 0);
     }
 
     private void or(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -341,13 +342,13 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
 
         if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
-            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.Or(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))));
+            foldExpression(instruction, functionState, blockState, null, BoolExprs.Or(List.of(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType()))), 0);
             return;
         }
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Or(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Or(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))), 0);
     }
 
     private void xor(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -356,12 +357,12 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
 
         if(op1.getType() instanceof BoolType && op2.getType() instanceof BoolType) {
-            functionState.getValues().put(instruction.getRetVar().get().getName(), BoolExprs.Xor(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType())));
+            foldExpression(instruction, functionState, blockState, null, BoolExprs.Xor(cast(op1.getExpr(functionState.getValues()), (BoolType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BoolType)op2.getType())), 0);
             return;
         }
         checkState(op1.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
         checkState(op2.getType() instanceof BvType, "Bitvector instructions only supports bitvector types!");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), BvExprs.Xor(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))));
+        foldExpression(instruction, functionState, blockState, null, BvExprs.Xor(List.of(cast(op1.getExpr(functionState.getValues()), (BvType)op2.getType()), cast(op2.getExpr(functionState.getValues()), (BvType)op2.getType()))), 0);
 
     }
 }
