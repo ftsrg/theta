@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.ir;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -28,18 +30,26 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
+import hu.bme.mit.theta.xcfa.ir.handlers.arguments.LocalArgument;
+import hu.bme.mit.theta.xcfa.ir.handlers.arguments.RegArgument;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -172,6 +182,27 @@ public class Utils {
         }
         else{
             return objects.get1();
+        }
+    }
+
+    public static void foldExpression(Instruction instruction, FunctionState functionState, BlockState blockState, String opName, Expr<?> op, int ref) {
+        //noinspection OptionalGetWithoutIsPresent
+        RegArgument ret = instruction.getRetVar().get();
+        if(ret instanceof LocalArgument) {
+            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
+            VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
+            Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
+            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
+            if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+            functionState.getProcedureBuilder().addLoc(loc);
+            functionState.getProcedureBuilder().addEdge(edge);
+            blockState.setLastLocation(loc);
+        } else {
+            if (functionState.getLocalVars().containsKey(opName)) {
+                Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(opName);
+                functionState.getLocalVars().put(ret.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() + ref));
+            }
+            functionState.getValues().put(ret.getName(), op);
         }
     }
 

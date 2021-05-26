@@ -40,6 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 
 public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
     @Override
@@ -65,10 +66,8 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
         checkState(idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
         checkState(instruction.getRetVar().isPresent(), "getArrayElement used without return value.");
 
-        Argument retVar = instruction.getRetVar().get();
-
         //noinspection unchecked
-        functionState.getValues().put(retVar.getName(), ArrayExprs.Read((Expr<ArrayType<IntType, Type>>) arr.getExpr(functionState.getValues()), cast(idx.getExpr(functionState.getValues()), Int())));
+        foldExpression(instruction, functionState, blockState, null, ArrayExprs.Read((Expr<ArrayType<IntType, Type>>) arr.getExpr(functionState.getValues()), cast(idx.getExpr(functionState.getValues()), Int())), 0);
     }
 
     private void setArrayElement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {

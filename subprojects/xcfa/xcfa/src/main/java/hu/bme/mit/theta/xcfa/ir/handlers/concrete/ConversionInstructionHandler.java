@@ -34,6 +34,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ir.Utils.foldExpression;
 
 public class ConversionInstructionHandler extends BaseInstructionHandler {
     @Override
@@ -84,55 +85,35 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
         Argument op = instruction.getArguments().get(0);
         checkState(op.getType() == IntType.getInstance(), "Only integer values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), functionState.getValues().get(op.getName()), 0);
     }
 
     private void zext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
         checkState(op.getType() == IntType.getInstance() || op.getType() == BoolType.getInstance(), "Only integer/boolean values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()), 0);
     }
 
     private void sext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
         checkState(op.getType() == IntType.getInstance() || op.getType() == BoolType.getInstance(), "Only integer/boolean values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), op.getType() == BoolType.getInstance() ? Ite(cast(functionState.getValues().get(op.getName()), BoolType.getInstance()), IntLitExpr.of(BigInteger.ONE), IntLitExpr.of(BigInteger.ZERO)) : functionState.getValues().get(op.getName()), 0);
     }
 
     private void fptrunc(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
         checkState(op.getType() == RatType.getInstance(), "Only rational values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), functionState.getValues().get(op.getName()), 0);
     }
 
     private void fpext(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
         checkState(op.getType() == RatType.getInstance(), "Only rational values are allowed!");
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), functionState.getValues().get(op.getName()), 0);
     }
 
     private void fptoui(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -141,7 +122,7 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Fptoui must load into a variable");
 
         Expr<RatType> expr = cast(functionState.getValues().get(op.getName()), Rat());
-//        functionState.getValues().put(instruction.getRetVar().get().getName(), );
+//        foldExpression(instruction, functionState, blockState, op.getName(), , 0);
 
         throw new RuntimeException("Not yet implemented!");
     }
@@ -161,10 +142,6 @@ public class ConversionInstructionHandler extends BaseInstructionHandler {
     private void bitcast(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument op = instruction.getArguments().get(0);
         checkState(instruction.getRetVar().isPresent(), "Load must load into a variable");
-        functionState.getValues().put(instruction.getRetVar().get().getName(), functionState.getValues().get(op.getName()));
-
-        if (functionState.getLocalVars().containsKey(op.getName())) {
-            functionState.getLocalVars().put(instruction.getRetVar().get().getName(), functionState.getLocalVars().get(op.getName()));
-        }
+        foldExpression(instruction, functionState, blockState, op.getName(), functionState.getValues().get(op.getName()), 0);
     }
 }
