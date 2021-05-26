@@ -28,11 +28,14 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
+import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,6 +147,32 @@ public class Utils {
         builder.setInitLoc(loc1);
         builder.setName(name);
         return builder.build();
+    }
+
+    public static VarDecl<?> getOrCreateVar(FunctionState functionState, Argument regArgument) {
+        VarDecl<?> var;
+        Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
+        if(objects == null) {
+            var = Var(regArgument.getName(), regArgument.getType());
+            functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+            functionState.getLocalVars().put(regArgument.getName(), Tuple2.of(var, 1));
+            functionState.getValues().put(regArgument.getName(), var.getRef());
+            return var;
+        } else if (!objects.get1().getType().equals(regArgument.getType())) {
+            String typedName = regArgument.getName() + "_" + regArgument.getType().toString();
+            objects = functionState.getLocalVars().get(typedName);
+            if(objects == null) {
+                var = Var(typedName, regArgument.getType());
+                functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+                functionState.getLocalVars().put(typedName, Tuple2.of(var, 1));
+                functionState.getValues().put(typedName, var.getRef());
+                return var;
+            }
+            else return objects.get1();
+        }
+        else{
+            return objects.get1();
+        }
     }
 
 }
