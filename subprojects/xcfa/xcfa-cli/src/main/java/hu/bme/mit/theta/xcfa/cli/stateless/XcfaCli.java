@@ -36,7 +36,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
-import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
+import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.*;
