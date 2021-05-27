@@ -192,7 +192,11 @@ public class Utils {
             XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
+            XcfaEdge edge;
+            if(!lhs.getRef().equals(op))
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of(stmt));
+            else
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, List.of());
             if(instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);

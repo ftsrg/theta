@@ -58,4 +58,7 @@ public class PlaceholderAssignmentStmt<T extends Type> implements Stmt {
     public AssignStmt<T> toAssignStmt(Map<String, Expr<?>> values) {
         return Assign(lhs, cast(rhsKey.getExpr(values), lhs.getType()));
     }
+    public boolean isSelfAssignment(Map<String, Expr<?>> values) {
+        return lhs.getRef().equals(rhsKey.getExpr(values));
+    }
 }

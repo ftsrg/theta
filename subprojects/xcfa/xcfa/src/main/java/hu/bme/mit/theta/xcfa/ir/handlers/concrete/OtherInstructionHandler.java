@@ -165,11 +165,14 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Stmt stmt;
             Expr<?> expr;
             if ((expr = value.getExpr(functionState.getValues())) != null) {
-                stmt = Assign(cast(phiVar, phiVar.getType()), cast(expr, phiVar.getType()));
+                if(!phiVar.getRef().equals(expr)) {
+                    stmt = Assign(cast(phiVar, phiVar.getType()), cast(expr, phiVar.getType()));
+                    val.get3().add(stmt);
+                }
             } else {
                 stmt = PlaceholderAssignmentStmt.of(phiVar, value);
+                val.get3().add(stmt);
             }
-            val.get3().add(stmt);
             functionState.getInterBlockEdges().put(key, val);
         }
     }

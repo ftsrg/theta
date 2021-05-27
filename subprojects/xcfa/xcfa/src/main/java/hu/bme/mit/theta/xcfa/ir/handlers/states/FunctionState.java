@@ -103,7 +103,9 @@ public class FunctionState {
 
     public void finalizeFunctionState(BuiltState builtState) {
         interBlockEdges.forEach((_obj, edgeTup) -> {
-            List<Stmt> stmts = edgeTup.get3().stream().map(stmt -> {
+            List<Stmt> stmts = edgeTup.get3().stream().filter(stmt ->
+                    !(stmt instanceof PlaceholderAssignmentStmt) || !((PlaceholderAssignmentStmt<?>) stmt).isSelfAssignment(getValues())
+            ).map(stmt -> {
                 if (stmt instanceof PlaceholderAssignmentStmt) {
                     return ((PlaceholderAssignmentStmt<?>) stmt).toAssignStmt(getValues());
                 }
