@@ -1,5 +1,6 @@
 int main()
 {
+    volatile int **a, b, *c, d[1], *e[][], **f;
     volatile int i = 0; //i:=0
     int j = i + 1;//j:=i+1
     i = 1;//i:=1

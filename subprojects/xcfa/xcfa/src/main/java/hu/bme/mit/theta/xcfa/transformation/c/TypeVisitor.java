@@ -6,6 +6,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.Enum;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -116,7 +117,9 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 	@Override
 	public CType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
 		CType subtype = ctx.typeSpecifier().accept(this);
-		subtype.incrementPointer();
+		for (Token star : ctx.pointer().stars) {
+			subtype.incrementPointer();
+		}
 		return subtype;
 	}
 
