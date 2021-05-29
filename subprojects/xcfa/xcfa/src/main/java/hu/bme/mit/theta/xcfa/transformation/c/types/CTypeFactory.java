@@ -7,7 +7,9 @@ import java.util.Optional;
 
 public class CTypeFactory {
 
-	public static CType Volatile() {
+	public static Unsigned Unsigned() { return Unsigned.instance; }
+
+	public static Volatile Volatile() {
 		return Volatile.instance;
 	}
 

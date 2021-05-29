@@ -332,10 +332,10 @@ directDeclarator
     |   directDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'   # directDeclaratorArray2
     |   directDeclarator '[' typeQualifierList 'static' assignmentExpression ']'    # directDeclaratorArray3
     |   directDeclarator '[' typeQualifierList? '*' ']'                             # directDeclaratorArray4
-    |   directDeclarator '(' parameterTypeList ')'                                  # directDeclaratorFunctionDecl
-    |   directDeclarator '(' identifierList? ')'                                    # directDeclaratorFunctionCall
+    |   directDeclarator '(' parameterTypeList? ')'                                 # directDeclaratorFunctionDecl
+//    |   directDeclarator '(' identifierList? ')'                                    # directDeclaratorFunctionCall
     |   Identifier ':' DigitSequence                                                # directDeclaratorBitField
-    |   '(' typeSpecifier? pointer directDeclarator ')'                             # directDeclaratorFunctionPointer
+//    |   '(' typeSpecifier? pointer directDeclarator ')'                             # directDeclaratorFunctionPointer
     ;
 
 gccDeclaratorExtension
@@ -363,7 +363,7 @@ nestedParenthesesBlock
     ;
 
 pointer
-    :  (('*'|'^') typeQualifierList?)+ // ^ - Blocks language extension
+    :  ((stars+='*'|'^') typeQualifierList?)+ // ^ - Blocks language extension
     ;
 
 typeQualifierList
@@ -371,7 +371,7 @@ typeQualifierList
     ;
 
 parameterTypeList
-    :   parameterList (',' '...')?
+    :   parameterList (',' ellipses='...')?
     ;
 
 parameterList
@@ -379,13 +379,13 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator            # ordinaryParameterdDeclaration
+    :   declarationSpecifiers declarator            # ordinaryParameterDeclaration
     |   declarationSpecifiers2 abstractDeclarator?  # abstractParameterDeclaration
     ;
 
-identifierList
-    :   Identifier (',' Identifier)*
-    ;
+//identifierList
+//    :   Identifier (',' Identifier)*
+//    ;
 
 typeName
     :   specifierQualifierList abstractDeclarator?

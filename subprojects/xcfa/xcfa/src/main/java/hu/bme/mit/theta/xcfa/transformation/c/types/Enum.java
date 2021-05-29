@@ -23,6 +23,16 @@ public class Enum extends CType{
 
 	@Override
 	protected void patch(CType cType) {
+		throw new RuntimeException("Should not be here! Cannot patch with an enum.");
+	}
 
+	@Override
+	public CType getBaseType() {
+		Enum anEnum = new Enum(id, fields);
+		anEnum.setAtomic(this.isAtomic());
+		anEnum.setExtern(this.isExtern());
+		anEnum.setTypedef(this.isTypedef());
+		anEnum.setVolatile(this.isVolatile());
+		return anEnum;
 	}
 }

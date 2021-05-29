@@ -4,6 +4,7 @@ import java.util.List;
 
 public abstract class CType {
 	private int pointerLevel = 0;
+	private boolean signed = true;
 	private boolean atomic = false;
 	private boolean extern = false;
 	private boolean typedef = false;
@@ -65,5 +66,17 @@ public abstract class CType {
 
 	public void setAssociatedName(String associatedName) {
 		this.associatedName = associatedName;
+	}
+
+	public CType getBaseType() {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	public boolean isSigned() {
+		return signed;
+	}
+
+	public void setSigned(boolean signed) {
+		this.signed = signed;
 	}
 }

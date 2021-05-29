@@ -6,8 +6,6 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.Enum;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
-import hu.bme.mit.theta.xcfa.transformation.c.types.Typedef;
-import hu.bme.mit.theta.xcfa.transformation.c.types.Volatile;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,15 +21,27 @@ import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedTyp
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Typedef;
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Volatile;
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Enum;
+import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Unsigned;
 
 public class TypeVisitor extends CBaseVisitor<CType> {
+	public static final TypeVisitor instance = new TypeVisitor();
+	private TypeVisitor(){}
 
 	@Override
 	public CType visitDeclarationSpecifiers(CParser.DeclarationSpecifiersContext ctx) {
+		return createCType(ctx.declarationSpecifier());
+	}
+
+	@Override
+	public CType visitDeclarationSpecifiers2(CParser.DeclarationSpecifiers2Context ctx) {
+		return createCType(ctx.declarationSpecifier());
+	}
+
+	private CType createCType(List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
 		List<CType> cTypes = new ArrayList<>();
-		for (CParser.DeclarationSpecifierContext declarationSpecifierContext : ctx.declarationSpecifier()) {
+		for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
 			CType ctype = declarationSpecifierContext.accept(this);
-			cTypes.add(ctype);
+			if(ctype != null) cTypes.add(ctype);
 		}
 
 		List<CType> enums = cTypes.stream().filter(cType -> cType instanceof Enum).collect(Collectors.toList());
@@ -87,7 +97,7 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 		for (CParser.EnumeratorContext enumeratorContext : ctx.enumeratorList().enumerator()) {
 			String value = enumeratorContext.enumerationConstant().getText();
 			CParser.ConstantExpressionContext expressionContext = enumeratorContext.constantExpression();
-			Expr<?> expr = expressionContext == null ? null : expressionContext.accept(null ); // TODO
+			Expr<?> expr = expressionContext == null ? null : null;//expressionContext.accept(null ); // TODO
 			fields.put(value, Optional.ofNullable(expr));
 		}
 		return Enum(id, fields);
@@ -112,7 +122,15 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 
 	@Override
 	public CType visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
-		return NamedType(ctx.getText());
+		switch (ctx.getText()) {
+			case "signed":
+				//nop
+				return null;
+			case "unsigned":
+				return Unsigned();
+			default:
+				return NamedType(ctx.getText());
+		}
 	}
 
 	@Override

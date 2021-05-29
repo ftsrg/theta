@@ -33,17 +33,15 @@ import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
-import hu.bme.mit.theta.xcfa.dsl.XcfaSymbol;
 import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.transformation.c.GlobalDeclarationVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.TypeVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -117,7 +115,9 @@ public class XcfaCli {
 			final CParser parser = new CParser(tokens);
 
 			final CParser.CompilationUnitContext context = parser.compilationUnit();
-			context.accept(new GlobalDeclarationVisitor());
+
+			context.accept(FunctionVisitor.instance);
+
 			XCFA xcfa = null;
 
 			if(parsing) {
