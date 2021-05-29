@@ -36,8 +36,17 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
+import hu.bme.mit.theta.xcfa.dsl.XcfaSymbol;
+import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
+import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.transformation.c.GlobalDeclarationVisitor;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +108,17 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+			//final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+
+			final CharStream input = CharStreams.fromStream(new FileInputStream(model));
+
+			final CLexer lexer = new CLexer(input);
+			final CommonTokenStream tokens = new CommonTokenStream(lexer);
+			final CParser parser = new CParser(tokens);
+
+			final CParser.CompilationUnitContext context = parser.compilationUnit();
+			context.accept(new GlobalDeclarationVisitor());
+			XCFA xcfa = null;
 
 			if(parsing) {
 				System.out.println("XCFA creation successful");
