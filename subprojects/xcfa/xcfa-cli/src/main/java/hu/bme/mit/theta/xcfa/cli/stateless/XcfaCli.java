@@ -39,9 +39,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
-import hu.bme.mit.theta.xcfa.transformation.c.TypeVisitor;
-import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
+import hu.bme.mit.theta.xcfa.transformation.c.TestVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -116,7 +114,7 @@ public class XcfaCli {
 
 			final CParser.CompilationUnitContext context = parser.compilationUnit();
 
-			context.accept(FunctionVisitor.instance);
+			context.accept(TestVisitor.instance);
 
 			XCFA xcfa = null;
 

@@ -187,7 +187,7 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers initDeclaratorList? ';'      # declarationSimple // initDeclaratorList was marked with a ? mark, not sure why
+    :   declarationSpecifiers initDeclaratorList? ';'
 //    |   staticAssertDeclaration                         # declarationStatic
     ;
 
@@ -446,14 +446,14 @@ statement
     |   expressionStatement
     |   selectionStatement
     |   iterationStatement
-    |   jumpStatement
-    |   ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (logicalOrExpression (',' logicalOrExpression)*)?)* ')' ';'
+    |   jumpStatement ';'
+//    |   ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (logicalOrExpression (',' logicalOrExpression)*)?)* ')' ';'
     ;
 
 labeledStatement
-    :   Identifier ':' statement
-    |   'case' constantExpression ':' statement
-    |   'default' ':' statement
+    :   Identifier ':' statement                # identifierStatement
+    |   'case' constantExpression ':' statement # caseStatement
+    |   'default' ':' statement                 # defaultStatement
     ;
 
 compoundStatement
@@ -465,8 +465,8 @@ blockItemList
     ;
 
 blockItem
-    :   statement
-    |   declaration
+    :   statement       # bodyStatement
+    |   declaration     # bodyDeclaration
     ;
 
 expressionStatement
@@ -474,22 +474,35 @@ expressionStatement
     ;
 
 selectionStatement
-    :   'if' '(' expression ')' statement ('else' statement)?
-    |   'switch' '(' expression ')' statement
+    :   'if' '(' expression ')' statement ('else' statement)?   #ifStatement
+    |   'switch' '(' expression ')' statement                   #switchStatement
     ;
 
 iterationStatement
-    :   While '(' expression ')' statement
-    |   Do statement While '(' expression ')' ';'
-    |   For '(' forCondition ')' statement
+    :   While '(' expression ')' statement                      # whileStatement
+    |   Do statement While '(' expression ')' ';'               # doWhileStatement
+    |   For '(' forCondition ')' statement                      # forStatement
     ;
 
 //    |   'for' '(' expression? ';' expression?  ';' forUpdate? ')' statement
 //    |   For '(' declaration  expression? ';' expression? ')' statement
 
 forCondition
-	:   (forDeclaration | expression?) ';' forExpression? ';' forExpression?
+	:   forInit ';' forTest ';' forIncr
 	;
+
+forInit
+    :  forDeclaration
+    |  expression?
+    ;
+
+forTest
+    :   forExpression?
+    ;
+
+forIncr
+    :   forExpression?
+    ;
 
 forDeclaration
     :   declarationSpecifiers initDeclaratorList?
@@ -500,12 +513,11 @@ forExpression
     ;
 
 jumpStatement
-    :   ('goto' Identifier
-    |   ('continue'| 'break')
-    |   'return' expression?
-    |   'goto' unaryExpression // GCC extension
-    )
-    ';'
+    :   'goto' Identifier       # gotoStatement
+    |   'continue'              # continueStatement
+    |   'break'                 # breakStatement
+    |   'return' expression?    # returnStatement
+//    |   'goto' unaryExpression // GCC extension
     ;
 
 compilationUnit
@@ -523,12 +535,12 @@ externalDeclaration
     ;
 
 functionDefinition
-    :   declarationSpecifiers? declarator declarationList? compoundStatement
+    :   declarationSpecifiers declarator /*declarationList?*/ compoundStatement
     ;
 
-declarationList
-    :   declaration+
-    ;
+//declarationList
+//    :   declaration+
+//    ;
 
 Auto : 'auto';
 Break : 'break';

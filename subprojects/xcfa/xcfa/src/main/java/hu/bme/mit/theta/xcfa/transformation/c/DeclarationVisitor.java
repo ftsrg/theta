@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	public static final DeclarationVisitor instance = new DeclarationVisitor();
 
-	public List<CDeclaration> getDeclarations(CParser.DeclarationSimpleContext ctx) {
+	public List<CDeclaration> getDeclarations(CParser.DeclarationContext ctx) {
 		List<CDeclaration> ret = new ArrayList<>();
 		CType cType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		if(cType.getAssociatedName() != null) {
