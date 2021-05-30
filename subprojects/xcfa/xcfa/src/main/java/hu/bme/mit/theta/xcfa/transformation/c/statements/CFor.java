@@ -5,26 +5,26 @@ import hu.bme.mit.theta.core.type.Expr;
 
 public class CFor extends CStatement{
 	private final CStatement body;
-	private final Stmt init;
-	private final Expr<?> guard;
-	private final Stmt increment;
+	private final CStatement init;
+	private final CStatement guard;
+	private final CStatement increment;
 
-	public CFor(CStatement body, Stmt init, Expr<?> guard, Stmt increment) {
+	public CFor(CStatement body, CStatement init, CStatement guard, CStatement increment) {
 		this.body = body;
 		this.init = init;
 		this.guard = guard;
 		this.increment = increment;
 	}
 
-	public Stmt getIncrement() {
+	public CStatement getIncrement() {
 		return increment;
 	}
 
-	public Expr<?> getGuard() {
+	public CStatement getGuard() {
 		return guard;
 	}
 
-	public Stmt getInit() {
+	public CStatement getInit() {
 		return init;
 	}
 

@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.transformation.c.declaration;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 
 import java.util.ArrayList;
@@ -11,9 +12,9 @@ public class CDeclaration {
 	private final String name;
 	private boolean isFunc;
 	private int derefCounter = 0;
-	private final List<Expr<?>> arrayDimensions = new ArrayList<>();
+	private final List<CStatement> arrayDimensions = new ArrayList<>();
 	private final List<CDeclaration> functionParams = new ArrayList<>();
-	private Expr<?> initExpr;
+	private CStatement initExpr;
 
 	public CDeclaration(CType cType) {
 		this.name = null;
@@ -36,11 +37,11 @@ public class CDeclaration {
 		derefCounter+=amount;
 	}
 
-	public void addArrayDimension(Expr<?> expr) {
+	public void addArrayDimension(CStatement expr) {
 		arrayDimensions.add(expr);
 	}
 
-	public List<Expr<?>> getArrayDimensions() {
+	public List<CStatement> getArrayDimensions() {
 		return arrayDimensions;
 	}
 
@@ -60,11 +61,11 @@ public class CDeclaration {
 		this.baseType = baseType;
 	}
 
-	public Expr<?> getInitExpr() {
+	public CStatement getInitExpr() {
 		return initExpr;
 	}
 
-	public void setInitExpr(Expr<?> initExpr) {
+	public void setInitExpr(CStatement initExpr) {
 		this.initExpr = initExpr;
 	}
 
@@ -74,7 +75,7 @@ public class CDeclaration {
 		stringBuilder.append(baseType).append(" ");
 		stringBuilder.append("*".repeat(Math.max(0, derefCounter)));
 		stringBuilder.append(name == null ? "" : name);
-		for (Expr<?> arrayDimension : arrayDimensions) {
+		for (CStatement arrayDimension : arrayDimensions) {
 			stringBuilder.append("[]");
 		}
 		if(isFunc) stringBuilder.append("(");

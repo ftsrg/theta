@@ -12,4 +12,9 @@ public class CExpr extends CStatement{
 	public Expr<?> getExpr() {
 		return expr;
 	}
+
+	@Override
+	public Expr<?> getExpression() {
+		return expr;
+	}
 }

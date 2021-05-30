@@ -3,11 +3,11 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 import hu.bme.mit.theta.core.type.Expr;
 
 public class CIf extends CStatement{
-	private final Expr<?> guard;
+	private final CStatement guard;
 	private final CStatement body;
 	private final CStatement elseStatement;
 
-	public CIf(Expr<?> guard, CStatement body, CStatement elseStatement) {
+	public CIf(CStatement guard, CStatement body, CStatement elseStatement) {
 		this.guard = guard;
 		this.body = body;
 		this.elseStatement = elseStatement;
@@ -21,7 +21,7 @@ public class CIf extends CStatement{
 		return body;
 	}
 
-	public Expr<?> getGuard() {
+	public CStatement getGuard() {
 		return guard;
 	}
 }

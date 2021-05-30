@@ -4,9 +4,9 @@ import hu.bme.mit.theta.core.type.Expr;
 
 public class CWhile extends CStatement{
 	private final CStatement body;
-	private final Expr<?> guard;
+	private final CStatement guard;
 
-	public CWhile(CStatement body, Expr<?> guard) {
+	public CWhile(CStatement body, CStatement guard) {
 		this.body = body;
 		this.guard = guard;
 	}
@@ -15,7 +15,7 @@ public class CWhile extends CStatement{
 		return body;
 	}
 
-	public Expr<?> getGuard() {
+	public CStatement getGuard() {
 		return guard;
 	}
 }

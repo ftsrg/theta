@@ -7,7 +7,7 @@ public class CGoto extends CStatement{
 		this.id = id;
 	}
 
-	public String getId() {
+	public String getFunctionId() {
 		return id;
 	}
 }

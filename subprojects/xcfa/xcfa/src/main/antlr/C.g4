@@ -87,7 +87,7 @@ argumentExpressionList
 
 unaryExpression
     :
-    (unaryExpressionIncrement |  unaryExpressionDecrement |  unaryExpressionSizeof)*
+    (unaryExpressionIncrement |  unaryExpressionDecrement /*|  unaryExpressionSizeof*/)*
     (postfixExpression
     |   unaryExpressionCast
     |   unaryExpressionSizeOrAlignOf
@@ -101,9 +101,9 @@ unaryExpressionIncrement
 unaryExpressionDecrement
     :   '--'
     ;
-unaryExpressionSizeof
-    :   'sizeof'
-    ;
+//unaryExpressionSizeof
+//    :   'sizeof'
+//    ;
 unaryExpressionCast
     :   unaryOperator castExpression
     ;
@@ -125,23 +125,23 @@ castExpression
     ;
 
 multiplicativeExpression
-    :   castExpression (('*'|'/'|'%') castExpression)*
+    :   castExpression (signs+=('*'|'/'|'%') castExpression)*
     ;
 
 additiveExpression
-    :   multiplicativeExpression (('+'|'-') multiplicativeExpression)*
+    :   multiplicativeExpression (signs+=('+'|'-') multiplicativeExpression)*
     ;
 
 shiftExpression
-    :   additiveExpression (('<<'|'>>') additiveExpression)*
+    :   additiveExpression (signs+=('<<'|'>>') additiveExpression)*
     ;
 
 relationalExpression
-    :   shiftExpression (('<'|'>'|'<='|'>=') shiftExpression)*
+    :   shiftExpression (signs+=('<'|'>'|'<='|'>=') shiftExpression)*
     ;
 
 equalityExpression
-    :   relationalExpression (('=='| '!=') relationalExpression)*
+    :   relationalExpression (signs+=('=='| '!=') relationalExpression)*
     ;
 
 andExpression

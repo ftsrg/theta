@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 
 import java.util.ArrayList;
@@ -14,29 +15,29 @@ import static com.google.common.base.Preconditions.checkState;
 public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	public static final DeclarationVisitor instance = new DeclarationVisitor();
 
-	public List<CDeclaration> getDeclarations(CParser.DeclarationContext ctx) {
+	public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext, CParser.InitDeclaratorListContext initDeclContext) {
 		List<CDeclaration> ret = new ArrayList<>();
-		CType cType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+		CType cType = declSpecContext.accept(TypeVisitor.instance);
 		if(cType.getAssociatedName() != null) {
 			CDeclaration cDeclaration = new CDeclaration(cType.getAssociatedName());
 			cDeclaration.setBaseType(cType.getBaseType());
 			cDeclaration.incDerefCounter(cType.getPointerLevel());
 			ret.add(cDeclaration);
 		}
-		if(ctx.initDeclaratorList() != null) {
-			for (CParser.InitDeclaratorContext context : ctx.initDeclaratorList().initDeclarator()) {
+		if(initDeclContext != null) {
+			for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
 				CDeclaration declaration = context.declarator().accept(this);
-				Expr<?> initializerExpression;
+				CStatement initializerExpression;
 				if (context.initializer() != null) {
 					checkState(context.initializer().initializerList() == null, "Initializer lists not yet implemented!");
-					initializerExpression = null;//context.initializer().assignmentExpression().accept(null);// TODO
+					initializerExpression = context.initializer().assignmentExpression().accept(FunctionVisitor.instance);
 					declaration.setInitExpr(initializerExpression);
 				}
 				declaration.setBaseType(cType.getBaseType());
 				ret.add(declaration);
 			}
 		}
-		if(cType.getAssociatedName() == null && ctx.initDeclaratorList() != null && ctx.initDeclaratorList().initDeclarator().size() > 0) {
+		if(cType.getAssociatedName() == null && initDeclContext != null && initDeclContext.initDeclarator().size() > 0) {
 			ret.get(0).incDerefCounter(cType.getPointerLevel());
 		}
 		return ret;
@@ -86,7 +87,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
 		CDeclaration decl = ctx.directDeclarator().accept(this);
 		if(ctx.assignmentExpression() != null) {
-			decl.addArrayDimension(null);//ctx.assignmentExpression().accept(null)); // TODO
+			decl.addArrayDimension(ctx.assignmentExpression().accept(FunctionVisitor.instance));
 		}
 		else {
 			decl.addArrayDimension(null);
