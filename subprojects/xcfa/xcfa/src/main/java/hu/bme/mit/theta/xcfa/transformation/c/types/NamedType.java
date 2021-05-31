@@ -39,4 +39,9 @@ public class NamedType extends CType{
 		stringBuilder.append(namedType);
 		return stringBuilder.toString();
 	}
+
+	@Override
+	public boolean isVoid() {
+		return namedType.equals("void") && getPointerLevel() == 0;
+	}
 }

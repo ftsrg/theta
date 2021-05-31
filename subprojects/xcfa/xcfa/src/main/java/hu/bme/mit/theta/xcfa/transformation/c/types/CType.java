@@ -79,4 +79,8 @@ public abstract class CType {
 	public void setSigned(boolean signed) {
 		this.signed = signed;
 	}
+
+	public boolean isVoid() {
+		return false;
+	}
 }

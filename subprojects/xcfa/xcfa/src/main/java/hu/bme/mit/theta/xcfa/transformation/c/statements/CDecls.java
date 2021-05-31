@@ -17,4 +17,9 @@ public class CDecls extends CStatement{
 	public List<Tuple2<CDeclaration, VarDecl<?>>> getcDeclarations() {
 		return cDeclarations;
 	}
+
+	@Override
+	public Object build(Object param) {
+		throw new RuntimeException("Cannot build CDecls!");
+	}
 }

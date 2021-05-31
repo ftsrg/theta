@@ -48,6 +48,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final String[] args;
@@ -116,8 +118,9 @@ public class XcfaCli {
 			final CParser.CompilationUnitContext context = parser.compilationUnit();
 
 			CStatement program = context.accept(FunctionVisitor.instance);
-
-			XCFA xcfa = null;
+			Object built = program.build(null);
+			checkState(built instanceof XCFA, "Program is not an XCFA");
+			XCFA xcfa = (XCFA) built;
 
 			if(parsing) {
 				System.out.println("XCFA creation successful");

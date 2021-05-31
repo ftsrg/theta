@@ -91,7 +91,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			List<Expr<BoolType>> collect = ctx.logicalAndExpression().stream().map(logicalAndExpressionContext ->
 					Neq(Int(0), cast(logicalAndExpressionContext.accept(this), Int()))).
 					collect(Collectors.toList());
-			return BoolExprs.Or(collect);
+			return Ite(BoolExprs.Or(collect), Int(1), Int(0));
 		}
 		return ctx.logicalAndExpression(0).accept(this);
 	}
@@ -102,7 +102,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			List<Expr<BoolType>> collect = ctx.inclusiveOrExpression().stream().map(inclusiveOrExpressionContext ->
 					Neq(Int(0), cast(inclusiveOrExpressionContext.accept(this), Int()))).
 					collect(Collectors.toList());
-			return BoolExprs.And(collect);
+			return Ite(BoolExprs.And(collect), Int(1), Int(0));
 		}
 		return ctx.inclusiveOrExpression(0).accept(this);
 	}
@@ -310,7 +310,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
-		return null;
+		return Int(-1);
 	}
 
 	public List<CStatement> getPostStatements() {

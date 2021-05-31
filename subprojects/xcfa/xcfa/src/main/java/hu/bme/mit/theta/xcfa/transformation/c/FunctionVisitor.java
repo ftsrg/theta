@@ -6,12 +6,15 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CBreak;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CCase;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCompound;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CContinue;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CDecls;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CDefault;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CDoWhile;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CFor;
@@ -28,6 +31,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,20 +43,27 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public static final FunctionVisitor instance = new FunctionVisitor();
+	public static final Map<String, XcfaLocation> locLUT = new LinkedHashMap<>();
 
 	private final Deque<Map<String, VarDecl<?>>> variables;
+	private final List<VarDecl<?>> flatVariables;
 
-	private VarDecl<?> createVar(String name) {
+	private VarDecl<?> createVar(CDeclaration declaration) {
+		String name = declaration.getName();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name, Int()));
-		return peek.get(name);
+		VarDecl<?> varDecl = peek.get(name);
+		flatVariables.add(varDecl);
+		declaration.setVarDecl(varDecl);
+		return varDecl;
 	}
 
 	public FunctionVisitor() {
 		variables = new ArrayDeque<>();
 		variables.push(new LinkedHashMap<>());
+		flatVariables = new ArrayList<>();
 	}
 
 	@Override
@@ -81,7 +92,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
 			if(declaration.getFunctionParams().size() == 0) // functions should not be interpreted as global variables
-				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration.getName())));
+				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
 		}
 		return decls;
 	}
@@ -89,19 +100,22 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
 		variables.push(new LinkedHashMap<>());
+		locLUT.clear();
+		flatVariables.clear();
 		CType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
+		funcDecl.setBaseType(returnType);
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			if(functionParam.getName() != null) createVar(functionParam.getName());
+			if(functionParam.getName() != null) createVar(functionParam);
 		}
 		CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
 		if(blockItemListContext != null) {
 			CStatement accept = blockItemListContext.accept(this);
 			variables.pop();
-			return new CFunction(funcDecl, accept);
+			return new CFunction(funcDecl, accept, new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
 		}
 		variables.pop();
-		return new CFunction(funcDecl, new CCompound());
+		return new CFunction(funcDecl, new CCompound(), new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
 	}
 
 	@Override
@@ -120,6 +134,18 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CStatement statement = ctx.statement().accept(this);
 		statement.setId(ctx.Identifier().getText());
 		return statement;
+	}
+
+	@Override
+	public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
+		return new CCase(
+				new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables))),
+				ctx.statement().accept(this));
+	}
+
+	@Override
+	public CStatement visitDefaultStatement(CParser.DefaultStatementContext ctx) {
+		return new CDefault(ctx.statement().accept(this));
 	}
 
 	@Override
@@ -194,11 +220,17 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	}
 
 	@Override
+	public CStatement visitStatement(CParser.StatementContext ctx) {
+		return ctx.children.get(0).accept(this);
+	}
+
+	@Override
 	public CStatement visitBodyDeclaration(CParser.BodyDeclarationContext ctx) {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			compound.getcStatementList().add(new CAssignment(createVar(declaration.getName()).getRef(), declaration.getInitExpr()));
+			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr()));
+			else createVar(declaration);
 		}
 		return compound;
 	}
@@ -244,7 +276,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			compound.getcStatementList().add(new CAssignment(createVar(declaration.getName()).getRef(), declaration.getInitExpr()));
+			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr()));
 		}
 		return compound;
 	}

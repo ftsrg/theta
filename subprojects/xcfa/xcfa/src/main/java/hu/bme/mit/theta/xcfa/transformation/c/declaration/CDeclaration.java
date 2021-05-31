@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.transformation.c.declaration;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
@@ -10,6 +11,7 @@ import java.util.List;
 public class CDeclaration {
 	private CType baseType;
 	private final String name;
+	private VarDecl<?> varDecl;
 	private boolean isFunc;
 	private int derefCounter = 0;
 	private final List<CStatement> arrayDimensions = new ArrayList<>();
@@ -95,5 +97,13 @@ public class CDeclaration {
 
 	public void setFunc(boolean func) {
 		isFunc = func;
+	}
+
+	public VarDecl<?> getVarDecl() {
+		return varDecl;
+	}
+
+	public void setVarDecl(VarDecl<?> varDecl) {
+		this.varDecl = varDecl;
 	}
 }

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -264,7 +265,8 @@ public final class XcfaProcedure {
 
         public XcfaLocation addLoc(XcfaLocation loc) {
             checkNotBuilt();
-            locs.add(loc);
+            if(!locs.contains(loc))
+                locs.add(loc);
             return loc;
         }
 

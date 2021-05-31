@@ -2,6 +2,17 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+
+import java.util.List;
+import java.util.Map;
+
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CFor extends CStatement{
 	private final CStatement body;
@@ -30,5 +41,33 @@ public class CFor extends CStatement{
 
 	public CStatement getBody() {
 		return body;
+	}
+
+	@Override
+	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
+		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
+		XcfaLocation endInit = new XcfaLocation("loc" + counter++, Map.of());
+		XcfaLocation startIncrement = new XcfaLocation("loc" + counter++, Map.of());
+		builder.addLoc(endLoc);
+		builder.addLoc(endInit);
+		builder.addLoc(initLoc);
+		builder.addLoc(startIncrement);
+		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		builder.addEdge(xcfaEdge);
+
+		XcfaLocation lastInit = init.build(builder, initLoc, null, null, returnLoc);
+		XcfaLocation lastTest = guard.build(builder, lastInit, null, null, returnLoc);
+		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+		builder.addEdge(xcfaEdge);
+		xcfaEdge = new XcfaEdge(lastTest, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		builder.addEdge(xcfaEdge);
+		XcfaLocation lastBody = body.build(builder, lastTest, endLoc, startIncrement, returnLoc);
+		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
+		builder.addEdge(xcfaEdge);
+		XcfaLocation lastIncrement = increment.build(builder, startIncrement, null, null, returnLoc);
+		xcfaEdge = new XcfaEdge(lastIncrement, endInit, List.of());
+		builder.addEdge(xcfaEdge);
+		return endLoc;
 	}
 }
