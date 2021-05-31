@@ -26,8 +26,12 @@ public class CRet extends CStatement{
 	@Override
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		if(expr == null) return lastLoc;
-		XcfaLocation endExpr = expr.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
-		XcfaLocation endLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		builder.addLoc(initLoc);
+		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		builder.addEdge(xcfaEdge);
+		XcfaLocation endExpr = expr.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
+		XcfaLocation endLoc = new XcfaLocation("unreachable" + counter++, Map.of());
 		builder.addLoc(endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
 		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, Int()), cast(expr.getExpression(), Int()))));

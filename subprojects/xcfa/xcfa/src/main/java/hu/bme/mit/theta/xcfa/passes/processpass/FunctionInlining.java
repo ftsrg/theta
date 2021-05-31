@@ -12,6 +12,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToErrorLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ public class FunctionInlining implements ProcessPass{
 		XcfaProcedure.Builder funcBuilder = new CallsToErrorLocs().run(mainProcBuilder);
 		funcBuilder = new UnusedVarRemovalPass().run(funcBuilder);
 		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
+		funcBuilder = new HavocAssignments().run(funcBuilder);
 		XcfaProcedure built = funcBuilder.build();
 		newBuilder.addProcedure(built);
 		newBuilder.setMainProcedure(built);
