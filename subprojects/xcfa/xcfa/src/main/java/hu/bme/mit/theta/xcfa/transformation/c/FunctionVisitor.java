@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.transformation.c;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -10,11 +11,14 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CBreak;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCompound;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CContinue;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CDecls;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CDoWhile;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CFor;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CFunction;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CGoto;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CIf;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CProgram;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CRet;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CSwitch;
@@ -54,11 +58,17 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
 		ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
 			CStatement accept = externalDeclarationContext.accept(this);
-			System.out.println(accept);
+			if(accept instanceof CFunction) {
+				program.getFunctions().add((CFunction) accept);
+			}
+			else if (accept instanceof CDecls) {
+				program.getGlobalDeclarations().addAll(((CDecls) accept).getcDeclarations());
+			}
 		}
-		return null;
+		return program;
 	}
 
 	@Override
@@ -68,12 +78,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		System.out.print("Stop: ");
 		printPosInfo(ctx.getStop());
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
-		CCompound compound = new CCompound();
+		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
 			if(declaration.getFunctionParams().size() == 0) // functions should not be interpreted as global variables
-				compound.getcStatementList().add(new CAssignment(createVar(declaration.getName()).getRef(), declaration.getInitExpr()));
+				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration.getName())));
 		}
-		return compound;
+		return decls;
 	}
 
 	@Override
@@ -88,10 +98,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		if(blockItemListContext != null) {
 			CStatement accept = blockItemListContext.accept(this);
 			variables.pop();
-			return accept;
+			return new CFunction(funcDecl, accept);
 		}
 		variables.pop();
-		return new CCompound();
+		return new CFunction(funcDecl, new CCompound());
 	}
 
 	@Override
