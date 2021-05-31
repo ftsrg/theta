@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class CProgram extends CStatement{
 			procBuilder.addProcedure((XcfaProcedure) build);
 			if(((XcfaProcedure) build).getName().equals("main")) procBuilder.setMainProcedure((XcfaProcedure) build);
 		}
+		procBuilder = new FunctionInlining().run(procBuilder);
 		XcfaProcess mainproc = procBuilder.build();
 		builder.addProcess(mainproc);
 		builder.setMainProcess(mainproc);

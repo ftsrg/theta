@@ -61,6 +61,24 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 			}
 		}
 
+		notFound = false;
+		while(!notFound) {
+			notFound = true;
+			Optional<XcfaEdge> duplicateEdge = builder.getEdges().stream().
+					filter(xcfaEdge ->
+							xcfaEdge.getStmts().size() == 0 &&
+									builder.getEdges().stream().anyMatch(xcfaEdge1 ->
+											xcfaEdge != xcfaEdge1 &&
+											xcfaEdge1.getSource() == xcfaEdge.getSource() &&
+											xcfaEdge1.getTarget() == xcfaEdge.getTarget() &&
+											xcfaEdge1.getStmts().size() == 0)).
+					findAny();
+			if(duplicateEdge.isPresent()) {
+				notFound = false;
+				builder.removeEdge(duplicateEdge.get());
+			}
+		}
+
 		return builder;
 	}
 }
