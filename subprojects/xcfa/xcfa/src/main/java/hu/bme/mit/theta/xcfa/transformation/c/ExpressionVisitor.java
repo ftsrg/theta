@@ -294,7 +294,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
-		return IntLitExpr.of(new BigInteger(ctx.getText().replaceAll("L", "")));
+		return IntLitExpr.of(new BigInteger(ctx.getText().replaceAll("[LUlu]", "")));
 	}
 
 	@Override
