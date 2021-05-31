@@ -12,16 +12,23 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class CAssignment extends CStatement{
 	private final Expr<?> lValue;
 	private final CStatement rValue;
+	private final String operator;
 
-	public CAssignment(Expr<?> lValue, CStatement rValue) {
+	public CAssignment(Expr<?> lValue, CStatement rValue, String operator) {
 		this.lValue = lValue;
 		this.rValue = rValue;
+		this.operator = operator;
 	}
 
 	public CStatement getrValue() {
@@ -34,16 +41,28 @@ public class CAssignment extends CStatement{
 
 	@Override
 	public Expr<?> getExpression() {
-		return rValue.getExpression();
+		switch (operator) {
+			case "=": return rValue.getExpression();
+			case "*=": return Mul(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			case "/=": return Div(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			case "%=": return Mod(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			case "+=": return Add(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			case "-=": return Sub(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			default: throw new RuntimeException("Bad operator!");
+		}
 	}
 
 	@Override
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
-		XcfaLocation location = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		builder.addLoc(initLoc);
+		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		builder.addEdge(xcfaEdge);
+		XcfaLocation location = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(location);
 		checkState(lValue instanceof RefExpr && ((RefExpr<?>) lValue).getDecl() instanceof VarDecl<?>, "lValue must be a variable!");
-		lastLoc = rValue.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), Int()), cast(rValue.getExpression(), Int()))));
+		initLoc = rValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
+		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), Int()), cast(getExpression(), Int()))));
 		builder.addEdge(xcfaEdge);
 		return location;
 	}

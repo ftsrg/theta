@@ -40,15 +40,19 @@ public class CCall extends CStatement{
 
 	@Override
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
+		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
+		builder.addLoc(initLoc);
+		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		builder.addEdge(xcfaEdge);
 		XcfaLocation location = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(location);
 		List<Expr<?>> params = new ArrayList<>();
 		params.add(ret.getRef());
 		for (CStatement param : this.params) {
-			lastLoc = param.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+			initLoc = param.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		}
 		params.addAll(this.params.stream().map(CStatement::getExpression).collect(Collectors.toList()));
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, location, List.of(new XcfaCallStmt(params, functionId)));
+		xcfaEdge = new XcfaEdge(initLoc, location, List.of(new XcfaCallStmt(params, functionId)));
 		builder.addEdge(xcfaEdge);
 		return location;
 	}

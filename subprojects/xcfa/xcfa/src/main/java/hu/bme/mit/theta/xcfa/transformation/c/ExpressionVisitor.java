@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
@@ -263,8 +263,19 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		checkState(ctx.unaryExpressionSizeOrAlignOf() == null, "Sizeof and alignof are not yet implemented");
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
-		if(increment != 0)preStatements.add(new CAssignment(ret, new CExpr(Add(cast(ret, Int()), Int(increment)))));
+		if(increment != 0)preStatements.add(new CAssignment(ret, new CExpr(Add(cast(ret, Int()), Int(increment))), "="));
 		return ret;
+	}
+
+	@Override
+	public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
+		Expr<?> accept = ctx.castExpression().accept(this);
+		switch(ctx.unaryOperator().getText()) {
+			case "-": return Neg(cast(accept, Int()));
+			case "+": return accept;
+			case "!": return Ite(Eq(cast(accept, Int()), Int(0)), Int(1), Int(0));
+		}
+		return accept;
 	}
 
 	@Override
@@ -282,7 +293,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
-			if(increment != 0)postStatements.add(new CAssignment(primary, new CExpr(Add(cast(primary, Int()), Int(increment)))));
+			if(increment != 0)postStatements.add(new CAssignment(primary, new CExpr(Add(cast(primary, Int()), Int(increment))), "="));
 			return primary;
 		}
 	}

@@ -229,7 +229,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr()));
+			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "="));
 			else createVar(declaration);
 		}
 		return compound;
@@ -250,7 +250,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
-		compound.getcStatementList().add(new CAssignment(ret, ctx.assignmentExpression().accept(this)));
+		compound.getcStatementList().add(new CAssignment(ret, ctx.assignmentExpression().accept(this), ctx.assignmentOperator().getText()));
 		compound.getcStatementList().addAll(expressionVisitor.getPostStatements());
 		return compound;
 	}
@@ -276,7 +276,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr()));
+			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "="));
 		}
 		return compound;
 	}

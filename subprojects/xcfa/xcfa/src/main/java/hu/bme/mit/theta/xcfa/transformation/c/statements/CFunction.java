@@ -52,7 +52,10 @@ public class CFunction extends CStatement{
 		builder.setName(funcDecl.getName());
 		if(!funcDecl.getBaseType().isVoid()) {
 			builder.createParam(XcfaProcedure.Direction.OUT, Var("ret", Int()));
+		} else {
+			builder.createParam(XcfaProcedure.Direction.OUT, Var("ret", Int()));
 		}
+
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
 			checkState(functionParam.getBaseType().isVoid() ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
 			if(functionParam.getVarDecl() != null) builder.createParam(XcfaProcedure.Direction.IN, functionParam.getVarDecl());
@@ -73,7 +76,6 @@ public class CFunction extends CStatement{
 		XcfaLocation end = compound.build(builder, init, null, null, ret);
 		builder.addEdge(new XcfaEdge(end, ret, List.of()));
 		builder.setFinalLoc(ret);
-		builder = new UnusedVarRemovalPass().run(builder);
 		builder = new EmptyEdgeRemovalPass().run(builder);
 		return builder.build();
 	}

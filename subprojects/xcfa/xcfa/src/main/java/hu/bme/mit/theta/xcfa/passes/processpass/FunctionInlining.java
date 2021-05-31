@@ -68,7 +68,6 @@ public class FunctionInlining implements ProcessPass{
 			havocStmts.clear();
 		}
 		XcfaProcedure.Builder funcBuilder = new CallsToErrorLocs().run(mainProcBuilder);
-		funcBuilder = new UnusedVarRemovalPass().run(funcBuilder);
 		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
 		funcBuilder = new HavocAssignments().run(funcBuilder);
 		XcfaProcedure built = funcBuilder.build();
