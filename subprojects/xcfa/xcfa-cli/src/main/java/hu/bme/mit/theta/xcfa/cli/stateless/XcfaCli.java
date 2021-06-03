@@ -37,6 +37,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
 import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
@@ -46,6 +48,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -74,6 +78,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
+
+	@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
+	String highlighted = null;
 
 	@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
 	String statisticsfile = null;
@@ -180,6 +187,9 @@ public class XcfaCli {
 				if (status.isUnsafe() && cexfile != null) {
 					writeCex(status.asUnsafe());
 				}
+				if (status.isUnsafe() && highlighted != null) {
+					writeXcfaWithCex(xcfa, status.asUnsafe());
+				}
 			} else {
 				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
@@ -223,6 +233,29 @@ public class XcfaCli {
 			if (printWriter != null) {
 				printWriter.close();
 			}
+		}
+	}
+
+	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		Set<String> cexLocations = new LinkedHashSet<>();
+		Set<XcfaEdge> cexEdges = new LinkedHashSet<>();
+		for (CfaState<ExplState> state : concrTrace.getStates()) {
+			cexLocations.add(state.getLoc().getName());
+		}
+		for (CfaAction action : concrTrace.getActions()) {
+			for (CFA.Edge edge : action.getEdges()) {
+				Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
+				for (Object xcfaEdge : xcfaEdges) {
+					XcfaEdge e = (XcfaEdge) xcfaEdge;
+					cexEdges.add(e);
+				}
+			}
+		}
+		final File file = new File(highlighted);
+		try (PrintWriter printWriter = new PrintWriter(file)) {
+			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
 		}
 	}
 }

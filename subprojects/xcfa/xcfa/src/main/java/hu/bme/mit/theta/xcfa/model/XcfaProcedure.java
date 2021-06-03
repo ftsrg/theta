@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -79,7 +80,7 @@ public final class XcfaProcedure {
 
         Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
         procedure.localVars.forEach((varDecl, litExpr) -> {
-            VarDecl<?> newVar = VarDecl.copyOf(varDecl);
+            VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
             localVarsCollectList.put(newVar, litExpr);
             newVarLut.put(varDecl, newVar);
         });
@@ -115,7 +116,7 @@ public final class XcfaProcedure {
         return new Builder();
     }
 
-    public String toDot() {
+    public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
         StringBuilder ret = new StringBuilder("label=\"");
         ret.append(name).append("(");
         params.forEach((varDecl, direction) -> {
@@ -135,7 +136,8 @@ public final class XcfaProcedure {
         ret.append("}\";\n");
         for (XcfaLocation location : getLocs()) {
             ret.append("\"").append(location.getName()).append("\"");
-            if (location.isErrorLoc()) ret.append("[xlabel=err]");
+            if(cexLocations.contains(location.getName())) ret.append(("[color=red]"));
+            else if (location.isErrorLoc()) ret.append("[xlabel=err]");
             else if (location.isEndLoc()) ret.append("[xlabel=final]");
             else if (getInitLoc() == location) ret.append("[xlabel=start]");
             ret.append(";\n");
@@ -147,7 +149,11 @@ public final class XcfaProcedure {
                 ret.append(stmt.toString());
                 ret.append(", ");
             }
-            ret.append("\"];\n");
+            ret.append("\"");
+            if(cexEdges.contains(edge)) {
+                ret.append(",color=red");
+            }
+            ret.append("];\n");
         }
         return ret.toString();
     }

@@ -25,11 +25,13 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -126,11 +128,14 @@ public final class XCFA {
 	 * Returns the XCFA as its graphviz representation
 	 */
 	public String toDot() {
+		return toDot(List.of(), List.of());
+	}
+	public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
 		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
 			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar).get()).append("\";\n");
 		}
-		ret.append(getMainProcess().toDot());
+		ret.append(getMainProcess().toDot(cexLocations, cexEdges));
 		ret.append("}\n");
 		return ret.toString();
 	}

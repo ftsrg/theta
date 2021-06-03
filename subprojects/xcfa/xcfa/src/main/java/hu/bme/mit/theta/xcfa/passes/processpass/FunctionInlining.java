@@ -35,6 +35,7 @@ public class FunctionInlining implements ProcessPass{
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+//		if(true) return builder;
 		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
 		newBuilder.setName(builder.getName());
 		newBuilder.getThreadLocalVars().putAll(builder.getThreadLocalVars());
@@ -50,6 +51,7 @@ public class FunctionInlining implements ProcessPass{
 		}
 		for (XcfaLocation loc : mainProcedure.getLocs()) {
 			mainProcBuilder.addLoc(loc);
+			loc.setEndLoc(false);
 		}
 		for (XcfaEdge edge : mainProcedure.getEdges()) {
 			mainProcBuilder.addEdge(edge);
@@ -70,6 +72,8 @@ public class FunctionInlining implements ProcessPass{
 		XcfaProcedure.Builder funcBuilder = new CallsToErrorLocs().run(mainProcBuilder);
 		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
 		funcBuilder = new HavocAssignments().run(funcBuilder);
+		funcBuilder = new UnusedVarRemovalPass().run(funcBuilder);
+		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
 		XcfaProcedure built = funcBuilder.build();
 		newBuilder.addProcedure(built);
 		newBuilder.setMainProcedure(built);
@@ -120,7 +124,7 @@ public class FunctionInlining implements ProcessPass{
 			}
 			Optional<XcfaProcedure> procedureOpt = oldBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(xcfaCallStmt.getProcedure())).findAny();
 			checkState(procedureOpt.isPresent());
-			XcfaProcedure procedure = procedureOpt.get();
+			XcfaProcedure procedure = new XcfaProcedure(procedureOpt.get());
 			for (VarDecl<?> localVar : procedure.getLocalVars()) {
 				procBuilder.createVar(localVar, null);
 			}

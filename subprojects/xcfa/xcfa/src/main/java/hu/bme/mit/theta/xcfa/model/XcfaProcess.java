@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,12 +59,12 @@ public final class XcfaProcess {
         return new Builder();
     }
 
-    public String toDot() {
+    public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
         StringBuilder ret = new StringBuilder();
         int cnt = 0;
         for (XcfaProcedure procedure : getProcedures()) {
             ret.append("subgraph cluster").append(cnt++).append("{\n");
-            ret.append(procedure.toDot());
+            ret.append(procedure.toDot(cexLocations, cexEdges));
             ret.append("}\n");
         }
         return ret.toString();

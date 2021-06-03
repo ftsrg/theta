@@ -23,7 +23,7 @@ public class CCall extends CStatement{
 	public CCall(String functionId, List<CStatement> params) {
 		this.functionId = functionId;
 		this.params = params;
-		ret = Var("functionret", Int());
+		ret = Var("call_" + functionId + "_ret" + counter++, Int());
 	}
 
 	public String getId() {

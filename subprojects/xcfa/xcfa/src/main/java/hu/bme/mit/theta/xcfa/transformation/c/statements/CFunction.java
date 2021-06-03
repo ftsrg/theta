@@ -51,9 +51,9 @@ public class CFunction extends CStatement{
 		builder.setRetType(funcDecl.getBaseType().isVoid() ? null : Int());
 		builder.setName(funcDecl.getName());
 		if(!funcDecl.getBaseType().isVoid()) {
-			builder.createParam(XcfaProcedure.Direction.OUT, Var("ret", Int()));
+			builder.createParam(XcfaProcedure.Direction.OUT, Var(funcDecl.getName() + "_ret" + counter++, Int()));
 		} else {
-			builder.createParam(XcfaProcedure.Direction.OUT, Var("ret", Int()));
+			builder.createParam(XcfaProcedure.Direction.OUT, Var(funcDecl.getName() + "_ret" + counter++, Int()));
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {

@@ -39,8 +39,9 @@ public final class XcfaLocation {
 		incomingEdges = new ArrayList<>();
 	}
 
+	private static int copyCnt = 0;
 	public static XcfaLocation copyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = new XcfaLocation(from.getName(), Map.copyOf(from.dictionary));
+		XcfaLocation xcfaLocation = new XcfaLocation(from.getName() + "_copy" + copyCnt++, Map.copyOf(from.dictionary));
 		XcfaMetadata.lookupMetadata(from).forEach((s, o) -> {
 			XcfaMetadata.create(xcfaLocation, s, o);
 		});

@@ -48,12 +48,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	private final Deque<Map<String, VarDecl<?>>> variables;
 	private final List<VarDecl<?>> flatVariables;
 
+	private int counter = 0;
 	private VarDecl<?> createVar(CDeclaration declaration) {
 		String name = declaration.getName();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
-		peek.put(name, Var(name, Int()));
+		peek.put(name, Var(name + counter++, Int()));
 		VarDecl<?> varDecl = peek.get(name);
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
