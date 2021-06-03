@@ -133,8 +133,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitIdentifierStatement(CParser.IdentifierStatementContext ctx) {
 		CStatement statement = ctx.statement().accept(this);
-		statement.setId(ctx.Identifier().getText());
-		return statement;
+		CCompound compound = new CCompound();
+		compound.getcStatementList().add(statement);
+		compound.setId(ctx.Identifier().getText());
+		return compound;
 	}
 
 	@Override

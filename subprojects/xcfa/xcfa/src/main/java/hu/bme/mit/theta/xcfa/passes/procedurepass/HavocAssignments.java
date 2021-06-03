@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public class HavocAssignments implements ProcedurePass {
@@ -40,6 +41,7 @@ public class HavocAssignments implements ProcedurePass {
 			notFound = true;
 			Optional<XcfaEdge> havocEdge = builder.getEdges().stream().filter(xcfaEdge ->
 					xcfaEdge.getStmts().size() == 1 && xcfaEdge.getStmts().get(0) instanceof HavocStmt &&
+					xcfaEdge.getTarget().getIncomingEdges().size() == 1 &&
 					xcfaEdge.getTarget().getOutgoingEdges().size() == 1 && xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().size() == 1 &&
 					xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().get(0) instanceof AssignStmt &&
 					((AssignStmt<?>) xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().get(0)).getExpr() instanceof RefExpr).findAny();
@@ -52,6 +54,7 @@ public class HavocAssignments implements ProcedurePass {
 					builder.removeEdge(havocEdge.get());
 					builder.removeEdge(assignEdge);
 					builder.addEdge(new XcfaEdge(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl()))));
+					builder.getLocs().remove(havocEdge.get().getTarget());
 				}
 			}
 		}
