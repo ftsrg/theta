@@ -28,14 +28,18 @@ public class CRet extends CStatement{
 		if(expr == null) return lastLoc;
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation endExpr = expr.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		XcfaLocation endLoc = new XcfaLocation("unreachable" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
 		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, Int()), cast(expr.getExpression(), Int()))));
 		builder.addEdge(edge);
+        propagateMetadata(edge);
 		return endLoc;
 	}
 }

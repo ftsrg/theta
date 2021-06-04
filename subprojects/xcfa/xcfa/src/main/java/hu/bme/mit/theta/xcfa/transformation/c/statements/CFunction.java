@@ -62,19 +62,25 @@ public class CFunction extends CStatement{
 		}
 		XcfaLocation init = new XcfaLocation("init" + counter++, Map.of());
 		builder.addLoc(init);
+        propagateMetadata(init);
 		builder.setInitLoc(init);
 		if(((List<?>) param).size() > 0) {
 			XcfaLocation endinit = new XcfaLocation("end_init" + counter++, Map.of());
 			builder.addLoc(endinit);
+        propagateMetadata(endinit);
 			//noinspection unchecked
 			XcfaEdge edge = new XcfaEdge(init, endinit, (List<Stmt>) param);
 			builder.addEdge(edge);
+        propagateMetadata(edge);
 			init = endinit;
 		}
 		XcfaLocation ret = new XcfaLocation("ret" + counter++, Map.of());
 		builder.addLoc(ret);
+        propagateMetadata(ret);
 		XcfaLocation end = compound.build(builder, init, null, null, ret);
-		builder.addEdge(new XcfaEdge(end, ret, List.of()));
+		XcfaEdge edge = new XcfaEdge(end, ret, List.of());
+		builder.addEdge(edge);
+        propagateMetadata(edge);
 		builder.setFinalLoc(ret);
 		builder = new EmptyEdgeRemovalPass().run(builder);
 		return builder.build();

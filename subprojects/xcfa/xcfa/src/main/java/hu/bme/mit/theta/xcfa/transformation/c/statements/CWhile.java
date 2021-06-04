@@ -36,18 +36,25 @@ public class CWhile extends CStatement{
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation innerLoop = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		builder.addLoc(innerLoop);
+        propagateMetadata(innerLoop);
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation testEndLoc = guard.build(builder, initLoc, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(testEndLoc, innerLoop, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		xcfaEdge = new XcfaEdge(testEndLoc, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation lastBody = body.build(builder, innerLoop, endLoc, initLoc, returnLoc);
 		xcfaEdge = new XcfaEdge(lastBody, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		return endLoc;
 	}
 }

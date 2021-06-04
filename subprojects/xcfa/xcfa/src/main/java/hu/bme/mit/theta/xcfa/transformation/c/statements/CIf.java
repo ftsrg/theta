@@ -43,29 +43,39 @@ public class CIf extends CStatement{
 		XcfaLocation mainBranch = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation elseBranch = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		builder.addLoc(mainBranch);
+        propagateMetadata(mainBranch);
 		builder.addLoc(elseBranch);
+        propagateMetadata(elseBranch);
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation endGuard = guard.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		xcfaEdge = new XcfaEdge(endGuard, mainBranch, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		xcfaEdge = new XcfaEdge(endGuard, elseBranch, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 
 		XcfaLocation mainEnd = body.build(builder, mainBranch, breakLoc, continueLoc, returnLoc);
 		if(elseStatement != null) {
 			XcfaLocation elseEnd = elseStatement.build(builder, elseBranch, breakLoc, continueLoc, returnLoc);
 			xcfaEdge = new XcfaEdge(elseEnd, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		} else {
 			xcfaEdge = new XcfaEdge(elseBranch, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		}
 
 		xcfaEdge = new XcfaEdge(mainEnd, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		return endLoc;
 	}
 }

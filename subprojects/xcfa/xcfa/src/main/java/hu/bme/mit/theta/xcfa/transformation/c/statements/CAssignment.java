@@ -56,14 +56,18 @@ public class CAssignment extends CStatement{
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation location = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(location);
+        propagateMetadata(location);
 		checkState(lValue instanceof RefExpr && ((RefExpr<?>) lValue).getDecl() instanceof VarDecl<?>, "lValue must be a variable!");
 		initLoc = rValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), Int()), cast(getExpression(), Int()))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		return location;
 	}
 }

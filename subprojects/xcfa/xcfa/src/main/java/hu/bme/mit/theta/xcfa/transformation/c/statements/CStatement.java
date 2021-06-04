@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
 
@@ -20,6 +21,10 @@ public abstract class CStatement {
 		this.loc = new XcfaLocation(id, Map.of());
 		this.id = id;
 		FunctionVisitor.locLUT.put(id, loc);
+	}
+
+	protected <T> void propagateMetadata(T newOwner) {
+		XcfaMetadata.create(newOwner, "sourceStatement", this);
 	}
 
 

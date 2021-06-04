@@ -36,18 +36,25 @@ public class CDoWhile extends CStatement{
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation innerEndLoc = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		builder.addLoc(innerEndLoc);
+        propagateMetadata(innerEndLoc);
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation lastBody = body.build(builder, initLoc, endLoc, innerEndLoc, returnLoc);
 		xcfaEdge = new XcfaEdge(lastBody, innerEndLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation lastGuard = guard.build(builder, innerEndLoc, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(lastGuard, initLoc, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		xcfaEdge = new XcfaEdge(lastGuard, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		return endLoc;
 	}
 }

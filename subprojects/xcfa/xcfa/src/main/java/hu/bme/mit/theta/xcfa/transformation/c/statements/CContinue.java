@@ -13,12 +13,16 @@ public class CContinue extends CStatement{
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
+        propagateMetadata(edge);
 		edge = new XcfaEdge(initLoc, continueLoc, List.of());
 		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable", Map.of());
 		builder.addLoc(unreachableLoc);
+        propagateMetadata(unreachableLoc);
 		builder.addEdge(edge);
+        propagateMetadata(edge);
 		return unreachableLoc;
 	}
 }

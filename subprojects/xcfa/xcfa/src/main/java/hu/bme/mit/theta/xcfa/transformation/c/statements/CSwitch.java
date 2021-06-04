@@ -37,10 +37,13 @@ public class CSwitch extends CStatement{
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
+        propagateMetadata(edge);
 		XcfaLocation endInit = testValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		checkState(body instanceof CCompound, "Switch body has to be a CompoundStatement!");
 		Expr<BoolType> defaultExpr = True();
@@ -53,23 +56,28 @@ public class CSwitch extends CStatement{
 		for (CStatement statement : ((CCompound) body).getcStatementList()) {
 			XcfaLocation location = new XcfaLocation("loc" + counter++, Map.of());
 			builder.addLoc(location);
+        propagateMetadata(location);
 			XcfaEdge xcfaEdge;
 			if(lastLocation != null) {
 				xcfaEdge = new XcfaEdge(lastLocation, location, List.of());
 				builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 			}
 			if(statement instanceof CCase) {
 				xcfaEdge = new XcfaEdge(endInit, location, List.of(Assume(Eq(testValue.getExpression(), ((CCase) statement).getExpr().getExpression()))));
 				builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 			} else if(statement instanceof CDefault) {
 				xcfaEdge = new XcfaEdge(endInit, location, List.of(Assume(defaultExpr)));
 				builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 			}
 			lastLocation = statement.build(builder, location, endLoc, continueLoc, returnLoc);
 		}
 		if(lastLocation != null) {
 			XcfaEdge xcfaEdge = new XcfaEdge(lastLocation, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		}
 		return endLoc;
 	}

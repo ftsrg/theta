@@ -50,24 +50,33 @@ public class CFor extends CStatement{
 		XcfaLocation endInit = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation startIncrement = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
+        propagateMetadata(endLoc);
 		builder.addLoc(endInit);
+        propagateMetadata(endInit);
 		builder.addLoc(initLoc);
+        propagateMetadata(initLoc);
 		builder.addLoc(startIncrement);
+        propagateMetadata(startIncrement);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 
 		XcfaLocation lastInit = init.build(builder, initLoc, null, null, returnLoc);
 		XcfaLocation lastTest = guard.build(builder, lastInit, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		xcfaEdge = new XcfaEdge(lastTest, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation lastBody = body.build(builder, lastTest, endLoc, startIncrement, returnLoc);
 		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		XcfaLocation lastIncrement = increment.build(builder, startIncrement, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(lastIncrement, endInit, List.of());
 		builder.addEdge(xcfaEdge);
+        propagateMetadata(xcfaEdge);
 		return endLoc;
 	}
 }

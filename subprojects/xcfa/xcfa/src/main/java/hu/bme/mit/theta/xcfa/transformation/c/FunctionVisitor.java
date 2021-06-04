@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CBreak;
@@ -27,6 +28,8 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -80,21 +83,40 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				program.getGlobalDeclarations().addAll(((CDecls) accept).getcDeclarations());
 			}
 		}
+		recordMetadata(ctx, program);
 		return program;
 	}
 
+	private void recordMetadata(ParserRuleContext ctx, CStatement statement) {
+		Token start = ctx.getStart();
+		Token stop = ctx.getStop();
+		String stopText = stop.getText();
+		String[] stopTextLines = stopText.split("\r\n|\r|\n", -1);
+		int stopLines = stopTextLines.length - 1;
+		int lineNumberStart = start.getLine();
+		int colNumberStart = start.getCharPositionInLine();
+		int lineNumberStop = stop.getLine() + stopLines;
+		int colNumberStop = stopLines == 0 ? stop.getCharPositionInLine() + stopText.length() - 1 : stopTextLines[stopLines].length();
+		int offsetStart = start.getStartIndex();
+		int offsetEnd = stop.getStopIndex();
+		XcfaMetadata.create(statement, "lineNumberStart", lineNumberStart);
+		XcfaMetadata.create(statement, "colNumberStart", colNumberStart);
+		XcfaMetadata.create(statement, "lineNumberStop", lineNumberStop);
+		XcfaMetadata.create(statement, "colNumberStop", colNumberStop);
+		XcfaMetadata.create(statement, "offsetStart", offsetStart);
+		XcfaMetadata.create(statement, "offsetEnd", offsetEnd);
+	}
+
+
 	@Override
 	public CStatement visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
-		System.out.print("Start: ");
-		printPosInfo(ctx.getStart());
-		System.out.print("Stop: ");
-		printPosInfo(ctx.getStop());
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
 			if(declaration.getFunctionParams().size() == 0) // functions should not be interpreted as global variables
 				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
 		}
+		recordMetadata(ctx, decls);
 		return decls;
 	}
 
@@ -113,10 +135,16 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		if(blockItemListContext != null) {
 			CStatement accept = blockItemListContext.accept(this);
 			variables.pop();
-			return new CFunction(funcDecl, accept, new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
+			CFunction cFunction = new CFunction(funcDecl, accept, new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
+			recordMetadata(ctx, cFunction);
+			return cFunction;
 		}
 		variables.pop();
-		return new CFunction(funcDecl, new CCompound(), new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
+		CCompound cCompound = new CCompound();
+		CFunction cFunction = new CFunction(funcDecl, cCompound, new ArrayList<>(flatVariables), new LinkedHashMap<>(locLUT));
+		recordMetadata(ctx, cCompound);
+		recordMetadata(ctx, cFunction);
+		return cFunction;
 	}
 
 	@Override
@@ -127,6 +155,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			compound.getcStatementList().add(blockItemContext.accept(this));
 		}
 		variables.pop();
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
@@ -136,19 +165,26 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CCompound compound = new CCompound();
 		compound.getcStatementList().add(statement);
 		compound.setId(ctx.Identifier().getText());
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
 	@Override
 	public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
-		return new CCase(
-				new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables))),
+		CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables)));
+		CCase cCase = new CCase(
+				cexpr,
 				ctx.statement().accept(this));
+		recordMetadata(ctx, cCase);
+		recordMetadata(ctx.constantExpression(), cexpr);
+		return cCase;
 	}
 
 	@Override
 	public CStatement visitDefaultStatement(CParser.DefaultStatementContext ctx) {
-		return new CDefault(ctx.statement().accept(this));
+		CDefault cDefault = new CDefault(ctx.statement().accept(this));
+		recordMetadata(ctx, cDefault);
+		return cDefault;
 	}
 
 	@Override
@@ -156,70 +192,92 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		if(ctx.blockItemList() != null) {
 			return ctx.blockItemList().accept(this);
 		}
-		return new CCompound();
+		CCompound compound = new CCompound();
+		recordMetadata(ctx, compound);
+		return compound;
 	}
 
 	@Override
 	public CStatement visitExpressionStatement(CParser.ExpressionStatementContext ctx) {
-		return ctx.expression() == null ? new CCompound() : ctx.expression().accept(this);
+		CStatement statement = ctx.expression() == null ? new CCompound() : ctx.expression().accept(this);
+		recordMetadata(ctx, statement);
+		return statement;
 	}
 
 	@Override
 	public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
-		return new CIf(
+		CIf cIf = new CIf(
 				ctx.expression().accept(this),
 				ctx.statement(0).accept(this),
 				ctx.statement().size() > 1 ? ctx.statement(1).accept(this) : null);
+		recordMetadata(ctx, cIf);
+		return cIf;
 	}
 
 	@Override
 	public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
-		return new CSwitch(
+		CSwitch cSwitch = new CSwitch(
 				ctx.expression().accept(this),
 				ctx.statement().accept(this));
+		recordMetadata(ctx, cSwitch);
+		return cSwitch;
 	}
 
 	@Override
 	public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
-		return new CWhile(
-			ctx.statement().accept(this),
-			ctx.expression().accept(this));
+		CWhile cWhile = new CWhile(
+				ctx.statement().accept(this),
+				ctx.expression().accept(this));
+		recordMetadata(ctx, cWhile);
+		return cWhile;
 	}
 
 	@Override
 	public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
-		return new CDoWhile(
+		CDoWhile cDoWhile = new CDoWhile(
 				ctx.statement().accept(this),
 				ctx.expression().accept(this));
+		recordMetadata(ctx, cDoWhile);
+		return cDoWhile;
 	}
 
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
-		return new CFor(
+		CFor cFor = new CFor(
 				ctx.statement().accept(this),
 				ctx.forCondition().forInit().accept(this),
 				ctx.forCondition().forTest().accept(this),
 				ctx.forCondition().forIncr().accept(this));
+		recordMetadata(ctx, cFor);
+		return cFor;
 	}
 
 	@Override
 	public CStatement visitGotoStatement(CParser.GotoStatementContext ctx) {
-		return new CGoto(ctx.Identifier().getText());
+		CGoto cGoto = new CGoto(ctx.Identifier().getText());
+		recordMetadata(ctx, cGoto);
+		return cGoto;
 	}
 
 	@Override
 	public CStatement visitContinueStatement(CParser.ContinueStatementContext ctx) {
-		return new CContinue();
+		CContinue cContinue = new CContinue();
+		recordMetadata(ctx, cContinue);
+		return cContinue;
 	}
 
 	@Override
 	public CStatement visitBreakStatement(CParser.BreakStatementContext ctx) {
-		return new CBreak();
+		CBreak cBreak = new CBreak();
+		recordMetadata(ctx, cBreak);
+		return cBreak;
 	}
 
 	@Override
 	public CStatement visitReturnStatement(CParser.ReturnStatementContext ctx) {
-		return new CRet(ctx.expression() == null ? null : ctx.expression().accept(this));
+		CRet cRet = new CRet(ctx.expression() == null ? null : ctx.expression().accept(this));
+		recordMetadata(ctx, cRet);
+		return cRet;
 	}
 
 	@Override
@@ -232,9 +290,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "="));
+			if(declaration.getInitExpr() != null) {
+				CAssignment cAssignment = new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "=");
+				recordMetadata(ctx, cAssignment);
+				compound.getcStatementList().add(cAssignment);
+			}
 			else createVar(declaration);
 		}
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
@@ -244,6 +307,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		for (CParser.AssignmentExpressionContext assignmentExpressionContext : ctx.assignmentExpression()) {
 			compound.getcStatementList().add(assignmentExpressionContext.accept(this));
 		}
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
@@ -253,8 +317,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
-		compound.getcStatementList().add(new CAssignment(ret, ctx.assignmentExpression().accept(this), ctx.assignmentOperator().getText()));
+		CAssignment cAssignment = new CAssignment(ret, ctx.assignmentExpression().accept(this), ctx.assignmentOperator().getText());
+		recordMetadata(ctx, cAssignment);
+		compound.getcStatementList().add(cAssignment);
 		compound.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
@@ -264,14 +331,19 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.conditionalExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
-		compound.getcStatementList().add(new CExpr(ret));
+		CExpr cexpr = new CExpr(ret);
+		recordMetadata(ctx, cexpr);
+		compound.getcStatementList().add(cexpr);
 		compound.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
 	@Override
 	public CStatement visitAssignmentExpressionDigitSequence(CParser.AssignmentExpressionDigitSequenceContext ctx) {
-		return new CExpr(IntLitExpr.of(BigInteger.valueOf(Long.parseLong(ctx.DigitSequence().getText()))));
+		CExpr cExpr = new CExpr(IntLitExpr.of(BigInteger.valueOf(Long.parseLong(ctx.DigitSequence().getText()))));
+		recordMetadata(ctx, cExpr);
+		return cExpr;
 	}
 
 	@Override
@@ -279,8 +351,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getInitExpr() != null) compound.getcStatementList().add(new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "="));
+			CAssignment cAssignment = new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "=");
+			recordMetadata(ctx, cAssignment);
+			if(declaration.getInitExpr() != null) compound.getcStatementList().add(cAssignment);
 		}
+		recordMetadata(ctx, compound);
 		return compound;
 	}
 
@@ -290,15 +365,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		for (CParser.AssignmentExpressionContext assignmentExpressionContext : ctx.assignmentExpression()) {
 			compound.getcStatementList().add(assignmentExpressionContext.accept(this));
 		}
+		recordMetadata(ctx, compound);
 		return compound;
-	}
-
-	private void printPosInfo(Token symbol) {
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("startIndex: ").append(symbol.getStartIndex()).append(", ");
-		stringBuilder.append("stopIndex: ").append(symbol.getStopIndex()).append(", ");
-		stringBuilder.append("line: ").append(symbol.getLine()).append(", ");
-		stringBuilder.append("column: ").append(symbol.getCharPositionInLine());
-		System.out.println(stringBuilder);
 	}
 }
