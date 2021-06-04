@@ -37,21 +37,33 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xcfa.XcfaUtils;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
-import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
+import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
+import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final String[] args;
 
-	@Parameter(names = "--input", description = "Path of the input XCFA model, LLVM IR or C program", required = true)
+	@Parameter(names = "--input", description = "Path of the input C program", required = true)
 	File model;
 
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
@@ -77,6 +89,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
 	String dotwitnessfile = null;
+
+	@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
+	String highlighted = null;
 
 	@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
 	String statisticsfile = null;
@@ -113,7 +128,20 @@ public class XcfaCli {
 
 		try {
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+			//final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
+
+			final CharStream input = CharStreams.fromStream(new FileInputStream(model));
+
+			final CLexer lexer = new CLexer(input);
+			final CommonTokenStream tokens = new CommonTokenStream(lexer);
+			final CParser parser = new CParser(tokens);
+
+			final CParser.CompilationUnitContext context = parser.compilationUnit();
+
+			CStatement program = context.accept(FunctionVisitor.instance);
+			Object built = program.build(null);
+			checkState(built instanceof XCFA, "Program is not an XCFA");
+			XCFA xcfa = (XCFA) built;
 
 			if(parsing) {
 				System.out.println("XCFA creation successful");
@@ -167,8 +195,11 @@ public class XcfaCli {
 					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
 					bw.close();
 				}
-				if (status.isUnsafe() && (cexfile != null || witnessfile != null || dotwitnessfile != null)) {
+				if (status.isUnsafe() && cexfile != null) {
 					writeCex(status.asUnsafe());
+				}
+				if (status.isUnsafe() && highlighted != null) {
+					writeXcfaWithCex(xcfa, status.asUnsafe());
 				}
 			} else {
 				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
@@ -184,8 +215,8 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.NWT_IT_SP, Z3SolverFactory.getInstance())
-					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.BFS)
+			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
+					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
 					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(10).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
 					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
 		} catch (final Exception ex) {
@@ -235,4 +266,43 @@ public class XcfaCli {
 		}
 	}
 
+	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		Set<String> cexLocations = new LinkedHashSet<>();
+		Set<XcfaEdge> cexEdges = new LinkedHashSet<>();
+		for (CfaState<ExplState> state : concrTrace.getStates()) {
+			cexLocations.add(state.getLoc().getName());
+		}
+		for (CfaAction action : concrTrace.getActions()) {
+			for (CFA.Edge edge : action.getEdges()) {
+				System.out.println("Line: " + retrieveStartLine(edge));
+				Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
+				for (Object xcfaEdge : xcfaEdges) {
+					XcfaEdge e = (XcfaEdge) xcfaEdge;
+					cexEdges.add(e);
+				}
+			}
+		}
+		final File file = new File(highlighted);
+		try (PrintWriter printWriter = new PrintWriter(file)) {
+			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
+		}
+	}
+
+	private int retrieveStartLine(CFA.Edge edge) {
+		Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
+		for (Object xcfaEdge : xcfaEdges) {
+			System.out.println("cfaEdge found");
+			Object sourceStatement = XcfaMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
+			if(sourceStatement != null) {
+				System.out.println("sourceStatement found");
+				Object lineNumberStart = XcfaMetadata.lookupMetadata(sourceStatement).get("lineNumberStart");
+				if(lineNumberStart != null && lineNumberStart instanceof Integer) {
+					return (int) lineNumberStart;
+				}
+			}
+		}
+		return -1;
+	}
 }

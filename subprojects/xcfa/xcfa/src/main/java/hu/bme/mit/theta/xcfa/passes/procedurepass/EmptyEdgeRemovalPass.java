@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class EmptyEdgeRemovalPass implements ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
@@ -58,6 +60,24 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 					builder.removeEdge(outgoingEdge);
 				}
 				builder.getLocs().remove(loc.get());
+			}
+		}
+
+		notFound = false;
+		while(!notFound) {
+			notFound = true;
+			Optional<XcfaEdge> duplicateEdge = builder.getEdges().stream().
+					filter(xcfaEdge ->
+							xcfaEdge.getStmts().size() == 0 &&
+									builder.getEdges().stream().anyMatch(xcfaEdge1 ->
+											xcfaEdge != xcfaEdge1 &&
+											xcfaEdge1.getSource() == xcfaEdge.getSource() &&
+											xcfaEdge1.getTarget() == xcfaEdge.getTarget() &&
+											xcfaEdge1.getStmts().size() == 0)).
+					findAny();
+			if(duplicateEdge.isPresent()) {
+				notFound = false;
+				builder.removeEdge(duplicateEdge.get());
 			}
 		}
 

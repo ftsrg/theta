@@ -25,11 +25,13 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -74,6 +76,7 @@ public final class XCFA {
 
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
 			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
+			XcfaMetadata.create(loc, "cfaLoc", cfaLoc);
 			locationLUT.put(loc, cfaLoc);
 		}
 
@@ -84,7 +87,9 @@ public final class XCFA {
 			locations.add(locationLUT.get(e.getSource()));
 			// Adding intermediate locations (CFAs can only have one per edge)
 			for (int i = 1; i < e.getStmts().size(); ++i) {
-				locations.add(builder.createLoc("tmp" + tmpcnt++));
+				CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
+				locations.add(loc);
+				XcfaMetadata.create(e, "cfaInterLoc", loc);
 			}
 			// Adding target
 			locations.add(locationLUT.get(e.getTarget()));
@@ -99,8 +104,11 @@ public final class XCFA {
 				XcfaMetadata.create(e, "cfaEdge", edge);
 			}
 		}
-		if(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc())==null)
-			locationLUT.put(getMainProcess().getMainProcedure().getFinalLoc(), builder.createLoc(getMainProcess().getMainProcedure().getFinalLoc().getName()));
+		//Theoretically, this is no longer necessary. However, if a "no final location" exception is ever thrown, start debugging here!
+//		if(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc())==null) {
+//			CFA.Loc loc = builder.createLoc(getMainProcess().getMainProcedure().getFinalLoc().getName());
+//			locationLUT.put(getMainProcess().getMainProcedure().getFinalLoc(), loc);
+//		}
 
 		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
@@ -126,11 +134,14 @@ public final class XCFA {
 	 * Returns the XCFA as its graphviz representation
 	 */
 	public String toDot() {
+		return toDot(List.of(), List.of());
+	}
+	public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
 		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
 			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar).get()).append("\";\n");
 		}
-		ret.append(getMainProcess().toDot());
+		ret.append(getMainProcess().toDot(cexLocations, cexEdges));
 		ret.append("}\n");
 		return ret.toString();
 	}

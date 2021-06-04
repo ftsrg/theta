@@ -75,7 +75,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.xcfa.ir.Utils.parseConstant;
+import static hu.bme.mit.theta.xcfa.transformation.Utils.parseConstant;
 
 public class XcfaGui extends JFrame {
 	private final XcfaState state;
