@@ -43,7 +43,7 @@ Stores the source CStatement for every edge and location created by the Antlr-ba
   
 Stores the starting line number of the CStatement.
 
-#### lineNumberEnd:
+#### lineNumberStop:
 - owner: CStatement
 - value: Integer
   
@@ -55,7 +55,7 @@ Stores the ending line number of the CStatement.
   
 Stores the starting column number of the CStatement.
 
-#### colNumberEnd:
+#### colNumberStop:
 - owner: CStatement
 - value: Integer
   
