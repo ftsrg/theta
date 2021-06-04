@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -44,7 +45,11 @@ public class CallsToErrorLocs implements ProcedurePass {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			if(edge.getStmts().stream().anyMatch(stmt -> stmt instanceof XcfaCallStmt)) {
 				builder.removeEdge(edge);
-				builder.addEdge(new XcfaEdge(edge.getSource(), errorLoc, List.of()));
+				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
+				builder.addEdge(xcfaEdge);
+				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					XcfaMetadata.create(xcfaEdge, s, o);
+				});
 			}
 		}
 

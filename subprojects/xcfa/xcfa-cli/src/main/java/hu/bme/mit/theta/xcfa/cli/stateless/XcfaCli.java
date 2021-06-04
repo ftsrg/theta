@@ -246,7 +246,6 @@ public class XcfaCli {
 		}
 		for (CfaAction action : concrTrace.getActions()) {
 			for (CFA.Edge edge : action.getEdges()) {
-				System.out.println("Line: " + retrieveStartLine(edge));
 				Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
 				for (Object xcfaEdge : xcfaEdges) {
 					XcfaEdge e = (XcfaEdge) xcfaEdge;
@@ -263,10 +262,8 @@ public class XcfaCli {
 	private int retrieveStartLine(CFA.Edge edge) {
 		Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
 		for (Object xcfaEdge : xcfaEdges) {
-			System.out.println("cfaEdge found");
 			Object sourceStatement = XcfaMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
 			if(sourceStatement != null) {
-				System.out.println("sourceStatement found");
 				Object lineNumberStart = XcfaMetadata.lookupMetadata(sourceStatement).get("lineNumberStart");
 				if(lineNumberStart != null && lineNumberStart instanceof Integer) {
 					return (int) lineNumberStart;

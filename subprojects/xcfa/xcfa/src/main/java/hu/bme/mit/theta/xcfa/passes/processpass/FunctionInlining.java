@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToErrorLocs;
@@ -97,7 +98,11 @@ public class FunctionInlining implements ProcessPass{
 					else newStmts.add(stmt);
 				}
 
-				procBuilder.addEdge(new XcfaEdge(xcfaEdge.getSource(), xcfaEdge.getTarget(), newStmts));
+				XcfaEdge edge = new XcfaEdge(xcfaEdge.getSource(), xcfaEdge.getTarget(), newStmts);
+				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+					XcfaMetadata.create(edge, s, o);
+				});
+				procBuilder.addEdge(edge);
 			}
 		});
 	}
@@ -111,14 +116,28 @@ public class FunctionInlining implements ProcessPass{
 			XcfaLocation end = xcfaEdge.getTarget();
 			if(i > 0) {
 				XcfaLocation loc1 = new XcfaLocation("inline" + counter++, Map.of());
+				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+					XcfaMetadata.create(loc1, s, o);
+				});
 				procBuilder.addLoc(loc1);
-				procBuilder.addEdge(new XcfaEdge(start, loc1, sublist(xcfaEdge.getStmts(), 0, i)));
+				XcfaEdge edge = new XcfaEdge(start, loc1, sublist(xcfaEdge.getStmts(), 0, i));
+				procBuilder.addEdge(edge);
+				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+					XcfaMetadata.create(edge, s, o);
+				});
 				start = loc1;
 			}
 			if(i < xcfaEdge.getStmts().size() - 1) {
 				XcfaLocation loc1 = new XcfaLocation("inline" + counter++, Map.of());
+				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+					XcfaMetadata.create(loc1, s, o);
+				});
 				procBuilder.addLoc(loc1);
-				procBuilder.addEdge(new XcfaEdge(loc1, end, sublist(xcfaEdge.getStmts(), i + 1, xcfaEdge.getStmts().size())));
+				XcfaEdge edge = new XcfaEdge(loc1, end, sublist(xcfaEdge.getStmts(), i + 1, xcfaEdge.getStmts().size()));
+				procBuilder.addEdge(edge);
+				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+					XcfaMetadata.create(edge, s, o);
+				});
 				end = loc1;
 			}
 			Optional<XcfaProcedure> procedureOpt = oldBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(xcfaCallStmt.getProcedure())).findAny();
@@ -147,9 +166,16 @@ public class FunctionInlining implements ProcessPass{
 				}
 				++paramCnt;
 			}
-
-			procBuilder.addEdge(new XcfaEdge(start, procedure.getInitLoc(), initStmts));
-			procBuilder.addEdge(new XcfaEdge(procedure.getFinalLoc(), end, retStmts));
+			XcfaEdge xcfaEdge1 = new XcfaEdge(start, procedure.getInitLoc(), initStmts);
+			XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+				XcfaMetadata.create(xcfaEdge1, s, o);
+			});
+			XcfaEdge xcfaEdge2 = new XcfaEdge(procedure.getFinalLoc(), end, retStmts);
+			XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+				XcfaMetadata.create(xcfaEdge2, s, o);
+			});
+			procBuilder.addEdge(xcfaEdge1);
+			procBuilder.addEdge(xcfaEdge2);
 		});
 	}
 

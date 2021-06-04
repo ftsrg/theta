@@ -263,7 +263,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		checkState(ctx.unaryExpressionSizeOrAlignOf() == null, "Sizeof and alignof are not yet implemented");
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
-		if(increment != 0)preStatements.add(new CAssignment(ret, new CExpr(Add(cast(ret, Int()), Int(increment))), "="));
+		if(increment != 0) {
+			CAssignment cAssignment = new CAssignment(ret, new CExpr(Add(cast(ret, Int()), Int(increment))), "=");
+			preStatements.add(cAssignment);
+			FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
+		}
 		return ret;
 	}
 
@@ -288,12 +292,17 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
 			CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments);
 			preStatements.add(cCall);
+			FunctionVisitor.instance.recordMetadata(ctx, cCall);
 			return cCall.getRet().getRef();
 		}
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
-			if(increment != 0)postStatements.add(new CAssignment(primary, new CExpr(Add(cast(primary, Int()), Int(increment))), "="));
+			if(increment != 0) {
+				CAssignment cAssignment = new CAssignment(primary, new CExpr(Add(cast(primary, Int()), Int(increment))), "=");
+				postStatements.add(cAssignment);
+				FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
+			}
 			return primary;
 		}
 	}

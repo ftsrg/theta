@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -42,8 +43,20 @@ public class EmptyEdgeRemovalPass implements ProcedurePass {
 				notFound = false;
 				List<XcfaEdge> outgoingEdges = new ArrayList<>(edge.get().getTarget().getOutgoingEdges());
 				for (XcfaEdge xcfaEdge : outgoingEdges) {
-					if(xcfaEdge.getTarget() == xcfaEdge.getSource()) builder.addEdge(new XcfaEdge(edge.get().getSource(), edge.get().getSource(), xcfaEdge.getStmts()));
-					else builder.addEdge(new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts()));
+					if(xcfaEdge.getTarget() == xcfaEdge.getSource()) {
+						XcfaEdge e = new XcfaEdge(edge.get().getSource(), edge.get().getSource(), xcfaEdge.getStmts());
+						builder.addEdge(e);
+						XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+							XcfaMetadata.create(e, s, o);
+						});
+					}
+					else {
+						XcfaEdge e = new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts());
+						builder.addEdge(e);
+						XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+							XcfaMetadata.create(e, s, o);
+						});
+					}
 				}
 				builder.removeEdge(edge.get());
 			}
