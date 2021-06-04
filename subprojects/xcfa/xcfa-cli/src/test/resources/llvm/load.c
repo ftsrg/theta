@@ -1,10 +1,11 @@
-extern int abort();
+extern int nondet();
 
 int main()
 {
     int i = 1;
     if(i) {
-        return abort();
+        i = nondet();
+        abort();
     }
     else return 0;
 
