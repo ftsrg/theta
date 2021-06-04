@@ -91,7 +91,7 @@ public final class XcfaTraceToWitness {
 					throw new RuntimeException("Assume statement condition should either be an Eq or a Neq Expr");
 				}
 
-				edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>");
+				edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 			}
 
 			// not an official witness data key, so no validator will use it, but it helps readability
