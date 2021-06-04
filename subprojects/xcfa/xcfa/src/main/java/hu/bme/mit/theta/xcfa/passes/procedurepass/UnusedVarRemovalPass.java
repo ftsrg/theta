@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -57,7 +58,11 @@ public class UnusedVarRemovalPass implements ProcedurePass {
 			}
 			if (newStmts.size() != edge.getStmts().size()) {
 				builder.removeEdge(edge);
-				builder.addEdge(new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts));
+				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
+				builder.addEdge(xcfaEdge);
+				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					XcfaMetadata.create(xcfaEdge, s, o);
+				});
 			}
 		}
 		List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());

@@ -91,6 +91,9 @@ public final class XcfaProcedure {
         List<XcfaLocation> locsCollectList = new ArrayList<>();
         procedure.locs.forEach(loc -> {
             XcfaLocation location = XcfaLocation.copyOf(loc);
+            XcfaMetadata.lookupMetadata(loc).forEach((s, o) -> {
+                XcfaMetadata.create(location, s, o);
+            });
             locsCollectList.add(location);
             newLocLut.put(loc, location);
         });
@@ -104,7 +107,13 @@ public final class XcfaProcedure {
         if(finalLoc != null) finalLoc.setEndLoc(true);
 
         List<XcfaEdge> edgeCollectList = new ArrayList<>();
-        procedure.edges.forEach(edge -> edgeCollectList.add(XcfaEdge.copyOf(edge, newLocLut, newVarLut)));
+        procedure.edges.forEach(edge -> {
+            XcfaEdge xcfaEdge = XcfaEdge.copyOf(edge, newLocLut, newVarLut);
+            XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+                XcfaMetadata.create(xcfaEdge, s, o);
+            });
+            edgeCollectList.add(xcfaEdge);
+        });
         edges = ImmutableList.copyOf(edgeCollectList);
         edges.forEach(edge -> edge.setParent(this));
 

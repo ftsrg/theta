@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -53,7 +54,11 @@ public class HavocAssignments implements ProcedurePass {
 					notFound = false;
 					builder.removeEdge(havocEdge.get());
 					builder.removeEdge(assignEdge);
-					builder.addEdge(new XcfaEdge(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl()))));
+					XcfaEdge xcfaEdge = new XcfaEdge(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl())));
+					builder.addEdge(xcfaEdge);
+					XcfaMetadata.lookupMetadata(havocEdge).forEach((s, o) -> {
+						XcfaMetadata.create(xcfaEdge, s, o);
+					});
 					builder.getLocs().remove(havocEdge.get().getTarget());
 				}
 			}

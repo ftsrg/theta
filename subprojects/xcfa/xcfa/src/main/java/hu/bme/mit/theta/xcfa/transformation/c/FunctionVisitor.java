@@ -87,7 +87,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		return program;
 	}
 
-	private void recordMetadata(ParserRuleContext ctx, CStatement statement) {
+	public void recordMetadata(ParserRuleContext ctx, CStatement statement) {
 		Token start = ctx.getStart();
 		Token stop = ctx.getStop();
 		String stopText = stop.getText();
