@@ -288,18 +288,4 @@ public class XcfaCli {
 			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
 		}
 	}
-
-	private int retrieveStartLine(CFA.Edge edge) {
-		Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
-		for (Object xcfaEdge : xcfaEdges) {
-			Object sourceStatement = XcfaMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
-			if(sourceStatement != null) {
-				Object lineNumberStart = XcfaMetadata.lookupMetadata(sourceStatement).get("lineNumberStart");
-				if(lineNumberStart != null && lineNumberStart instanceof Integer) {
-					return (int) lineNumberStart;
-				}
-			}
-		}
-		return -1;
-	}
 }
