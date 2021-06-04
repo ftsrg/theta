@@ -264,9 +264,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if(increment != 0) {
-			CAssignment cAssignment = new CAssignment(ret, new CExpr(Add(cast(ret, Int()), Int(increment))), "=");
+			CExpr cexpr = new CExpr(Add(cast(ret, Int()), Int(increment)));
+			CAssignment cAssignment = new CAssignment(ret, cexpr, "=");
 			preStatements.add(cAssignment);
 			FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
+			FunctionVisitor.instance.recordMetadata(ctx, cexpr);
 		}
 		return ret;
 	}
@@ -299,9 +301,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
 			if(increment != 0) {
-				CAssignment cAssignment = new CAssignment(primary, new CExpr(Add(cast(primary, Int()), Int(increment))), "=");
+				CExpr cexpr = new CExpr(Add(cast(primary, Int()), Int(increment)));
+				CAssignment cAssignment = new CAssignment(primary, cexpr, "=");
 				postStatements.add(cAssignment);
 				FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
+				FunctionVisitor.instance.recordMetadata(ctx, cexpr);
 			}
 			return primary;
 		}
