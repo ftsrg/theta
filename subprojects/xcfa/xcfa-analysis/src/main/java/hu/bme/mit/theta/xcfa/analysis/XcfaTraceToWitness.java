@@ -56,10 +56,12 @@ public final class XcfaTraceToWitness {
 			}
 
 			// add endline if there is a line number
+			/* TODO endlines at conditions (assumeStmts) should not include the whole control expression (whole scope of if/for/etc.)
 			Integer endLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getEdges().get(0), "lineNumberStop");
 			if (endLineNumber != -1) {
 				edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
 			}
+			 */
 
 			// add offset if there is an offset start
 			Integer offsetStartNumber = getEdgeMetadata(concreteTrace.getAction(i).getEdges().get(0), "offsetStart");
