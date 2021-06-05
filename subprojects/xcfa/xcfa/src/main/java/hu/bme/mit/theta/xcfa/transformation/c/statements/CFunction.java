@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
@@ -30,6 +31,7 @@ public class CFunction extends CStatement{
 		this.compound = compound;
 		this.flatVariables = flatVariables;
 		this.locLut = locLut;
+		XcfaMetadata.lookupMetadata(funcDecl).forEach((s, o) -> XcfaMetadata.create(this, s, o));
 	}
 
 	public CStatement getCompound() {

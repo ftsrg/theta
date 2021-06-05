@@ -17,55 +17,42 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-public class CallsToFinalLocs implements ProcedurePass {
-	private static final String errorFunc = "reach_error";
-	private static final String abortFunc = "abort";
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+
+public class CallsToHavocs implements ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = new XcfaLocation(builder.getName() + "_error", Map.of());
-		XcfaLocation finalLoc = new XcfaLocation(builder.getName() + "_final", Map.of());
-		builder.addLoc(errorLoc);
-		builder.addLoc(finalLoc);
-		XcfaLocation oldFinalLoc = builder.getFinalLoc();
-		builder.setFinalLoc(finalLoc);
-		XcfaEdge toFinal = new XcfaEdge(oldFinalLoc, finalLoc, List.of());
-		builder.addEdge(toFinal);
-		builder.setErrorLoc(errorLoc);
-
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
 			if(e.isPresent()) {
-				XcfaEdge xcfaEdge;
-				switch(((XcfaCallStmt)e.get()).getProcedure()) {
-					case errorFunc:
-						xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
-						break;
-					case abortFunc:
-						xcfaEdge = new XcfaEdge(edge.getSource(), finalLoc, List.of());
-						break;
-					default:
-						continue;
+				List<Stmt> collect = new ArrayList<>();
+				for (Stmt stmt : edge.getStmts()) {
+					if(stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
+						Expr<?> expr = ((XcfaCallStmt)e.get()).getParams().get(0);
+						checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
+						VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
+						collect.add(Havoc(var));
+					}
+					else collect.add(stmt);
 				}
+				XcfaEdge xcfaEdge;
+				xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
 				builder.removeEdge(edge);
 				builder.addEdge(xcfaEdge);
 				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {

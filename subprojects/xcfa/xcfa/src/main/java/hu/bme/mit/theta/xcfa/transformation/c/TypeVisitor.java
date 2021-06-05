@@ -131,6 +131,9 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 				return null;
 			case "unsigned":
 				return Unsigned();
+			case "long":
+			case "short":
+				return null;
 			default:
 				return NamedType(ctx.getText());
 		}

@@ -542,6 +542,8 @@ functionDefinition
 //    :   declaration+
 //    ;
 
+Extension: '__extension__' -> skip;
+
 Auto : 'auto';
 Break : 'break';
 Case : 'case';

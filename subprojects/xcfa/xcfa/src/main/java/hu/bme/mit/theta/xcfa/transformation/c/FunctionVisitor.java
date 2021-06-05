@@ -29,7 +29,6 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -50,14 +49,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	private final Deque<Map<String, VarDecl<?>>> variables;
 	private final List<VarDecl<?>> flatVariables;
+	private final Map<VarDecl<?>, CDeclaration> functions;
 
-	private int counter = 0;
 	private VarDecl<?> createVar(CDeclaration declaration) {
 		String name = declaration.getName();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
-		peek.put(name, Var(name + counter++, Int()));
+		peek.put(name, Var(name, Int()));
 		VarDecl<?> varDecl = peek.get(name);
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
@@ -68,6 +67,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		variables = new ArrayDeque<>();
 		variables.push(new LinkedHashMap<>());
 		flatVariables = new ArrayList<>();
+		functions = new LinkedHashMap<>();
 	}
 
 	@Override
@@ -122,11 +122,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
+		CType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
+		functions.put(createVar(funcDecl), funcDecl);
 		variables.push(new LinkedHashMap<>());
 		locLUT.clear();
 		flatVariables.clear();
-		CType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
-		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setBaseType(returnType);
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
 			if(functionParam.getName() != null) createVar(functionParam);
@@ -171,7 +172,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
-		CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables)));
+		CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables, functions)));
 		CCase cCase = new CCase(
 				cexpr,
 				ctx.statement().accept(this));
@@ -313,7 +314,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitAssignmentExpressionAssignmentExpression(CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
-		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables);
+		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables, functions);
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
@@ -327,7 +328,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitAssignmentExpressionConditionalExpression(CParser.AssignmentExpressionConditionalExpressionContext ctx) {
-		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables);
+		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables, functions);
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.conditionalExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());

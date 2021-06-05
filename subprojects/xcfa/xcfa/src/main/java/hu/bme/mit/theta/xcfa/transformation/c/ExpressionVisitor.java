@@ -11,6 +11,8 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
@@ -43,16 +45,24 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	private final List<CStatement> preStatements = new ArrayList<>();
 	private final List<CStatement> postStatements = new ArrayList<>();
 	private final Deque<Map<String, VarDecl<?>>> variables;
+	private final Map<VarDecl<?>, CDeclaration> functions;
 
 	private static boolean isBitwiseOps = false;
 
-	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
+	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		this.variables = variables;
+		this.functions = functions;
 	}
 	
 	private VarDecl<?> getVar(String name) {
 		for (Map<String, VarDecl<?>> variableList : variables) {
-			if(variableList.containsKey(name)) return variableList.get(name);
+			if(variableList.containsKey(name)) {
+				VarDecl<?> varDecl = variableList.get(name);
+				if(functions.containsKey(varDecl)) {
+					XcfaMetadata.create(functions.get(varDecl), "shouldInline", false);
+				}
+				return varDecl;
+			}
 		}
 		throw new RuntimeException("No such variable: " + name);
 	}
