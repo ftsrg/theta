@@ -32,20 +32,30 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CallsToErrorLocs implements ProcedurePass {
+public class CallsToFinalLocs implements ProcedurePass {
+	private static final String errorFunc = "reach_error";
+
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		XcfaLocation errorLoc = new XcfaLocation("error", Map.of());
+		XcfaLocation finalLoc = new XcfaLocation("final", Map.of());
 		builder.addLoc(errorLoc);
+		builder.addLoc(finalLoc);
+		XcfaLocation oldFinalLoc = builder.getFinalLoc();
+		builder.setFinalLoc(finalLoc);
+		XcfaEdge toFinal = new XcfaEdge(oldFinalLoc, finalLoc, List.of());
+		builder.addEdge(toFinal);
 		builder.setErrorLoc(errorLoc);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			if(edge.getStmts().stream().anyMatch(stmt -> stmt instanceof XcfaCallStmt)) {
+			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			if(e.isPresent()) {
 				builder.removeEdge(edge);
-				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
+				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), ((XcfaCallStmt)e.get()).getProcedure().equals(errorFunc) ? errorLoc : finalLoc, List.of());
 				builder.addEdge(xcfaEdge);
 				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
 					XcfaMetadata.create(xcfaEdge, s, o);

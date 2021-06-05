@@ -323,8 +323,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitPrimaryExpressionBraceExpression(CParser.PrimaryExpressionBraceExpressionContext ctx) {
-		System.err.println("Brace expression not fully implemented: " + ctx.getText());
-		return ctx.expression().accept(FunctionVisitor.instance).getExpression();
+		CStatement statement = ctx.expression().accept(FunctionVisitor.instance);
+		preStatements.add(statement);
+		return statement.getExpression();
 	}
 
 	@Override

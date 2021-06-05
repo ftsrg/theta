@@ -50,7 +50,7 @@ public class HavocAssignments implements ProcedurePass {
 				HavocStmt<?> h = (HavocStmt<?>) havocEdge.get().getStmts().get(0);
 				XcfaEdge assignEdge = havocEdge.get().getTarget().getOutgoingEdges().get(0);
 				AssignStmt<?> a = (AssignStmt<?>) assignEdge.getStmts().get(0);
-				if(h.getVarDecl() == ((RefExpr<?>)a.getExpr()).getDecl()) {
+				if(h.getVarDecl() == ((RefExpr<?>)a.getExpr()).getDecl() && h.getVarDecl().getName().startsWith("call_")) {
 					notFound = false;
 					builder.removeEdge(havocEdge.get());
 					builder.removeEdge(assignEdge);

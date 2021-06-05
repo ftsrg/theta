@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
-import com.google.common.base.Predicates;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
@@ -11,7 +10,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToErrorLocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
@@ -32,7 +30,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class FunctionInlining implements ProcessPass{
 	private int counter = 0;
-	private List<String> errorFuncs = List.of("abort");
+	private final List<String> nopFuncs = List.of("reach_error", "abort");
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
@@ -69,9 +67,9 @@ public class FunctionInlining implements ProcessPass{
 			splittingPoints.clear();
 			havocStmts.clear();
 		}
-		XcfaProcedure.Builder funcBuilder = new CallsToErrorLocs().run(mainProcBuilder);
-//		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
+		XcfaProcedure.Builder funcBuilder = new CallsToFinalLocs().run(mainProcBuilder);
 		funcBuilder = new HavocAssignments().run(funcBuilder);
+		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
 		funcBuilder = new UnusedVarRemovalPass().run(funcBuilder);
 		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
 		XcfaProcedure built = funcBuilder.build();
@@ -194,7 +192,7 @@ public class FunctionInlining implements ProcessPass{
 		for (XcfaEdge edge : mainProcBuilder.getEdges()) {
 			boolean stillExists = true;
 			while(stillExists) {
-				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && !alreadyHandled.contains(stmt) && !errorFuncs.contains(((XcfaCallStmt)stmt).getProcedure())).findAny();
+				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && !alreadyHandled.contains(stmt) && !nopFuncs.contains(((XcfaCallStmt)stmt).getProcedure())).findAny();
 				if(callStmtOpt.isPresent() ) {
 					alreadyHandled.add(callStmtOpt.get());
 					anyMatch = true;

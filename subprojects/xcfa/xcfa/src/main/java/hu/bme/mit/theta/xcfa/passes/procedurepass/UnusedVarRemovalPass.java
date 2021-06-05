@@ -34,40 +34,45 @@ import java.util.stream.Collectors;
 public class UnusedVarRemovalPass implements ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Set<VarDecl<?>> vars = new LinkedHashSet<>();
-		for (XcfaEdge edge : builder.getEdges()) {
-			for (Stmt stmt : edge.getStmts()) {
-				Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
-				vars1.removeIf(varDecl ->
-					   (stmt instanceof HavocStmt)
+		boolean atLeastOne = true;
+		while(atLeastOne) {
+			atLeastOne = false;
+			Set<VarDecl<?>> vars = new LinkedHashSet<>();
+			for (XcfaEdge edge : builder.getEdges()) {
+				for (Stmt stmt : edge.getStmts()) {
+					Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
+					vars1.removeIf(varDecl ->
+									(stmt instanceof HavocStmt)
 //					|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
-				);
-				vars.addAll(vars1);
-			}
-		}
-		List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
-		for (int i = 0; i < edges.size(); i++) {
-			XcfaEdge edge = edges.get(i);
-			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
-			for (Stmt stmt : edge.getStmts()) {
-				if (stmt instanceof HavocStmt && !vars.contains(((HavocStmt<?>) stmt).getVarDecl())) {
-					newStmts.remove(stmt);
-				} else if (stmt instanceof AssignStmt && !vars.contains(((AssignStmt<?>) stmt).getVarDecl())) {
-					newStmts.remove(stmt);
+					);
+					vars.addAll(vars1);
 				}
 			}
-			if (newStmts.size() != edge.getStmts().size()) {
-				builder.removeEdge(edge);
-				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
-				builder.addEdge(xcfaEdge);
-				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					XcfaMetadata.create(xcfaEdge, s, o);
-				});
+			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
+			for (int i = 0; i < edges.size(); i++) {
+				XcfaEdge edge = edges.get(i);
+				List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
+				for (Stmt stmt : edge.getStmts()) {
+					if (stmt instanceof HavocStmt && !vars.contains(((HavocStmt<?>) stmt).getVarDecl())) {
+						newStmts.remove(stmt);
+					} else if (stmt instanceof AssignStmt && !vars.contains(((AssignStmt<?>) stmt).getVarDecl())) {
+						newStmts.remove(stmt);
+					}
+				}
+				if (newStmts.size() != edge.getStmts().size()) {
+					builder.removeEdge(edge);
+					XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
+					builder.addEdge(xcfaEdge);
+					XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+						XcfaMetadata.create(xcfaEdge, s, o);
+					});
+					atLeastOne = true;
+				}
 			}
-		}
-		List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());
-		for (VarDecl<?> varDecl : unused) {
-			builder.getLocalVars().remove(varDecl);
+			List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());
+			for (VarDecl<?> varDecl : unused) {
+				builder.getLocalVars().remove(varDecl);
+			}
 		}
 
 		return builder;
