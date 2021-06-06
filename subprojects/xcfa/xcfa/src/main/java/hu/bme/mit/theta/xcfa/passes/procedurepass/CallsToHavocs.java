@@ -34,7 +34,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
-public class CallsToHavocs implements ProcedurePass {
+public class CallsToHavocs extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
@@ -62,5 +62,10 @@ public class CallsToHavocs implements ProcedurePass {
 		}
 
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }

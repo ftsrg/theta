@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -353,8 +354,9 @@ public final class XcfaProcedure {
             checkState(finalLoc.getOutgoingEdges().isEmpty(), "Final location cannot have outgoing edges.");
             if (errorLoc != null)
                 checkState(errorLoc.getOutgoingEdges().isEmpty(), "Error location cannot have outgoing edges.");
+            Builder builder = XcfaPassManager.run(this);
             built = true;
-            return new XcfaProcedure(this);
+            return new XcfaProcedure(builder);
         }
 
         public void removeEdge(XcfaEdge xcfaEdge) {

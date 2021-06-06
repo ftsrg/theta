@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class UnusedVarRemovalPass implements ProcedurePass {
+public class UnusedVarRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		boolean atLeastOne = true;

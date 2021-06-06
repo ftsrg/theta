@@ -15,6 +15,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
@@ -30,12 +31,15 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class FunctionInlining implements ProcessPass{
+public class FunctionInlining extends ProcessPass {
 	private int counter = 0;
 	private final List<String> nopFuncs = List.of("reach_error", "abort");
+	private final Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		ProcedurePass.postInlining = true;
+		alreadyHandled.clear();
 		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
 		newBuilder.setName(builder.getName());
 		newBuilder.getThreadLocalVars().putAll(builder.getThreadLocalVars());
@@ -100,15 +104,6 @@ public class FunctionInlining implements ProcessPass{
 			splitAndInlineEdges(builder, mainProcBuilder, splittingPoints);
 			splittingPoints.clear();
 		}
-
-
-		mainProcBuilder = new PthreadCallsToThreadStmts().run(mainProcBuilder);
-		mainProcBuilder = new CallsToFinalLocs().run(mainProcBuilder);
-		mainProcBuilder = new CallsToHavocs().run(mainProcBuilder);
-		mainProcBuilder = new HavocAssignments().run(mainProcBuilder);
-		mainProcBuilder = new EmptyEdgeRemovalPass().run(mainProcBuilder);
-		mainProcBuilder = new UnusedVarRemovalPass().run(mainProcBuilder);
-		mainProcBuilder = new EmptyEdgeRemovalPass().run(mainProcBuilder);
 		XcfaProcedure built = mainProcBuilder.build();
 		newBuilder.addProcedure(built);
 		return built;
@@ -195,7 +190,6 @@ public class FunctionInlining implements ProcessPass{
 	}
 
 
-	Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 	private boolean handleCallStmts(XcfaProcess.Builder builder, XcfaProcedure mainProcedure, XcfaProcedure.Builder mainProcBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {
 		boolean anyMatch = false;
 		for (XcfaEdge edge : mainProcBuilder.getEdges()) {

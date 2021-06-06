@@ -18,9 +18,9 @@ package hu.bme.mit.theta.xcfa.passes.processpass;
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
-public interface ProcessPass {
+public abstract class ProcessPass {
 
-	XcfaProcess.Builder run(XcfaProcess.Builder builder);
+	public abstract XcfaProcess.Builder run(XcfaProcess.Builder builder);
 
 
 }

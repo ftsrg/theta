@@ -37,7 +37,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
-public class PthreadCallsToThreadStmts implements ProcedurePass {
+public class PthreadCallsToThreadStmts extends ProcedurePass {
 	private static final String threadStart = "pthread_create";
 	private static final int threadStartHandle = 0;
 	private static final int threadStartFuncPtr = 2;

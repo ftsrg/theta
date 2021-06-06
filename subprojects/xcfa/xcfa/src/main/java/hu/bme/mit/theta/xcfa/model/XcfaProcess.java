@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -182,7 +183,8 @@ public final class XcfaProcess {
         public XcfaProcess build() {
             checkNotBuilt();
             checkState(mainProcedure != null, "Main procedure must be set.");
-            XcfaProcess process = new XcfaProcess(this);
+            Builder builder = XcfaPassManager.run(this);
+            XcfaProcess process = new XcfaProcess(builder);
             built = true;
             return process;
         }

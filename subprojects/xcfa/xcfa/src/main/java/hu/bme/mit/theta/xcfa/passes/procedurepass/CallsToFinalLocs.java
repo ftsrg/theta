@@ -36,9 +36,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CallsToFinalLocs implements ProcedurePass {
-	private static final String errorFunc = "reach_error";
-	private static final String abortFunc = "abort";
+public class CallsToFinalLocs extends ProcedurePass {
+	private static final List<String> errorFunc = List.of("reach_error");
+	private static final List<String> abortFunc = List.of("abort", "exit");
+	public boolean postInlining = false;
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
@@ -56,15 +57,13 @@ public class CallsToFinalLocs implements ProcedurePass {
 			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
 			if(e.isPresent()) {
 				XcfaEdge xcfaEdge;
-				switch(((XcfaCallStmt)e.get()).getProcedure()) {
-					case errorFunc:
-						xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
-						break;
-					case abortFunc:
-						xcfaEdge = new XcfaEdge(edge.getSource(), finalLoc, List.of());
-						break;
-					default:
-						continue;
+				String procedure = ((XcfaCallStmt) e.get()).getProcedure();
+				if (errorFunc.contains(procedure)) {
+					xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
+				} else if (abortFunc.contains(procedure)) {
+					xcfaEdge = new XcfaEdge(edge.getSource(), finalLoc, List.of());
+				} else {
+					continue;
 				}
 				builder.removeEdge(edge);
 				builder.addEdge(xcfaEdge);
@@ -75,5 +74,10 @@ public class CallsToFinalLocs implements ProcedurePass {
 		}
 
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }

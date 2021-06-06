@@ -53,7 +53,6 @@ public class CProgram extends CStatement{
 			procBuilder.addProcedure((XcfaProcedure) build);
 			if(((XcfaProcedure) build).getName().equals("main")) procBuilder.setMainProcedure((XcfaProcedure) build);
 		}
-		procBuilder = new FunctionInlining().run(procBuilder);
 		XcfaProcess mainproc = procBuilder.build();
 		builder.addProcess(mainproc);
 		builder.setMainProcess(mainproc);

@@ -84,8 +84,6 @@ public class CFunction extends CStatement{
 		builder.addEdge(edge);
         propagateMetadata(edge);
 		builder.setFinalLoc(ret);
-		builder = new EmptyEdgeRemovalPass().run(builder);
-		builder = new UnusedVarRemovalPass().run(builder);
 		return builder.build();
 	}
 }
