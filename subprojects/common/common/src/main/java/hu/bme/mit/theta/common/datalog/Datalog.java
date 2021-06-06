@@ -300,10 +300,10 @@ public class Datalog {
 			int cnt = 0;
 			for (Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule : rules) {
 				for (Tuple2<Relation, TupleN<Variable>> clause : rule.get2()) {
-					for (TupleN<DatalogArgument> newElement : clause.get1().newElements) {
+					for (TupleN<DatalogArgument> newElement : new LinkedHashSet<>(clause.get1().newElements)) {
 						cnt = addElements(cnt, rule, clause, newElement);
 					}
-					for (TupleN<DatalogArgument> newElement : clause.get1().toAdd) {
+					for (TupleN<DatalogArgument> newElement : new LinkedHashSet<>(clause.get1().toAdd)) {
 						cnt = addElements(cnt, rule, clause, newElement);
 					}
 				}
