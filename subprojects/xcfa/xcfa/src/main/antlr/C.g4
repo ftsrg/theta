@@ -542,8 +542,8 @@ functionDefinition
 //    :   declaration+
 //    ;
 
-Extension: '__extension__' -> skip;
-
+Extension: '__extension__' -> skip; // Hack to make .i files work (SV-COMP)
+VoidSizeof: '(void) sizeof' -> skip; // Hack to make .i files work (SV-COMP)
 Auto : 'auto';
 Break : 'break';
 Case : 'case';
