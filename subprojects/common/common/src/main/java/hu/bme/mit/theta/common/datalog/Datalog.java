@@ -15,8 +15,7 @@ import hu.bme.mit.theta.common.TupleN;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,7 @@ public class Datalog {
 	public static String runProgram(String relations) {
 		Datalog datalog = new Datalog();
 		StringBuilder ret = new StringBuilder();
-		Map<String, Relation> relationMap = new HashMap<>();
+		Map<String, Relation> relationMap = new LinkedHashMap<>();
 		for (String expression : relations.split("\\.")) {
 			String nospace = expression.replaceAll("[ \t\n]", "");
 			if (nospace.matches("([a-z_][a-zA-Z0-9_]*)\\(([a-z_0-9][a-zA-Z0-9_]*)(,[a-z_0-9][a-zA-Z_0-9]*)*\\)")) { //fact assertion
@@ -56,7 +55,7 @@ public class Datalog {
 			} else if (nospace.matches("([a-z_][a-zA-Z_0-9]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\):-([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\)(,([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\))*")) { //deduction rule
 				String[] splitExpression = nospace.split(":-");
 
-				Map<String, Variable> variableMap = new HashMap<>();
+				Map<String, Variable> variableMap = new LinkedHashMap<>();
 				String[] splitString = splitExpression[0].split("\\(");
 				String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
 				relationMap.putIfAbsent(splitString[0], datalog.createRelation(arguments.length));
@@ -230,6 +229,7 @@ public class Datalog {
 	}
 
 	public class Relation {
+		private String name;
 		private final Set<TupleN<DatalogArgument>> elements;
 		private final Set<TupleN<DatalogArgument>> newElements;
 		private final Set<TupleN<DatalogArgument>> toAdd;
@@ -237,6 +237,15 @@ public class Datalog {
 		private final int arity;
 
 		private Relation(int n) {
+			this("", n);
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		private Relation(String name, int n) {
+			this.name = name;
 			this.arity = n;
 			elements = new LinkedHashSet<>();
 			newElements = new LinkedHashSet<>();
@@ -249,7 +258,7 @@ public class Datalog {
 			newElements.add(fact);
 			if (debug) {
 				System.out.println();
-				System.out.println("New fact: " + fact);
+				System.out.println("New fact (" + name + "): " + fact);
 			}
 			refresh();
 		}
@@ -273,18 +282,19 @@ public class Datalog {
 			return arity;
 		}
 
-		private boolean validate(List<Tuple2<Relation, TupleN<Variable>>> clauses, Map<Variable, DatalogArgument> currentAssignments, List<Map<Variable, DatalogArgument>> assignments) {
+		private boolean validate(List<Tuple2<Relation, TupleN<Variable>>> oldClauses, Map<Variable, DatalogArgument> currentAssignments, List<Map<Variable, DatalogArgument>> assignments) {
+			List<Tuple2<Relation, TupleN<Variable>>> clauses = new ArrayList<>(oldClauses);
 			if (clauses.size() > 0) {
 				Tuple2<Relation, TupleN<Variable>> clause = clauses.get(0);
 				clauses.remove(0);
 				for (TupleN<DatalogArgument> element : clause.get1().elements) {
-					Map<Variable, DatalogArgument> nextAssignments = new HashMap<>(currentAssignments);
+					Map<Variable, DatalogArgument> nextAssignments = new LinkedHashMap<>(currentAssignments);
 					if (!putAssignments(nextAssignments, clause, element)) {
 						validate(clauses, nextAssignments, assignments);
 					}
 				}
 				for (TupleN<DatalogArgument> element : clause.get1().newElements) {
-					Map<Variable, DatalogArgument> nextAssignments = new HashMap<>(currentAssignments);
+					Map<Variable, DatalogArgument> nextAssignments = new LinkedHashMap<>(currentAssignments);
 					if (!putAssignments(nextAssignments, clause, element)) {
 						validate(clauses, nextAssignments, assignments);
 					}
@@ -300,11 +310,25 @@ public class Datalog {
 			int cnt = 0;
 			for (Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule : rules) {
 				for (Tuple2<Relation, TupleN<Variable>> clause : rule.get2()) {
-					for (TupleN<DatalogArgument> newElement : new LinkedHashSet<>(clause.get1().newElements)) {
-						cnt = addElements(cnt, rule, clause, newElement);
+					Set<TupleN<DatalogArgument>> alreadyAdded = new LinkedHashSet<>();
+					boolean atLeastOne = true;
+					while(atLeastOne) {
+						atLeastOne = false;
+						for (TupleN<DatalogArgument> newElement : clause.get1().newElements.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection( LinkedHashSet::new ))) {
+							cnt = addElements(cnt, rule, clause, newElement);
+							alreadyAdded.add(newElement);
+							atLeastOne = true;
+						}
 					}
-					for (TupleN<DatalogArgument> newElement : new LinkedHashSet<>(clause.get1().toAdd)) {
-						cnt = addElements(cnt, rule, clause, newElement);
+					alreadyAdded.clear();
+					atLeastOne = true;
+					while(atLeastOne) {
+						atLeastOne = false;
+						for (TupleN<DatalogArgument> newElement : clause.get1().toAdd.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection( LinkedHashSet::new ))) {
+							cnt = addElements(cnt, rule, clause, newElement);
+							alreadyAdded.add(newElement);
+							atLeastOne = true;
+						}
 					}
 				}
 			}
@@ -312,11 +336,11 @@ public class Datalog {
 		}
 
 		private int addElements(int cnt, Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule, Tuple2<Relation, TupleN<Variable>> clause, TupleN<DatalogArgument> newElement) {
-			Map<Variable, DatalogArgument> assignments = new HashMap<>();
+			Map<Variable, DatalogArgument> assignments = new LinkedHashMap<>();
 			if (putAssignments(assignments, clause, newElement))
 				return cnt;
 			if (debug) {
-				if (this == relations.get(1)) System.out.println("\tChecking " + newElement);
+				 System.out.println("\t(" + name + ")Checking " + newElement);
 			}
 			ArrayList<Tuple2<Relation, TupleN<Variable>>> validators = new ArrayList<>(rule.get2());
 			validators.remove(clause);
@@ -333,7 +357,7 @@ public class Datalog {
 					if (!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(item)) {
 						toAdd.add(item);
 						if (debug) {
-							if (this == relations.get(1)) System.out.println("Adding " + item);
+							 System.out.println("(" + name + ")Adding " + item);
 						}
 						++cnt;
 					}
@@ -358,8 +382,8 @@ public class Datalog {
 			if (debug) {
 				StringBuilder stringBuilder = new StringBuilder("[");
 				newElements.forEach(objects -> stringBuilder.append(objects.toString()).append(", "));
-				if (this == relations.get(1))
-					System.out.println("Promoting newElements to elements: " + stringBuilder.append("]").toString());
+				
+					System.out.println("(" + name + ") Promoting newElements to elements: " + stringBuilder.append("]").toString());
 			}
 			elements.addAll(newElements);
 			newElements.clear();
@@ -367,8 +391,8 @@ public class Datalog {
 			if (debug) {
 				StringBuilder stringBuilder1 = new StringBuilder("[");
 				toAdd.forEach(objects -> stringBuilder1.append(objects.toString()).append(", "));
-				if (this == relations.get(1))
-					System.out.println("Promoting toAdd to newElements: " + stringBuilder1.append("]").toString());
+				
+					System.out.println("(" + name + ") Promoting toAdd to newElements: " + stringBuilder1.append("]").toString());
 			}
 			newElements.addAll(toAdd);
 			toAdd.clear();

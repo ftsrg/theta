@@ -48,11 +48,17 @@ public class MemoryModelChecking {
 		accessors = new LinkedHashMap<>();
 		Datalog datalog = Datalog.createProgram();
 		Datalog.Relation po = datalog.createRelation(2);
+		po.setName("po");
 		Datalog.Relation poPath = datalog.createTransitive(po);
+		poPath.setName("poPath");
 		Datalog.Relation rf = datalog.createRelation(2);
+		rf.setName("rf");
 		Datalog.Relation porf = datalog.createDisjunction(Set.of(po, rf));
+		porf.setName("porf");
 		Datalog.Relation porfPath = datalog.createTransitive(porf);
+		porfPath.setName("porfPath");
 		Datalog.Relation coherency = datalog.createRelation(4);
+		coherency.setName("coherency");
 		Datalog.Variable w1, w2, r1, r2;
 		coherency.addRule(TupleN.of(
 				w1 = datalog.getVariable(),
@@ -74,7 +80,7 @@ public class MemoryModelChecking {
 								TupleN.of(w1, r2)
 						),
 						Tuple2.of(
-								porfPath,
+								rf,
 								TupleN.of(w2, r1)
 						)
 				));
