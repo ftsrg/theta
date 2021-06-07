@@ -19,7 +19,7 @@ To aid witness generation, there is an XcfaMetadata class which holds the follow
 
 Stores the mapping from each XCFA location to their CFA counterpart. This is a 1:1 relation.
 
-#### cfaInterLoc:
+#### xcfaInterLoc:
 - owner: XcfaEdge
 - value: CFA.Loc
   

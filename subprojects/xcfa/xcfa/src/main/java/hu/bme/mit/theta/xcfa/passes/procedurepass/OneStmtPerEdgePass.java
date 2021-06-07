@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -23,11 +24,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 
-public class EmptyEdgeSkipPass extends ProcedurePass {
+public class OneStmtPerEdgePass extends ProcedurePass {
+	private static int tmpcnt = 0;
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		boolean notFound = false;
@@ -36,7 +39,24 @@ public class EmptyEdgeSkipPass extends ProcedurePass {
 			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
-				builder.addEdge(new XcfaEdge(edge.get().getSource(), edge.get().getTarget(), List.of(Skip())));
+				XcfaEdge xcfaEdge = new XcfaEdge(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
+				builder.addEdge(xcfaEdge);
+				XcfaMetadata.lookupMetadata(edge.get()).forEach((s, o) -> XcfaMetadata.create(xcfaEdge, s, o));
+				builder.removeEdge(edge.get());
+			}
+			edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() > 1).findFirst();
+			if(edge.isPresent()) {
+				notFound = false;
+				XcfaLocation lastLoc = edge.get().getSource(), interLoc;
+				for (Stmt stmt : edge.get().getStmts()) {
+					interLoc = edge.get().getStmts().indexOf(stmt) == edge.get().getStmts().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
+					builder.addLoc(interLoc);
+					XcfaMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
+					XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, interLoc, List.of(stmt));
+					lastLoc = interLoc;
+					builder.addEdge(xcfaEdge);
+					XcfaMetadata.lookupMetadata(edge.get()).forEach((s, o) -> XcfaMetadata.create(xcfaEdge, s, o));
+				}
 				builder.removeEdge(edge.get());
 			}
 		}

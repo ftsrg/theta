@@ -90,7 +90,7 @@ public final class XCFA {
 			for (int i = 1; i < e.getStmts().size(); ++i) {
 				CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
 				locations.add(loc);
-				XcfaMetadata.create(e, "cfaInterLoc", loc);
+				XcfaMetadata.create(e, "xcfaInterLoc", loc);
 			}
 			// Adding target
 			locations.add(locationLUT.get(e.getTarget()));

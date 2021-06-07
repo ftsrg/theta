@@ -50,6 +50,7 @@ public class CCall extends CStatement{
 		builder.addLoc(location);
         propagateMetadata(location);
 		List<Expr<?>> params = new ArrayList<>();
+		builder.createVar(ret, null);
 		params.add(ret.getRef());
 		for (CStatement param : this.params) {
 			initLoc = param.build(builder, initLoc, breakLoc, continueLoc, returnLoc);

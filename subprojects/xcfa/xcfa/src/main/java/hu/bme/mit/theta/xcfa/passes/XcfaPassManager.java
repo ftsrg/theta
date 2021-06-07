@@ -7,7 +7,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.AssignmentChainRemoval;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeSkipPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
@@ -33,8 +33,7 @@ public class XcfaPassManager {
 				new HavocAssignments(),
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
-				new EmptyEdgeRemovalPass(),
-				new EmptyEdgeSkipPass()));
+				new EmptyEdgeRemovalPass()));
 		processPasses.addAll(List.of(
 				new FunctionInlining()));
 		xcfaPasses.addAll((List.of(

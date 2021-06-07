@@ -39,6 +39,9 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
@@ -91,6 +94,12 @@ public class XcfaCli {
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
 
+	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
+	boolean loadStore = false;
+
+	@Parameter(names = "--strict-stmtlist", description = "Exactly one statement per edge")
+	boolean oneStmt = false;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -116,6 +125,13 @@ public class XcfaCli {
 		}
 
 		try {
+			if(loadStore) {
+				XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
+			}
+			if(oneStmt) {
+				XcfaPassManager.addProcedurePass(new OneStmtPerEdgePass());
+			}
+
 			final Stopwatch sw = Stopwatch.createStarted();
 			//final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
 
