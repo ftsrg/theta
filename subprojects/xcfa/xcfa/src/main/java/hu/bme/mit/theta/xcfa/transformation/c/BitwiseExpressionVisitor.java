@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 
 import java.util.Deque;
 import java.util.List;
@@ -15,8 +16,8 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class BitwiseExpressionVisitor extends ExpressionVisitor {
 
-	public BitwiseExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
-		super(variables);
+	public BitwiseExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
+		super(variables, functions);
 	}
 
 	@Override

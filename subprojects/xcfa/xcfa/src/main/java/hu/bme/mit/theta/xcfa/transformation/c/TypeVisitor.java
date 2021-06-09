@@ -55,9 +55,7 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 			cTypes.remove(mainType);
 		}
 
-		CType type = mainType.apply(cTypes);
-		System.out.println(type);
-		return type;
+		return mainType.apply(cTypes);
 	}
 
 	@Override
@@ -85,7 +83,8 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 
 	@Override
 	public CType visitCompoundDefinition(CParser.CompoundDefinitionContext ctx) {
-		throw new UnsupportedOperationException("Not yet implemented");
+		System.err.println("Warning: CompoundDefinitions are not yet implemented!");
+		return NamedType("int");
 	}
 
 	@Override

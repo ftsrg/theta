@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
@@ -30,6 +31,7 @@ public class CFunction extends CStatement{
 		this.compound = compound;
 		this.flatVariables = flatVariables;
 		this.locLut = locLut;
+		XcfaMetadata.lookupMetadata(funcDecl).forEach((s, o) -> XcfaMetadata.create(this, s, o));
 	}
 
 	public CStatement getCompound() {
@@ -64,14 +66,14 @@ public class CFunction extends CStatement{
 		builder.addLoc(init);
         propagateMetadata(init);
 		builder.setInitLoc(init);
-		if(((List<?>) param).size() > 0) {
+		if(((List<?>) param).size() > 0 && builder.getName().equals("main")) {
 			XcfaLocation endinit = new XcfaLocation("end_init" + counter++, Map.of());
 			builder.addLoc(endinit);
-        propagateMetadata(endinit);
+        	propagateMetadata(endinit);
 			//noinspection unchecked
 			XcfaEdge edge = new XcfaEdge(init, endinit, (List<Stmt>) param);
 			builder.addEdge(edge);
-        propagateMetadata(edge);
+        	propagateMetadata(edge);
 			init = endinit;
 		}
 		XcfaLocation ret = new XcfaLocation("ret" + counter++, Map.of());
@@ -82,7 +84,6 @@ public class CFunction extends CStatement{
 		builder.addEdge(edge);
         propagateMetadata(edge);
 		builder.setFinalLoc(ret);
-		builder = new EmptyEdgeRemovalPass().run(builder);
 		return builder.build();
 	}
 }

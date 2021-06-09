@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -228,7 +229,8 @@ public final class XCFA {
 		public XCFA build() {
 			checkNotBuilt();
 			checkState(mainProcess != null, "Main process must be set.");
-			XCFA xcfa = new XCFA(this);
+			Builder builder = XcfaPassManager.run(this);
+			XCFA xcfa = new XCFA(builder);
 			built = true;
 			return xcfa;
 		}

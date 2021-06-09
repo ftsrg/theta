@@ -32,20 +32,40 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CallsToErrorLocs implements ProcedurePass {
+public class CallsToFinalLocs extends ProcedurePass {
+	private static final List<String> errorFunc = List.of("reach_error");
+	private static final List<String> abortFunc = List.of("abort", "exit");
+	public boolean postInlining = false;
+
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = new XcfaLocation("error", Map.of());
+		XcfaLocation errorLoc = new XcfaLocation(builder.getName() + "_error", Map.of());
+		XcfaLocation finalLoc = new XcfaLocation(builder.getName() + "_final", Map.of());
 		builder.addLoc(errorLoc);
+		builder.addLoc(finalLoc);
+		XcfaLocation oldFinalLoc = builder.getFinalLoc();
+		builder.setFinalLoc(finalLoc);
+		XcfaEdge toFinal = new XcfaEdge(oldFinalLoc, finalLoc, List.of());
+		builder.addEdge(toFinal);
 		builder.setErrorLoc(errorLoc);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			if(edge.getStmts().stream().anyMatch(stmt -> stmt instanceof XcfaCallStmt)) {
+			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			if(e.isPresent()) {
+				XcfaEdge xcfaEdge;
+				String procedure = ((XcfaCallStmt) e.get()).getProcedure();
+				if (errorFunc.contains(procedure)) {
+					xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
+				} else if (abortFunc.contains(procedure)) {
+					xcfaEdge = new XcfaEdge(edge.getSource(), finalLoc, List.of());
+				} else {
+					continue;
+				}
 				builder.removeEdge(edge);
-				XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
 				builder.addEdge(xcfaEdge);
 				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
 					XcfaMetadata.create(xcfaEdge, s, o);
@@ -54,5 +74,10 @@ public class CallsToErrorLocs implements ProcedurePass {
 		}
 
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }

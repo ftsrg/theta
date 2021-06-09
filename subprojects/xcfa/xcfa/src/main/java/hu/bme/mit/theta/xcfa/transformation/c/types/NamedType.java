@@ -24,7 +24,7 @@ public class NamedType extends CType{
 					cType.setLongLong(true);
 					cType.setLong(false);
 				} else {
-					setLong(true);
+					cType.setLong(true);
 				}
 				break;
 			case "short":

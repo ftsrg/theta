@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
-import com.google.common.base.Predicates;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -11,9 +11,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToErrorLocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.ArrayList;
@@ -23,19 +26,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class FunctionInlining implements ProcessPass{
+public class FunctionInlining extends ProcessPass {
 	private int counter = 0;
-	private List<String> errorFuncs = List.of("abort");
+	private final List<String> nopFuncs = List.of("reach_error", "abort");
+	private final Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		ProcedurePass.postInlining = true;
+		alreadyHandled.clear();
 		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
 		newBuilder.setName(builder.getName());
 		newBuilder.getThreadLocalVars().putAll(builder.getThreadLocalVars());
@@ -43,8 +47,42 @@ public class FunctionInlining implements ProcessPass{
 			newBuilder.createParam(param);
 		}
 		XcfaProcedure mainProcedure = builder.getMainProcedure();
+		XcfaProcedure newMainProc = inlineProcedure(builder, newBuilder, mainProcedure);
+		newBuilder.setMainProcedure(newMainProc);
+
+		boolean foundOne = true;
+		while(foundOne) {
+			foundOne = false;
+			for (XcfaProcedure procedure : new ArrayList<>(newBuilder.getProcedures())) {
+				for (XcfaEdge edge : procedure.getEdges()) {
+					for (Stmt stmt : edge.getStmts()) {
+						if(stmt instanceof StartThreadStmt) {
+							String threadName = ((StartThreadStmt) stmt).getThreadName();
+							Optional<XcfaProcedure> func = newBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
+							if(func.isEmpty()) {
+								Optional<XcfaProcedure> oldProc = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
+								if(oldProc.isPresent()) {
+									foundOne = true;
+									inlineProcedure(builder, newBuilder, oldProc.get());
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return newBuilder;
+
+	}
+
+	private XcfaProcedure inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure mainProcedure) {
 		XcfaProcedure.Builder mainProcBuilder = XcfaProcedure.builder();
-		mainProcedure.getParams().forEach((varDecl, direction) -> mainProcBuilder.createParam(direction, varDecl));
+		for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : mainProcedure.getParams().entrySet()) {
+			VarDecl<?> varDecl = entry.getKey();
+			XcfaProcedure.Direction direction = entry.getValue();
+			mainProcBuilder.createParam(direction, varDecl);
+		}
 		mainProcBuilder.setName(mainProcedure.getName());
 		for (VarDecl<?> localVar : mainProcedure.getLocalVars()) {
 			mainProcBuilder.createVar(localVar, null);
@@ -60,51 +98,15 @@ public class FunctionInlining implements ProcessPass{
 		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
 		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
 		Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints = new LinkedHashMap<>();
-		Map<XcfaEdge, List<XcfaCallStmt>> havocStmts = new LinkedHashMap<>();
 
 
-		while(handleCallStmts(builder, mainProcedure, mainProcBuilder, splittingPoints, havocStmts)) {
-			havocEdges(builder, mainProcBuilder, havocStmts);
+		while(handleCallStmts(builder, mainProcedure, mainProcBuilder, splittingPoints)) {
 			splitAndInlineEdges(builder, mainProcBuilder, splittingPoints);
 			splittingPoints.clear();
-			havocStmts.clear();
 		}
-		XcfaProcedure.Builder funcBuilder = new CallsToErrorLocs().run(mainProcBuilder);
-//		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
-		funcBuilder = new HavocAssignments().run(funcBuilder);
-		funcBuilder = new UnusedVarRemovalPass().run(funcBuilder);
-		funcBuilder = new EmptyEdgeRemovalPass().run(funcBuilder);
-		XcfaProcedure built = funcBuilder.build();
+		XcfaProcedure built = mainProcBuilder.build();
 		newBuilder.addProcedure(built);
-		newBuilder.setMainProcedure(built);
-		return newBuilder;
-
-	}
-
-	private void havocEdges(XcfaProcess.Builder oldBuilder, XcfaProcedure.Builder procBuilder, Map<XcfaEdge, List<XcfaCallStmt>> havocStmts) {
-		havocStmts.forEach((xcfaEdge, xcfaCallStmts) -> {
-			for (XcfaCallStmt xcfaCallStmt : xcfaCallStmts) {
-				procBuilder.removeEdge(xcfaEdge);
-				List<Stmt> havocs = new ArrayList<>();
-//				for (Expr<?> expr : xcfaCallStmt.getParams()) { // TODO: here all OUT params should be havoced
-				Expr<?> expr = xcfaCallStmt.getParams().get(0);
-					checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
-					VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-					havocs.add(Havoc(var));
-//				}
-				List<Stmt> newStmts = new ArrayList<>();
-				for (Stmt stmt : xcfaEdge.getStmts()) {
-					if(stmt == xcfaCallStmt) newStmts.addAll(havocs);
-					else newStmts.add(stmt);
-				}
-
-				XcfaEdge edge = new XcfaEdge(xcfaEdge.getSource(), xcfaEdge.getTarget(), newStmts);
-				XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
-					XcfaMetadata.create(edge, s, o);
-				});
-				procBuilder.addEdge(edge);
-			}
-		});
+		return built;
 	}
 
 	private void splitAndInlineEdges(XcfaProcess.Builder oldBuilder, XcfaProcedure.Builder procBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {
@@ -188,13 +190,16 @@ public class FunctionInlining implements ProcessPass{
 	}
 
 
-	private boolean handleCallStmts(XcfaProcess.Builder builder, XcfaProcedure mainProcedure, XcfaProcedure.Builder mainProcBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints, Map<XcfaEdge, List<XcfaCallStmt>> havocStmts) {
+	private boolean handleCallStmts(XcfaProcess.Builder builder, XcfaProcedure mainProcedure, XcfaProcedure.Builder mainProcBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {
 		boolean anyMatch = false;
-		Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 		for (XcfaEdge edge : mainProcBuilder.getEdges()) {
 			boolean stillExists = true;
 			while(stillExists) {
-				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && !alreadyHandled.contains(stmt) && !errorFuncs.contains(((XcfaCallStmt)stmt).getProcedure())).findAny();
+				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt ->
+						stmt instanceof XcfaCallStmt &&
+						!alreadyHandled.contains(stmt) &&
+						!nopFuncs.contains(((XcfaCallStmt)stmt).getProcedure()) &&
+						shouldInlineCall(builder, (XcfaCallStmt) stmt)).findAny();
 				if(callStmtOpt.isPresent() ) {
 					alreadyHandled.add(callStmtOpt.get());
 					anyMatch = true;
@@ -202,9 +207,6 @@ public class FunctionInlining implements ProcessPass{
 					if (procedure.isPresent()) {
 						splittingPoints.putIfAbsent(edge, new ArrayList<>());
 						splittingPoints.get(edge).add((XcfaCallStmt) callStmtOpt.get());
-					} else {
-						havocStmts.putIfAbsent(edge, new ArrayList<>());
-						havocStmts.get(edge).add((XcfaCallStmt) callStmtOpt.get());
 					}
 				} else {
 					stillExists = false;
@@ -212,5 +214,17 @@ public class FunctionInlining implements ProcessPass{
 			}
 		}
 		return anyMatch;
+	}
+
+	private boolean shouldInlineCall(XcfaProcess.Builder builder, XcfaCallStmt callStmt) {
+		Optional<XcfaProcedure> procedure = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callStmt.getProcedure())).findAny();
+		if(procedure.isPresent()) {
+			Optional<Object> sourceStatement = XcfaMetadata.getMetadataValue(procedure.get(), "sourceStatement");
+			if(sourceStatement.isPresent()) {
+				Optional<Object> shouldInline = XcfaMetadata.getMetadataValue(sourceStatement.get(), "shouldInline");
+				return shouldInline.isEmpty() || !(shouldInline.get() instanceof Boolean) || (Boolean) shouldInline.get();
+			}
+		}
+		return true;
 	}
 }

@@ -3,61 +3,57 @@ package hu.bme.mit.theta.xcfa.transformation.c;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
-import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
-import hu.bme.mit.theta.xcfa.transformation.c.statements.CCall;
-import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	protected final List<CStatement> preStatements = new ArrayList<>();
 	protected final List<CStatement> postStatements = new ArrayList<>();
 	protected final Deque<Map<String, VarDecl<?>>> variables;
+	private final Map<VarDecl<?>, CDeclaration> functions;
+
 	protected static boolean isBitwiseOps = false;
 
-	protected ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
+	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		this.variables = variables;
+		this.functions = functions;
 	}
 
-	public static ExpressionVisitor create(Deque<Map<String, VarDecl<?>>> variables) {
+
+	public static ExpressionVisitor create(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		if(isBitwiseOps) {
-			return new BitwiseExpressionVisitor(variables);
+			return new BitwiseExpressionVisitor(variables, functions);
 		} else {
-			return new IntegerExpressionVisitor(variables);
+			return new IntegerExpressionVisitor(variables, functions);
 		}
 	}
 
 	protected VarDecl<?> getVar(String name) {
 		for (Map<String, VarDecl<?>> variableList : variables) {
-			if(variableList.containsKey(name)) return variableList.get(name);
+			if(variableList.containsKey(name)) {
+				VarDecl<?> varDecl = variableList.get(name);
+				if(functions.containsKey(varDecl)) {
+					XcfaMetadata.create(functions.get(varDecl), "shouldInline", false);
+				}
+				return varDecl;
+			}
 		}
 		throw new RuntimeException("No such variable: " + name);
 	}

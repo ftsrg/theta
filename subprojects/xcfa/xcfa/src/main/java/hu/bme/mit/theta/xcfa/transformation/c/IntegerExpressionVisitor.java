@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
@@ -43,8 +44,8 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
 
-	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
-		super(variables);
+	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
+		super(variables, functions);
 	}
 
 	private Expr<BvType> checkAndGetBvType(Expr<?> expr) {

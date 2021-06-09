@@ -27,7 +27,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class EmptyEdgeRemovalPass implements ProcedurePass {
+public class EmptyEdgeRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		boolean notFound = false;

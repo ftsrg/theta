@@ -11,7 +11,9 @@ void reach_error() { assert(0); }
 */
 
 #include <pthread.h>
-#define assert(e) if (!(e)) ERROR: reach_error()
+void assert(int e) {
+ if (!(e)) ERROR: reach_error();
+}
 
 int flag1 = 0, flag2 = 0; // boolean flags
 int turn; // integer variable to hold the ID of the thread whose turn is it

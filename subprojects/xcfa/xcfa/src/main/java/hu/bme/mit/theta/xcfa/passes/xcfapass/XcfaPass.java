@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.passes.xcfapass;
 
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-public interface XcfaPass {
+public abstract class XcfaPass {
 
-	XCFA.Builder run(XCFA.Builder builder);
+	public abstract XCFA.Builder run(XCFA.Builder builder);
 
 }
