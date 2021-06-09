@@ -70,9 +70,14 @@ Stores the starting offset of the CStatement (inclusive).
 #### offsetEnd:
 - owner: CStatement
 - value: Integer
-  
+
 Stores the ending offset of the CStatement (inclusive).
 
+#### cType
+- owner: Expr<?>
+- value: CType
+
+Stores the C type of the expression.
 
 An example for retrieving starting line number information from a CFA.Edge:
 
