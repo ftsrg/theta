@@ -42,6 +42,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.TypedefVisitor;
+import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -49,6 +51,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.*;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
