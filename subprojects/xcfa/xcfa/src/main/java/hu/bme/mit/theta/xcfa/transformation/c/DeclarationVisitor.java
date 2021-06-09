@@ -15,6 +15,12 @@ import static com.google.common.base.Preconditions.checkState;
 public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	public static final DeclarationVisitor instance = new DeclarationVisitor();
 
+	/**
+	 * From a single declaration context and initialization list this function produces the corresponding CDeclarations
+	 * @param declSpecContext declaration context
+	 * @param initDeclContext initialization list context
+	 * @return the corresponding CDeclarations
+	 */
 	public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext, CParser.InitDeclaratorListContext initDeclContext) {
 		List<CDeclaration> ret = new ArrayList<>();
 		CType cType = declSpecContext.accept(TypeVisitor.instance);

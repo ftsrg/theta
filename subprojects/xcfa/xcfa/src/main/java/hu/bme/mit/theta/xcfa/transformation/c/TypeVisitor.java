@@ -16,17 +16,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Atomic;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Extern;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedType;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Typedef;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Volatile;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Enum;
-import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.Unsigned;
+import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.*;
 
 public class TypeVisitor extends CBaseVisitor<CType> {
 	public static final TypeVisitor instance = new TypeVisitor();
 	private TypeVisitor(){}
+
+	private static final List<String> standardTypes =
+			List.of("int", "char", "long", "short", "void", "float", "double", "unsigned");
+	private static final List<String> shorthandTypes =
+			List.of("long", "short", "unsigned");
+
 
 	@Override
 	public CType visitDeclarationSpecifiers(CParser.DeclarationSpecifiersContext ctx) {
@@ -46,11 +46,18 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 		}
 
 		List<CType> enums = cTypes.stream().filter(cType -> cType instanceof Enum).collect(Collectors.toList());
-		checkState(enums.size() <= 1, "Declaration cannot contain more than one enum");
+		checkState(enums.size() <= 0, "Declaration cannot contain any enums"); // not supported yet
 		List<CType> namedElements = cTypes.stream().filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
-		CType mainType = enums.size() == 0 ? namedElements.get(0) : enums.get(0);
-		cTypes.remove(mainType);
-		return mainType.apply(cTypes);
+		NamedType mainType = (NamedType) namedElements.get(namedElements.size()-1);
+		if(shorthandTypes.contains(mainType.getNamedType())) {
+			mainType = NamedType("int");
+		} else {
+			cTypes.remove(mainType);
+		}
+
+		CType type = mainType.apply(cTypes);
+		System.out.println(type);
+		return type;
 	}
 
 	@Override
@@ -138,7 +145,16 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 
 	@Override
 	public CType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
-		return NamedType(ctx.getText());
+		Optional<CType> type = TypedefVisitor.instance.getType(ctx.getText());
+		if(type.isPresent()) {
+			return type.get();
+		} else {
+			if(standardTypes.contains(ctx.getText())) {
+				return NamedType(ctx.getText());
+			} else {
+				return DeclaredName(ctx.getText());
+			}
+		}
 	}
 
 	@Override

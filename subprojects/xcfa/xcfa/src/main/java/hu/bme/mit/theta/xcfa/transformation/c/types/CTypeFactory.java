@@ -23,5 +23,7 @@ public class CTypeFactory {
 
 	public static NamedType NamedType(final String namedType) { return new NamedType(namedType); }
 
+	public static DeclaredName DeclaredName(final String declaredName) { return new DeclaredName(declaredName); }
+
 	public static Enum Enum(final String id, final Map<String, Optional<Expr<?>>> fields) { return new Enum(id, fields); }
 }

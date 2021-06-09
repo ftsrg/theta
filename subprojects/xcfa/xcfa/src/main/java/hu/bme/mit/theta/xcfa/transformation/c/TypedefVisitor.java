@@ -3,37 +3,49 @@ package hu.bme.mit.theta.xcfa.transformation.c;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
-import org.antlr.v4.runtime.Token;
+import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-//TODO: nem jo (nullt ad néha vissza, nem hamist/igazat)
-public class BitwiseChecker extends CBaseVisitor<Boolean> {
-	public static final BitwiseChecker instance = new BitwiseChecker();
+public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
+	public static final TypedefVisitor instance = new TypedefVisitor();
+	private final List<CDeclaration> declarations = new ArrayList<>();
 
-	@Override
-	public Boolean visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
-		Boolean accept = ctx.exclusiveOrExpression(0).accept(this);
-		return ctx.exclusiveOrExpression().size() > 1 || accept == null || accept;
+	public Optional<CType> getType(String id) {
+		return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(CDeclaration::getBaseType).findFirst();
 	}
 
 	@Override
-	public Boolean visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
-		Boolean accept = ctx.andExpression(0).accept(this);
-		return ctx.andExpression().size() > 1 || accept == null || accept;
+	public List<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
+		if(ctx.declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
+			throw new UnsupportedOperationException("Not yet implemented (local typedef)");
+		} else return null;
 	}
 
 	@Override
-	public Boolean visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
-		Boolean accept = ctx.inclusiveOrExpression(0).accept(this);
-		return ctx.inclusiveOrExpression().size() > 1 || accept == null || accept;
+	public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
+		List<CDeclaration> ret = new ArrayList<>();
+		if(ctx.declaration().declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
+			List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+			ret.addAll(declarations);
+			return ret;
+		}
+		return null;
 	}
 
 	@Override
-	public Boolean visitShiftExpression(CParser.ShiftExpressionContext ctx) {
-		Boolean accept = ctx.additiveExpression(0).accept(this);
-		return ctx.additiveExpression().size() > 1 || accept == null || accept;
-
+	public List<CDeclaration> visitCompilationUnit(CParser.CompilationUnitContext ctx) {
+		CParser.TranslationUnitContext translationUnitContext = ctx.translationUnit();
+		if(translationUnitContext!=null) {
+			for (CParser.ExternalDeclarationContext externalDeclarationContext : translationUnitContext.externalDeclaration()) {
+				List<CDeclaration> declList = externalDeclarationContext.accept(this);
+				if(declList!=null) {
+					declarations.addAll(declList);
+				}
+			}
+		}
+		return declarations;
 	}
-
 }

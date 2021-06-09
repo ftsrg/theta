@@ -2,6 +2,10 @@ package hu.bme.mit.theta.xcfa.transformation.c.types;
 
 import java.util.List;
 
+/**
+ * Any received CType instance will either be a NamedType or an Enum (and later a Struct, still under development).
+ * The other subclasses are helper classes to provide metadata on the signedness, atomicity, etc. of the type.
+ */
 public abstract class CType {
 	private int pointerLevel = 0;
 	private boolean signed = true;
@@ -9,6 +13,14 @@ public abstract class CType {
 	private boolean extern = false;
 	private boolean typedef = false;
 	private boolean isVolatile = false;
+	private boolean isShort = false;
+	private boolean isLong = false;
+	private boolean isLongLong = false;
+
+	/**
+	 * According to the grammar, the first declared variable is part of the type
+	 * (e.g. `int a` will result in a named type `int`, with an associated name `a`)
+	 */
 	private String associatedName = null;
 
 	public int getPointerLevel() {
@@ -68,6 +80,12 @@ public abstract class CType {
 		this.associatedName = associatedName;
 	}
 
+	/**
+	 * Returns the base type of the C type e.g. `int* a` will result in a CType of int pointer
+	 * but the semantic meaning is that it is an int and the declared variable is of pointer type
+	 * (this is a shortcoming of the grammar)
+	 * @return base type
+	 */
 	public CType getBaseType() {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
@@ -82,5 +100,29 @@ public abstract class CType {
 
 	public boolean isVoid() {
 		return false;
+	}
+
+	public boolean isLongLong() {
+		return isLongLong;
+	}
+
+	public void setLongLong(boolean longLong) {
+		isLongLong = longLong;
+	}
+
+	public boolean isLong() {
+		return isLong;
+	}
+
+	public void setLong(boolean aLong) {
+		isLong = aLong;
+	}
+
+	public boolean isShort() {
+		return isShort;
+	}
+
+	public void setShort(boolean aShort) {
+		isShort = aShort;
 	}
 }

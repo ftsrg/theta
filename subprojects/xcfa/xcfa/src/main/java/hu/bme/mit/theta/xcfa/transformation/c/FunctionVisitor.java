@@ -29,7 +29,6 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -44,6 +43,12 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+/**
+ * FunctionVisitor is responsible for the instantiation of high-level model elements, such as Programs, Functions,
+ * and Statements. It employs a TypeVisitor instance to provide type information, a DeclarationVisitor instance to
+ * provide information on declarations (both global and local, complete with initializations) and an ExpressionVisitor
+ * instance to provide information on Expressions in the source code.
+ */
 public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public static final FunctionVisitor instance = new FunctionVisitor();
 	public static final Map<String, XcfaLocation> locLUT = new LinkedHashMap<>();
@@ -59,6 +64,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name + counter++, Int()));
 		VarDecl<?> varDecl = peek.get(name);
+		// TODO add array types to CType
+		CType cType = declaration.getBaseType().getBaseType();
+		for (int i = 0; i < cType.getPointerLevel(); i++) {
+			cType.incrementPointer();
+		}
+		XcfaMetadata.create(varDecl.getRef(), "cType", cType);
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
 		return varDecl;
@@ -72,7 +83,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
-		ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+		ctx.accept(TypedefVisitor.instance);
+		IntegerExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
 		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
 			CStatement accept = externalDeclarationContext.accept(this);
@@ -171,7 +183,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
-		CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(variables)));
+		CExpr cexpr = new CExpr(ctx.constantExpression().accept(new IntegerExpressionVisitor(variables)));
 		CCase cCase = new CCase(
 				cexpr,
 				ctx.statement().accept(this));
@@ -313,7 +325,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitAssignmentExpressionAssignmentExpression(CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
-		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables);
+		IntegerExpressionVisitor expressionVisitor = new IntegerExpressionVisitor(variables);
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
@@ -327,7 +339,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitAssignmentExpressionConditionalExpression(CParser.AssignmentExpressionConditionalExpressionContext ctx) {
-		ExpressionVisitor expressionVisitor = new ExpressionVisitor(variables);
+		IntegerExpressionVisitor expressionVisitor = new IntegerExpressionVisitor(variables);
 		CCompound compound = new CCompound();
 		Expr<?> ret = ctx.conditionalExpression().accept(expressionVisitor);
 		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
