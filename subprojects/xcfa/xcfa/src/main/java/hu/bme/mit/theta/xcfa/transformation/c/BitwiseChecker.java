@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.List;
 
+//TODO: nem jo (nullt ad neha vissza, nem hamist/igazat)
 public class BitwiseChecker extends CBaseVisitor<Boolean> {
 	public static final BitwiseChecker instance = new BitwiseChecker();
 
