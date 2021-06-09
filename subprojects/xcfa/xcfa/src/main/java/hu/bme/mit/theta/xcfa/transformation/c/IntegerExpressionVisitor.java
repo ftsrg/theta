@@ -4,23 +4,25 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
+import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
+import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -39,27 +41,10 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
-	private final List<CStatement> preStatements = new ArrayList<>();
-	private final List<CStatement> postStatements = new ArrayList<>();
-	private final Deque<Map<String, VarDecl<?>>> variables;
+public class IntegerExpressionVisitor extends ExpressionVisitor {
 
-	private static boolean isBitwiseOps = false;
-
-	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
-		this.variables = variables;
-	}
-	
-	private VarDecl<?> getVar(String name) {
-		for (Map<String, VarDecl<?>> variableList : variables) {
-			if(variableList.containsKey(name)) return variableList.get(name);
-		}
-		throw new RuntimeException("No such variable: " + name);
-	}
-
-	public static void setBitwise(Boolean bitwise) {
-		checkState(bitwise == null || !bitwise, "Bitwise ops not yet implemented!");
-		isBitwiseOps = bitwise != null;
+	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables) {
+		super(variables);
 	}
 
 	private Expr<BvType> checkAndGetBvType(Expr<?> expr) {
@@ -75,9 +60,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			if(ifTrue instanceof CAssignment) {
 				preStatements.add(ifTrue);
 			}
+			Expr<?> expr = ctx.logicalOrExpression().accept(this);
 			return Ite(
 					Neq(Int(0),
-							cast(ctx.logicalOrExpression().accept(this), Int())),
+							cast(expr, expr.getType())),
 					ifTrue.getExpression(),
 					ctx.conditionalExpression().accept(this)
 					);
@@ -88,9 +74,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
 		if(ctx.logicalAndExpression().size() > 1) {
-			List<Expr<BoolType>> collect = ctx.logicalAndExpression().stream().map(logicalAndExpressionContext ->
-					Neq(Int(0), cast(logicalAndExpressionContext.accept(this), Int()))).
-					collect(Collectors.toList());
+			List<Expr<BoolType>> collect = ctx.logicalAndExpression().stream().map(logicalAndExpressionContext -> {
+					Expr<?> expr = logicalAndExpressionContext.accept(this);
+					return Neq(getZeroLiteral(expr.getType()), cast(expr, expr.getType())); }).
+				collect(Collectors.toList());
 			return Ite(BoolExprs.Or(collect), Int(1), Int(0));
 		}
 		return ctx.logicalAndExpression(0).accept(this);
@@ -99,8 +86,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
 		if(ctx.inclusiveOrExpression().size() > 1) {
-			List<Expr<BoolType>> collect = ctx.inclusiveOrExpression().stream().map(inclusiveOrExpressionContext ->
-					Neq(Int(0), cast(inclusiveOrExpressionContext.accept(this), Int()))).
+			List<Expr<BoolType>> collect = ctx.inclusiveOrExpression().stream().map(inclusiveOrExpressionContext -> {
+				Expr<?> expr = inclusiveOrExpressionContext.accept(this);
+				return Neq(getZeroLiteral(expr.getType()), cast(expr, expr.getType())); }).
 					collect(Collectors.toList());
 			return Ite(BoolExprs.And(collect), Int(1), Int(0));
 		}
@@ -109,44 +97,20 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
-		if(ctx.exclusiveOrExpression().size() > 1) {
-			List<? extends Expr<BvType>> collect = ctx.exclusiveOrExpression().stream().map(exclusiveOrExpressionContext -> {
-				Expr<?> expr = exclusiveOrExpressionContext.accept(this);
-				checkState(expr.getType() instanceof BvType);
-				//noinspection unchecked
-				return (Expr<BvType>)expr;
-			}).collect(Collectors.toList());
-			BvExprs.Or(collect);
-		}
-		return ctx.exclusiveOrExpression(0).accept(this);
+		if(ctx.exclusiveOrExpression().size() > 1) throw new RuntimeException("Inclusive or should be handled by BitwiseExpressionVisitor");
+		else return ctx.exclusiveOrExpression().get(0).accept(this);
 	}
 
 	@Override
 	public Expr<?> visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
-		if(ctx.andExpression().size() > 1) {
-			List<? extends Expr<BvType>> collect = ctx.andExpression().stream().map(exclusiveOrExpressionContext -> {
-				Expr<?> expr = exclusiveOrExpressionContext.accept(this);
-				checkState(expr.getType() instanceof BvType);
-				//noinspection unchecked
-				return (Expr<BvType>)expr;
-			}).collect(Collectors.toList());
-			BvExprs.Or(collect);
-		}
-		return ctx.andExpression(0).accept(this);
+		if(ctx.andExpression().size() > 1) throw new RuntimeException("Exclusive or should be handled by BitwiseExpressionVisitor");
+		else return ctx.andExpression().get(0).accept(this);
 	}
 
 	@Override
 	public Expr<?> visitAndExpression(CParser.AndExpressionContext ctx) {
-		if(ctx.equalityExpression().size() > 1) {
-			List<? extends Expr<BvType>> collect = ctx.equalityExpression().stream().map(exclusiveOrExpressionContext -> {
-				Expr<?> expr = exclusiveOrExpressionContext.accept(this);
-				checkState(expr.getType() instanceof BvType);
-				//noinspection unchecked
-				return (Expr<BvType>)expr;
-			}).collect(Collectors.toList());
-			BvExprs.Or(collect);
-		}
-		return ctx.equalityExpression(0).accept(this);
+		if(ctx.equalityExpression().size() > 1) throw new RuntimeException("Bitwise and should be handled by BitwiseExpressionVisitor");
+		else return ctx.equalityExpression().get(0).accept(this);
 	}
 
 	@Override
@@ -156,10 +120,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			for(int i = 0; i < ctx.relationalExpression().size() - 1; ++i) {
 				Expr<IntType> leftOp, rightOp;
 				if(expr == null)
-					leftOp = cast(ctx.relationalExpression(i).accept(this), Int());
+					leftOp = cast(ctx.relationalExpression(i).accept(this), expr.getType());
 				else
 					leftOp = expr;
-				rightOp = cast(ctx.relationalExpression(i+1).accept(this), Int());
+				rightOp = cast(ctx.relationalExpression(i+1).accept(this), expr.getType());
 				expr = cast(Ite(
 						ctx.signs.get(i).getText().equals("==") ? IntExprs.Eq(leftOp, rightOp) : IntExprs.Neq(leftOp, rightOp),
 						Int(1),
@@ -202,24 +166,59 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitShiftExpression(CParser.ShiftExpressionContext ctx) {
-		if(ctx.additiveExpression().size() > 1) {
-			throw new UnsupportedOperationException("not yet implemented for Bv!");
-		}
-		else return ctx.additiveExpression(0).accept(this);
+		if(ctx.additiveExpression().size() > 1) throw new RuntimeException("Shift expressions should be handled by BitwiseExpressionVisitor");
+		else return ctx.additiveExpression().get(0).accept(this);
 	}
 
 	@Override
 	public Expr<?> visitAdditiveExpression(CParser.AdditiveExpressionContext ctx) {
 		if(ctx.multiplicativeExpression().size() > 1) {
 			List<Expr<IntType>> arguments = new ArrayList<>();
+			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
+
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
-				if(i == 0 || ctx.signs.get(i-1).getText().equals("+")) arguments.add(cast(ctx.multiplicativeExpression(i).accept(this),Int()));
-				else arguments.add(Neg(cast(ctx.multiplicativeExpression(i).accept(this),Int())));
+				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
+				Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
+				if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
+					CType cType = (CType) cTypeOptional.get();
+					checkState(cType instanceof NamedType);
+					namedTypes.add((NamedType) cType);
+				}
+				// CType expressionType = deduceType(namedTypes);
+				if(i == 0 || ctx.signs.get(i-1).getText().equals("+")) arguments.add(cast(expr, Int()));
+				else arguments.add(Neg(cast(expr,Int())));
 			}
 			return Add(arguments);
 		}
 		return ctx.multiplicativeExpression(0).accept(this);
 	}
+
+	// currently supported here: unsigned/signed short/char/int/long/long long
+	// TODO what should we do when void?
+	/*
+	private CType deduceType(List<NamedType> namedTypes) {
+		boolean signed = true;
+		NamedType maxType = namedTypes.get(0);
+
+		for (NamedType type : namedTypes) {
+			String typeName = type.getNamedType();
+
+			// non-supported:
+			checkState(type.getPointerLevel()==0);
+			checkState(!typeName.endsWith("]")); // should we check for arrays somehow else?
+			checkState(type.getStandardType()!=StandardType.NONSTANDARD);
+
+			if(!type.isSigned()) {
+				signed = false;
+			}
+			if(maxType.getStandardType().compareTo(type.getStandardType())<0) {
+				maxType = type;
+			}
+		}
+		// TODO add copyOf func of namedType (as a member) & CType (as unsupported op)
+		NamedType deducedType = new NamedType(maxType);// lemasoljuk es signedness allitas
+	}
+	*/
 
 	@Override
 	public Expr<?> visitMultiplicativeExpression(CParser.MultiplicativeExpressionContext ctx) {
@@ -335,13 +334,5 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
 		return Int(-1);
-	}
-
-	public List<CStatement> getPostStatements() {
-		return postStatements;
-	}
-
-	public List<CStatement> getPreStatements() {
-		return preStatements;
 	}
 }
