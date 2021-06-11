@@ -21,6 +21,7 @@ import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +45,17 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
+	// 32 bit for now, but we'll need to add a 64bit option as well
+	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
+	private static final Map<String, Integer> standardTypeSizes = new HashMap<>();
+
+	static {
+		standardTypeSizes.put("char", 8);
+		standardTypeSizes.put("int", 32);
+		standardTypeSizes.put("short", 16);
+		standardTypeSizes.put("long", 32);
+		standardTypeSizes.put("longlong", 32);
+	}
 
 	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		super(variables, functions);
@@ -175,9 +187,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	@Override
 	public Expr<?> visitAdditiveExpression(CParser.AdditiveExpressionContext ctx) {
 		if(ctx.multiplicativeExpression().size() > 1) {
-			List<Expr<IntType>> arguments = new ArrayList<>();
 			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
-
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
 				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
 				Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
@@ -186,104 +196,39 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					checkState(cType instanceof NamedType);
 					namedTypes.add((NamedType) cType);
 				}
-				// CType expressionType = deduceType(namedTypes);
+			}
+			CType expressionType = deduceType(namedTypes);
+			XcfaMetadata.create(this, "cType", expressionType);
+
+			List<Expr<IntType>> arguments = new ArrayList<>();
+			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
+				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
 				if(i == 0 || ctx.signs.get(i-1).getText().equals("+")) arguments.add(cast(expr, Int()));
 				else arguments.add(Neg(cast(expr,Int())));
 			}
+			// TODO add modulo for overflows
+			// return Add(Rem(arguments, CONST));
 			return Add(arguments);
 		}
 		return ctx.multiplicativeExpression(0).accept(this);
 	}
 
-	/**
-	 * Expressions (that are not variables) should have a type based on their operands
-	 * Deducing this type follows the logic given below (based on the C11 standard):
-	 *
-	 * 1. Base types: unsigned/signed char/short/int/long/long long
-	 * Note: signed int and int are the same BUT the signedness of char is implementation defined!
-	 * (so there are three "chars": unsigned char, signed char and char)
-	 * Solution: we shall output a warning if there is a char without explicit signedness, but
-	 * by default we will handle it as a signed char.
-	 *
-	 * 2. Integer promotions
-	 * "If an int can represent all values of the original type (as restricted by the width, for a
-	 * bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
-	 * int. These are called the integer promotions.) All other types are unchanged by the
-	 * integer promotions.
-	 * The integer promotions preserve value including sign."
-	 *
-	 * The text above means, that if the types of the operand are a subset of the following:
-	 * signed/unsigned short, signed/unsigned char, char, signed int
-	 * than the type of the expression shall be signed int
-	 * (more precisely, the shorts and chars are "promoted" to signed ints and thus all operands become signed ints,
-	 * hence the result type is also a signed int)
-	 *
-	 * 3. long and long long
-	 * If there is a long in the operand types - the expression of the type should also be long
-	 * If there is a long long in the operand types - the expression of the type should also be long long
-	 *
-	 * 4. Signedness
-	 * "if the operand that has unsigned integer type has rank greater or
-	 * equal to the rank of the type of the other operand, then the operand with
-	 * signed integer type is converted to the type of the operand with unsigned
-	 * integer type."
-	 *
-	 * So if there is an unsigned int type (after the integer promotions, so more precisely an unsigned int, long
-	 * or long long), then the type of the expression should also be unsigned. Otherwise it will be signed.
-	 *
-	 * 5. volatility and other attributes
-	 * - an expression is volatile if there is at least one volatile variable in it
-	 * - an expression cannot be atomic or extern
-	 *
-	 * @param namedTypes list of the types of the operands in the expression
-	 * @return the deduced type of the expression
-	 */
-	// TODO what should we do when void?
-	private CType deduceType(List<NamedType> namedTypes) {
-		boolean signed = true;
-		boolean isVolatile = false;
-		boolean containsLong = false;
-		boolean containsLongLong = false;
-
-		for (NamedType type : namedTypes) {
-			// non-supported:
-			checkState(type.getPointerLevel()==0);
-
-			// just to make sure, that we don't get any unsupported types here
-			if(!(type.getNamedType().contains("int") || type.getNamedType().contains("char"))) {
-				throw new RuntimeException("Typed should contains int or char, instead it is: " + type.getNamedType());
-			}
-
-			// if any int/long/long long is unsigned, the result should be handled as unsigned
-			if(type.getNamedType().contains("int") && !type.isShort() && !type.isSigned()) {
-				signed = false;
-			}
-			if(type.isVolatile()) { // if there is any volatile type, the deduced type should be volatile as well
-				isVolatile = true;
-			}
-
-			if(type.isLong()) {
-				containsLong = true;
-			} else if(type.isLongLong()) {
-				containsLongLong = true;
-			}
-
-		}
-
-		NamedType deducedType = NamedType("int");
-		deducedType.setAtomic(false); // only vars can be atomic or extern
-		deducedType.setExtern(false);
-		deducedType.setShort(false);
-		deducedType.setSigned(signed);
-		deducedType.setVolatile(isVolatile);
-		deducedType.setLong(containsLong);
-		deducedType.setLongLong(containsLongLong);
-		return deducedType;
-	}
-
 	@Override
 	public Expr<?> visitMultiplicativeExpression(CParser.MultiplicativeExpressionContext ctx) {
 		if(ctx.castExpression().size() > 1) {
+			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
+			for(int i = 0; i < ctx.castExpression().size(); ++i) {
+				Expr<?> expr = ctx.castExpression(i).accept(this);
+				Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
+				if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
+					CType cType = (CType) cTypeOptional.get();
+					checkState(cType instanceof NamedType);
+					namedTypes.add((NamedType) cType);
+				}
+			}
+			CType expressionType = deduceType(namedTypes);
+			XcfaMetadata.create(this, "cType", expressionType);
+
 			Expr<IntType> expr = null;
 			for(int i = 0; i < ctx.castExpression().size() - 1; ++i) {
 				Expr<IntType> leftOp, rightOp;
@@ -397,4 +342,104 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
 		return Int(-1);
 	}
+
+
+	/**
+	 * Expressions (that are not variables) should have a type based on their operands
+	 * Deducing this type follows the logic given below (based on the C11 standard):
+	 *
+	 * 1. Base types: unsigned/signed char/short/int/long/long long
+	 * Note: signed int and int are the same BUT the signedness of char is implementation defined!
+	 * (so there are three "chars": unsigned char, signed char and char)
+	 * Solution: we shall output a warning if there is a char without explicit signedness, but
+	 * by default we will handle it as a signed char.
+	 *
+	 * 2. Integer promotions
+	 * "If an int can represent all values of the original type (as restricted by the width, for a
+	 * bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
+	 * int. These are called the integer promotions.) All other types are unchanged by the
+	 * integer promotions.
+	 * The integer promotions preserve value including sign."
+	 *
+	 * The text above means, that if the types of the operand are a subset of the following:
+	 * signed/unsigned short, signed/unsigned char, char, signed int
+	 * than the type of the expression shall be signed int
+	 * (more precisely, the shorts and chars are "promoted" to signed ints and thus all operands become signed ints,
+	 * hence the result type is also a signed int)
+	 *
+	 * 3. long and long long
+	 * If there is a long in the operand types - the expression of the type should also be long
+	 * If there is a long long in the operand types - the expression of the type should also be long long
+	 *
+	 * 4. Signedness
+	 * "if the operand that has unsigned integer type has rank greater or
+	 * equal to the rank of the type of the other operand, then the operand with
+	 * signed integer type is converted to the type of the operand with unsigned
+	 * integer type."
+	 *
+	 * so if in the "highest ranked" types (int<long<longlong) there is an unsigned one, than the expression type
+	 * shall also be unsigned. Otherwise it shall be signed
+	 *
+	 * 5. volatility and other attributes
+	 * - an expression is volatile if there is at least one volatile variable in it
+	 * - an expression cannot be atomic or extern
+	 *
+	 * @param namedTypes list of the types of the operands in the expression
+	 * @return the deduced type of the expression
+	 */
+	// TODO what should we do when void?
+	// TODO handle empty list
+	private CType deduceType(List<NamedType> namedTypes) {
+		boolean signed = true;
+		boolean isVolatile = false;
+		boolean containsLong = false;
+		boolean containsLongLong = false;
+
+		for (NamedType type : namedTypes) {
+			// non-supported:
+			checkState(type.getPointerLevel()==0);
+
+			// just to make sure, that we don't get any unsupported types here
+			if(!(type.getNamedType().contains("int") || type.getNamedType().contains("char"))) {
+				throw new RuntimeException("Typed should contains int or char, instead it is: " + type.getNamedType());
+			}
+
+			if(type.isVolatile()) { // if there is any volatile type, the deduced type should be volatile as well
+				isVolatile = true;
+			}
+
+			if(type.isLong()) {
+				containsLong = true;
+			} else if(type.isLongLong()) {
+				containsLongLong = true;
+			}
+
+		}
+
+		if(containsLongLong) {
+			if (namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && type.isLongLong() && !type.isSigned())) {
+				signed = false;
+			}
+		}
+		else if(containsLong) {
+			if(namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && type.isLong() && !type.isSigned())) {
+				signed = false;
+			}
+		} else {
+			if(namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && !type.isShort() && !type.isSigned())) {
+				signed = false;
+			}
+		}
+
+		NamedType deducedType = NamedType("int");
+		deducedType.setAtomic(false); // only vars can be atomic or extern
+		deducedType.setExtern(false);
+		deducedType.setShort(false);
+		deducedType.setSigned(signed);
+		deducedType.setVolatile(isVolatile);
+		deducedType.setLong(containsLong);
+		deducedType.setLongLong(containsLongLong);
+		return deducedType;
+	}
+
 }
