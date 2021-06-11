@@ -55,7 +55,15 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 			cTypes.remove(mainType);
 		}
 
-		return mainType.apply(cTypes);
+		CType type = mainType.apply(cTypes);
+		// we didn't get explicit signedness
+		if(type.isSigned()==null) {
+			if(type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
+				System.err.println("WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.");
+			}
+			type.setSigned(true);
+		}
+		return type;
 	}
 
 	@Override
@@ -133,8 +141,7 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 	public CType visitTypeSpecifierSimple(CParser.TypeSpecifierSimpleContext ctx) {
 		switch (ctx.getText()) {
 			case "signed":
-				//nop
-				return null;
+				return Signed();
 			case "unsigned":
 				return Unsigned();
 			default:

@@ -41,6 +41,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
 
@@ -194,32 +195,91 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		return ctx.multiplicativeExpression(0).accept(this);
 	}
 
-	// currently supported here: unsigned/signed short/char/int/long/long long
+	/**
+	 * Expressions (that are not variables) should have a type based on their operands
+	 * Deducing this type follows the logic given below (based on the C11 standard):
+	 *
+	 * 1. Base types: unsigned/signed char/short/int/long/long long
+	 * Note: signed int and int are the same BUT the signedness of char is implementation defined!
+	 * (so there are three "chars": unsigned char, signed char and char)
+	 * Solution: we shall output a warning if there is a char without explicit signedness, but
+	 * by default we will handle it as a signed char.
+	 *
+	 * 2. Integer promotions
+	 * "If an int can represent all values of the original type (as restricted by the width, for a
+	 * bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
+	 * int. These are called the integer promotions.) All other types are unchanged by the
+	 * integer promotions.
+	 * The integer promotions preserve value including sign."
+	 *
+	 * The text above means, that if the types of the operand are a subset of the following:
+	 * signed/unsigned short, signed/unsigned char, char, signed int
+	 * than the type of the expression shall be signed int
+	 * (more precisely, the shorts and chars are "promoted" to signed ints and thus all operands become signed ints,
+	 * hence the result type is also a signed int)
+	 *
+	 * 3. long and long long
+	 * If there is a long in the operand types - the expression of the type should also be long
+	 * If there is a long long in the operand types - the expression of the type should also be long long
+	 *
+	 * 4. Signedness
+	 * "if the operand that has unsigned integer type has rank greater or
+	 * equal to the rank of the type of the other operand, then the operand with
+	 * signed integer type is converted to the type of the operand with unsigned
+	 * integer type."
+	 *
+	 * So if there is an unsigned int type (after the integer promotions, so more precisely an unsigned int, long
+	 * or long long), then the type of the expression should also be unsigned. Otherwise it will be signed.
+	 *
+	 * 5. volatility and other attributes
+	 * - an expression is volatile if there is at least one volatile variable in it
+	 * - an expression cannot be atomic or extern
+	 *
+	 * @param namedTypes list of the types of the operands in the expression
+	 * @return the deduced type of the expression
+	 */
 	// TODO what should we do when void?
-	/*
 	private CType deduceType(List<NamedType> namedTypes) {
 		boolean signed = true;
-		NamedType maxType = namedTypes.get(0);
+		boolean isVolatile = false;
+		boolean containsLong = false;
+		boolean containsLongLong = false;
 
 		for (NamedType type : namedTypes) {
-			String typeName = type.getNamedType();
-
 			// non-supported:
 			checkState(type.getPointerLevel()==0);
-			checkState(!typeName.endsWith("]")); // should we check for arrays somehow else?
-			checkState(type.getStandardType()!=StandardType.NONSTANDARD);
 
-			if(!type.isSigned()) {
+			// just to make sure, that we don't get any unsupported types here
+			if(!(type.getNamedType().contains("int") || type.getNamedType().contains("char"))) {
+				throw new RuntimeException("Typed should contains int or char, instead it is: " + type.getNamedType());
+			}
+
+			// if any int/long/long long is unsigned, the result should be handled as unsigned
+			if(type.getNamedType().contains("int") && !type.isShort() && !type.isSigned()) {
 				signed = false;
 			}
-			if(maxType.getStandardType().compareTo(type.getStandardType())<0) {
-				maxType = type;
+			if(type.isVolatile()) { // if there is any volatile type, the deduced type should be volatile as well
+				isVolatile = true;
 			}
+
+			if(type.isLong()) {
+				containsLong = true;
+			} else if(type.isLongLong()) {
+				containsLongLong = true;
+			}
+
 		}
-		// TODO add copyOf func of namedType (as a member) & CType (as unsupported op)
-		NamedType deducedType = new NamedType(maxType);// lemasoljuk es signedness allitas
+
+		NamedType deducedType = NamedType("int");
+		deducedType.setAtomic(false); // only vars can be atomic or extern
+		deducedType.setExtern(false);
+		deducedType.setShort(false);
+		deducedType.setSigned(signed);
+		deducedType.setVolatile(isVolatile);
+		deducedType.setLong(containsLong);
+		deducedType.setLongLong(containsLongLong);
+		return deducedType;
 	}
-	*/
 
 	@Override
 	public Expr<?> visitMultiplicativeExpression(CParser.MultiplicativeExpressionContext ctx) {

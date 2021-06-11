@@ -8,7 +8,7 @@ import java.util.List;
  */
 public abstract class CType {
 	private int pointerLevel = 0;
-	private boolean signed = true;
+	private Boolean signed = null;
 	private boolean atomic = false;
 	private boolean extern = false;
 	private boolean typedef = false;
@@ -90,7 +90,7 @@ public abstract class CType {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
-	public boolean isSigned() {
+	public Boolean isSigned() {
 		return signed;
 	}
 
@@ -125,4 +125,5 @@ public abstract class CType {
 	public void setShort(boolean aShort) {
 		isShort = aShort;
 	}
+
 }

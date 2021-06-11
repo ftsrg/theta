@@ -9,6 +9,8 @@ public class CTypeFactory {
 
 	public static Unsigned Unsigned() { return Unsigned.instance; }
 
+	public static Signed Signed() { return Signed.instance; }
+
 	public static Volatile Volatile() {
 		return Volatile.instance;
 	}
