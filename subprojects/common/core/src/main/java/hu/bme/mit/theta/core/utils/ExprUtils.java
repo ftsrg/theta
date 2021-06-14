@@ -232,6 +232,31 @@ public final class ExprUtils {
 	}
 
 	/**
+	 * Return the canonical form of an expression.
+	 *
+	 * @param expr Original expression
+	 * @return Canonical form
+	 */
+	public static <ExprType extends Type> Expr<ExprType> canonize(final Expr<ExprType> expr) {
+		return ExprCanonizer.canonize(expr);
+	}
+
+	/**
+	 * Return the canonical form of a list of expressions.
+	 *
+	 * @param exprs Original expressions
+	 * @return Canonical forms
+	 */
+	public static List<Expr<?>> canonizeAll(final List<? extends Expr<?>> exprs) {
+		final List<Expr<?>> canonizedArgs = new ArrayList<>();
+		for (final Expr<?> expr : exprs) {
+			final Expr<?> canonizedArg = canonize(expr);
+			canonizedArgs.add(canonizedArg);
+		}
+		return canonizedArgs;
+	}
+
+	/**
 	 * Transform an expression into a ponated one.
 	 *
 	 * @param expr Original expression
