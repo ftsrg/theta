@@ -401,58 +401,24 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	 * @param namedTypes list of the types of the operands in the expression
 	 * @return the deduced type of the expression
 	 */
-	// TODO what should we do when void?
 	private NamedType deduceType(List<NamedType> namedTypes) {
+		// a few checks
 		checkState(!namedTypes.isEmpty());
-		boolean signed = true;
-		boolean isVolatile = false;
-		boolean containsLong = false;
-		boolean containsLongLong = false;
-
 		for (NamedType type : namedTypes) {
 			// non-supported:
 			checkState(type.getPointerLevel()==0);
 
 			// just to make sure, that we don't get any unsupported types here
 			if(!(type.getNamedType().contains("int") || type.getNamedType().contains("char"))) {
-				throw new RuntimeException("Typed should contains int or char, instead it is: " + type.getNamedType());
-			}
-
-			if(type.isVolatile()) { // if there is any volatile type, the deduced type should be volatile as well
-				isVolatile = true;
-			}
-
-			if(type.isLong()) {
-				containsLong = true;
-			} else if(type.isLongLong()) {
-				containsLongLong = true;
-			}
-
-		}
-
-		if(containsLongLong) {
-			if (namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && type.isLongLong() && !type.isSigned())) {
-				signed = false;
-			}
-		}
-		else if(containsLong) {
-			if(namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && type.isLong() && !type.isSigned())) {
-				signed = false;
-			}
-		} else {
-			if(namedTypes.stream().anyMatch(type -> type.getNamedType().contains("int") && !type.isShort() && !type.isSigned())) {
-				signed = false;
+				throw new RuntimeException("NamedType should contains int or char, instead it is: " + type.getNamedType());
 			}
 		}
 
-		NamedType deducedType = NamedType("int");
-		deducedType.setAtomic(false); // only vars can be atomic or extern
-		deducedType.setExtern(false);
-		deducedType.setShort(false);
-		deducedType.setSigned(signed);
-		deducedType.setVolatile(isVolatile);
-		deducedType.setLong(containsLong);
-		deducedType.setLongLong(containsLongLong);
+		// deduction
+		NamedType deducedType = namedTypes.get(0);
+		for (int i = 1; i < namedTypes.size(); i++) {
+			deducedType = deduceTypeBinary(deducedType, namedTypes.get(i));
+		}
 		return deducedType;
 	}
 
