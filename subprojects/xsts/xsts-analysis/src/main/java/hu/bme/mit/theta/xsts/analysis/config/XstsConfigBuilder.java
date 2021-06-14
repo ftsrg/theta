@@ -100,7 +100,7 @@ public class XstsConfigBuilder {
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private int maxEnum = 0;
-	private int maxPredCount = 0;
+	private int maxAtomCount = 0;
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
@@ -131,8 +131,8 @@ public class XstsConfigBuilder {
 		return this;
 	}
 
-	public XstsConfigBuilder maxPredCount(final int maxPredCount) {
-		this.maxPredCount = maxPredCount;
+	public XstsConfigBuilder maxAtomCount(final int maxAtomCount) {
+		this.maxAtomCount = maxAtomCount;
 		return this;
 	}
 
@@ -325,7 +325,7 @@ public class XstsConfigBuilder {
 			Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
 			final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
-			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, maxPredCount);
+			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, maxAtomCount);
 
 			switch (refinement) {
 				case FW_BIN_ITP:

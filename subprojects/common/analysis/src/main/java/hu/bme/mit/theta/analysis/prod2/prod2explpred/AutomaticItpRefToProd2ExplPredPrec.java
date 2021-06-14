@@ -23,54 +23,49 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
 	private final Set<VarDecl<?>> explPreferredVars;
-	private final Map<VarDecl<?>, Set<Expr<BoolType>>> predCount;
+	private final Map<VarDecl<?>, Set<Expr<BoolType>>> atomCount;
 	private final ExprSplitter exprSplitter;
-	private final int maxPredCount;
+	private final int maxAtomCount;
 
-	private AutomaticItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxPredCount) {
+	private AutomaticItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxAtomCount) {
 		this.explPreferredVars = checkNotNull(explPreferredVars);
 		this.exprSplitter = checkNotNull(exprSplitter);
-		this.maxPredCount = maxPredCount;
+		this.maxAtomCount = maxAtomCount;
 
-		this.predCount = new LinkedHashMap<>();
+		this.atomCount = new LinkedHashMap<>();
 	}
 
-	public static AutomaticItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxPredCount) {
-		checkArgument(maxPredCount >= 0, "MaxPredCount must be non-negative.");
-		return new AutomaticItpRefToProd2ExplPredPrec(explPreferredVars, exprSplitter, maxPredCount);
+	public static AutomaticItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxAtomCount) {
+		checkArgument(maxAtomCount >= 0, "MaxPredCount must be non-negative.");
+		return new AutomaticItpRefToProd2ExplPredPrec(explPreferredVars, exprSplitter, maxAtomCount);
 	}
 
 	@Override
 	public Prod2Prec<ExplPrec, PredPrec> toPrec(ItpRefutation refutation, int index) {
-		final Collection<Expr<BoolType>> exprs = exprSplitter.apply(refutation.get(index));
-		Set<VarDecl<?>> explSelectedVars = new LinkedHashSet<>();
-		Set<Expr<BoolType>> predSelectedExprs = new LinkedHashSet<>();
-		for (var expr : exprs) {
-			var atoms = ExprUtils.getAtoms(expr);
-			boolean allExpl = true;
-			for (var atom : atoms){
-				final Set<VarDecl<?>> containedVars = ExprUtils.getVars(atom);
-				for (var decl : containedVars) {
-					predCount.computeIfAbsent(decl,(k) -> new HashSet<Expr<BoolType>>()).add(atom);
-				}
-			}
-			final Set<VarDecl<?>> containedVars = ExprUtils.getVars(expr);
-			for(var decl:containedVars){
-				if(decl.getType() == Bool()){
-					explPreferredVars.add(decl);
-				}
-				if(predCount.get(decl).size()>=maxPredCount && maxPredCount!=0){
-					explPreferredVars.add(decl);
-				}
-				if (explPreferredVars.contains(decl)) {
-					explSelectedVars.add(decl);
-				} else allExpl = false;
-			}
+		final Expr<BoolType> refExpr = refutation.get(index);
 
-			if (!allExpl) predSelectedExprs.add(expr);
-		}
+		final var canonicalAtoms = ExprUtils.getAtoms(refExpr).stream()
+				.map(ExprUtils::canonize)
+				.collect(Collectors.toSet());
+		canonicalAtoms.forEach(
+				atom -> ExprUtils.getVars(atom).forEach(
+						decl -> atomCount.computeIfAbsent(decl,(k) -> new HashSet<Expr<BoolType>>()).add(atom)
+				)
+		);
+
+		explPreferredVars.addAll(
+				ExprUtils.getVars(refExpr).stream()
+					.filter(decl -> atomCount.get(decl).size() >= maxAtomCount && maxAtomCount != 0 || decl.getType() == Bool())
+					.collect(Collectors.toSet()));
+
+		final var explSelectedVars = ExprUtils.getVars(refExpr).stream()
+				.filter(explPreferredVars::contains)
+				.collect(Collectors.toSet());
+		final var predSelectedExprs = exprSplitter.apply(refExpr).stream()
+				.filter(expr -> !explPreferredVars.containsAll(ExprUtils.getVars(expr)))
+				.collect(Collectors.toSet());
+
 		return Prod2Prec.of(ExplPrec.of(explSelectedVars), PredPrec.of(predSelectedExprs));
-
 	}
 
 	@Override
@@ -78,7 +73,7 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 		final ExplPrec joinedExpl = prec1.getPrec1().join(prec2.getPrec1());
 		final PredPrec joinedPred = prec1.getPrec2().join(prec2.getPrec2());
 		final var filteredPreds = joinedPred.getPreds().stream()
-				.filter(pred -> !ExprUtils.getVars(pred).stream().allMatch(decl -> joinedExpl.getVars().contains(decl)))
+				.filter(pred -> !joinedExpl.getVars().containsAll(ExprUtils.getVars(pred)))
 				.collect(Collectors.toList());
 		final PredPrec filteredPred = PredPrec.of(filteredPreds);
 		return Prod2Prec.of(joinedExpl,filteredPred);
