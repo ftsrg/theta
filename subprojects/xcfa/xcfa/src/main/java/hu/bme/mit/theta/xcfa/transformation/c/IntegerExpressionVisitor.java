@@ -5,8 +5,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -18,6 +20,7 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
+import javax.naming.Name;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -45,8 +48,10 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
-	// 32 bit for now, but we'll need to add a 64bit option as well
+	// TODO 32 bit for now, but we'll need to add a 64bit option as well
 	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
+	// Warning note: when deducing type, we assume an ILP32 or an LP64 arch
+	// (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 	private static final Map<String, Integer> standardTypeSizes = new HashMap<>();
 
 	static {
@@ -197,7 +202,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					namedTypes.add((NamedType) cType);
 				}
 			}
-			CType expressionType = deduceType(namedTypes);
+			NamedType expressionType = deduceType(namedTypes);
 			XcfaMetadata.create(this, "cType", expressionType);
 
 			List<Expr<IntType>> arguments = new ArrayList<>();
@@ -206,8 +211,12 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				if(i == 0 || ctx.signs.get(i-1).getText().equals("+")) arguments.add(cast(expr, Int()));
 				else arguments.add(Neg(cast(expr,Int())));
 			}
-			// TODO add modulo for overflows
-			// return Add(Rem(arguments, CONST));
+
+			// unsigned overflow/underflow
+			if(!expressionType.isSigned()) {
+				int maxBits = standardTypeSizes.get(expressionType.getNamedType());
+				return Rem(Add(arguments), Int((int) Math.pow(2, maxBits)));
+			}
 			return Add(arguments);
 		}
 		return ctx.multiplicativeExpression(0).accept(this);
@@ -351,7 +360,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	 * 1. Base types: unsigned/signed char/short/int/long/long long
 	 * Note: signed int and int are the same BUT the signedness of char is implementation defined!
 	 * (so there are three "chars": unsigned char, signed char and char)
-	 * Solution: we shall output a warning if there is a char without explicit signedness, but
+	 * Solution: we output a warning (not in this function) if there is a char without explicit signedness, but
 	 * by default we will handle it as a signed char.
 	 *
 	 * 2. Integer promotions
@@ -361,35 +370,40 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	 * integer promotions.
 	 * The integer promotions preserve value including sign."
 	 *
-	 * The text above means, that if the types of the operand are a subset of the following:
-	 * signed/unsigned short, signed/unsigned char, char, signed int
-	 * than the type of the expression shall be signed int
-	 * (more precisely, the shorts and chars are "promoted" to signed ints and thus all operands become signed ints,
-	 * hence the result type is also a signed int)
+	 * 3. Usual arithmetic conversions
+	 * "the integer promotions are performed on both operands. Then the
+	 * following rules are applied to the promoted operands:
+	 * 	If both operands have the same type, then no further conversion is needed.
+	 * Otherwise, if both operands have signed integer types or both have unsigned
+	 * integer types, the operand with the type of lesser integer conversion rank is
+	 * converted to the type of the operand with greater rank.
 	 *
-	 * 3. long and long long
-	 * If there is a long in the operand types - the expression of the type should also be long
-	 * If there is a long long in the operand types - the expression of the type should also be long long
-	 *
-	 * 4. Signedness
-	 * "if the operand that has unsigned integer type has rank greater or
+	 * 	Otherwise, if the operand that has unsigned integer type has rank greater or
 	 * equal to the rank of the type of the other operand, then the operand with
 	 * signed integer type is converted to the type of the operand with unsigned
-	 * integer type."
+	 * integer type.
 	 *
-	 * so if in the "highest ranked" types (int<long<longlong) there is an unsigned one, than the expression type
-	 * shall also be unsigned. Otherwise it shall be signed
+	 * 	Otherwise, if the type of the operand with signed integer type can represent
+	 * all of the values of the type of the operand with unsigned integer type, then
+	 * the operand with unsigned integer type is converted to the type of the
+	 * operand with signed integer type.
 	 *
-	 * 5. volatility and other attributes
+	 * 	Otherwise, both operands are converted to the unsigned integer type
+	 * corresponding to the type of the operand with signed integer type."
+	 *
+	 * 4. volatility and other attributes
 	 * - an expression is volatile if there is at least one volatile variable in it
 	 * - an expression cannot be atomic or extern
+	 *
+	 * Warning note: when deducing type, we assume an ILP32 or an LP64 arch
+	 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 	 *
 	 * @param namedTypes list of the types of the operands in the expression
 	 * @return the deduced type of the expression
 	 */
 	// TODO what should we do when void?
-	// TODO handle empty list
-	private CType deduceType(List<NamedType> namedTypes) {
+	private NamedType deduceType(List<NamedType> namedTypes) {
+		checkState(!namedTypes.isEmpty());
 		boolean signed = true;
 		boolean isVolatile = false;
 		boolean containsLong = false;
@@ -442,4 +456,118 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		return deducedType;
 	}
 
+	/**
+	 * The usual arithmetic conversions and other implicit conversion rules of the C standard are
+	 * given for two operands, so the straightforward way of implementation is pairwise deduction.
+	 * conversion rules: {@link #deduceType(List)}  }
+	 *
+	 * @param typeA First operand type
+	 * @param typeB Second operand type
+	 * @return the resulting type, which is not necessarily typeA or typeB
+	 */
+	private NamedType deduceTypeBinary(NamedType typeA, NamedType typeB) {
+		NamedType resultType = NamedType("int");
+		if(typeA.isVolatile() || typeB.isVolatile()) {
+			resultType.setVolatile(true);
+		}
+		resultType.setAtomic(false);
+		resultType.setExtern(false);
+
+		// integer promotion
+		NamedType typeACopy = promoteToInteger(typeA);
+		NamedType typeBCopy = promoteToInteger(typeB);
+
+		// usual arithmetic conversions
+		// same types
+		if(typeACopy.isLongLong() == typeBCopy.isLongLong() &&
+			typeACopy.isLong() == typeBCopy.isLong() &&
+			typeACopy.isSigned() == typeBCopy.isSigned()) {
+			copyIntType(typeACopy, resultType);
+		}
+		// both signed or both unsigned -> rank
+		else if(typeACopy.isSigned() == typeBCopy.isSigned()) {
+			if(rankLessThan(typeACopy, typeBCopy)) {
+				copyIntType(typeBCopy, resultType);
+			} else copyIntType(typeACopy, resultType);
+		} else {
+			NamedType unsignedType = typeA.isSigned() ? typeBCopy : typeACopy;
+			NamedType signedType = typeA.isSigned() ? typeACopy : typeBCopy;
+
+			// unsigned has >= rank -> unsigned type
+			if(rankLessThan(signedType, unsignedType)) {
+				copyIntType(unsignedType, resultType);
+			} else if(standardTypeSizes.get(signedType.getNamedType()) >= 2*standardTypeSizes.get(unsignedType.getNamedType())) {
+			// unsigned has < rank & signed is at least twice the size -> signed type
+				copyIntType(signedType, resultType);
+			} else {
+			// unsigned has < rank & signed is less than twice the size -> unsigned version of signed type
+				copyIntType(signedType, resultType);
+				resultType.setSigned(false);
+			}
+		}
+		return resultType;
+	}
+
+	/**
+	 * Copies the short, long, longlong and signedness attributes and nothing else
+	 *
+	 * @param src copy to
+	 * @param dest copy from
+	 */
+	private void copyIntType(NamedType src, NamedType dest) {
+		dest.setShort(src.isShort());
+		dest.setLong(src.isLong());
+		dest.setLongLong(src.isLongLong());
+		dest.setSigned(src.isSigned());
+	}
+
+	private boolean rankLessThan(NamedType typeA, NamedType typeB) {
+		if(typeA.getNamedType().contains("char")) {
+			if(typeB.getNamedType().contains("char")) { // both are chars
+				return false;
+			} else return true; // only A is a char
+		} else if(typeB.getNamedType().contains("char")) { // only B is a char
+			return true;
+		} else { // both are ints
+			if (typeB.isLongLong() && !typeA.isLongLong()) {
+				return true;
+			} else if (typeB.isLong() && !typeA.isLongLong() && !typeA.isLong()) {
+				return true;
+			} else if (!typeB.isShort() && typeA.isShort()) {
+				return true;
+			} else return false;
+		}
+	}
+
+	/**
+	 * Integer promotions
+	 * 	 "If an int can represent all values of the original type (as restricted by the width, for a
+	 * 	 bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
+	 * 	 int. These are called the integer promotions.) All other types are unchanged by the
+	 * 	 integer promotions.
+	 * 	 The integer promotions preserve value including sign."
+	 *
+	 * Assumption: we are in an architecture, where a signed integer can represent all values of both
+	 * signed and unsigned shorts or chars (ILP32 and LP64 are such)
+	 *
+	 * @param type type to promote
+	 * @return promoted type, it must be an int and cannot be short
+	 */
+	private NamedType promoteToInteger(NamedType type) {
+		// integer promotion
+		NamedType typeCopy = null;
+		if(type.getNamedType().contains("char")) {
+			typeCopy = NamedType("int");
+			typeCopy.setSigned(true);
+			typeCopy.setLongLong(false);
+			typeCopy.setLong(false);
+		} else if(type.isShort()) {
+			typeCopy = (NamedType) type.copyOf();
+			typeCopy.setShort(false);
+			typeCopy.setSigned(true);
+		} else {
+			typeCopy = (NamedType) type.copyOf();
+		}
+		return typeCopy;
+	}
 }

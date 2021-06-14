@@ -71,5 +71,23 @@ public class NamedType extends CType{
 	public boolean isVoid() {
 		return namedType.equals("void") && getPointerLevel() == 0;
 	}
+
+	@Override
+	public CType copyOf() {
+		CType namedType = new NamedType(getNamedType());
+		namedType.setAtomic(this.isAtomic());
+		namedType.setExtern(this.isExtern());
+		namedType.setTypedef(this.isTypedef());
+		namedType.setVolatile(this.isVolatile());
+		namedType.setSigned(this.isSigned());
+		namedType.setShort(this.isShort());
+		namedType.setLong(this.isLong());
+		namedType.setLongLong(this.isLongLong());
+		for(int i = 0; i < this.getPointerLevel(); i++) {
+			namedType.incrementPointer();
+		}
+
+		return namedType;
+	}
 }
 

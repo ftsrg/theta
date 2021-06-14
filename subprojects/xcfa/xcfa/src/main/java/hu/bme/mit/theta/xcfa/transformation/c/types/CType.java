@@ -126,4 +126,7 @@ public abstract class CType {
 		isShort = aShort;
 	}
 
+	public CType copyOf() {
+		throw new UnsupportedOperationException("Abstract base class CType should not be copied");
+	}
 }
