@@ -343,6 +343,15 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		}
 	}
 
+	private void truncateToType(NamedType type, Expr<IntType> expr) {
+		NamedType exprType = getcTypeMetadata(expr);
+		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
+		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
+		if(typeBitSize<exprTypeBitSize) {
+			expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
+		}
+	}
+
 	private NamedType getcTypeMetadata(Expr<?> expr) {
 		Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
 		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
