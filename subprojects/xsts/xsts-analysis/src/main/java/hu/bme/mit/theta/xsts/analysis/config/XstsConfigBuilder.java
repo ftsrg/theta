@@ -38,7 +38,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 public class XstsConfigBuilder {
 
 	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED
 	}
 
 	public enum Refinement {
@@ -271,7 +271,7 @@ public class XstsConfigBuilder {
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
-		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED) {
+		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED_COMBINED) {
 			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts;
 			if(optimizeStmts == OptimizeStmts.ON){
 				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
