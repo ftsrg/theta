@@ -195,15 +195,12 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
 				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
-				Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
-				if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
-					CType cType = (CType) cTypeOptional.get();
-					checkState(cType instanceof NamedType);
-					namedTypes.add((NamedType) cType);
-				}
+				// get metadata about operand C types
+				NamedType cType = getcTypeMetadata(expr);
+				namedTypes.add(cType);
 			}
+			// use C type metadata to deduce the C type of the additive expression
 			NamedType expressionType = deduceType(namedTypes);
-			XcfaMetadata.create(this, "cType", expressionType);
 
 			List<Expr<IntType>> arguments = new ArrayList<>();
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
@@ -215,9 +212,13 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			// unsigned overflow/underflow
 			if(!expressionType.isSigned()) {
 				int maxBits = standardTypeSizes.get(expressionType.getNamedType());
-				return Rem(Add(arguments), Int((int) Math.pow(2, maxBits)));
+				IntRemExpr expr = Rem(Add(arguments), Int((int) Math.pow(2, maxBits)));
+				XcfaMetadata.create(expr, "cType", expressionType);
+				return expr;
 			}
-			return Add(arguments);
+			IntAddExpr expr = Add(arguments);
+			XcfaMetadata.create(expr, "cType", expressionType);
+			return expr;
 		}
 		return ctx.multiplicativeExpression(0).accept(this);
 	}
@@ -228,15 +229,12 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
 			for(int i = 0; i < ctx.castExpression().size(); ++i) {
 				Expr<?> expr = ctx.castExpression(i).accept(this);
-				Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
-				if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
-					CType cType = (CType) cTypeOptional.get();
-					checkState(cType instanceof NamedType);
-					namedTypes.add((NamedType) cType);
-				}
+				NamedType cType = getcTypeMetadata(expr);
+				namedTypes.add(cType);
 			}
-			CType expressionType = deduceType(namedTypes);
-			XcfaMetadata.create(this, "cType", expressionType);
+
+			// use C type metadata to deduce the C type of the expression
+			NamedType expressionType = deduceType(namedTypes);
 
 			Expr<IntType> expr = null;
 			for(int i = 0; i < ctx.castExpression().size() - 1; ++i) {
@@ -247,11 +245,20 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					leftOp = expr;
 				rightOp = cast(ctx.castExpression(i+1).accept(this), Int());
 				switch(ctx.signs.get(i).getText()) {
-					case "*": expr = Mul(leftOp, rightOp); break;
+					case "*":
+						// unsigned overflow handling - it "wraps around"
+						if(!expressionType.isSigned()) {
+							int maxBits = standardTypeSizes.get(expressionType.getNamedType());
+							expr = Rem(Mul(leftOp, rightOp), Int((int) Math.pow(2, maxBits)));
+						} else {
+							expr = Mul(leftOp, rightOp);
+						}
+						break;
 					case "/": expr = Div(leftOp, rightOp); break;
 					case "%": expr = Rem(leftOp, rightOp); break;
 				}
 			}
+			XcfaMetadata.create(expr, "cType", expressionType);
 			return expr;
 		}
 		return ctx.castExpression(0).accept(this);
@@ -279,6 +286,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if(increment != 0) {
 			CExpr cexpr = new CExpr(Add(cast(ret, Int()), Int(increment)));
+			// TODO primary is the left side - create value conversion from right type to left type
 			CAssignment cAssignment = new CAssignment(ret, cexpr, "=");
 			preStatements.add(cAssignment);
 			FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
@@ -313,9 +321,19 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		}
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
+			// we handle ++ and -- as if they were additions and assignments
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
 			if(increment != 0) {
-				CExpr cexpr = new CExpr(Add(cast(primary, Int()), Int(increment)));
+				IntAddExpr add = Add(cast(primary, Int()), Int(increment));
+				CExpr cexpr;
+				NamedType namedType = getcTypeMetadata(primary);
+				if(!namedType.isSigned()) {
+					Integer maxBits = standardTypeSizes.get(namedType.getNamedType());
+					cexpr = new CExpr(Rem(add, Int((int) Math.pow(2, maxBits))));
+				} else {
+					cexpr = new CExpr(add);
+				}
+				// no need to truncate here, as left and right side types are the same
 				CAssignment cAssignment = new CAssignment(primary, cexpr, "=");
 				postStatements.add(cAssignment);
 				FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
@@ -325,6 +343,15 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		}
 	}
 
+	private NamedType getcTypeMetadata(Expr<?> expr) {
+		Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
+		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
+			CType cType = (CType) cTypeOptional.get();
+			checkState(cType instanceof NamedType);
+			return (NamedType) cType;
+		} else return null;
+	}
+
 	@Override
 	public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
 		return getVar(ctx.Identifier().getText()).getRef();
@@ -332,7 +359,20 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 
 	@Override
 	public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
-		return IntLitExpr.of(new BigInteger(ctx.getText().replaceAll("[LUlu]", "")));
+		NamedType namedType = NamedType("int");
+		if(ctx.getText().contains("ll") || ctx.getText().contains("LL")) {
+			namedType.setLongLong(true);
+		} else if(ctx.getText().contains("l") || ctx.getText().contains("L")) {
+			namedType.setLong(true);
+		}
+
+		if(ctx.getText().contains("u") || ctx.getText().contains("U") ) {
+			namedType.setSigned(false);
+		}
+
+		IntLitExpr litExpr = IntLitExpr.of(new BigInteger(ctx.getText().replaceAll("[LUlu]", "")));
+		XcfaMetadata.create(litExpr, "cType", namedType);
+		return litExpr;
 	}
 
 	@Override
@@ -351,7 +391,6 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
 		return Int(-1);
 	}
-
 
 	/**
 	 * Expressions (that are not variables) should have a type based on their operands
