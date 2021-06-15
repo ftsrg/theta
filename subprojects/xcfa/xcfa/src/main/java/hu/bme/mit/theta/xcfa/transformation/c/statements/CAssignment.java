@@ -27,7 +27,7 @@ public class CAssignment extends CStatement{
 
 	public CAssignment(Expr<?> lValue, CStatement rValue, String operator) {
 		this.lValue = lValue;
-		this.rValue = rValue;
+		this.rValue = rValue; // TODO add truncate here
 		this.operator = operator;
 	}
 
@@ -41,6 +41,10 @@ public class CAssignment extends CStatement{
 
 	@Override
 	public Expr<?> getExpression() {
+		return lValue;
+	}
+
+	public Expr<?> getrExpression() {
 		switch (operator) {
 			case "=": return rValue.getExpression();
 			case "*=": return Mul(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
@@ -65,7 +69,7 @@ public class CAssignment extends CStatement{
         propagateMetadata(location);
 		checkState(lValue instanceof RefExpr && ((RefExpr<?>) lValue).getDecl() instanceof VarDecl<?>, "lValue must be a variable!");
 		initLoc = rValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
-		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), Int()), cast(getExpression(), Int()))));
+		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), Int()), cast(getrExpression(), Int()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		return location;

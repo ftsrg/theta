@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.xcfa.CTypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
@@ -48,20 +49,6 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
-	// TODO 32 bit for now, but we'll need to add a 64bit option as well
-	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
-	// Warning note: when deducing type, we assume an ILP32 or an LP64 arch
-	// (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
-	private static final Map<String, Integer> standardTypeSizes = new HashMap<>();
-
-	static {
-		standardTypeSizes.put("char", 8);
-		standardTypeSizes.put("int", 32);
-		standardTypeSizes.put("short", 16);
-		standardTypeSizes.put("long", 32);
-		standardTypeSizes.put("longlong", 32);
-	}
-
 	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		super(variables, functions);
 	}
@@ -196,11 +183,11 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
 				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
 				// get metadata about operand C types
-				NamedType cType = getcTypeMetadata(expr);
+				NamedType cType = CTypeUtils.getcTypeMetadata(expr);
 				namedTypes.add(cType);
 			}
 			// use C type metadata to deduce the C type of the additive expression
-			NamedType expressionType = deduceType(namedTypes);
+			NamedType expressionType = CTypeUtils.deduceType(namedTypes);
 
 			List<Expr<IntType>> arguments = new ArrayList<>();
 			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
@@ -211,7 +198,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 
 			// unsigned overflow/underflow
 			if(!expressionType.isSigned()) {
-				int maxBits = standardTypeSizes.get(expressionType.getNamedType());
+				int maxBits = CTypeUtils.standardTypeSizes.get(expressionType.getNamedType());
 				IntRemExpr expr = Rem(Add(arguments), Int((int) Math.pow(2, maxBits)));
 				XcfaMetadata.create(expr, "cType", expressionType);
 				return expr;
@@ -229,12 +216,12 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
 			for(int i = 0; i < ctx.castExpression().size(); ++i) {
 				Expr<?> expr = ctx.castExpression(i).accept(this);
-				NamedType cType = getcTypeMetadata(expr);
+				NamedType cType = CTypeUtils.getcTypeMetadata(expr);
 				namedTypes.add(cType);
 			}
 
 			// use C type metadata to deduce the C type of the expression
-			NamedType expressionType = deduceType(namedTypes);
+			NamedType expressionType = CTypeUtils.deduceType(namedTypes);
 
 			Expr<IntType> expr = null;
 			for(int i = 0; i < ctx.castExpression().size() - 1; ++i) {
@@ -248,7 +235,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					case "*":
 						// unsigned overflow handling - it "wraps around"
 						if(!expressionType.isSigned()) {
-							int maxBits = standardTypeSizes.get(expressionType.getNamedType());
+							int maxBits = CTypeUtils.standardTypeSizes.get(expressionType.getNamedType());
 							expr = Rem(Mul(leftOp, rightOp), Int((int) Math.pow(2, maxBits)));
 						} else {
 							expr = Mul(leftOp, rightOp);
@@ -285,8 +272,8 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if(increment != 0) {
+			// TODO overflow?
 			CExpr cexpr = new CExpr(Add(cast(ret, Int()), Int(increment)));
-			// TODO primary is the left side - create value conversion from right type to left type
 			CAssignment cAssignment = new CAssignment(ret, cexpr, "=");
 			preStatements.add(cAssignment);
 			FunctionVisitor.instance.recordMetadata(ctx, cAssignment);
@@ -326,9 +313,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			if(increment != 0) {
 				IntAddExpr add = Add(cast(primary, Int()), Int(increment));
 				CExpr cexpr;
-				NamedType namedType = getcTypeMetadata(primary);
+				NamedType namedType = CTypeUtils.getcTypeMetadata(primary);
 				if(!namedType.isSigned()) {
-					Integer maxBits = standardTypeSizes.get(namedType.getNamedType());
+					Integer maxBits = CTypeUtils.standardTypeSizes.get(namedType.getNamedType());
 					cexpr = new CExpr(Rem(add, Int((int) Math.pow(2, maxBits))));
 				} else {
 					cexpr = new CExpr(add);
@@ -341,24 +328,6 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			}
 			return primary;
 		}
-	}
-
-	private void truncateToType(NamedType type, Expr<IntType> expr) {
-		NamedType exprType = getcTypeMetadata(expr);
-		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
-		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
-		if(typeBitSize<exprTypeBitSize) {
-			expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
-		}
-	}
-
-	private NamedType getcTypeMetadata(Expr<?> expr) {
-		Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
-		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
-			CType cType = (CType) cTypeOptional.get();
-			checkState(cType instanceof NamedType);
-			return (NamedType) cType;
-		} else return null;
 	}
 
 	@Override
@@ -401,187 +370,5 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		return Int(-1);
 	}
 
-	/**
-	 * Expressions (that are not variables) should have a type based on their operands
-	 * Deducing this type follows the logic given below (based on the C11 standard):
-	 *
-	 * 1. Base types: unsigned/signed char/short/int/long/long long
-	 * Note: signed int and int are the same BUT the signedness of char is implementation defined!
-	 * (so there are three "chars": unsigned char, signed char and char)
-	 * Solution: we output a warning (not in this function) if there is a char without explicit signedness, but
-	 * by default we will handle it as a signed char.
-	 *
-	 * 2. Integer promotions
-	 * "If an int can represent all values of the original type (as restricted by the width, for a
-	 * bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
-	 * int. These are called the integer promotions.) All other types are unchanged by the
-	 * integer promotions.
-	 * The integer promotions preserve value including sign."
-	 *
-	 * 3. Usual arithmetic conversions
-	 * "the integer promotions are performed on both operands. Then the
-	 * following rules are applied to the promoted operands:
-	 * 	If both operands have the same type, then no further conversion is needed.
-	 * Otherwise, if both operands have signed integer types or both have unsigned
-	 * integer types, the operand with the type of lesser integer conversion rank is
-	 * converted to the type of the operand with greater rank.
-	 *
-	 * 	Otherwise, if the operand that has unsigned integer type has rank greater or
-	 * equal to the rank of the type of the other operand, then the operand with
-	 * signed integer type is converted to the type of the operand with unsigned
-	 * integer type.
-	 *
-	 * 	Otherwise, if the type of the operand with signed integer type can represent
-	 * all of the values of the type of the operand with unsigned integer type, then
-	 * the operand with unsigned integer type is converted to the type of the
-	 * operand with signed integer type.
-	 *
-	 * 	Otherwise, both operands are converted to the unsigned integer type
-	 * corresponding to the type of the operand with signed integer type."
-	 *
-	 * 4. volatility and other attributes
-	 * - an expression is volatile if there is at least one volatile variable in it
-	 * - an expression cannot be atomic or extern
-	 *
-	 * Warning note: when deducing type, we assume an ILP32 or an LP64 arch
-	 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
-	 *
-	 * @param namedTypes list of the types of the operands in the expression
-	 * @return the deduced type of the expression
-	 */
-	private NamedType deduceType(List<NamedType> namedTypes) {
-		// a few checks
-		checkState(!namedTypes.isEmpty());
-		for (NamedType type : namedTypes) {
-			// non-supported:
-			checkState(type.getPointerLevel()==0);
 
-			// just to make sure, that we don't get any unsupported types here
-			if(!(type.getNamedType().contains("int") || type.getNamedType().contains("char"))) {
-				throw new RuntimeException("NamedType should contains int or char, instead it is: " + type.getNamedType());
-			}
-		}
-
-		// deduction
-		NamedType deducedType = namedTypes.get(0);
-		for (int i = 1; i < namedTypes.size(); i++) {
-			deducedType = deduceTypeBinary(deducedType, namedTypes.get(i));
-		}
-		return deducedType;
-	}
-
-	/**
-	 * The usual arithmetic conversions and other implicit conversion rules of the C standard are
-	 * given for two operands, so the straightforward way of implementation is pairwise deduction.
-	 * conversion rules: {@link #deduceType(List)}  }
-	 *
-	 * @param typeA First operand type
-	 * @param typeB Second operand type
-	 * @return the resulting type, which is not necessarily typeA or typeB
-	 */
-	private NamedType deduceTypeBinary(NamedType typeA, NamedType typeB) {
-		NamedType resultType = NamedType("int");
-		if(typeA.isVolatile() || typeB.isVolatile()) {
-			resultType.setVolatile(true);
-		}
-		resultType.setAtomic(false);
-		resultType.setExtern(false);
-
-		// integer promotion
-		NamedType typeACopy = promoteToInteger(typeA);
-		NamedType typeBCopy = promoteToInteger(typeB);
-
-		// usual arithmetic conversions
-		// same types
-		if(typeACopy.isLongLong() == typeBCopy.isLongLong() &&
-			typeACopy.isLong() == typeBCopy.isLong() &&
-			typeACopy.isSigned() == typeBCopy.isSigned()) {
-			copyIntType(typeACopy, resultType);
-		}
-		// both signed or both unsigned -> rank
-		else if(typeACopy.isSigned() == typeBCopy.isSigned()) {
-			if(rankLessThan(typeACopy, typeBCopy)) {
-				copyIntType(typeBCopy, resultType);
-			} else copyIntType(typeACopy, resultType);
-		} else {
-			NamedType unsignedType = typeA.isSigned() ? typeBCopy : typeACopy;
-			NamedType signedType = typeA.isSigned() ? typeACopy : typeBCopy;
-
-			// unsigned has >= rank -> unsigned type
-			if(rankLessThan(signedType, unsignedType)) {
-				copyIntType(unsignedType, resultType);
-			} else if(standardTypeSizes.get(signedType.getNamedType()) >= 2*standardTypeSizes.get(unsignedType.getNamedType())) {
-			// unsigned has < rank & signed is at least twice the size -> signed type
-				copyIntType(signedType, resultType);
-			} else {
-			// unsigned has < rank & signed is less than twice the size -> unsigned version of signed type
-				copyIntType(signedType, resultType);
-				resultType.setSigned(false);
-			}
-		}
-		return resultType;
-	}
-
-	/**
-	 * Copies the short, long, longlong and signedness attributes and nothing else
-	 *
-	 * @param src copy to
-	 * @param dest copy from
-	 */
-	private void copyIntType(NamedType src, NamedType dest) {
-		dest.setShort(src.isShort());
-		dest.setLong(src.isLong());
-		dest.setLongLong(src.isLongLong());
-		dest.setSigned(src.isSigned());
-	}
-
-	private boolean rankLessThan(NamedType typeA, NamedType typeB) {
-		if(typeA.getNamedType().contains("char")) {
-			if(typeB.getNamedType().contains("char")) { // both are chars
-				return false;
-			} else return true; // only A is a char
-		} else if(typeB.getNamedType().contains("char")) { // only B is a char
-			return true;
-		} else { // both are ints
-			if (typeB.isLongLong() && !typeA.isLongLong()) {
-				return true;
-			} else if (typeB.isLong() && !typeA.isLongLong() && !typeA.isLong()) {
-				return true;
-			} else if (!typeB.isShort() && typeA.isShort()) {
-				return true;
-			} else return false;
-		}
-	}
-
-	/**
-	 * Integer promotions
-	 * 	 "If an int can represent all values of the original type (as restricted by the width, for a
-	 * 	 bit-field), the value is converted to an int; otherwise, it is converted to an unsigned
-	 * 	 int. These are called the integer promotions.) All other types are unchanged by the
-	 * 	 integer promotions.
-	 * 	 The integer promotions preserve value including sign."
-	 *
-	 * Assumption: we are in an architecture, where a signed integer can represent all values of both
-	 * signed and unsigned shorts or chars (ILP32 and LP64 are such)
-	 *
-	 * @param type type to promote
-	 * @return promoted type, it must be an int and cannot be short
-	 */
-	private NamedType promoteToInteger(NamedType type) {
-		// integer promotion
-		NamedType typeCopy = null;
-		if(type.getNamedType().contains("char")) {
-			typeCopy = NamedType("int");
-			typeCopy.setSigned(true);
-			typeCopy.setLongLong(false);
-			typeCopy.setLong(false);
-		} else if(type.isShort()) {
-			typeCopy = (NamedType) type.copyOf();
-			typeCopy.setShort(false);
-			typeCopy.setSigned(true);
-		} else {
-			typeCopy = (NamedType) type.copyOf();
-		}
-		return typeCopy;
-	}
 }
