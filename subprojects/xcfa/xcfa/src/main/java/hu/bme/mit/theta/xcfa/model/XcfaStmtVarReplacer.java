@@ -58,7 +58,11 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
         if (expr instanceof RefExpr<?>) {
             if (((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>) {
                 if(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()) == null) return expr;
-                else return cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+                else {
+                    Expr<T> tExpr = cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+                    XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
+                    return tExpr;
+                }
             }
         }
 
@@ -72,7 +76,9 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
                 }
             } else newOps.add(replaceVars(op, varLut));
         }
-        return expr.withOps(newOps);
+        Expr<T> tExpr = expr.withOps(newOps);
+        XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
+        return tExpr;
     }
 
 

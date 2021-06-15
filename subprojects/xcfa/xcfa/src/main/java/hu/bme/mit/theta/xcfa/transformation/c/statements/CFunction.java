@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -9,6 +10,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
+import hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory;
+import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,9 +56,16 @@ public class CFunction extends CStatement{
 		builder.setRetType(funcDecl.getBaseType().isVoid() ? null : Int());
 		builder.setName(funcDecl.getName());
 		if(!funcDecl.getBaseType().isVoid()) {
-			builder.createParam(XcfaProcedure.Direction.OUT, Var(funcDecl.getName() + "_ret" + counter++, Int()));
+			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
+			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType());
+			builder.createParam(XcfaProcedure.Direction.OUT, var);
 		} else {
-			builder.createParam(XcfaProcedure.Direction.OUT, Var(funcDecl.getName() + "_ret" + counter++, Int()));
+			// TODO we assume later, that there is always a ret var, but this should change
+			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
+			NamedType signedIntType = CTypeFactory.NamedType("int");
+			signedIntType.setSigned(true);
+			XcfaMetadata.create(var.getRef(), "cType", signedIntType);
+			builder.createParam(XcfaProcedure.Direction.OUT, var);
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {

@@ -1,23 +1,22 @@
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -76,37 +76,64 @@ public class FunctionInlining extends ProcessPass {
 
 	}
 
-	private XcfaProcedure inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure mainProcedure) {
-		XcfaProcedure.Builder mainProcBuilder = XcfaProcedure.builder();
-		for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : mainProcedure.getParams().entrySet()) {
+	private XcfaProcedure inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure procedure) {
+		XcfaProcedure.Builder procBuilder = XcfaProcedure.builder();
+		for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : procedure.getParams().entrySet()) {
 			VarDecl<?> varDecl = entry.getKey();
 			XcfaProcedure.Direction direction = entry.getValue();
-			mainProcBuilder.createParam(direction, varDecl);
+			procBuilder.createParam(direction, varDecl);
 		}
-		mainProcBuilder.setName(mainProcedure.getName());
-		for (VarDecl<?> localVar : mainProcedure.getLocalVars()) {
-			mainProcBuilder.createVar(localVar, null);
+		procBuilder.setName(procedure.getName());
+		for (VarDecl<?> localVar : procedure.getLocalVars()) {
+			procBuilder.createVar(localVar, null);
 		}
-		for (XcfaLocation loc : mainProcedure.getLocs()) {
-			mainProcBuilder.addLoc(loc);
+		for (XcfaLocation loc : procedure.getLocs()) {
+			procBuilder.addLoc(loc);
 			loc.setEndLoc(false);
 		}
-		for (XcfaEdge edge : mainProcedure.getEdges()) {
-			mainProcBuilder.addEdge(edge);
+		for (XcfaEdge edge : procedure.getEdges()) {
+			procBuilder.addEdge(edge);
 		}
-		mainProcBuilder.setInitLoc(mainProcedure.getInitLoc());
-		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
-		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
+		procBuilder.setInitLoc(procedure.getInitLoc());
+		procBuilder.setFinalLoc(procedure.getFinalLoc());
+		procBuilder.setFinalLoc(procedure.getFinalLoc());
 		Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints = new LinkedHashMap<>();
 
 
-		while(handleCallStmts(builder, mainProcedure, mainProcBuilder, splittingPoints)) {
-			splitAndInlineEdges(builder, mainProcBuilder, splittingPoints);
+		while(handleCallStmts(builder, procedure, procBuilder, splittingPoints)) {
+			splitAndInlineEdges(builder, procBuilder, splittingPoints);
 			splittingPoints.clear();
 		}
-		XcfaProcedure built = mainProcBuilder.build();
+
+		// TODO function calls
+		truncateAssignments(builder, procBuilder);
+
+		XcfaProcedure built = procBuilder.build();
 		newBuilder.addProcedure(built);
 		return built;
+	}
+
+	/**
+	 * In assignments we need to convert the C type of the right hand expression to the C type of the left one.
+	 * In the case, where the left type is smaller in maximum size than the right one, we'll truncate the value.
+	 * We need to add a modulo to the right expression in this case to truncate.
+	 */
+	private void truncateAssignments(XcfaProcess.Builder builder, XcfaProcedure.Builder procBuilder) {
+		List<XcfaEdge> edgesCopy = new ArrayList<>(procBuilder.getEdges());
+
+		for (XcfaEdge edge : edgesCopy) {
+			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
+			for (Stmt stmt : edge.getStmts()) {
+				if(stmt instanceof AssignStmt) {
+					NamedType leftType = CIntTypeUtils.getcTypeMetadata(((AssignStmt<?>) stmt).getVarDecl().getRef());
+					checkNotNull(leftType);
+					@SuppressWarnings("unchecked")
+					Expr<IntType> expr = (Expr<IntType>) ((AssignStmt<?>) stmt).getExpr();
+					Expr<IntType> truncatedExpr = CIntTypeUtils.truncateToType(leftType, expr);
+					// TODO create new edge based on UnusedVarRemoval pass line 52-76
+				}
+			}
+		}
 	}
 
 	private void splitAndInlineEdges(XcfaProcess.Builder oldBuilder, XcfaProcedure.Builder procBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {

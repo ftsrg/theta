@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.xcfa;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
@@ -13,10 +15,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
-public class CTypeUtils {
+/**
+ * Note: char isn't an int type in C, but we'll handle it here as well, as it isn't a floating point type
+ */
+public class CIntTypeUtils {
 	// TODO 32 bit for now, but we'll need to add a 64bit option as well
 	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
 	// Warning note: when deducing type, we assume an ILP32 or an LP64 arch
@@ -31,13 +35,19 @@ public class CTypeUtils {
 		standardTypeSizes.put("longlong", 32);
 	}
 
-	static void truncateToType(NamedType type, Expr<IntType> expr) {
+	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
 		NamedType exprType = getcTypeMetadata(expr);
 		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
 		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
-		if(typeBitSize<exprTypeBitSize) {
+		if(type.isSigned()) typeBitSize /= 2;
+		if(exprType.isSigned()) exprTypeBitSize /= 2;
+
+		// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
+		// otherwise we only need it, if the left side is smaller
+		if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
 			expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
-		}
+		} // otherwise we don't need to truncate
+		return expr;
 	}
 
 	public static NamedType getcTypeMetadata(Expr<?> expr) {
@@ -116,6 +126,16 @@ public class CTypeUtils {
 			deducedType = deduceTypeBinary(deducedType, namedTypes.get(i));
 		}
 		return deducedType;
+	}
+
+	/**
+	 * Type deduction of unary expressions
+	 * @return a copy of the type, promoted to integer
+	 */
+	public static NamedType deduceType(NamedType type) {
+		NamedType typeCopy = (NamedType) type.copyOf();
+		promoteToInteger(typeCopy);
+		return typeCopy;
 	}
 
 	/**
@@ -231,5 +251,14 @@ public class CTypeUtils {
 			typeCopy = (NamedType) type.copyOf();
 		}
 		return typeCopy;
+	}
+
+	public static Expr<IntType> addOverflowWraparound(NamedType namedType, Expr<IntType> innerExpr) {
+		if(!namedType.isSigned()) {
+			Integer maxBits = CIntTypeUtils.standardTypeSizes.get(namedType.getNamedType());
+			return Rem(innerExpr, Int((int) Math.pow(2, maxBits)));
+		} else {
+			return innerExpr;
+		}
 	}
 }
