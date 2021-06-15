@@ -18,17 +18,25 @@ package hu.bme.mit.theta.xcfa.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -45,6 +53,7 @@ public final class XcfaProcess {
     private final ImmutableList<XcfaProcedure> procedures;
     private final XcfaProcedure mainProcedure;
     private XCFA parent;
+    private final Tuple2<XcfaEdge, StartThreadStmt> threadStartStmt;
 
 
     private XcfaProcess(final Builder builder) {
@@ -53,7 +62,71 @@ public final class XcfaProcess {
         procedures = ImmutableList.copyOf(builder.procedures);
         procedures.forEach(procedure -> procedure.setParent(this));
         mainProcedure = builder.mainProcedure;
-        name = builder.name;
+        name = builder.name == null ? mainProcedure.getName() : builder.name;
+        threadStartStmt = null;
+    }
+
+    public XcfaProcess(XcfaEdge edge, StartThreadStmt stmt, final XcfaProcess process) {
+        XcfaMetadata.lookupMetadata(process).forEach((s, o) -> {
+            XcfaMetadata.create(this, s, o);
+        });
+
+        threadStartStmt = Tuple2.of(edge, stmt);
+
+        Map<VarDecl<?>, VarDecl<?>> newVarLut = new HashMap<>();
+
+        List<VarDecl<?>> paramCollectList = new ArrayList<>();
+        process.params.forEach((varDecl) -> {
+            VarDecl<?> newVar = VarDecl.copyOf(varDecl);
+            paramCollectList.add(newVar);
+            newVarLut.put(varDecl, newVar);
+        });
+        params = ImmutableList.copyOf(paramCollectList);
+
+        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
+        process.threadLocalVars.forEach((varDecl, litExpr) -> {
+            VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
+            localVarsCollectList.put(newVar, litExpr);
+            newVarLut.put(varDecl, newVar);
+        });
+        threadLocalVars = ImmutableMap.copyOf(localVarsCollectList);
+
+        Set<XcfaProcedure> usedProcedures = new LinkedHashSet<>();
+        Set<XcfaProcedure> newUsedProcedures = new LinkedHashSet<>();
+        Optional<XcfaProcedure> proc = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(stmt.getThreadName())).findFirst();
+        checkState(proc.isPresent());
+        usedProcedures.add(proc.get());
+        boolean foundAny = true;
+        while(foundAny) {
+            foundAny = false;
+            for (XcfaProcedure usedProcedure : usedProcedures) {
+                for (XcfaEdge edge1 : usedProcedure.getEdges()) {
+                    for (Stmt stmt1 : edge1.getStmts()) {
+                        if(stmt1 instanceof XcfaCallStmt) {
+                            Optional<XcfaProcedure> procedure = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) stmt1).getProcedure())).findFirst();
+                            if(procedure.isPresent() && !usedProcedures.contains(procedure.get())) {
+                                foundAny = true;
+                                newUsedProcedures.add(procedure.get());
+                            }
+                        }
+                    }
+                }
+            }
+            usedProcedures.addAll(newUsedProcedures);
+            newUsedProcedures.clear();
+        }
+
+        final XcfaProcedure[] toBeMain = new XcfaProcedure[1];
+        procedures = ImmutableList.copyOf(process.procedures.stream().filter(usedProcedures::contains).map(xcfaProcedure -> {
+            XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure, newVarLut);
+            if(procedure.getName().equals(stmt.getThreadName())) {
+                toBeMain[0] = procedure;
+            }
+            return procedure;
+        }).collect(Collectors.toList()));
+        checkState(toBeMain[0] != null, "Main procedure is not known!");
+        mainProcedure = toBeMain[0];
+        name = mainProcedure.getName();
     }
 
     public static Builder builder() {
@@ -101,6 +174,10 @@ public final class XcfaProcess {
 
     void setParent(XCFA xcfa) {
         this.parent = xcfa;
+    }
+
+    public Tuple2<XcfaEdge, StartThreadStmt> getThreadStartStmt() {
+        return threadStartStmt;
     }
 
     @Override

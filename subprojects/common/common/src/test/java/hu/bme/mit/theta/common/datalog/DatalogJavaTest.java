@@ -42,9 +42,9 @@ public final class DatalogJavaTest {
 	public DatalogJavaTest() {
 		datalog = Datalog.createProgram();
 		//datalog.setDebug(true);
-		edge = datalog.createRelation(2);
-		successor = datalog.createRelation(2);
-		reflexive = datalog.createRelation(1);
+		edge = datalog.createRelation("edge",2);
+		successor = datalog.createRelation("successor", 2);
+		reflexive = datalog.createRelation("reflexive", 1);
 
 		Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(datalog.getVariable(), datalog.getVariable());
 		Datalog.Variable next = datalog.getVariable();

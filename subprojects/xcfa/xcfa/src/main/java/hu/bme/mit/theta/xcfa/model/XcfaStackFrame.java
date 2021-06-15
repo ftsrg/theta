@@ -29,20 +29,14 @@ public class XcfaStackFrame {
 	private boolean handled;
 	private boolean lastStmt;
 	private boolean newProcedure;
-	private final Map<VarDecl<?>, LitExpr<?>> localVars;
 
-	XcfaStackFrame(XcfaState owner, XcfaEdge edge, Stmt stmt, Map<VarDecl<?>, LitExpr<?>> localVars) {
+	XcfaStackFrame(XcfaState owner, XcfaEdge edge, Stmt stmt) {
 		this.owner = owner;
 		this.edge = edge;
 		this.stmt = stmt;
 		this.lastStmt = false;
 		this.newProcedure = false;
 		this.handled = false;
-		this.localVars = localVars;
-	}
-
-	public Map<VarDecl<?>, LitExpr<?>> getLocalVars() {
-		return localVars;
 	}
 
 	public XcfaEdge getEdge() {
@@ -66,7 +60,7 @@ public class XcfaStackFrame {
 	}
 
 	XcfaStackFrame duplicate(XcfaState newOwner) {
-		return new XcfaStackFrame(newOwner, edge, stmt, localVars);
+		return new XcfaStackFrame(newOwner, edge, stmt);
 	}
 
 	public XcfaProcess getProcess() {

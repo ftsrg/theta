@@ -25,15 +25,19 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 
 public class Datalog {
-	private final List<Relation> relations;
+	private final Map<String, Relation> relations;
 	private boolean debug = false;
 
 	protected Datalog() {
-		relations = new ArrayList<>();
+		relations = new LinkedHashMap<>();
 	}
 
 	public static Datalog createProgram() {
 		return new Datalog();
+	}
+
+	public Map<String, Relation> getRelations() {
+		return relations;
 	}
 
 	/*
@@ -41,6 +45,7 @@ public class Datalog {
 	 * Only supports queries of entire relations right now.
 	 */
 	public static String runProgram(String relations) {
+		int counter = 0;
 		Datalog datalog = new Datalog();
 		StringBuilder ret = new StringBuilder();
 		Map<String, Relation> relationMap = new LinkedHashMap<>();
@@ -49,7 +54,7 @@ public class Datalog {
 			if (nospace.matches("([a-z_][a-zA-Z0-9_]*)\\(([a-z_0-9][a-zA-Z0-9_]*)(,[a-z_0-9][a-zA-Z_0-9]*)*\\)")) { //fact assertion
 				String[] splitString = nospace.split("\\(");
 				String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
-				relationMap.putIfAbsent(splitString[0], datalog.createRelation(arguments.length));
+				relationMap.putIfAbsent(splitString[0], datalog.createRelation("rel" + counter++, arguments.length));
 				TupleN<DatalogArgument> argumentTuple = TupleN.of(Arrays.stream(arguments).map(StringDatalogArgument::new).collect(Collectors.toList()));
 				relationMap.get(splitString[0]).addFact(argumentTuple);
 			} else if (nospace.matches("([a-z_][a-zA-Z_0-9]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\):-([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\)(,([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\))*")) { //deduction rule
@@ -58,7 +63,7 @@ public class Datalog {
 				Map<String, Variable> variableMap = new LinkedHashMap<>();
 				String[] splitString = splitExpression[0].split("\\(");
 				String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
-				relationMap.putIfAbsent(splitString[0], datalog.createRelation(arguments.length));
+				relationMap.putIfAbsent(splitString[0], datalog.createRelation("rel" + counter++, arguments.length));
 				TupleN<Variable> argumentTuple = TupleN.of(Arrays.stream(arguments).map(s -> {
 					variableMap.putIfAbsent(s, datalog.getVariable());
 					return variableMap.get(s);
@@ -68,7 +73,7 @@ public class Datalog {
 				for (String dependency : splitExpression[1].split("\\),")) {
 					String[] dsplitString = dependency.split("\\(");
 					String[] darguments = dsplitString[1].replaceAll("\\)", "").split(",");
-					relationMap.putIfAbsent(dsplitString[0], datalog.createRelation(darguments.length));
+					relationMap.putIfAbsent(dsplitString[0], datalog.createRelation("rel" + counter++, darguments.length));
 					TupleN<Variable> dargumentTuple = TupleN.of(Arrays.stream(darguments).map(s -> {
 						variableMap.putIfAbsent(s, datalog.getVariable());
 						return variableMap.get(s);
@@ -99,7 +104,7 @@ public class Datalog {
 		int cnt;
 		do {
 			cnt = 0;
-			for (Relation relation : relations) {
+			for (Relation relation : relations.values()) {
 				int i = relation.calc();
 				if (debug)
 					System.out.println(i + " new facts");
@@ -108,21 +113,21 @@ public class Datalog {
 			if (debug)
 				System.out.println("====");
 		} while (cnt > 0);
-		for (Relation relation : relations) {
+		for (Relation relation : relations.values()) {
 			relation.flush();
 		}
 	}
 
-	public Relation createRelation(int n) {
+	public Relation createRelation(String name, int n) {
 		checkState(n > 0, "Relation must have positive arity");
 		Relation ret = new Relation(n);
-		relations.add(ret);
+		relations.put(name, ret);
 		return ret;
 	}
 
-	public Relation createTransitive(Relation simple) {
+	public Relation createTransitive(String name, Relation simple) {
 		checkState(simple.arity == 2, "Only binary relations should have transitive closures!");
-		Relation path = createRelation(2);
+		Relation path = createRelation(name, 2);
 		Datalog.Variable var1, var2, var3;
 		path.addRule(
 				TupleN.of(
@@ -161,14 +166,14 @@ public class Datalog {
 		return path;
 	}
 
-	public Relation createDisjunction(Iterable<Relation> relations) {
+	public Relation createDisjunction(String name, Iterable<Relation> relations) {
 		Integer arity = null;
 		for (Relation relation : relations) {
 			if(arity == null) arity = relation.getArity();
 			else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
 		}
 		checkState(arity != null, "At least one relation is necessary!");
-		Relation disjunction = createRelation(arity);
+		Relation disjunction = createRelation(name, arity);
 		List<Variable> vars = new ArrayList<>();
 		for (int i = 0; i < arity; i++) {
 			vars.add(getVariable());
@@ -187,7 +192,7 @@ public class Datalog {
 		}
 		return disjunction;
 	}
-	public Relation createConjuction(Iterable<Relation> relations) {
+	public Relation createConjuction(String name, Iterable<Relation> relations) {
 		Integer arity = null;
 		TupleN<Variable> varTuple = null;
 		Set<Tuple2<Relation, TupleN<Variable>>> deps = new LinkedHashSet<>();
@@ -205,7 +210,7 @@ public class Datalog {
 			deps.add(Tuple2.of(relation, varTuple));
 		}
 		checkState(arity != null, "At least one relation is necessary!");
-		Relation conjuction = createRelation(arity);
+		Relation conjuction = createRelation(name, arity);
 		conjuction.addRule(
 				varTuple,
 				deps

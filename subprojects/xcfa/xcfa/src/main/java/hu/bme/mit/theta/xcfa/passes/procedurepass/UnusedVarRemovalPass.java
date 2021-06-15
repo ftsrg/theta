@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -34,20 +35,28 @@ import java.util.stream.Collectors;
 public class UnusedVarRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		removeUnusedVars(builder, null);
+		return builder;
+	}
+
+	public static void removeUnusedVars(XcfaProcedure.Builder builder, Set<VarDecl<?>> usedVars) {
 		boolean atLeastOne = true;
 		while(atLeastOne) {
 			atLeastOne = false;
-			Set<VarDecl<?>> vars = new LinkedHashSet<>();
-			for (XcfaEdge edge : builder.getEdges()) {
-				for (Stmt stmt : edge.getStmts()) {
-					Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
-					vars1.removeIf(varDecl ->
-									(stmt instanceof HavocStmt)
-//					|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
-					);
-					vars.addAll(vars1);
+			Set<VarDecl<?>> vars;
+			if(usedVars == null) {
+				vars = new LinkedHashSet<>();
+				for (XcfaEdge edge : builder.getEdges()) {
+					for (Stmt stmt : edge.getStmts()) {
+						Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
+						vars1.removeIf(varDecl ->
+										(stmt instanceof HavocStmt)
+	//					|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
+						);
+						vars.addAll(vars1);
+					}
 				}
-			}
+			} else vars = usedVars;
 			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
 			for (int i = 0; i < edges.size(); i++) {
 				XcfaEdge edge = edges.get(i);
@@ -74,7 +83,5 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 				builder.getLocalVars().remove(varDecl);
 			}
 		}
-
-		return builder;
 	}
 }

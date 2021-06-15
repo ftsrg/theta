@@ -89,7 +89,7 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
         Argument handleName = instruction.getArguments().get(0);
         Argument functionName = instruction.getArguments().get(1);
         Argument param = instruction.getArguments().get(2);
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new StartThreadStmt(handleName.getName(), functionName.getName(), param.getExpr(functionState.getValues()))));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new StartThreadStmt(null, functionName.getName(), param.getExpr(functionState.getValues()))));
         if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addLoc(newLoc);
         functionState.getProcedureBuilder().addEdge(edge);
@@ -99,7 +99,7 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     private void jointhread(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), new HashMap<>());
         Argument handleName = instruction.getArguments().get(0);
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new JoinThreadStmt(handleName.getName())));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, List.of(new JoinThreadStmt(null)));
         if (instruction.getLineNumber() >= 0) XcfaMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addLoc(newLoc);
         functionState.getProcedureBuilder().addEdge(edge);

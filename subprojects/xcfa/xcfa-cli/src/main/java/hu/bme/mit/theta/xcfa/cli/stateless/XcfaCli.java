@@ -34,7 +34,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
+import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -207,7 +207,7 @@ public class XcfaCli {
 					writeXcfaWithCex(xcfa, status.asUnsafe());
 				}
 			} else {
-				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
+				BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
 
 

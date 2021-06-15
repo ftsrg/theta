@@ -1,22 +1,21 @@
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.ArrayList;
@@ -47,23 +46,25 @@ public class FunctionInlining extends ProcessPass {
 			newBuilder.createParam(param);
 		}
 		XcfaProcedure mainProcedure = builder.getMainProcedure();
-		XcfaProcedure newMainProc = inlineProcedure(builder, newBuilder, mainProcedure);
-		newBuilder.setMainProcedure(newMainProc);
+		XcfaProcedure.Builder newMainProc = inlineProcedure(builder, newBuilder, mainProcedure);
 
+		Set<XcfaProcedure.Builder> alreadyInlined = new LinkedHashSet<>();
+		alreadyInlined.add(newMainProc);
 		boolean foundOne = true;
 		while(foundOne) {
 			foundOne = false;
-			for (XcfaProcedure procedure : new ArrayList<>(newBuilder.getProcedures())) {
+			for (XcfaProcedure.Builder procedure : new ArrayList<>(alreadyInlined)) {
 				for (XcfaEdge edge : procedure.getEdges()) {
 					for (Stmt stmt : edge.getStmts()) {
 						if(stmt instanceof StartThreadStmt) {
 							String threadName = ((StartThreadStmt) stmt).getThreadName();
-							Optional<XcfaProcedure> func = newBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
+							Optional<XcfaProcedure.Builder> func = alreadyInlined.stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
 							if(func.isEmpty()) {
 								Optional<XcfaProcedure> oldProc = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
 								if(oldProc.isPresent()) {
 									foundOne = true;
-									inlineProcedure(builder, newBuilder, oldProc.get());
+									XcfaProcedure.Builder builder1 = inlineProcedure(builder, newBuilder, oldProc.get());
+									alreadyInlined.add(builder1);
 								}
 							}
 						}
@@ -72,11 +73,33 @@ public class FunctionInlining extends ProcessPass {
 			}
 		}
 
+		Set<VarDecl<?>> usedVars = new LinkedHashSet<>();
+		for (XcfaProcedure.Builder procedure : alreadyInlined) {
+			for (XcfaEdge edge : procedure.getEdges()) {
+				for (Stmt stmt : edge.getStmts()) {
+					if (stmt instanceof AssignStmt) {
+						usedVars.addAll(ExprUtils.getVars(((AssignStmt<?>) stmt).getExpr()));
+					} else if (stmt instanceof StoreStmt){
+						usedVars.add(((StoreStmt) stmt).getLocal());
+					}
+					else {
+						usedVars.addAll(StmtUtils.getVars(stmt));
+					}
+				}
+			}
+		}
+
+		for (XcfaProcedure.Builder procBuilder : alreadyInlined) {
+			UnusedVarRemovalPass.removeUnusedVars(procBuilder, usedVars);
+			XcfaProcedure procedure = procBuilder.build();
+			newBuilder.addProcedure(procedure);
+			if(procBuilder == newMainProc) newBuilder.setMainProcedure(procedure);
+		}
 		return newBuilder;
 
 	}
 
-	private XcfaProcedure inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure mainProcedure) {
+	private XcfaProcedure.Builder inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure mainProcedure) {
 		XcfaProcedure.Builder mainProcBuilder = XcfaProcedure.builder();
 		for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : mainProcedure.getParams().entrySet()) {
 			VarDecl<?> varDecl = entry.getKey();
@@ -96,7 +119,7 @@ public class FunctionInlining extends ProcessPass {
 		}
 		mainProcBuilder.setInitLoc(mainProcedure.getInitLoc());
 		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
-		mainProcBuilder.setFinalLoc(mainProcedure.getFinalLoc());
+//		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
 		Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints = new LinkedHashMap<>();
 
 
@@ -104,9 +127,7 @@ public class FunctionInlining extends ProcessPass {
 			splitAndInlineEdges(builder, mainProcBuilder, splittingPoints);
 			splittingPoints.clear();
 		}
-		XcfaProcedure built = mainProcBuilder.build();
-		newBuilder.addProcedure(built);
-		return built;
+		return mainProcBuilder;
 	}
 
 	private void splitAndInlineEdges(XcfaProcess.Builder oldBuilder, XcfaProcedure.Builder procBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {
@@ -151,6 +172,7 @@ public class FunctionInlining extends ProcessPass {
 			procedure.getParams().forEach((varDecl, direction) -> procBuilder.createVar(varDecl, null));
 			procedure.getLocs().forEach(procBuilder::addLoc);
 			procedure.getEdges().forEach(procBuilder::addEdge);
+			procedure.getFinalLoc().setEndLoc(false);
 
 			int paramCnt = 0;
 			List<Stmt> retStmts = new ArrayList<>();

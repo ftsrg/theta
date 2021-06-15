@@ -60,13 +60,13 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 								Expr<?> funcptr = ((XcfaCallStmt) stmt).getParams().get(threadStartFuncPtr + 1);
 								checkState(funcptr instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								Expr<?> param = ((XcfaCallStmt) stmt).getParams().get(threadStartParam + 1);
-								StartThreadStmt startThreadStmt = new StartThreadStmt(((RefExpr<?>) handle).getDecl().getName(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
+								StartThreadStmt startThreadStmt = new StartThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
 								collect.add(startThreadStmt);
 								break;
 							case threadJoin:
 								handle = ((XcfaCallStmt) stmt).getParams().get(threadJoinHandle + 1);
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
-								JoinThreadStmt joinThreadStmt = new JoinThreadStmt(((RefExpr<?>) handle).getDecl().getName());
+								JoinThreadStmt joinThreadStmt = new JoinThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
 								collect.add(joinThreadStmt);
 								break;
 							default:
