@@ -12,6 +12,7 @@ public abstract class CStatement {
 	private String id;
 	private XcfaLocation loc;
 	protected static int counter = 0;
+	protected static int UNROLL_COUNT = 3;
 
 	public String getId() {
 		return id;

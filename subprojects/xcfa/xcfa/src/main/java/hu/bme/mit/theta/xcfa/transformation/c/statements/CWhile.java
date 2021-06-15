@@ -33,28 +33,42 @@ public class CWhile extends CStatement{
 	@Override
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
-		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
-		XcfaLocation innerLoop = new XcfaLocation("loc" + counter++, Map.of());
-		builder.addLoc(endLoc);
-        propagateMetadata(endLoc);
-		builder.addLoc(innerLoop);
-        propagateMetadata(innerLoop);
 		builder.addLoc(initLoc);
-        propagateMetadata(initLoc);
+		propagateMetadata(initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
-		XcfaLocation testEndLoc = guard.build(builder, initLoc, null, null, returnLoc);
-		xcfaEdge = new XcfaEdge(testEndLoc, innerLoop, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(testEndLoc, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
-		XcfaLocation lastBody = body.build(builder, innerLoop, endLoc, initLoc, returnLoc);
-		xcfaEdge = new XcfaEdge(lastBody, initLoc, List.of());
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
+		propagateMetadata(xcfaEdge);
+		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
+		builder.addLoc(endLoc);
+		propagateMetadata(endLoc);
+		for(int i = 0; i < UNROLL_COUNT; ++i) {
+			if (((CCompound) body).getcStatementList().size() == 0) {
+				xcfaEdge = new XcfaEdge(initLoc, endLoc, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+				builder.addEdge(xcfaEdge);
+				propagateMetadata(xcfaEdge);
+				return endLoc;
+			} else {
+				XcfaLocation innerLoop = new XcfaLocation("loc" + counter++, Map.of());
+				builder.addLoc(innerLoop);
+				propagateMetadata(innerLoop);
+				XcfaLocation testEndLoc = guard.build(builder, initLoc, null, null, returnLoc);
+				if(UNROLL_COUNT > 0) {
+					initLoc = new XcfaLocation("loc" + counter++, Map.of());
+					builder.addLoc(initLoc);
+					propagateMetadata(initLoc);
+				}
+				xcfaEdge = new XcfaEdge(testEndLoc, innerLoop, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+				builder.addEdge(xcfaEdge);
+				propagateMetadata(xcfaEdge);
+				xcfaEdge = new XcfaEdge(testEndLoc, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+				builder.addEdge(xcfaEdge);
+				propagateMetadata(xcfaEdge);
+				XcfaLocation lastBody = body.build(builder, innerLoop, endLoc, initLoc, returnLoc);
+				xcfaEdge = new XcfaEdge(lastBody, initLoc, List.of());
+				builder.addEdge(xcfaEdge);
+				propagateMetadata(xcfaEdge);
+			}
+		}
 		return endLoc;
 	}
 }
