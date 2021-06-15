@@ -28,6 +28,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.AssignStmt.of;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -122,16 +123,32 @@ public class FunctionInlining extends ProcessPass {
 		List<XcfaEdge> edgesCopy = new ArrayList<>(procBuilder.getEdges());
 
 		for (XcfaEdge edge : edgesCopy) {
+			boolean atLeastOneAssignmentTruncated = false;
 			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
 			for (Stmt stmt : edge.getStmts()) {
 				if(stmt instanceof AssignStmt) {
-					NamedType leftType = CIntTypeUtils.getcTypeMetadata(((AssignStmt<?>) stmt).getVarDecl().getRef());
+					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
+					NamedType leftType = CIntTypeUtils.getcTypeMetadata(assignStmt.getVarDecl().getRef());
 					checkNotNull(leftType);
 					@SuppressWarnings("unchecked")
-					Expr<IntType> expr = (Expr<IntType>) ((AssignStmt<?>) stmt).getExpr();
+					Expr<IntType> expr = (Expr<IntType>) assignStmt.getExpr();
+
 					Expr<IntType> truncatedExpr = CIntTypeUtils.truncateToType(leftType, expr);
-					// TODO create new edge based on UnusedVarRemoval pass line 52-76
+					if(!expr.equals(truncatedExpr)) { // TODO will equals work here?
+						atLeastOneAssignmentTruncated = true;
+						newStmts.remove(stmt);
+						AssignStmt<IntType> newStmt = AssignStmt.of((VarDecl<IntType>) assignStmt.getVarDecl(), truncatedExpr);
+						newStmts.add(newStmt);
+					}
 				}
+			}
+			if(atLeastOneAssignmentTruncated) {
+				XcfaEdge newEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
+				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					XcfaMetadata.create(newEdge, s, o);
+				});
+				procBuilder.removeEdge(edge);
+				procBuilder.addEdge(newEdge);
 			}
 		}
 	}
