@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.analysis.prod2.prod2explpred;
 
-import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.maxatomcount.MaxAtomCount;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
-import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -25,18 +25,18 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 	private final Set<VarDecl<?>> explPreferredVars;
 	private final Map<VarDecl<?>, Set<Expr<BoolType>>> atomCount;
 	private final ExprSplitter exprSplitter;
-	private final int maxAtomCount;
+	private final MaxAtomCount maxAtomCount;
 
-	private AutomaticItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxAtomCount) {
+	private AutomaticItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final MaxAtomCount maxAtomCount) {
 		this.explPreferredVars = checkNotNull(explPreferredVars);
 		this.exprSplitter = checkNotNull(exprSplitter);
 		this.maxAtomCount = maxAtomCount;
 
-		this.atomCount = new LinkedHashMap<>();
+		this.atomCount = Containers.createMap();
 	}
 
-	public static AutomaticItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final int maxAtomCount) {
-		checkArgument(maxAtomCount >= 0, "MaxPredCount must be non-negative.");
+	public static AutomaticItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final MaxAtomCount maxAtomCount) {
+		checkNotNull(maxAtomCount);
 		return new AutomaticItpRefToProd2ExplPredPrec(explPreferredVars, exprSplitter, maxAtomCount);
 	}
 
@@ -49,13 +49,13 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 				.collect(Collectors.toSet());
 		canonicalAtoms.forEach(
 				atom -> ExprUtils.getVars(atom).forEach(
-						decl -> atomCount.computeIfAbsent(decl,(k) -> new HashSet<Expr<BoolType>>()).add(atom)
+						decl -> atomCount.computeIfAbsent(decl,(k) -> Containers.createSet()).add(atom)
 				)
 		);
 
 		explPreferredVars.addAll(
 				ExprUtils.getVars(refExpr).stream()
-					.filter(decl -> atomCount.get(decl).size() >= maxAtomCount && maxAtomCount != 0 || decl.getType() == Bool())
+					.filter(decl -> atomCount.get(decl).size() >= maxAtomCount.get(decl) && maxAtomCount.get(decl) != 0 || decl.getType() == Bool())
 					.collect(Collectors.toSet()));
 
 		final var explSelectedVars = ExprUtils.getVars(refExpr).stream()
