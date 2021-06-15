@@ -37,6 +37,8 @@ public class CIntTypeUtils {
 
 	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
 		NamedType exprType = getcTypeMetadata(expr);
+		System.out.println(expr);
+		System.out.println("in truncate: " + exprType);
 		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
 		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
 		if(type.isSigned()) typeBitSize /= 2;

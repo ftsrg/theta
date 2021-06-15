@@ -74,6 +74,7 @@ public final class XcfaProcedure {
         Map<VarDecl<?>, Direction> paramCollectList = new LinkedHashMap<>();
         procedure.params.forEach((varDecl, direction) -> {
             VarDecl<?> newVar = VarDecl.copyOf(varDecl);
+            XcfaMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> XcfaMetadata.create(newVar.getRef(), s, o));
             paramCollectList.put(newVar, direction);
             newVarLut.put(varDecl, newVar);
         });
@@ -82,6 +83,7 @@ public final class XcfaProcedure {
         Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
         procedure.localVars.forEach((varDecl, litExpr) -> {
             VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
+            XcfaMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> XcfaMetadata.create(newVar.getRef(), s, o));
             localVarsCollectList.put(newVar, litExpr);
             newVarLut.put(varDecl, newVar);
         });

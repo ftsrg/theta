@@ -7,7 +7,9 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -30,6 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.AssignStmt.of;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class FunctionInlining extends ProcessPass {
@@ -121,28 +124,28 @@ public class FunctionInlining extends ProcessPass {
 	 */
 	private void truncateAssignments(XcfaProcess.Builder builder, XcfaProcedure.Builder procBuilder) {
 		List<XcfaEdge> edgesCopy = new ArrayList<>(procBuilder.getEdges());
-
 		for (XcfaEdge edge : edgesCopy) {
 			boolean atLeastOneAssignmentTruncated = false;
 			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
 			for (Stmt stmt : edge.getStmts()) {
-				if(stmt instanceof AssignStmt) {
+				if (stmt instanceof AssignStmt) {
 					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
 					NamedType leftType = CIntTypeUtils.getcTypeMetadata(assignStmt.getVarDecl().getRef());
 					checkNotNull(leftType);
-					@SuppressWarnings("unchecked")
-					Expr<IntType> expr = (Expr<IntType>) assignStmt.getExpr();
+					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
 
+					System.out.println(assignStmt.getExpr());
+					System.out.println(expr);
 					Expr<IntType> truncatedExpr = CIntTypeUtils.truncateToType(leftType, expr);
-					if(!expr.equals(truncatedExpr)) { // TODO will equals work here?
+					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
 						newStmts.remove(stmt);
-						AssignStmt<IntType> newStmt = AssignStmt.of((VarDecl<IntType>) assignStmt.getVarDecl(), truncatedExpr);
+						AssignStmt<IntType> newStmt = AssignStmt.of(cast(assignStmt.getVarDecl(), Int()) , truncatedExpr);
 						newStmts.add(newStmt);
 					}
 				}
 			}
-			if(atLeastOneAssignmentTruncated) {
+			if (atLeastOneAssignmentTruncated) {
 				XcfaEdge newEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
 				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
 					XcfaMetadata.create(newEdge, s, o);
@@ -151,6 +154,8 @@ public class FunctionInlining extends ProcessPass {
 				procBuilder.addEdge(newEdge);
 			}
 		}
+
+
 	}
 
 	private void splitAndInlineEdges(XcfaProcess.Builder oldBuilder, XcfaProcedure.Builder procBuilder, Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints) {
@@ -203,7 +208,13 @@ public class FunctionInlining extends ProcessPass {
 				VarDecl<?> varDecl = entry.getKey();
 				XcfaProcedure.Direction direction = entry.getValue();
 				if (direction != XcfaProcedure.Direction.OUT) {
-					initStmts.add(Assign(cast(varDecl, varDecl.getType()), cast(xcfaCallStmt.getParams().get(paramCnt), varDecl.getType())));
+					NamedType funcParamType = CIntTypeUtils.getcTypeMetadata(varDecl.getRef());
+					checkNotNull(funcParamType);
+					Expr<IntType> param = cast(xcfaCallStmt.getParams().get(paramCnt), Int());
+					Expr<IntType> truncatedParam = CIntTypeUtils.truncateToType(funcParamType, param);
+
+					AssignStmt<IntType> assignStmt = Assign(cast(varDecl, Int()), truncatedParam);
+					initStmts.add(assignStmt);
 				}
 				if (direction != XcfaProcedure.Direction.IN) {
 					Expr<?> expr = xcfaCallStmt.getParams().get(paramCnt);
