@@ -21,7 +21,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
  * Note: char isn't an int type in C, but we'll handle it here as well, as it isn't a floating point type
  */
 public class CIntTypeUtils {
-	// TODO 32 bit for now, but we'll need to add a 64bit option as well
 	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
 	// Warning note: when deducing type, we assume an ILP32 or an LP64 arch
 	// (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
