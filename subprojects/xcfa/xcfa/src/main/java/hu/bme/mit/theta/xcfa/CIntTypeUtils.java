@@ -4,20 +4,17 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
-import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,7 +26,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
  */
 public class CIntTypeUtils {
 	public static ArchitectureType architecture = ArchitectureType.ILP32;
-	public static boolean addModulo = true;
+	public static boolean addModulo = false;
 
 	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
 		if(addModulo) {
@@ -289,7 +286,9 @@ public class CIntTypeUtils {
 		if(addModulo) {
 			if(!namedType.isSigned()) {
 				Integer maxBits = architecture.getBitWidth(namedType.getNamedType());
-				return Rem(innerExpr, Int(BigInteger.valueOf(2).pow(maxBits)));
+				IntRemExpr rem = Rem(innerExpr, Int(BigInteger.valueOf(2).pow(maxBits)));
+				XcfaMetadata.create(rem, "cType", namedType);
+				return rem;
 			} else {
 				return innerExpr;
 			}

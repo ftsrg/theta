@@ -12,6 +12,12 @@ public class NamedType extends CType{
 		this.namedType = namedType;
 	}
 
+	public static NamedType getInt() {
+		NamedType namedType = new NamedType("int");
+		namedType.setSigned(true);
+		return namedType;
+	}
+
 	public String getNamedType() {
 		return namedType;
 	}

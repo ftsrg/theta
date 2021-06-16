@@ -15,6 +15,7 @@ import java.util.Map;
 	public final Map<String, Integer> standardTypeSizes = new HashMap<>();
 
 	private ArchitectureType(int _char, int _short, int _int, int _long, int _longlong) {
+		standardTypeSizes.put("void", 1);
 		standardTypeSizes.put("char", _short);
 		standardTypeSizes.put("short", _short);
 		standardTypeSizes.put("int", _int);
@@ -22,5 +23,6 @@ import java.util.Map;
 		standardTypeSizes.put("longlong", _longlong);
 	}
 
-	public int getBitWidth(String typeName) { return standardTypeSizes.get(typeName); }
+	public int getBitWidth(String typeName) {
+		System.out.println(typeName); return standardTypeSizes.get(typeName); }
 }

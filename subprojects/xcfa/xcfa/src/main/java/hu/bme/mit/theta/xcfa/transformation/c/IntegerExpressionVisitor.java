@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.c;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
@@ -12,6 +13,7 @@ import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
@@ -63,12 +65,14 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				preStatements.add(ifTrue);
 			}
 			Expr<?> expr = ctx.logicalOrExpression().accept(this);
-			return Ite(
+			IteExpr<?> ite = Ite(
 					Neq(Int(0),
 							cast(expr, expr.getType())),
 					ifTrue.getExpression(),
 					ctx.conditionalExpression().accept(this)
-					);
+			);
+			XcfaMetadata.create(ite, "cType", NamedType.getInt());
+			return ite;
 		}
 		else return ctx.logicalOrExpression().accept(this);
 	}
@@ -80,7 +84,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					Expr<?> expr = logicalAndExpressionContext.accept(this);
 					return Neq(getZeroLiteral(expr.getType()), cast(expr, expr.getType())); }).
 				collect(Collectors.toList());
-			return Ite(BoolExprs.Or(collect), Int(1), Int(0));
+			IteExpr<?> ite = Ite(BoolExprs.Or(collect), Int(1), Int(0));
+			XcfaMetadata.create(ite, "cType", NamedType.getInt());
+			return ite;
 		}
 		return ctx.logicalAndExpression(0).accept(this);
 	}
@@ -92,7 +98,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				Expr<?> expr = inclusiveOrExpressionContext.accept(this);
 				return Neq(getZeroLiteral(expr.getType()), cast(expr, expr.getType())); }).
 					collect(Collectors.toList());
-			return Ite(BoolExprs.And(collect), Int(1), Int(0));
+			IteExpr<?> ite = Ite(BoolExprs.And(collect), Int(1), Int(0));
+			XcfaMetadata.create(ite, "cType", NamedType.getInt());
+			return ite;
 		}
 		return ctx.inclusiveOrExpression(0).accept(this);
 	}
@@ -131,6 +139,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 						Int(1),
 						Int(0)
 				), Int());
+				XcfaMetadata.create(expr, "cType", NamedType.getInt());
 			}
 			return expr;
 		}
@@ -160,6 +169,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 						Int(1),
 						Int(0)
 				), Int());
+				XcfaMetadata.create(expr, "cType", NamedType.getInt());
 			}
 			return expr;
 		}
@@ -278,7 +288,10 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				return negExpr;
 			}
 			case "+": return accept; // no need to update type, it remains the same
-			case "!": return Ite(Eq(cast(accept, Int()), Int(0)), Int(1), Int(0));
+			case "!":
+				IteExpr<?> ite = Ite(Eq(cast(accept, Int()), Int(0)), Int(1), Int(0));
+				XcfaMetadata.create(ite, "cType", NamedType.getInt());
+				return ite;
 		}
 		return accept;
 	}
