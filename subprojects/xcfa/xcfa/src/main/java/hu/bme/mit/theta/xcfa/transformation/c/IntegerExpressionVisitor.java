@@ -291,7 +291,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		if(ctx.postfixExpressionBraces().size() == 1) {
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
-			CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments);
+			CCall cCall = new CCall(ctx.primaryExpression().getText(), functions.get(getVar(ctx.primaryExpression().getText())), arguments);
 			preStatements.add(cCall);
 			FunctionVisitor.instance.recordMetadata(ctx, cCall);
 			return cCall.getRet().getRef();

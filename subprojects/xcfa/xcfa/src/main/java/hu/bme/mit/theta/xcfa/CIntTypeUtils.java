@@ -41,13 +41,14 @@ public class CIntTypeUtils {
 		System.out.println("in truncate: " + exprType);
 		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
 		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
-		if(type.isSigned()) typeBitSize /= 2;
-		if(exprType.isSigned()) exprTypeBitSize /= 2;
+		if(type.isSigned()) typeBitSize -= 1;
+		if(exprType.isSigned()) exprTypeBitSize -= 1;
 
 		// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
 		// otherwise we only need it, if the left side is smaller
 		if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
 			expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
+			XcfaMetadata.create(expr, "cType", type);
 		} // otherwise we don't need to truncate
 		return expr;
 	}

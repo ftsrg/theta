@@ -27,7 +27,7 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	protected final List<CStatement> preStatements = new ArrayList<>();
 	protected final List<CStatement> postStatements = new ArrayList<>();
 	protected final Deque<Map<String, VarDecl<?>>> variables;
-	private final Map<VarDecl<?>, CDeclaration> functions;
+	protected final Map<VarDecl<?>, CDeclaration> functions;
 
 	protected static boolean isBitwiseOps = false;
 
