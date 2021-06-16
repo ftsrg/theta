@@ -21,35 +21,29 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
  * Note: char isn't an int type in C, but we'll handle it here as well, as it isn't a floating point type
  */
 public class CIntTypeUtils {
-	// ILP32 Architecture, see here: https://unix.org/whitepapers/64bit.html
-	// Warning note: when deducing type, we assume an ILP32 or an LP64 arch
-	// (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
-	public static final Map<String, Integer> standardTypeSizes = new HashMap<>();
-
-	static {
-		standardTypeSizes.put("char", 8);
-		standardTypeSizes.put("int", 32);
-		standardTypeSizes.put("short", 16);
-		standardTypeSizes.put("long", 32);
-		standardTypeSizes.put("longlong", 32);
-	}
+	public static ArchitectureType architecture = ArchitectureType.ILP32;
+	public static boolean addModulo = true;
 
 	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
-		NamedType exprType = getcTypeMetadata(expr);
-		System.out.println(expr);
-		System.out.println("in truncate: " + exprType);
-		Integer exprTypeBitSize = standardTypeSizes.get(exprType.getNamedType());
-		Integer typeBitSize = standardTypeSizes.get(type.getNamedType());
-		if(type.isSigned()) typeBitSize -= 1;
-		if(exprType.isSigned()) exprTypeBitSize -= 1;
+		if(addModulo) {
+			NamedType exprType = getcTypeMetadata(expr);
+			System.out.println(expr);
+			System.out.println("in truncate: " + exprType);
+			int exprTypeBitSize = architecture.getBitWidth(exprType.getNamedType());
+			int typeBitSize = architecture.getBitWidth(type.getNamedType());
+			if(type.isSigned()) typeBitSize -= 1;
+			if(exprType.isSigned()) exprTypeBitSize -= 1;
 
-		// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
-		// otherwise we only need it, if the left side is smaller
-		if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
-			expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
-			XcfaMetadata.create(expr, "cType", type);
-		} // otherwise we don't need to truncate
-		return expr;
+			// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
+			// otherwise we only need it, if the left side is smaller
+			if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
+				expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
+				XcfaMetadata.create(expr, "cType", type);
+			} // otherwise we don't need to truncate
+			return expr;
+		} else {
+			return expr;
+		}
 	}
 
 	public static NamedType getcTypeMetadata(Expr<?> expr) {
@@ -180,7 +174,7 @@ public class CIntTypeUtils {
 			// unsigned has >= rank -> unsigned type
 			if(rankLessThan(signedType, unsignedType)) {
 				copyIntType(unsignedType, resultType);
-			} else if(standardTypeSizes.get(signedType.getNamedType()) >= 2*standardTypeSizes.get(unsignedType.getNamedType())) {
+			} else if(architecture.getBitWidth(signedType.getNamedType()) >= 2*architecture.getBitWidth(unsignedType.getNamedType())) {
 				// unsigned has < rank & signed is at least twice the size -> signed type
 				copyIntType(signedType, resultType);
 			} else {
@@ -256,11 +250,16 @@ public class CIntTypeUtils {
 	}
 
 	public static Expr<IntType> addOverflowWraparound(NamedType namedType, Expr<IntType> innerExpr) {
-		if(!namedType.isSigned()) {
-			Integer maxBits = CIntTypeUtils.standardTypeSizes.get(namedType.getNamedType());
-			return Rem(innerExpr, Int((int) Math.pow(2, maxBits)));
+		if(addModulo) {
+			if(!namedType.isSigned()) {
+				Integer maxBits = architecture.getBitWidth(namedType.getNamedType());
+				return Rem(innerExpr, Int((int) Math.pow(2, maxBits)));
+			} else {
+				return innerExpr;
+			}
 		} else {
 			return innerExpr;
 		}
+
 	}
 }

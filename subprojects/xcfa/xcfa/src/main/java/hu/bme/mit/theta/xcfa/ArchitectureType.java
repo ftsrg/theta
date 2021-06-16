@@ -21,16 +21,6 @@ import java.util.Map;
 		standardTypeSizes.put("long", _long);
 		standardTypeSizes.put("longlong", _longlong);
 	}
+
+	public int getBitWidth(String typeName) { return standardTypeSizes.get(typeName); }
 }
-
-/*
-public static final Map<String, Integer> standardTypeSizes = new HashMap<>();
-
-static {
-		standardTypeSizes.put("char", 8);
-		standardTypeSizes.put("short", 16);
-		standardTypeSizes.put("int", 32);
-		standardTypeSizes.put("long", 32);
-		standardTypeSizes.put("longlong", 32);
-		}
-*/
