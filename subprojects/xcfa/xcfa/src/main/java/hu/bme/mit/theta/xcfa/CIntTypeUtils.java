@@ -1,7 +1,12 @@
 package hu.bme.mit.theta.xcfa;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
@@ -9,11 +14,13 @@ import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.CTypeFactory;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
@@ -26,9 +33,9 @@ public class CIntTypeUtils {
 
 	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
 		if(addModulo) {
-			NamedType exprType = getcTypeMetadata(expr);
 			System.out.println(expr);
-			System.out.println("in truncate: " + exprType);
+			NamedType exprType = getcTypeMetadata(expr);
+			checkNotNull(exprType);
 			int exprTypeBitSize = architecture.getBitWidth(exprType.getNamedType());
 			int typeBitSize = architecture.getBitWidth(type.getNamedType());
 			if(type.isSigned()) typeBitSize -= 1;
@@ -37,7 +44,7 @@ public class CIntTypeUtils {
 			// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
 			// otherwise we only need it, if the left side is smaller
 			if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
-				expr = Rem(expr, Int((int) Math.pow(2, typeBitSize)));
+				expr = Rem(expr, Int(BigInteger.valueOf(2).pow(typeBitSize)));
 				XcfaMetadata.create(expr, "cType", type);
 			} // otherwise we don't need to truncate
 			return expr;
@@ -46,8 +53,37 @@ public class CIntTypeUtils {
 		}
 	}
 
-	public static NamedType getcTypeMetadata(Expr<?> expr) {
-		Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(expr,"cType");
+	/**
+	 * Creates assumptions based on the type of var about min and max values.
+	 * Should be added after havoc statements.
+	 * Cannot be turned off, as that can cause false positive cases.
+	 * @param var the variable we make assumptions about
+	 * @return two assumptions, one stating that the var has a value over the min value and another stating, that it is under it's max value
+	 */
+	public static Tuple2<AssumeStmt, AssumeStmt> createWraparoundAssumptions(VarDecl<?> var) {
+		NamedType type = CIntTypeUtils.getcTypeMetadata(var.getRef());
+		AssumeStmt assumeMax;
+		AssumeStmt assumeMin;
+		IntLeqExpr leq;
+		IntGeqExpr geq;
+		int bitWidth = architecture.getBitWidth(type.getNamedType());
+		if(type.isSigned()) {
+			BigInteger max = BigInteger.valueOf(2).pow(bitWidth-1).subtract(BigInteger.valueOf(1));
+			BigInteger min = BigInteger.valueOf(2).pow(bitWidth-1);
+			leq = Leq((Expr<IntType>) var.getRef(), Int(max));
+			geq = Geq((Expr<IntType>) var.getRef(), Neg(Int(min)));
+		} else {
+			BigInteger max = BigInteger.valueOf(2).pow(bitWidth-1);
+			leq = Leq((Expr<IntType>) var.getRef(), Int(max));
+			geq = Geq((Expr<IntType>) var.getRef(), Int(0));
+		}
+		assumeMax = AssumeStmt.of(leq);
+		assumeMin = AssumeStmt.of(geq);
+		return Tuple2.of(assumeMin, assumeMax);
+	}
+
+	public static NamedType getcTypeMetadata(Object o) {
+		Optional<Object> cTypeOptional = XcfaMetadata.getMetadataValue(o,"cType");
 		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CType) {
 			CType cType = (CType) cTypeOptional.get();
 			checkState(cType instanceof NamedType);
@@ -253,7 +289,7 @@ public class CIntTypeUtils {
 		if(addModulo) {
 			if(!namedType.isSigned()) {
 				Integer maxBits = architecture.getBitWidth(namedType.getNamedType());
-				return Rem(innerExpr, Int((int) Math.pow(2, maxBits)));
+				return Rem(innerExpr, Int(BigInteger.valueOf(2).pow(maxBits)));
 			} else {
 				return innerExpr;
 			}

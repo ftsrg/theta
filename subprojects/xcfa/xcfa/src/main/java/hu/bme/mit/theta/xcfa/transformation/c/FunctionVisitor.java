@@ -126,8 +126,15 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getFunctionParams().size() == 0) // functions should not be interpreted as global variables
+			if(!declaration.isFunc()) // functions should not be interpreted as global variables
 				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
+			else {
+				CType returnType = declaration.getBaseType();
+				for (int i = 0; i < declaration.getDerefCounter(); i++) {
+					returnType.incrementPointer();
+				}
+				XcfaMetadata.create(declaration.getName(), "cType", returnType);
+			}
 		}
 		recordMetadata(ctx, decls);
 		return decls;
@@ -138,7 +145,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setBaseType(returnType);
-		functions.put(createVar(funcDecl), funcDecl);
+		XcfaMetadata.create(funcDecl.getName(), "cType", returnType);
+		VarDecl<?> var = createVar(funcDecl);
+		functions.put(var, funcDecl);
 		variables.push(new LinkedHashMap<>());
 		locLUT.clear();
 		flatVariables.clear();

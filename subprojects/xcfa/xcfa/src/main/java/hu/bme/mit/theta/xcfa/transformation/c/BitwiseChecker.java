@@ -14,25 +14,29 @@ public class BitwiseChecker extends CBaseVisitor<Boolean> {
 	@Override
 	public Boolean visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
 		Boolean accept = ctx.exclusiveOrExpression(0).accept(this);
-		return ctx.exclusiveOrExpression().size() > 1 || accept == null || accept;
+		Boolean b = ctx.exclusiveOrExpression().size() > 1 || accept == null || accept;
+		return b;
 	}
 
 	@Override
 	public Boolean visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
 		Boolean accept = ctx.andExpression(0).accept(this);
-		return ctx.andExpression().size() > 1 || accept == null || accept;
+		Boolean b = ctx.andExpression().size() > 1 || accept == null || accept;
+		return b;
 	}
 
 	@Override
 	public Boolean visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
 		Boolean accept = ctx.inclusiveOrExpression(0).accept(this);
-		return ctx.inclusiveOrExpression().size() > 1 || accept == null || accept;
+		Boolean b = ctx.inclusiveOrExpression().size() > 1 || accept == null || accept;
+		return b;
 	}
 
 	@Override
 	public Boolean visitShiftExpression(CParser.ShiftExpressionContext ctx) {
 		Boolean accept = ctx.additiveExpression(0).accept(this);
-		return ctx.additiveExpression().size() > 1 || accept == null || accept;
+		Boolean b = ctx.additiveExpression().size() > 1 || accept == null || accept;
+		return b;
 
 	}
 

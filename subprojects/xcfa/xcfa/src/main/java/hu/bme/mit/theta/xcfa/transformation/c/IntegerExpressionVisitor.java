@@ -122,10 +122,10 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			for(int i = 0; i < ctx.relationalExpression().size() - 1; ++i) {
 				Expr<IntType> leftOp, rightOp;
 				if(expr == null)
-					leftOp = cast(ctx.relationalExpression(i).accept(this), expr.getType());
+					leftOp = cast(ctx.relationalExpression(i).accept(this), Int());
 				else
 					leftOp = expr;
-				rightOp = cast(ctx.relationalExpression(i+1).accept(this), expr.getType());
+				rightOp = cast(ctx.relationalExpression(i+1).accept(this), Int());
 				expr = cast(Ite(
 						ctx.signs.get(i).getText().equals("==") ? IntExprs.Eq(leftOp, rightOp) : IntExprs.Neq(leftOp, rightOp),
 						Int(1),
@@ -291,7 +291,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		if(ctx.postfixExpressionBraces().size() == 1) {
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
-			CCall cCall = new CCall(ctx.primaryExpression().getText(), functions.get(getVar(ctx.primaryExpression().getText())), arguments);
+			CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments);
 			preStatements.add(cCall);
 			FunctionVisitor.instance.recordMetadata(ctx, cCall);
 			return cCall.getRet().getRef();

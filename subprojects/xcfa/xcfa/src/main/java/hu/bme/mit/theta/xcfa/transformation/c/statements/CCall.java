@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -23,17 +24,12 @@ public class CCall extends CStatement{
 	private final String functionId;
 	private final List<CStatement> params;
 
-	public CCall(String functionId, CDeclaration cDeclaration, List<CStatement> params) {
+	public CCall(String functionId, List<CStatement> params) {
 		this.functionId = functionId;
 		this.params = params;
 		ret = Var("call_" + functionId + "_ret" + counter++, Int());
-		if(cDeclaration!=null) {
-			CType paramType = cDeclaration.getBaseType();
-			for (int i = 0; i < cDeclaration.getDerefCounter(); i++) {
-				paramType.incrementPointer();
-			}
-			XcfaMetadata.create(ret.getRef(), "cType", paramType);
-		}
+		CType paramType = CIntTypeUtils.getcTypeMetadata(functionId);
+		XcfaMetadata.create(ret.getRef(), "cType", paramType);
 	}
 
 	public String getId() {

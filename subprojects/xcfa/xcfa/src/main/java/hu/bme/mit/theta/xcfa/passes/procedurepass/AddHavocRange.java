@@ -19,38 +19,38 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
-public class CallsToHavocs extends ProcedurePass {
+public class AddHavocRange extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof HavocStmt).findAny();
 			if(e.isPresent()) {
 				List<Stmt> collect = new ArrayList<>();
 				for (Stmt stmt : edge.getStmts()) {
-					if(stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
-						Expr<?> expr = ((XcfaCallStmt)e.get()).getParams().get(0);
-						checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
-						VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-						collect.add(Havoc(var));
+					if(stmt == e.get()) {
+						VarDecl<?> var = ((HavocStmt)e.get()).getVarDecl();
+						collect.add(stmt);
+						Tuple2<AssumeStmt, AssumeStmt> wraparoundAssumptions = CIntTypeUtils.createWraparoundAssumptions(var);
+						collect.add(wraparoundAssumptions.get1());
+						collect.add(wraparoundAssumptions.get2());
 					}
 					else collect.add(stmt);
 				}

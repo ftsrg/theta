@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.passes;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AssignmentChainRemoval;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
@@ -34,7 +35,8 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
 				new EmptyEdgeRemovalPass(),
-				new EmptyEdgeSkipPass()));
+				new EmptyEdgeSkipPass(),
+				new AddHavocRange()));
 		processPasses.addAll(List.of(
 				new FunctionInlining()));
 		xcfaPasses.addAll((List.of(

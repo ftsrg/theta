@@ -134,8 +134,6 @@ public class FunctionInlining extends ProcessPass {
 					checkNotNull(leftType);
 					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
 
-					System.out.println(assignStmt.getExpr());
-					System.out.println(expr);
 					Expr<IntType> truncatedExpr = CIntTypeUtils.truncateToType(leftType, expr);
 					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
