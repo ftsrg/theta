@@ -17,11 +17,12 @@
 package hu.bme.mit.theta.core.stmt.xcfa;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
 public class JoinThreadStmt extends XcfaStmt {
-	private final String key;
+	private final VarDecl<?> key;
 
 	private static final int HASH_SEED = 413;
 	private static final String STMT_LABEL = "join-thread";
@@ -49,7 +50,7 @@ public class JoinThreadStmt extends XcfaStmt {
 		return Utils.lispStringBuilder(STMT_LABEL).add(key).toString();
 	}
 
-	public JoinThreadStmt(String key) {
+	public JoinThreadStmt(VarDecl<?> key) {
 		this.key = key;
 	}
 
@@ -63,7 +64,7 @@ public class JoinThreadStmt extends XcfaStmt {
 		return visitor.visit(this, param);
 	}
 
-	public String getKey() {
+	public VarDecl<?> getKey() {
 		return key;
 	}
 }

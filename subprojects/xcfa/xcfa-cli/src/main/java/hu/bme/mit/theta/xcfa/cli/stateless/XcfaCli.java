@@ -33,30 +33,34 @@ import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
+import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
-import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
-import hu.bme.mit.theta.xcfa.transformation.c.TypedefVisitor;
-import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -105,6 +109,12 @@ public class XcfaCli {
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
 
+	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
+	boolean loadStore = false;
+
+	@Parameter(names = "--strict-stmtlist", description = "Exactly one statement per edge")
+	boolean oneStmt = false;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -130,6 +140,13 @@ public class XcfaCli {
 		}
 
 		try {
+			if(loadStore) {
+				XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
+			}
+			if(oneStmt) {
+				XcfaPassManager.addProcedurePass(new OneStmtPerEdgePass());
+			}
+
 			final Stopwatch sw = Stopwatch.createStarted();
 			//final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
 
@@ -205,7 +222,7 @@ public class XcfaCli {
 					writeXcfaWithCex(xcfa, status.asUnsafe());
 				}
 			} else {
-				MemoryModelChecking parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
+				BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
 
 

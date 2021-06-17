@@ -17,12 +17,13 @@
 package hu.bme.mit.theta.core.stmt.xcfa;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Expr;
 
 public class StartThreadStmt extends XcfaStmt {
-	private final String key;
+	private final VarDecl<?> key;
 	private final String threadName;
 	private final Expr<?> param;
 
@@ -58,7 +59,7 @@ public class StartThreadStmt extends XcfaStmt {
 		return Utils.lispStringBuilder(STMT_LABEL).add(key).add(threadName).add(param == null ? "" : param).toString();
 	}
 
-	public StartThreadStmt(String key, String threadName, Expr<?> param) {
+	public StartThreadStmt(VarDecl<?> key, String threadName, Expr<?> param) {
 		this.key = key;
 		this.threadName = threadName;
 		this.param = param;
@@ -82,7 +83,7 @@ public class StartThreadStmt extends XcfaStmt {
 		return param;
 	}
 
-	public String getKey() {
+	public VarDecl<?> getKey() {
 		return key;
 	}
 }

@@ -16,13 +16,13 @@
 
 package hu.bme.mit.theta.xcfa.analysis;
 
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
+import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 public class XcfaAnalysis {
 
-	public static MemoryModelChecking createParametricAnalysis(XCFA xcfa) {
-		return new MemoryModelChecking(xcfa);
+	public static BoundedMultithreadedAnalysis createParametricAnalysis(XCFA xcfa) {
+		return new BoundedMultithreadedAnalysis(xcfa);
 	}
 
 }

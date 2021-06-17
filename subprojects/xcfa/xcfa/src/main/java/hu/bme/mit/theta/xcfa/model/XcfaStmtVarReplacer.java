@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.model;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -54,15 +55,13 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarDecl<?>>, Stmt> {
 
-    public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<VarDecl<?>, VarDecl<?>> varLut) {
+    public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> varLut) {
         if (expr instanceof RefExpr<?>) {
-            if (((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>) {
-                if(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()) == null) return expr;
-                else {
-                    Expr<T> tExpr = cast(varLut.get((VarDecl<?>) ((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
-                    XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
-                    return tExpr;
-                }
+            if (varLut.get(((RefExpr<T>) expr).getDecl()) == null) return expr;
+            else {
+                Expr<T> tExpr = cast(varLut.get(((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+                XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
+                return tExpr;
             }
         }
 
@@ -70,11 +69,7 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
         List<Expr<?>> newOps = new ArrayList<>();
         for (Expr<?> op : ops) {
             if (op instanceof LitExpr<?>) newOps.add(op);
-            else if (op instanceof RefExpr<?>) {
-                if (((RefExpr<?>) op).getDecl() instanceof VarDecl<?>) {
-                    newOps.add(varLut.getOrDefault(((RefExpr<?>) op).getDecl(), (VarDecl<?>) ((RefExpr<?>) op).getDecl()).getRef());
-                }
-            } else newOps.add(replaceVars(op, varLut));
+            else newOps.add(replaceVars(op, varLut));
         }
         Expr<T> tExpr = expr.withOps(newOps);
         XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));

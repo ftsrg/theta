@@ -38,12 +38,15 @@ public class CProgram extends CStatement{
 	@Override
 	public Object build(Object param) {
 		XCFA.Builder builder = XCFA.builder();
+		builder.setDynamic(true);
 
 		List<Stmt> initStmtList = new ArrayList<>();
 		for (Tuple2<CDeclaration, VarDecl<?>> globalDeclaration : globalDeclarations) {
 			builder.addGlobalVar(globalDeclaration.get2(), Int(0));
 			if(globalDeclaration.get1().getInitExpr() != null) {
 				initStmtList.add(Assign(cast(globalDeclaration.get2(), Int()), cast(globalDeclaration.get1().getInitExpr().getExpression(), Int())));
+			} else {
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), Int()), cast(Int(0), Int())));
 			}
 		}
 		XcfaProcess.Builder procBuilder = XcfaProcess.builder();

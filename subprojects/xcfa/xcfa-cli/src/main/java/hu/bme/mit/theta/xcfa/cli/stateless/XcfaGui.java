@@ -75,6 +75,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.xcfa.transformation.Utils.parseConstant;
 
 public class XcfaGui extends JFrame {
@@ -147,6 +148,7 @@ public class XcfaGui extends JFrame {
 	}
 
 	private void updateThread(XcfaProcess process) {
+		if(choicePanel.get(process) == null) addThread(process.getName(), process);
 		for (Component component : choicePanel.get(process).getComponents()) {
 			component.setVisible(false);
 		}
@@ -183,7 +185,7 @@ public class XcfaGui extends JFrame {
 
 	private void updateVars(){
 		values.forEach((varDecl, jLabel) -> {
-			Optional<? extends LitExpr<?>> value = state.getValuation().eval(varDecl);
+			Optional<? extends LitExpr<?>> value = state.lookup(varDecl);
 			jLabel.setText(value.isPresent() ? value.get().toString() : "?");
 		});
 	}
@@ -288,6 +290,7 @@ public class XcfaGui extends JFrame {
 					xcfaStackFrame.getStmt().accept(guiXcfaStmtVisitor, xcfaStackFrame.getProcess());
 					xcfaStackFrame.accept();
 					if(edge.getStmts().size() == i + 1) addTraceLine(tracePanel.get(xcfaStackFrame.getProcess()), edge);
+					disableThread(xcfaStackFrame.getProcess());
 					updateThreads();
 				} );
 			}
@@ -302,8 +305,13 @@ public class XcfaGui extends JFrame {
 		jPanel.add(choice);
 	}
 
+	private void disableThread(XcfaProcess process) {
+		for (Component component : choicePanel.get(process).getComponents()) {
+			component.setVisible(false);
+		}
+	}
 	private void updateThreads() {
-		for (XcfaProcess process : state.getXcfa().getProcesses()) {
+		for (XcfaProcess process : state.getEnabledProcesses()) {
 			updateThread(process);
 		}
 	}
@@ -365,17 +373,14 @@ public class XcfaGui extends JFrame {
 		@Override
 		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(AssignStmt<DeclType> stmt, XcfaProcess param) {
 			log(param.getName() + " " + stmt);
-			MutablePartitionedValuation valuation = state.getValuation();
-			valuation.put(state.getPartitions().get(param), stmt.getVarDecl(), stmt.getExpr().eval(valuation));
+			state.getSolvers().get(param).add(Eq(state.getNewInstance(stmt.getVarDecl()).getRef(), state.getInstantiatedExpression(stmt.getExpr())));
 			return null;
 		}
 
 		@Override
 		public <DeclType extends hu.bme.mit.theta.core.type.Type> R visit(HavocStmt<DeclType> stmt, XcfaProcess param) {
 			log(param.getName() + " " + stmt);
-			String value = JOptionPane.showInputDialog(XcfaGui.this,"Give a new value for " + stmt.getVarDecl().getName() + " [" + stmt.getVarDecl().getType() + "]");
-			LitExpr<? extends hu.bme.mit.theta.core.type.Type> constant = parseConstant(stmt.getVarDecl().getType(), value);
-			state.addValuation(state.getPartitions().get(param), stmt.getVarDecl(), constant);
+			state.getNewInstance(stmt.getVarDecl());
 			return null;
 		}
 

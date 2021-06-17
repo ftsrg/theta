@@ -33,28 +33,28 @@ public class LoadStmt extends XcfaStmt {
 
 	private volatile int hashCode = 0;
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + global.hashCode();
-			result = 31 * result + local.hashCode();
-			result = 31 * result + (atomic ? 1 : 0) ;
-			result = 31 * result + ordering.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		return obj instanceof LoadStmt
-				&& ((LoadStmt) obj).getGlobal().equals(global)
-				&& ((LoadStmt) obj).getLocal().equals(local)
-				&& ((LoadStmt) obj).getOrdering().equals(ordering)
-				&& ((LoadStmt) obj).isAtomic() == atomic;
-	}
+//	@Override
+//	public int hashCode() {
+//		int result = hashCode;
+//		if (result == 0) {
+//			result = HASH_SEED;
+//			result = 31 * result + global.hashCode();
+//			result = 31 * result + local.hashCode();
+//			result = 31 * result + (atomic ? 1 : 0) ;
+//			result = 31 * result + ordering.hashCode();
+//			hashCode = result;
+//		}
+//		return result;
+//	}
+//
+//	@Override
+//	public boolean equals(final Object obj) {
+//		return obj instanceof LoadStmt
+//				&& ((LoadStmt) obj).getGlobal().equals(global)
+//				&& ((LoadStmt) obj).getLocal().equals(local)
+//				&& ((LoadStmt) obj).getOrdering().equals(ordering)
+//				&& ((LoadStmt) obj).isAtomic() == atomic;
+//	}
 
 	@Override
 	public String toString() {

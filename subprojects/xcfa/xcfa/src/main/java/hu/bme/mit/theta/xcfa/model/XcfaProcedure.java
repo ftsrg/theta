@@ -64,12 +64,14 @@ public final class XcfaProcedure {
     }
 
     public XcfaProcedure(XcfaProcedure procedure) {
+        this(procedure, new LinkedHashMap<>());
+    }
+
+    public XcfaProcedure(XcfaProcedure procedure, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
         XcfaMetadata.lookupMetadata(procedure).forEach((s, o) -> {
             XcfaMetadata.create(this, s, o);
         });
         parent = null; // ProcessBuilder will fill out this field
-
-        Map<VarDecl<?>, VarDecl<?>> newVarLut = new HashMap<>();
 
         Map<VarDecl<?>, Direction> paramCollectList = new LinkedHashMap<>();
         procedure.params.forEach((varDecl, direction) -> {
