@@ -12,6 +12,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -87,13 +88,16 @@ public final class XcfaTraceToWitness {
 				boolean conditionTrue;
 				if(((AssumeStmt) actionStmt).getCond() instanceof EqExpr) {
 					conditionTrue = true;
+					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 				} else if (((AssumeStmt) actionStmt).getCond() instanceof NeqExpr) {
 					conditionTrue = false;
+					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 				} else {
-					throw new RuntimeException("Assume statement condition should either be an Eq or a Neq Expr");
+					// it is a leq or a geq - this isn't a control statement
+					// TODO maybe this case should be added as an assumption
+					// throw new RuntimeException("Assume statement condition should either be an Eq or a Neq Expr");
 				}
 
-				edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 			}
 
 			// not an official witness data key, so no validator will use it, but it helps readability
