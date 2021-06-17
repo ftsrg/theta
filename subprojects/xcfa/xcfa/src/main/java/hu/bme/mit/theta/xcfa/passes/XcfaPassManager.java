@@ -34,9 +34,20 @@ public class XcfaPassManager {
 				new HavocAssignments(),
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
+				new EmptyEdgeSkipPass(),
+				new AddHavocRange()));
+		/*
+		procedurePasses.addAll(List.of(
+				new PthreadCallsToThreadStmts(),
+				new CallsToFinalLocs(),
+				new CallsToHavocs(),
+				new HavocAssignments(),
+				new UnusedVarRemovalPass(),
+				new AssignmentChainRemoval(),
 				new EmptyEdgeRemovalPass(),
 				new EmptyEdgeSkipPass(),
 				new AddHavocRange()));
+		*/
 		processPasses.addAll(List.of(
 				new FunctionInlining()));
 		xcfaPasses.addAll((List.of(

@@ -27,6 +27,8 @@ import static com.google.common.base.Preconditions.checkState;
 public final class XcfaTraceToWitness {
 	private static Trace<CfaState<ExplState>, CfaAction> concreteTrace;
 	private static Graph witnessGraph;
+	private static final boolean addExplicitStates = true;
+
 	private XcfaTraceToWitness() {}
 
 	public static Graph buildWitness(
@@ -87,15 +89,14 @@ public final class XcfaTraceToWitness {
 				// when we need assumptions (by controlflow branches), the outer = means a cond true a /= means a cond false
 				boolean conditionTrue;
 				if(((AssumeStmt) actionStmt).getCond() instanceof EqExpr) {
-					conditionTrue = true;
+					conditionTrue = false;
 					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 				} else if (((AssumeStmt) actionStmt).getCond() instanceof NeqExpr) {
-					conditionTrue = false;
+					conditionTrue = true;
 					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
 				} else {
 					// it is a leq or a geq - this isn't a control statement
-					// TODO maybe this case should be added as an assumption
-					// throw new RuntimeException("Assume statement condition should either be an Eq or a Neq Expr");
+					// TODO maybe this case should be added as an assumption as well
 				}
 
 			}
@@ -159,9 +160,11 @@ public final class XcfaTraceToWitness {
 	 */
 	private static void addNodes() {
 		StringBuilder entryLabel = new StringBuilder();
-		entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
-		// entryLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(0)
-		//		.getState().toString()).append("</data>").append(System.lineSeparator());
+		if(addExplicitStates) {
+			entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
+			entryLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(0)
+					.getState().toString()).append("</data>").append(System.lineSeparator());
+		}
 		// add entry state as a node
 		addWitnessNode(0, entryLabel.toString());
 
@@ -171,15 +174,19 @@ public final class XcfaTraceToWitness {
 		// add the other states as nodes (except the last one)
 		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
 			StringBuilder nodeLabel = new StringBuilder();
-		//	nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
-		//			.getState().toString()).append("</data>").append(System.lineSeparator());
+			if(addExplicitStates) {
+				nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
+					.getState().toString()).append("</data>").append(System.lineSeparator());
+			}
 			addWitnessNode(i, nodeLabel.toString());
 		}
 
 		StringBuilder endLabel = new StringBuilder();
-		endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
-		// endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size()-1)
-		//		.getState().toString()).append("</data>").append(System.lineSeparator());
+		if(addExplicitStates) {
+			endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
+			endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size() - 1)
+				.getState().toString()).append("</data>").append(System.lineSeparator());
+		}
 		// add violation (end) state/node
 		addWitnessNode(concreteTrace.getStates().size()-1, endLabel.toString());
 	}

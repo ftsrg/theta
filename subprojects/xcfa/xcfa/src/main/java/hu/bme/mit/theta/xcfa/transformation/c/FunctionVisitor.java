@@ -133,7 +133,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				for (int i = 0; i < declaration.getDerefCounter(); i++) {
 					returnType.incrementPointer();
 				}
-				XcfaMetadata.create(declaration.getName(), "cType", returnType);
+				declaration.setBaseType(returnType);
+				if(!variables.peek().containsKey(declaration.getName())) {
+					XcfaMetadata.create(declaration.getName(), "cType", returnType);
+					VarDecl<?> var = createVar(declaration);
+					functions.put(var, declaration);
+				}
 			}
 		}
 		recordMetadata(ctx, decls);
@@ -145,9 +150,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setBaseType(returnType);
-		XcfaMetadata.create(funcDecl.getName(), "cType", returnType);
-		VarDecl<?> var = createVar(funcDecl);
-		functions.put(var, funcDecl);
+		if(!variables.peek().containsKey(funcDecl.getName())) {
+			XcfaMetadata.create(funcDecl.getName(), "cType", returnType);
+			VarDecl<?> var = createVar(funcDecl);
+			functions.put(var, funcDecl);
+		}
 		variables.push(new LinkedHashMap<>());
 		locLUT.clear();
 		flatVariables.clear();
