@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -50,8 +51,11 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 					for (Stmt stmt : edge.getStmts()) {
 						Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
 						vars1.removeIf(varDecl ->
-										(stmt instanceof HavocStmt)
-	//					|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
+							(
+								(stmt instanceof HavocStmt)
+								|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl
+										&& !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
+							) && builder.getLocalVars().containsKey(varDecl)
 						);
 						vars.addAll(vars1);
 					}

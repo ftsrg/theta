@@ -32,7 +32,7 @@ public class XcfaCallStmt extends XcfaStmt {
 	private static final int HASH_SEED = 417;
 
 	private volatile int hashCode = 0;
-
+/*
 	@Override
 	public int hashCode() {
 		int result = hashCode;
@@ -50,7 +50,7 @@ public class XcfaCallStmt extends XcfaStmt {
 		return obj instanceof XcfaCallStmt
 				&& ((XcfaCallStmt) obj).getParams().equals(params)
 				&& ((XcfaCallStmt) obj).getProcedure().equals(procedure);
-	}
+	}*/
 
 	public XcfaCallStmt(List<Expr<?>> params, String procedure) {
 		this.params = params;
