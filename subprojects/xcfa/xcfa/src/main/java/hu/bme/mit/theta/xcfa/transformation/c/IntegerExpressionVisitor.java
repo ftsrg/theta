@@ -315,6 +315,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
 			if(increment != 0) {
 				IntAddExpr add = Add(cast(primary, Int()), Int(increment));
+				XcfaMetadata.create(add, "cType", CIntTypeUtils.getcTypeMetadata(primary));
 				CExpr cexpr;
 				NamedType namedType = CIntTypeUtils.getcTypeMetadata(primary);
 				cexpr = new CExpr(CIntTypeUtils.addOverflowWraparound(namedType, add));
