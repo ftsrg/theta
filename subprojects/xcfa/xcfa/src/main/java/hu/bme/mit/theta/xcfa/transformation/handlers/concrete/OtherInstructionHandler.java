@@ -159,7 +159,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
-            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>(), -1));
+            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), null), new XcfaLocation(key.get2(), null), new ArrayList<>(), instruction.getLineNumber()));
             checkState(phiVar.getType().equals(value.getType()), "phiVar and value has to be of the same type!");
             Stmt stmt;
             Expr<?> expr;

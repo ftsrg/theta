@@ -32,8 +32,13 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
+import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.MemoryModelChecking;
 import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
@@ -81,6 +86,12 @@ public class XcfaCli {
 
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
+
+	@Parameter(names = "--witness", description = "Write witness to a file")
+	String witnessfile = null;
+
+	@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
+	String dotwitnessfile = null;
 
 	@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
 	String highlighted = null;
@@ -204,6 +215,7 @@ public class XcfaCli {
 			ex.printStackTrace();
 		}
 	}
+
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
 			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
@@ -227,15 +239,33 @@ public class XcfaCli {
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
-		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			printWriter.write(concrTrace.toString());
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
+
+		if(cexfile!=null) {
+			final File file = new File(cexfile);
+			PrintWriter printWriter = null;
+			try {
+				printWriter = new PrintWriter(file);
+				printWriter.write(concrTrace.toString());
+			} finally {
+				if (printWriter != null) {
+					printWriter.close();
+				}
 			}
+		}
+		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
+		if(witnessfile!=null) {
+			final File file = new File(witnessfile);
+			// TODO handle more input flags to get the parameters instead of hardcoding them
+			// TODO make WitnessWriter singleton
+			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+			try {
+				ww.writeFile(witnessGraph, witnessfile);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		if(dotwitnessfile!=null) {
+			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile);
 		}
 	}
 
@@ -260,19 +290,5 @@ public class XcfaCli {
 		try (PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
 		}
-	}
-
-	private int retrieveStartLine(CFA.Edge edge) {
-		Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
-		for (Object xcfaEdge : xcfaEdges) {
-			Object sourceStatement = XcfaMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
-			if(sourceStatement != null) {
-				Object lineNumberStart = XcfaMetadata.lookupMetadata(sourceStatement).get("lineNumberStart");
-				if(lineNumberStart != null && lineNumberStart instanceof Integer) {
-					return (int) lineNumberStart;
-				}
-			}
-		}
-		return -1;
 	}
 }
