@@ -37,12 +37,15 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.XcfaState;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Stack;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.lispStringBuilder;
@@ -99,6 +102,10 @@ public class BoundedMultithreadedAnalysis {
 		XcfaProcedure mainProcedure = xcfa.getMainProcess().getMainProcedure();
 		walkXcfaLoc(mainProcedure.getInitLoc(), xcfa.getMainProcess(), mainProcedure, mainProcedure.getInitLoc());
 
+		List<TupleN<DatalogArgument>> reads = new ArrayList<>(r.getElements());
+		chooseRf(0, reads, new Stack<>());
+
+
 		accessors.forEach((varDecl, objects) -> {
 			objects.get1().forEach((loadStmt, xcfaEdge) -> {
 				objects.get2().forEach((storeStmt, xcfaEdge1) -> {
@@ -107,7 +114,27 @@ public class BoundedMultithreadedAnalysis {
 			});
 		});
 
+		Collection<TupleN<DatalogArgument>> rfElements = rf.getElements();
+
+
+
 		ExecutionGraphPrinter.print(datalog);
+	}
+
+	private void chooseRf(int i, List<TupleN<DatalogArgument>> reads, Stack<Tuple2<LoadStmt, StoreStmt>> execution) {
+		if(i == reads.size()) {
+		} else {
+			TupleN<DatalogArgument> read = reads.get(i);
+			GenericDatalogArgument<?> readStmt = (GenericDatalogArgument<?>) read.get(0);
+			GenericDatalogArgument<?> varAr = (GenericDatalogArgument<?>) read.get(1);
+			LoadStmt loadStmt = (LoadStmt) readStmt.getContent();
+			VarDecl<?> varDecl = (VarDecl<?>) varAr.getContent();
+			for (StoreStmt storeStmt : accessors.get(varDecl).get2().keySet()) {
+				execution.push(Tuple2.of(loadStmt, storeStmt));
+				chooseRf(i + 1, reads, execution);
+				execution.pop();
+			}
+		}
 	}
 
 	private final Set<Tuple2<Object, Object>> edges = new LinkedHashSet<>();
