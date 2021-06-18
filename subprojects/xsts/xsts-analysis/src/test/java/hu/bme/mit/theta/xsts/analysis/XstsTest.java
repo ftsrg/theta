@@ -23,6 +23,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsNMaxAtomCountFactory;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -234,7 +235,7 @@ public class XstsTest {
 			xsts = XstsDslManager.createXsts(inputStream);
 		}
 
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).maxAtomCount(5).logger(logger).build(xsts);
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).xstsMaxAtomCountFactory(new XstsNMaxAtomCountFactory(5)).logger(logger).build(xsts);
 		final SafetyResult<?, ?> status = configuration.check();
 		if (safe) {
 			assertTrue(status.isSafe());
