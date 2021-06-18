@@ -23,6 +23,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsNMaxAtomCountFactory;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,25 +61,25 @@ public class XstsTest {
 
 				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -100,13 +101,13 @@ public class XstsTest {
 
 				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -118,61 +119,61 @@ public class XstsTest {
 
 				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 //				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -184,7 +185,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 //				{ "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -196,29 +197,29 @@ public class XstsTest {
 
 				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/array_constant.xsts", "src/test/resources/property/array_constant.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/localvars.xsts", "src/test/resources/property/localvars.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_CART},
+				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
 				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.PRED_CART}
 		});
@@ -234,7 +235,7 @@ public class XstsTest {
 			xsts = XstsDslManager.createXsts(inputStream);
 		}
 
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).logger(logger).build(xsts);
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).xstsMaxAtomCountFactory(new XstsNMaxAtomCountFactory(5)).logger(logger).build(xsts);
 		final SafetyResult<?, ?> status = configuration.check();
 		if (safe) {
 			assertTrue(status.isSafe());
