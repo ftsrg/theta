@@ -169,16 +169,21 @@ public class XstsStatement {
 		@Override
 		public Stmt visitBlockStmt(BlockStmtContext ctx) {
 			push();
-			if(ctx.stmts.size()==0) return SkipStmt.getInstance();
-			if(ctx.stmts.size()==1) return ctx.stmt.accept(this);
 
-			final List<Stmt> stmts = new ArrayList<>();
-			for(var stmtCtx: ctx.stmts){
-				final Stmt stmt = stmtCtx.accept(this);
-				stmts.add(stmt);
+			final Stmt result;
+			if(ctx.stmts.size()==0) result=SkipStmt.getInstance();
+			else if(ctx.stmts.size()==1) result=ctx.stmt.accept(this);
+			else {
+				final List<Stmt> stmts = new ArrayList<>();
+				for(var stmtCtx: ctx.stmts){
+					final Stmt stmt = stmtCtx.accept(this);
+					stmts.add(stmt);
+				}
+				result = SequenceStmt.of(stmts);
 			}
+
 			pop();
-			return SequenceStmt.of(stmts);
+			return result;
 		}
 
 	}
