@@ -55,7 +55,7 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 
 		explPreferredVars.addAll(
 				ExprUtils.getVars(refExpr).stream()
-					.filter(decl -> atomCount.get(decl).size() >= maxAtomCount.get(decl) && maxAtomCount.get(decl) != 0 || decl.getType() == Bool())
+					.filter(decl -> atomCount.get(decl).size() > maxAtomCount.get(decl) && maxAtomCount.get(decl) != 0 || decl.getType() == Bool())
 					.collect(Collectors.toSet()));
 
 		final var explSelectedVars = ExprUtils.getVars(refExpr).stream()

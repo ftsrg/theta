@@ -21,6 +21,7 @@ public class XstsAllAssumesMaxAtomCountFactory implements XstsMaxAtomCountFactor
         atoms.addAll(AtomCollector.collectAtoms(xsts.getEnv()));
         atoms.addAll(AtomCollector.collectAtoms(xsts.getInit()));
         atoms.addAll(AtomCollector.collectAtoms(xsts.getTran()));
+        atoms.addAll(ExprUtils.getAtoms(xsts.getProp()));
 
         final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
                 .map(ExprUtils::canonize)
@@ -34,7 +35,10 @@ public class XstsAllAssumesMaxAtomCountFactory implements XstsMaxAtomCountFactor
 
         final Map<VarDecl<?>, Integer> atomCount = Containers.createMap();
         xsts.getVars().forEach(
-                decl -> atomCount.put(decl, declToAtoms.computeIfAbsent(decl,(k) -> Containers.createSet()).size())
+                decl -> {
+                    if(declToAtoms.containsKey(decl)) atomCount.put(decl, declToAtoms.get(decl).size());
+                    else atomCount.put(decl, 5);
+                }
         );
         return new IndividualMaxAtomCount(atomCount);
     }
