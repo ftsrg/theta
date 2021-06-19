@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.CIntTypeUtils;
@@ -20,6 +21,7 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
+import hu.bme.mit.theta.xcfa.transformation.c.types.CType;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.math.BigInteger;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
@@ -202,8 +205,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				else arguments.add(Neg(cast(expr,Int())));
 			}
 
-			Expr<?> expr = CIntTypeUtils.addOverflowWraparound(expressionType, Add(arguments));
-			XcfaMetadata.create(expr, "cType", expressionType);
+			IntAddExpr add = Add(arguments);
+			XcfaMetadata.create(add, "cType", expressionType);
+			Expr<?> expr = CIntTypeUtils.addOverflowWraparound(add);
 			return expr;
 		}
 		return ctx.multiplicativeExpression(0).accept(this);
@@ -233,7 +237,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				switch(ctx.signs.get(i).getText()) {
 					case "*":
 						// unsigned overflow handling - it "wraps around"
-						CIntTypeUtils.addOverflowWraparound(expressionType, Mul(leftOp, rightOp));
+						expr = Mul(leftOp, rightOp);
+						XcfaMetadata.create(expr, "cType", expressionType);
+						CIntTypeUtils.addOverflowWraparound(expr);
 						break;
 					case "/": expr = Div(leftOp, rightOp); break;
 					case "%": expr = Rem(leftOp, rightOp); break;
@@ -252,7 +258,11 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 
 	@Override
 	public Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx) {
-		return ctx.castExpression().accept(this);
+		NamedType castType = (NamedType) ctx.typeName().specifierQualifierList().accept(TypeVisitor.instance);
+		Expr<IntType> expr = cast(ctx.castExpression().accept(this), Int());
+		checkNotNull(castType);
+		expr = CIntTypeUtils.explicitCast(castType, expr);
+		return expr;
 	}
 
 	@Override
@@ -267,7 +277,8 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if(increment != 0) {
 			IntAddExpr expr = Add(cast(ret, Int()), Int(increment));
-			Expr<IntType> wrappedExpr = CIntTypeUtils.addOverflowWraparound(CIntTypeUtils.getcTypeMetadata(ret), expr);
+			XcfaMetadata.create(expr, "cType", CIntTypeUtils.getcTypeMetadata(ret));
+			Expr<IntType> wrappedExpr = CIntTypeUtils.addOverflowWraparound(expr);
 			CExpr cexpr = new CExpr(wrappedExpr);
 			CAssignment cAssignment = new CAssignment(ret, cexpr, "=");
 			preStatements.add(cAssignment);
@@ -317,8 +328,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				IntAddExpr add = Add(cast(primary, Int()), Int(increment));
 				XcfaMetadata.create(add, "cType", CIntTypeUtils.getcTypeMetadata(primary));
 				CExpr cexpr;
-				NamedType namedType = CIntTypeUtils.getcTypeMetadata(primary);
-				cexpr = new CExpr(CIntTypeUtils.addOverflowWraparound(namedType, add));
+				cexpr = new CExpr(CIntTypeUtils.addOverflowWraparound(add));
 				// no need to truncate here, as left and right side types are the same
 				CAssignment cAssignment = new CAssignment(primary, cexpr, "=");
 				postStatements.add(cAssignment);

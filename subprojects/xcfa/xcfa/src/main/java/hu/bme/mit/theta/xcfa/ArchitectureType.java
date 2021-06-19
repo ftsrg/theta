@@ -24,5 +24,6 @@ import java.util.Map;
 	}
 
 	public int getBitWidth(String typeName) {
-		System.out.println(typeName); return standardTypeSizes.get(typeName); }
+		return standardTypeSizes.get(typeName);
+	}
 }

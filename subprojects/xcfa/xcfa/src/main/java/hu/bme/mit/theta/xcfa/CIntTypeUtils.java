@@ -22,15 +22,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 /**
- * Note: char isn't an int type in C, but we'll handle it here as well, as it isn't a floating point type
+ * Note: char isn't an integer type in C, but we'll handle it here as well, as it isn't a floating point type
  */
 public class CIntTypeUtils {
 	public static ArchitectureType architecture = ArchitectureType.ILP32;
-	public static boolean addModulo = false;
+	public static boolean addModulo = true;
 
 	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
 		if(addModulo) {
-			System.out.println(expr);
 			NamedType exprType = getcTypeMetadata(expr);
 			checkNotNull(exprType);
 			int exprTypeBitSize = architecture.getBitWidth(exprType.getNamedType());
@@ -282,7 +281,13 @@ public class CIntTypeUtils {
 		return typeCopy;
 	}
 
-	public static Expr<IntType> addOverflowWraparound(NamedType namedType, Expr<IntType> innerExpr) {
+	/**
+	 *
+	 * @param innerExpr to wrap around, it must have a cType XCFA Metadata
+	 * @return a modulo expression, wrapped around innerExpr
+	 */
+	public static Expr<IntType> addOverflowWraparound(Expr<IntType> innerExpr) {
+		NamedType namedType = getcTypeMetadata(innerExpr);
 		if(addModulo) {
 			if(!namedType.isSigned()) {
 				Integer maxBits = architecture.getBitWidth(namedType.getNamedType());
@@ -296,5 +301,36 @@ public class CIntTypeUtils {
 			return innerExpr;
 		}
 
+	}
+
+	public static Expr<IntType> explicitCast(NamedType namedType, Expr<IntType> exprToCast) {
+		checkNotNull(namedType);
+		checkNotNull(exprToCast);
+		Expr<IntType> ret;
+		int namedTypeBitWidth = architecture.getBitWidth(namedType.getNamedType());
+		if(namedType.isSigned()) namedTypeBitWidth--;
+
+		NamedType exprType = getcTypeMetadata(exprToCast);
+		int exprTypeBitWidth = architecture.getBitWidth(exprType.getNamedType());
+		if(exprType.isSigned()) exprTypeBitWidth--;
+
+		//	typeToCastTo    Expr        What to do
+		//	unsigned        unsigned    easy, check widths, add mod if needed
+		//	signed          signed      check widths, add complex mod
+		//	unsigned        signed      add mod, even if Expr is smaller (to filter out neg numbers)
+		//	signed          unsigned    check widths, add complex mod
+		if(namedType.isSigned() && namedTypeBitWidth < exprTypeBitWidth) {
+			BigInteger halfWidth = BigInteger.valueOf(2).pow(namedTypeBitWidth);
+			// complex mod: ( (signed expr + half width) mod 2*signedTypeMax ) - half width
+			ret = Add(Rem(Add(exprToCast, Int(halfWidth)), Int(BigInteger.valueOf(2).pow(namedTypeBitWidth+1))), Neg(Int(halfWidth)));;
+			XcfaMetadata.create(ret, "cType", namedType);
+		} else if(exprType.isSigned() || namedTypeBitWidth < exprTypeBitWidth) {
+			ret = Rem(exprToCast, Int(BigInteger.valueOf(2).pow(namedTypeBitWidth)));
+			XcfaMetadata.create(ret, "cType", namedType);
+		} else {
+			ret = exprToCast;
+		}
+
+		return ret;
 	}
 }

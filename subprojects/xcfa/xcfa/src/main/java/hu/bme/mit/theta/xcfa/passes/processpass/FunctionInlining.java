@@ -136,7 +136,6 @@ public class FunctionInlining extends ProcessPass {
 			splitAndInlineEdges(builder, procBuilder, splittingPoints);
 			splittingPoints.clear();
 		}
-		// TODO function calls
 		truncateAssignments(builder, procBuilder);
 
 		return procBuilder;

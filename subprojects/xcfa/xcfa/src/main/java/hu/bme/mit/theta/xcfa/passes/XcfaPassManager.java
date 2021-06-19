@@ -33,6 +33,7 @@ public class XcfaPassManager {
 				new CallsToFinalLocs(),
 				new CallsToHavocs(),
 				new HavocAssignments(),
+				new AddHavocRange(),
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
 				new EmptyEdgeRemovalPass(),

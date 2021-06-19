@@ -10,6 +10,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
@@ -26,8 +27,9 @@ public class CAssignment extends CStatement{
 	private final String operator;
 
 	public CAssignment(Expr<?> lValue, CStatement rValue, String operator) {
+		checkNotNull(rValue.getExpression());
 		this.lValue = lValue;
-		this.rValue = rValue; // TODO add truncate here
+		this.rValue = rValue;
 		this.operator = operator;
 	}
 

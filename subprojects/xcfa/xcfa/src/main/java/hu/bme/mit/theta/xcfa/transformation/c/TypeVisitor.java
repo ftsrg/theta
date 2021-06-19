@@ -38,18 +38,13 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 		return createCType(ctx.declarationSpecifier());
 	}
 
-	private CType createCType(List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
-		List<CType> cTypes = new ArrayList<>();
-		for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
-			CType ctype = declarationSpecifierContext.accept(this);
-			if(ctype != null) cTypes.add(ctype);
-		}
 
+	private CType mergeCTypes(List<CType> cTypes) {
 		List<CType> enums = cTypes.stream().filter(cType -> cType instanceof Enum).collect(Collectors.toList());
 		checkState(enums.size() <= 0, "Declaration cannot contain any enums"); // not supported yet
 		List<CType> namedElements = cTypes.stream().filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
-		NamedType mainType = (NamedType) namedElements.get(namedElements.size()-1);
-		if(shorthandTypes.contains(mainType.getNamedType())) {
+		NamedType mainType = (NamedType) namedElements.get(namedElements.size() - 1);
+		if (shorthandTypes.contains(mainType.getNamedType())) {
 			mainType = NamedType("int");
 		} else {
 			cTypes.remove(mainType);
@@ -57,13 +52,45 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 
 		CType type = mainType.apply(cTypes);
 		// we didn't get explicit signedness
-		if(type.isSigned()==null) {
-			if(type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
+		if (type.isSigned() == null) {
+			if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
 				System.err.println("WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.");
 			}
 			type.setSigned(true);
 		}
 		return type;
+	}
+
+	@Override
+	public CType visitSpecifierQualifierList(CParser.SpecifierQualifierListContext ctx) {
+		return createCType(ctx);
+	}
+
+	private CType createCType(CParser.SpecifierQualifierListContext specifierQualifierListContext) {
+		List<CType> cTypes = new ArrayList<>();
+		while(specifierQualifierListContext != null) {
+			CType qualifierSpecifier = null;
+			if(specifierQualifierListContext.typeSpecifier() != null) {
+				qualifierSpecifier = specifierQualifierListContext.typeSpecifier().accept(this);
+			}
+			else if(specifierQualifierListContext.typeQualifier() != null) {
+				qualifierSpecifier = specifierQualifierListContext.typeQualifier().accept(this);
+			}
+			if(qualifierSpecifier != null) cTypes.add(qualifierSpecifier);
+			specifierQualifierListContext = specifierQualifierListContext.specifierQualifierList();
+		}
+
+		return mergeCTypes(cTypes);
+	}
+
+	private CType createCType(List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
+		List<CType> cTypes = new ArrayList<>();
+		for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
+			CType ctype = declarationSpecifierContext.accept(this);
+			if(ctype != null) cTypes.add(ctype);
+		}
+
+		return mergeCTypes(cTypes);
 	}
 
 	@Override
