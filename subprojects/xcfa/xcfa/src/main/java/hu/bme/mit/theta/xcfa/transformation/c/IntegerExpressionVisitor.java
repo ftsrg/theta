@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.transformation.c;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -137,11 +138,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				else
 					leftOp = expr;
 				rightOp = cast(ctx.relationalExpression(i+1).accept(this), Int());
-				NamedType commonType = CIntTypeUtils.deduceType(List.of(
-						CIntTypeUtils.getcTypeMetadata(leftOp),
-						CIntTypeUtils.getcTypeMetadata(rightOp)));
-				Expr<IntType> leftExpr = CIntTypeUtils.explicitCast(commonType, leftOp);
-				Expr<IntType> rightExpr = CIntTypeUtils.explicitCast(commonType, rightOp);
+				Tuple2<Expr<IntType>, Expr<IntType>> exprTuple2 = CIntTypeUtils.castToCommonType(leftOp, rightOp);
+				Expr<IntType> leftExpr = exprTuple2.get1();
+				Expr<IntType> rightExpr = exprTuple2.get2();
 				expr = cast(Ite(
 						ctx.signs.get(i).getText().equals("==") ? IntExprs.Eq(leftExpr, rightExpr) : IntExprs.Neq(leftOp, rightOp),
 						Int(1),
@@ -166,11 +165,14 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					leftOp = expr;
 				rightOp = cast(ctx.shiftExpression(i+1).accept(this), Int());
 				Expr<BoolType> guard = null;
+				Tuple2<Expr<IntType>, Expr<IntType>> exprTuple2 = CIntTypeUtils.castToCommonType(leftOp, rightOp);
+				Expr<IntType> leftExpr = exprTuple2.get1();
+				Expr<IntType> rightExpr = exprTuple2.get2();
 				switch(ctx.signs.get(i).getText()) {
-					case "<": guard = Lt(leftOp, rightOp); break;
-					case ">": guard = Gt(leftOp, rightOp); break;
-					case "<=": guard = Leq(leftOp, rightOp); break;
-					case ">=": guard = Geq(leftOp, rightOp); break;
+					case "<": guard = Lt(leftExpr, rightExpr); break;
+					case ">": guard = Gt(leftExpr, rightExpr); break;
+					case "<=": guard = Leq(leftExpr, rightExpr); break;
+					case ">=": guard = Geq(leftExpr, rightExpr); break;
 				}
 				expr = cast(Ite(
 						guard,

@@ -333,4 +333,15 @@ public class CIntTypeUtils {
 
 		return ret;
 	}
+
+	public static Tuple2<Expr<IntType>, Expr<IntType>> castToCommonType(Expr<IntType> exprA, Expr<IntType> exprB) {
+		checkNotNull(exprA);
+		checkNotNull(exprB);
+		NamedType commonType = CIntTypeUtils.deduceType(List.of(
+				CIntTypeUtils.getcTypeMetadata(exprA),
+				CIntTypeUtils.getcTypeMetadata(exprB)));
+		Expr<IntType> castExprA = CIntTypeUtils.explicitCast(commonType, exprA);
+		Expr<IntType> castExprB = CIntTypeUtils.explicitCast(commonType, exprB);
+		return Tuple2.of(castExprA, castExprB);
+	}
 }
