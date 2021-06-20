@@ -137,8 +137,13 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				else
 					leftOp = expr;
 				rightOp = cast(ctx.relationalExpression(i+1).accept(this), Int());
+				NamedType commonType = CIntTypeUtils.deduceType(List.of(
+						CIntTypeUtils.getcTypeMetadata(leftOp),
+						CIntTypeUtils.getcTypeMetadata(rightOp)));
+				Expr<IntType> leftExpr = CIntTypeUtils.explicitCast(commonType, leftOp);
+				Expr<IntType> rightExpr = CIntTypeUtils.explicitCast(commonType, rightOp);
 				expr = cast(Ite(
-						ctx.signs.get(i).getText().equals("==") ? IntExprs.Eq(leftOp, rightOp) : IntExprs.Neq(leftOp, rightOp),
+						ctx.signs.get(i).getText().equals("==") ? IntExprs.Eq(leftExpr, rightExpr) : IntExprs.Neq(leftOp, rightOp),
 						Int(1),
 						Int(0)
 				), Int());
