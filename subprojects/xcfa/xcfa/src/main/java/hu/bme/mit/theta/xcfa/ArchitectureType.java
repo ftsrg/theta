@@ -16,7 +16,7 @@ import java.util.Map;
 
 	private ArchitectureType(int _char, int _short, int _int, int _long, int _longlong) {
 		standardTypeSizes.put("void", 1);
-		standardTypeSizes.put("char", _short);
+		standardTypeSizes.put("char", _char);
 		standardTypeSizes.put("short", _short);
 		standardTypeSizes.put("int", _int);
 		standardTypeSizes.put("long", _long);
