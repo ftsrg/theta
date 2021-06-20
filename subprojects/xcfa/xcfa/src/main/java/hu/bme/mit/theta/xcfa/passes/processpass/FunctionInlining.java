@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -42,7 +43,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class FunctionInlining extends ProcessPass {
 	private int counter = 0;
 	private final List<String> nopFuncs = List.of("reach_error", "abort");
-	private final Set<Stmt> alreadyHandled = new LinkedHashSet<>();
+	private final Set<Tuple2<Stmt, XcfaEdge>> alreadyHandled = new LinkedHashSet<>();
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
@@ -275,11 +276,11 @@ public class FunctionInlining extends ProcessPass {
 			while(stillExists) {
 				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt ->
 						stmt instanceof XcfaCallStmt &&
-						!alreadyHandled.contains(stmt) &&
+						!alreadyHandled.contains(Tuple2.of(stmt, edge)) &&
 						!nopFuncs.contains(((XcfaCallStmt)stmt).getProcedure()) &&
 						shouldInlineCall(builder, (XcfaCallStmt) stmt)).findAny();
 				if(callStmtOpt.isPresent() ) {
-					alreadyHandled.add(callStmtOpt.get());
+					alreadyHandled.add(Tuple2.of(callStmtOpt.get(), edge));
 					anyMatch = true;
 					Optional<XcfaProcedure> procedure = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) callStmtOpt.get()).getProcedure())).findAny();
 					if (procedure.isPresent()) {
