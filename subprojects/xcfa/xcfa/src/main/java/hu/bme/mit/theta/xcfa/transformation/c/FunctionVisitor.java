@@ -244,11 +244,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+		CStatement init = ctx.forCondition().forInit().accept(this);
+		CStatement test = ctx.forCondition().forTest().accept(this);
+		CStatement incr = ctx.forCondition().forIncr().accept(this);
 		CFor cFor = new CFor(
 				ctx.statement().accept(this),
-				ctx.forCondition().forInit().accept(this),
-				ctx.forCondition().forTest().accept(this),
-				ctx.forCondition().forIncr().accept(this));
+				init,
+				test,
+				incr);
 		recordMetadata(ctx, cFor);
 		return cFor;
 	}

@@ -41,7 +41,7 @@ public class CWhile extends CStatement{
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
 		propagateMetadata(endLoc);
-		for(int i = 0; i < UNROLL_COUNT; ++i) {
+		for(int i = 0; i < (UNROLL_COUNT == 0 ? 1 : UNROLL_COUNT); ++i) {
 			if (((CCompound) body).getcStatementList().size() == 0) {
 				xcfaEdge = new XcfaEdge(initLoc, endLoc, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 				builder.addEdge(xcfaEdge);

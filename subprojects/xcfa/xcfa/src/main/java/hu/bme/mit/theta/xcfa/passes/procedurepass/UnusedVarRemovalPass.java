@@ -51,7 +51,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 						Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
 						vars1.removeIf(varDecl ->
 										(stmt instanceof HavocStmt)
-	//					|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
+						|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl && !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
 						);
 						vars.addAll(vars1);
 					}
