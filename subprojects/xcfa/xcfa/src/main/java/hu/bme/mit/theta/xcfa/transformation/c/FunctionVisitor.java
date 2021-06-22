@@ -2,14 +2,17 @@ package hu.bme.mit.theta.xcfa.transformation.c;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssignment;
+import hu.bme.mit.theta.xcfa.transformation.c.statements.CAssume;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CBreak;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCase;
 import hu.bme.mit.theta.xcfa.transformation.c.statements.CCompound;
@@ -325,7 +328,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				recordMetadata(ctx, cAssignment);
 				compound.getcStatementList().add(cAssignment);
 			}
-			else createVar(declaration);
+			else {
+				VarDecl<?> varDecl = createVar(declaration);
+				// if there is no initializer, then we'll add an assumption regarding min and max values
+				AssumeStmt assumeStmt = CIntTypeUtils.createWraparoundAssumptions(varDecl);
+				CAssume cAssume = new CAssume(assumeStmt);
+				compound.getcStatementList().add(cAssume);
+			}
 		}
 		recordMetadata(ctx, compound);
 		return compound;

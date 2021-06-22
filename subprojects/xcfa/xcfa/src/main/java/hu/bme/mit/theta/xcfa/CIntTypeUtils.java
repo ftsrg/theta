@@ -4,6 +4,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
@@ -56,12 +57,12 @@ public class CIntTypeUtils {
 	 * @param var the variable we make assumptions about
 	 * @return two assumptions, one stating that the var has a value over the min value and another stating, that it is under it's max value
 	 */
-	public static Tuple2<AssumeStmt, AssumeStmt> createWraparoundAssumptions(VarDecl<?> var) {
+	public static AssumeStmt createWraparoundAssumptions(VarDecl<?> var) {
 		NamedType type = CIntTypeUtils.getcTypeMetadata(var.getRef());
-		AssumeStmt assumeMax;
-		AssumeStmt assumeMin;
+		AssumeStmt assume;
 		IntLeqExpr leq;
 		IntGeqExpr geq;
+		AndExpr and;
 		int bitWidth = architecture.getBitWidth(type.getNamedType());
 		if(type.isSigned()) {
 			BigInteger max = BigInteger.valueOf(2).pow(bitWidth-1).subtract(BigInteger.valueOf(1));
@@ -73,9 +74,9 @@ public class CIntTypeUtils {
 			leq = Leq((Expr<IntType>) var.getRef(), Int(max));
 			geq = Geq((Expr<IntType>) var.getRef(), Int(0));
 		}
-		assumeMax = AssumeStmt.of(leq);
-		assumeMin = AssumeStmt.of(geq);
-		return Tuple2.of(assumeMin, assumeMax);
+		and = AndExpr.of(List.of(leq, geq));
+		assume = AssumeStmt.of(and);
+		return assume;
 	}
 
 	public static NamedType getcTypeMetadata(Object o) {

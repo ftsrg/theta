@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.transformation.c;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.c.declaration.CDeclaration;
