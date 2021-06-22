@@ -3,8 +3,10 @@ package hu.bme.mit.theta.xcfa.transformation.c.statements;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.xcfa.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
@@ -47,15 +49,18 @@ public class CAssignment extends CStatement{
 	}
 
 	public Expr<?> getrExpression() {
+		Expr<?> ret = null;
 		switch (operator) {
 			case "=": return rValue.getExpression();
-			case "*=": return Mul(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
-			case "/=": return Div(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
-			case "%=": return Mod(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
-			case "+=": return Add(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
-			case "-=": return Sub(cast(lValue, Int()), cast(rValue.getExpression(), Int()));
+			case "*=": ret = Mul(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
+			case "/=": ret = Div(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
+			case "%=": ret = Mod(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
+			case "+=": ret = Add(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
+			case "-=": ret = Sub(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
 			default: throw new RuntimeException("Bad operator!");
 		}
+		XcfaMetadata.create(ret, "cType", CIntTypeUtils.getcTypeMetadata(lValue));
+		return ret;
 	}
 
 	@Override

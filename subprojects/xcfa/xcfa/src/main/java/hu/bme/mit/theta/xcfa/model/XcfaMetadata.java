@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class XcfaMetadata {
 	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new HashMap<>();
 	private static final Map<Object, Map<String, Object>> lookupKeyValue = new HashMap<>();
@@ -40,6 +42,7 @@ public class XcfaMetadata {
 	}
 
 	public static <T,X> void create(X owner, String key, T value) {
+		checkNotNull(value);
 		Tuple2<String, T> tup = Tuple2.of(key, value);
 		Set<Object> set = lookupOwner.getOrDefault(tup, new HashSet<>());
 		set.add(owner);
