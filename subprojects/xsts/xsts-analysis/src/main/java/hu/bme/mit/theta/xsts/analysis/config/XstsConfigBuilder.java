@@ -28,9 +28,8 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
+import hu.bme.mit.theta.xsts.analysis.autoexpl.*;
 import hu.bme.mit.theta.xsts.analysis.initprec.*;
-import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsUnlimitedMaxAtomCountFactory;
-import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsMaxAtomCountFactory;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -91,6 +90,20 @@ public class XstsConfigBuilder {
 
 	}
 
+	public enum AutoExpl {
+		STATIC(new XstsStaticAutoExpl()),
+
+		ALLASSUMES(new XstsAllAssumesAutoExpl()),
+
+		ALLEXPRS(new XstsAllExprsAutoExpl()),
+
+		NEWOPERANDS(new XstsNewOperandsAutoExpl());
+
+		public final XstsAutoExpl builder;
+
+		private AutoExpl(final XstsAutoExpl builder) { this.builder = builder; }
+	}
+
 	public enum OptimizeStmts {
 		ON, OFF
 	}
@@ -105,7 +118,7 @@ public class XstsConfigBuilder {
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
-	private XstsMaxAtomCountFactory xstsMaxAtomCountFactory = new XstsUnlimitedMaxAtomCountFactory();
+	private AutoExpl autoExpl = AutoExpl.ALLASSUMES;
 
 	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -148,8 +161,8 @@ public class XstsConfigBuilder {
 		return this;
 	}
 
-	public XstsConfigBuilder xstsMaxAtomCountFactory(final XstsMaxAtomCountFactory xstsMaxAtomCountFactory) {
-		this.xstsMaxAtomCountFactory = xstsMaxAtomCountFactory;
+	public XstsConfigBuilder autoExpl(final AutoExpl autoExpl) {
+		this.autoExpl = autoExpl;
 		return this;
 	}
 
@@ -327,7 +340,7 @@ public class XstsConfigBuilder {
 			Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
 			final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
-			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(ctrlVars, predSplit.splitter, xstsMaxAtomCountFactory.create(xsts));
+			final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(autoExpl.builder.create(xsts), predSplit.splitter);
 
 			switch (refinement) {
 				case FW_BIN_ITP:

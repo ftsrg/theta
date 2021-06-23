@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.prod2.prod2explpred;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
-import hu.bme.mit.theta.analysis.expr.refinement.maxatomcount.MaxAtomCount;
+import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -22,47 +22,32 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
-	private final Set<VarDecl<?>> explPreferredVars;
 	private final Map<VarDecl<?>, Set<Expr<BoolType>>> atomCount;
 	private final ExprSplitter exprSplitter;
-	private final MaxAtomCount maxAtomCount;
+	private final AutoExpl autoExpl;
 
-	private AutomaticItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final MaxAtomCount maxAtomCount) {
-		this.explPreferredVars = checkNotNull(explPreferredVars);
+	private AutomaticItpRefToProd2ExplPredPrec(final AutoExpl autoExpl, final ExprSplitter exprSplitter) {
 		this.exprSplitter = checkNotNull(exprSplitter);
-		this.maxAtomCount = maxAtomCount;
+		this.autoExpl = autoExpl;
 
 		this.atomCount = Containers.createMap();
 	}
 
-	public static AutomaticItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars, final ExprSplitter exprSplitter, final MaxAtomCount maxAtomCount) {
-		checkNotNull(maxAtomCount);
-		return new AutomaticItpRefToProd2ExplPredPrec(explPreferredVars, exprSplitter, maxAtomCount);
+	public static AutomaticItpRefToProd2ExplPredPrec create(final AutoExpl autoExpl, final ExprSplitter exprSplitter) {
+		checkNotNull(autoExpl);
+		return new AutomaticItpRefToProd2ExplPredPrec(autoExpl, exprSplitter);
 	}
 
 	@Override
 	public Prod2Prec<ExplPrec, PredPrec> toPrec(ItpRefutation refutation, int index) {
 		final Expr<BoolType> refExpr = refutation.get(index);
-
-		final var canonicalAtoms = ExprUtils.getAtoms(refExpr).stream()
-				.map(ExprUtils::canonize)
-				.collect(Collectors.toSet());
-		canonicalAtoms.forEach(
-				atom -> ExprUtils.getVars(atom).forEach(
-						decl -> atomCount.computeIfAbsent(decl,(k) -> Containers.createSet()).add(atom)
-				)
-		);
-
-		explPreferredVars.addAll(
-				ExprUtils.getVars(refExpr).stream()
-					.filter(decl -> atomCount.get(decl).size() > maxAtomCount.get(decl) && maxAtomCount.get(decl) != 0 || decl.getType() == Bool())
-					.collect(Collectors.toSet()));
+		autoExpl.update(refExpr);
 
 		final var explSelectedVars = ExprUtils.getVars(refExpr).stream()
-				.filter(explPreferredVars::contains)
+				.filter(autoExpl::isExpl)
 				.collect(Collectors.toSet());
 		final var predSelectedExprs = exprSplitter.apply(refExpr).stream()
-				.filter(expr -> !explPreferredVars.containsAll(ExprUtils.getVars(expr)))
+				.filter(expr -> !ExprUtils.getVars(expr).stream().allMatch(autoExpl::isExpl))
 				.collect(Collectors.toSet());
 
 		return Prod2Prec.of(ExplPrec.of(explSelectedVars), PredPrec.of(predSelectedExprs));
