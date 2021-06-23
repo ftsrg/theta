@@ -93,9 +93,9 @@ public class XstsConfigBuilder {
 	public enum AutoExpl {
 		STATIC(new XstsStaticAutoExpl()),
 
-		ALLASSUMES(new XstsAllAssumesAutoExpl()),
+		ALLASSUMES(new XstsOnlyAssumesNewAtomsAutoExpl()),
 
-		ALLEXPRS(new XstsAllExprsAutoExpl()),
+		ALLEXPRS(new XstsNewAtomsAutoExpl()),
 
 		NEWOPERANDS(new XstsNewOperandsAutoExpl());
 

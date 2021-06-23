@@ -12,7 +12,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class XstsAllAssumesAutoExpl implements XstsAutoExpl{
+public class XstsNewAtomsAutoExpl implements XstsAutoExpl{
     @Override
     public AutoExpl create(XSTS xsts) {
         final Set<Expr<BoolType>> atoms = Containers.createSet();
@@ -20,6 +20,7 @@ public class XstsAllAssumesAutoExpl implements XstsAutoExpl{
         atoms.addAll(AtomCollector.collectAtoms(xsts.getInit()));
         atoms.addAll(AtomCollector.collectAtoms(xsts.getTran()));
         atoms.addAll(ExprUtils.getAtoms(xsts.getProp()));
+        atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 
         final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
                 .map(ExprUtils::canonize)
