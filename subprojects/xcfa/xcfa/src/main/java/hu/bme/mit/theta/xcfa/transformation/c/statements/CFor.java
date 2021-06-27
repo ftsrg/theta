@@ -69,7 +69,7 @@ public class CFor extends CStatement{
 		xcfaEdge = new XcfaEdge(lastTest, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation lastBody = body.build(builder, lastTest, endLoc, startIncrement, returnLoc);
+		XcfaLocation lastBody = body.build(builder, endInit, endLoc, startIncrement, returnLoc);
 		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
