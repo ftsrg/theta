@@ -70,7 +70,7 @@ public class CIntTypeUtils {
 			leq = Leq((Expr<IntType>) var.getRef(), Int(max));
 			geq = Geq((Expr<IntType>) var.getRef(), Neg(Int(min)));
 		} else {
-			BigInteger max = BigInteger.valueOf(2).pow(bitWidth-1);
+			BigInteger max = BigInteger.valueOf(2).pow(bitWidth).subtract(BigInteger.valueOf(1));
 			leq = Leq((Expr<IntType>) var.getRef(), Int(max));
 			geq = Geq((Expr<IntType>) var.getRef(), Int(0));
 		}
@@ -337,7 +337,7 @@ public class CIntTypeUtils {
 		} else if(exprType.isSigned() || namedTypeBitWidth < exprTypeBitWidth) {
 			ret = Rem(exprToCast, Int(BigInteger.valueOf(2).pow(namedTypeBitWidth)));
 			XcfaMetadata.create(ret, "cType", namedType);
-		} else {
+		} else { // TODO shouldn't happen(?)
 			ret = exprToCast;
 		}
 
