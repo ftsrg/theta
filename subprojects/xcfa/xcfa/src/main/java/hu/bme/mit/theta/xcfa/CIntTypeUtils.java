@@ -315,6 +315,15 @@ public class CIntTypeUtils {
 		int exprTypeBitWidth = architecture.getBitWidth(exprType.getNamedType());
 		if(exprType.isSigned()) exprTypeBitWidth--;
 
+		// types aren't necessarily the same, but signedness and width is the same
+		// so no arithmetic addition is needed, but the new expression should have the given type as a metadata
+		if(namedType.isSigned() == exprType.isSigned() &&
+			namedTypeBitWidth == exprTypeBitWidth) {
+			ret = exprToCast;
+			XcfaMetadata.create(ret, "cType", namedType);
+			return ret;
+		}
+
 		//	typeToCastTo    Expr        What to do
 		//	unsigned        unsigned    easy, check widths, add mod if needed
 		//	signed          signed      check widths, add complex mod
