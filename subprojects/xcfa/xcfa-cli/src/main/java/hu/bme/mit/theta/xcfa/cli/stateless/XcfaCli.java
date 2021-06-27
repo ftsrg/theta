@@ -119,6 +119,33 @@ public class XcfaCli {
 	@Parameter(names = "--strict-stmtlist", description = "Exactly one statement per edge")
 	boolean oneStmt = false;
 
+	@Parameter(names = "--domain", description = "Abstract domain")
+	CfaConfigBuilder.Domain domain = CfaConfigBuilder.Domain.PRED_CART;
+
+	@Parameter(names = "--refinement", description = "Refinement strategy")
+	CfaConfigBuilder.Refinement refinement = CfaConfigBuilder.Refinement.SEQ_ITP;
+
+	@Parameter(names = "--search", description = "Search strategy")
+	CfaConfigBuilder.Search search = CfaConfigBuilder.Search.BFS;
+
+	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+	CfaConfigBuilder.PredSplit predSplit = CfaConfigBuilder.PredSplit.WHOLE;
+
+	@Parameter(names = "--precgranularity", description = "Precision granularity")
+	CfaConfigBuilder.PrecGranularity precGranularity = CfaConfigBuilder.PrecGranularity.GLOBAL;
+
+	@Parameter(names = "--encoding", description = "Block encoding")
+	CfaConfigBuilder.Encoding encoding = CfaConfigBuilder.Encoding.LBE;
+
+	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 10;
+
+	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
+	CfaConfigBuilder.InitPrec initPrec = CfaConfigBuilder.InitPrec.EMPTY;
+
+	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -239,10 +266,17 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
+
+			/*
 			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
 					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
-					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(100).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
-					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
+					.predSplit(CfaConfigBuilder.PredSplit.CONJUNCTS).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1).initPrec(CfaConfigBuilder.InitPrec.ALLASSUMES)
+					.pruneStrategy(PruneStrategy.FULL).logger(new ConsoleLogger(Logger.Level.DETAIL)).build(cfa, errLoc);
+			*/
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
