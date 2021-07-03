@@ -246,13 +246,18 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 						// unsigned overflow handling - it "wraps around"
 						expr = Mul(leftOp, rightOp);
 						XcfaMetadata.create(expr, "cType", expressionType);
-						CIntTypeUtils.addOverflowWraparound(expr);
+						expr = CIntTypeUtils.addOverflowWraparound(expr);
 						break;
-					case "/": expr = Div(leftOp, rightOp); break;
-					case "%": expr = Rem(leftOp, rightOp); break;
+					case "/":
+						expr = Div(leftOp, rightOp);
+						XcfaMetadata.create(expr, "cType", expressionType);
+						break;
+					case "%":
+						expr = Rem(leftOp, rightOp);
+						XcfaMetadata.create(expr, "cType", expressionType);
+						break;
 				}
 			}
-			XcfaMetadata.create(expr, "cType", expressionType);
 			return expr;
 		}
 		return ctx.castExpression(0).accept(this);

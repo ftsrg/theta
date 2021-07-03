@@ -4,7 +4,9 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * Note: char isn't an integer type in C, but we'll handle it here as well, as it isn't a floating point type
@@ -28,28 +31,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 public class CIntTypeUtils {
 	public static ArchitectureType architecture = ArchitectureType.ILP32;
 	public static boolean addModulo = true;
-
-	public static Expr<IntType> truncateToType(NamedType type, Expr<IntType> expr) {
-		if(addModulo) {
-			NamedType exprType = getcTypeMetadata(expr);
-			checkNotNull(exprType);
-			int exprTypeBitSize = architecture.getBitWidth(exprType.getNamedType());
-			int typeBitSize = architecture.getBitWidth(type.getNamedType());
-			if(type.isSigned()) typeBitSize -= 1;
-			if(exprType.isSigned()) exprTypeBitSize -= 1;
-
-			// if there is a truncation from a signed to an unsigned type, then we'll always need the modulo
-			// otherwise we only need it, if the left side is smaller
-			if(typeBitSize<exprTypeBitSize || (!type.isSigned() && exprType.isSigned()) ) {
-				expr = Rem(expr, Int(BigInteger.valueOf(2).pow(typeBitSize)));
-				XcfaMetadata.create(expr, "cType", type);
-			} // otherwise we don't need to truncate
-			return expr;
-		} else {
-			return expr;
-		}
-	}
-
+	public static boolean signedOverflow = true;
+	
 	/**
 	 * Creates assumptions based on the type of var about min and max values.
 	 * Should be added after havoc statements.
@@ -289,14 +272,25 @@ public class CIntTypeUtils {
 	 */
 	public static Expr<IntType> addOverflowWraparound(Expr<IntType> innerExpr) {
 		NamedType namedType = getcTypeMetadata(innerExpr);
+		Integer namedTypeBitWidth = architecture.getBitWidth(namedType.getNamedType());
+		if (namedType.isSigned()) namedTypeBitWidth--;
 		if(addModulo) {
 			if(!namedType.isSigned()) {
-				Integer maxBits = architecture.getBitWidth(namedType.getNamedType());
-				IntRemExpr rem = Rem(innerExpr, Int(BigInteger.valueOf(2).pow(maxBits)));
+				IntRemExpr rem = Rem(innerExpr, Int(BigInteger.valueOf(2).pow(namedTypeBitWidth)));
 				XcfaMetadata.create(rem, "cType", namedType);
 				return rem;
 			} else {
-				return innerExpr;
+				if(signedOverflow) {
+					System.err.println("WARNING: Possibility of signed overflow of the expression " + innerExpr + " (with wraparound, but this is undefined behaviour)");
+					BigInteger halfWidth = BigInteger.valueOf(2).pow(namedTypeBitWidth);
+					// complex mod: ( (signed expr + half width) mod 2*signedTypeMax ) - half width
+					IntAddExpr rem = Add(Rem(Add(innerExpr, Int(halfWidth)), Int(BigInteger.valueOf(2).pow(namedTypeBitWidth+1))), Neg(Int(halfWidth)));;
+					XcfaMetadata.create(rem, "cType", namedType);
+					return rem;
+				} else {
+					System.err.println("WARNING: Possibility of signed overflow of the expression " + innerExpr + " (and thus undefined behaviour and false positives)");
+					return innerExpr;
+				}
 			}
 		} else {
 			return innerExpr;
@@ -319,7 +313,7 @@ public class CIntTypeUtils {
 		// so no arithmetic addition is needed, but the new expression should have the given type as a metadata
 		if(namedType.isSigned() == exprType.isSigned() &&
 			namedTypeBitWidth == exprTypeBitWidth) {
-			ret = exprToCast;
+			ret = cast(AbstractExprs.Pos(exprToCast), Int());
 			XcfaMetadata.create(ret, "cType", namedType);
 			return ret;
 		}

@@ -266,17 +266,18 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
+
 			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
 
-			/*
+/*
 			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
 					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
 					.predSplit(CfaConfigBuilder.PredSplit.CONJUNCTS).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1).initPrec(CfaConfigBuilder.InitPrec.ALLASSUMES)
-					.pruneStrategy(PruneStrategy.FULL).logger(new ConsoleLogger(Logger.Level.DETAIL)).build(cfa, errLoc);
-			*/
+					.pruneStrategy(PruneStrategy.FULL).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
+*/
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}

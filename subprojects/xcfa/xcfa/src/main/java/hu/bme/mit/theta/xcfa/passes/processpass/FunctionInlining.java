@@ -159,7 +159,7 @@ public class FunctionInlining extends ProcessPass {
 					checkNotNull(leftType);
 					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
 
-					Expr<IntType> truncatedExpr = CIntTypeUtils.truncateToType(leftType, expr);
+					Expr<IntType> truncatedExpr = CIntTypeUtils.explicitCast(leftType, expr); // truncateToType(leftType, expr);
 					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
 						newStmts.remove(stmt);
@@ -235,7 +235,7 @@ public class FunctionInlining extends ProcessPass {
 					NamedType funcParamType = CIntTypeUtils.getcTypeMetadata(varDecl.getRef());
 					checkNotNull(funcParamType);
 					Expr<IntType> param = cast(xcfaCallStmt.getParams().get(paramCnt), Int());
-					Expr<IntType> truncatedParam = CIntTypeUtils.truncateToType(funcParamType, param);
+					Expr<IntType> truncatedParam = CIntTypeUtils.explicitCast(funcParamType, param); // truncateToType(funcParamType, param);
 
 					AssignStmt<IntType> assignStmt = Assign(cast(varDecl, Int()), truncatedParam);
 					initStmts.add(assignStmt);
