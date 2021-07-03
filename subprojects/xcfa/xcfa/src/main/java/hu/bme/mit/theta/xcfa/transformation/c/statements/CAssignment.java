@@ -60,6 +60,7 @@ public class CAssignment extends CStatement{
 			default: throw new RuntimeException("Bad operator!");
 		}
 		XcfaMetadata.create(ret, "cType", CIntTypeUtils.getcTypeMetadata(lValue));
+		ret = CIntTypeUtils.addOverflowWraparound(cast(ret, Int()));
 		return ret;
 	}
 

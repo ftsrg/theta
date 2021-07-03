@@ -32,7 +32,7 @@ public class CIntTypeUtils {
 	public static ArchitectureType architecture = ArchitectureType.ILP32;
 	public static boolean addModulo = true;
 	public static boolean signedOverflow = true;
-	
+
 	/**
 	 * Creates assumptions based on the type of var about min and max values.
 	 * Should be added after havoc statements.
