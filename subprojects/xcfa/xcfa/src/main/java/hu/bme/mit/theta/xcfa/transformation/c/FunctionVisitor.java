@@ -64,7 +64,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		String name = declaration.getName();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
-		System.out.println(name);
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name, Int()));
 		VarDecl<?> varDecl = peek.get(name);
