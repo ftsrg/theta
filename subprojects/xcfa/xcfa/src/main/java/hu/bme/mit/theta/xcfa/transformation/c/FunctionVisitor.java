@@ -64,6 +64,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		String name = declaration.getName();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
+		System.out.println(name);
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name, Int()));
 		VarDecl<?> varDecl = peek.get(name);
@@ -239,43 +240,52 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
+		variables.push(new LinkedHashMap<>());
 		CIf cIf = new CIf(
 				ctx.expression().accept(this),
 				ctx.statement(0).accept(this),
 				ctx.statement().size() > 1 ? ctx.statement(1).accept(this) : null);
 		recordMetadata(ctx, cIf);
+		variables.pop();
 		return cIf;
 	}
 
 	@Override
 	public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
+		variables.push(new LinkedHashMap<>());
 		CSwitch cSwitch = new CSwitch(
 				ctx.expression().accept(this),
 				ctx.statement().accept(this));
 		recordMetadata(ctx, cSwitch);
+		variables.pop();
 		return cSwitch;
 	}
 
 	@Override
 	public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
+		variables.push(new LinkedHashMap<>());
 		CWhile cWhile = new CWhile(
 				ctx.statement().accept(this),
 				ctx.expression().accept(this));
 		recordMetadata(ctx, cWhile);
+		variables.pop();
 		return cWhile;
 	}
 
 	@Override
 	public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
+		variables.push(new LinkedHashMap<>());
 		CDoWhile cDoWhile = new CDoWhile(
 				ctx.statement().accept(this),
 				ctx.expression().accept(this));
 		recordMetadata(ctx, cDoWhile);
+		variables.pop();
 		return cDoWhile;
 	}
 
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+		variables.push(new LinkedHashMap<>());
 		CStatement init = ctx.forCondition().forInit().accept(this);
 		CStatement test = ctx.forCondition().forTest().accept(this);
 		CStatement incr = ctx.forCondition().forIncr().accept(this);
@@ -285,6 +295,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				test,
 				incr);
 		recordMetadata(ctx, cFor);
+		variables.pop();
 		return cFor;
 	}
 
