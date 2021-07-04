@@ -31,7 +31,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class CIntTypeUtils {
 	public static ArchitectureType architecture = ArchitectureType.ILP32;
 	public static boolean addModulo = true;
-	public static boolean signedOverflow = true;
+	public static boolean signedOverflow = false;
 
 	/**
 	 * Creates assumptions based on the type of var about min and max values.
