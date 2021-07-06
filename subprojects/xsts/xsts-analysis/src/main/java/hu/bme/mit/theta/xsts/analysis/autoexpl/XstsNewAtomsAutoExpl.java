@@ -5,7 +5,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewAtomsAutoExpl;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.AtomCollector;
+import hu.bme.mit.theta.core.utils.StmtAtomCollector;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 
@@ -16,9 +16,9 @@ public class XstsNewAtomsAutoExpl implements XstsAutoExpl{
     @Override
     public AutoExpl create(XSTS xsts) {
         final Set<Expr<BoolType>> atoms = Containers.createSet();
-        atoms.addAll(AtomCollector.collectAtoms(xsts.getEnv()));
-        atoms.addAll(AtomCollector.collectAtoms(xsts.getInit()));
-        atoms.addAll(AtomCollector.collectAtoms(xsts.getTran()));
+        atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getEnv()));
+        atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getInit()));
+        atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getTran()));
         atoms.addAll(ExprUtils.getAtoms(xsts.getProp()));
         atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 

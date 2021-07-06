@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -43,18 +44,23 @@ public class NewOperandsAutoExpl implements AutoExpl{
                 .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
                 .collect(Collectors.toSet());
         canonicalAtoms.stream()
-                .filter(BinaryExpr.class::isInstance)
-                .map(BinaryExpr.class::cast)
+                .filter(atom -> atom.getOps().size() > 1)
                 .forEach(
                         atom -> {
-                            if(atom.getLeftOp() instanceof RefExpr) {
-                                final Decl<?> decl = ((RefExpr<?>) atom.getLeftOp()).getDecl();
-                                if(modelOperands.containsKey(decl) && !modelOperands.get(decl).contains(atom.getRightOp())) newOperands.computeIfAbsent(decl, k -> Containers.createSet()).add(atom.getRightOp());
-                            }
-                            if(atom.getRightOp() instanceof RefExpr) {
-                                final Decl<?> decl = ((RefExpr<?>) atom.getRightOp()).getDecl();
-                                if(modelOperands.containsKey(decl) && !modelOperands.get(decl).contains(atom.getLeftOp())) newOperands.computeIfAbsent(decl, k -> Containers.createSet()).add(atom.getLeftOp());
-                            }
+                            atom.getOps().stream()
+                                    .filter(RefExpr.class::isInstance)
+                                    .map(RefExpr.class::cast)
+                                    .forEach(
+                                            ref -> atom.getOps().stream()
+                                                    .filter(Predicate.not(ref::equals))
+                                                    .forEach(
+                                                            op -> {
+                                                                final Decl<?> decl = ref.getDecl();
+                                                                if(modelOperands.containsKey(decl) && !modelOperands.get(decl).contains(op)) newOperands.computeIfAbsent(decl, k -> Containers.createSet()).add(op);
+                                                            }
+                                                    )
+
+                                    );
                         }
                 );
 

@@ -93,9 +93,7 @@ public class XstsConfigBuilder {
 	public enum AutoExpl {
 		STATIC(new XstsStaticAutoExpl()),
 
-		ALLASSUMES(new XstsOnlyAssumesNewAtomsAutoExpl()),
-
-		ALLEXPRS(new XstsNewAtomsAutoExpl()),
+		NEWATOMS(new XstsNewAtomsAutoExpl()),
 
 		NEWOPERANDS(new XstsNewOperandsAutoExpl());
 
@@ -118,7 +116,7 @@ public class XstsConfigBuilder {
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
-	private AutoExpl autoExpl = AutoExpl.ALLASSUMES;
+	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
 	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
