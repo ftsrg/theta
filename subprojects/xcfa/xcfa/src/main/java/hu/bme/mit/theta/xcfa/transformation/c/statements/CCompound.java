@@ -26,6 +26,16 @@ public class CCompound extends CStatement{
 	}
 
 	@Override
+	public void setPostStatements(CStatement postStatements) {
+		this.postStatements = postStatements;
+	}
+
+	@Override
+	public void setPreStatements(CStatement preStatements) {
+		this.preStatements = preStatements;
+	}
+
+	@Override
 	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		builder.addLoc(initLoc);
@@ -34,9 +44,11 @@ public class CCompound extends CStatement{
 		builder.addEdge(edge);
         propagateMetadata(edge);
 		lastLoc = initLoc;
+		if(preStatements != null) lastLoc = preStatements.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
 		for (CStatement statement : cStatementList) {
 			if(statement != null) lastLoc = statement.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
 		}
+		if(postStatements != null) lastLoc = postStatements.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
 		return lastLoc;
 	}
 }

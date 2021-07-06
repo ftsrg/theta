@@ -367,12 +367,16 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public CStatement visitAssignmentExpressionAssignmentExpression(CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
 		ExpressionVisitor expressionVisitor = ExpressionVisitor.create(variables, functions);
 		CCompound compound = new CCompound();
+		CCompound preStatements = new CCompound();
+		CCompound postStatements = new CCompound();
 		Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
-		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
 		CAssignment cAssignment = new CAssignment(ret, ctx.assignmentExpression().accept(this), ctx.assignmentOperator().getText());
-		recordMetadata(ctx, cAssignment);
 		compound.getcStatementList().add(cAssignment);
-		compound.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		preStatements.getcStatementList().addAll(expressionVisitor.getPreStatements());
+		compound.setPreStatements(preStatements);
+		recordMetadata(ctx, compound);
+		postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		compound.setPostStatements(postStatements);
 		recordMetadata(ctx, compound);
 		return compound;
 	}
@@ -381,12 +385,16 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public CStatement visitAssignmentExpressionConditionalExpression(CParser.AssignmentExpressionConditionalExpressionContext ctx) {
 		ExpressionVisitor expressionVisitor = ExpressionVisitor.create(variables, functions);
 		CCompound compound = new CCompound();
+		CCompound preStatements = new CCompound();
+		CCompound postStatements = new CCompound();
 		Expr<?> ret = ctx.conditionalExpression().accept(expressionVisitor);
-		compound.getcStatementList().addAll(expressionVisitor.getPreStatements());
 		CExpr cexpr = new CExpr(ret);
-		recordMetadata(ctx, cexpr);
 		compound.getcStatementList().add(cexpr);
-		compound.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		preStatements.getcStatementList().addAll(expressionVisitor.getPreStatements());
+		compound.setPreStatements(preStatements);
+		recordMetadata(ctx, compound);
+		postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
+		compound.setPostStatements(postStatements);
 		recordMetadata(ctx, compound);
 		return compound;
 	}

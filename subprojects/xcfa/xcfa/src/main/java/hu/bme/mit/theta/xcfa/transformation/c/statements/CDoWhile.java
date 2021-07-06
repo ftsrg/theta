@@ -35,8 +35,14 @@ public class CDoWhile extends CStatement{
 		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation innerEndLoc = new XcfaLocation("loc" + counter++, Map.of());
+		XcfaLocation innerInnerGuard = new XcfaLocation("loc" + counter++, Map.of());
+		XcfaLocation outerInnerGuard = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
         propagateMetadata(endLoc);
+		builder.addLoc(innerInnerGuard);
+        propagateMetadata(innerInnerGuard);
+		builder.addLoc(outerInnerGuard);
+        propagateMetadata(outerInnerGuard);
 		builder.addLoc(innerEndLoc);
         propagateMetadata(innerEndLoc);
 		builder.addLoc(initLoc);
@@ -48,13 +54,21 @@ public class CDoWhile extends CStatement{
 		xcfaEdge = new XcfaEdge(lastBody, innerEndLoc, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation lastGuard = guard.build(builder, innerEndLoc, null, null, returnLoc);
-		xcfaEdge = new XcfaEdge(lastGuard, initLoc, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+		XcfaLocation lastPre = guard.getPreStatements().build(builder, innerEndLoc, null, null, returnLoc);
+		xcfaEdge = new XcfaEdge(lastPre, innerInnerGuard, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastGuard, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastPre, outerInnerGuard, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		return endLoc;
+        XcfaLocation outerLastGuard = guard.getPostStatements().build(builder, outerInnerGuard, null, null, null);
+        XcfaLocation innerLastGuard = guard.getPostStatements().build(builder, innerInnerGuard, null, null, null);
+		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
+		builder.addEdge(xcfaEdge);
+		propagateMetadata(xcfaEdge);
+		xcfaEdge = new XcfaEdge(innerLastGuard, initLoc, List.of());
+		builder.addEdge(xcfaEdge);
+		propagateMetadata(xcfaEdge);
+        return endLoc;
 	}
 }

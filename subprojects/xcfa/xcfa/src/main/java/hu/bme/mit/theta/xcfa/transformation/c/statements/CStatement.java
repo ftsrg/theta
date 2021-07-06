@@ -18,6 +18,8 @@ public abstract class CStatement {
 	private XcfaLocation loc;
 	protected static int counter = 0;
 	protected static int UNROLL_COUNT = 0;
+	protected CStatement preStatements;
+	protected CStatement postStatements;
 
 	public String getId() {
 		return id;
@@ -69,5 +71,21 @@ public abstract class CStatement {
 
 	public XcfaLocation getLoc() {
 		return loc;
+	}
+
+	public CStatement getPostStatements() {
+		return postStatements == null ? new CCompound() : postStatements;
+	}
+
+	public void setPostStatements(CStatement postStatements) {
+		throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
+	}
+
+	public CStatement getPreStatements() {
+		return preStatements == null ? new CCompound() : preStatements;
+	}
+
+	public void setPreStatements(CStatement preStatements) {
+		throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
 	}
 }

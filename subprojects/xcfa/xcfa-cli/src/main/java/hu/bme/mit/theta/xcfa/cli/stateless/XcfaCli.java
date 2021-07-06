@@ -273,9 +273,9 @@ public class XcfaCli {
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(Logger.Level.SUBSTEP)).build(cfa, errLoc);
 */
 
-			return new CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
+			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
 					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
-					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1000).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
+					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
 					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.DETAIL)).build(cfa, errLoc);
 
 		} catch (final Exception ex) {

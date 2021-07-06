@@ -49,8 +49,11 @@ public class CFor extends CStatement{
 		XcfaLocation endLoc = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation endInit = new XcfaLocation("loc" + counter++, Map.of());
 		XcfaLocation startIncrement = new XcfaLocation("loc" + counter++, Map.of());
+		XcfaLocation outerLastTest = new XcfaLocation("loc" + counter++, Map.of());
 		builder.addLoc(endLoc);
         propagateMetadata(endLoc);
+		builder.addLoc(outerLastTest);
+        propagateMetadata(outerLastTest);
 		builder.addLoc(endInit);
         propagateMetadata(endInit);
 		builder.addLoc(initLoc);
@@ -62,14 +65,15 @@ public class CFor extends CStatement{
         propagateMetadata(xcfaEdge);
 
 		XcfaLocation lastInit = init.build(builder, initLoc, null, null, returnLoc);
-		XcfaLocation lastTest = guard.build(builder, lastInit, null, null, returnLoc);
+		XcfaLocation lastTest = guard.getPreStatements().build(builder, lastInit, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastTest, endLoc, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastTest, outerLastTest, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation lastBody = body.build(builder, endInit, endLoc, startIncrement, returnLoc);
+		XcfaLocation innerLastGuard = guard.getPostStatements().build(builder, endInit, endLoc, startIncrement, returnLoc);
+		XcfaLocation lastBody = body.build(builder, innerLastGuard, endLoc, startIncrement, returnLoc);
 		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
@@ -77,6 +81,10 @@ public class CFor extends CStatement{
 		xcfaEdge = new XcfaEdge(lastIncrement, lastInit, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
+		XcfaLocation outerLastGuard = guard.getPostStatements().build(builder, outerLastTest, endLoc, startIncrement, returnLoc);
+		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
+		builder.addEdge(xcfaEdge);
+		propagateMetadata(xcfaEdge);
 		return endLoc;
 	}
 }
