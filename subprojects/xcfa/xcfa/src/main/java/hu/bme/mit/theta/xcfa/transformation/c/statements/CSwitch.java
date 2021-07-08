@@ -44,7 +44,7 @@ public class CSwitch extends CStatement{
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
         propagateMetadata(edge);
-		XcfaLocation endInit = testValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
+		XcfaLocation endInit = testValue.buildWithoutPostStatement(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		checkState(body instanceof CCompound, "Switch body has to be a CompoundStatement!");
 		Expr<BoolType> defaultExpr = True();
 		for (CStatement statement : ((CCompound) body).getcStatementList()) {
@@ -64,11 +64,13 @@ public class CSwitch extends CStatement{
         propagateMetadata(xcfaEdge);
 			}
 			if(statement instanceof CCase) {
-				xcfaEdge = new XcfaEdge(endInit, location, List.of(Assume(Eq(testValue.getExpression(), ((CCase) statement).getExpr().getExpression()))));
+				XcfaLocation afterGuard = testValue.buildPostStatement(builder, endInit, breakLoc, continueLoc, returnLoc);
+				xcfaEdge = new XcfaEdge(afterGuard, location, List.of(Assume(Eq(testValue.getExpression(), ((CCase) statement).getExpr().getExpression()))));
 				builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 			} else if(statement instanceof CDefault) {
-				xcfaEdge = new XcfaEdge(endInit, location, List.of(Assume(defaultExpr)));
+				XcfaLocation afterGuard = testValue.buildPostStatement(builder, endInit, breakLoc, continueLoc, returnLoc);
+				xcfaEdge = new XcfaEdge(afterGuard, location, List.of(Assume(defaultExpr)));
 				builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 			}

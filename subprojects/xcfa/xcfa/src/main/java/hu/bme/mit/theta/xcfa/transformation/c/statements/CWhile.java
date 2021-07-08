@@ -56,8 +56,7 @@ public class CWhile extends CStatement{
 				XcfaLocation innerLoop = new XcfaLocation("loc" + counter++, Map.of());
 				builder.addLoc(innerLoop);
 				propagateMetadata(innerLoop);
-				// here
-				XcfaLocation testEndLoc = guard.getPreStatements().buildWithoutPostStatement(builder, initLoc, null, null, returnLoc);
+				XcfaLocation testEndLoc = guard.buildWithoutPostStatement(builder, initLoc, null, null, returnLoc);
 				if(UNROLL_COUNT > 0) {
 					initLoc = new XcfaLocation("loc" + counter++, Map.of());
 					builder.addLoc(initLoc);
@@ -69,16 +68,14 @@ public class CWhile extends CStatement{
 				xcfaEdge = new XcfaEdge(testEndLoc, outerBeforeGuard, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(xcfaEdge);
-				// here
-				XcfaLocation lastGuard = guard.getPostStatements().buildWithoutPostStatement(builder, innerLoop, endLoc, initLoc, returnLoc);
+				XcfaLocation lastGuard = guard.buildPostStatement(builder, innerLoop, endLoc, initLoc, returnLoc);
 				XcfaLocation lastBody = body.build(builder, lastGuard, endLoc, initLoc, returnLoc);
 				xcfaEdge = new XcfaEdge(lastBody, initLoc, List.of());
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(xcfaEdge);
 			}
 		}
-		// here
-		XcfaLocation outerLastGuard = guard.getPostStatements().buildWithoutPostStatement(builder, outerBeforeGuard, null, null, null);
+		XcfaLocation outerLastGuard = guard.buildPostStatement(builder, outerBeforeGuard, null, null, null);
 		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(xcfaEdge);

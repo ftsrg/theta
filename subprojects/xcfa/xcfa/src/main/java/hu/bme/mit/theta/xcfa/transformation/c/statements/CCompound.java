@@ -62,8 +62,15 @@ public class CCompound extends CStatement{
 		propagateMetadata(edge);
 		lastLoc = initLoc;
 		if(preStatements != null) lastLoc = preStatements.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
-		for (CStatement statement : cStatementList) {
-			if(statement != null) lastLoc = statement.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+		for (int i = 0; i < cStatementList.size()-1; i++) {
+			CStatement statement = cStatementList.get(i);
+			if (statement != null) lastLoc = statement.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+		}
+		CStatement lastStatement = this.cStatementList.get(cStatementList.size() - 1);
+		if(this.postStatements == null) {
+			lastLoc = lastStatement.buildWithoutPostStatement(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+		} else {
+			lastLoc = lastStatement.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
 		}
 		return lastLoc;
 	}
@@ -71,6 +78,7 @@ public class CCompound extends CStatement{
 	@Override
 	public XcfaLocation buildPostStatement(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
 		if(postStatements != null) lastLoc = postStatements.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+		else lastLoc = cStatementList.get(cStatementList.size()-1).buildPostStatement(builder, lastLoc, breakLoc, continueLoc, returnLoc);
 		return lastLoc;
 	}
 

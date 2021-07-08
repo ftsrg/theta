@@ -54,15 +54,15 @@ public class CDoWhile extends CStatement{
 		xcfaEdge = new XcfaEdge(lastBody, innerEndLoc, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation lastPre = guard.getPreStatements().build(builder, innerEndLoc, null, null, returnLoc);
+		XcfaLocation lastPre = guard.buildWithoutPostStatement(builder, innerEndLoc, null, null, returnLoc);
 		xcfaEdge = new XcfaEdge(lastPre, innerInnerGuard, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		xcfaEdge = new XcfaEdge(lastPre, outerInnerGuard, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-        XcfaLocation outerLastGuard = guard.getPostStatements().build(builder, outerInnerGuard, null, null, null);
-        XcfaLocation innerLastGuard = guard.getPostStatements().build(builder, innerInnerGuard, null, null, null);
+        XcfaLocation outerLastGuard = guard.buildPostStatement(builder, outerInnerGuard, null, null, null);
+        XcfaLocation innerLastGuard = guard.buildPostStatement(builder, innerInnerGuard, null, null, null);
 		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(xcfaEdge);

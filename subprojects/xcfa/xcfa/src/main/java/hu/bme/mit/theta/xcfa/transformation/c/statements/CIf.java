@@ -53,7 +53,7 @@ public class CIf extends CStatement{
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation endGuard = guard.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
+		XcfaLocation endGuard = guard.buildWithoutPostStatement(builder, initLoc, breakLoc, continueLoc, returnLoc);
 		xcfaEdge = new XcfaEdge(endGuard, mainBranch, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
@@ -61,9 +61,11 @@ public class CIf extends CStatement{
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 
-		XcfaLocation mainEnd = body.build(builder, mainBranch, breakLoc, continueLoc, returnLoc);
+		XcfaLocation mainAfterGuard = guard.buildPostStatement(builder, mainBranch, breakLoc, continueLoc, returnLoc);
+		XcfaLocation mainEnd = body.build(builder, mainAfterGuard, breakLoc, continueLoc, returnLoc);
 		if(elseStatement != null) {
-			XcfaLocation elseEnd = elseStatement.build(builder, elseBranch, breakLoc, continueLoc, returnLoc);
+			XcfaLocation elseAfterGuard = guard.buildPostStatement(builder, elseBranch, breakLoc, continueLoc, returnLoc);
+			XcfaLocation elseEnd = elseStatement.build(builder, elseAfterGuard, breakLoc, continueLoc, returnLoc);
 			xcfaEdge = new XcfaEdge(elseEnd, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
