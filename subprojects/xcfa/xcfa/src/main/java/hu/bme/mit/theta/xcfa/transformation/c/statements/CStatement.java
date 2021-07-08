@@ -69,6 +69,14 @@ public abstract class CStatement {
 		throw new RuntimeException("Cannot build CStatement!");
 	}
 
+	public XcfaLocation buildWithoutPostStatement(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLocation) {
+		throw new RuntimeException("CStatement isn't a compount statement!");
+	}
+
+	public XcfaLocation buildPostStatement(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
+		throw new RuntimeException("CStatement isn't a compount statement!");
+	}
+
 	public XcfaLocation getLoc() {
 		return loc;
 	}
