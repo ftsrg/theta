@@ -9,6 +9,7 @@ import java.util.List;
 public abstract class CType {
 	private int pointerLevel = 0;
 	private Boolean signed = null;
+	private boolean bool = false;
 	private boolean atomic = false;
 	private boolean extern = false;
 	private boolean typedef = false;
@@ -39,6 +40,15 @@ public abstract class CType {
 	}
 
 	protected abstract void patch(CType cType);
+
+	public boolean isBool() {
+		return bool;
+	}
+
+	public void setBool(boolean bool) {
+		setSigned(false); // _Bool isn't signed, but signed might be the default value in some cases
+		this.bool = bool;
+	}
 
 	public boolean isAtomic() {
 		return atomic;

@@ -23,9 +23,9 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 	private TypeVisitor(){}
 
 	private static final List<String> standardTypes =
-			List.of("int", "char", "long", "short", "void", "float", "double", "unsigned");
+			List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
 	private static final List<String> shorthandTypes =
-			List.of("long", "short", "unsigned");
+			List.of("long", "short", "unsigned", "_Bool");
 
 
 	@Override
@@ -171,6 +171,8 @@ public class TypeVisitor extends CBaseVisitor<CType> {
 				return Signed();
 			case "unsigned":
 				return Unsigned();
+			case "_Bool":
+				return NamedType("_Bool");
 			default:
 				return NamedType(ctx.getText());
 		}

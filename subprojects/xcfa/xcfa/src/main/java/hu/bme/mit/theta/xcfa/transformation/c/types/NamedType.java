@@ -36,6 +36,9 @@ public class NamedType extends CType{
 			case "short":
 				setShort(true);
 				break;
+			case "_Bool":
+				setBool(true);
+				break;
 			default:
 				if(!cType.isTypedef()) throw new RuntimeException("namedType should be short or long or type specifier, instead it is " + namedType);
 				break;
