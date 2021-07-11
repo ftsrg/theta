@@ -63,6 +63,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +78,27 @@ public class XcfaCli {
 	@Parameter(names = "--input", description = "Path of the input C program", required = true)
 	File model;
 
+	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", required = false)
+	boolean outputResults = false;
+
+	// @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+	String cexfile = null;
+
+	//@Parameter(names = "--witness", description = "Write witness to a file")
+	String witnessfile = null;
+
+	//@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
+	String dotwitnessfile = null;
+
+	//@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
+	String highlighted = null;
+
+	//@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
+	String statisticsfile = null;
+
+	// @Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
+	String printxcfa = null;
+
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
 	ArithmeticType arithmeticType = ArithmeticType.efficient;
 
@@ -88,24 +110,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
-
-	@Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
-	String printxcfa = null;
-
-	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
-	String cexfile = null;
-
-	@Parameter(names = "--witness", description = "Write witness to a file")
-	String witnessfile = null;
-
-	@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
-	String dotwitnessfile = null;
-
-	@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
-	String highlighted = null;
-
-	@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
-	String statisticsfile = null;
 
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
@@ -174,6 +178,25 @@ public class XcfaCli {
 		}
 
 		try {
+			if(outputResults) {
+				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
+				System.out.println(resultsDir);
+				boolean bool = resultsDir.mkdir();
+				if(!bool){
+					throw new RuntimeException("Couldn't create results directory");
+				}
+
+				String basicFileName = resultsDir + "/" + model.getName();
+				System.out.println(basicFileName);
+				printxcfa = basicFileName + ".xcfa";
+				cexfile = basicFileName + ".cex";
+				witnessfile = basicFileName + ".witness.graphml";
+				dotwitnessfile = basicFileName + ".witness.dot";
+				highlighted = basicFileName + ".highlighed.xcfa";
+				statisticsfile = basicFileName + ".statistics.txt";
+			}
+
+
 			if(loadStore) {
 				XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
 			}
@@ -207,7 +230,6 @@ public class XcfaCli {
 				}
 				return;
 			}
-
 
 			if(showGui) {
 				new XcfaGui(xcfa);
@@ -247,6 +269,8 @@ public class XcfaCli {
 					bw.write("input file name: " + model + System.lineSeparator());
 					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
 					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+					bw.write("Configuration: " + configuration + System.lineSeparator());
+
 					bw.close();
 				}
 				if (status.isUnsafe() && cexfile != null) {
