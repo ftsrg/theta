@@ -77,10 +77,16 @@ public class CFor extends CStatement{
 		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		XcfaLocation lastIncrement = increment.build(builder, startIncrement, null, null, returnLoc);
-		xcfaEdge = new XcfaEdge(lastIncrement, lastInit, List.of());
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
+        if(increment!=null) {
+			XcfaLocation lastIncrement = increment.build(builder, startIncrement, null, null, returnLoc);
+			xcfaEdge = new XcfaEdge(lastIncrement, lastInit, List.of());
+			builder.addEdge(xcfaEdge);
+			propagateMetadata(xcfaEdge);
+		} else {
+			xcfaEdge = new XcfaEdge(startIncrement, lastInit, List.of());
+			builder.addEdge(xcfaEdge);
+			propagateMetadata(xcfaEdge);
+		}
 		XcfaLocation outerLastGuard = guard.buildPostStatement(builder, outerLastTest, endLoc, startIncrement, returnLoc);
 		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);

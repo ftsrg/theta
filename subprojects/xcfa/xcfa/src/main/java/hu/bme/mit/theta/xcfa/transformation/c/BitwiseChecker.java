@@ -7,37 +7,66 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.List;
 
-//TODO: nem jo (nullt ad neha vissza, nem hamist/igazat)
-public class BitwiseChecker extends CBaseVisitor<Boolean> {
+public class BitwiseChecker extends CBaseVisitor<Void> {
 	public static final BitwiseChecker instance = new BitwiseChecker();
+	private static boolean isBitwise = false;
 
-	@Override
-	public Boolean visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
-		Boolean accept = ctx.exclusiveOrExpression(0).accept(this);
-		Boolean b = ctx.exclusiveOrExpression().size() > 1 || accept == null || accept;
-		return b;
+	public boolean checkIfBitwise(CParser.CompilationUnitContext ctx) {
+		isBitwise = false;
+		ctx.accept(instance);
+		return isBitwise;
 	}
 
 	@Override
-	public Boolean visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
-		Boolean accept = ctx.andExpression(0).accept(this);
-		Boolean b = ctx.andExpression().size() > 1 || accept == null || accept;
-		return b;
+	public Void visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
+		isBitwise = true;
+		return null;
 	}
 
 	@Override
-	public Boolean visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
-		Boolean accept = ctx.inclusiveOrExpression(0).accept(this);
-		Boolean b = ctx.inclusiveOrExpression().size() > 1 || accept == null || accept;
-		return b;
+	public Void visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
+		isBitwise = true;
+		return null;
 	}
 
 	@Override
-	public Boolean visitShiftExpression(CParser.ShiftExpressionContext ctx) {
-		Boolean accept = ctx.additiveExpression(0).accept(this);
-		Boolean b = ctx.additiveExpression().size() > 1 || accept == null || accept;
-		return b;
+	public Void visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
+		ctx.exclusiveOrExpression(0).accept(this);
+		Boolean b = ctx.exclusiveOrExpression().size() > 1;
+		if(b) {
+			isBitwise = true;
+		}
+		return null;
+	}
 
+	@Override
+	public Void visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
+		ctx.andExpression(0).accept(this);
+		Boolean b = ctx.andExpression().size() > 1;
+		if(b) {
+			isBitwise = true;
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitAndExpression(CParser.AndExpressionContext ctx) {
+		ctx.equalityExpression(0).accept(this);
+		Boolean b = ctx.equalityExpression().size() > 1;
+		if(b) {
+			isBitwise = true;
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitShiftExpression(CParser.ShiftExpressionContext ctx) {
+		ctx.additiveExpression(0).accept(this);
+		Boolean b = ctx.additiveExpression().size() > 1;
+		if(b) {
+			isBitwise = true;
+		}
+		return null;
 	}
 
 }

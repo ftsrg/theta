@@ -88,7 +88,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
 		ctx.accept(TypedefVisitor.instance);
-		IntegerExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+		// ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+		ExpressionVisitor.setBitwise(BitwiseChecker.instance.checkIfBitwise(ctx));
 		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
 			CStatement accept = externalDeclarationContext.accept(this);

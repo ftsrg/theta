@@ -230,8 +230,6 @@ typeSpecifier
     |   'short'
     |   'int'
     |   'long'
-    |   'float'
-    |   'double'
     |   'signed'
     |   'unsigned'
     |   '_Bool'
@@ -239,6 +237,8 @@ typeSpecifier
     |   '__m128'
     |   '__m128d'
     |   '__m128i')                                                  # typeSpecifierSimple
+    |   'float'                                                     # typeSpecifierFloat
+    |   'double'                                                    # typeSpecifierDouble
     |   '__extension__' '(' ('__m128' | '__m128d' | '__m128i') ')'  # typeSpecifierExtension
     |   atomicTypeSpecifier                                         # typeSpecifierAtomic
     |   structOrUnionSpecifier                                      # typeSpecifierCompound

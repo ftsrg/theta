@@ -369,7 +369,13 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			namedType.setSigned(false);
 		} else namedType.setSigned(true);
 
-		IntLitExpr litExpr = IntLitExpr.of(new BigInteger(ctx.getText().replaceAll("[LUlu]", "")));
+		String constantString = ctx.getText().replaceAll("[LUlu]", "");
+		IntLitExpr litExpr;
+		if(constantString.startsWith("0x")) {
+			litExpr = IntLitExpr.of(new BigInteger(constantString.substring(2, constantString.length()), 16));
+		} else {
+			litExpr = IntLitExpr.of(new BigInteger(constantString));
+		}
 		XcfaMetadata.create(litExpr, "cType", namedType);
 		return litExpr;
 	}

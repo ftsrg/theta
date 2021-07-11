@@ -60,8 +60,8 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	public static void setBitwise(Boolean bitwise) {
 		// TODO remove this check
-		checkState(bitwise == null || !bitwise, "Bitwise ops not yet implemented!");
-		isBitwiseOps = bitwise != null;
+		checkState(!bitwise, "Bitwise ops not yet implemented!");
+		isBitwiseOps = bitwise;
 	}
 
 	public List<CStatement> getPostStatements() {

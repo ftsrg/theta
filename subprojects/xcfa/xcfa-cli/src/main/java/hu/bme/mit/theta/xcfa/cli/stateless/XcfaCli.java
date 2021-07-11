@@ -126,10 +126,10 @@ public class XcfaCli {
 	CfaConfigBuilder.Domain domain = CfaConfigBuilder.Domain.PRED_CART;
 
 	@Parameter(names = "--refinement", description = "Refinement strategy")
-	CfaConfigBuilder.Refinement refinement = CfaConfigBuilder.Refinement.SEQ_ITP;
+	CfaConfigBuilder.Refinement refinement = CfaConfigBuilder.Refinement.BW_BIN_ITP;
 
 	@Parameter(names = "--search", description = "Search strategy")
-	CfaConfigBuilder.Search search = CfaConfigBuilder.Search.BFS;
+	CfaConfigBuilder.Search search = CfaConfigBuilder.Search.ERR;
 
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
 	CfaConfigBuilder.PredSplit predSplit = CfaConfigBuilder.PredSplit.WHOLE;
@@ -269,17 +269,11 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
-
-/*
 			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
 					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
 					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
-					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.DETAIL)).build(cfa, errLoc);
-*/
+					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
+
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
