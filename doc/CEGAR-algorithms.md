@@ -89,10 +89,12 @@ If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain (or that variable is deterministically assigned).
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 
-### `--maxpredcount`
+### `--autoexpl`
 
-Available for XSTS.
-The number of predicates a variable has to appear in before it is tracked explicitly when `--domain` is `EXPL_PRED_*`. Default is `0` (unlimited).
+Automatic predicate-to-explicit switching strategy. Available for XSTS, when used an `EXPL_PRED_*` domain. The goal of these options is to automatically detect when many values of a variable are enumerated in order to unroll a loop.
+* `STATIC`: No automatic switching
+* `NEWATOMS`: A variable is switched to explicit tracking when it appears in an atom that isn't present in the model.
+* `NEWOPERANDS`: A variable is switched to explicit tracking when it appears in an expression with an operand that it doesn't appear with in the model.
 
 ### `--refinement`
 
