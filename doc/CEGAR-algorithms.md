@@ -36,7 +36,7 @@ The domain controls the abstract information that is being tracked about the sys
 * `PRED_BOOL`: [Boolean predicate abstraction](https://link.springer.com/article/10.1007/s10009-002-0095-0) keeps track of arbitrary Boolean combination of predicates.
 * `PRED_SPLIT`: Boolean predicate abstraction, but states are [split]((https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf)) into sub-states along disjunctions.
 * `EXPL`: [Explicit-value abstraction]((https://link.springer.com/chapter/10.1007/978-3-642-37057-1_11)) keeps track of concrete values, but only for a (continuously expanded) set of variables.
-* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT`, `EXPL_PRED_BOOL` and `EXPL_PRED_COMBINED`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Other variables are also tracked explicitly if they appear in a given number of atoms in predicates (defined with the `--maxatomcount` option).
+* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT`, `EXPL_PRED_BOOL` and `EXPL_PRED_COMBINED`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Variables can automatically be switched from predicate tracking to explicit tracking depending on the `--autoexpl` option (see below).
 
 Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
 Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
@@ -89,13 +89,12 @@ If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain (or that variable is deterministically assigned).
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 
-### `--maxatomcount`
+### `--autoexpl`
 
-Available for XSTS. The number of atoms a variable has to appear in before it is tracked explicitly when `--domain` is `EXPL_PRED_*`.
-* `ALLASSUMES`: The number of different atoms the variable appears in assume statements.
-* `ALLEXPRS`: The number of different atoms the variable appears in boolean expressions.
-* `UNLIMITED`: No dynamic switching (default).
-* `N`: N times (where N is a positive integer)
+Automatic predicate-to-explicit switching strategy. Available for XSTS, when used an `EXPL_PRED_*` domain. The goal of these options is to automatically detect when many values of a variable are enumerated in order to unroll a loop.
+* `STATIC`: No automatic switching
+* `NEWATOMS`: A variable is switched to explicit tracking when it appears in an atom that isn't present in the model.
+* `NEWOPERANDS`: A variable is switched to explicit tracking when it appears in an expression with an operand that it doesn't appear with in the model.
 
 ### `--refinement`
 

@@ -27,9 +27,6 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
-import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsUnlimitedMaxAtomCountFactory;
-import hu.bme.mit.theta.xsts.analysis.maxatomcount.XstsMaxAtomCountFactory;
-import hu.bme.mit.theta.xsts.cli.converter.XstsMaxAtomCountFactoryConverter;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
@@ -69,8 +66,8 @@ public class XstsCli {
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
 
-	@Parameter(names = "--maxatomcount", description = "Number of different atoms a variable has to appear in to be switched to explicit tracking", converter = XstsMaxAtomCountFactoryConverter.class)
- 	XstsMaxAtomCountFactory xstsMaxAtomCountFactory = new XstsUnlimitedMaxAtomCountFactory();
+	@Parameter(names = "--autoexpl", description = "Predicate to explicit switching strategy")
+ 	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -204,7 +201,7 @@ public class XstsCli {
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.maxEnum(maxEnum).xstsMaxAtomCountFactory(xstsMaxAtomCountFactory).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
 					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);

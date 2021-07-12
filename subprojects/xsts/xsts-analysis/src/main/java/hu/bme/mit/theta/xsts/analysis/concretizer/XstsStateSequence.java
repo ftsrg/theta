@@ -84,8 +84,7 @@ public final class XstsStateSequence {
 					var optSymbol = type.getLiterals().stream()
 							.filter(symbol -> symbol.getIntValue().equals(intValue.getValue()))
 							.findFirst();
-					assert optSymbol.isPresent();
-					sb.add(String.format("(%s %s)", decl.getName(), optSymbol.get().getName()));
+					if(optSymbol.isPresent()) sb.add(String.format("(%s %s)", decl.getName(), optSymbol.get().getName()));
 				} else {
 					sb.add(String.format("(%s %s)", decl.getName(), val.get()));
 				}

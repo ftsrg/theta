@@ -14,14 +14,10 @@ import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class ExprCanonizer {
 
@@ -342,63 +338,32 @@ public final class ExprCanonizer {
     }
 
     private static Expr<BoolType> canonizeRatNeq(final RatNeqExpr expr) {
-        return canonizeGenericCommutativeBinaryExpr(expr);
+        final Expr<BoolType> notEq = Not(RatExprs.Eq(expr.getLeftOp(), expr.getRightOp()));
+        return canonize(notEq);
     }
 
     private static Expr<BoolType> canonizeRatGeq(final RatGeqExpr expr) {
-        final Expr<RatType> leftOp = canonize(expr.getLeftOp());
-        final Expr<RatType> rightOp = canonize(expr.getRightOp());
-
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return RatLeqExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        final Expr<BoolType> notLt = Not(RatExprs.Lt(expr.getLeftOp(), expr.getRightOp()));
+        return canonize(notLt);
     }
 
     private static Expr<BoolType> canonizeRatGt(final RatGtExpr expr) {
         final Expr<RatType> leftOp = canonize(expr.getLeftOp());
         final Expr<RatType> rightOp = canonize(expr.getRightOp());
 
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return RatLtExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        return RatLtExpr.of(rightOp,leftOp);
     }
 
     private static Expr<BoolType> canonizeRatLeq(final RatLeqExpr expr) {
-        final Expr<RatType> leftOp = canonize(expr.getLeftOp());
-        final Expr<RatType> rightOp = canonize(expr.getRightOp());
-
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return RatGeqExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        final Expr<BoolType> notGt = Not(RatExprs.Gt(expr.getLeftOp(),expr.getRightOp()));
+        return canonize(notGt);
     }
 
     private static Expr<BoolType> canonizeRatLt(final RatLtExpr expr) {
         final Expr<RatType> leftOp = canonize(expr.getLeftOp());
         final Expr<RatType> rightOp = canonize(expr.getRightOp());
 
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return RatGtExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        return expr.with(leftOp,rightOp);
     }
 
     private static Expr<IntType> canonizeRatToInt(final RatToIntExpr expr) {
@@ -461,63 +426,32 @@ public final class ExprCanonizer {
     }
 
     private static Expr<BoolType> canonizeIntNeq(final IntNeqExpr expr) {
-        return canonizeGenericCommutativeBinaryExpr(expr);
+        final Expr<BoolType> notEq = Not(IntExprs.Eq(expr.getLeftOp(), expr.getRightOp()));
+        return canonize(notEq);
     }
 
     private static Expr<BoolType> canonizeIntGeq(final IntGeqExpr expr) {
-        final Expr<IntType> leftOp = canonize(expr.getLeftOp());
-        final Expr<IntType> rightOp = canonize(expr.getRightOp());
-
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return IntLeqExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        final Expr<BoolType> notLt = Not(IntExprs.Lt(expr.getLeftOp(), expr.getRightOp()));
+        return canonize(notLt);
     }
 
     private static Expr<BoolType> canonizeIntGt(final IntGtExpr expr) {
         final Expr<IntType> leftOp = canonize(expr.getLeftOp());
         final Expr<IntType> rightOp = canonize(expr.getRightOp());
 
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return IntLtExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        return IntLtExpr.of(rightOp,leftOp);
     }
 
     private static Expr<BoolType> canonizeIntLeq(final IntLeqExpr expr) {
-        final Expr<IntType> leftOp = canonize(expr.getLeftOp());
-        final Expr<IntType> rightOp = canonize(expr.getRightOp());
-
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return IntGeqExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        final Expr<BoolType> notGt = Not(IntExprs.Gt(expr.getLeftOp(), expr.getRightOp()));
+        return canonize(notGt);
     }
 
     private static Expr<BoolType> canonizeIntLt(final IntLtExpr expr) {
         final Expr<IntType> leftOp = canonize(expr.getLeftOp());
         final Expr<IntType> rightOp = canonize(expr.getRightOp());
 
-        final int leftHashCode = leftOp.hashCode();
-        final int rightHashCode = rightOp.hashCode();
-
-        if(rightHashCode < leftHashCode){
-            return IntGtExpr.of(rightOp,leftOp);
-        } else {
-            return expr.with(leftOp,rightOp);
-        }
+        return expr.with(leftOp,rightOp);
     }
 
     /*

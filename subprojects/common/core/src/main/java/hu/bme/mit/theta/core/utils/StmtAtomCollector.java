@@ -4,19 +4,20 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.Set;
 
-public class AtomCollector {
+public class StmtAtomCollector {
 
     public static Set<Expr<BoolType>> collectAtoms(final Stmt stmt){
         final Set<Expr<BoolType>> atoms = Containers.createSet();
-        stmt.accept(new AllAssumesCollector(), atoms);
+        stmt.accept(new AllAssumesAndAssignsCollector(), atoms);
         return atoms;
     }
 
-    private static class AllAssumesCollector implements StmtVisitor<Set<Expr<BoolType>>, Void> {
+    private static class AllAssumesAndAssignsCollector implements StmtVisitor<Set<Expr<BoolType>>, Void> {
 
         @Override
         public Void visit(SkipStmt stmt, Set<Expr<BoolType>> atoms) {
@@ -31,6 +32,8 @@ public class AtomCollector {
 
         @Override
         public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
+            final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(),stmt.getExpr());
+            atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
         }
 
