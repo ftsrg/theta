@@ -16,12 +16,15 @@ import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -30,15 +33,17 @@ public class XstsStatement {
 	private final DynamicScope scope;
 	private final SymbolTable typeTable;
 	private final StmtContext context;
+	private final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType;
 
-	public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context) {
+	public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context, final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType) {
 		this.scope = checkNotNull(scope);
 		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
+		this.varToType = checkNotNull(varToType);
 	}
 
 	public Stmt instantiate(final Env env) {
-		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, typeTable, env);
+		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, typeTable, env, varToType);
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
 			throw new AssertionError();
@@ -51,12 +56,14 @@ public class XstsStatement {
 
 		private DynamicScope currentScope;
 		private final SymbolTable typeTable;
+		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType;
 		private final Env env;
 
-		public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env) {
+		public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env, final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType) {
 			this.currentScope = checkNotNull(scope);
 			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);
+			this.varToType = checkNotNull(varToType);
 		}
 
 		private void push() {
@@ -75,6 +82,14 @@ public class XstsStatement {
 			final String lhsId = ctx.lhs.getText();
 			final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
 			final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
+			if(varToType.containsKey(var)){
+				final XstsTypeDeclSymbol type = varToType.get(var);
+				final Expr<BoolType> expr = Or(type.getLiterals().stream()
+						.map(lit -> Eq(var.getRef(),Int(lit.getIntValue())))
+						.collect(Collectors.toList()));
+				final AssumeStmt assume = Assume(expr);
+				return SequenceStmt.of(List.of(Havoc(var),assume));
+			}
 			return Havoc(var);
 		}
 

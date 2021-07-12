@@ -46,7 +46,7 @@ final class XstsType {
 		}
 
 		@Override
-		public Type visitCustomType(CustomTypeContext ctx) {
+		public Type visitCustomType(final CustomTypeContext ctx) {
 			Optional<? extends Symbol> optSymbol = typeTable.get(ctx.name.getText());
 			if (optSymbol.isEmpty()) {
 				throw new ParseException(ctx, "Type '" + ctx.name.getText() + "' cannot be resolved");
