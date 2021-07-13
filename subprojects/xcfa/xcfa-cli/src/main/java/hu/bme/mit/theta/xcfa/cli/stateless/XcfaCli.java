@@ -192,7 +192,7 @@ public class XcfaCli {
 				cexfile = basicFileName + ".cex";
 				witnessfile = basicFileName + ".witness.graphml";
 				dotwitnessfile = basicFileName + ".witness.dot";
-				highlighted = basicFileName + ".highlighed.xcfa";
+				highlighted = basicFileName + ".highlighted.xcfa";
 				statisticsfile = basicFileName + ".statistics.txt";
 			}
 
@@ -269,7 +269,6 @@ public class XcfaCli {
 					bw.write("input file name: " + model + System.lineSeparator());
 					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
 					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
-					bw.write("Configuration: " + configuration + System.lineSeparator());
 
 					bw.close();
 				}
