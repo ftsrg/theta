@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO
 public class BitwiseExpressionVisitor extends ExpressionVisitor {
 
 	public BitwiseExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
