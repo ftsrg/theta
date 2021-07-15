@@ -12,9 +12,21 @@ public class NamedType extends CType{
 		this.namedType = namedType;
 	}
 
-	public static NamedType getInt() {
+	public static NamedType getIntType() {
 		NamedType namedType = new NamedType("int");
 		namedType.setSigned(true);
+		return namedType;
+	}
+
+	public static NamedType getUnsignedIntType() {
+		NamedType namedType = new NamedType("int");
+		namedType.setSigned(false);
+		return namedType;
+	}
+
+	public static NamedType getBoolType() {
+		NamedType namedType = new NamedType("_Bool");
+		namedType.setSigned(false);
 		return namedType;
 	}
 

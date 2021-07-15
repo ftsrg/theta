@@ -3,12 +3,16 @@ package hu.bme.mit.theta.xcfa;
 import java.util.HashMap;
 import java.util.Map;
 
+class ArchitectureConfig {
+	public static final ArchitectureType architecture = ArchitectureType.ILP32;
+}
+
 /**
 * ILP32 and LP64 Architecture, see here: https://unix.org/whitepapers/64bit.html
 * Warning note: when deducing type, we assume an ILP32 or an LP64 arch
 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 */
- public enum ArchitectureType {
+enum ArchitectureType {
 	ILP32(1, 8,16,32,32,64),
 	LP64(1, 8,16,32,64,64);
 

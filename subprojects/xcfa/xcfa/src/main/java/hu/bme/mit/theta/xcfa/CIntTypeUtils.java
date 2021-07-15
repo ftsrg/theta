@@ -24,12 +24,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ArchitectureConfig.architecture;
 
 /**
  * Note: char isn't an integer type in C, but we'll handle it here as well, as it isn't a floating point type
  */
 public class CIntTypeUtils {
-	public static ArchitectureType architecture = ArchitectureType.ILP32;
 	public static boolean addModulo = true;
 	public static boolean signedOverflow = false;
 

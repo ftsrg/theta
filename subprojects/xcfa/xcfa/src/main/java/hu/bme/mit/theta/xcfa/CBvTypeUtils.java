@@ -4,6 +4,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
@@ -33,12 +34,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.ArchitectureConfig.architecture;
 
 /**
  * Note: char isn't an integer type in C, but we'll handle it here as well, as it isn't a floating point type
  */
 public class CBvTypeUtils {
-	public static ArchitectureType architecture = ArchitectureType.ILP32;
+	// public static ArchitectureType architecture = ArchitectureType.ILP32;
 	public static boolean addModulo = true;
 	public static boolean signedOverflow = false;
 
@@ -354,6 +356,19 @@ public class CBvTypeUtils {
 		Expr<BvType> castExprA = CBvTypeUtils.explicitCast(commonType, exprA);
 		Expr<BvType> castExprB = CBvTypeUtils.explicitCast(commonType, exprB);
 		return Tuple2.of(castExprA, castExprB);
+	}
+
+	public static Expr<BvType> getBvValueOfType(NamedType cType, int value) {
+		int width = architecture.getBitWidth(cType.getNamedType());
+		if(cType.isSigned()) {
+			return BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.valueOf(value), width);
+		} else {
+			return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(value), width);
+		}
+	}
+
+	public static int getBitWidth(NamedType cType) {
+		return architecture.getBitWidth(cType.getNamedType());
 	}
 
 	// TODO floating point types (float, double, long double)
