@@ -7,8 +7,24 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -22,6 +38,7 @@ import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.c.types.NamedType;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +57,8 @@ public class BitwiseExpressionVisitor extends ExpressionVisitor {
 	public BitwiseExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		super(variables, functions);
 	}
+
+	// TODO line TODO
 
 	@Override
 	public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
@@ -149,7 +168,10 @@ public class BitwiseExpressionVisitor extends ExpressionVisitor {
 				}
 				else
 					leftOp = expr;
-				rightOp = cast(ctx.relationalExpression(i+1).accept(this), BvUtils.);
+				Expr<?> rightAccept = ctx.relationalExpression(i + 1).accept(this);
+				NamedType rightCType = CBvTypeUtils.getcTypeMetadata(rightAccept);
+				rightOp = cast(rightAccept, BvType.of(CBvTypeUtils.getBitWidth(rightCType)));
+
 				Tuple2<Expr<BvType>, Expr<BvType>> exprTuple2 = CBvTypeUtils.castToCommonType(leftOp, rightOp);
 				Expr<BvType> leftExpr = exprTuple2.get1();
 				Expr<BvType> rightExpr = exprTuple2.get2();
@@ -165,35 +187,52 @@ public class BitwiseExpressionVisitor extends ExpressionVisitor {
 		return ctx.relationalExpression(0).accept(this);
 	}
 
-	// TODO line TODO
-
 	@Override
 	public Expr<?> visitRelationalExpression(CParser.RelationalExpressionContext ctx) {
 		if(ctx.shiftExpression().size() > 1) {
-			Expr<IntType> expr = null;
+			Expr<BvType> expr = null;
 			for(int i = 0; i < ctx.shiftExpression().size() - 1; ++i) {
-				Expr<IntType> leftOp, rightOp;
-				if(expr == null)
-					leftOp = cast(ctx.shiftExpression(i).accept(this), Int());
+				Expr<BvType> leftOp, rightOp;
+				if(expr == null) {
+					Expr<?> accept = ctx.shiftExpression(i).accept(this);
+					NamedType cType = CBvTypeUtils.getcTypeMetadata(accept);
+					leftOp = cast(accept, BvType.of(CBvTypeUtils.getBitWidth(cType)));
+				}
 				else
 					leftOp = expr;
-				rightOp = cast(ctx.shiftExpression(i+1).accept(this), Int());
+				Expr<?> rightAccept = ctx.shiftExpression(i + 1).accept(this);
+				NamedType rightCType = CBvTypeUtils.getcTypeMetadata(rightAccept);
+				rightOp = cast(rightAccept, BvType.of(CBvTypeUtils.getBitWidth(rightCType)));
+
 				Expr<BoolType> guard = null;
-				Tuple2<Expr<IntType>, Expr<IntType>> exprTuple2 = CIntTypeUtils.castToCommonType(leftOp, rightOp);
-				Expr<IntType> leftExpr = exprTuple2.get1();
-				Expr<IntType> rightExpr = exprTuple2.get2();
-				switch(ctx.signs.get(i).getText()) {
-					case "<": guard = Lt(leftExpr, rightExpr); break;
-					case ">": guard = Gt(leftExpr, rightExpr); break;
-					case "<=": guard = Leq(leftExpr, rightExpr); break;
-					case ">=": guard = Geq(leftExpr, rightExpr); break;
+				Tuple2<Expr<BvType>, Expr<BvType>> exprTuple2 = CBvTypeUtils.castToCommonType(leftOp, rightOp);
+				Expr<BvType> leftExpr = exprTuple2.get1();
+				Expr<BvType> rightExpr = exprTuple2.get2();
+
+				if(CBvTypeUtils.getcTypeMetadata(leftExpr).isSigned()) {
+					switch(ctx.signs.get(i).getText()) {
+						case "<": guard = BvSLtExpr.of(leftExpr, rightExpr); break;
+						case ">": guard = BvSGtExpr.of(leftExpr, rightExpr); break;
+						case "<=": guard = BvSLeqExpr.of(leftExpr, rightExpr); break;
+						case ">=": guard = BvSGeqExpr.of(leftExpr, rightExpr); break;
+					}
+
+				} else {
+					switch(ctx.signs.get(i).getText()) {
+						case "<": guard = BvULtExpr.of(leftExpr, rightExpr); break;
+						case ">": guard = BvUGtExpr.of(leftExpr, rightExpr); break;
+						case "<=": guard = BvULeqExpr.of(leftExpr, rightExpr); break;
+						case ">=": guard = BvUGeqExpr.of(leftExpr, rightExpr); break;
+					}
 				}
+
 				expr = cast(Ite(
 						guard,
-						Int(1),
-						Int(0)
-				), Int());
-				XcfaMetadata.create(expr, "cType", NamedType.getIntType());
+						BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(1), 1),
+						BvUtils.bigIntegerToUnsignedBvLitExpr (BigInteger.valueOf(0),1)
+				), BvType.of(1));
+
+				XcfaMetadata.create(expr, "cType", NamedType.getBoolType());
 			}
 			return expr;
 		}
@@ -210,12 +249,93 @@ public class BitwiseExpressionVisitor extends ExpressionVisitor {
 
 	@Override
 	public Expr<?> visitAdditiveExpression(CParser.AdditiveExpressionContext ctx) {
-		return null;
+		if(ctx.multiplicativeExpression().size() > 1) {
+			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
+			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
+				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
+				// get metadata about operand C types
+				NamedType cType = CBvTypeUtils.getcTypeMetadata(expr);
+				namedTypes.add(cType);
+			}
+			// use C type metadata to deduce the C type of the additive expression
+			NamedType expressionType = CBvTypeUtils.deduceType(namedTypes);
+
+			List<Expr<BvType>> arguments = new ArrayList<>();
+			for(int i = 0; i < ctx.multiplicativeExpression().size(); ++i) {
+				Expr<?> expr = ctx.multiplicativeExpression(i).accept(this);
+				if(i == 0 || ctx.signs.get(i-1).getText().equals("+")) arguments.add(cast(expr, BvType.of(CBvTypeUtils.getBitWidth(expressionType))));
+				else arguments.add(BvNegExpr.of(cast(expr,BvType.of(CBvTypeUtils.getBitWidth(expressionType)))));
+			}
+
+			BvAddExpr add = BvAddExpr.of(arguments);
+			XcfaMetadata.create(add, "cType", expressionType);
+			Expr<?> expr = CBvTypeUtils.addOverflowWraparound(add);
+			return expr;
+		}
+		return ctx.multiplicativeExpression(0).accept(this);
 	}
 
 	@Override
 	public Expr<?> visitMultiplicativeExpression(CParser.MultiplicativeExpressionContext ctx) {
-		return null;
+		if(ctx.castExpression().size() > 1) {
+			List<NamedType> namedTypes = new ArrayList<>(); // used when deducing the type of the expression
+			for(int i = 0; i < ctx.castExpression().size(); ++i) {
+				Expr<?> expr = ctx.castExpression(i).accept(this);
+				NamedType cType = CBvTypeUtils.getcTypeMetadata(expr);
+				namedTypes.add(cType);
+			}
+
+			// use C type metadata to deduce the C type of the expression
+			NamedType expressionType = CBvTypeUtils.deduceType(namedTypes);
+
+			Expr<BvType> expr = null;
+			for(int i = 0; i < ctx.castExpression().size() - 1; ++i) {
+				Expr<BvType> leftOp, rightOp;
+
+				if(expr == null) {
+					Expr<?> accept = ctx.castExpression(i).accept(this);
+					NamedType cType = CBvTypeUtils.getcTypeMetadata(accept);
+					leftOp = CBvTypeUtils.explicitCast(expressionType, cast(accept, BvType.of(CBvTypeUtils.getBitWidth(cType))));
+				}
+				else
+					leftOp = expr;
+
+				Expr<?> rightAccept = ctx.castExpression(i + 1).accept(this);
+				NamedType rightCType = CBvTypeUtils.getcTypeMetadata(rightAccept);
+				rightOp = CBvTypeUtils.explicitCast(expressionType, cast(rightAccept, BvType.of(CBvTypeUtils.getBitWidth(rightCType))));
+
+				switch(ctx.signs.get(i).getText()) {
+					case "*":
+						// unsigned overflow handling - it "wraps around"
+						expr = BvMulExpr.of(List.of(leftOp, rightOp));
+						XcfaMetadata.create(expr, "cType", expressionType);
+						expr = CBvTypeUtils.addOverflowWraparound(expr);
+						break;
+					case "/":
+						if(CBvTypeUtils.getcTypeMetadata(leftOp).isSigned()) {
+							expr = BvSDivExpr.of(leftOp, rightOp);
+							XcfaMetadata.create(expr, "cType", expressionType);
+						} else {
+							expr = BvUDivExpr.of(leftOp, rightOp);
+							XcfaMetadata.create(expr, "cType", expressionType);
+						}
+						break;
+					case "%":
+						if(CBvTypeUtils.getcTypeMetadata(leftOp).isSigned()) {
+							expr = BvSRemExpr.of(leftOp, rightOp);
+							XcfaMetadata.create(expr, "cType", expressionType);
+						} else {
+							expr = BvURemExpr.of(leftOp, rightOp);
+							XcfaMetadata.create(expr, "cType", expressionType);
+						}
+						XcfaMetadata.create(expr, "cType", expressionType);
+						break;
+				}
+			}
+			return expr;
+		}
+		return ctx.castExpression(0).accept(this);
+
 	}
 
 	@Override

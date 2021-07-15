@@ -333,7 +333,6 @@ public class CBvTypeUtils {
 		//	unsigned        signed      add mod, even if Expr is smaller (to filter out neg numbers)
 		//	signed          unsigned    check widths, add complex mod
 		if(namedType.isSigned() && namedTypeBitWidth < exprTypeBitWidth) {
-			BigInteger halfWidth = BigInteger.valueOf(2).pow(namedTypeBitWidth);
 			// complex mod: ( (signed expr + half width) mod 2*signedTypeMax ) - half width
 			BvSRemExpr srem = BvSRemExpr.of(exprToCast, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.valueOf(2).pow(namedTypeBitWidth), namedTypeBitWidth));
 			XcfaMetadata.create(srem, "cType", namedType);
@@ -342,11 +341,15 @@ public class CBvTypeUtils {
 			BvURemExpr urem = BvURemExpr.of(exprToCast, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(2).pow(namedTypeBitWidth), namedTypeBitWidth));
 			XcfaMetadata.create(urem, "cType", namedType);
 			return urem;
-		} else { // TODO shouldn't happen(?)
+		} else { // TODO BV special case: when it becomes longer
 			return exprToCast;
 		}
 	}
 
+	/** The semantics of this function differ from its integer counterpart - it must be used much more often
+	 *  it changes not just the cType metadata, but the width of the BvTypes as well
+	 *  so various operations can be executed on them
+	 */
 	public static Tuple2<Expr<BvType>, Expr<BvType>> castToCommonType(Expr<BvType> exprA, Expr<BvType> exprB) {
 		checkNotNull(exprA);
 		checkNotNull(exprB);
