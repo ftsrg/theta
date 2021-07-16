@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.FPExpr;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -81,6 +82,16 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -297,6 +308,26 @@ final class Z3ExprTransformer {
 				.addCase(BvSLeqExpr.class, this::transformBvSLeq)
 	
 				.addCase(BvSLtExpr.class, this::transformBvSLt)
+
+				// Floating points
+
+				.addCase(FpLitExpr.class, this::transformFpLit)
+
+				.addCase(FpAddExpr.class, this::transformFpAdd)
+
+				.addCase(FpSubExpr.class, this::transformFpSub)
+
+				.addCase(FpPosExpr.class, this::transformFpPos)
+
+				.addCase(FpNegExpr.class, this::transformFpNeg)
+
+				.addCase(FpMulExpr.class, this::transformFpMul)
+
+				.addCase(FpDivExpr.class, this::transformFpDiv)
+
+				.addCase(FpEqExpr.class, this::transformFpEq)
+
+				.addCase(FpNeqExpr.class, this::transformFpNeq)
 
 				// Functions
 
@@ -853,6 +884,81 @@ final class Z3ExprTransformer {
 		final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
 		return context.mkBVSLT(leftOpTerm, rightOpTerm);
+	}
+
+	/*
+	 * Floating points
+	 */
+
+	private com.microsoft.z3.Expr transformFpLit(final FpLitExpr expr) {
+		return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1), (com.microsoft.z3.BitVecExpr) toTerm(expr.getExponent()), (com.microsoft.z3.BitVecExpr) toTerm(expr.getSignificand()));
+	}
+
+	private com.microsoft.z3.Expr transformFpAdd(final FpAddExpr expr) {
+		final FPExpr[] opTerms = expr.getOps().stream()
+			.map(e-> (FPExpr) toTerm(e))
+			.toArray(FPExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], (op1, op2) -> context.mkFPAdd(transformFpRoundingMode(expr.getRoundingMode()), op1, op2));
+	}
+
+	private com.microsoft.z3.Expr transformFpSub(final FpSubExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPSub(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpPos(final FpPosExpr expr) {
+		return toTerm(expr.getOp());
+	}
+
+	private com.microsoft.z3.Expr transformFpNeg(final FpNegExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPNeg(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpMul(final FpMulExpr expr) {
+		final FPExpr[] opTerms = expr.getOps().stream()
+			.map(e-> (FPExpr) toTerm(e))
+			.toArray(FPExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], (op1, op2) -> context.mkFPMul(transformFpRoundingMode(expr.getRoundingMode()), op1, op2));
+	}
+
+	private com.microsoft.z3.Expr transformFpDiv(final FpDivExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+
+		return context.mkFPDiv(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpEq(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpNeq(final FpNeqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkNot(context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm));
+	}
+
+	private com.microsoft.z3.FPRMExpr transformFpRoundingMode(final FpRoundingMode roundingMode) {
+		switch (roundingMode) {
+			case RNE:
+				return context.mkFPRoundNearestTiesToEven();
+			case RNA:
+				return context.mkFPRoundNearestTiesToAway();
+			case RTP:
+				return context.mkFPRoundTowardPositive();
+			case RTN:
+				return context.mkFPRoundTowardNegative();
+			case RTZ:
+				return context.mkFPRoundTowardZero();
+			default:
+				throw new UnsupportedOperationException();
+		}
 	}
 
 	/*
