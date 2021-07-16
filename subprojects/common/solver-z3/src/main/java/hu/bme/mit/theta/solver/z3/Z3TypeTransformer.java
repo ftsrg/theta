@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
@@ -39,6 +40,7 @@ final class Z3TypeTransformer {
 	private final com.microsoft.z3.IntSort intSort;
 	private final com.microsoft.z3.RealSort realSort;
 	private final Set<com.microsoft.z3.BitVecSort> bvSorts;
+	private final Set<com.microsoft.z3.FPSort> fpSorts;
 
 	Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
@@ -48,6 +50,7 @@ final class Z3TypeTransformer {
 		intSort = context.mkIntSort();
 		realSort = context.mkRealSort();
 		bvSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
+		fpSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
 	}
 
 	public com.microsoft.z3.Sort toSort(final Type type) {
@@ -60,12 +63,22 @@ final class Z3TypeTransformer {
 		} else if (type instanceof BvType) {
 			final BvType bvType = (BvType) type;
 			final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream().filter(sort -> sort.getSize() == bvType.getSize()).findAny();
-			if(bvSort.isPresent()) {
+			if (bvSort.isPresent()) {
 				return bvSort.get();
 			} else {
 				final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(bvType.getSize());
 				bvSorts.add(newBvSort);
 				return newBvSort;
+			}
+		} else if (type instanceof FpType) {
+			final FpType fpType = (FpType) type;
+			final Optional<com.microsoft.z3.FPSort> fpSort = fpSorts.stream().filter(sort -> sort.getEBits() == fpType.getExponent() && sort.getSBits() == fpType.getSignificand()).findAny();
+			if (fpSort.isPresent()) {
+				return fpSort.get();
+			} else {
+				final com.microsoft.z3.FPSort newFpSort = context.mkFPSort(fpType.getExponent(), fpType.getSignificand());
+				fpSorts.add(newFpSort);
+				return newFpSort;
 			}
 		} else if (type instanceof ArrayType) {
 			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
