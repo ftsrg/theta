@@ -11,26 +11,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class FpAddExpr extends MultiaryExpr<FpType, FpType> {
-    private static final int HASH_SEED = 6588;
-    private static final String OPERATOR_LABEL = "fpadd";
+public class FpMulExpr extends MultiaryExpr<FpType, FpType> {
+    private static final int HASH_SEED = 4276;
+    private static final String OPERATOR_LABEL = "fpmul";
 
     private final FpRoundingMode roundingMode;
 
-    private FpAddExpr(final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
+    private FpMulExpr(final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
         super(ops);
         checkAllTypesEqual(ops);
         checkNotNull(roundingMode);
         this.roundingMode = roundingMode;
     }
 
-    public static FpAddExpr of(final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
-        return new FpAddExpr(roundingMode, ops);
+    public static FpMulExpr of(final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
+        return new FpMulExpr(roundingMode, ops);
     }
 
-    public static FpAddExpr create(final FpRoundingMode roundingMode, final List<? extends Expr<?>> ops) {
+    public static FpMulExpr create(final FpRoundingMode roundingMode, final List<? extends Expr<?>> ops) {
         checkNotNull(ops);
-        return FpAddExpr.of(roundingMode, ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
+        return FpMulExpr.of(roundingMode, ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
     }
 
     public FpRoundingMode getRoundingMode() {
@@ -46,17 +46,17 @@ public class FpAddExpr extends MultiaryExpr<FpType, FpType> {
     public FpLitExpr eval(final Valuation val) {
         return getOps().stream().skip(1).reduce(
             (FpLitExpr) getOps().get(0).eval(val),
-            (op1, op2) -> (op1.add(roundingMode, (FpLitExpr) op2.eval(val))),
-            (op1, op2) -> (op1.add(roundingMode, op2))
+            (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
+            (op1, op2) -> (op1.mul(roundingMode, op2))
         );
     }
 
     @Override
-    public FpAddExpr with(final Iterable<? extends Expr<FpType>> ops) {
+    public FpMulExpr with(final Iterable<? extends Expr<FpType>> ops) {
         if (ops == getOps()) {
             return this;
         } else {
-            return FpAddExpr.of(roundingMode, ops);
+            return FpMulExpr.of(roundingMode, ops);
         }
     }
 
@@ -64,8 +64,8 @@ public class FpAddExpr extends MultiaryExpr<FpType, FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpAddExpr) {
-            final FpAddExpr that = (FpAddExpr) obj;
+        } else if (obj instanceof FpMulExpr) {
+            final FpMulExpr that = (FpMulExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {
             return false;

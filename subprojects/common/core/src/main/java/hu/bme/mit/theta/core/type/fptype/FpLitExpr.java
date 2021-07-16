@@ -3,19 +3,17 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.utils.FpUtils;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToNeutralBvLitExpr;
-import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoNeutralDomain;
-import static hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger;
+import static hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr;
+import static hu.bme.mit.theta.core.utils.FpUtils.fpLitExprToBigFloat;
+import static hu.bme.mit.theta.core.utils.FpUtils.getMathContext;
 
 public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, Comparable<FpType> {
     private static final int HASH_SEED = 4254;
@@ -38,6 +36,33 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         return new FpLitExpr(hidden, exponent, significand);
     }
 
+    public static FpLitExpr NaN(final FpType fpType) {
+        final var exponent = new boolean[fpType.getExponent()];
+        Arrays.fill(exponent, true);
+        final var significand = new boolean[fpType.getSignificand()-1];
+        Arrays.fill(significand, true);
+
+        return new FpLitExpr(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    }
+
+    public static FpLitExpr PositiveInfinity(final FpType fpType) {
+        final var exponent = new boolean[fpType.getExponent()];
+        Arrays.fill(exponent, true);
+        final var significand = new boolean[fpType.getSignificand()-1];
+        Arrays.fill(significand, false);
+
+        return new FpLitExpr(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    }
+
+    public static FpLitExpr NegativeInfinity(final FpType fpType) {
+        final var exponent = new boolean[fpType.getExponent()];
+        Arrays.fill(exponent, true);
+        final var significand = new boolean[fpType.getSignificand()-1];
+        Arrays.fill(significand, false);
+
+        return new FpLitExpr(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    }
+
     public boolean getHidden() {
         return hidden;
     }
@@ -50,10 +75,90 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         return significand;
     }
 
+    public boolean isNaN() {
+        var isNaN = true;
+        for(final var i : exponent.getValue()) {
+            isNaN = isNaN && i;
+        }
+        for(final var i : significand.getValue()) {
+            isNaN = isNaN && i;
+        }
+        return isNaN;
+    }
+
+    public boolean isPositiveInfinity() {
+        var isNaN = !hidden;
+        for(final var i : exponent.getValue()) {
+            isNaN = isNaN && i;
+        }
+        for(final var i : significand.getValue()) {
+            isNaN = isNaN && !i;
+        }
+        return isNaN;
+    }
+
+    public boolean isNegativeInfinity() {
+        var isNaN = hidden;
+        for(final var i : exponent.getValue()) {
+            isNaN = isNaN && i;
+        }
+        for(final var i : significand.getValue()) {
+            isNaN = isNaN && !i;
+        }
+        return isNaN;
+    }
+
     public FpLitExpr add(final FpRoundingMode roundingMode, final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigDecimal sum = FpUtils.fpLitExprToBigDecimal(roundingMode, this).add(FpUtils.fpLitExprToBigDecimal(roundingMode, that));
-        return FpUtils.bigDecimalToFpLitExpr(sum, getType());
+        var sum = fpLitExprToBigFloat(roundingMode, this).add(fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+        return bigFloatToFpLitExpr(sum, getType());
+    }
+
+    public FpLitExpr sub(final FpRoundingMode roundingMode, final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var sub = fpLitExprToBigFloat(roundingMode, this).subtract(fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+        return bigFloatToFpLitExpr(sub, getType());
+    }
+
+    public FpLitExpr pos() {
+        return this;
+    }
+
+    public FpLitExpr neg() {
+        var neg = fpLitExprToBigFloat(FpRoundingMode.RNA, this).negate();
+        return bigFloatToFpLitExpr(neg, getType());
+    }
+
+    public FpLitExpr mul(final FpRoundingMode roundingMode, final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var sub = fpLitExprToBigFloat(roundingMode, this).multiply(fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+        return bigFloatToFpLitExpr(sub, getType());
+    }
+
+    public FpLitExpr div(final FpRoundingMode roundingMode, final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var sub = fpLitExprToBigFloat(roundingMode, this).divide(fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+        return bigFloatToFpLitExpr(sub, getType());
+    }
+
+    public BoolLitExpr eq(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.RNA, this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.RNA, that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
+    }
+
+    public BoolLitExpr neq(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.RNA, this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.RNA, that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        return BoolExprs.Bool(!(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand)));
     }
 
     @Override
@@ -84,8 +189,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         if (this == obj) {
             return true;
         } else if (obj instanceof FpLitExpr) {
-            final FpLitExpr that = (FpLitExpr) obj;
-            return this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand);
+            return eq((FpLitExpr) obj).equals(BoolExprs.True());
         } else {
             return false;
         }
