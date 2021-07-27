@@ -16,15 +16,11 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.xcfa.CIntTypeUtils;
+import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -34,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public class AddHavocRange extends ProcedurePass {
 

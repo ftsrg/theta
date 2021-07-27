@@ -20,9 +20,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -50,9 +47,9 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
-import hu.bme.mit.theta.xcfa.transformation.ArithmeticType;
-import hu.bme.mit.theta.xcfa.transformation.c.FunctionVisitor;
-import hu.bme.mit.theta.xcfa.transformation.c.statements.CStatement;
+import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -67,7 +64,6 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -100,7 +96,7 @@ public class XcfaCli {
 	String printxcfa = null;
 
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
-	ArithmeticType arithmeticType = ArithmeticType.efficient;
+	ArchitectureConfig.ArithmeticType arithmeticType = ArchitectureConfig.ArithmeticType.efficient;
 
 	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
 	boolean printcfa;
@@ -205,7 +201,6 @@ public class XcfaCli {
 			}
 
 			final Stopwatch sw = Stopwatch.createStarted();
-			//final XCFA xcfa = XcfaUtils.fromFile(model, arithmeticType);
 
 			final CharStream input = CharStreams.fromStream(new FileInputStream(model));
 
