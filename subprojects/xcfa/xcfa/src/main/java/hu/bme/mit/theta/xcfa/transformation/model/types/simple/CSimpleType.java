@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.simple;
 
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+
 import java.util.List;
 
 /**
@@ -137,6 +139,10 @@ public abstract class CSimpleType {
 	}
 
 	public CSimpleType copyOf() {
-		throw new UnsupportedOperationException("Abstract base class CType should not be copied");
+		throw new UnsupportedOperationException("Abstract base class CSimpleType should not be copied");
+	}
+
+	public CComplexType getActualType() {
+		throw new UnsupportedOperationException("Abstract base class CSimpleType should not be used");
 	}
 }

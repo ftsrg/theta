@@ -8,6 +8,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
 
@@ -50,9 +51,9 @@ public class CFunction extends CStatement{
 		for (VarDecl<?> flatVariable : flatVariables) {
 			builder.createVar(flatVariable, null);
 		}
-		builder.setRetType(funcDecl.getBaseType().isVoid() ? null : Int());
+		builder.setRetType(funcDecl.getBaseType() instanceof CVoid ? null : Int());
 		builder.setName(funcDecl.getName());
-		if(!funcDecl.getBaseType().isVoid()) {
+		if(!(funcDecl.getBaseType() instanceof CVoid)) {
 			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
 			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType());
 			builder.createParam(XcfaProcedure.Direction.OUT, var);
@@ -66,7 +67,7 @@ public class CFunction extends CStatement{
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			checkState(functionParam.getBaseType().isVoid() ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
+			checkState(functionParam.getBaseType() instanceof CVoid ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
 			if(functionParam.getVarDecl() != null) builder.createParam(XcfaProcedure.Direction.IN, functionParam.getVarDecl());
 		}
 		XcfaLocation init = new XcfaLocation("init" + counter++, Map.of());

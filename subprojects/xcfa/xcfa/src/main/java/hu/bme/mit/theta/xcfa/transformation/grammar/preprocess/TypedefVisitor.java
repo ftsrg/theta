@@ -4,7 +4,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 	public static final TypedefVisitor instance = new TypedefVisitor();
 	private final List<CDeclaration> declarations = new ArrayList<>();
 
-	public Optional<CSimpleType> getType(String id) {
+	public Optional<CComplexType> getType(String id) {
 		return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(CDeclaration::getBaseType).findFirst();
 	}
 

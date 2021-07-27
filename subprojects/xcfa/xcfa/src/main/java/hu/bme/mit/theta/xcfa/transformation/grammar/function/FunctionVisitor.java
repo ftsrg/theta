@@ -5,17 +5,15 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.xcfa.transformation.grammar.type.DeclarationVisitor;
-import hu.bme.mit.theta.xcfa.transformation.grammar.expression.ExpressionVisitor;
-import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.BitwiseChecker;
-import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
-import hu.bme.mit.theta.xcfa.transformation.grammar.type.TypeVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.grammar.expression.ExpressionVisitor;
+import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.BitwiseChecker;
+import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
+import hu.bme.mit.theta.xcfa.transformation.grammar.type.DeclarationVisitor;
+import hu.bme.mit.theta.xcfa.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CAssume;
@@ -36,6 +34,8 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CRet;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CWhile;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
@@ -72,11 +72,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name, Int()));
 		VarDecl<?> varDecl = peek.get(name);
-		// TODO add array types to CType
-		CSimpleType cSimpleType = declaration.getBaseType().getBaseType();
-		for (int i = 0; i < cSimpleType.getPointerLevel(); i++) {
-			cSimpleType.incrementPointer();
-		}
+		CComplexType cSimpleType = declaration.getBaseType();
 		XcfaMetadata.create(varDecl.getRef(), "cType", cSimpleType);
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
@@ -138,10 +134,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			if(!declaration.isFunc()) // functions should not be interpreted as global variables
 				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
 			else {
-				CSimpleType returnType = declaration.getBaseType();
-				for (int i = 0; i < declaration.getDerefCounter(); i++) {
-					returnType.incrementPointer();
-				}
+				CComplexType returnType = declaration.getBaseType();
 				declaration.setBaseType(returnType);
 				if(!variables.peek().containsKey(declaration.getName())) {
 					XcfaMetadata.create(declaration.getName(), "cType", returnType);
@@ -156,7 +149,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
-		CSimpleType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+		CComplexType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance).getActualType();
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setBaseType(returnType);
 		if(!variables.peek().containsKey(funcDecl.getName())) {

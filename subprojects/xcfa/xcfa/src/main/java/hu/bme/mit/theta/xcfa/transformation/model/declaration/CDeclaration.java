@@ -2,13 +2,14 @@ package hu.bme.mit.theta.xcfa.transformation.model.declaration;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CDeclaration {
-	private CSimpleType baseType;
+	private CComplexType baseType;
 	private final String name;
 	private VarDecl<?> varDecl;
 	private boolean isFunc;
@@ -19,7 +20,7 @@ public class CDeclaration {
 
 	public CDeclaration(CSimpleType cSimpleType) {
 		this.name = null;
-		this.baseType = cSimpleType.getBaseType();
+		this.baseType = cSimpleType.getBaseType().getActualType();
 		this.derefCounter = cSimpleType.getPointerLevel();
 	}
 	public CDeclaration(String name) {
@@ -54,11 +55,11 @@ public class CDeclaration {
 		return functionParams;
 	}
 
-	public CSimpleType getBaseType() {
+	public CComplexType getBaseType() {
 		return baseType;
 	}
 
-	public void setBaseType(CSimpleType baseType) {
+	public void setBaseType(CComplexType baseType) {
 		this.baseType = baseType;
 	}
 

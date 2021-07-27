@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.type;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.Enum;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
@@ -181,9 +182,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	@Override
 	public CSimpleType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
-		Optional<CSimpleType> type = TypedefVisitor.instance.getType(ctx.getText());
+		Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.getText());
 		if(type.isPresent()) {
-			return type.get();
+			return type.get().getOrigin();
 		} else {
 			if(standardTypes.contains(ctx.getText())) {
 				return NamedType(ctx.getText());
