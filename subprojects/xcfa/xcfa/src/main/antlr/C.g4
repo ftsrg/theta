@@ -121,7 +121,7 @@ unaryOperator
 castExpression
     :   '__extension__'? '(' typeName ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
-    |   DigitSequence                                       #castExpressionDigitSequence
+//    |   DigitSequence                                       #castExpressionDigitSequence
     ;
 
 multiplicativeExpression
@@ -171,7 +171,7 @@ conditionalExpression
 assignmentExpression
     :   conditionalExpression                                   #assignmentExpressionConditionalExpression
     |   unaryExpression assignmentOperator assignmentExpression #assignmentExpressionAssignmentExpression
-    |   DigitSequence                                           #assignmentExpressionDigitSequence
+//    |   DigitSequence                                           #assignmentExpressionDigitSequence
     ;
 
 assignmentOperator

@@ -10,7 +10,6 @@ import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -19,8 +18,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
-import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -151,11 +150,11 @@ public class FunctionInlining extends ProcessPass {
 			for (Stmt stmt : edge.getStmts()) {
 				if (stmt instanceof AssignStmt) {
 					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
-					NamedType leftType = CIntTypeUtils.getcTypeMetadata(assignStmt.getVarDecl().getRef());
+					CComplexType leftType = CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef());
 					checkNotNull(leftType);
 					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
 
-					Expr<IntType> truncatedExpr = CIntTypeUtils.explicitCast(leftType, expr); // truncateToType(leftType, expr);
+					Expr<IntType> truncatedExpr = leftType.castTo(expr);
 					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
 						newStmts.remove(stmt);
@@ -228,10 +227,10 @@ public class FunctionInlining extends ProcessPass {
 				VarDecl<?> varDecl = entry.getKey();
 				XcfaProcedure.Direction direction = entry.getValue();
 				if (direction != XcfaProcedure.Direction.OUT) {
-					NamedType funcParamType = CIntTypeUtils.getcTypeMetadata(varDecl.getRef());
+					CComplexType funcParamType = CComplexType.getType(varDecl.getRef());
 					checkNotNull(funcParamType);
 					Expr<IntType> param = cast(xcfaCallStmt.getParams().get(paramCnt), Int());
-					Expr<IntType> truncatedParam = CIntTypeUtils.explicitCast(funcParamType, param); // truncateToType(funcParamType, param);
+					Expr<IntType> truncatedParam = funcParamType.castTo(param);
 
 					AssignStmt<IntType> assignStmt = Assign(cast(varDecl, Int()), truncatedParam);
 					initStmts.add(assignStmt);

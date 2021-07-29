@@ -7,7 +7,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ public class CCall extends CStatement{
 		this.functionId = functionId;
 		this.params = params;
 		ret = Var("call_" + functionId + "_ret" + counter++, Int());
-		XcfaMetadata.create(ret.getRef(), "cType", CIntTypeUtils.getcTypeMetadata(functionId));
+		XcfaMetadata.create(ret.getRef(), "cType", XcfaMetadata.getMetadataValue(functionId, "cType"));
 	}
 
 	public String getId() {

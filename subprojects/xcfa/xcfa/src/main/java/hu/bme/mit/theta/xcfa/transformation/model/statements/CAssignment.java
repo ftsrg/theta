@@ -2,12 +2,13 @@ package hu.bme.mit.theta.xcfa.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class CAssignment extends CStatement{
@@ -52,15 +48,15 @@ public class CAssignment extends CStatement{
 		Expr<?> ret = null;
 		switch (operator) {
 			case "=": return rValue.getExpression();
-			case "*=": ret = Mul(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
-			case "/=": ret = Div(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
-			case "%=": ret = Mod(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
-			case "+=": ret = Add(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
-			case "-=": ret = Sub(cast(lValue, Int()), cast(rValue.getExpression(), Int())); break;
+			case "*=": ret = AbstractExprs.Mul(lValue, rValue.getExpression()); break;
+			case "/=": ret = AbstractExprs.Div(lValue, rValue.getExpression()); break;
+			case "%=": ret = AbstractExprs.Mod(lValue, rValue.getExpression()); break;
+			case "+=": ret = AbstractExprs.Add(lValue, rValue.getExpression()); break;
+			case "-=": ret = AbstractExprs.Sub(lValue, rValue.getExpression()); break;
 			default: throw new RuntimeException("Bad operator!");
 		}
-		XcfaMetadata.create(ret, "cType", CIntTypeUtils.getcTypeMetadata(lValue));
-		ret = CIntTypeUtils.addOverflowWraparound(cast(ret, Int()));
+		XcfaMetadata.create(ret, "cType", CComplexType.getType(lValue));
+		ret = CComplexType.getType(ret).castTo(ret);
 		return ret;
 	}
 

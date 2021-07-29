@@ -4,7 +4,6 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -35,11 +34,9 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -343,7 +340,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			else {
 				VarDecl<?> varDecl = createVar(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				AssumeStmt assumeStmt = CIntTypeUtils.createWraparoundAssumptions(varDecl);
+				AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).wrapAround(varDecl.getRef());
 				CAssume cAssume = new CAssume(assumeStmt);
 				compound.getcStatementList().add(cAssume);
 			}
@@ -396,13 +393,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		compound.setPostStatements(postStatements);
 		recordMetadata(ctx, compound);
 		return compound;
-	}
-
-	@Override
-	public CStatement visitAssignmentExpressionDigitSequence(CParser.AssignmentExpressionDigitSequenceContext ctx) {
-		CExpr cExpr = new CExpr(IntLitExpr.of(BigInteger.valueOf(Long.parseLong(ctx.DigitSequence().getText()))));
-		recordMetadata(ctx, cExpr);
-		return cExpr;
 	}
 
 	@Override

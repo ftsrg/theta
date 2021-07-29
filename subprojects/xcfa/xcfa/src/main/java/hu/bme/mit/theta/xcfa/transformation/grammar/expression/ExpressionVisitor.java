@@ -38,11 +38,7 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 
 	public static ExpressionVisitor create(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
-		if(isBitwiseOps) {
-			return new BitwiseExpressionVisitor(variables, functions);
-		} else {
-			return new IntegerExpressionVisitor(variables, functions);
-		}
+		return new IntegerExpressionVisitor(variables, functions);
 	}
 
 	protected VarDecl<?> getVar(String name) {
@@ -110,9 +106,6 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public abstract Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx);
-
-	@Override
-	public abstract Expr<?> visitCastExpressionDigitSequence(CParser.CastExpressionDigitSequenceContext ctx);
 
 	@Override
 	public abstract Expr<?> visitUnaryExpression(CParser.UnaryExpressionContext ctx);

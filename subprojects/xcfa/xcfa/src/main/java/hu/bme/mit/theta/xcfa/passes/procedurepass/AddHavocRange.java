@@ -17,19 +17,16 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.xcfa.transformation.utils.CIntTypeUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class AddHavocRange extends ProcedurePass {
 
@@ -43,7 +40,7 @@ public class AddHavocRange extends ProcedurePass {
 					if(stmt == e.get()) {
 						VarDecl<?> var = ((HavocStmt)e.get()).getVarDecl();
 						collect.add(stmt);
-						AssumeStmt wraparoundAssumption = CIntTypeUtils.createWraparoundAssumptions(var);
+						Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).wrapAround(var.getRef());
 						collect.add(wraparoundAssumption);
 					}
 					else collect.add(stmt);
