@@ -171,7 +171,10 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				Expr<?> leftExpr = smallestCommonType.castTo(leftOp);
 				Expr<?> rightExpr = smallestCommonType.castTo(rightOp);
 				CComplexType signedInt = CComplexType.getSignedInt();
-				expr = Ite(AbstractExprs.Eq(leftExpr, rightExpr), signedInt.getUnitValue(), signedInt.getNullValue());
+				if(ctx.signs.get(i).getText().equals("=="))
+					expr = Ite(AbstractExprs.Eq(leftExpr, rightExpr), signedInt.getUnitValue(), signedInt.getNullValue());
+				else
+					expr = Ite(AbstractExprs.Neq(leftExpr, rightExpr), signedInt.getUnitValue(), signedInt.getNullValue());
 				XcfaMetadata.create(expr, "cType", signedInt);
 			}
 			return expr;

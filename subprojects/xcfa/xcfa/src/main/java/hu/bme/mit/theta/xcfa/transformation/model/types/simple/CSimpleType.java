@@ -48,7 +48,7 @@ public abstract class CSimpleType {
 	}
 
 	public void setBool(boolean bool) {
-		setSigned(false); // _Bool isn't signed, but signed might be the default value in some cases
+		if(bool) setSigned(false); // _Bool isn't signed, but signed might be the default value in some cases
 		this.bool = bool;
 	}
 
