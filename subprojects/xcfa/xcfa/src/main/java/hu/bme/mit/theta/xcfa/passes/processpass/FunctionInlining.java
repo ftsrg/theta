@@ -154,11 +154,11 @@ public class FunctionInlining extends ProcessPass {
 					checkNotNull(leftType);
 					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
 
-					Expr<IntType> truncatedExpr = leftType.castTo(expr);
+					Expr<?> truncatedExpr = leftType.castTo(expr);
 					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
 						newStmts.remove(stmt);
-						AssignStmt<IntType> newStmt = AssignStmt.of(cast(assignStmt.getVarDecl(), Int()) , truncatedExpr);
+						AssignStmt<?> newStmt = Assign(cast(assignStmt.getVarDecl(), assignStmt.getVarDecl().getType()), cast(truncatedExpr, assignStmt.getVarDecl().getType()));
 						newStmts.add(newStmt);
 					}
 				}
@@ -230,9 +230,9 @@ public class FunctionInlining extends ProcessPass {
 					CComplexType funcParamType = CComplexType.getType(varDecl.getRef());
 					checkNotNull(funcParamType);
 					Expr<IntType> param = cast(xcfaCallStmt.getParams().get(paramCnt), Int());
-					Expr<IntType> truncatedParam = funcParamType.castTo(param);
+					Expr<?> truncatedParam = funcParamType.castTo(param);
 
-					AssignStmt<IntType> assignStmt = Assign(cast(varDecl, Int()), truncatedParam);
+					AssignStmt<?> assignStmt = Assign(cast(varDecl, varDecl.getType()), cast(truncatedParam, varDecl.getType()));
 					initStmts.add(assignStmt);
 				}
 				if (direction != XcfaProcedure.Direction.IN) {

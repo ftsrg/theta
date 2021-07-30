@@ -25,6 +25,11 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CReal;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.CastVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.LimitVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.NullValueVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.TypeVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.UnitValueVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
 import java.util.List;
@@ -42,19 +47,23 @@ public abstract class CComplexType {
 	}
 
 	public Expr<?> getNullValue() {
-		throw new RuntimeException("Default values are not applicable for this type!");
+		return this.accept(NullValueVisitor.instance, null);
 	}
 
 	public Expr<?> getUnitValue() {
-		throw new RuntimeException("Default values are not applicable for this type!");
+		return this.accept(UnitValueVisitor.instance, null);
 	}
 
 	public AssumeStmt limit(Expr<?> expr) {
-		throw new RuntimeException("Wraparound statements are not supported for this type!");
+		return this.accept(LimitVisitor.instance, expr);
 	}
 
-	public <T extends Type> Expr<T> castTo(Expr<T> expr) {
-		throw new RuntimeException("Casting is not supported for this type!");
+	public Expr<?> castTo(Expr<?> expr) {
+		return this.accept(CastVisitor.instance, expr);
+	}
+
+	public Type getSmtType() {
+		return this.accept(TypeVisitor.instance, null);
 	}
 
 	public CComplexType getSmallestCommonType(CComplexType type) {
@@ -86,73 +95,73 @@ public abstract class CComplexType {
 
 	public static class CComplexTypeVisitor<T, R> {
 		public R visit(CComplexType type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CVoid type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CReal type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CDouble type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CFloat type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CLongDouble type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CInteger type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CShort type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CSignedShort type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CUnsignedShort type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CLongLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CSignedLongLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CUnsignedLongLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CUnsignedLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CSignedLong type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CInt type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CSignedInt type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CUnsignedInt type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CChar type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CSignedChar type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CUnsignedChar type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 		public R visit(CBool type, T param) {
-			return null;
+			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
 	}
 

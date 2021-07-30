@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
@@ -219,14 +220,15 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			//noinspection unchecked
 			Expr<BvType> expr = (Expr<BvType>) accept;
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(expr)));
+			checkState(smallestCommonType.getSmtType() instanceof BvType);
 			for(int i = 1; i < ctx.additiveExpression().size(); ++i) {
 				Expr<BvType> rightOp;
 				accept = ctx.additiveExpression(i).accept(this);
 				checkState(accept.getType() instanceof BvType);
 				//noinspection unchecked
 				rightOp = (Expr<BvType>) accept;
-				Expr<BvType> leftExpr = smallestCommonType.castTo(expr);
-				Expr<BvType> rightExpr = smallestCommonType.castTo(rightOp);
+				Expr<BvType> leftExpr = cast(smallestCommonType.castTo(expr), (BvType)smallestCommonType.getSmtType());
+				Expr<BvType> rightExpr = cast(smallestCommonType.castTo(rightOp), (BvType)smallestCommonType.getSmtType());
 				expr = BvExprs.ShiftLeft(leftExpr, rightExpr);
 				XcfaMetadata.create(expr, "cType", smallestCommonType);
 			}
