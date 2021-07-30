@@ -3,6 +3,8 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.simple;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CUnsignedChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cint.CSignedInt;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cint.CUnsignedInt;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.clong.CSignedLong;
@@ -28,9 +30,9 @@ public class NamedType extends CSimpleType {
 	@Override
 	public CComplexType getActualType() {
 		switch (namedType) {
-			case "_Bool": return new CBool(this);
-			case "char": if(isSigned()) return new CSignedInt(this); else return new CUnsignedInt(this);
-			case "int": if(isSigned()) {
+			case "char": if(isSigned()) return new CSignedChar(this); else return new CUnsignedChar(this);
+			case "int": if(isBool()) return new CBool(this);
+						else if(isSigned()) {
 							if(isLong()) return new CSignedLong(this);
 							else if(isLongLong()) return new CSignedLongLong(this);
 							else if(isShort()) return new CSignedShort(this);
@@ -82,10 +84,10 @@ public class NamedType extends CSimpleType {
 				}
 				break;
 			case "short":
-				setShort(true);
+				cSimpleType.setShort(true);
 				break;
 			case "_Bool":
-				setBool(true);
+				cSimpleType.setBool(true);
 				break;
 			default:
 				if(!cSimpleType.isTypedef()) throw new RuntimeException("namedType should be short or long or type specifier, instead it is " + namedType);
@@ -102,6 +104,7 @@ public class NamedType extends CSimpleType {
 		namedType.setVolatile(this.isVolatile());
 		namedType.setSigned(this.isSigned());
 		namedType.setShort(this.isShort());
+		namedType.setBool(this.isBool());
 		namedType.setLong(this.isLong());
 		namedType.setLongLong(this.isLongLong());
 
@@ -118,6 +121,7 @@ public class NamedType extends CSimpleType {
 		if(!isSigned()) stringBuilder.append("unsigned ");
 		if(isShort()) stringBuilder.append("short ");
 		if(isLong()) stringBuilder.append("long ");
+		if(isBool()) stringBuilder.append("_Bool ");
 		if(isLongLong()) stringBuilder.append("long long ");
 
 		stringBuilder.append(namedType);
@@ -139,6 +143,7 @@ public class NamedType extends CSimpleType {
 		namedType.setSigned(this.isSigned());
 		namedType.setShort(this.isShort());
 		namedType.setLong(this.isLong());
+		namedType.setBool(this.isBool());
 		namedType.setLongLong(this.isLongLong());
 		for(int i = 0; i < this.getPointerLevel(); i++) {
 			namedType.incrementPointer();

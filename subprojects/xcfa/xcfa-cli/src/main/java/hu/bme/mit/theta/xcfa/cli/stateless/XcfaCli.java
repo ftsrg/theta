@@ -185,6 +185,7 @@ public class XcfaCli {
 				String basicFileName = resultsDir + "/" + model.getName();
 				System.out.println(basicFileName);
 				printxcfa = basicFileName + ".xcfa";
+				printcfa = true;
 				cexfile = basicFileName + ".cex";
 				witnessfile = basicFileName + ".witness.graphml";
 				dotwitnessfile = basicFileName + ".witness.dot";
@@ -243,7 +244,6 @@ public class XcfaCli {
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
 					bw.write(cfa.toString());
 				}
-				return;
 			}
 
 

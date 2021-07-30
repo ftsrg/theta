@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.expression;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
@@ -11,7 +12,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
@@ -22,7 +22,6 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -34,8 +33,8 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
 
 public class IntegerExpressionVisitor extends ExpressionVisitor {
 	public IntegerExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
@@ -405,30 +404,45 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	@Override
 	public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
 		String text = ctx.getText().toLowerCase();
-		if(text.endsWith("f")) {
-			// float
+		checkState(!text.endsWith("f"), "Constant cannot be a float");
+		checkState(!text.contains("."), "Constant cannot be a double");
+
+		boolean isLong = text.endsWith("l");
+		if(isLong) text = text.substring(0, text.length() - 1);
+		boolean isLongLong = text.endsWith("l");
+		if(isLongLong) text = text.substring(0, text.length() - 1);
+		boolean isUnsigned = text.endsWith("u");
+		if(isUnsigned) text = text.substring(0, text.length() - 1);
+
+		LitExpr<?> litExpr;
+		if(text.startsWith("0x")) {
+			long l = Long.parseLong(text.substring(2), 16);
+			litExpr = Int(BigInteger.valueOf(l));
+		}
+		else if (text.startsWith("0b")) {
+			long l = Long.parseLong(text.substring(2), 2);
+			litExpr = Int(BigInteger.valueOf(l));
+		}
+		else if (text.startsWith("0") && text.length() > 1) {
+			long l = Long.parseLong(text.substring(1), 8);
+			litExpr = Int(BigInteger.valueOf(l));
+		}
+		else {
+			long l = Long.parseLong(text, 10);
+			litExpr = Int(BigInteger.valueOf(l));
 		}
 
-		NamedType namedType = NamedType("int");
-		if(ctx.getText().contains("ll") || ctx.getText().contains("LL")) {
-			namedType.setLongLong(true);
-		} else if(ctx.getText().contains("l") || ctx.getText().contains("L")) {
-			namedType.setLong(true);
-		}
+		CComplexType type;
+		if(isLongLong && isUnsigned) type = CComplexType.getUnsignedLongLong();
+		else if(isLongLong) type = CComplexType.getSignedLongLong();
+		else if(isLong && isUnsigned) type = CComplexType.getUnsignedLong();
+		else if(isLong) type = CComplexType.getSignedLong();
+		else if(isUnsigned) type = CComplexType.getUnsignedInt();
+		else type = CComplexType.getSignedInt();
 
-		if(ctx.getText().contains("u") || ctx.getText().contains("U") ) {
-			namedType.setSigned(false);
-		} else namedType.setSigned(true);
-
-		String constantString = ctx.getText().replaceAll("[LUlu]", "");
-		IntLitExpr litExpr;
-		if(constantString.startsWith("0x")) {
-			litExpr = IntLitExpr.of(new BigInteger(constantString.substring(2), 16));
-		} else {
-			litExpr = IntLitExpr.of(new BigInteger(constantString));
-		}
-		XcfaMetadata.create(litExpr, "cType", namedType);
+		XcfaMetadata.create(litExpr, "cType", type);
 		return litExpr;
+
 	}
 
 	@Override

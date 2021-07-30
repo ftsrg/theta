@@ -25,7 +25,7 @@ public class CCall extends CStatement{
 		this.functionId = functionId;
 		this.params = params;
 		ret = Var("call_" + functionId + "_ret" + counter++, Int());
-		XcfaMetadata.create(ret.getRef(), "cType", XcfaMetadata.getMetadataValue(functionId, "cType"));
+		XcfaMetadata.create(ret.getRef(), "cType", XcfaMetadata.getMetadataValue(functionId, "cType").get());
 	}
 
 	public String getId() {
