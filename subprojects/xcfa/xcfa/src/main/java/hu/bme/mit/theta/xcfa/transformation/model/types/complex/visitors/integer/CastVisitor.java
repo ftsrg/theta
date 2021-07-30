@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.intege
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -110,5 +111,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	@Override
 	public Expr<?> visit(CBool type, Expr<?> param) {
 		return Ite(Eq(param, Int(0)), Int(0), Int(1));
+	}
+
+	@Override
+	public Expr<?> visit(CVoid type, Expr<?> param) {
+		return param;
 	}
 }

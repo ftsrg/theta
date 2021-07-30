@@ -29,6 +29,7 @@ public class NamedType extends CSimpleType {
 
 	@Override
 	public CComplexType getActualType() {
+		if(getPointerLevel() > 0) return new CUnsignedInt(this);
 		switch (namedType) {
 			case "char": if(isSigned()) return new CSignedChar(this); else return new CUnsignedChar(this);
 			case "int": if(isBool()) return new CBool(this);

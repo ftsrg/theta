@@ -34,6 +34,7 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
@@ -69,8 +70,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		checkState(!peek.containsKey(name), "Variable already exists!");
 		peek.put(name, Var(name, Int()));
 		VarDecl<?> varDecl = peek.get(name);
-		CComplexType cSimpleType = declaration.getBaseType();
-		XcfaMetadata.create(varDecl.getRef(), "cType", cSimpleType);
+		CSimpleType cSimpleType = declaration.getBaseType();
+		for (int i = 0; i < declaration.getDerefCounter(); i++) {
+			cSimpleType.incrementPointer();
+		}
+		XcfaMetadata.create(varDecl.getRef(), "cType", cSimpleType.getActualType());
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
 		return varDecl;
@@ -131,10 +135,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			if(!declaration.isFunc()) // functions should not be interpreted as global variables
 				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
 			else {
-				CComplexType returnType = declaration.getBaseType();
+				CSimpleType returnType = declaration.getBaseType();
 				declaration.setBaseType(returnType);
 				if(!variables.peek().containsKey(declaration.getName())) {
-					XcfaMetadata.create(declaration.getName(), "cType", returnType);
+					XcfaMetadata.create(declaration.getName(), "cType", returnType.getActualType());
 					VarDecl<?> var = createVar(declaration);
 					functions.put(var, declaration);
 				}
@@ -146,11 +150,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
-		CComplexType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance).getActualType();
+		CSimpleType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setBaseType(returnType);
 		if(!variables.peek().containsKey(funcDecl.getName())) {
-			XcfaMetadata.create(funcDecl.getName(), "cType", returnType);
+			XcfaMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			VarDecl<?> var = createVar(funcDecl);
 			functions.put(var, funcDecl);
 		}

@@ -51,11 +51,11 @@ public class CFunction extends CStatement{
 		for (VarDecl<?> flatVariable : flatVariables) {
 			builder.createVar(flatVariable, null);
 		}
-		builder.setRetType(funcDecl.getBaseType() instanceof CVoid ? null : Int());
+		builder.setRetType(funcDecl.getBaseType().getActualType() instanceof CVoid ? null : Int());
 		builder.setName(funcDecl.getName());
-		if(!(funcDecl.getBaseType() instanceof CVoid)) {
+		if(!(funcDecl.getBaseType().getActualType() instanceof CVoid)) {
 			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
-			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType());
+			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType().getActualType());
 			builder.createParam(XcfaProcedure.Direction.OUT, var);
 		} else {
 			// TODO we assume later, that there is always a ret var, but this should change
@@ -67,7 +67,7 @@ public class CFunction extends CStatement{
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			checkState(functionParam.getBaseType() instanceof CVoid ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
+			checkState(functionParam.getBaseType().getActualType() instanceof CVoid ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
 			if(functionParam.getVarDecl() != null) builder.createParam(XcfaProcedure.Direction.IN, functionParam.getVarDecl());
 		}
 		XcfaLocation init = new XcfaLocation("init" + counter++, Map.of());
