@@ -6,4 +6,8 @@ public class CUnsignedLong extends CLong {
 	public CUnsignedLong(CSimpleType origin) {
 		super(origin);
 	}
+
+	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+		return visitor.visit(this, param);
+	}
 }

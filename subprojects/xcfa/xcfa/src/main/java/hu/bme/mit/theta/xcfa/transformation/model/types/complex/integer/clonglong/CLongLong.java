@@ -7,4 +7,7 @@ public abstract class CLongLong extends CInteger {
 	protected CLongLong(CSimpleType origin) {
 		super(origin);
 	}
+	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+		return visitor.visit(this, param);
+	}
 }

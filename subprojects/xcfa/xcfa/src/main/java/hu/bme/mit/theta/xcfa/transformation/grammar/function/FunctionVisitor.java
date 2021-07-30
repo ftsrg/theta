@@ -340,7 +340,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			else {
 				VarDecl<?> varDecl = createVar(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).wrapAround(varDecl.getRef());
+				AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
 				CAssume cAssume = new CAssume(assumeStmt);
 				compound.getcStatementList().add(cAssume);
 			}
