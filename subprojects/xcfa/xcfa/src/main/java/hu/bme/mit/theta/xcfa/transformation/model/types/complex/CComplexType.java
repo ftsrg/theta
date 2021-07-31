@@ -26,15 +26,16 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CReal;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.CastVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.LimitVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.NullValueVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.TypeVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.UnitValueVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
 import java.util.List;
 import java.util.Optional;
+
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getCastVisitor;
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getLimitVisitor;
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getNullValueVisitor;
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getTypeVisitor;
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getUnitValueVisitor;
 
 public abstract class CComplexType {
 	private final CSimpleType origin;
@@ -48,23 +49,23 @@ public abstract class CComplexType {
 	}
 
 	public Expr<?> getNullValue() {
-		return this.accept(NullValueVisitor.instance, null);
+		return this.accept(getNullValueVisitor(), null);
 	}
 
 	public Expr<?> getUnitValue() {
-		return this.accept(UnitValueVisitor.instance, null);
+		return this.accept(getUnitValueVisitor(), null);
 	}
 
 	public AssumeStmt limit(Expr<?> expr) {
-		return this.accept(LimitVisitor.instance, expr);
+		return this.accept(getLimitVisitor(), expr);
 	}
 
 	public Expr<?> castTo(Expr<?> expr) {
-		return this.accept(CastVisitor.instance, expr);
+		return this.accept(getCastVisitor(), expr);
 	}
 
 	public Type getSmtType() {
-		return this.accept(TypeVisitor.instance, null);
+		return this.accept(getTypeVisitor(), null);
 	}
 
 	public CComplexType getSmallestCommonType(CComplexType type) {
@@ -102,6 +103,9 @@ public abstract class CComplexType {
 	public static CComplexType getUnsignedInt() { return new CUnsignedInt(null); }
 	public static CComplexType getSignedLongLong() { return new CSignedLongLong(null); }
 	public static CComplexType getSignedLong() { return new CSignedLong(null); }
+	public static CComplexType getFloat() { return new CFloat(null); }
+	public static CComplexType getDouble() { return new CDouble(null); }
+	public static CComplexType getLongDouble() { return new CLongDouble(null); }
 
 	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
 		return visitor.visit(this, param);

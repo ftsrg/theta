@@ -1,11 +1,21 @@
 package hu.bme.mit.theta.xcfa.transformation;
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.CastVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.LimitVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.NullValueVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.TypeVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.UnitValueVisitor;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class ArchitectureConfig {
 	public static final ArchitectureType architecture = ArchitectureType.ILP32;
-	public static final ArithmeticType arithmetic = ArithmeticType.efficient;
+	public static ArithmeticType arithmetic = ArithmeticType.efficient;
 
 
 	/**
@@ -14,19 +24,27 @@ public class ArchitectureConfig {
 	 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 	 */
 	public enum ArchitectureType {
-		ILP32(1, 8,16,32,32,64),
-		LP64(1, 8,16,32,64,64);
+		ILP32(1, 8,16,32,32,64, 24, 8, 53, 11, 113, 15),
+		LP64(1, 8,16,32,64,64, 24, 8, 53, 11, 113, 15);
 
 		public final Map<String, Integer> standardTypeSizes = new HashMap<>();
 
-		ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong) {
-			standardTypeSizes.put("void", 1); // TODO both bool and void 1, will this cause any problems?
+		ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong,
+						 int _float_significand, int _float_exponent, int _double_significand, int _double_exponent,
+						 int _longdouble_significand, int _longdouble_exponend) {
+			standardTypeSizes.put("void", 1);
 			standardTypeSizes.put("bool", _bool);
 			standardTypeSizes.put("char", _char);
 			standardTypeSizes.put("short", _short);
 			standardTypeSizes.put("int", _int);
 			standardTypeSizes.put("long", _long);
 			standardTypeSizes.put("longlong", _longlong);
+			standardTypeSizes.put("float_s", _float_significand);
+			standardTypeSizes.put("float_e", _float_exponent);
+			standardTypeSizes.put("double_s", _double_significand);
+			standardTypeSizes.put("double_e", _double_exponent);
+			standardTypeSizes.put("longdouble_s", _longdouble_significand);
+			standardTypeSizes.put("longdouble_e", _longdouble_exponend);
 		}
 
 		public int getBitWidth(String typeName) {
@@ -45,5 +63,26 @@ public class ArchitectureConfig {
 		integer,
 		bitvector,
 		efficient
+	}
+
+	public static CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> getCastVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return CastVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.CastVisitor.instance;
+	}
+	public static CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> getLimitVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return LimitVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.LimitVisitor.instance;
+	}
+	public static CComplexType.CComplexTypeVisitor<Void, Expr<?>>  getNullValueVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return NullValueVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.NullValueVisitor.instance;
+	}
+	public static CComplexType.CComplexTypeVisitor<Void, Expr<?>>  getUnitValueVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return UnitValueVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.UnitValueVisitor.instance;
+	}
+	public static CComplexType.CComplexTypeVisitor<Void, Type> getTypeVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return TypeVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.TypeVisitor.instance;
 	}
 }

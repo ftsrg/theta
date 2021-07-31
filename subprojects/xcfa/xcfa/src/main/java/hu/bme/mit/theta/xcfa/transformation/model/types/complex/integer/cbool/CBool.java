@@ -1,9 +1,10 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool;
 
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
-public class CBool extends CInteger {
+public class CBool extends CInteger implements Unsigned {
 	private static final int RANK = 0;
 	public CBool(CSimpleType origin) {
 		super(origin);

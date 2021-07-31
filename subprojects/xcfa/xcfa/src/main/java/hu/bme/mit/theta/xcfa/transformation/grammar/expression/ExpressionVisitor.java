@@ -20,7 +20,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
@@ -28,8 +27,6 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	protected final List<CStatement> postStatements = new ArrayList<>();
 	protected final Deque<Map<String, VarDecl<?>>> variables;
 	protected final Map<VarDecl<?>, CDeclaration> functions;
-
-	protected static boolean isBitwiseOps = false;
 
 	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		this.variables = variables;
@@ -52,12 +49,6 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			}
 		}
 		throw new RuntimeException("No such variable: " + name);
-	}
-
-	public static void setBitwise(Boolean bitwise) {
-		// TODO remove this check
-		checkState(!bitwise, "Bitwise ops not yet implemented!");
-		isBitwiseOps = bitwise;
 	}
 
 	public List<CStatement> getPostStatements() {

@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cint;
 
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
-public class CSignedInt extends CInt {
+public class CSignedInt extends CInt implements Signed {
 	public CSignedInt(CSimpleType origin) {
 		super(origin);
 	}

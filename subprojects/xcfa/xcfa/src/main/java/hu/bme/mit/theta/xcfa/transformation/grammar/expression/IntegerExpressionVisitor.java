@@ -12,8 +12,11 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.xcfa.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
@@ -22,6 +25,8 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import org.kframework.mpfr.BigFloat;
+import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,6 +38,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -407,44 +413,69 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	@Override
 	public Expr<?> visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
 		String text = ctx.getText().toLowerCase();
-		checkState(!text.endsWith("f"), "Constant cannot be a float");
-		checkState(!text.contains("."), "Constant cannot be a double");
-
 		boolean isLong = text.endsWith("l");
-		if(isLong) text = text.substring(0, text.length() - 1);
-		boolean isLongLong = text.endsWith("l");
-		if(isLongLong) text = text.substring(0, text.length() - 1);
-		boolean isUnsigned = text.endsWith("u");
-		if(isUnsigned) text = text.substring(0, text.length() - 1);
+		if (isLong) text = text.substring(0, text.length() - 1);
+		if(text.contains(".") || text.contains("e")) {
+			boolean isFloat = text.endsWith("f");
+			if (isFloat) text = text.substring(0, text.length() - 1);
+			checkState(!(isFloat&&isLong), "A constant shall only have F or L suffix, not both!");
+			int exponent, significand;
+			CComplexType type;
+			if(isFloat) {
+				exponent = ArchitectureConfig.architecture.getBitWidth("float_e");
+				significand = ArchitectureConfig.architecture.getBitWidth("float_s");
+				type = CComplexType.getFloat();
+			} else if (isLong) {
+				exponent = ArchitectureConfig.architecture.getBitWidth("longdouble_e");
+				significand = ArchitectureConfig.architecture.getBitWidth("longdouble_s");
+				type = CComplexType.getLongDouble();
+			} else {
+				exponent = ArchitectureConfig.architecture.getBitWidth("double_e");
+				significand = ArchitectureConfig.architecture.getBitWidth("double_s");
+				type = CComplexType.getDouble();
+			}
 
-		LitExpr<?> litExpr;
-		if(text.startsWith("0x")) {
-			long l = Long.parseLong(text.substring(2), 16);
-			litExpr = Int(BigInteger.valueOf(l));
-		}
-		else if (text.startsWith("0b")) {
-			long l = Long.parseLong(text.substring(2), 2);
-			litExpr = Int(BigInteger.valueOf(l));
-		}
-		else if (text.startsWith("0") && text.length() > 1) {
-			long l = Long.parseLong(text.substring(1), 8);
-			litExpr = Int(BigInteger.valueOf(l));
-		}
-		else {
-			long l = Long.parseLong(text, 10);
-			litExpr = Int(BigInteger.valueOf(l));
-		}
+			BigFloat bigFloat;
+			if (text.startsWith("0x")) {
+				throw new UnsupportedOperationException("Hexadeximal FP constants are not yet supported!");
+			} else if (text.startsWith("0b")) {
+				throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
+			} else {
+				bigFloat = new BigFloat(text.substring(2), new BinaryMathContext(significand, exponent));
+			}
+			FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(significand, exponent));
+			XcfaMetadata.create(fpLitExpr, "cType", type);
+			return fpLitExpr;
 
-		CComplexType type;
-		if(isLongLong && isUnsigned) type = CComplexType.getUnsignedLongLong();
-		else if(isLongLong) type = CComplexType.getSignedLongLong();
-		else if(isLong && isUnsigned) type = CComplexType.getUnsignedLong();
-		else if(isLong) type = CComplexType.getSignedLong();
-		else if(isUnsigned) type = CComplexType.getUnsignedInt();
-		else type = CComplexType.getSignedInt();
+		} else {
 
-		XcfaMetadata.create(litExpr, "cType", type);
-		return litExpr;
+			boolean isLongLong = text.endsWith("l");
+			if (isLongLong) text = text.substring(0, text.length() - 1);
+			boolean isUnsigned = text.endsWith("u");
+			if (isUnsigned) text = text.substring(0, text.length() - 1);
+
+			LitExpr<?> litExpr;
+			if (text.startsWith("0x")) {
+				litExpr = Int(new BigInteger(text.substring(2), 16));
+			} else if (text.startsWith("0b")) {
+				litExpr = Int(new BigInteger(text.substring(2), 2));
+			} else if (text.startsWith("0") && text.length() > 1) {
+				litExpr = Int(new BigInteger(text.substring(1), 8));
+			} else {
+				litExpr = Int(new BigInteger(text, 10));
+			}
+
+			CComplexType type;
+			if (isLongLong && isUnsigned) type = CComplexType.getUnsignedLongLong();
+			else if (isLongLong) type = CComplexType.getSignedLongLong();
+			else if (isLong && isUnsigned) type = CComplexType.getUnsignedLong();
+			else if (isLong) type = CComplexType.getSignedLong();
+			else if (isUnsigned) type = CComplexType.getUnsignedInt();
+			else type = CComplexType.getSignedInt();
+
+			XcfaMetadata.create(litExpr, "cType", type);
+			return litExpr;
+		}
 
 	}
 

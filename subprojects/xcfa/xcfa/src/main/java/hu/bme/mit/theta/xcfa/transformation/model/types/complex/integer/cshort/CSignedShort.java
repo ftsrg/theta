@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cshort;
 
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
-public class CSignedShort extends CShort {
+public class CSignedShort extends CShort implements Signed {
 	public CSignedShort(CSimpleType origin) {
 		super(origin);
 	}

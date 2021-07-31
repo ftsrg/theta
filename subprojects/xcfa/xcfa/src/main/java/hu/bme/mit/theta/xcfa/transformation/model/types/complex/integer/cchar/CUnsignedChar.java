@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar;
 
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
-public class CUnsignedChar extends CChar {
+public class CUnsignedChar extends CChar implements Unsigned {
 	public CUnsignedChar(CSimpleType origin) {
 		super(origin);
 		unsigned = true;

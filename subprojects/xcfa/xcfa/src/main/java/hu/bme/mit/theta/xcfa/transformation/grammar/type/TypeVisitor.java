@@ -3,11 +3,11 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.type;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.Enum;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
-import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
@@ -18,7 +18,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.*;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Atomic;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.DeclaredName;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Enum;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Extern;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Signed;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Typedef;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Unsigned;
+import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Volatile;
 
 public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	public static final TypeVisitor instance = new TypeVisitor();
@@ -178,6 +186,16 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 			default:
 				return NamedType(ctx.getText());
 		}
+	}
+
+	@Override
+	public CSimpleType visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
+		return NamedType("float");
+	}
+
+	@Override
+	public CSimpleType visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
+		return NamedType("double");
 	}
 
 	@Override

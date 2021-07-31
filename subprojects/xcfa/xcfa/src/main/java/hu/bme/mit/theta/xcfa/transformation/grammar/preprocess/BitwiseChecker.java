@@ -2,15 +2,19 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.preprocess;
 
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 
 public class BitwiseChecker extends CBaseVisitor<Void> {
 	public static final BitwiseChecker instance = new BitwiseChecker();
 	private static boolean isBitwise = false;
 
 	public boolean checkIfBitwise(CParser.CompilationUnitContext ctx) {
-		isBitwise = false;
-		ctx.accept(instance);
-		return isBitwise;
+		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+			isBitwise = false;
+			ctx.accept(instance);
+			ArchitectureConfig.arithmetic = isBitwise ? ArchitectureConfig.ArithmeticType.bitvector : ArchitectureConfig.ArithmeticType.integer;
+			return isBitwise;
+		} else return ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector;
 	}
 
 	@Override

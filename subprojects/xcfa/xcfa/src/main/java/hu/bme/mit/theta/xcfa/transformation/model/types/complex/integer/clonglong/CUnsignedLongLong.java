@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.clonglong;
 
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
-public class CUnsignedLongLong extends CLongLong {
+public class CUnsignedLongLong extends CLongLong implements Unsigned {
 	public CUnsignedLongLong(CSimpleType origin) {
 		super(origin);
 		unsigned = true;

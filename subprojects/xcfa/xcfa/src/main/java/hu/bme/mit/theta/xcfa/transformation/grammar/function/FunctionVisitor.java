@@ -47,7 +47,6 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as Programs, Functions,
@@ -65,12 +64,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	private VarDecl<?> createVar(CDeclaration declaration) {
 		String name = declaration.getName();
+		CSimpleType cSimpleType = declaration.getBaseType();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
-		peek.put(name, Var(name, Int()));
+		peek.put(name, Var(name, cSimpleType.getActualType().getSmtType()));
 		VarDecl<?> varDecl = peek.get(name);
-		CSimpleType cSimpleType = declaration.getBaseType();
 		for (int i = 0; i < declaration.getDerefCounter(); i++) {
 			cSimpleType.incrementPointer();
 		}
@@ -91,7 +90,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
 		ctx.accept(TypedefVisitor.instance);
 		// ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
-		ExpressionVisitor.setBitwise(BitwiseChecker.instance.checkIfBitwise(ctx));
+		BitwiseChecker.instance.checkIfBitwise(ctx);
 		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
 			CStatement accept = externalDeclarationContext.accept(this);
