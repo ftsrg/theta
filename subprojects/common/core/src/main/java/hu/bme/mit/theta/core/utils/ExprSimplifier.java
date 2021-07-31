@@ -15,20 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -54,37 +40,47 @@ import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -115,6 +111,21 @@ import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import org.kframework.mpfr.BigFloat;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class ExprSimplifier {
 
@@ -263,6 +274,24 @@ public final class ExprSimplifier {
 			.addCase(BvSLeqExpr.class, ExprSimplifier::simplifyBvSLeq)
 
 			.addCase(BvSLtExpr.class, ExprSimplifier::simplifyBvSLt)
+
+			// Floating points
+
+			.addCase(FpAddExpr.class, ExprSimplifier::simplifyFpAdd)
+
+			.addCase(FpSubExpr.class, ExprSimplifier::simplifyFpSub)
+
+			.addCase(FpPosExpr.class, ExprSimplifier::simplifyFpPos)
+
+			.addCase(FpNegExpr.class, ExprSimplifier::simplifyFpNeg)
+
+			.addCase(FpMulExpr.class, ExprSimplifier::simplifyFpMul)
+
+			.addCase(FpDivExpr.class, ExprSimplifier::simplifyFpDiv)
+
+			.addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
+
+			.addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
 
 			// General
 
@@ -1685,4 +1714,168 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
+	private static Expr<FpType> simplifyFpAdd(final FpAddExpr expr, final Valuation val) {
+		final List<Expr<FpType>> ops = new ArrayList<>();
+
+		for (final Expr<FpType> op : expr.getOps()) {
+			final Expr<FpType> opVisited = simplify(op, val);
+			if (opVisited instanceof FpAddExpr) {
+				final FpAddExpr addOp = (FpAddExpr) opVisited;
+				ops.addAll(addOp.getOps());
+			} else {
+				ops.add(opVisited);
+			}
+		}
+		final FpLitExpr zero = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+		FpLitExpr value = zero;
+
+		for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+			final Expr<FpType> op = iterator.next();
+			if (op instanceof FpLitExpr) {
+				final FpLitExpr litOp = (FpLitExpr) op;
+				value = value.add(expr.getRoundingMode(), litOp);
+				iterator.remove();
+			}
+		}
+
+		if (!value.equals(zero)) {
+			ops.add(value);
+		}
+
+		if (ops.isEmpty()) {
+			return zero;
+		} else if (ops.size() == 1) {
+			return Utils.singleElementOf(ops);
+		}
+
+		return expr.with(ops);
+	}
+
+	private static Expr<FpType> simplifyFpSub(final FpSubExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			final FpLitExpr leftLit = (FpLitExpr) leftOp;
+			final FpLitExpr rightLit = (FpLitExpr) rightOp;
+			return leftLit.sub(expr.getRoundingMode(), rightLit);
+		}
+
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+			if (leftOp.equals(rightOp)) {
+				return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+			}
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<FpType> simplifyFpPos(final FpPosExpr expr, final Valuation val) {
+		return simplify(expr.getOp(), val);
+	}
+
+	private static Expr<FpType> simplifyFpNeg(final FpNegExpr expr, final Valuation val) {
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			final FpLitExpr litOp = (FpLitExpr) op;
+			return litOp.neg();
+		} else if (op instanceof FpNegExpr) {
+			final FpNegExpr negOp = (FpNegExpr) op;
+			return negOp.getOp();
+		}
+
+		return expr.with(op);
+	}
+
+	private static Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
+		final List<Expr<FpType>> ops = new ArrayList<>();
+
+		for (final Expr<FpType> op : expr.getOps()) {
+			final Expr<FpType> opVisited = simplify(op, val);
+			if (opVisited instanceof FpMulExpr) {
+				final FpMulExpr mulOp = (FpMulExpr) opVisited;
+				ops.addAll(mulOp.getOps());
+			} else {
+				ops.add(opVisited);
+			}
+		}
+
+		final FpLitExpr ZERO = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+		final FpLitExpr ONE = FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
+
+		FpLitExpr value = ONE;
+		for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+			final Expr<FpType> op = iterator.next();
+			if (op instanceof FpLitExpr) {
+				final FpLitExpr litOp = (FpLitExpr) op;
+				value = value.mul(expr.getRoundingMode(), litOp);
+				iterator.remove();
+				if (value.equals(ZERO)) {
+					return ZERO;
+				}
+			}
+		}
+
+		if (!value.equals(ONE)) {
+			ops.add(0, value);
+		}
+
+		if (ops.isEmpty()) {
+			return ONE;
+		} else if (ops.size() == 1) {
+			return Utils.singleElementOf(ops);
+		}
+
+		return expr.with(ops);
+	}
+
+	private static Expr<FpType> simplifyFpDiv(final FpDivExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			final FpLitExpr leftLit = (FpLitExpr) leftOp;
+			final FpLitExpr rightLit = (FpLitExpr) rightOp;
+			return leftLit.div(expr.getRoundingMode(), rightLit);
+		}
+
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+			if (leftOp.equals(rightOp)) {
+				return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
+			}
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BoolType> simplifyFpEq(final FpEqExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return Bool(leftOp.equals(rightOp));
+		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+			if (leftOp.equals(rightOp)) {
+				return True();
+			}
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return Bool(!leftOp.equals(rightOp));
+		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+			if (leftOp.equals(rightOp)) {
+				return False();
+			}
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
 }
