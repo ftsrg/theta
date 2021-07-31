@@ -1,3 +1,3 @@
 grammar Cat;
 
-mcm;
+mcm :   'MCM';

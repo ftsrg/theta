@@ -72,18 +72,18 @@ public final class XcfaDslTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 
-				{"/simple.xcfa",                                //filepath
-						0,                                      //globalVarCount
-						1,                                      //processCount
-						new Integer[]{0},                       //processVarCount
-						new Integer[]{0},                       //processParamCount
-						new Integer[]{1},                       //procedureCount
-						new Integer[][]{{1}},                   //procedureVarCount
-						new Integer[][]{{0}},                   //procedureParamCount
-						new Integer[][]{{3}},                   //locCount
-						new Integer[][]{{3}},                   //edgeCount
-						new Integer[][][]{{{1, 2, 1}}}	        //statementCount
-				}
+//				{"/simple.xcfa",                                //filepath
+//						0,                                      //globalVarCount
+//						1,                                      //processCount
+//						new Integer[]{0},                       //processVarCount
+//						new Integer[]{0},                       //processParamCount
+//						new Integer[]{1},                       //procedureCount
+//						new Integer[][]{{1}},                   //procedureVarCount
+//						new Integer[][]{{0}},                   //procedureParamCount
+//						new Integer[][]{{3}},                   //locCount
+//						new Integer[][]{{3}},                   //edgeCount
+//						new Integer[][][]{{{1, 2, 1}}}	        //statementCount
+//				}
 		});
 	}
 
