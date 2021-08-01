@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xcfa.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -18,7 +17,6 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CFunction extends CStatement{
 	private final CDeclaration funcDecl;
@@ -51,15 +49,15 @@ public class CFunction extends CStatement{
 		for (VarDecl<?> flatVariable : flatVariables) {
 			builder.createVar(flatVariable, null);
 		}
-		builder.setRetType(funcDecl.getBaseType().getActualType() instanceof CVoid ? null : Int());
+		builder.setRetType(funcDecl.getBaseType().getActualType() instanceof CVoid ? null : funcDecl.getBaseType().getActualType().getSmtType());
 		builder.setName(funcDecl.getName());
 		if(!(funcDecl.getBaseType().getActualType() instanceof CVoid)) {
-			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
+			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getBaseType().getActualType().getSmtType());
 			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType().getActualType());
 			builder.createParam(XcfaProcedure.Direction.OUT, var);
 		} else {
 			// TODO we assume later, that there is always a ret var, but this should change
-			VarDecl<IntType> var = Var(funcDecl.getName() + "_ret" + counter++, Int());
+			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getBaseType().getActualType().getSmtType());
 			NamedType signedIntType = CSimpleTypeFactory.NamedType("int");
 			signedIntType.setSigned(true);
 			XcfaMetadata.create(var.getRef(), "cType", signedIntType);

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector;
 
-import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
@@ -16,11 +16,11 @@ import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
 
-public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Expr<?>> {
+public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
 	public static final NullValueVisitor instance = new NullValueVisitor();
 
 	@Override
-	public Expr<?> visit(CDouble type, Void param) {
+	public LitExpr<?> visit(CDouble type, Void param) {
 		return FpUtils.bigFloatToFpLitExpr(
 				new BigFloat(
 						"0.0",
@@ -33,7 +33,7 @@ public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Exp
 	}
 
 	@Override
-	public Expr<?> visit(CFloat type, Void param) {
+	public LitExpr<?> visit(CFloat type, Void param) {
 		return FpUtils.bigFloatToFpLitExpr(
 				new BigFloat(
 						"0.0",
@@ -46,7 +46,7 @@ public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Exp
 	}
 
 	@Override
-	public Expr<?> visit(CLongDouble type, Void param) {
+	public LitExpr<?> visit(CLongDouble type, Void param) {
 		return FpUtils.bigFloatToFpLitExpr(
 				new BigFloat(
 						"0.0",
@@ -59,7 +59,7 @@ public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Exp
 	}
 
 	@Override
-	public Expr<?> visit(CInteger type, Void param) {
+	public LitExpr<?> visit(CInteger type, Void param) {
 		if(type instanceof Signed) {
 			return BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ZERO, type.width());
 		} else {

@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.complex;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
@@ -48,7 +49,7 @@ public abstract class CComplexType {
 		return origin;
 	}
 
-	public Expr<?> getNullValue() {
+	public LitExpr<?> getNullValue() {
 		return this.accept(getNullValueVisitor(), null);
 	}
 

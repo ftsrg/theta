@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvSubExpr extends BinaryExpr<BvType, BvType> {
+public final class BvSubExpr extends SubExpr<BvType> {
 
     private static final int HASH_SEED = 2567;
     private static final String OPERATOR = "bvsub";

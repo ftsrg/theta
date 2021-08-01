@@ -2,11 +2,11 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
-public final class BvPosExpr extends UnaryExpr<BvType, BvType> {
+public final class BvPosExpr extends PosExpr<BvType> {
 
     private static final int HASH_SEED = 8962;
     private static final String OPERATOR_LABEL = "bvpos";

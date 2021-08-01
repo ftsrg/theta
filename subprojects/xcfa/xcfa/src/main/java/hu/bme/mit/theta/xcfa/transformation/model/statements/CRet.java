@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class CRet extends CStatement{
@@ -37,7 +36,7 @@ public class CRet extends CStatement{
 		builder.addLoc(endLoc);
         propagateMetadata(endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
-		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, Int()), cast(expr.getExpression(), Int()))));
+		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, key.getType()), cast(expr.getExpression(), key.getType()))));
 		builder.addEdge(edge);
         propagateMetadata(edge);
 		return endLoc;

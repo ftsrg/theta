@@ -7,6 +7,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CCall extends CStatement{
 	private final VarDecl<?> ret;
@@ -24,7 +24,7 @@ public class CCall extends CStatement{
 	public CCall(String functionId, List<CStatement> params) {
 		this.functionId = functionId;
 		this.params = params;
-		ret = Var("call_" + functionId + "_ret" + counter++, Int());
+		ret = Var("call_" + functionId + "_ret" + counter++, ((CComplexType)XcfaMetadata.getMetadataValue(functionId, "cType").get()).getSmtType());
 		XcfaMetadata.create(ret.getRef(), "cType", XcfaMetadata.getMetadataValue(functionId, "cType").get());
 	}
 

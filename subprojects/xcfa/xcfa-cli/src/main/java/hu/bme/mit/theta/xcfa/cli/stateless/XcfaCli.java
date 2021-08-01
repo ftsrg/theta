@@ -173,6 +173,8 @@ public class XcfaCli {
 			return;
 		}
 
+		ArchitectureConfig.arithmetic = arithmeticType;
+
 		try {
 			if(outputResults) {
 				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");

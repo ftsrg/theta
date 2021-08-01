@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.statements;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,6 @@ import java.util.Map;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CDoWhile extends CStatement{
 	private final CStatement body;
@@ -54,10 +54,10 @@ public class CDoWhile extends CStatement{
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		XcfaLocation lastPre = guard.buildWithoutPostStatement(builder, innerEndLoc, null, null, returnLoc);
-		xcfaEdge = new XcfaEdge(lastPre, innerInnerGuard, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastPre, innerInnerGuard, List.of(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastPre, outerInnerGuard, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastPre, outerInnerGuard, List.of(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
         XcfaLocation outerLastGuard = guard.buildPostStatement(builder, outerInnerGuard, null, null, null);

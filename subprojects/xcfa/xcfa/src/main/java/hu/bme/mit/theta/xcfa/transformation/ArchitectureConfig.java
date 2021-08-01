@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.CastVisitor;
@@ -73,11 +74,11 @@ public class ArchitectureConfig {
 		if(arithmetic == ArithmeticType.bitvector) return LimitVisitor.instance;
 		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.LimitVisitor.instance;
 	}
-	public static CComplexType.CComplexTypeVisitor<Void, Expr<?>>  getNullValueVisitor() {
+	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>>  getNullValueVisitor() {
 		if(arithmetic == ArithmeticType.bitvector) return NullValueVisitor.instance;
 		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.NullValueVisitor.instance;
 	}
-	public static CComplexType.CComplexTypeVisitor<Void, Expr<?>>  getUnitValueVisitor() {
+	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>>  getUnitValueVisitor() {
 		if(arithmetic == ArithmeticType.bitvector) return UnitValueVisitor.instance;
 		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.UnitValueVisitor.instance;
 	}

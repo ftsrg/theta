@@ -2,11 +2,11 @@ package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
-public final class BvNegExpr extends UnaryExpr<BvType, BvType> {
+public final class BvNegExpr extends NegExpr<BvType> {
 
     private static final int HASH_SEED = 8325;
     private static final String OPERATOR_LABEL = "bvneg";

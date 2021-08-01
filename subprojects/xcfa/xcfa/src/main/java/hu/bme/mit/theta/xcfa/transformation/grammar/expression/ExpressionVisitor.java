@@ -2,13 +2,6 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.expression;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatExprs;
-import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -19,8 +12,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	protected final List<CStatement> preStatements = new ArrayList<>();
@@ -121,18 +112,4 @@ public abstract class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public abstract Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx);
-
-	public static Expr<?> getZeroLiteral(Type type) {
-		if(type instanceof BoolType) {
-			return FalseExpr.getInstance();
-		} else if(type instanceof IntType) {
-			return Int(0);
-		} else if(type instanceof RatType) {
-			return RatExprs.Rat(0,1);
-		} else if(type instanceof ArrayType) {
-			throw new RuntimeException("Zero literal of arrays in ExpressionVisitor not implemented yet");
-		} else {
-			throw new RuntimeException("Could not interpret type " + type);
-		}
-	}
 }

@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.statements;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
 import java.util.Map;
@@ -64,10 +65,10 @@ public class CFor extends CStatement{
 
 		XcfaLocation lastInit = init.build(builder, initLoc, null, null, returnLoc);
 		XcfaLocation lastTest = guard.buildWithoutPostStatement(builder, lastInit, null, null, returnLoc);
-		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Assume(Neq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastTest, outerLastTest, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(lastTest, outerLastTest, List.of(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		XcfaLocation innerLastGuard = guard.buildPostStatement(builder, endInit, endLoc, startIncrement, returnLoc);

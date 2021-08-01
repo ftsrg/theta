@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
@@ -35,7 +36,6 @@ import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
@@ -82,8 +82,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static java.util.stream.Collectors.toList;
@@ -420,15 +418,15 @@ final class XcfaExpression {
 		}
 
 		private ModExpr<?> createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<IntType> leftOp = cast(uncastLeftOp, Int());
-			final Expr<IntType> rightOp = cast(uncastRightOp, Int());
-			return Mod(leftOp, rightOp);
+			final Expr<?> leftOp = uncastLeftOp;
+			final Expr<?> rightOp = uncastRightOp;
+			return AbstractExprs.Mod(leftOp, rightOp);
 		}
 
 		private RemExpr<?> createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<IntType> leftOp = cast(uncastLeftOp, Int());
-			final Expr<IntType> rightOp = cast(uncastRightOp, Int());
-			return Rem(leftOp, rightOp);
+			final Expr<?> leftOp = uncastLeftOp;
+			final Expr<?> rightOp = uncastRightOp;
+			return AbstractExprs.Rem(leftOp, rightOp);
 		}
 
 		////

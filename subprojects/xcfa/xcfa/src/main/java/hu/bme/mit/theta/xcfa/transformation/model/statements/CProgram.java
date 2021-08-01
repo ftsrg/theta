@@ -7,13 +7,13 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class CProgram extends CStatement{
@@ -40,11 +40,11 @@ public class CProgram extends CStatement{
 
 		List<Stmt> initStmtList = new ArrayList<>();
 		for (Tuple2<CDeclaration, VarDecl<?>> globalDeclaration : globalDeclarations) {
-			builder.addGlobalVar(globalDeclaration.get2(), Int(0));
+			builder.addGlobalVar(globalDeclaration.get2(), CComplexType.getType(globalDeclaration.get2().getRef()).getNullValue());
 			if(globalDeclaration.get1().getInitExpr() != null) {
-				initStmtList.add(Assign(cast(globalDeclaration.get2(), Int()), cast(globalDeclaration.get1().getInitExpr().getExpression(), Int())));
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(globalDeclaration.get1().getInitExpr().getExpression(), globalDeclaration.get2().getType())));
 			} else {
-				initStmtList.add(Assign(cast(globalDeclaration.get2(), Int()), cast(Int(0), Int())));
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(CComplexType.getType(globalDeclaration.get2().getRef()).getNullValue(), globalDeclaration.get2().getType())));
 			}
 		}
 		XcfaProcess.Builder procBuilder = XcfaProcess.builder();

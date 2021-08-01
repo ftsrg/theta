@@ -258,6 +258,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 				collect.add(castTo);
 			}
 			Expr<?> add = AbstractExprs.Add(collect);
+			XcfaMetadata.create(add, "cType", smallestCommonType);
 			add = smallestCommonType.castTo(add);
 			XcfaMetadata.create(add, "cType", smallestCommonType);
 			return add;
@@ -286,6 +287,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}
+				XcfaMetadata.create(expr, "cType", smallestCommonType);
 				expr = smallestCommonType.castTo(expr);
 				XcfaMetadata.create(expr, "cType", smallestCommonType);
 			}
@@ -303,6 +305,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 	public Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx) {
 		CComplexType actualType = ctx.typeName().specifierQualifierList().accept(TypeVisitor.instance).getActualType();
 		Expr<?> expr = actualType.castTo(ctx.castExpression().accept(this));
+		XcfaMetadata.create(expr, "cType", actualType);
 		expr = actualType.castTo(expr);
 		XcfaMetadata.create(expr, "cType", actualType);
 		return expr;

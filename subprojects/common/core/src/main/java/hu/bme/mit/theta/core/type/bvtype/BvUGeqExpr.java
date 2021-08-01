@@ -1,16 +1,16 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvUGeqExpr extends BinaryExpr<BvType, BoolType> {
+public final class BvUGeqExpr extends GeqExpr<BvType> {
 
     private static final int HASH_SEED = 6234;
     private static final String OPERATOR_LABEL = "bvuge";

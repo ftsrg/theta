@@ -9,7 +9,6 @@ import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -32,7 +31,6 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class FunctionInlining extends ProcessPass {
@@ -152,7 +150,7 @@ public class FunctionInlining extends ProcessPass {
 					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
 					CComplexType leftType = CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef());
 					checkNotNull(leftType);
-					Expr<IntType> expr = cast(assignStmt.getExpr(), Int());
+					Expr<?> expr = assignStmt.getExpr();
 
 					Expr<?> truncatedExpr = leftType.castTo(expr);
 					if (!expr.equals(truncatedExpr)) {
@@ -229,7 +227,7 @@ public class FunctionInlining extends ProcessPass {
 				if (direction != XcfaProcedure.Direction.OUT) {
 					CComplexType funcParamType = CComplexType.getType(varDecl.getRef());
 					checkNotNull(funcParamType);
-					Expr<IntType> param = cast(xcfaCallStmt.getParams().get(paramCnt), Int());
+					Expr<?> param = xcfaCallStmt.getParams().get(paramCnt);
 					Expr<?> truncatedParam = funcParamType.castTo(param);
 
 					AssignStmt<?> assignStmt = Assign(cast(varDecl, varDecl.getType()), cast(truncatedParam, varDecl.getType()));

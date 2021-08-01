@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.statements;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
 import java.util.Map;
@@ -53,10 +54,10 @@ public class CIf extends CStatement{
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		XcfaLocation endGuard = guard.buildWithoutPostStatement(builder, initLoc, breakLoc, continueLoc, returnLoc);
-		xcfaEdge = new XcfaEdge(endGuard, mainBranch, List.of(Assume(Neq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(endGuard, mainBranch, List.of(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
-		xcfaEdge = new XcfaEdge(endGuard, elseBranch, List.of(Assume(Eq(guard.getExpression(), Int(0)))));
+		xcfaEdge = new XcfaEdge(endGuard, elseBranch, List.of(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 
