@@ -3,10 +3,11 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
-public final class FpNegExpr extends UnaryExpr<FpType, FpType> {
+public final class FpNegExpr extends NegExpr<FpType> {
 
     private static final int HASH_SEED = 4622;
     private static final String OPERATOR_LABEL = "fpneg";

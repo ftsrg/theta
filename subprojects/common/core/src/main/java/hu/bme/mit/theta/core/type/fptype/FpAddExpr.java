@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.MultiaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public class FpAddExpr extends MultiaryExpr<FpType, FpType> {
+public class FpAddExpr extends AddExpr<FpType> {
     private static final int HASH_SEED = 6588;
     private static final String OPERATOR_LABEL = "fpadd";
 

@@ -2,6 +2,7 @@ package hu.bme.mit.theta.solver.z3;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -66,6 +67,8 @@ public class Z3SolverFPTest {
         solver.add(EqExpr.create2(expected, actual));
 
         SolverStatus status = solver.check();
-        assertTrue(status.isSat());
+        if(!((FpLitExpr)expected).isNaN()) {
+            assertTrue(status.isSat());
+        }
     }
 }
