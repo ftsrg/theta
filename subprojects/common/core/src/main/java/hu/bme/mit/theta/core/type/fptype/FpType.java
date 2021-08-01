@@ -2,13 +2,21 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Additive;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class FpType implements Equational<FpType> {
+public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType> {
     private final static int HASH_SEED = 5424;
     private final static String TYPE_LABEL = "Fp";
 
@@ -73,5 +81,35 @@ public class FpType implements Equational<FpType> {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(TYPE_LABEL).add(exponent).add(significand).toString();
+    }
+
+    @Override
+    public AddExpr<FpType> Add(Iterable<? extends Expr<FpType>> ops) {
+        return FpExprs.Add(FpRoundingMode.getDefaultRoundingMode(), ops);
+    }
+
+    @Override
+    public SubExpr<FpType> Sub(Expr<FpType> leftOp, Expr<FpType> rightOp) {
+        return FpExprs.Sub(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
+    }
+
+    @Override
+    public PosExpr<FpType> Pos(Expr<FpType> op) {
+        return FpExprs.Pos(op);
+    }
+
+    @Override
+    public NegExpr<FpType> Neg(Expr<FpType> op) {
+        return FpExprs.Neg(op);
+    }
+
+    @Override
+    public MulExpr<FpType> Mul(Iterable<? extends Expr<FpType>> ops) {
+        return FpExprs.Mul(FpRoundingMode.getDefaultRoundingMode(), ops);
+    }
+
+    @Override
+    public DivExpr<FpType> Div(Expr<FpType> leftOp, Expr<FpType> rightOp) {
+        return FpExprs.Div(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
     }
 }

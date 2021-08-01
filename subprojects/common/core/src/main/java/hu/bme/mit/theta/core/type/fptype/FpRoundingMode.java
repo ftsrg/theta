@@ -5,5 +5,9 @@ public enum FpRoundingMode {
     RNA, /* Round nearest ties to away */
     RTP, /* Round toward positive */
     RTN, /* Round toward negative */
-    RTZ /* Round toward zero */
+    RTZ; /* Round toward zero */
+
+    public static FpRoundingMode getDefaultRoundingMode() {
+        return RNE;
+    }
 }

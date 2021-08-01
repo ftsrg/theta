@@ -3,11 +3,12 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class FpDivExpr extends BinaryExpr<FpType, FpType> {
+public final class FpDivExpr extends DivExpr<FpType> {
     private static final int HASH_SEED = 1646;
     private static final String OPERATOR = "fpdiv";
 
