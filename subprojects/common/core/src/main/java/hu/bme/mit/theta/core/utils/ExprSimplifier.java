@@ -71,14 +71,19 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -295,6 +300,16 @@ public final class ExprSimplifier {
 			.addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
 
 			.addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
+
+			.addCase(FpAbsExpr.class, ExprSimplifier::simplifyFpAbs)
+
+			.addCase(FpRoundToIntegralExpr.class, ExprSimplifier::simplifyFpRoundToIntegral)
+
+			.addCase(FpMaxExpr.class, ExprSimplifier::simplifyFpMax) // TODO no simplifications (yet?)
+
+			.addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin) // TODO no simplifications (yet?)
+
+			.addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt) // TODO no simplifications (yet?)
 
 			// General
 
@@ -1802,6 +1817,28 @@ public final class ExprSimplifier {
 		return expr.with(op);
 	}
 
+	private static Expr<FpType> simplifyFpAbs(final FpAbsExpr expr, final Valuation val) {
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpAbsExpr) {
+			final FpAbsExpr absOp = (FpAbsExpr) op;
+			return absOp.getOp();
+		}
+
+		return expr.with(op);
+	}
+
+	private static Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpRoundToIntegralExpr) {
+			final FpRoundToIntegralExpr rndOp = (FpRoundToIntegralExpr) op;
+			return rndOp.getOp();
+		}
+
+		return expr.with(op);
+	}
+
 	private static Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
 		final List<Expr<FpType>> ops = new ArrayList<>();
 
@@ -1891,5 +1928,20 @@ public final class ExprSimplifier {
 		}
 
 		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<FpType> simplifyFpMax(final FpMaxExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<FpType> simplifyFpMin(final FpMinExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
 	}
 }

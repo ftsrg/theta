@@ -5,18 +5,21 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Divisible;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType> {
+public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>, Divisible<FpType> {
     private final static int HASH_SEED = 5424;
     private final static String TYPE_LABEL = "Fp";
 
@@ -111,5 +114,15 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
     @Override
     public DivExpr<FpType> Div(Expr<FpType> leftOp, Expr<FpType> rightOp) {
         return FpExprs.Div(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
+    }
+
+    @Override
+    public ModExpr<FpType> Mod(Expr<FpType> leftOp, Expr<FpType> rightOp) {
+        return FpExprs.Mod();
+    }
+
+    @Override
+    public RemExpr<FpType> Rem(Expr<FpType> leftOp, Expr<FpType> rightOp) {
+        return FpExprs.Rem(leftOp, rightOp);
     }
 }
