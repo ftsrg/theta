@@ -53,6 +53,11 @@ public final class CFA {
 		locs = ImmutableSet.copyOf(builder.locs);
 		edges = ImmutableList.copyOf(builder.edges);
 		vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(toImmutableSet());
+		Set<String> varNames = Containers.createSet();
+		for (var v : vars) {
+			checkArgument(!varNames.contains(v.getName()), "Variable with name '" + v.getName() + "' already exists in the CFA.");
+			varNames.add(v.getName());
+		}
 	}
 
 	public Loc getInitLoc() {
@@ -174,10 +179,15 @@ public final class CFA {
 		private final Collection<Loc> locs;
 		private final Collection<Edge> edges;
 
+		private final Set<String> locNames;
+
 		private boolean built;
+
+		private static int UNNAMED_LOC_LABEL = 0;
 
 		private Builder() {
 			locs = Containers.createSet();
+			locNames = Containers.createSet();
 			edges = new LinkedList<>();
 			built = false;
 		}
@@ -223,9 +233,15 @@ public final class CFA {
 
 		public Loc createLoc(final String name) {
 			checkNotBuilt();
+			checkArgument(!locNames.contains(name), "Location with name '" + name + "' already exists in the CFA.");
 			final Loc loc = new Loc(name);
 			locs.add(loc);
+			locNames.add(name);
 			return loc;
+		}
+
+		public Loc createLoc() {
+			return createLoc("__" + UNNAMED_LOC_LABEL++);
 		}
 
 		public Edge createEdge(final Loc source, final Loc target, final Stmt stmt) {
