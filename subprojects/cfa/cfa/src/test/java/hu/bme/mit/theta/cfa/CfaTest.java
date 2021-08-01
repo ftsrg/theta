@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.cfa;
 
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmts;
