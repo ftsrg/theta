@@ -72,7 +72,7 @@ public class CAssignment extends CStatement{
         propagateMetadata(location);
 		checkState(lValue instanceof RefExpr && ((RefExpr<?>) lValue).getDecl() instanceof VarDecl<?>, "lValue must be a variable!");
 		initLoc = rValue.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
-		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), ((VarDecl<?>)((RefExpr<?>) lValue).getDecl()).getType()), cast(getrExpression(), ((VarDecl<?>)((RefExpr<?>) lValue).getDecl()).getType()))));
+		xcfaEdge = new XcfaEdge(initLoc, location, List.of(Assign(cast((VarDecl<?>)((RefExpr<?>) lValue).getDecl(), ((VarDecl<?>)((RefExpr<?>) lValue).getDecl()).getType()), cast(getrExpression(), getrExpression().getType()))));
 		builder.addEdge(xcfaEdge);
         propagateMetadata(xcfaEdge);
 		return location;

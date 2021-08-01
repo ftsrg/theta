@@ -7,6 +7,7 @@ import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CLongDouble;
@@ -37,11 +38,11 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 
 	@Override
 	public Type visit(CInteger type, Void param) {
-		return BvType.of(type.width());
+		return BvType.of(type.width(), type instanceof Signed);
 	}
 
 	@Override
 	public Type visit(CVoid type, Void param) {
-		return BvType.of(1);
+		return BvType.of(1, false);
 	}
 }

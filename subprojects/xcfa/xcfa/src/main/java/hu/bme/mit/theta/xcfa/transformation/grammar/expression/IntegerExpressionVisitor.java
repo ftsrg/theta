@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -254,6 +255,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			List<Expr<?>> collect = new ArrayList<>();
 			for (int i = 0; i < exprs.size(); i++) {
 				Expr<?> expr = (i == 0 || ctx.signs.get(i-1).getText().equals("+")) ? exprs.get(i) : AbstractExprs.Neg(exprs.get(i));
+				XcfaMetadata.create(expr, "cType", CComplexType.getType(exprs.get(i)));
 				Expr<?> castTo = smallestCommonType.castTo(expr);
 				collect.add(castTo);
 			}
@@ -344,6 +346,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			case "-": {
 				Expr<?> negExpr = AbstractExprs.Neg(accept);
 				CComplexType type = CComplexType.getType(accept);
+				XcfaMetadata.create(negExpr, "cType", type);
 				negExpr = type.castTo(negExpr);
 				XcfaMetadata.create(negExpr, "cType", type);
 				return negExpr;
@@ -394,6 +397,7 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 					else
 						expr = AbstractExprs.Add(expr, type.getUnitValue());
 				}
+				XcfaMetadata.create(expr, "cType", type);
 				expr = type.castTo(expr);
 				XcfaMetadata.create(expr, "cType", type);
 				CExpr cexpr;
@@ -457,15 +461,15 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			boolean isUnsigned = text.endsWith("u");
 			if (isUnsigned) text = text.substring(0, text.length() - 1);
 
-			LitExpr<?> litExpr;
+			BigInteger bigInteger;
 			if (text.startsWith("0x")) {
-				litExpr = Int(new BigInteger(text.substring(2), 16));
+				bigInteger = new BigInteger(text.substring(2), 16);
 			} else if (text.startsWith("0b")) {
-				litExpr = Int(new BigInteger(text.substring(2), 2));
+				bigInteger = new BigInteger(text.substring(2), 2);
 			} else if (text.startsWith("0") && text.length() > 1) {
-				litExpr = Int(new BigInteger(text.substring(1), 8));
+				bigInteger = new BigInteger(text.substring(1), 8);
 			} else {
-				litExpr = Int(new BigInteger(text, 10));
+				bigInteger = new BigInteger(text, 10);
 			}
 
 			CComplexType type;
@@ -475,6 +479,12 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			else if (isLong) type = CComplexType.getSignedLong();
 			else if (isUnsigned) type = CComplexType.getUnsignedInt();
 			else type = CComplexType.getSignedInt();
+
+			LitExpr<?> litExpr = ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector ?
+					isUnsigned ?
+							BvUtils.bigIntegerToUnsignedBvLitExpr(bigInteger, type.width()) :
+							BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width()) :
+					Int(bigInteger);
 
 			XcfaMetadata.create(litExpr, "cType", type);
 			return litExpr;

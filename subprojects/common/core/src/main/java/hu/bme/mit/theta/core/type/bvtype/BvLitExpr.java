@@ -31,16 +31,21 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     private volatile int hashCode = 0;
 
     private final boolean[] value;
+    private final Boolean signed;
 
-    private BvLitExpr(final boolean[] value) {
+    private BvLitExpr(final boolean[] value, final Boolean signed) {
+        this.signed = signed;
         checkNotNull(value);
         checkArgument(value.length > 0, "Bitvector must have positive size");
 
         this.value = value;
     }
 
+    public static BvLitExpr of(final boolean[] value, final Boolean signed) {
+        return new BvLitExpr(value, signed);
+    }
     public static BvLitExpr of(final boolean[] value) {
-        return new BvLitExpr(value);
+        return of(value, null);
     }
 
     public boolean[] getValue() {
@@ -49,7 +54,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     @Override
     public BvType getType() {
-        return BvType(value.length);
+        return BvType(value.length, signed);
     }
 
     @Override

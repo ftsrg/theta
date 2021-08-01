@@ -28,7 +28,7 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
         return new BvType(size, null);
     }
 
-    public static BvType of(final int size, final boolean signed) {
+    public static BvType of(final int size, final Boolean signed) {
         return new BvType(size, signed);
     }
 

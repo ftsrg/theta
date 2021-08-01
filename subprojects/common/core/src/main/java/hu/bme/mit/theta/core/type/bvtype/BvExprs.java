@@ -11,15 +11,23 @@ public final class BvExprs {
 
     }
 
+    public static BvType BvType(final int size, final Boolean signedness) {
+        return BvType.of(size, signedness);
+    }
     public static BvType BvType(final int size) {
-        return BvType.of(size);
+        return BvType(size, null);
+    }
+
+    public static BvLitExpr Bv(final boolean[] value, final Boolean signedness) {
+        return BvLitExpr.of(value, signedness);
     }
 
     public static BvLitExpr Bv(final boolean[] value) {
-        return BvLitExpr.of(value);
+        return Bv(value, null);
     }
 
-    public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
+
+        public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
         return BvConcatExpr.of(ops);
     }
 
