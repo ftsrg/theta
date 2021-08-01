@@ -125,7 +125,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     }
 
     public FpLitExpr neg() {
-        var neg = fpLitExprToBigFloat(FpRoundingMode.RNA, this).negate();
+        var neg = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this).negate();
         return bigFloatToFpLitExpr(neg, getType());
     }
 
@@ -143,8 +143,8 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
     public BoolLitExpr eq(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        var left = fpLitExprToBigFloat(FpRoundingMode.RNA, this);
-        var right = fpLitExprToBigFloat(FpRoundingMode.RNA, that);
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
         if(left.isNaN() || right.isNaN()) {
             return BoolExprs.False();
         }
@@ -153,8 +153,8 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
     public BoolLitExpr neq(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        var left = fpLitExprToBigFloat(FpRoundingMode.RNA, this);
-        var right = fpLitExprToBigFloat(FpRoundingMode.RNA, that);
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
         if(left.isNaN() || right.isNaN()) {
             return BoolExprs.False();
         }

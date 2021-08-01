@@ -37,4 +37,12 @@ public final class FpExprs {
     public static FpDivExpr Div(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
         return FpDivExpr.of(roundingMode, leftOp, rightOp);
     }
+
+    public static FpRemExpr Rem(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpRemExpr.of(leftOp, rightOp);
+    }
+
+    public static FpAbsExpr Abs(final Expr<FpType> op) {
+        return FpAbsExpr.of(op);
+    }
 }
