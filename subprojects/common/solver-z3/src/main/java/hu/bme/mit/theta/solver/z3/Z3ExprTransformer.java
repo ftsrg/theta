@@ -23,6 +23,7 @@ import com.microsoft.z3.BitVecSort;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.FPExpr;
+import com.microsoft.z3.FPSort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -105,6 +106,9 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -365,6 +369,10 @@ final class Z3ExprTransformer {
 				.addCase(FpIsNanExpr.class, this::transformFpIsNan)
 
 				.addCase(FpFromBvExpr.class, this::transformFpFromBv)
+
+				.addCase(FpToBvExpr.class, this::transformFpToBv)
+
+				.addCase(FpToFpExpr.class, this::transformFpToFp)
 
 				// Functions
 
@@ -1067,6 +1075,19 @@ final class Z3ExprTransformer {
 		return context.mkFP(sgn, sig, exp);
 	}
 
+	private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
+		boolean sgn = expr.getSgn();
+		int size = expr.getSize();
+		final com.microsoft.z3.FPExpr op = (com.microsoft.z3.FPExpr) toTerm(expr.getOp());
+
+		return context.mkFPToBV(transformFpRoundingMode(expr.getRoundingMode()), op, size, sgn);
+	}
+
+	private com.microsoft.z3.Expr transformFpToFp(final FpToFpExpr expr) {
+		final com.microsoft.z3.FPExpr op = (com.microsoft.z3.FPExpr) toTerm(expr.getOp());
+
+		return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), op, new FPSort(context, expr.getExpBits(), expr.getSignBits()));
+	}
 	/*
 	 * Arrays
 	 */

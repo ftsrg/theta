@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.type.fptype.*;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -61,6 +62,15 @@ public class FpTestUtils {
             { FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41")) },
             { FpSqrtExpr.class, Fp16("3.0"), Sqrt(RNE, Fp16("9.0")) },
             { FpSqrtExpr.class, Fp16("0.1"), Sqrt(RNE, Fp16("0.01")) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16), ToBv(RNE, Fp16("10.9"), 16, false) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 3), ToBv(RNE, Fp16("10.9"), 3, false) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16), ToBv(RNE, Fp16("10.9"), 16, true) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 4), ToBv(RNE, Fp16("10.9"), 4, true) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16), ToBv(RNE, Fp16("-10.9"), 16, true) },
+            { FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 4), ToBv(RNE, Fp16("-10.9"), 4, true) },
+            { FpToFpExpr.class, Fp32("12.0"), ToFp(RNE, Fp16("12.0"), 8, 24) },
+            { FpToFpExpr.class, Fp64("12.0"), ToFp(RNE, Fp16("12.0"), 11, 53) },
+            { FpToFpExpr.class, Fp16("12.0"), ToFp(RNE, Fp32("12.0"), 5, 11) },
         });
     }
 
@@ -87,9 +97,17 @@ public class FpTestUtils {
     }
 
     private static final BinaryMathContext BINARY16 = BinaryMathContext.BINARY16.withRoundingMode(FpUtils.getMathContextRoundingMode(RNE));
+    private static final BinaryMathContext BINARY32 = BinaryMathContext.BINARY32.withRoundingMode(FpUtils.getMathContextRoundingMode(RNE));
+    private static final BinaryMathContext BINARY64 = BinaryMathContext.BINARY64.withRoundingMode(FpUtils.getMathContextRoundingMode(RNE));
 
     private static FpLitExpr Fp16(final String lit) {
         return FpUtils.bigFloatToFpLitExpr(new BigFloat(lit, BINARY16), FpType(5, 11));
+    }
+    private static FpLitExpr Fp32(final String lit) {
+        return FpUtils.bigFloatToFpLitExpr(new BigFloat(lit, BINARY32), FpType(8, 24));
+    }
+    private static FpLitExpr Fp64(final String lit) {
+        return FpUtils.bigFloatToFpLitExpr(new BigFloat(lit, BINARY64), FpType(11, 53));
     }
 
     private static FpLitExpr Fp16NaN() {
