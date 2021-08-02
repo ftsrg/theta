@@ -95,4 +95,7 @@ public final class FpExprs {
         return FpMinExpr.of(roundingMode, leftOp, rightOp);
     }
 
+    public static FpToBvExpr ToBv(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size, final boolean sgn) {
+        return FpToBvExpr.of(roundingMode, op, size, sgn);
+    }
 }
