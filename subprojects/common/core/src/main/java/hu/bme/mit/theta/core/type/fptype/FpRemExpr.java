@@ -16,31 +16,41 @@
 package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
+import org.kframework.mpfr.BigFloat;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
-public final class FpRemExpr extends RemExpr<FpType> {
+public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 
 	private static final int HASH_SEED = 6670;
 
 	private static final String OPERATOR_LABEL = "fprem";
 
-	private FpRemExpr(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+	private final FpRoundingMode roundingMode;
+
+	private FpRemExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		super(leftOp, rightOp);
+		checkAllTypesEqual(leftOp, rightOp);
+		checkNotNull(roundingMode);
+		this.roundingMode = roundingMode;
 	}
 
-	public static FpRemExpr of(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return new FpRemExpr(leftOp, rightOp);
+	public static FpRemExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return new FpRemExpr(roundingMode, leftOp, rightOp);
 	}
 
-	public static FpRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+	public static FpRemExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Expr<FpType> newLeftOp = castFp(leftOp);
 		final Expr<FpType> newRightOp = castFp(rightOp);
-		return FpRemExpr.of(newLeftOp, newRightOp);
+		return FpRemExpr.of(roundingMode, newLeftOp, newRightOp);
+	}
+
+	public FpRoundingMode getRoundingMode() {
+		return roundingMode;
 	}
 
 	@Override
@@ -52,16 +62,22 @@ public final class FpRemExpr extends RemExpr<FpType> {
 	public FpLitExpr eval(final Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-		FpUtils.fpLitExprToBigFloat(leftOpVal)
-		return leftOpVal.rem(rightOpVal);
+		BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal);
+		BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal);
+		BigFloat remainder = leftFloat.remainder(rightFloat, FpUtils.getMathContext(this.getType(), roundingMode));
+
+		return FpUtils.bigFloatToFpLitExpr(remainder, this.getType());
 	}
 
 	@Override
+
+
+
 	public FpRemExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return FpRemExpr.of(leftOp, rightOp);
+			return FpRemExpr.of(roundingMode, leftOp, rightOp);
 		}
 	}
 
