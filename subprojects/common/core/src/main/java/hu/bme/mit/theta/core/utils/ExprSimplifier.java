@@ -75,13 +75,19 @@ import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
@@ -299,6 +305,14 @@ public final class ExprSimplifier {
 
 			.addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
 
+			.addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq) // TODO no simplifications (yet?)
+
+			.addCase(FpLeqExpr.class, ExprSimplifier::simplifyFpLeq) // TODO no simplifications (yet?)
+
+			.addCase(FpGtExpr.class, ExprSimplifier::simplifyFpGt) // TODO no simplifications (yet?)
+
+			.addCase(FpLtExpr.class, ExprSimplifier::simplifyFpLt) // TODO no simplifications (yet?)
+
 			.addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
 
 			.addCase(FpAbsExpr.class, ExprSimplifier::simplifyFpAbs)
@@ -310,6 +324,8 @@ public final class ExprSimplifier {
 			.addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin) // TODO no simplifications (yet?)
 
 			.addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt) // TODO no simplifications (yet?)
+
+			.addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
 
 			// General
 
@@ -1828,6 +1844,16 @@ public final class ExprSimplifier {
 		return expr.with(op);
 	}
 
+	private static Expr<BoolType> simplifyFpIsNan(final FpIsNanExpr expr, final Valuation val) {
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			return Bool(((FpLitExpr)op).isNaN());
+		}
+
+		return expr.with(op);
+	}
+
 	private static Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
 		final Expr<FpType> op = simplify(expr.getOp(), val);
 
@@ -1914,6 +1940,25 @@ public final class ExprSimplifier {
 
 		return expr.with(leftOp, rightOp);
 	}
+
+	private static Expr<BoolType> simplifyFpGeq(final FpGeqExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<BoolType> simplifyFpLeq(final FpLeqExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+	private static Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+	private static Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
 
 	private static Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
 		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);

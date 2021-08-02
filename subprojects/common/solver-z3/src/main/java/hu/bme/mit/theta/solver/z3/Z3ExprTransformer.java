@@ -86,6 +86,7 @@ import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
@@ -93,6 +94,7 @@ import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
@@ -346,6 +348,10 @@ final class Z3ExprTransformer {
 				.addCase(FpMinExpr.class, this::transformFpMin)
 
 				.addCase(FpSqrtExpr.class, this::transformFpSqrt)
+
+				.addCase(FpRemExpr.class, this::transformFpRem)
+
+				.addCase(FpIsNanExpr.class, this::transformFpIsNan)
 
 				// Functions
 
@@ -945,6 +951,11 @@ final class Z3ExprTransformer {
 		return context.mkFPAbs(opTerm);
 	}
 
+	private com.microsoft.z3.Expr transformFpIsNan(final FpIsNanExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPIsNaN(opTerm);
+	}
+
 	private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
 		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
 		return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
@@ -970,6 +981,12 @@ final class Z3ExprTransformer {
 		return context.mkFPDiv(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm, rightOpTerm);
 	}
 
+	private com.microsoft.z3.Expr transformFpRem(final FpRemExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPRem(leftOpTerm, rightOpTerm);
+	}
+
 	private com.microsoft.z3.Expr transformFpEq(final FpEqExpr expr) {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
@@ -980,6 +997,30 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 		return context.mkNot(context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm));
+	}
+
+	private com.microsoft.z3.Expr transformFpGeq(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPGEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpLeq(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPLEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpGt(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPGt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpLt(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPLt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
 	}
 
 	private com.microsoft.z3.FPRMExpr transformFpRoundingMode(final FpRoundingMode roundingMode) {

@@ -19,7 +19,7 @@ import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>, Divisible<FpType> {
+public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType> {
     private final static int HASH_SEED = 5424;
     private final static String TYPE_LABEL = "Fp";
 
@@ -114,15 +114,5 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
     @Override
     public DivExpr<FpType> Div(Expr<FpType> leftOp, Expr<FpType> rightOp) {
         return FpExprs.Div(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
-    }
-
-    @Override
-    public ModExpr<FpType> Mod(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Mod();
-    }
-
-    @Override
-    public RemExpr<FpType> Rem(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Rem(leftOp, rightOp);
     }
 }

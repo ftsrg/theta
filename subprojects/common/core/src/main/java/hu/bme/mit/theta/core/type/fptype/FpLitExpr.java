@@ -151,6 +151,62 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
     }
 
+    public BoolLitExpr gt(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        if(left.greaterThan(right)) {
+            return BoolExprs.True();
+        } else {
+            return BoolExprs.False();
+        }
+    }
+
+    public BoolLitExpr lt(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        if(left.lessThan(right)) {
+            return BoolExprs.True();
+        } else {
+            return BoolExprs.False();
+        }
+    }
+
+    public BoolLitExpr geq(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        if(left.greaterThanOrEqualTo(right)) {
+            return BoolExprs.True();
+        } else {
+            return BoolExprs.False();
+        }
+    }
+
+    public BoolLitExpr leq(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        if(left.isNaN() || right.isNaN()) {
+            return BoolExprs.False();
+        }
+        if(left.lessThanOrEqualTo(right)) {
+            return BoolExprs.True();
+        } else {
+            return BoolExprs.False();
+        }
+    }
+
     public BoolLitExpr neq(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
