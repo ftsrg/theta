@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type;
 
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
@@ -11,12 +11,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.kframework.mpfr.BigFloat;
-import org.kframework.mpfr.BinaryMathContext;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
+import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -64,8 +68,24 @@ public class FpTypeTest {
 
         // Equality check
         Valuation val = ImmutableValuation.builder().build();
-        if(!((FpLitExpr)expected).isNaN()) {
-            assertEquals(expected.eval(val), actual.eval(val));
+        if(expected instanceof FpLitExpr && actual.getType() instanceof FpType) {
+            if(((FpLitExpr) expected).isNaN()) {
+                assertTrue(((FpLitExpr)actual.eval(val)).isNaN());
+            }
+            else if(((FpLitExpr) expected).isNegativeInfinity()) {
+                assertTrue(((FpLitExpr)actual.eval(val)).isNegativeInfinity());
+            }
+            else if(((FpLitExpr) expected).isPositiveInfinity()) {
+                assertTrue(((FpLitExpr)actual.eval(val)).isPositiveInfinity());
+            }
+            else {
+                //noinspection unchecked
+                FpLeqExpr leq = Leq(Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual.eval(val))),
+                        FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2", FpUtils.getMathContext((FpType) actual.getType(), RNE)), (FpType) actual.getType()));
+                assertEquals(Bool(true), leq.eval(val));
+            }
+        } else {
+            assertEquals(expected, actual.eval(val));
         }
     }
 }
