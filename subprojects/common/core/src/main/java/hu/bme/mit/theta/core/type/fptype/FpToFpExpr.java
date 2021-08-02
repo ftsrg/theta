@@ -34,20 +34,20 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
 		this.roundingMode = roundingMode;
 	}
 
-	public int getExpBits() {
-		return expBits;
-	}
-
-	public int getSignBits() {
-		return signBits;
-	}
-
 	public static FpToFpExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op, final int exp, final int signBits) {
 		return new FpToFpExpr(roundingMode, op, exp, signBits);
 	}
 
 	public static FpToFpExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op, final int exp, final int signBits) {
 		return FpToFpExpr.of(roundingMode, op, exp, signBits);
+	}
+
+	public int getExpBits() {
+		return expBits;
+	}
+
+	public int getSignBits() {
+		return signBits;
 	}
 
 	@Override

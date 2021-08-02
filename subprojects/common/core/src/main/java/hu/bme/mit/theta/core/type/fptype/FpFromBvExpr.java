@@ -2,7 +2,6 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -15,7 +14,6 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
 /**
  * Sign and significand is presumed to be unsigned
@@ -71,7 +69,8 @@ public class FpFromBvExpr implements Expr<FpType> {
 	}
 
 	@Override
-	public FpLitExpr eval(Valuation val) {;
+	public FpLitExpr eval(Valuation val) {
+		;
 		final BvLitExpr sgnBv = (BvLitExpr) sgn.eval(val);
 		final BvLitExpr sigBv = (BvLitExpr) sig.eval(val);
 		final BvLitExpr expBv = (BvLitExpr) exp.eval(val);

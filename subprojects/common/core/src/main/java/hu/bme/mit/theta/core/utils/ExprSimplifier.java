@@ -88,7 +88,6 @@ import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
 import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
@@ -409,11 +408,11 @@ public final class ExprSimplifier {
 	}
 
 	private static <IT extends Type, ET extends Type> Expr<ET>
-		simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
+	simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>){
-			return (LitExpr<ET>)expr.eval(val);
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) {
+			return (LitExpr<ET>) expr.eval(val);
 		}
 		return expr.with(arr, index);
 	}
@@ -427,7 +426,7 @@ public final class ExprSimplifier {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
 		Expr<ET> elem = simplify(expr.getElem(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof  LitExpr<?>){
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof LitExpr<?>) {
 			return expr.eval(val);
 		}
 		return expr.with(arr, index, elem);
@@ -1126,15 +1125,13 @@ public final class ExprSimplifier {
 			final Expr<BvType> op = iterator.next();
 			if (op instanceof BvLitExpr) {
 				final BvLitExpr litOp = (BvLitExpr) op;
-				if(value == null) {
+				if (value == null) {
 					value = litOp;
-				}
-				else {
+				} else {
 					value = value.concat(litOp);
 				}
 				iterator.remove();
-			}
-			else {
+			} else {
 				return expr.withOps(ops);
 			}
 		}
@@ -1145,10 +1142,9 @@ public final class ExprSimplifier {
 	private static Expr<BvType> simplifyBvExtract(final BvExtractExpr expr, final Valuation val) {
 		final Expr<BvType> bitvec = simplify(expr.getBitvec(), val);
 
-		if(bitvec instanceof BvLitExpr) {
+		if (bitvec instanceof BvLitExpr) {
 			return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
-		}
-		else {
+		} else {
 			return expr;
 		}
 	}
@@ -1156,10 +1152,9 @@ public final class ExprSimplifier {
 	private static Expr<BvType> simplifyBvZExt(final BvZExtExpr expr, final Valuation val) {
 		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
 
-		if(bitvec instanceof BvLitExpr) {
+		if (bitvec instanceof BvLitExpr) {
 			return ((BvLitExpr) bitvec).zext(expr.getExtendType());
-		}
-		else {
+		} else {
 			return expr;
 		}
 	}
@@ -1167,10 +1162,9 @@ public final class ExprSimplifier {
 	private static Expr<BvType> simplifyBvSExt(final BvSExtExpr expr, final Valuation val) {
 		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
 
-		if(bitvec instanceof BvLitExpr) {
+		if (bitvec instanceof BvLitExpr) {
 			return ((BvLitExpr) bitvec).sext(expr.getExtendType());
-		}
-		else {
+		} else {
 			return expr;
 		}
 	}
@@ -1263,7 +1257,7 @@ public final class ExprSimplifier {
 
 		final BvLitExpr ZERO = Bv(new boolean[expr.getType().getSize()]);
 		final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-		ONE.getValue()[expr.getType().getSize()-1] = true; // 1
+		ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
 
 		BvLitExpr value = ONE;
 		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
@@ -1304,7 +1298,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp)) {
 				final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-				ONE.getValue()[expr.getType().getSize()-1] = true; // 1
+				ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
 				return ONE;
 			}
 		}
@@ -1325,7 +1319,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp)) {
 				final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-				ONE.getValue()[expr.getType().getSize()-1] = true; // 1
+				ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
 				return ONE;
 			}
 		}
@@ -1403,7 +1397,7 @@ public final class ExprSimplifier {
 			}
 		}
 		BvLitExpr ONES = Bv(new boolean[expr.getType().getSize()]);
-		for(int i = 0; i < expr.getType().getSize(); i++) {
+		for (int i = 0; i < expr.getType().getSize(); i++) {
 			ONES.getValue()[i] = true;
 		}
 
@@ -1857,7 +1851,7 @@ public final class ExprSimplifier {
 		final Expr<FpType> op = simplify(expr.getOp(), val);
 
 		if (op instanceof FpLitExpr) {
-			return Bool(((FpLitExpr)op).isNaN());
+			return Bool(((FpLitExpr) op).isNaN());
 		}
 
 		return expr.with(op);
@@ -1959,10 +1953,12 @@ public final class ExprSimplifier {
 		// TODO any simplifications?
 		return expr;
 	}
+
 	private static Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
 		// TODO any simplifications?
 		return expr;
 	}
+
 	private static Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
 		// TODO any simplifications?
 		return expr;

@@ -4,20 +4,11 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.FpUtils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-
-import java.math.RoundingMode;
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class FpMaxExpr extends BinaryExpr<FpType, FpType> {
 	private static final int HASH_SEED = 6668;
@@ -81,7 +72,7 @@ public class FpMaxExpr extends BinaryExpr<FpType, FpType> {
 	public LitExpr<FpType> eval(Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-		if(FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal).greaterThan(FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal))) {
+		if (FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal).greaterThan(FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal))) {
 			return leftOpVal;
 		} else {
 			return rightOpVal;

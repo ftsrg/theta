@@ -5,15 +5,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 import org.kframework.mpfr.BigFloat;
 
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
 	private static final int HASH_SEED = 6669;

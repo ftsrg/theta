@@ -22,7 +22,8 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 
@@ -70,7 +71,6 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 	}
 
 	@Override
-
 
 
 	public FpRemExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {

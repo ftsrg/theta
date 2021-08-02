@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.z3;
 
 import com.google.common.collect.Sets;
 import com.microsoft.z3.Context;
-
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

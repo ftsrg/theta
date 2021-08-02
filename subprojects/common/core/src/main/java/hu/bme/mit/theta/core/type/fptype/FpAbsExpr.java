@@ -2,18 +2,10 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
 public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 	private static final int HASH_SEED = 6666;
@@ -40,7 +32,7 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 	@Override
 	public FpLitExpr eval(Valuation val) {
 		final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-		if(opVal.getHidden()) {
+		if (opVal.getHidden()) {
 			return opVal.neg();
 		} else {
 			return opVal;

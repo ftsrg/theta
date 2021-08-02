@@ -7,14 +7,9 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import org.kframework.mpfr.BigFloat;
 
 import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -43,20 +38,20 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 		this.roundingMode = roundingMode;
 	}
 
-	public int getSize() {
-		return size;
-	}
-
-	public boolean getSgn() {
-		return sgn;
-	}
-
 	public static FpToBvExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size, final boolean sgn) {
 		return new FpToBvExpr(roundingMode, op, size, sgn);
 	}
 
 	public static FpToBvExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size, final boolean sgn) {
 		return FpToBvExpr.of(roundingMode, op, size, sgn);
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public boolean getSgn() {
+		return sgn;
 	}
 
 	@Override
@@ -78,7 +73,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 		final FpLitExpr op = (FpLitExpr) this.op.eval(val);
 
 		BigInteger bigIntegerValue = FpUtils.fpLitExprToBigFloat(roundingMode, op).toBigInteger();
-		if(sgn) {
+		if (sgn) {
 			return BvUtils.bigIntegerToSignedBvLitExpr(bigIntegerValue, size);
 		} else {
 			return BvUtils.bigIntegerToUnsignedBvLitExpr(bigIntegerValue, size);

@@ -72,7 +72,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 	public LitExpr<FpType> eval(Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-		if(FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal).lessThan(FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal))) {
+		if (FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal).lessThan(FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal))) {
 			return leftOpVal;
 		} else {
 			return rightOpVal;
