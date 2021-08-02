@@ -55,7 +55,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 
 	@Override
 	public FpType getType() {
-		return this.getType();
+		return getLeftOp().getType();
 	}
 
 	@Override
