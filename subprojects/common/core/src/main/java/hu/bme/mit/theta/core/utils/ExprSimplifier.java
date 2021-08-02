@@ -92,6 +92,8 @@ import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -326,6 +328,10 @@ public final class ExprSimplifier {
 			.addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
 
 			.addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv) // TODO no simplifications (yet?)
+
+			.addCase(FpToBvExpr.class, ExprSimplifier::simplifyFpToBv) // TODO no simplifications (yet?)
+
+			.addCase(FpToFpExpr.class, ExprSimplifier::simplifyFpToFp) // TODO no simplifications (yet?)
 
 			// General
 
@@ -1980,6 +1986,16 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<FpType> simplifyFpToFp(final FpToFpExpr expr, final Valuation val) {
 		// TODO any simplifications?
 		return expr;
 	}

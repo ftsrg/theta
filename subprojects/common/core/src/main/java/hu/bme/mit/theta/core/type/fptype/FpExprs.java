@@ -50,4 +50,8 @@ public final class FpExprs {
     public static FpFromBvExpr fromBv(final FpRoundingMode roundingMode, final Expr<BvType> sgn, final Expr<BvType> sig, final Expr<BvType> exp) {
         return FpFromBvExpr.of(roundingMode, sgn, sig, exp);
     }
+
+    public static FpToBvExpr toBv(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size, final boolean sgn) {
+        return FpToBvExpr.of(roundingMode, op, size, sgn);
+    }
 }
