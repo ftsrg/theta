@@ -75,6 +75,7 @@ import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
@@ -326,6 +327,8 @@ public final class ExprSimplifier {
 			.addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt) // TODO no simplifications (yet?)
 
 			.addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
+
+			.addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv) // TODO no simplifications (yet?)
 
 			// General
 
@@ -1986,6 +1989,11 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
+		// TODO any simplifications?
+		return expr;
+	}
+
+	private static Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
 		// TODO any simplifications?
 		return expr;
 	}
