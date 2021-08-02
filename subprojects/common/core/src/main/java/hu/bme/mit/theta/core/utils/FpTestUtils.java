@@ -1,12 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.*;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -14,13 +8,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Add;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Div;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Mul;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Neg;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Pos;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.*;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNA;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
 
@@ -36,6 +25,42 @@ public class FpTestUtils {
             { FpNegExpr.class, Fp16("-2.1"), Neg(Fp16("2.1")) },
             { FpMulExpr.class, Fp16("7.14"), Mul(RNE, List.of(Fp16("2.1"), Fp16("3.4"))) },
             { FpDivExpr.class, Fp16("2.1"), Div(RNE, Fp16("7.14"), Fp16("3.4")) },
+            { FpEqExpr.class, Bool(true), Eq(Fp16("7.14"), Fp16("7.14")) },
+            { FpEqExpr.class, Bool(false), Eq(Fp16("7.14"), Fp16("7.15"))  },
+            { FpNeqExpr.class, Bool(true), Neq(Fp16("-7.14"), Fp16("7.14"))  },
+            { FpNeqExpr.class, Bool(false), Neq(Fp16("-7.14"), Fp16("-7.14"))  },
+            { FpAbsExpr.class, Fp16("2.1"), Abs(Fp16("2.1")) },
+            { FpAbsExpr.class, Fp16("2.1"), Abs(Fp16("-2.1")) },
+            { FpGeqExpr.class, Bool(true), Geq(Fp16("7.14"), Fp16("7.15")) },
+            { FpGeqExpr.class, Bool(true), Geq(Fp16("7.14"), Fp16("7.14")) },
+            { FpGeqExpr.class, Bool(false), Geq(Fp16("-7.14"), Fp16("-7.15")) },
+            { FpGtExpr.class, Bool(true), Gt(Fp16("7.14"), Fp16("7.15")) },
+            { FpGtExpr.class, Bool(false), Gt(Fp16("7.14"), Fp16("7.14")) },
+            { FpGtExpr.class, Bool(false), Gt(Fp16("-7.14"), Fp16("-7.15")) },
+            { FpIsNanExpr.class, Bool(true), IsNan(Fp16NaN()) },
+            { FpIsNanExpr.class, Bool(false), IsNan(Fp16PInf()) },
+            { FpIsNanExpr.class, Bool(false), IsNan(Fp16NInf()) },
+            { FpIsNanExpr.class, Bool(false), IsNan(Fp16("0.0")) },
+            { FpLeqExpr.class, Bool(false), Leq(Fp16("7.14"), Fp16("7.15")) },
+            { FpLeqExpr.class, Bool(true), Leq(Fp16("7.14"), Fp16("7.14")) },
+            { FpLeqExpr.class, Bool(true), Leq(Fp16("-7.14"), Fp16("-7.15")) },
+            { FpLtExpr.class, Bool(false), Lt(Fp16("7.14"), Fp16("7.15")) },
+            { FpLtExpr.class, Bool(false), Lt(Fp16("7.14"), Fp16("7.14")) },
+            { FpLtExpr.class, Bool(true), Lt(Fp16("-7.14"), Fp16("-7.15")) },
+            { FpMaxExpr.class, Fp16("2.1"), Max(RNE, Fp16("-2.1"), Fp16("2.1")) },
+            { FpMaxExpr.class, Fp16("2.1"), Max(RNE, Fp16("1.9"), Fp16("2.1")) },
+            { FpMinExpr.class, Fp16("-2.1"), Min(RNE, Fp16("-2.1"), Fp16("2.1")) },
+            { FpMinExpr.class, Fp16("1.9"), Min(RNE, Fp16("1.9"), Fp16("2.1")) },
+            { FpRemExpr.class, Fp16("0.1"), Rem(RNE, Fp16("4.3"), Fp16("4.3")) },
+            { FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("4.3")) },
+            { FpRemExpr.class, Fp16("0.1"), Rem(RNE, Fp16("4.3"), Fp16("-4.3")) },
+            { FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("-4.3")) },
+            { FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5")) },
+            { FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("2.49")) },
+            { FpRoundToIntegralExpr.class, Fp16("-10.0"), RoundToIntegral(RNE, Fp16("-10.49")) },
+            { FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41")) },
+            { FpSqrtExpr.class, Fp16("3.0"), Sqrt(RNE, Fp16("9.0")) },
+            { FpSqrtExpr.class, Fp16("0.1"), Sqrt(RNE, Fp16("0.01")) },
         });
     }
 

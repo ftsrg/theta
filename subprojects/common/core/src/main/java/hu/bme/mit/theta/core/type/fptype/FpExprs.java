@@ -47,7 +47,52 @@ public final class FpExprs {
         return FpAbsExpr.of(op);
     }
 
-    public static FpFromBvExpr fromBv(final FpRoundingMode roundingMode, final Expr<BvType> sgn, final Expr<BvType> sig, final Expr<BvType> exp) {
+    public static FpFromBvExpr FromBv(final FpRoundingMode roundingMode, final Expr<BvType> sgn, final Expr<BvType> sig, final Expr<BvType> exp) {
         return FpFromBvExpr.of(roundingMode, sgn, sig, exp);
     }
+
+    public static FpEqExpr Eq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpEqExpr.of(leftOp, rightOp);
+    }
+
+    public static FpNeqExpr Neq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpNeqExpr.of(leftOp, rightOp);
+    }
+
+    public static FpGtExpr Gt(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpGtExpr.of(leftOp, rightOp);
+    }
+
+    public static FpGeqExpr Geq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpGeqExpr.of(leftOp, rightOp);
+    }
+
+    public static FpLtExpr Lt(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpLtExpr.of(leftOp, rightOp);
+    }
+
+    public static FpLeqExpr Leq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpLeqExpr.of(leftOp, rightOp);
+    }
+
+    public static FpIsNanExpr IsNan(final Expr<FpType> op) {
+        return FpIsNanExpr.of(op);
+    }
+
+    public static FpRoundToIntegralExpr RoundToIntegral(final FpRoundingMode roundingMode, final Expr<FpType> op) {
+        return FpRoundToIntegralExpr.of(roundingMode, op);
+    }
+
+    public static FpSqrtExpr Sqrt(final FpRoundingMode roundingMode, final Expr<FpType> op) {
+        return FpSqrtExpr.of(roundingMode, op);
+    }
+
+    public static FpMaxExpr Max(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpMaxExpr.of(roundingMode, leftOp, rightOp);
+    }
+
+    public static FpMinExpr Min(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        return FpMinExpr.of(roundingMode, leftOp, rightOp);
+    }
+
 }
