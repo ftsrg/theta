@@ -23,7 +23,9 @@ public class FpFromBvExpr implements Expr<FpType> {
 	private static final int HASH_SEED = 6696;
 	private static final String OPERATOR_LABEL = "fpfrombv";
 
-	private final Expr<BvType> sgn, sig, exp;
+	private final Expr<BvType> sgn;
+	private final Expr<BvType> sig;
+	private final Expr<BvType> exp;
 
 	private final FpRoundingMode roundingMode;
 
@@ -70,7 +72,6 @@ public class FpFromBvExpr implements Expr<FpType> {
 
 	@Override
 	public FpLitExpr eval(Valuation val) {
-		;
 		final BvLitExpr sgnBv = (BvLitExpr) sgn.eval(val);
 		final BvLitExpr sigBv = (BvLitExpr) sig.eval(val);
 		final BvLitExpr expBv = (BvLitExpr) exp.eval(val);

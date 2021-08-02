@@ -957,7 +957,7 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformFpLit(final FpLitExpr expr) {
-		return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1), (com.microsoft.z3.BitVecExpr) toTerm(expr.getExponent()), (com.microsoft.z3.BitVecExpr) toTerm(expr.getSignificand()));
+		return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1), (BitVecExpr) toTerm(expr.getExponent()), (BitVecExpr) toTerm(expr.getSignificand()));
 	}
 
 	private com.microsoft.z3.Expr transformFpAdd(final FpAddExpr expr) {
@@ -1078,28 +1078,28 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformFpMax(final FpMaxExpr expr) {
-		final com.microsoft.z3.FPExpr leftOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.FPExpr rightOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getRightOp());
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
 		return context.mkFPMax(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpMin(final FpMinExpr expr) {
-		final com.microsoft.z3.FPExpr leftOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.FPExpr rightOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getRightOp());
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
 		return context.mkFPMin(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
-		final com.microsoft.z3.BitVecExpr sgn = (com.microsoft.z3.BitVecExpr) toTerm(expr.getSgn());
-		final com.microsoft.z3.BitVecExpr sig = (com.microsoft.z3.BitVecExpr) toTerm(expr.getSig());
-		final com.microsoft.z3.BitVecExpr exp = (com.microsoft.z3.BitVecExpr) toTerm(expr.getExp());
+		final BitVecExpr sgn = (BitVecExpr) toTerm(expr.getSgn());
+		final BitVecExpr sig = (BitVecExpr) toTerm(expr.getSig());
+		final BitVecExpr exp = (BitVecExpr) toTerm(expr.getExp());
 		return context.mkFP(sgn, sig, exp);
 	}
 
 	private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
 		boolean sgn = expr.getSgn();
 		int size = expr.getSize();
-		final com.microsoft.z3.FPExpr op = (com.microsoft.z3.FPExpr) toTerm(expr.getOp());
+		final FPExpr op = (FPExpr) toTerm(expr.getOp());
 
 		return context.mkFPToBV(transformFpRoundingMode(expr.getRoundingMode()), op, size, sgn);
 	}
@@ -1108,7 +1108,7 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformFpToFp(final FpToFpExpr expr) {
-		final com.microsoft.z3.FPExpr op = (com.microsoft.z3.FPExpr) toTerm(expr.getOp());
+		final FPExpr op = (FPExpr) toTerm(expr.getOp());
 
 		return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), op, new FPSort(context, expr.getExpBits(), expr.getSignBits()));
 	}
