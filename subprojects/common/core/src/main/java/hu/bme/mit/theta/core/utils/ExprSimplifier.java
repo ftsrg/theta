@@ -307,13 +307,13 @@ public final class ExprSimplifier {
 
 			.addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
 
-			.addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq) // TODO no simplifications (yet?)
+			.addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq)
 
-			.addCase(FpLeqExpr.class, ExprSimplifier::simplifyFpLeq) // TODO no simplifications (yet?)
+			.addCase(FpLeqExpr.class, ExprSimplifier::simplifyFpLeq)
 
-			.addCase(FpGtExpr.class, ExprSimplifier::simplifyFpGt) // TODO no simplifications (yet?)
+			.addCase(FpGtExpr.class, ExprSimplifier::simplifyFpGt)
 
-			.addCase(FpLtExpr.class, ExprSimplifier::simplifyFpLt) // TODO no simplifications (yet?)
+			.addCase(FpLtExpr.class, ExprSimplifier::simplifyFpLt)
 
 			.addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
 
@@ -321,19 +321,19 @@ public final class ExprSimplifier {
 
 			.addCase(FpRoundToIntegralExpr.class, ExprSimplifier::simplifyFpRoundToIntegral)
 
-			.addCase(FpMaxExpr.class, ExprSimplifier::simplifyFpMax) // TODO no simplifications (yet?)
+			.addCase(FpMaxExpr.class, ExprSimplifier::simplifyFpMax)
 
-			.addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin) // TODO no simplifications (yet?)
+			.addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin)
 
-			.addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt) // TODO no simplifications (yet?)
+			.addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt)
 
 			.addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
 
-			.addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv) // TODO no simplifications (yet?)
+			.addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv)
 
-			.addCase(FpToBvExpr.class, ExprSimplifier::simplifyFpToBv) // TODO no simplifications (yet?)
+			.addCase(FpToBvExpr.class, ExprSimplifier::simplifyFpToBv)
 
-			.addCase(FpToFpExpr.class, ExprSimplifier::simplifyFpToFp) // TODO no simplifications (yet?)
+			.addCase(FpToFpExpr.class, ExprSimplifier::simplifyFpToFp)
 
 			// General
 
@@ -1945,22 +1945,46 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<BoolType> simplifyFpGeq(final FpGeqExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<BoolType> simplifyFpLeq(final FpLeqExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
@@ -1981,32 +2005,64 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<FpType> simplifyFpMax(final FpMaxExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<FpType> simplifyFpMin(final FpMinExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<BvType> sgn = simplify(expr.getSgn(), val);
+		final Expr<BvType> exp = simplify(expr.getExp(), val);
+		final Expr<BvType> sig = simplify(expr.getExp(), val);
+
+		if (sgn instanceof BvLitExpr && exp instanceof BvLitExpr && sig instanceof BvLitExpr) {
+			return expr.eval(val);
+		}
+
 		return expr;
 	}
 
 	private static Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
 		return expr;
 	}
 
 	private static Expr<FpType> simplifyFpToFp(final FpToFpExpr expr, final Valuation val) {
-		// TODO any simplifications?
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			return expr.eval(val);
+		}
 		return expr;
 	}
 }
