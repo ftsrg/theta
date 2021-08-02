@@ -19,7 +19,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.BitVecExpr;
-import com.microsoft.z3.BitVecSort;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.FPExpr;
@@ -50,65 +49,8 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
-import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -1057,15 +999,15 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformFpMax(final FpMaxExpr expr) {
-		final com.microsoft.z3.Expr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.Expr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
-		return context.mkFPMax((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+		final com.microsoft.z3.FPExpr leftOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.FPExpr rightOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPMax(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpMin(final FpMinExpr expr) {
-		final com.microsoft.z3.Expr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
-		final com.microsoft.z3.Expr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
-		return context.mkFPMin((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+		final com.microsoft.z3.FPExpr leftOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.FPExpr rightOpTerm = (com.microsoft.z3.FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPMin(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
