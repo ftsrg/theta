@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 
 public final class FpExprs {
     private FpExprs() {}
@@ -44,5 +45,9 @@ public final class FpExprs {
 
     public static FpAbsExpr Abs(final Expr<FpType> op) {
         return FpAbsExpr.of(op);
+    }
+
+    public static FpFromBvExpr fromBv(final FpRoundingMode roundingMode, final Expr<BvType> sgn, final Expr<BvType> sig, final Expr<BvType> exp) {
+        return FpFromBvExpr.of(roundingMode, sgn, sig, exp);
     }
 }
