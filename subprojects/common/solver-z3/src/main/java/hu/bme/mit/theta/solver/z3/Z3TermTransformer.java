@@ -232,8 +232,13 @@ final class Z3TermTransformer {
 	}
 
 	private Expr<?> transformFpLit(final com.microsoft.z3.Expr term) {
-		FpType type = FpType.of(((FPNum) term).getEBits(), ((FPNum) term).getSBits());
-		BigFloat bigFloat = new BigFloat(((FPNum) term).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat(((FPNum) term).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
+		FPNum fpTerm = (FPNum) term;
+		FpType type = FpType.of((fpTerm).getEBits(), (fpTerm).getSBits());
+		String printed = term.toString();
+		if(printed.equals("+oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()), type);
+		else if(printed.equals("-oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()), type);
+		else if(printed.equals("NaN")) return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
+		BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat((fpTerm).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
 		return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
 	}
 
