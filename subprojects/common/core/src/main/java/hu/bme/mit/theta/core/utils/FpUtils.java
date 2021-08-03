@@ -20,6 +20,10 @@ public final class FpUtils {
 			return BigFloat.positiveInfinity(expr.getType().getSignificand());
 		} else if (expr.isNegativeInfinity()) {
 			return BigFloat.negativeInfinity(expr.getType().getSignificand());
+		}else if (expr.isPositiveZero()) {
+			return BigFloat.zero(expr.getType().getSignificand());
+		} else if (expr.isNegativeZero()) {
+			return BigFloat.negativeZero(expr.getType().getSignificand());
 		} else {
 			final var maxExponent = (1L << (expr.getType().getExponent() - 1)) - 1;
 

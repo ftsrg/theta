@@ -34,7 +34,7 @@ public final class FpIsNanExpr extends UnaryExpr<FpType, BoolType> {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return FpAbsExpr.of(op);
+			return FpIsNanExpr.of(op);
 		}
 	}
 

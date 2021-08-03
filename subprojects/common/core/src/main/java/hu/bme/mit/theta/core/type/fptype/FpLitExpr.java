@@ -79,10 +79,11 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 		for (final var i : exponent.getValue()) {
 			isNaN = isNaN && i;
 		}
+		var atLeastOne = false;
 		for (final var i : significand.getValue()) {
-			isNaN = isNaN && i;
+			atLeastOne = atLeastOne || i;
 		}
-		return isNaN;
+		return isNaN && atLeastOne;
 	}
 
 	public boolean isPositiveInfinity() {
@@ -100,6 +101,28 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 		var isNaN = hidden;
 		for (final var i : exponent.getValue()) {
 			isNaN = isNaN && i;
+		}
+		for (final var i : significand.getValue()) {
+			isNaN = isNaN && !i;
+		}
+		return isNaN;
+	}
+
+	public boolean isNegativeZero() {
+		var isNaN = !hidden;
+		for (final var i : exponent.getValue()) {
+			isNaN = isNaN && !i;
+		}
+		for (final var i : significand.getValue()) {
+			isNaN = isNaN && !i;
+		}
+		return isNaN;
+	}
+
+	public boolean isPositiveZero() {
+		var isNaN = hidden;
+		for (final var i : exponent.getValue()) {
+			isNaN = isNaN && !i;
 		}
 		for (final var i : significand.getValue()) {
 			isNaN = isNaN && !i;
