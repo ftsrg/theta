@@ -243,7 +243,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof FpLitExpr) {
+		} else if (obj instanceof FpLitExpr && getType().equals(((FpLitExpr) obj).getType())) {
 			return eq((FpLitExpr) obj).equals(BoolExprs.True());
 		} else {
 			return false;

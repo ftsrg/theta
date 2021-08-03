@@ -1952,7 +1952,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 	private static Expr<BoolType> simplifyFpLeq(final FpLeqExpr expr, final Valuation val) {
@@ -1963,7 +1963,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 	private static Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
@@ -1974,7 +1974,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 	private static Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
@@ -1985,7 +1985,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 
@@ -2012,7 +2012,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 	private static Expr<FpType> simplifyFpMin(final FpMinExpr expr, final Valuation val) {
@@ -2023,7 +2023,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(leftOp, rightOp);
 	}
 
 	private static Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
@@ -2033,7 +2033,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(op);
 	}
 
 	private static Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
@@ -2043,7 +2043,7 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 
-		return expr;
+		return expr.with(sgn);
 	}
 
 	private static Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
@@ -2052,7 +2052,7 @@ public final class ExprSimplifier {
 		if (op instanceof FpLitExpr) {
 			return expr.eval(val);
 		}
-		return expr;
+		return expr.with(op);
 	}
 
 	private static Expr<FpType> simplifyFpToFp(final FpToFpExpr expr, final Valuation val) {
@@ -2061,6 +2061,10 @@ public final class ExprSimplifier {
 		if (op instanceof FpLitExpr) {
 			return expr.eval(val);
 		}
-		return expr;
+		else if (op instanceof FpToFpExpr) {
+			return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
+		}
+
+		return expr.with(op);
 	}
 }
