@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
@@ -36,6 +37,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.Add;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Div;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Eq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Geq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Gt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
@@ -55,6 +57,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNA;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
+import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RTZ;
 
 public class FpTestUtils {
 
@@ -109,15 +112,24 @@ public class FpTestUtils {
 				{FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41"))},
 				{FpSqrtExpr.class, Fp16("3.0"), Sqrt(RNE, Fp16("9.0"))},
 				{FpSqrtExpr.class, Fp16("0.1"), Sqrt(RNE, Fp16("0.01"))},
-				{FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16), ToBv(RNE, Fp16("10.9"), 16, false)},
-				{FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 3), ToBv(RNE, Fp16("10.9"), 3, false)},
-				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16), ToBv(RNE, Fp16("10.9"), 16, true)},
-				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 4), ToBv(RNE, Fp16("10.9"), 4, true)},
-				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16), ToBv(RNE, Fp16("-10.9"), 16, true)},
-				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 4), ToBv(RNE, Fp16("-10.9"), 4, true)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16), ToBv(RTZ, Fp16("10.9"), 16, false)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 3), ToBv(RTZ, Fp16("10.9"), 3, false)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16), ToBv(RTZ, Fp16("10.9"), 16, true)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 4), ToBv(RTZ, Fp16("10.9"), 4, true)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16), ToBv(RTZ, Fp16("-10.9"), 16, true)},
+				{FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 4), ToBv(RTZ, Fp16("-10.9"), 4, true)},
 				{FpToFpExpr.class, Fp32("12.0"), ToFp(RNE, Fp16("12.0"), 8, 24)},
 				{FpToFpExpr.class, Fp64("12.0"), ToFp(RNE, Fp16("12.0"), 11, 53)},
 				{FpToFpExpr.class, Fp16("12.0"), ToFp(RNE, Fp32("12.0"), 5, 11)},
+				{FpFromBvExpr.class, Fp16("0"), FromBv(RNE, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.ZERO, 16), FpType(5, 11), false)},
+				{FpFromBvExpr.class, Fp16("1"), FromBv(RNE, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.ONE, 16), FpType(5, 11), false)},
+				{FpFromBvExpr.class, Fp16("10"), FromBv(RNE, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16), FpType(5, 11), false)},
+				{FpFromBvExpr.class, Fp16("0"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ZERO, 16), FpType(5, 11), true)},
+				{FpFromBvExpr.class, Fp16("1"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ONE, 16), FpType(5, 11), true)},
+				{FpFromBvExpr.class, Fp16("10"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16), FpType(5, 11), true)},
+				{FpFromBvExpr.class, Fp16("0"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ZERO.negate(), 16), FpType(5, 11), true)},
+				{FpFromBvExpr.class, Fp16("-1"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ONE.negate(), 16), FpType(5, 11), true)},
+				{FpFromBvExpr.class, Fp16("-10"), FromBv(RNE, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16), FpType(5, 11), true)},
 		});
 	}
 

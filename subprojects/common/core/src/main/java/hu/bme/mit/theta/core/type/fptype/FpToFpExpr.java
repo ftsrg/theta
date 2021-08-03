@@ -8,10 +8,6 @@ import org.kframework.mpfr.BigFloat;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * signBits and signBitsificand is presumed to be unsignBitsed
- * Exponent is presumed to be signBitsed
- */
 public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
 	private static final int HASH_SEED = 6799;
 	private static final String OPERATOR_LABEL = "fptofp";

@@ -1090,10 +1090,9 @@ final class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
-		final BitVecExpr sgn = (BitVecExpr) toTerm(expr.getSgn());
-		final BitVecExpr sig = (BitVecExpr) toTerm(expr.getSig());
-		final BitVecExpr exp = (BitVecExpr) toTerm(expr.getExp());
-		return context.mkFP(sgn, sig, exp);
+		final BitVecExpr val = (BitVecExpr) toTerm(expr.getOp());
+		final FPSort fpSort = context.mkFPSort(expr.getFpType().getExponent(), expr.getFpType().getSignificand());
+		return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), val, fpSort, expr.isSigned());
 	}
 
 	private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
