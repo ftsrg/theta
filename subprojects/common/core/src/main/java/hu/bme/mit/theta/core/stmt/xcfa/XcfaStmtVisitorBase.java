@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.stmt.xcfa;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -93,6 +94,11 @@ public class XcfaStmtVisitorBase<P, R> implements XcfaStmtVisitor<P, R> {
 
     @Override
     public R visit(OrtStmt stmt, P param) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public R visit(LoopStmt stmt, P param) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 

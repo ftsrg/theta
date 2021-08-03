@@ -90,6 +90,11 @@ public class StmtSimplifier {
         }
 
         @Override
+        public SimplifyResult visit(XcfaStmt xcfaStmt, MutableValuation param) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
         public SimplifyResult visit(final SequenceStmt stmt, final MutableValuation valuation) {
             final var subStmtsUnrolled = stmt.getStmts().stream()
                     .map(subStmt -> subStmt.accept(this,valuation)).collect(Collectors.toList());

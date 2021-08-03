@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -399,6 +400,11 @@ public class XcfaGui extends JFrame {
 		@Override
 		public R visit(OrtStmt stmt, XcfaProcess param) {
 			throw new UnsupportedOperationException("Not yet implemented!");
+		}
+
+		@Override
+		public R visit(LoopStmt stmt, XcfaProcess param) {
+			throw new UnsupportedOperationException("Not implemented.");
 		}
 
 		@Override
