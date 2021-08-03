@@ -25,11 +25,11 @@ public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
 				new BigFloat(
 						"1.0",
 						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("double_s"),
-								ArchitectureConfig.architecture.getBitWidth("double_e"))),
+								ArchitectureConfig.architecture.getBitWidth("double_e"),
+								ArchitectureConfig.architecture.getBitWidth("double_s"))),
 				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("double_s"),
-						ArchitectureConfig.architecture.getBitWidth("double_e")));
+						ArchitectureConfig.architecture.getBitWidth("double_e"),
+						ArchitectureConfig.architecture.getBitWidth("double_s")));
 	}
 
 	@Override
@@ -38,11 +38,11 @@ public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
 				new BigFloat(
 						"1.0",
 						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("float_s"),
-								ArchitectureConfig.architecture.getBitWidth("float_e"))),
+								ArchitectureConfig.architecture.getBitWidth("float_e"),
+								ArchitectureConfig.architecture.getBitWidth("float_s"))),
 				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("float_s"),
-						ArchitectureConfig.architecture.getBitWidth("float_e")));
+						ArchitectureConfig.architecture.getBitWidth("float_e"),
+						ArchitectureConfig.architecture.getBitWidth("float_s")));
 	}
 
 	@Override
@@ -51,11 +51,11 @@ public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
 				new BigFloat(
 						"1.0",
 						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("longdouble_s"),
-								ArchitectureConfig.architecture.getBitWidth("longdouble_e"))),
+								ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+								ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
 				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("longdouble_s"),
-						ArchitectureConfig.architecture.getBitWidth("longdouble_e")));
+						ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+						ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
 	}
 
 	@Override
