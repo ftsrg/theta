@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -10,7 +10,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class FpLtExpr extends EqExpr<FpType> {
+public final class FpLtExpr extends LtExpr<FpType> {
 
 	private static final int HASH_SEED = 1745;
 	private static final String OPERATOR_LABEL = "<";
