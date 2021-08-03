@@ -289,10 +289,10 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.NWT_IT_SP, Z3SolverFactory.getInstance())
-					.precGranularity(CfaConfigBuilder.PrecGranularity.GLOBAL).search(CfaConfigBuilder.Search.ERR)
-					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(1).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
-					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
+			return new CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.NWT_SP, Z3SolverFactory.getInstance())
+					.precGranularity(CfaConfigBuilder.PrecGranularity.LOCAL).search(CfaConfigBuilder.Search.ERR)
+					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(5).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
+					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.VERBOSE)).build(cfa, errLoc);
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);

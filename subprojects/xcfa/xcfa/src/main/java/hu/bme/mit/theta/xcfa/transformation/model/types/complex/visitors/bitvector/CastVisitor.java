@@ -2,8 +2,6 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvec
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
@@ -78,7 +76,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 		}
 	}
 
-	private UnaryExpr<? extends Equational<? extends Equational<?>>, FpType> handleFp(CReal type, Expr<?> param) {
+	private Expr<FpType> handleFp(CReal type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
 		if(that instanceof CReal) {
 			FpType fpType = (FpType) type.getSmtType();
@@ -155,17 +153,26 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CDouble type, Expr<?> param) {
+		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CDouble)
+			return param;
 		return handleFp(type, param);
 	}
 
 	@Override
 	public Expr<?> visit(CFloat type, Expr<?> param) {
+		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CFloat)
+			return param;
 		return handleFp(type, param);
 
 	}
 
 	@Override
 	public Expr<?> visit(CLongDouble type, Expr<?> param) {
+		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CLongDouble)
+			return param;
 		return handleFp(type, param);
 
 	}
