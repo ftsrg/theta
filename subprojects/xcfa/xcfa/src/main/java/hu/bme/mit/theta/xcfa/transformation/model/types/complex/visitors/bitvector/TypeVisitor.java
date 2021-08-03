@@ -18,22 +18,22 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 	@Override
 	public Type visit(CDouble type, Void param) {
 		return FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("double_s"),
-						ArchitectureConfig.architecture.getBitWidth("double_e"));
+						ArchitectureConfig.architecture.getBitWidth("double_e"),
+						ArchitectureConfig.architecture.getBitWidth("double_s"));
 	}
 
 	@Override
 	public Type visit(CFloat type, Void param) {
 		return FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("float_s"),
-						ArchitectureConfig.architecture.getBitWidth("float_e"));
+						ArchitectureConfig.architecture.getBitWidth("float_e"),
+						ArchitectureConfig.architecture.getBitWidth("float_s"));
 	}
 
 	@Override
 	public Type visit(CLongDouble type, Void param) {
 		return FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("longdouble_s"),
-						ArchitectureConfig.architecture.getBitWidth("longdouble_e"));
+						ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+						ArchitectureConfig.architecture.getBitWidth("longdouble_s"));
 	}
 
 	@Override

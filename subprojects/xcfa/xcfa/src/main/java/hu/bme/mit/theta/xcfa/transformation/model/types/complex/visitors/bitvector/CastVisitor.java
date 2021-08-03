@@ -2,8 +2,13 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvec
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
@@ -29,6 +34,8 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CReal;
 import java.math.BigInteger;
 import java.util.List;
 
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -37,7 +44,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleSignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
-		if(that instanceof CReal) throw new UnsupportedOperationException("Reals and integers are not yet compatible!");
+		if(that instanceof CReal) {
+			//noinspection unchecked
+			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), true);
+		}
 		else if (that instanceof CInteger) {
 			if(that.width() < type.width()) {
 				if(that instanceof Unsigned) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
@@ -52,7 +62,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleUnsignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
-		if(that instanceof CReal) throw new UnsupportedOperationException("Reals and integers are not yet compatible!");
+		if(that instanceof CReal) {
+			//noinspection unchecked
+			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
+		}
 		else if (that instanceof CInteger) {
 			if(that.width() < type.width()) {
 				if(that instanceof Signed) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
@@ -64,6 +77,20 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 			throw new IllegalStateException("Compound types are not directly supported!");
 		}
 	}
+
+	private UnaryExpr<? extends Equational<? extends Equational<?>>, FpType> handleFp(CReal type, Expr<?> param) {
+		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CReal) {
+			FpType fpType = (FpType) type.getSmtType();
+			//noinspection unchecked
+			return ToFp(FpRoundingMode.RTZ, (Expr<FpType>) param, fpType.getExponent(), fpType.getSignificand());
+		} else if (that instanceof CInteger) {
+			boolean signed = that instanceof Signed;
+			//noinspection unchecked
+			return FromBv(FpRoundingMode.RTZ, (Expr<BvType>) param, (FpType) type.getSmtType(), signed);
+		} else throw new UnsupportedOperationException("Bad type!");
+	}
+
 
 	@Override
 	public Expr<?> visit(CSignedShort type, Expr<?> param) {
@@ -128,16 +155,18 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CDouble type, Expr<?> param) {
-		return param;
+		return handleFp(type, param);
 	}
 
 	@Override
 	public Expr<?> visit(CFloat type, Expr<?> param) {
-		return param;
+		return handleFp(type, param);
+
 	}
 
 	@Override
 	public Expr<?> visit(CLongDouble type, Expr<?> param) {
-		return param;
+		return handleFp(type, param);
+
 	}
 }

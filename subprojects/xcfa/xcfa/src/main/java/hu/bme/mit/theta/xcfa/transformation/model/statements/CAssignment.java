@@ -56,6 +56,7 @@ public class CAssignment extends CStatement{
 		}
 		XcfaMetadata.create(ret, "cType", CComplexType.getType(lValue));
 		ret = CComplexType.getType(ret).castTo(ret);
+		XcfaMetadata.create(ret, "cType", CComplexType.getType(ret));
 		return ret;
 	}
 

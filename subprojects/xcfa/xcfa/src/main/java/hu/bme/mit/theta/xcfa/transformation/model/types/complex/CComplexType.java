@@ -62,7 +62,9 @@ public abstract class CComplexType {
 	}
 
 	public Expr<?> castTo(Expr<?> expr) {
-		return this.accept(getCastVisitor(), expr);
+		Expr<?> accept = this.accept(getCastVisitor(), expr);
+		XcfaMetadata.create(accept, "cType", this);
+		return accept;
 	}
 
 	public Type getSmtType() {

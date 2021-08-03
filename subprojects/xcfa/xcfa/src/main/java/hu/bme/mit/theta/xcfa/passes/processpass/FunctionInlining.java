@@ -153,6 +153,7 @@ public class FunctionInlining extends ProcessPass {
 					Expr<?> expr = assignStmt.getExpr();
 
 					Expr<?> truncatedExpr = leftType.castTo(expr);
+					XcfaMetadata.create(truncatedExpr, "cType", leftType);
 					if (!expr.equals(truncatedExpr)) {
 						atLeastOneAssignmentTruncated = true;
 						newStmts.remove(stmt);
@@ -229,6 +230,7 @@ public class FunctionInlining extends ProcessPass {
 					checkNotNull(funcParamType);
 					Expr<?> param = xcfaCallStmt.getParams().get(paramCnt);
 					Expr<?> truncatedParam = funcParamType.castTo(param);
+					XcfaMetadata.create(truncatedParam, "cType", funcParamType);
 
 					AssignStmt<?> assignStmt = Assign(cast(varDecl, varDecl.getType()), cast(truncatedParam, varDecl.getType()));
 					initStmts.add(assignStmt);

@@ -448,9 +448,9 @@ public class IntegerExpressionVisitor extends ExpressionVisitor {
 			} else if (text.startsWith("0b")) {
 				throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
 			} else {
-				bigFloat = new BigFloat(text.substring(2), new BinaryMathContext(significand, exponent));
+				bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
 			}
-			FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(significand, exponent));
+			FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
 			XcfaMetadata.create(fpLitExpr, "cType", type);
 			return fpLitExpr;
 

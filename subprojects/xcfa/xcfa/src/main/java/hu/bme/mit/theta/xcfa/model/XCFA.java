@@ -32,10 +32,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
@@ -75,6 +75,13 @@ public final class XCFA {
 
 		Map<XcfaLocation, CFA.Loc> locationLUT = new HashMap<>();
 
+		HashMap<VarDecl<?>, VarDecl<?>> varLut = new HashMap<>();
+		int counter = 0;
+
+		for (VarDecl<?> localVar : getMainProcess().getMainProcedure().getLocalVars()) {
+			varLut.put(localVar, Var(localVar.getName() + "_id" + counter++, localVar.getType()));
+		}
+
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
 			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
 			XcfaMetadata.create(loc, "cfaLoc", cfaLoc);
@@ -97,7 +104,7 @@ public final class XCFA {
 			// Adding edges
 			for (int i = 0; i < e.getStmts().size(); ++i) {
 				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
-				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i));
+				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i).accept(new XcfaStmtVarReplacer(), varLut));
 				XcfaMetadata.create(e, "cfaEdge", edge);
 			}
 			if (e.getStmts().size() == 0) {

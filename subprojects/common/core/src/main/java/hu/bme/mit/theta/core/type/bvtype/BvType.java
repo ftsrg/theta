@@ -3,10 +3,32 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Additive;
+import hu.bme.mit.theta.core.type.abstracttype.Castable;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Divisible;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 
 public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>, Equational<BvType>, Ordered<BvType>,
         Castable<BvType> {
@@ -96,6 +118,10 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
 
     @Override
     public <TargetType extends Type> Expr<TargetType> Cast(Expr<BvType> op, TargetType type) {
+        if(type instanceof FpType && signed != null) {
+            //noinspection unchecked
+            return (Expr<TargetType>) FromBv(FpRoundingMode.RTZ, op, (FpType) type, signed);
+        }
         throw new ClassCastException("Bv cannot be cast to " + type);
     }
 
