@@ -55,8 +55,8 @@ public class CAssignment extends CStatement{
 			default: throw new RuntimeException("Bad operator!");
 		}
 		XcfaMetadata.create(ret, "cType", CComplexType.getType(lValue));
-		ret = CComplexType.getType(ret).castTo(ret);
-		XcfaMetadata.create(ret, "cType", CComplexType.getType(ret));
+		ret = CComplexType.getType(lValue).castTo(ret);
+		XcfaMetadata.create(ret, "cType", CComplexType.getType(lValue));
 		return ret;
 	}
 
