@@ -232,11 +232,8 @@ final class Z3TermTransformer {
 	}
 
 	private Expr<?> transformFpLit(final com.microsoft.z3.Expr term) {
-		final com.microsoft.z3.FPNum fpNum = (FPNum) term;
-		String significand = ((FPNum) term).getSignificand().split("\\.")[0];
-		boolean sign = ((FPNum) term).getSign();
 		FpType type = FpType.of(((FPNum) term).getEBits(), ((FPNum) term).getSBits());
-		BigFloat bigFloat = new BigFloat(sign, new BigInteger(significand), ((FPNum) term).getExponentInt64(), FpUtils.getMathContext(type, FpRoundingMode.RNE));
+		BigFloat bigFloat = new BigFloat(((FPNum) term).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat(((FPNum) term).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
 		return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
 	}
 
