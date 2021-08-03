@@ -73,6 +73,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -351,6 +352,16 @@ public class ExprSimplifierTest {
 		assertEquals(False(), simplify(Lt(Int(3), Int(2))));
 		assertEquals(True(), simplify(Lt(Int(3), Int(5))));
 		assertEquals(False(), simplify(Lt(a, a)));
+	}
+
+	@Test
+	public void testRatToInt() {
+		assertEquals(Int(1), simplify(ToInt(Rat(4, 3))));
+		assertEquals(Int(1), simplify(ToInt(Rat(3, 3))));
+		assertEquals(Int(0), simplify(ToInt(Rat(2, 3))));
+		assertEquals(Int(-1), simplify(ToInt(Rat(-4, 3))));
+		assertEquals(Int(-1), simplify(ToInt(Rat(4, -3))));
+		assertEquals(Int(1), simplify(ToInt(Rat(-4, -3))));
 	}
 
 	// Bitvectors

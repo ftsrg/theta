@@ -18,7 +18,7 @@ package hu.bme.mit.theta.core.decl;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -37,7 +37,7 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 
 	VarDecl(final String name, final DeclType type) {
 		super(name, type);
-		indexToConst = new HashMap<>();
+		indexToConst = Containers.createMap();
 	}
 
 	public static <DeclType extends Type> VarDecl<DeclType> copyOf(VarDecl<DeclType> from) {

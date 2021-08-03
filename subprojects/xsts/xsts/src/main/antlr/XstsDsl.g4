@@ -261,23 +261,28 @@ stmt:	localVarDeclStmt
 	|	assumeStmt
 	|   nonDetStmt
 	|   blockStmt
+	|   loopStmt
 	;
 
 nonDetStmt
-    :   CHOICE blocks+=blockStmt (NONDET_OR blocks+=blockStmt)*
+    :   CHOICE blocks+=stmt (NONDET_OR blocks+=stmt)*
     ;
 
 blockStmt
-    :   LCURLY subStmt=seqStmt RCURLY
+    :   LCURLY (stmts+=stmt)* RCURLY
+    ;
+
+loopStmt
+    :   FOR loopVar=ID FROM from=expr TO to=expr DO subStmt=stmt
     ;
 
 localVarDeclStmt
     :   LOCAL VAR name=ID DP ttype=type (EQUALS initValue=expr)? SEMICOLON
     ;
 
-seqStmt
-    :   (stmts+=stmt)*
-    ;
+//seqStmt
+//    :
+//    ;
 
 assignStmt
 	:	lhs=ID ASSIGN value=expr SEMICOLON
@@ -308,6 +313,22 @@ ASSUME
 
 CHOICE
     :   'choice'
+    ;
+
+FOR
+    :   'for'
+    ;
+
+FROM
+    :   'from'
+    ;
+
+TO
+    :   'to'
+    ;
+
+DO
+    :   'do'
     ;
 
 NONDET_OR

@@ -1,31 +1,43 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.xsts.XSTS;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public final class XstsLts implements LTS<XstsState, XstsAction> {
+public final class XstsLts <S extends ExprState> implements LTS<XstsState<S>, XstsAction> {
 
-	private final Collection<XstsAction> internalActions;
-	private final Collection<XstsAction> externalActions;
-	private final Collection<XstsAction> initActions;
+	private final NonDetStmt trans;
+	private final NonDetStmt env;
+	private final NonDetStmt init;
 
-	private XstsLts(final XSTS xsts) {
-		internalActions = xsts.getTran().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
-		externalActions = xsts.getEnv().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
-		initActions = xsts.getInit().getStmts().stream().map(XstsAction::create).collect(Collectors.toList());
+	private final XstsStmtOptimizer<S> stmtOptimizer;
+
+	private XstsLts(final XSTS xsts, final XstsStmtOptimizer<S> stmtOptimizer) {
+		trans = xsts.getTran();
+		env = xsts.getEnv();
+		init = xsts.getInit();
+
+		this.stmtOptimizer = stmtOptimizer;
 	}
 
-	public static LTS<XstsState, XstsAction> create(final XSTS xsts) {
-		return new XstsLts(xsts);
+	public static <S extends ExprState> LTS<XstsState<S>, XstsAction> create(final XSTS xsts, final XstsStmtOptimizer<S> stmtOptimizer) {
+		return new XstsLts<>(xsts,stmtOptimizer);
 	}
 
 	@Override
-	public Collection<XstsAction> getEnabledActionsFor(XstsState state) {
-		if (!state.isInitialized()) return initActions;
-		else if (state.lastActionWasEnv()) return internalActions;
-		else return externalActions;
+	public Collection<XstsAction> getEnabledActionsFor(XstsState<S> state) {
+		NonDetStmt enabledSet;
+		if (!state.isInitialized()) enabledSet = init;
+		else if (state.lastActionWasEnv()) enabledSet = trans;
+		else enabledSet = env;
+
+		return enabledSet.getStmts().stream()
+				.map(stmt -> stmtOptimizer.optimizeStmt(state,stmt))
+				.map(XstsAction::create)
+				.collect(Collectors.toList());
 	}
 }

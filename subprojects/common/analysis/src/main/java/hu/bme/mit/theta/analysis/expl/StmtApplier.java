@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-final class StmtApplier {
+public final class StmtApplier {
 
 	public enum ApplyResult {
 		FAILURE, SUCCESS, BOTTOM
@@ -62,6 +62,9 @@ final class StmtApplier {
 		} else if (stmt instanceof OrtStmt) {
 			final OrtStmt ortStmt = (OrtStmt) stmt;
 			return applyOrt(ortStmt, val, approximate);
+		} else if (stmt instanceof LoopStmt) {
+			final LoopStmt loopStmt = (LoopStmt) stmt;
+			return applyLoop(loopStmt, val, approximate);
 		} else {
 			throw new UnsupportedOperationException("Unhandled statement: " + stmt);
 		}
@@ -168,6 +171,11 @@ final class StmtApplier {
 		val.clear();
 		val.putAll(copy);
 		return ApplyResult.SUCCESS;
+	}
+
+	private static ApplyResult applyLoop(final LoopStmt stmt, final MutableValuation val,
+											 final boolean approximate) {
+		throw new UnsupportedOperationException(String.format("Loop statement %s was not unrolled",stmt));
 	}
 
 	private static ApplyResult applyNonDet(final NonDetStmt stmt, final MutableValuation val,

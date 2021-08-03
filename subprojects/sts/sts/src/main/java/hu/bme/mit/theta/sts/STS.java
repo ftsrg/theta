@@ -23,7 +23,7 @@ import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Set;
 
 import hu.bme.mit.theta.common.Utils;
@@ -53,7 +53,7 @@ public final class STS {
 		this.init = checkNotNull(init);
 		this.trans = checkNotNull(trans);
 		this.prop = checkNotNull(prop);
-		final Set<VarDecl<?>> tmpVars = new HashSet<>();
+		final Set<VarDecl<?>> tmpVars = Containers.createSet();
 		ExprUtils.collectVars(init, tmpVars);
 		ExprUtils.collectVars(trans, tmpVars);
 		ExprUtils.collectVars(prop, tmpVars);
@@ -113,8 +113,8 @@ public final class STS {
 		private Expr<BoolType> prop;
 
 		private Builder() {
-			init = new HashSet<>();
-			trans = new HashSet<>();
+			init = Containers.createSet();
+			trans = Containers.createSet();
 			prop = null;
 		}
 

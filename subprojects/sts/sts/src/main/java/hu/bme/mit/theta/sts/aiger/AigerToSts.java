@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 
 import hu.bme.mit.theta.core.decl.Decls;
@@ -55,7 +55,7 @@ public final class AigerToSts {
 	public static STS createSts(final AigerSystem aigerSys) {
 		final Builder builder = STS.builder();
 
-		final Map<AigerNode, VarDecl<BoolType>> vars = new HashMap<>();
+		final Map<AigerNode, VarDecl<BoolType>> vars = Containers.createMap();
 		aigerSys.getNodes().forEach(n -> vars.put(n, Decls.Var(n.getName(), Bool())));
 
 		for (final AigerNode node : aigerSys.getNodes()) {

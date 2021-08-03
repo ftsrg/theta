@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.max;
 
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -174,12 +174,12 @@ public class VarIndexing {
 		private Builder(final int defaultIndex) {
 			checkArgument(defaultIndex >= 0, "Negative default index");
 			this.defaultIndex = defaultIndex;
-			varToOffset = new HashMap<>();
+			varToOffset = Containers.createMap();
 		}
 
 		private Builder(final VarIndexing indexing) {
 			this.defaultIndex = indexing.defaultIndex;
-			this.varToOffset = new HashMap<>(indexing.varToOffset);
+			this.varToOffset = Containers.createMap(indexing.varToOffset);
 		}
 
 		public Builder inc(final VarDecl<?> varDecl, final int n) {
@@ -208,7 +208,7 @@ public class VarIndexing {
 			checkNotNull(that);
 
 			final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
-			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+			final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
 			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
 			for (final VarDecl<?> varDecl : varDecls) {
@@ -232,7 +232,7 @@ public class VarIndexing {
 
 			final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
 			checkArgument(newDefaultIndex >= 0, "Negative default index");
-			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+			final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
 			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
 			for (final VarDecl<?> varDecl : varDecls) {
@@ -255,7 +255,7 @@ public class VarIndexing {
 			checkNotNull(that);
 
 			final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
-			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+			final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
 			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
 			for (final VarDecl<?> varDecl : varDecls) {

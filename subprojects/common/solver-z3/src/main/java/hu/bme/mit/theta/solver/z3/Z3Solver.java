@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
@@ -76,7 +76,7 @@ final class Z3Solver implements Solver {
 		this.z3Solver = z3Solver;
 
 		assertions = new StackImpl<>();
-		assumptions = new HashMap<>();
+		assumptions = Containers.createMap();
 	}
 
 	////
@@ -234,7 +234,7 @@ final class Z3Solver implements Solver {
 
 		public Z3Model(final com.microsoft.z3.Model z3Model) {
 			this.z3Model = z3Model;
-			constToExpr = new HashMap<>();
+			constToExpr = Containers.createMap();
 		}
 
 		@Override

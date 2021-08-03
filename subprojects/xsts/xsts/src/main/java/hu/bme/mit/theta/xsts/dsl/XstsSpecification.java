@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.ParseException;
@@ -11,11 +12,12 @@ import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class XstsSpecification implements DynamicScope {
@@ -45,8 +47,8 @@ public class XstsSpecification implements DynamicScope {
 	public XSTS instantiate(){
 		final Env env = new Env();
 
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = new HashMap<>();
-		final Set<VarDecl<?>> ctrlVars = new HashSet<>();
+		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = Containers.createMap();
+		final Set<VarDecl<?>> ctrlVars = Containers.createSet();
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 
 		for(var typeDeclContext: context.typeDeclarations){
@@ -84,15 +86,21 @@ public class XstsSpecification implements DynamicScope {
 			if(varDeclContext.CTRL()!=null) ctrlVars.add(var);
 			if(varDeclContext.initValue!=null){
 				initExprs.add(Eq(var.getRef(),new XstsExpression(this,typeTable,varDeclContext.initValue).instantiate(env)));
+			} else if(varToType.containsKey(var)) {
+				final var type = varToType.get(var);
+				final Expr<BoolType> expr = Or(type.getLiterals().stream()
+						.map(lit -> Eq(var.getRef(),Int(lit.getIntValue())))
+						.collect(Collectors.toList()));
+				initExprs.add(expr);
 			}
 			env.define(symbol,var);
 		}
 
 		final Expr<BoolType> initFormula = And(initExprs);
 
-		final NonDetStmt tranSet = new XstsTransitionSet(this,typeTable,context.tran.transitionSet()).instantiate(env);
-		final NonDetStmt initSet = new XstsTransitionSet(this,typeTable,context.init.transitionSet()).instantiate(env);
-		final NonDetStmt envSet = new XstsTransitionSet(this,typeTable,context.env.transitionSet()).instantiate(env);
+		final NonDetStmt tranSet = new XstsTransitionSet(this,typeTable,context.tran.transitionSet(), varToType).instantiate(env);
+		final NonDetStmt initSet = new XstsTransitionSet(this,typeTable,context.init.transitionSet(), varToType).instantiate(env);
+		final NonDetStmt envSet = new XstsTransitionSet(this,typeTable,context.env.transitionSet(), varToType).instantiate(env);
 
 		final Expr<BoolType> prop = cast(new XstsExpression(this,typeTable,context.prop).instantiate(env),Bool());
 

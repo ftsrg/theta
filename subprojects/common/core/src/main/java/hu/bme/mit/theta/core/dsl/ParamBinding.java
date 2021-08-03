@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,7 +43,7 @@ public final class ParamBinding implements Substitution {
 		checkArgument(params.size() == args.size());
 
 		this.params = ImmutableList.copyOf(params);
-		this.paramToArg = new HashMap<>();
+		this.paramToArg = Containers.createMap();
 
 		for (int i = 0; i < params.size(); i++) {
 			final ParamDecl<?> param = params.get(i);

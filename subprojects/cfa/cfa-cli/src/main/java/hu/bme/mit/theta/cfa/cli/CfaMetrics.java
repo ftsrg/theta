@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
@@ -48,7 +48,7 @@ public final class CfaMetrics {
 	}
 
 	public static int getCfaComponents(final CFA cfa) {
-		final Set<CFA.Loc> visited = new HashSet<>();
+		final Set<CFA.Loc> visited = Containers.createSet();
 		int components = 0;
 
 		for (final CFA.Loc loc : cfa.getLocs()) {

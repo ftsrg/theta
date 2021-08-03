@@ -25,7 +25,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -137,7 +137,7 @@ public class PredAbstractors {
 				}
 				while (solver.check().isSat()) {
 					final Valuation model = solver.getModel();
-					final Set<Expr<BoolType>> newStatePreds = new HashSet<>();
+					final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
 					final List<Expr<BoolType>> feedback = new LinkedList<>();
 					feedback.add(True());
 					for (int i = 0; i < preds.size(); ++i) {
