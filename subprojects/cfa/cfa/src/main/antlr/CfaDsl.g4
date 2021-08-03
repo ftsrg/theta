@@ -81,6 +81,7 @@ type:	boolType
 	|	funcType
 	|	arrayType
 	|	bvType
+	|   fpType
 	;
 
 typeList
@@ -111,6 +112,10 @@ bvType
     :   BVTYPE LBRACK size=INT RBRACK
     ;
 
+fpType
+    :   FPTYPE LBRACK exp=INT COMMA sig=INT RBRACK
+    ;
+
 BOOLTYPE
 	:	'bool'
 	;
@@ -125,6 +130,10 @@ RATTYPE
 
 BVTYPE
     :   'bv'
+    ;
+
+FPTYPE
+    :   'fp'
     ;
 
 // E X P R E S S I O N S
@@ -214,7 +223,7 @@ additiveExpr
 	;
 
 multiplicativeExpr
-	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM) ops+=bvConcatExpr)*
+	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM | FPREM) ops+=bvConcatExpr)*
 	;
 
 bvConcatExpr
@@ -227,7 +236,7 @@ bvExtendExpr
 
 unaryExpr
 	:	bitwiseNotExpr
-	|	oper=(PLUS | MINUS | BV_POS | BV_NEG) op=unaryExpr
+	|	oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_NAN | FPROUNDTOINT | FPSQRT) op=unaryExpr
 	;
 
 bitwiseNotExpr
@@ -274,6 +283,7 @@ primaryExpr
 	|	ratLitExpr
 	|	arrLitExpr
 	|	bvLitExpr
+	|   fpLitExpr
 	|	idExpr
 	|	parenExpr
 	;
@@ -301,6 +311,10 @@ arrLitExpr
 
 bvLitExpr
     :   bv=BV
+    ;
+
+fpLitExpr
+    :   sig=(PLUS | MINUS)? bvLitExpr bvLitExpr
     ;
 
 idExpr
@@ -508,6 +522,46 @@ BV_SGT
 
 BV_SGE
     :   'bvsge'
+    ;
+
+FP_ABS
+    :   'fpabs'
+    ;
+
+FP_FROM_BV
+    :   'fpfrombv'
+    ;
+
+FP_IS_NAN
+    :   'fpisnan'
+    ;
+
+FPMAX
+    :   'fpmax'
+    ;
+
+FPMIN
+    :   'fpmin'
+    ;
+
+FPREM
+    :   'fprem'
+    ;
+
+FPROUNDTOINT
+    :   'fproundtoint'
+    ;
+
+FPSQRT
+    :   'fpsqrt'
+    ;
+
+FPTOBV
+    :   'fptobv'
+    ;
+
+FPTOFP
+    :   'fptofp'
     ;
 
 TRUE:	'true'
