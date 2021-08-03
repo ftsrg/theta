@@ -412,7 +412,7 @@ public final class ExprSimplifier {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
 		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) {
-			return (LitExpr<ET>) expr.eval(val);
+			return expr.eval(val);
 		}
 		return expr.with(arr, index);
 	}
@@ -2037,11 +2037,9 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
-		final Expr<BvType> sgn = simplify(expr.getSgn(), val);
-		final Expr<BvType> exp = simplify(expr.getExp(), val);
-		final Expr<BvType> sig = simplify(expr.getExp(), val);
+		final Expr<BvType> sgn = simplify(expr.getOp(), val);
 
-		if (sgn instanceof BvLitExpr && exp instanceof BvLitExpr && sig instanceof BvLitExpr) {
+		if (sgn instanceof BvLitExpr) {
 			return expr.eval(val);
 		}
 

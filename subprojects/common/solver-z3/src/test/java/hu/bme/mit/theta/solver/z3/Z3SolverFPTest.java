@@ -73,7 +73,6 @@ public class Z3SolverFPTest {
 		solver.push();
 
 
-		SolverStatus status = solver.check();
 		if (expected instanceof FpLitExpr && actual.getType() instanceof FpType) {
 			if (((FpLitExpr) expected).isNaN()) {
 				//noinspection unchecked
@@ -91,6 +90,7 @@ public class Z3SolverFPTest {
 		} else {
 			solver.add(EqExpr.create2(expected, actual));
 		}
+		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
 	}
 }

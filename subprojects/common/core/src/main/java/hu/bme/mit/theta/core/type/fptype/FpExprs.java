@@ -48,8 +48,8 @@ public final class FpExprs {
 		return FpAbsExpr.of(op);
 	}
 
-	public static FpFromBvExpr FromBv(final FpRoundingMode roundingMode, final Expr<BvType> sgn, final Expr<BvType> sig, final Expr<BvType> exp) {
-		return FpFromBvExpr.of(roundingMode, sgn, sig, exp);
+	public static FpFromBvExpr FromBv(final FpRoundingMode roundingMode, final Expr<BvType> op, final FpType fpType, final boolean signed) {
+		return FpFromBvExpr.of(roundingMode, op, fpType, signed);
 	}
 
 	public static FpEqExpr Eq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
