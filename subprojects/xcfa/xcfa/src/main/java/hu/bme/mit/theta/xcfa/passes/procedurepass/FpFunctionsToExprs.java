@@ -46,6 +46,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+//TODO: type-right conversions (because sqrt and sqrtf might have different domains)
 public class FpFunctionsToExprs extends ProcedurePass {
 	private static final Map<String, BiFunction<XcfaProcedure.Builder, XcfaCallStmt, Stmt>> handlers = new LinkedHashMap<>();
 	private static void addHandler(String[] names, BiFunction<XcfaProcedure.Builder, XcfaCallStmt, Stmt> handler) {
