@@ -8,7 +8,7 @@ public enum FpRoundingMode {
 	RTZ; /* Round toward zero */
 
 	public static FpRoundingMode getDefaultRoundingMode() {
-		return RNA;
+		return RNA; /* Default because it is default in the C standard */
 	}
 }
  
