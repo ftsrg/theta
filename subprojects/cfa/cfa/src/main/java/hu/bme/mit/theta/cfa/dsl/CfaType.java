@@ -19,6 +19,9 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
 import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
@@ -86,10 +89,29 @@ final class CfaType {
 
 		@Override
 		public Type visitFpType(FpTypeContext ctx) {
-			final int expSize = Integer.parseInt(ctx.exp.getText());
-			final int sigSize = Integer.parseInt(ctx.sig.getText());
+			final int expSize = getExp(ctx.getText());
+			final int sigSize = getSignificand(ctx.getText());
 			return FpType.of(expSize, sigSize);
+		}
+
+		private int getExp(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(1));
+			} else throw new RuntimeException("Exponent not well formed in fp type!");
+		}
+
+		private int getSignificand(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(2));
+			} else throw new RuntimeException("Significand not well formed in fp type!");
 		}
 	}
 
 }
+ 

@@ -71,7 +71,7 @@ public final class FpSubExpr extends SubExpr<FpType> {
 			return true;
 		} else if (obj instanceof FpSubExpr) {
 			final FpSubExpr that = (FpSubExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
 		} else {
 			return false;
 		}
@@ -87,3 +87,4 @@ public final class FpSubExpr extends SubExpr<FpType> {
 		return OPERATOR;
 	}
 }
+ 

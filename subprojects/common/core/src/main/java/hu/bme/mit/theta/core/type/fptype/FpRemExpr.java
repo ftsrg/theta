@@ -97,7 +97,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 			return true;
 		} else if (obj instanceof FpRemExpr) {
 			final FpRemExpr that = (FpRemExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
 		} else {
 			return false;
 		}
@@ -114,3 +114,4 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 	}
 
 }
+ 

@@ -66,7 +66,7 @@ public class FpAddExpr extends AddExpr<FpType> {
 			return true;
 		} else if (obj instanceof FpAddExpr) {
 			final FpAddExpr that = (FpAddExpr) obj;
-			return this.getOps().equals(that.getOps());
+			return this.getOps().equals(that.getOps()) && roundingMode == that.roundingMode;
 		} else {
 			return false;
 		}
@@ -82,3 +82,4 @@ public class FpAddExpr extends AddExpr<FpType> {
 		return OPERATOR_LABEL;
 	}
 }
+ 

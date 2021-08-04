@@ -57,6 +57,18 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpSqrtExpr) {
+			final FpSqrtExpr that = (FpSqrtExpr) obj;
+			return this.getOp().equals(that.getOp()) && roundingMode.equals(that.roundingMode);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}
@@ -66,3 +78,4 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
 		return OPERATOR_LABEL;
 	}
 }
+ 

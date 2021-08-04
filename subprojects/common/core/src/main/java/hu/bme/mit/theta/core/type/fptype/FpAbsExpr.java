@@ -49,6 +49,18 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpAbsExpr) {
+			final FpAbsExpr that = (FpAbsExpr) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}
@@ -58,3 +70,4 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 		return OPERATOR_LABEL;
 	}
 }
+ 

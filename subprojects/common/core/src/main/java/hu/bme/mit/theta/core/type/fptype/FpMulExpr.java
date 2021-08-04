@@ -66,7 +66,7 @@ public class FpMulExpr extends MulExpr<FpType> {
 			return true;
 		} else if (obj instanceof FpMulExpr) {
 			final FpMulExpr that = (FpMulExpr) obj;
-			return this.getOps().equals(that.getOps());
+			return this.getOps().equals(that.getOps()) && roundingMode == that.roundingMode;
 		} else {
 			return false;
 		}
@@ -82,3 +82,4 @@ public class FpMulExpr extends MulExpr<FpType> {
 		return OPERATOR_LABEL;
 	}
 }
+ 
