@@ -314,7 +314,7 @@ final class Z3TermTransformer {
 			return transformExists(term, model, vars);
 
 		} else {
-			throw new AssertionError("Unhandled case: " + term.toString());
+			throw new AssertionError("Unhandled case: " + term);
 		}
 	}
 
@@ -466,3 +466,4 @@ final class Z3TermTransformer {
 	}
 
 }
+ 

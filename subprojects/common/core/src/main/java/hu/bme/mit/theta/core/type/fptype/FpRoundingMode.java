@@ -11,3 +11,4 @@ public enum FpRoundingMode {
 		return RNA;
 	}
 }
+ 

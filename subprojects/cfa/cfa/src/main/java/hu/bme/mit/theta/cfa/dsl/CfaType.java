@@ -114,3 +114,4 @@ final class CfaType {
 	}
 
 }
+ 

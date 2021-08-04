@@ -58,7 +58,6 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.utils.FpUtils;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -1146,3 +1145,4 @@ final class CfaExpression {
 	}
 
 }
+ 

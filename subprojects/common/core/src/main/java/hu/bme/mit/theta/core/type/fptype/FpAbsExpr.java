@@ -3,7 +3,6 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
@@ -71,3 +70,4 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 		return OPERATOR_LABEL;
 	}
 }
+ 
