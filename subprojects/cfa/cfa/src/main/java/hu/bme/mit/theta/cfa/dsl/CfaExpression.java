@@ -58,6 +58,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.utils.FpUtils;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -66,6 +67,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -113,9 +116,14 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Max;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Min;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.RoundToIntegral;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sqrt;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToBv;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -375,6 +383,27 @@ final class CfaExpression {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
+		@Override
+		public Expr<?> visitFpFuncExpr(FpFuncExprContext ctx){
+			if (ctx.rightOp != null) {
+				final Expr<FpType> leftOp = (Expr<FpType>) ctx.leftOp.accept(this);
+				final Expr<FpType> rightOp = (Expr<FpType>) ctx.rightOp.accept(this);
+
+				switch (ctx.oper.getType()) {
+					case FPMAX:
+						return Max(getRoundingMode(ctx.oper.getText()), leftOp, rightOp);
+					case FPMIN:
+						return Min(getRoundingMode(ctx.oper.getText()), leftOp, rightOp);
+					default:
+						throw new ParseException(ctx, "Unknown operator");
+				}
+
+			} else {
+				return visitChildren(ctx);
+			}
+		}
+
 		////
 
 		@Override
@@ -581,6 +610,7 @@ final class CfaExpression {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper,
 													final MultiplicativeExprContext ctx) {
 			switch (oper.getType()) {
@@ -616,8 +646,13 @@ final class CfaExpression {
 					return createBvSRemExpr(castBv(leftOp), castBv(rightOp));
 
 				case FPREM:
-					//noinspection unchecked
-					return FpExprs.Rem(FpRoundingMode.RNE, (Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
+					return FpExprs.Rem(getRoundingMode(oper.getText()), (Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
+
+				case FPMUL:
+					return FpExprs.Mul(getRoundingMode(oper.getText()), List.of((Expr<FpType>) leftOp, (Expr<FpType>) rightOp));
+
+				case FPDIV:
+					return FpExprs.Div(getRoundingMode(oper.getText()), (Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
 
 				default:
 					throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
@@ -776,10 +811,25 @@ final class CfaExpression {
 						return IsNan((Expr<FpType>) op);
 
 					case FPROUNDTOINT:
-						return RoundToIntegral(FpRoundingMode.RNE, (Expr<FpType>) op);
+						return RoundToIntegral(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op);
 
 					case FPSQRT:
-						return Sqrt(FpRoundingMode.RNE, (Expr<FpType>) op);
+						return Sqrt(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op);
+
+					case FPTOFP:
+						return ToFp(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op, getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText()));
+
+					case FPTOBV:
+						return ToBv(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op, getBvSize(ctx.oper.getText()), isSignedBv(ctx.oper.getText()));
+
+					case FP_FROM_BV:
+						return FromBv(getRoundingMode(ctx.oper.getText()), (Expr<BvType>) op, FpType.of(getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText())), isSignedFp(ctx.oper.getText()));
+
+					case FPNEG:
+						return FpExprs.Neg((Expr<FpType>) op);
+
+					case FPPOS:
+						return FpExprs.Pos((Expr<FpType>) op);
 
 					default:
 						throw new ParseException(ctx, "Unknown operator");
@@ -787,6 +837,63 @@ final class CfaExpression {
 			} else {
 				return visitChildren(ctx);
 			}
+		}
+
+		private boolean isSignedFp(String text) {
+			Pattern pattern = Pattern.compile("\\[([us])]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return !matcher.group(1).equals("u");
+			} else return false;
+
+		}
+
+		private boolean isSignedBv(String text) {
+			Pattern pattern = Pattern.compile("\\[[0-9]*'([us])]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return !matcher.group(1).equals("u");
+			} else throw new RuntimeException("Signedness not well formed in bv type!");
+		}
+
+		private int getBvSize(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*)'[us]]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(1));
+			} else throw new RuntimeException("Size not well formed in bv type!");
+		}
+
+		private int getExp(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(1));
+			} else throw new RuntimeException("Exponent not well formed in fp type!");
+		}
+
+		private int getSignificand(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(2));
+			} else throw new RuntimeException("Significand not well formed in fp type!");
+		}
+
+		private FpRoundingMode getRoundingMode(String text) {
+			Pattern pattern = Pattern.compile("\\[([A-Z]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				FpRoundingMode fpRoundingMode = FpRoundingMode.valueOf(matcher.group(1));
+				return fpRoundingMode;
+			} else return FpRoundingMode.getDefaultRoundingMode();
+
 		}
 
 		@Override
@@ -897,8 +1004,9 @@ final class CfaExpression {
 		public Expr<?> visitFpLitExpr(FpLitExprContext ctx) {
 			final BvLitExpr significand = (BvLitExpr) ctx.bvLitExpr(1).accept(this);
 			final BvLitExpr exponent = (BvLitExpr) ctx.bvLitExpr(0).accept(this);
-			final boolean sign = ctx.sig == null || ctx.sig.getText().equals("+");
-			return FpLitExpr.of(sign, exponent, significand);
+			final boolean pos = ctx.sig == null || ctx.sig.getText().equals("+");
+			FpLitExpr of = FpLitExpr.of(!pos, exponent, significand);
+			return of;
 		}
 
 		@Override
