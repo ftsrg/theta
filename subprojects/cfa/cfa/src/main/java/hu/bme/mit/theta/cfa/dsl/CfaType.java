@@ -15,16 +15,26 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BvTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.FpTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.IntTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.RatTypeContext;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.TypeContext;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.core.type.Type;
 
 final class CfaType {
 
@@ -76,6 +86,32 @@ final class CfaType {
 			final int size = Integer.parseInt(ctx.size.getText());
 			return BvType(size);
 		}
+
+		@Override
+		public Type visitFpType(FpTypeContext ctx) {
+			final int expSize = getExp(ctx.getText());
+			final int sigSize = getSignificand(ctx.getText());
+			return FpType.of(expSize, sigSize);
+		}
+
+		private int getExp(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(1));
+			} else throw new RuntimeException("Exponent not well formed in fp type!");
+		}
+
+		private int getSignificand(String text) {
+			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find())
+			{
+				return Integer.parseInt(matcher.group(2));
+			} else throw new RuntimeException("Significand not well formed in fp type!");
+		}
 	}
 
 }
+ 

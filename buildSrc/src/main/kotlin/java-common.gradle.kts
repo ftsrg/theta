@@ -4,8 +4,11 @@ apply(plugin = "jacoco-common")
 dependencies {
     val implementation: Configuration by configurations
     val testImplementation: Configuration by configurations
+    val libPath: String by rootProject.extra
 
     implementation(Deps.guava)
+    implementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
+    implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
     testImplementation(Deps.junit4)
     testImplementation(Deps.Mockito.core)
 }
