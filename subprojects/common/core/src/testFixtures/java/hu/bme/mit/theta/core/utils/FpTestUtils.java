@@ -141,6 +141,14 @@ public class FpTestUtils {
 				{FpNegExpr.class, Fp16NaN(), Neg(Fp16NaN())},
 				{FpMulExpr.class, Fp16NaN(), Mul(RNE, List.of(Fp16NaN(), Fp16("3.4")))},
 				{FpDivExpr.class, Fp16NaN(), Div(RNE, Fp16("7.14"), Fp16NaN())},
+				{FpLeqExpr.class, Bool(false), Leq(Fp16("7.14"), Fp16NaN())},
+				{FpGeqExpr.class, Bool(false), Geq(Fp16("7.14"), Fp16NaN())},
+				{FpGtExpr.class, Bool(false), Gt(Fp16("7.14"), Fp16NaN())},
+				{FpLtExpr.class, Bool(false), Lt(Fp16("7.14"), Fp16NaN())},
+				{FpLeqExpr.class, Bool(false), Leq(Fp16NaN(), Fp16NaN())},
+				{FpGeqExpr.class, Bool(false), Geq(Fp16NaN(), Fp16NaN())},
+				{FpGtExpr.class, Bool(false), Gt(Fp16NaN(), Fp16NaN())},
+				{FpLtExpr.class, Bool(false), Lt(Fp16NaN(), Fp16NaN())},
 		});
 	}
 
