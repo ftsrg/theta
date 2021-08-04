@@ -238,6 +238,8 @@ final class Z3TermTransformer {
 		if(printed.equals("+oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()), type);
 		else if(printed.equals("-oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()), type);
 		else if(printed.equals("NaN")) return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
+		else if(printed.equals("+zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
+		else if(printed.equals("-zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
 		BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat((fpTerm).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
 		return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
 	}
