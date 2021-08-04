@@ -55,7 +55,7 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
 
 	@Override
 	public FpLitExpr eval(Valuation val) {
-		BinaryMathContext mathContext = FpUtils.getMathContext(fpType, FpRoundingMode.RNE);
+		BinaryMathContext mathContext = FpUtils.getMathContext(fpType, roundingMode);
 		BvLitExpr eval = (BvLitExpr) getOp().eval(val);
 		return FpUtils.bigFloatToFpLitExpr(new BigFloat(signed ? BvUtils.signedBvLitExprToBigInteger(eval) : BvUtils.unsignedBvLitExprToBigInteger(eval), mathContext), fpType);
 	}
