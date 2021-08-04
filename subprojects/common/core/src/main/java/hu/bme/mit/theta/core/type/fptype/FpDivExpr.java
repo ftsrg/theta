@@ -71,7 +71,7 @@ public final class FpDivExpr extends DivExpr<FpType> {
 			return true;
 		} else if (obj instanceof FpDivExpr) {
 			final FpDivExpr that = (FpDivExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
 		} else {
 			return false;
 		}

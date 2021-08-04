@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.fptype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
@@ -45,6 +46,18 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
 			return this;
 		} else {
 			return FpAbsExpr.of(op);
+		}
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpAbsExpr) {
+			final FpAbsExpr that = (FpAbsExpr) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
 		}
 	}
 

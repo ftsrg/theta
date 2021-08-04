@@ -8,6 +8,6 @@ public enum FpRoundingMode {
 	RTZ; /* Round toward zero */
 
 	public static FpRoundingMode getDefaultRoundingMode() {
-		return RNE;
+		return RNA;
 	}
 }

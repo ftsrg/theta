@@ -68,6 +68,18 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
 		return FpUtils.bigFloatToFpLitExpr(value, getType());
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpToFpExpr) {
+			final FpToFpExpr that = (FpToFpExpr) obj;
+			return this.getOp().equals(that.getOp()) && expBits == that.expBits && signBits == that.signBits && roundingMode.equals(that.roundingMode);
+		} else {
+			return false;
+		}
+	}
+
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}

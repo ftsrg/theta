@@ -51,6 +51,18 @@ public final class FpIsNanExpr extends UnaryExpr<FpType, BoolType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpIsNanExpr) {
+			final FpIsNanExpr that = (FpIsNanExpr) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}

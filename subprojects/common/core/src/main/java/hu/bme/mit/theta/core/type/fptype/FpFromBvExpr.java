@@ -60,6 +60,18 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
 		return FpUtils.bigFloatToFpLitExpr(new BigFloat(signed ? BvUtils.signedBvLitExprToBigInteger(eval) : BvUtils.unsignedBvLitExprToBigInteger(eval), mathContext), fpType);
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpFromBvExpr) {
+			final FpFromBvExpr that = (FpFromBvExpr) obj;
+			return this.getOp().equals(that.getOp()) && fpType.equals(that.fpType) && roundingMode.equals(that.roundingMode);
+		} else {
+			return false;
+		}
+	}
+
 
 	@Override
 	public FpFromBvExpr with(Expr<BvType> op) {

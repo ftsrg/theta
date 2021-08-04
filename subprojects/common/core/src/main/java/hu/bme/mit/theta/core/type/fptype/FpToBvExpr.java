@@ -80,6 +80,18 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 		}
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpToBvExpr) {
+			final FpToBvExpr that = (FpToBvExpr) obj;
+			return this.getOp().equals(that.getOp()) && size == that.size && sgn == that.sgn && roundingMode.equals(that.roundingMode);
+		} else {
+			return false;
+		}
+	}
+
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}

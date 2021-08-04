@@ -69,6 +69,17 @@ public class FpMaxExpr extends BinaryExpr<FpType, FpType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof FpMaxExpr) {
+			final FpMaxExpr that = (FpMaxExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
+		} else {
+			return false;
+		}
+	}
+	@Override
 	public LitExpr<FpType> eval(Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
