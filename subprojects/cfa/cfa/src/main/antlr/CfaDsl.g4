@@ -608,7 +608,7 @@ FP_TYPE_DECL
     ;
 
 FP_ROUNDINGMODE
-    :   LBRACK ID RBRACK
+    :   LBRACK [A-Z]* RBRACK
     ;
 
 FALSE
