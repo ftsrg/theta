@@ -58,7 +58,7 @@ public abstract class CComplexType {
 		return this.accept(getNullValueVisitor(), null);
 	}
 
-	public Expr<?> getUnitValue() {
+	public LitExpr<?> getUnitValue() {
 		return this.accept(getUnitValueVisitor(), null);
 	}
 

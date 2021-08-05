@@ -30,6 +30,16 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 	}
 
 	@Override
+	public Void visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
+		String text = ctx.getText();
+		if(text.contains(".")) {
+			isBitwise = true;
+			return null;
+		}
+		return super.visitPrimaryExpressionConstant(ctx);
+	}
+
+	@Override
 	public Void visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
 		ctx.exclusiveOrExpression(0).accept(this);
 		Boolean b = ctx.exclusiveOrExpression().size() > 1;

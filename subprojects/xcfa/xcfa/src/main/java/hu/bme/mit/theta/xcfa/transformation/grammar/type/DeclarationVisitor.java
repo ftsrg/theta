@@ -2,10 +2,11 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.type;
 
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
+import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.xcfa.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
-import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,17 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 				CDeclaration declaration = context.declarator().accept(this);
 				CStatement initializerExpression;
 				if (context.initializer() != null) {
-					checkState(context.initializer().initializerList() == null, "Initializer lists not yet implemented!");
-					initializerExpression = context.initializer().assignmentExpression().accept(FunctionVisitor.instance);
+					checkState(context.initializer().initializerList().designation().size() == 0, "Initializer list designators not yet implemented!");
+					if(context.initializer().initializerList() != null) {
+						CInitializerList cInitializerList = new CInitializerList(cSimpleType.getActualType());
+						for (CParser.InitializerContext initializer : context.initializer().initializerList().initializers) {
+							CStatement expr = initializer.assignmentExpression().accept(FunctionVisitor.instance);
+							cInitializerList.addStatement(null /* TODO: add designator */, expr);
+						}
+						initializerExpression = cInitializerList;
+					} else {
+						initializerExpression = context.initializer().assignmentExpression().accept(FunctionVisitor.instance);
+					}
 					declaration.setInitExpr(initializerExpression);
 				}
 				declaration.setBaseType(cSimpleType.getBaseType());

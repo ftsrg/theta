@@ -420,7 +420,7 @@ initializer
     ;
 
 initializerList
-    :   designation? initializer (',' designation? initializer)*
+    :   designation? initializers+=initializer (',' designation? initializers+=initializer)*
     ;
 
 designation
