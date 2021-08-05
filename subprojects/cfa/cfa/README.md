@@ -39,18 +39,32 @@ Variables of the CFA can have the following types.
 * `rat`: Rational numbers (implemented as SMT reals).
 * `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 * `bv[L]`: Bitvector of given length `L`. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
+* `fp[E:S]`: Floating point of given size exponent `E` and significand `S`. Significand size should include the hidden bit as well. The type corresponds to the FloatingPoint type in the [SMT-LIB theory](https://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml)
 
 Expressions of the CFA include the following.
 * Identifiers (variables).
 * Literals, e.g., `true`, `false` (Bool), `0`, `123` (integer), `4 % 5` (rational).
   * Array literals can be given by listing the key-value pairs and the (mandatory) default element, e.g., `[0 <- 182, 1 <- 41, default <- 75]`. If there are no elements, the key type has to be given before the default element, e.g., `[<int>default <- 75]`.
   * Bitvector literals can be given by stating the length and the exact value of the bitvector in binary, decimal or hexadecimal form. (E.g. `4'd5` is a 4-bit-long bitvector with the decimal value 5.) _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
+  * Floating point literals can be given in the following form: `[+-]?bitvector.bitvector`, defining the optional sign (+/-), exponent and significand in this order. (E.g. `+5'b10000.10'd0` is `+2.0f` of type `fp[5:11]` (half-precision IEEE-754 float)). The value is calculated the following way (using `e` for exponent size, and `E`, `S` for values, `h` for sign): `value = (-1)^h * 1.S * 2^(E-2^(e-1)+1)`
 * Comparison, e.g., `=`, `/=`, `<`, `>`, `<=`, `>=`.
 * Boolean operators, e.g., `and`, `or`, `xor`, `not`, `imply`, `iff`.
 * Arithmetic, e.g., `+`, `-`, `/`, `*`, `mod`, `rem`.
 * Conditional: `if . then . else .`.
 * Array read (`a[i]`) and write (`a[i <- v]`).
 * Bitvector specific operators, e.g., `bvand`, `bvor`, `bvxor`, `bvshl`, `bvashr`, `bvlshr`, `bvrol`, `bvror`, `bvnot`, etc. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
+* Floating point operators are special in the sense that extra arguments can be passed to them via brackets.
+  * Arithmetic: `fprem[ROUNDING?]`, `fpsub[ROUNDING?]`, `fpadd[ROUNDING?]`, `fpmul[ROUNDING?]`, `fpdiv[ROUNDING?]`, `fppos[ROUNDING?]`, `fpneg[ROUNDING?]`
+  * Conversion: `fpfrombv[FPTYPE][SIGNEDNESS][ROUNDING?]`, `fptobv[BVTYPE][ROUNDING?]`, `fptofp[FPTYPE][ROUNDING?]`
+  * Unary functions: `fpisnan`, `fpabs`, `fproundtoint[ROUNDING?]`, `fpsqrt[ROUNDING?`
+  * Binary functions: `fpmin[ROUNDING?]`, `fpmax[ROUNDING?]`
+  * Where 
+    * `ROUNDING` is one of {RNE, RNA, RTP, RTZ, RTN},
+    * `FPTYPE` is of the form `[exp:sig]`,
+    * `SIGNEDNESS` is either `u` or `s`,
+    * `BVTYPE` is of the form `size'SIGNEDNESS`.
+    * E.g. `fpfrombv[5:11][u][RNE]` creates an `FpFromBvExpr` with rounding mode `RNE` that transforms an `unsigned` bitvector into a half-precision IEEE-754 float. The same happens when `[RNE]` is omitted in `fpfrombv[5:11][u]`, as `RNE` is the default rounding mode.  
+  * Note that the regular operators (`=`, `+`, `*`, etc.; except for `mod` and `rem`) still work for FpTypes with a default rounding mode of RNE.
 
 ### Textual representation (DSL)
 
