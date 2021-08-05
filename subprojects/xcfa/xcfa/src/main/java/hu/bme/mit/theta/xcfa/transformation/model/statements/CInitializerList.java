@@ -5,7 +5,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -42,10 +42,9 @@ public class CInitializerList extends CStatement{
 			list.add(Tuple2.of(currentValue, expr));
 			currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(ImmutableValuation.empty());
 		}
-		ArrayLitExpr<I, E> of = ArrayLitExpr.of(list,
+		return ArrayInitExpr.of(list,
 				(Expr<E>) type.getNullValue(),
 				(ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(), type.getSmtType()));
-		return of;
 	}
 
 	@Override
