@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -146,7 +147,7 @@ public class FunctionInlining extends ProcessPass {
 			boolean atLeastOneAssignmentTruncated = false;
 			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
 			for (Stmt stmt : edge.getStmts()) {
-				if (stmt instanceof AssignStmt) {
+				if (stmt instanceof AssignStmt && !(((AssignStmt<?>) stmt).getVarDecl().getType() instanceof ArrayType)) {
 					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
 					CComplexType leftType = CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef());
 					checkNotNull(leftType);

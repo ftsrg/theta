@@ -2,6 +2,8 @@ package hu.bme.mit.theta.xcfa.transformation.model.declaration;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
 import java.util.ArrayList;
@@ -56,6 +58,14 @@ public class CDeclaration {
 
 	public CSimpleType getBaseType() {
 		return baseType;
+	}
+
+	public CComplexType getActualType() {
+		CComplexType actualType = baseType.getActualType();
+		for (CStatement arrayDimension : arrayDimensions) {
+			actualType = new CArray(null, actualType);
+		}
+		return actualType;
 	}
 
 	public void setBaseType(CSimpleType baseType) {

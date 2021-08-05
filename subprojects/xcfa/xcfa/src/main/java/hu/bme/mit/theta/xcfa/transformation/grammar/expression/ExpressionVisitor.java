@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CCall;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -406,10 +408,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
-		checkState(ctx.postfixExpressionBrackets().size() == 0, "Arrays are not yet supported!");
 		checkState(ctx.postfixExpressionMemberAccess().size() == 0, "Structs are not yet supported!");
 		checkState(ctx.postfixExpressionPtrMemberAccess().size() == 0, "Structs are not yet supported!");
 		if(ctx.postfixExpressionBraces().size() == 1) {
+			checkState(ctx.postfixExpressionBrackets().size() == 0, "Arrays and functions are not yet supported together!");
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
 			CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments);
@@ -419,13 +421,23 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		}
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
+			int size = ctx.postfixExpressionBrackets().size();
+			for (int i = 0; i < size; i++) {
+				CComplexType arrayType = CComplexType.getType(primary);
+				checkState(arrayType instanceof CArray, "Non-array expression used as array!");
+				Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
+				primary = ArrayReadExpr.create(primary, index);
+				XcfaMetadata.create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+			}
+			CComplexType type = CComplexType.getType(primary);
+			checkState(!(type instanceof CArray), "Raw array access not allowed!");
+
 			// we handle ++ and -- as if they were additions and assignments
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
-			if(increment != 0) {
+			if (increment != 0) {
 				Expr<?> expr = primary;
-				CComplexType type = CComplexType.getType(primary);
 				for (int i = 0; i < Math.abs(increment); i++) {
-					if(increment < 0)
+					if (increment < 0)
 						expr = AbstractExprs.Sub(expr, type.getUnitValue());
 					else
 						expr = AbstractExprs.Add(expr, type.getUnitValue());
@@ -446,6 +458,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	}
 
 	@Override
+	public Expr<?> visitPostfixExpressionBrackets(CParser.PostfixExpressionBracketsContext ctx) {
+		return ctx.expression().accept(this);
+	}
+
+	@Override
 	public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
 		return getVar(ctx.Identifier().getText()).getRef();
 	}
@@ -455,13 +472,13 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		String text = ctx.getText().toLowerCase();
 		boolean isLong = text.endsWith("l");
 		if (isLong) text = text.substring(0, text.length() - 1);
-		if(text.contains(".") || text.contains("e")) {
+		if (text.contains(".") || text.contains("e")) {
 			boolean isFloat = text.endsWith("f");
 			if (isFloat) text = text.substring(0, text.length() - 1);
-			checkState(!(isFloat&&isLong), "A constant shall only have F or L suffix, not both!");
+			checkState(!(isFloat && isLong), "A constant shall only have F or L suffix, not both!");
 			int exponent, significand;
 			CComplexType type;
-			if(isFloat) {
+			if (isFloat) {
 				exponent = ArchitectureConfig.architecture.getBitWidth("float_e");
 				significand = ArchitectureConfig.architecture.getBitWidth("float_s");
 				type = CComplexType.getFloat();

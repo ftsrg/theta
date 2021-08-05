@@ -4,6 +4,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -64,16 +65,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	private VarDecl<?> createVar(CDeclaration declaration) {
 		String name = declaration.getName();
-		CSimpleType cSimpleType = declaration.getBaseType();
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
-		peek.put(name, Var(name, cSimpleType.getActualType().getSmtType()));
+		peek.put(name, Var(name, declaration.getActualType().getSmtType()));
 		VarDecl<?> varDecl = peek.get(name);
-		for (int i = 0; i < declaration.getDerefCounter(); i++) {
-			cSimpleType.incrementPointer();
-		}
-		XcfaMetadata.create(varDecl.getRef(), "cType", cSimpleType.getActualType());
+		XcfaMetadata.create(varDecl.getRef(), "cType", declaration.getActualType());
 		flatVariables.add(varDecl);
 		declaration.setVarDecl(varDecl);
 		return varDecl;
@@ -343,9 +340,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			else {
 				VarDecl<?> varDecl = createVar(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
-				CAssume cAssume = new CAssume(assumeStmt);
-				compound.getcStatementList().add(cAssume);
+				if (!(varDecl.getType() instanceof ArrayType)) {
+					AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
+					CAssume cAssume = new CAssume(assumeStmt);
+					compound.getcStatementList().add(cAssume);
+				}
 			}
 		}
 		recordMetadata(ctx, compound);

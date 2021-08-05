@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector;
 
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CDouble;
@@ -25,15 +27,20 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 	@Override
 	public Type visit(CFloat type, Void param) {
 		return FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("float_e"),
-						ArchitectureConfig.architecture.getBitWidth("float_s"));
+				ArchitectureConfig.architecture.getBitWidth("float_e"),
+				ArchitectureConfig.architecture.getBitWidth("float_s"));
 	}
 
 	@Override
 	public Type visit(CLongDouble type, Void param) {
 		return FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-						ArchitectureConfig.architecture.getBitWidth("longdouble_s"));
+				ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+				ArchitectureConfig.architecture.getBitWidth("longdouble_s"));
+	}
+
+	@Override
+	public Type visit(CArray type, Void param) {
+		return ArrayType.of(CComplexType.getUnsignedLong().getSmtType(), type.getEmbeddedType().getSmtType());
 	}
 
 	@Override

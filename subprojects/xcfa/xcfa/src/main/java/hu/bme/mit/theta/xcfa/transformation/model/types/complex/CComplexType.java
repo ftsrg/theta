@@ -6,6 +6,11 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CCompound;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CFunction;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CChar;
@@ -175,14 +180,37 @@ public abstract class CComplexType {
 		public R visit(CChar type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CSignedChar type, T param) {
 			return visit(((CChar) type), param);
 		}
+
 		public R visit(CUnsignedChar type, T param) {
 			return visit(((CChar) type), param);
 		}
+
 		public R visit(CBool type, T param) {
 			return visit(((CInteger) type), param);
+		}
+
+		public R visit(CCompound type, T param) {
+			return visit(((CComplexType) type), param);
+		}
+
+		public R visit(CArray type, T param) {
+			return visit(((CCompound) type), param);
+		}
+
+		public R visit(CFunction type, T param) {
+			return visit(((CCompound) type), param);
+		}
+
+		public R visit(CStruct type, T param) {
+			return visit(((CCompound) type), param);
+		}
+
+		public R visit(CPointer type, T param) {
+			return visit(((CCompound) type), param);
 		}
 	}
 

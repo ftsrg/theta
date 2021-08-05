@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -24,7 +25,7 @@ public class SimplifyExprs extends ProcedurePass{
 			List<Stmt> newStmts = new ArrayList<>();
 			boolean found = false;
 			for (Stmt stmt : edge.getStmts()) {
-				if(stmt instanceof AssignStmt) {
+				if (stmt instanceof AssignStmt && !(((AssignStmt<?>) stmt).getVarDecl().getType() instanceof ArrayType)) {
 					VarDecl<?> varDecl = ((AssignStmt<?>) stmt).getVarDecl();
 					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) stmt).getExpr(), ImmutableValuation.empty());
 					XcfaMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) stmt).getExpr()));
@@ -33,8 +34,7 @@ public class SimplifyExprs extends ProcedurePass{
 							cast(CComplexType.getType(varDecl.getRef()).castTo(simplified), varDecl.getType()));
 					newStmts.add(newStmt);
 					found = true;
-				}
-				else newStmts.add(stmt);
+				} else newStmts.add(stmt);
 			}
 			if(found) {
 				builder.removeEdge(edge);
