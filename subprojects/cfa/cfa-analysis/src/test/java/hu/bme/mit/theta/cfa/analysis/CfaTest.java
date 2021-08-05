@@ -98,7 +98,7 @@ public class CfaTest {
 
 				{ "src/test/resources/arrays.cfa", PRED_BOOL, BW_BIN_ITP, false, 8 },
 
-				{ "src/test/resources/arrayinit.cfa", PRED_CART, BW_BIN_ITP, false, 4 },
+				{ "src/test/resources/arrayinit.cfa", PRED_CART, BW_BIN_ITP, false, 3 },
 
 				{ "src/test/resources/arrays.cfa", EXPL, SEQ_ITP, false, 8 },
 
