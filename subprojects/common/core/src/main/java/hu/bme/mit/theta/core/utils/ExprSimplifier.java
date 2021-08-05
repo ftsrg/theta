@@ -415,7 +415,7 @@ public final class ExprSimplifier {
 	simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) {
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
 			return expr.eval(val);
 		}
 		return expr.with(arr, index);
