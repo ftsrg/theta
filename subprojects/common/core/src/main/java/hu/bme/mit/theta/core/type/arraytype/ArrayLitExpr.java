@@ -86,7 +86,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 			return true;
 		} else if (obj instanceof ArrayLitExpr) {
 			final ArrayLitExpr<?, ?> that = (ArrayLitExpr<?, ?>) obj;
-			return this.type.equals(that.type) && this.elems.equals(that.elems);
+			return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(that.elseElem);
 		} else {
 			return false;
 		}
