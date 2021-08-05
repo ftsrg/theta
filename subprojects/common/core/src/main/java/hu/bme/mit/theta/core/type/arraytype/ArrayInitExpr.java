@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> extends NullaryExpr<ArrayType<IndexType, ElemType>> {
 
-	private static final int HASH_SEED = 229;
+	private static final int HASH_SEED = 241;
 	private static final String OPERATOR_LABEL = "arrayinit";
 
 	private final ArrayType<IndexType, ElemType> type;
