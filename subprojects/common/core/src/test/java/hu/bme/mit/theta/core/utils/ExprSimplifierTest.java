@@ -723,7 +723,7 @@ public class ExprSimplifierTest {
 	// Array
 	@Test
 	public void testArrayRead() {
-		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
 		var arr = Array(elems, Int(100), Array(Int(), Int()));
@@ -734,7 +734,7 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testArrayWrite() {
-		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		var arr = Array(elems, Int(100), Array(Int(), Int()));
 		var newArr = simplify(Write(arr, Int(5), Int(6)));

@@ -1030,7 +1030,7 @@ final class CfaExpression {
 			}
 			valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-			final List<Tuple2<Expr<T1>, Expr<T2>>> elems = IntStream
+			final List<Tuple2<? extends Expr<T1>, ? extends Expr<T2>>> elems = IntStream
 				.range(0, ctx.indexExpr.size())
 				.mapToObj(i -> Tuple2.of(
 					cast(ctx.indexExpr.get(i).accept(this), indexType),

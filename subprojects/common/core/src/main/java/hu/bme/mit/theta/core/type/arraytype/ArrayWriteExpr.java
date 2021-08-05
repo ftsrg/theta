@@ -15,22 +15,21 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		implements Expr<ArrayType<IndexType, ElemType>> {
@@ -89,8 +88,8 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		LitExpr<IndexType> indexVal = index.eval(val);
 		LitExpr<ElemType> elemVal = elem.eval(val);
 
-		List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elemList = new ArrayList<>();
-		for(Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+		List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elemList = new ArrayList<>();
+		for(Tuple2<LitExpr<IndexType>, LitExpr<ElemType>> elem : arrayVal.getElements()) {
 			if(!elem.get1().equals(indexVal)) {
 				elemList.add(elem);
 			}
