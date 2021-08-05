@@ -412,7 +412,12 @@ public final class ExprSimplifier {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
 		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) {
-			return expr.eval(val);
+			ArrayLitExpr<IT, ET> arrayLit = (ArrayLitExpr<IT, ET>) arr.eval(val);
+			for (Tuple2<Expr<IT>, Expr<ET>> element : arrayLit.getElements()) {
+				if (element.get1().equals(index)){
+					return simplify(element.get2(), val);
+				}
+			}
 		}
 		return expr.with(arr, index);
 	}
