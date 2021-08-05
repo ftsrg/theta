@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -390,6 +391,8 @@ final class Z3ExprTransformer {
 				.addCase(ArrayNeqExpr.class, this::transformArrayNeq)
 
 				.addCase(ArrayLitExpr.class, this::transformArrayLit)
+
+				.addCase(ArrayInitExpr.class, this::transformArrayInit)
 
 				.build();
 	}
@@ -1142,6 +1145,14 @@ final class Z3ExprTransformer {
 	 */
 
 	private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
+		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
+		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+		}
+		return running;
+	}
+
+	private com.microsoft.z3.Expr transformArrayInit(final ArrayInitExpr<?, ?> expr) {
 		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
 		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
 			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
