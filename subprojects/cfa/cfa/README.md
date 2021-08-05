@@ -39,7 +39,7 @@ Variables of the CFA can have the following types.
 * `rat`: Rational numbers (implemented as SMT reals).
 * `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 * `bv[L]`: Bitvector of given length `L`. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
-* `fp[E:S]`: Floating point of given size exponent `E` and significand `S`. Significand size should include the hidden bit as well. The type corresponds to the FloatingPoint type in the (SMT-LIB theory)[https://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml]
+* `fp[E:S]`: Floating point of given size exponent `E` and significand `S`. Significand size should include the hidden bit as well. The type corresponds to the FloatingPoint type in the [SMT-LIB theory](https://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml)
 
 Expressions of the CFA include the following.
 * Identifiers (variables).
