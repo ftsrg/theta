@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -307,6 +308,8 @@ public final class ExprWriter {
 
 				.addCase(ArrayLitExpr.class, this::arrayLit)
 
+				.addCase(ArrayInitExpr.class, this::arrayInit)
+
 				// FloatingPoint
 
 				.addCase(FpAbsExpr.class, e -> prefixUnary(e, " fpabs "))
@@ -464,6 +467,13 @@ public final class ExprWriter {
 	}
 
 	private String arrayLit(final ArrayLitExpr<?, ?> expr) {
+		return "[" +
+			expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2())).collect(Collectors.joining(", ")) +
+			"<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(expr.getElseElem()) +
+		"]";
+	}
+
+	private String arrayInit(final ArrayInitExpr<?, ?> expr) {
 		return "[" +
 			expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2())).collect(Collectors.joining(", ")) +
 			"<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(expr.getElseElem()) +
