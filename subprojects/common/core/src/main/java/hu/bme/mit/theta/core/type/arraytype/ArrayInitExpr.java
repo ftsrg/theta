@@ -35,8 +35,6 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 
 	private final Expr<ElemType> elseElem;
 
-	private volatile int hashCode;
-
 	private ArrayInitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
 						  final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
 		//noinspection unchecked
