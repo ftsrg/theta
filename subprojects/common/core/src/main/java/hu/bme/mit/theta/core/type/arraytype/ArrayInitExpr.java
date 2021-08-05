@@ -2,19 +2,22 @@ package hu.bme.mit.theta.core.type.arraytype;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
-public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> extends NullaryExpr<ArrayType<IndexType, ElemType>> {
+public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> extends MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
 
 	private static final int HASH_SEED = 241;
 	private static final String OPERATOR_LABEL = "arrayinit";
@@ -29,6 +32,8 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 
 	private ArrayInitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
 						  final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
+		//noinspection unchecked
+		super(Stream.concat(List.of((Expr<Type>)elseElem).stream(), Stream.concat(elems.stream().map(objects -> (Expr<Type>)objects.get1()), elems.stream().map(objects -> (Expr<Type>)objects.get2()))).collect(Collectors.toList()));
 		this.type = checkNotNull(type);
 		this.elseElem = checkNotNull(elseElem);
 		this.elems = checkNotNull(elems);
@@ -55,19 +60,6 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 		return ArrayLitExpr.of(elems.stream().map(objects -> Tuple2.of(objects.get1().eval(val), objects.get2().eval(val))).collect(Collectors.toList()), elseElem, type);
 	}
 
-	@Override
-	public int hashCode() {
-		int tmp = hashCode;
-		if (tmp == 0) {
-			tmp = HASH_SEED;
-			tmp = 31 * tmp + type.hashCode();
-			for(Tuple2<Expr<IndexType>, Expr<ElemType>> elem : elems) {
-				tmp = 31 * tmp + elem.hashCode();
-			}
-			hashCode = tmp;
-		}
-		return tmp;
-	}
 
 	@Override
 	public boolean equals(final Object obj) {
@@ -81,12 +73,36 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 		}
 	}
 
+
+	@SuppressWarnings("unchecked")
 	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(OPERATOR_LABEL)
-				.addAll(elems.stream().map(elem -> String.format("(%s %s)", elem.get1(), elem.get2())))
-				.add((String.format("(default %s)", elseElem)))
-				.toString();
+	public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> with(Iterable<? extends Expr<Type>> ops) {
+		long size = StreamSupport.stream(ops.spliterator(), false).count();
+		checkState(size % 2 == 1, "Ops must be odd long!");
+		long counter = 0;
+		Expr<ElemType> elseElem = null;
+		List<Expr<IndexType>> indices = new ArrayList<>();
+		List<Expr<ElemType>> elems = new ArrayList<>();
+		for (Expr<Type> op : ops) {
+			if(counter == 0) elseElem = (Expr<ElemType>) op;
+			else if (counter <= (size-1)/2) indices.add((Expr<IndexType>) op);
+			else elems.add((Expr<ElemType>) op);
+			++counter;
+		}
+		List<Tuple2<Expr<IndexType>, Expr<ElemType>>> newOps = new ArrayList<>();
+		for (int i = 0; i < indices.size(); i++) {
+			newOps.add(Tuple2.of(indices.get(i), elems.get(i)));
+		}
+		return ArrayInitExpr.of(newOps, elseElem, type);
 	}
 
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
+	}
+
+	@Override
+	public String getOperatorLabel() {
+		return OPERATOR_LABEL;
+	}
 }
