@@ -420,6 +420,7 @@ public final class ExprSimplifier {
 					return simplify(element.get2(), val);
 				}
 			}
+			return simplify(arrayLit.getElseElem(), val);
 		}
 		return expr.with(arr, index);
 	}
