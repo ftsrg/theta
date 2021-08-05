@@ -3,7 +3,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.complex.real;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
 
 public class CDouble extends CReal {
-	private static final int RANK = 0;
+	private static final int RANK = 10;
 	public CDouble(CSimpleType origin) {
 		super(origin);
 		rank = RANK;
