@@ -1935,10 +1935,6 @@ public final class ExprSimplifier {
 
 		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
 			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return True();
-			}
 		}
 
 		return expr.with(leftOp, rightOp);
