@@ -39,7 +39,7 @@ Variables of the CFA can have the following types.
 * `rat`: Rational numbers (implemented as SMT reals).
 * `[K] -> V`: SMT arrays (associative maps) from a given key type `K` to a value type `V`.
 * `bv[L]`: Bitvector of given length `L`. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
-* `fp[E:S]`: Floating point of given size exponent `E` and significand `S`. Significand size should include the hidden bit as well.` 
+* `fp[E:S]`: Floating point of given size exponent `E` and significand `S`. Significand size should include the hidden bit as well. The type corresponds to the FloatingPoint type in the (SMT-LIB theory)[https://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml]
 
 Expressions of the CFA include the following.
 * Identifiers (variables).
@@ -54,15 +54,16 @@ Expressions of the CFA include the following.
 * Array read (`a[i]`) and write (`a[i <- v]`).
 * Bitvector specific operators, e.g., `bvand`, `bvor`, `bvxor`, `bvshl`, `bvashr`, `bvlshr`, `bvrol`, `bvror`, `bvnot`, etc. _This is an experimental feature. See the [details](doc/bitvectors.md) for more information._
 * Floating point operators are special in the sense that extra arguments can be passed to them via brackets.
-  * No extra arguments: `fpisnan`, `fpabs`
-  * Optionally customizable rounding mode: `fpmax[ROUNDING?]`, `fpmin[ROUNDING?]`, `fprem[ROUNDING?]`, `fproundtoint[ROUNDING?]`, `fpsqrt[ROUNDING?]`, `fpsub[ROUNDING?]`, `fpadd[ROUNDING?]`, `fpmul[ROUNDING?]`, `fpdiv[ROUNDING?]`, `fppos[ROUNDING?]`, `fpneg[ROUNDING?]`
-  * Special: `fpfrombv[FPTYPE][SIGNEDNESS][ROUNDING?]`, `fptobv[BVTYPE][ROUNDING?]`, `fptofp[FPTYPE][ROUNDING?]`
+  * Arithmetic: `fprem[ROUNDING?]`, `fpsub[ROUNDING?]`, `fpadd[ROUNDING?]`, `fpmul[ROUNDING?]`, `fpdiv[ROUNDING?]`, `fppos[ROUNDING?]`, `fpneg[ROUNDING?]`
+  * Conversion: `fpfrombv[FPTYPE][SIGNEDNESS][ROUNDING?]`, `fptobv[BVTYPE][ROUNDING?]`, `fptofp[FPTYPE][ROUNDING?]`
+  * Unary functions: `fpisnan`, `fpabs`, `fproundtoint[ROUNDING?]`, `fpsqrt[ROUNDING?`
+  * Binary functions: `fpmin[ROUNDING?]`, `fpmax[ROUNDING?]`
   * Where 
     * `ROUNDING` is one of {RNE, RNA, RTP, RTZ, RTN},
     * `FPTYPE` is of the form `[exp:sig]`,
     * `SIGNEDNESS` is either `u` or `s`,
     * `BVTYPE` is of the form `size'SIGNEDNESS`.
-    * E.g. `fpfrombv[5:11][u][RNE]` creates an `FpFromBvExpr` with rounding mode `RNE` that transforms an `unsigned` bitvector into a half-precision IEEE-754 float.
+    * E.g. `fpfrombv[5:11][u][RNE]` creates an `FpFromBvExpr` with rounding mode `RNE` that transforms an `unsigned` bitvector into a half-precision IEEE-754 float. The same happens when `[RNE]` is omitted in `fpfrombv[5:11][u]`, as `RNE` is the default rounding mode.  
   * Note that the regular operators (`=`, `+`, `*`, etc.; except for `mod` and `rem`) still work for FpTypes with a default rounding mode of RNE.
 
 ### Textual representation (DSL)
