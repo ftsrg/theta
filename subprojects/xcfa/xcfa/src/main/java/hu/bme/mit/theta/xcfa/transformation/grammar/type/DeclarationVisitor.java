@@ -36,8 +36,8 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 				CDeclaration declaration = context.declarator().accept(this);
 				CStatement initializerExpression;
 				if (context.initializer() != null) {
-					checkState(context.initializer().initializerList().designation().size() == 0, "Initializer list designators not yet implemented!");
 					if(context.initializer().initializerList() != null) {
+						checkState(context.initializer().initializerList().designation().size() == 0, "Initializer list designators not yet implemented!");
 						CInitializerList cInitializerList = new CInitializerList(cSimpleType.getActualType());
 						for (CParser.InitializerContext initializer : context.initializer().initializerList().initializers) {
 							CStatement expr = initializer.assignmentExpression().accept(FunctionVisitor.instance);

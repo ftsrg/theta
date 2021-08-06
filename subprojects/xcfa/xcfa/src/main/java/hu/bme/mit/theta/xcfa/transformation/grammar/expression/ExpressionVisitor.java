@@ -421,6 +421,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		}
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
+			if(primary == null) return null;
 			int size = ctx.postfixExpressionBrackets().size();
 			for (int i = 0; i < size; i++) {
 				CComplexType arrayType = CComplexType.getType(primary);
@@ -430,11 +431,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				XcfaMetadata.create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
 			}
 			CComplexType type = CComplexType.getType(primary);
-			checkState(!(type instanceof CArray), "Raw array access not allowed!");
 
 			// we handle ++ and -- as if they were additions and assignments
 			int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
 			if (increment != 0) {
+				checkState(!(type instanceof CArray), "Raw array access not allowed!");
 				Expr<?> expr = primary;
 				for (int i = 0; i < Math.abs(increment); i++) {
 					if (increment < 0)

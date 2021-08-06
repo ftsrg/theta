@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Unsigned;
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CReal;
 import java.math.BigInteger;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -175,5 +177,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 			return param;
 		return handleFp(type, param);
 
+	}
+
+	@Override
+	public Expr<?> visit(CArray type, Expr<?> param) {
+		checkState(CComplexType.getType(param) instanceof CArray, "Only arrays can be used in place of arrays!");
+		return param;
 	}
 }
