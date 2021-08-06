@@ -121,6 +121,7 @@ public final class XCFA {
 		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
 		if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null) builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
+		else builder.setErrorLoc(builder.createLoc());
 		builder.setFinalLoc(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc()));
 
 		return builder.build();
