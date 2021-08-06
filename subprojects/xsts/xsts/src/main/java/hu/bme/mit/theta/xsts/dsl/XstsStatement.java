@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -19,10 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -131,6 +132,40 @@ public class XstsStatement {
 				stmts.add(stmt);
 			}
 			return NonDetStmt.of(stmts);
+		}
+
+		@Override
+		public Stmt visitAssignArrayWriteSugar(AssignArrayWriteSugarContext ctx) {
+			try {
+				final String lhsId = ctx.array.getText();
+				final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
+				final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
+				checkArgument(var.getType() instanceof ArrayType);
+
+				final XstsExpression index = new XstsExpression(currentScope, typeTable, ctx.index);
+				final Expr<?> indexExpr = index.instantiate(env);
+
+				final XstsExpression value = new XstsExpression(currentScope, typeTable, ctx.value);
+				final Expr<?> valueExpr = value.instantiate(env);
+
+				final Expr<?> arrayWriteExpr = createArrayWriteExpr(var.getRef(), indexExpr, valueExpr);
+				if (arrayWriteExpr.getType().equals(var.getType())) {
+					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
+					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) arrayWriteExpr;
+					return Assign(tVar, tExpr);
+				} else {
+					throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + arrayWriteExpr);
+				}
+			} catch (Exception e){
+				throw new ParseException(ctx,e.getMessage());
+			}
+		}
+
+		private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(Expr<?> var, Expr<?> indexExpr, Expr<?> valueExpr){
+			@SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) var;
+			final Expr<T1> index = cast(indexExpr, array.getType().getIndexType());
+			final Expr<T2> value = cast(valueExpr, array.getType().getElemType());
+			return Write(array, index, value);
 		}
 
 		@Override

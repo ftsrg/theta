@@ -256,6 +256,7 @@ DEFAULT
 // S T A T E M E N T S
 
 stmt:	localVarDeclStmt
+    |   assignArrayWriteSugar
     |   assignStmt
 	|	havocStmt
 	|	assumeStmt
@@ -284,6 +285,10 @@ localVarDeclStmt
 //    :
 //    ;
 
+assignArrayWriteSugar
+    :   array=ID LBRACK index=expr RBRACK ASSIGN value=expr SEMICOLON
+    ;
+
 assignStmt
 	:	lhs=ID ASSIGN value=expr SEMICOLON
 	;
@@ -295,7 +300,6 @@ havocStmt
 assumeStmt
 	:	ASSUME cond=expr SEMICOLON
 	;
-
 
 //
 
