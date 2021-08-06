@@ -53,7 +53,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 				if(that instanceof Unsigned) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
 				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 			} else if (that.width() > type.width()) {
-				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(type.width()-1), Int(0));
+				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
 			} else return param;
 		} else {
 			throw new IllegalStateException("Compound types are not directly supported!");

@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -29,22 +30,27 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CFor;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CFunction;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CGoto;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CIf;
+import hu.bme.mit.theta.xcfa.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CRet;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -63,17 +69,27 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	private final List<VarDecl<?>> flatVariables;
 	private final Map<VarDecl<?>, CDeclaration> functions;
 
-	private VarDecl<?> createVar(CDeclaration declaration) {
+	private Collection<VarDecl<?>> createVars(CDeclaration declaration) {
 		String name = declaration.getName();
+		List<VarDecl<?>> vars = new ArrayList<>();
+		createVars(name, declaration, declaration.getActualType(), vars);
+		return vars;
+	}
+
+	private void createVars(String name, CDeclaration declaration, CComplexType type, List<VarDecl<?>> vars) {
+		if(type instanceof CStruct) {
+			((CStruct) type).getFields().forEach((s, type1) -> {
+				createVars(name + "." + s, declaration, type1, vars);
+			});
+		}
+		VarDecl<?> varDecl = Var(name, type.getSmtType());
 		Map<String, VarDecl<?>> peek = variables.peek();
 		//noinspection ConstantConditions
 		checkState(!peek.containsKey(name), "Variable already exists!");
-		peek.put(name, Var(name, declaration.getActualType().getSmtType()));
-		VarDecl<?> varDecl = peek.get(name);
-		XcfaMetadata.create(varDecl.getRef(), "cType", declaration.getActualType());
+		peek.put(name, varDecl);
 		flatVariables.add(varDecl);
-		declaration.setVarDecl(varDecl);
-		return varDecl;
+		XcfaMetadata.create(varDecl.getRef(), "cType", type);
+		declaration.addVarDecl(varDecl);
 	}
 
 	public FunctionVisitor() {
@@ -128,15 +144,21 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
-			if(!declaration.isFunc()) // functions should not be interpreted as global variables
-				decls.getcDeclarations().add(Tuple2.of(declaration, createVar(declaration)));
+			if(!declaration.isFunc()) { // functions should not be interpreted as global variables
+				createVars(declaration);
+				for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+					decls.getcDeclarations().add(Tuple2.of(declaration, varDecl));
+				}
+			}
 			else {
 				CSimpleType returnType = declaration.getBaseType();
 				declaration.setBaseType(returnType);
 				if(!variables.peek().containsKey(declaration.getName())) {
 					XcfaMetadata.create(declaration.getName(), "cType", returnType.getActualType());
-					VarDecl<?> var = createVar(declaration);
-					functions.put(var, declaration);
+					createVars(declaration);
+					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+						functions.put(varDecl, declaration);
+					}
 				}
 			}
 		}
@@ -151,14 +173,16 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		funcDecl.setBaseType(returnType);
 		if(!variables.peek().containsKey(funcDecl.getName())) {
 			XcfaMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
-			VarDecl<?> var = createVar(funcDecl);
-			functions.put(var, funcDecl);
+			createVars(funcDecl);
+			for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
+				functions.put(varDecl, funcDecl);
+			}
 		}
 		variables.push(new LinkedHashMap<>());
 		locLUT.clear();
 		flatVariables.clear();
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			if(functionParam.getName() != null) createVar(functionParam);
+			if(functionParam.getName() != null) createVars(functionParam);
 		}
 		CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
 		if(blockItemListContext != null) {
@@ -333,17 +357,45 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
 			if(declaration.getInitExpr() != null) {
-				CAssignment cAssignment = new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "=");
-				recordMetadata(ctx, cAssignment);
-				compound.getcStatementList().add(cAssignment);
+				createVars(declaration);
+				if(declaration.getBaseType() instanceof Struct) {
+					checkState(declaration.getInitExpr() instanceof CInitializerList, "Struct can only be initialized via an initializer list!");
+					List<VarDecl<?>> varDecls = declaration.getVarDecls();
+					for (int i = 0; i < varDecls.size(); i++) {
+						VarDecl<?> varDecl = varDecls.get(i);
+						Tuple2<Optional<CStatement>, CStatement> initializer = ((CInitializerList) declaration.getInitExpr()).getStatements().get(i);
+
+						CAssignment cAssignment = new CAssignment(varDecl.getRef(), initializer.get2(), "=");
+						recordMetadata(ctx, cAssignment);
+						compound.getcStatementList().add(cAssignment);
+					}
+				}
+				else {
+					checkState(declaration.getVarDecls().size() == 1, "non-struct declarations shall only have one variable!");
+					CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
+					recordMetadata(ctx, cAssignment);
+					compound.getcStatementList().add(cAssignment);
+				}
 			}
 			else {
-				VarDecl<?> varDecl = createVar(declaration);
+				createVars(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				if (!(varDecl.getType() instanceof ArrayType)) {
-					AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
-					CAssume cAssume = new CAssume(assumeStmt);
-					compound.getcStatementList().add(cAssume);
+				if(declaration.getBaseType() instanceof Struct) {
+					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+						if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) { // BoolType is either well-defined true/false, or a struct in disguise
+							AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
+							CAssume cAssume = new CAssume(assumeStmt);
+							compound.getcStatementList().add(cAssume);
+						}
+					}
+				}
+				else {
+					VarDecl<?> varDecl = declaration.getVarDecls().get(0);
+					if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) {
+						AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
+						CAssume cAssume = new CAssume(assumeStmt);
+						compound.getcStatementList().add(cAssume);
+					}
 				}
 			}
 		}
@@ -402,7 +454,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			CAssignment cAssignment = new CAssignment(createVar(declaration).getRef(), declaration.getInitExpr(), "=");
+			createVars(declaration);
+			checkState(declaration.getVarDecls().size() == 1, "For loops cannot have struct declarations! (not yet implemented)");
+			CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
 			recordMetadata(ctx, cAssignment);
 			if(declaration.getInitExpr() != null) compound.getcStatementList().add(cAssignment);
 		}

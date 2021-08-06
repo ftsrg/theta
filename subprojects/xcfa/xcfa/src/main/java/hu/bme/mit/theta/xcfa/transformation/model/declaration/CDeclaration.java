@@ -12,7 +12,7 @@ import java.util.List;
 public class CDeclaration {
 	private CSimpleType baseType;
 	private final String name;
-	private VarDecl<?> varDecl;
+	private final List<VarDecl<?>> varDecls;
 	private boolean isFunc;
 	private int derefCounter = 0;
 	private final List<CStatement> arrayDimensions = new ArrayList<>();
@@ -23,9 +23,11 @@ public class CDeclaration {
 		this.name = null;
 		this.baseType = cSimpleType.getBaseType();
 		this.derefCounter = cSimpleType.getPointerLevel();
+		this.varDecls = new ArrayList<>();
 	}
 	public CDeclaration(String name) {
 		this.name = name;
+		this.varDecls = new ArrayList<>();
 	}
 
 	public String getName() {
@@ -108,11 +110,11 @@ public class CDeclaration {
 		isFunc = func;
 	}
 
-	public VarDecl<?> getVarDecl() {
-		return varDecl;
+	public List<VarDecl<?>> getVarDecls() {
+		return varDecls;
 	}
 
-	public void setVarDecl(VarDecl<?> varDecl) {
-		this.varDecl = varDecl;
+	public void addVarDecl(VarDecl<?> varDecl) {
+		this.varDecls.add(varDecl);
 	}
 }

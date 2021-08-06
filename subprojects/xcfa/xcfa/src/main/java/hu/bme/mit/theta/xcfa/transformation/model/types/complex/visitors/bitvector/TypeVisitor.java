@@ -8,11 +8,14 @@ import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CLongDouble;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 	public static final TypeVisitor instance = new TypeVisitor();
@@ -51,5 +54,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 	@Override
 	public Type visit(CVoid type, Void param) {
 		return BvType.of(1, false);
+	}
+
+	@Override
+	public Type visit(CStruct type, Void param) {
+		return Bool();
 	}
 }

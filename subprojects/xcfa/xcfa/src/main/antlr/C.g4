@@ -263,7 +263,7 @@ structDeclarationList
     ;
 
 structDeclaration
-    :   specifierQualifierList structDeclaratorList? ';'    #structDeclarationSimple
+    :   specifierQualifierList structDeclaratorList? ';'
 //    |   staticAssertDeclaration                             #structDeclarationStatic
     ;
 

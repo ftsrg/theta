@@ -58,4 +58,8 @@ public class CInitializerList extends CStatement{
 	public void addStatement(CStatement index, CStatement value) {
 		statements.add(Tuple2.of(Optional.ofNullable(index), value));
 	}
+
+	public List<Tuple2<Optional<CStatement>, CStatement>> getStatements() {
+		return statements;
+	}
 }

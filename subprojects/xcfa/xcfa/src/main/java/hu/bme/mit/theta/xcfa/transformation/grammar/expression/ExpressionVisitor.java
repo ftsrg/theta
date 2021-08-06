@@ -408,8 +408,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
-		checkState(ctx.postfixExpressionMemberAccess().size() == 0, "Structs are not yet supported!");
-		checkState(ctx.postfixExpressionPtrMemberAccess().size() == 0, "Structs are not yet supported!");
+		checkState(ctx.postfixExpressionMemberAccess().size() == 0 || ctx.postfixExpressionBrackets().size() == 0, "Structs of arrays are not yet supported!");
+		checkState(ctx.postfixExpressionPtrMemberAccess().size() == 0, "Struct pointers are not yet supported!");
 		if(ctx.postfixExpressionBraces().size() == 1) {
 			checkState(ctx.postfixExpressionBrackets().size() == 0, "Arrays and functions are not yet supported together!");
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
@@ -421,14 +421,27 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		}
 		else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
-			if(primary == null) return null;
-			int size = ctx.postfixExpressionBrackets().size();
-			for (int i = 0; i < size; i++) {
-				CComplexType arrayType = CComplexType.getType(primary);
-				checkState(arrayType instanceof CArray, "Non-array expression used as array!");
-				Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-				primary = ArrayReadExpr.create(primary, index);
-				XcfaMetadata.create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+			if(primary == null) {
+				return null;
+			} else {
+				int size = ctx.postfixExpressionBrackets().size();
+				for (int i = 0; i < size; i++) {
+					CComplexType arrayType = CComplexType.getType(primary);
+					checkState(arrayType instanceof CArray, "Non-array expression used as array!");
+					Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
+					primary = ArrayReadExpr.create(primary, index);
+					XcfaMetadata.create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+				}
+				size = ctx.postfixExpressionMemberAccess().size();
+				if (size > 0) {
+					StringBuilder varName = new StringBuilder(ctx.primaryExpression().getText());
+					for (int i = 0; i < size; i++) {
+						varName.append(ctx.postfixExpressionMemberAccess().get(i).getText());
+					}
+					VarDecl<?> var = getVar(varName.toString());
+					if(var == null) return null;
+					primary = var.getRef();
+				}
 			}
 			CComplexType type = CComplexType.getType(primary);
 

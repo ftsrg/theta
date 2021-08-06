@@ -65,8 +65,10 @@ public class CFunction extends CStatement{
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			checkState(functionParam.getBaseType().getActualType() instanceof CVoid ||  functionParam.getVarDecl() != null, "Function param should have an associated variable!");
-			if(functionParam.getVarDecl() != null) builder.createParam(XcfaProcedure.Direction.IN, functionParam.getVarDecl());
+			checkState(functionParam.getBaseType().getActualType() instanceof CVoid ||  functionParam.getVarDecls().size() > 0, "Function param should have an associated variable!");
+			for (VarDecl<?> varDecl : functionParam.getVarDecls()) {
+				if(varDecl != null) builder.createParam(XcfaProcedure.Direction.IN, varDecl);
+			}
 		}
 		XcfaLocation init = new XcfaLocation("init" + counter++, Map.of());
 		builder.addLoc(init);

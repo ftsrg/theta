@@ -4,10 +4,13 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.Enum;
 import hu.bme.mit.theta.xcfa.transformation.model.types.simple.NamedType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
@@ -128,13 +131,34 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	@Override
 	public CSimpleType visitCompoundDefinition(CParser.CompoundDefinitionContext ctx) {
-		System.err.println("Warning: CompoundDefinitions are not yet implemented!");
-		return NamedType("int");
+		if(ctx.structOrUnion().Struct() != null) {
+			String name = null;
+			if(ctx.Identifier()!=null) name = ctx.Identifier().getText();
+			Struct struct = CSimpleTypeFactory.Struct(name);
+			for (CParser.StructDeclarationContext structDeclarationContext : ctx.structDeclarationList().structDeclaration()) {
+				CParser.SpecifierQualifierListContext specifierQualifierListContext = structDeclarationContext.specifierQualifierList();
+				CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
+				if (structDeclarationContext.structDeclaratorList() == null) {
+					struct.addField(cSimpleType.getAssociatedName(), cSimpleType);
+				} else {
+					for (CParser.StructDeclaratorContext structDeclaratorContext : structDeclarationContext.structDeclaratorList().structDeclarator()) {
+						CDeclaration declaration = structDeclaratorContext.accept(DeclarationVisitor.instance);
+						struct.addField(declaration.getName(), cSimpleType);
+					}
+				}
+			}
+			return struct;
+		} else {
+			System.err.println("Warning: CompoundDefinitions are not yet implemented!");
+			return NamedType("int");
+		}
 	}
 
 	@Override
 	public CSimpleType visitCompoundUsage(CParser.CompoundUsageContext ctx) {
-		return NamedType(ctx.structOrUnion().getText() + " " + ctx.Identifier().getText());
+		String text = ctx.Identifier().getText();
+		if (ctx.structOrUnion().Struct() != null) return Struct.getByName(text);
+		else return NamedType(ctx.structOrUnion().getText() + " " + text);
 	}
 
 	@Override

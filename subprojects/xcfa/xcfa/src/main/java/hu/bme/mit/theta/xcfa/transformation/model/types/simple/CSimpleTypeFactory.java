@@ -28,4 +28,6 @@ public class CSimpleTypeFactory {
 	public static DeclaredName DeclaredName(final String declaredName) { return new DeclaredName(declaredName); }
 
 	public static Enum Enum(final String id, final Map<String, Optional<Expr<?>>> fields) { return new Enum(id, fields); }
+
+	public static Struct Struct(final String name) { return new Struct(name); }
 }

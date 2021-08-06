@@ -68,6 +68,16 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	}
 
 	@Override
+	public CDeclaration visitStructDeclaratorSimple(CParser.StructDeclaratorSimpleContext ctx) {
+		return ctx.declarator().accept(this);
+	}
+
+	@Override
+	public CDeclaration visitStructDeclaratorConstant(CParser.StructDeclaratorConstantContext ctx) {
+		throw new UnsupportedOperationException("Not yet supported!");
+	}
+
+	@Override
 	public CDeclaration visitAbstractParameterDeclaration(CParser.AbstractParameterDeclarationContext ctx) {
 		CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(TypeVisitor.instance);
 		checkState(ctx.abstractDeclarator() == null, "Abstract declarators not yet supported!");
