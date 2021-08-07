@@ -1,17 +1,21 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.ExprSimplifier;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> extends NullaryExpr<ArrayType<IndexType, ElemType>> 
 		implements LitExpr<ArrayType<IndexType, ElemType>> {
@@ -21,27 +25,34 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
 	private final ArrayType<IndexType, ElemType> type;
 
-	private final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems;
+	private final List<Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>> elems;
 
-	private final Expr<ElemType> elseElem;
+	private final LitExpr<ElemType> elseElem;
 
 	private volatile int hashCode;
 
-	private ArrayLitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+	private ArrayLitExpr(final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
 						 final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
 		this.type = checkNotNull(type);
-		this.elseElem = checkNotNull(elseElem);
-		this.elems = checkNotNull(elems);
+		Expr<ElemType> simplifiedElem = ExprSimplifier.simplify(checkNotNull(elseElem), ImmutableValuation.empty());
+		checkState(simplifiedElem instanceof LitExpr, "ArrayLitExprs shall only contain literal values!");
+		this.elseElem = (LitExpr<ElemType>) simplifiedElem;
+		this.elems = checkNotNull(elems).stream().map(elem -> {
+			Expr<IndexType> index = ExprSimplifier.simplify(elem.get1(), ImmutableValuation.empty());
+			Expr<ElemType> element = ExprSimplifier.simplify(elem.get2(), ImmutableValuation.empty());
+			checkState(index instanceof LitExpr && element instanceof LitExpr, "ArrayLitExprs shall only contain literal values");
+			return Tuple2.of((LitExpr<IndexType>)index, (LitExpr<ElemType>)element);
+		}).collect(Collectors.toList());
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> of(
-			final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+			final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
 			final Expr<ElemType> elseElem,
 			final ArrayType<IndexType, ElemType> type) {
 		return new ArrayLitExpr<>(elems, elseElem, type);
 	}
 
-	public List<Tuple2<Expr<IndexType>, Expr<ElemType>>> getElements() { return ImmutableList.copyOf(elems); }
+	public List<Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>> getElements() { return ImmutableList.copyOf(elems); }
 
 	public Expr<ElemType> getElseElem() { return elseElem; }
 
@@ -61,7 +72,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 		if (tmp == 0) {
 			tmp = HASH_SEED;
 			tmp = 31 * tmp + type.hashCode();
-			for(Tuple2<Expr<IndexType>, Expr<ElemType>> elem : elems) {
+			for(Tuple2<LitExpr<IndexType>, LitExpr<ElemType>> elem : elems) {
 				tmp = 31 * tmp + elem.hashCode();
 			}
 			hashCode = tmp;
@@ -75,7 +86,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 			return true;
 		} else if (obj instanceof ArrayLitExpr) {
 			final ArrayLitExpr<?, ?> that = (ArrayLitExpr<?, ?>) obj;
-			return this.type.equals(that.type) && this.elems.equals(that.elems);
+			return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(that.elseElem);
 		} else {
 			return false;
 		}

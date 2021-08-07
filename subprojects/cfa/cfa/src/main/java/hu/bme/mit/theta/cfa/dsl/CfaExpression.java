@@ -96,7 +96,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -125,6 +125,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
@@ -1039,7 +1040,7 @@ final class CfaExpression {
 				.collect(Collectors.toUnmodifiableList());
 
 			final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
-			return Array(elems, elseExpr, ArrayType.of(indexType, valueType));
+			return simplify(ArrayInit(elems, elseExpr, ArrayType.of(indexType, valueType)));
 		}
 
 		@Override

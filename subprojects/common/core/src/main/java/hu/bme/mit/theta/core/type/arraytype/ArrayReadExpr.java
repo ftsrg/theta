@@ -15,20 +15,19 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
 
@@ -76,9 +75,9 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	public LitExpr<ElemType> eval(final Valuation val) {
 		ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>)array.eval(val);
 		LitExpr<IndexType> indexVal = index.eval(val);
-		for (Tuple2<Expr<IndexType>, Expr<ElemType>> elem : arrayVal.getElements()) {
+		for (Tuple2<LitExpr<IndexType>, LitExpr<ElemType>> elem : arrayVal.getElements()) {
 			if (elem.get1().equals(indexVal)){
-				return (LitExpr<ElemType>)elem.get2();
+				return elem.get2();
 			}
 		}
 		return (LitExpr<ElemType>)arrayVal.getElseElem();

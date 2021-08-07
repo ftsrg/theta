@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.DispatchTable2;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -23,6 +24,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -223,6 +225,8 @@ public final class ExprSimplifier {
 
 			.addCase(ArrayWriteExpr.class, ExprSimplifier::simplifyArrayWrite)
 
+			.addCase(ArrayInitExpr.class, ExprSimplifier::simplifyArrayInit)
+
 			// Bitvectors
 
 			.addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
@@ -411,7 +415,7 @@ public final class ExprSimplifier {
 	simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
 		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
 		Expr<IT> index = simplify(expr.getIndex(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) {
+		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
 			return expr.eval(val);
 		}
 		return expr.with(arr, index);
@@ -430,6 +434,22 @@ public final class ExprSimplifier {
 			return expr.eval(val);
 		}
 		return expr.with(arr, index, elem);
+	}
+
+	private static <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
+	simplifyArrayInit(final ArrayInitExpr<IT, ET> t, final Valuation val) {
+		boolean nonLiteralFound = false;
+		List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
+		Expr<ET> newElseElem = simplify(t.getElseElem(), val);
+		if(!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
+		for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
+			Expr<IT> newIndex = simplify(element.get1(), val);
+			Expr<ET> newElement = simplify(element.get2(), val);
+			newElements.add(Tuple2.of(newIndex, newElement));
+			if(!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
+		}
+		if(nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
+		else return t.eval(val);
 	}
 
 	/*
