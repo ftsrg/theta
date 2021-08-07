@@ -756,6 +756,10 @@ public class ExprSimplifierTest {
 		var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Add(Int(1), Int(2))));
+		var initArr = ArrayInit(elems, Int(100), Array(Int(), Int()));
+		var litArr = simplify(initArr);
+		assertTrue(litArr instanceof ArrayLitExpr);
+		
 		VarDecl<IntType> noname = Var("noname", Int());
 		elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(1))));
 		var arr = ArrayInit(elems, Int(100), Array(Int(), Int()));
