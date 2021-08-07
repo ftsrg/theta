@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.utils;
 
+import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
@@ -30,6 +32,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
@@ -68,7 +71,20 @@ public class FpTestUtils {
 	private FpTestUtils() {
 	}
 
-	public static Collection<?> BasicOperations() {
+	public static Stream<?> GetOperations() {
+		return Stream.concat(
+				Stream.concat(
+						BasicOperations().stream(),
+						Stream.concat(
+								LinuxSpecificTests().stream(),
+								WindowsSpecificTests().stream())),
+				Stream.concat(
+						NaNOperations().stream(),
+						InfinityOperations().stream()
+				));
+	}
+
+	private static Collection<?> BasicOperations() {
 		return Arrays.asList(new Object[][]{
 				{FpAddExpr.class, Fp16("5.5"), Add(RNE, List.of(Fp16("2.1"), Fp16("3.4")))},
 				{FpSubExpr.class, Fp16("2.1"), Sub(RNE, Fp16("5.5"), Fp16("3.4"))},
@@ -106,7 +122,6 @@ public class FpTestUtils {
 				{FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("2.1"))},
 				{FpRemExpr.class, Fp16("0.1"), Rem(RNE, Fp16("4.3"), Fp16("-2.1"))},
 				{FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("-2.1"))},
-				//{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5"))},
 				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("2.49"))},
 				{FpRoundToIntegralExpr.class, Fp16("-10.0"), RoundToIntegral(RNE, Fp16("-10.49"))},
 				{FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41"))},
@@ -133,7 +148,21 @@ public class FpTestUtils {
 		});
 	}
 
-	public static Collection<?> NaNOperations() {
+	private static Collection<?> LinuxSpecificTests() {
+		if (!OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) return ImmutableSet.of();
+		return Arrays.asList(new Object[][]{
+				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5"))},
+		});
+	}
+
+	private static Collection<?> WindowsSpecificTests() {
+		if (!OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
+		return Arrays.asList(new Object[][]{
+				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.51"))},
+		});
+	}
+
+	private static Collection<?> NaNOperations() {
 		return Arrays.asList(new Object[][]{
 				{FpAddExpr.class, Fp16NaN(), Add(RNE, List.of(Fp16NaN(), Fp16("3.4")))},
 				{FpSubExpr.class, Fp16NaN(), Sub(RNE, Fp16("5.5"), Fp16NaN())},
@@ -152,7 +181,7 @@ public class FpTestUtils {
 		});
 	}
 
-	public static Collection<?> InfinityOperations() {
+	private static Collection<?> InfinityOperations() {
 		return Arrays.asList(new Object[][]{
 				{FpAddExpr.class, Fp16PInf(), Add(RNA, List.of(Fp16PInf(), Fp16("3.4")))},
 				{FpSubExpr.class, Fp16NInf(), Sub(RNA, Fp16("5.5"), Fp16PInf())},
