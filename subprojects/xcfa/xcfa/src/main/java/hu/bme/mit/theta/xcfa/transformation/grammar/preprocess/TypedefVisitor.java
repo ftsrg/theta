@@ -15,7 +15,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 	private final List<CDeclaration> declarations = new ArrayList<>();
 
 	public Optional<CComplexType> getType(String id) {
-		return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(cDeclaration1 -> cDeclaration1.getBaseType().getActualType()).findFirst();
+		return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(CDeclaration::getActualType).findFirst();
 	}
 
 	@Override

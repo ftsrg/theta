@@ -27,7 +27,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 		CSimpleType cSimpleType = declSpecContext.accept(TypeVisitor.instance);
 		if(cSimpleType.getAssociatedName() != null) {
 			CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
-			cDeclaration.setBaseType(cSimpleType.getBaseType());
+			cDeclaration.setType(cSimpleType);
 			cDeclaration.incDerefCounter(cSimpleType.getPointerLevel());
 			ret.add(cDeclaration);
 		}
@@ -49,7 +49,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 					}
 					declaration.setInitExpr(initializerExpression);
 				}
-				declaration.setBaseType(cSimpleType.getBaseType());
+				declaration.setType(cSimpleType);
 				ret.add(declaration);
 			}
 		}
@@ -63,7 +63,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	public CDeclaration visitOrdinaryParameterDeclaration(CParser.OrdinaryParameterDeclarationContext ctx) {
 		CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration declaration = ctx.declarator().accept(this);
-		declaration.setBaseType(cSimpleType.getBaseType());
+		declaration.setType(cSimpleType);
 		return declaration;
 	}
 

@@ -49,15 +49,15 @@ public class CFunction extends CStatement{
 		for (VarDecl<?> flatVariable : flatVariables) {
 			builder.createVar(flatVariable, null);
 		}
-		builder.setRetType(funcDecl.getBaseType().getActualType() instanceof CVoid ? null : funcDecl.getBaseType().getActualType().getSmtType());
+		builder.setRetType(funcDecl.getActualType() instanceof CVoid ? null : funcDecl.getActualType().getSmtType());
 		builder.setName(funcDecl.getName());
-		if(!(funcDecl.getBaseType().getActualType() instanceof CVoid)) {
-			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getBaseType().getActualType().getSmtType());
-			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getBaseType().getActualType());
+		if(!(funcDecl.getActualType() instanceof CVoid)) {
+			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getActualType().getSmtType());
+			XcfaMetadata.create(var.getRef(), "cType", funcDecl.getActualType());
 			builder.createParam(XcfaProcedure.Direction.OUT, var);
 		} else {
 			// TODO we assume later, that there is always a ret var, but this should change
-			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getBaseType().getActualType().getSmtType());
+			VarDecl<?> var = Var(funcDecl.getName() + "_ret" + counter++, funcDecl.getActualType().getSmtType());
 			NamedType signedIntType = CSimpleTypeFactory.NamedType("int");
 			signedIntType.setSigned(true);
 			XcfaMetadata.create(var.getRef(), "cType", signedIntType);
@@ -65,7 +65,7 @@ public class CFunction extends CStatement{
 		}
 
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			checkState(functionParam.getBaseType().getActualType() instanceof CVoid ||  functionParam.getVarDecls().size() > 0, "Function param should have an associated variable!");
+			checkState(functionParam.getActualType() instanceof CVoid ||  functionParam.getVarDecls().size() > 0, "Function param should have an associated variable!");
 			for (VarDecl<?> varDecl : functionParam.getVarDecls()) {
 				if(varDecl != null) builder.createParam(XcfaProcedure.Direction.IN, varDecl);
 			}

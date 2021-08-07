@@ -151,8 +151,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				}
 			}
 			else {
-				CSimpleType returnType = declaration.getBaseType();
-				declaration.setBaseType(returnType);
+				CSimpleType returnType = declaration.getType();
+				declaration.setType(returnType);
 				if(!variables.peek().containsKey(declaration.getName())) {
 					XcfaMetadata.create(declaration.getName(), "cType", returnType.getActualType());
 					createVars(declaration);
@@ -170,7 +170,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
 		CSimpleType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
-		funcDecl.setBaseType(returnType);
+		funcDecl.setType(returnType);
 		if(!variables.peek().containsKey(funcDecl.getName())) {
 			XcfaMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			createVars(funcDecl);
@@ -358,7 +358,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		for (CDeclaration declaration : declarations) {
 			if(declaration.getInitExpr() != null) {
 				createVars(declaration);
-				if(declaration.getBaseType() instanceof Struct) {
+				if(declaration.getType() instanceof Struct) {
 					checkState(declaration.getInitExpr() instanceof CInitializerList, "Struct can only be initialized via an initializer list!");
 					List<VarDecl<?>> varDecls = declaration.getVarDecls();
 					for (int i = 0; i < varDecls.size(); i++) {
@@ -380,7 +380,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			else {
 				createVars(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				if(declaration.getBaseType() instanceof Struct) {
+				if(declaration.getType() instanceof Struct) {
 					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
 						if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) { // BoolType is either well-defined true/false, or a struct in disguise
 							AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());

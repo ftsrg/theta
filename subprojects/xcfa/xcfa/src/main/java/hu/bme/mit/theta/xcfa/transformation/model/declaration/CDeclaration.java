@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CDeclaration {
-	private CSimpleType baseType;
+	private CSimpleType type;
 	private final String name;
 	private final List<VarDecl<?>> varDecls;
 	private boolean isFunc;
@@ -21,7 +21,7 @@ public class CDeclaration {
 
 	public CDeclaration(CSimpleType cSimpleType) {
 		this.name = null;
-		this.baseType = cSimpleType.getBaseType();
+		this.type = cSimpleType;
 		this.derefCounter = cSimpleType.getPointerLevel();
 		this.varDecls = new ArrayList<>();
 	}
@@ -58,20 +58,20 @@ public class CDeclaration {
 		return functionParams;
 	}
 
-	public CSimpleType getBaseType() {
-		return baseType;
+	public CSimpleType getType() {
+		return type;
 	}
 
 	public CComplexType getActualType() {
-		CComplexType actualType = baseType.getActualType();
+		CComplexType actualType = type.getActualType();
 		for (CStatement arrayDimension : arrayDimensions) {
 			actualType = new CArray(null, actualType);
 		}
 		return actualType;
 	}
 
-	public void setBaseType(CSimpleType baseType) {
-		this.baseType = baseType;
+	public void setType(CSimpleType baseType) {
+		this.type = baseType;
 	}
 
 	public CStatement getInitExpr() {
@@ -85,7 +85,7 @@ public class CDeclaration {
 	@Override
 	public String toString() {
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(baseType).append(" ");
+		stringBuilder.append(type).append(" ");
 		stringBuilder.append("*".repeat(Math.max(0, derefCounter)));
 		stringBuilder.append(name == null ? "" : name);
 		for (CStatement arrayDimension : arrayDimensions) {
