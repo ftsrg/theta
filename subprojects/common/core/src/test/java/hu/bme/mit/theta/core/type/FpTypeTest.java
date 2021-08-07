@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.type;
 
-import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
@@ -16,7 +14,6 @@ import org.kframework.mpfr.BigFloat;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
@@ -41,14 +38,7 @@ public class FpTypeTest {
 
 	@Parameterized.Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
 	public static Collection<?> operations() {
-		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
-		return Stream.concat(
-				FpTestUtils.BasicOperations().stream(),
-				Stream.concat(
-						FpTestUtils.NaNOperations().stream(),
-						FpTestUtils.InfinityOperations().stream()
-				)
-		).collect(Collectors.toUnmodifiableList());
+		return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
 	}
 
 	@Test
