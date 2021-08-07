@@ -82,7 +82,7 @@ Expressions of the XSTS can include the following:
 * Comparison, e.g., `==`, `!=`, `<`, `>`, `<=`, `>=`.
 * Boolean operators, e.g., `&&`, `||`, `!`, `->`.
 * Arithmetic, e.g., `+`, `-`, `/`, `*`, `%`.
-* Array read (`a[i]`) and write (`a[i <- v]`).
+* Array read (`a[i]`) and write (`a[i <- v]`). The syntactic sugar `array[index]:=value` is also available for easier array writes.
 
 ### Transitions
 

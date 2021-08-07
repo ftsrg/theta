@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.type;
 
+import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
@@ -39,6 +41,7 @@ public class FpTypeTest {
 
 	@Parameterized.Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
 	public static Collection<?> operations() {
+		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
 		return Stream.concat(
 				FpTestUtils.BasicOperations().stream(),
 				Stream.concat(

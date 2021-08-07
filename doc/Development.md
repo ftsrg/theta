@@ -3,7 +3,7 @@
 Theta is written in Java 11 using
 * [Gradle](https://gradle.org/) as a build system,
 * [Git](https://git-scm.com/) and [GitHub](https://github.com/FTSRG/theta) for version control,
-* [Travis](https://travis-ci.org/FTSRG/theta) and [GitHub actions](https://github.com/ftsrg/theta/actions) for continuous integration,
+* [GitHub actions](https://github.com/ftsrg/theta/actions) for continuous integration,
 * [Codacy](https://www.codacy.com/app/FTSRG/theta/dashboard) for static code analysis,
 * [Docker](https://www.docker.com/) for packaging.
 

@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.solver.z3;
 
+import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
@@ -41,6 +43,7 @@ public class Z3SolverFPTest {
 
 	@Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
 	public static Collection<?> operations() {
+		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
 		return Stream.concat(
 				FpTestUtils.BasicOperations().stream(),
 				Stream.concat(
