@@ -3,8 +3,12 @@ name: Linux build
 on: [push, pull_request]
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-latest
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04, ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.11
