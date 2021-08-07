@@ -5,6 +5,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,10 +27,14 @@ public class RemoveDeadEnds extends ProcedurePass{
 	}
 
 	private void collectNonDeadEndEdges(XcfaLocation loc, Set<XcfaEdge> nonDeadEndEdges) {
-		for (XcfaEdge incomingEdge : loc.getIncomingEdges()) {
-			if(!nonDeadEndEdges.contains(incomingEdge)) {
+		Set<XcfaEdge> incomingEdges = new LinkedHashSet<>(loc.getIncomingEdges());
+		while(!incomingEdges.isEmpty()) {
+			Optional<XcfaEdge> any = incomingEdges.stream().findAny();
+			XcfaEdge incomingEdge = any.get();
+			incomingEdges.remove(incomingEdge);
+			if (!nonDeadEndEdges.contains(incomingEdge)) {
 				nonDeadEndEdges.add(incomingEdge);
-				collectNonDeadEndEdges(incomingEdge.getSource(), nonDeadEndEdges);
+				incomingEdges.addAll(incomingEdge.getSource().getIncomingEdges());
 			}
 		}
 	}

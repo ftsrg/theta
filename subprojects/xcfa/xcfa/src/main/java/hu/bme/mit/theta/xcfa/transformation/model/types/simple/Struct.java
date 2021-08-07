@@ -9,6 +9,7 @@ import java.util.Map;
 public class Struct extends NamedType {
 	private final Map<String, CSimpleType> fields;
 	private final String name;
+	private boolean currentlyBeingBuilt;
 	private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
 
 	public static Struct getByName(String name) {
@@ -20,6 +21,7 @@ public class Struct extends NamedType {
 		fields = new LinkedHashMap<>();
 		this.name = name;
 		if(name != null) definedTypes.put(name, this);
+		currentlyBeingBuilt = false;
 	}
 
 	public void addField(String name, CSimpleType type) {
@@ -28,8 +30,14 @@ public class Struct extends NamedType {
 
 	@Override
 	public CComplexType getActualType() {
+		if(currentlyBeingBuilt) {
+			System.err.println("WARNING: self-embedded structs! Using long as a placeholder");
+			return CComplexType.getSignedInt();
+		}
+		currentlyBeingBuilt = true;
 		Map<String, CComplexType> actualFields = new LinkedHashMap<>();
 		fields.forEach((s, cSimpleType) -> actualFields.put(s, cSimpleType.getActualType()));
+		currentlyBeingBuilt = false;
 		return new CStruct(this, actualFields);
 	}
 

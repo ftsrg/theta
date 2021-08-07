@@ -363,7 +363,7 @@ nestedParenthesesBlock
     ;
 
 pointer
-    :  ((stars+='*'|'^') typeQualifierList?)+ // ^ - Blocks language extension
+    :  ((stars+='*'|'^') ('__restrict')? typeQualifierList?)+ // ^ - Blocks language extension
     ;
 
 typeQualifierList
