@@ -106,7 +106,7 @@ public class FpTestUtils {
 				{FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("2.1"))},
 				{FpRemExpr.class, Fp16("0.1"), Rem(RNE, Fp16("4.3"), Fp16("-2.1"))},
 				{FpRemExpr.class, Fp16("-0.1"), Rem(RNE, Fp16("-4.3"), Fp16("-2.1"))},
-				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5"))},
+				//{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5"))},
 				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("2.49"))},
 				{FpRoundToIntegralExpr.class, Fp16("-10.0"), RoundToIntegral(RNE, Fp16("-10.49"))},
 				{FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41"))},
