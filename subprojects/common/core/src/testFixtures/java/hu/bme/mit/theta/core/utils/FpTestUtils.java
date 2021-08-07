@@ -157,8 +157,9 @@ public class FpTestUtils {
 
 	private static Collection<?> WindowsSpecificTests() {
 		if (!OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
+		//noinspection RedundantArrayCreation
 		return Arrays.asList(new Object[][]{
-				{FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.51"))},
+				// This is a placeholder for any tests that might be Windows-only
 		});
 	}
 
