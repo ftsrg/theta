@@ -246,7 +246,6 @@ public class XcfaCli {
 				}
 			}
 
-
 			CFA cfa;
 			try {
 				cfa = xcfa.createCFA();
@@ -261,11 +260,12 @@ public class XcfaCli {
 				if(statisticsfile!=null) {
 					File statistics = new File(statisticsfile);
 					BufferedWriter bw = new BufferedWriter(new FileWriter(statistics));
-					// TODO whenever algorithm selection is added - change to that from the flags
 					bw.write("input file name: " + model + System.lineSeparator());
 					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
 					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+					// TODO whenever algorithm selection is added - change to that from the flags
 					bw.write("Configuration used: ");
+					bw.write(System.lineSeparator());
 					bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
 					bw.write(System.lineSeparator());
 					bw.write("Domain: " + domain);
