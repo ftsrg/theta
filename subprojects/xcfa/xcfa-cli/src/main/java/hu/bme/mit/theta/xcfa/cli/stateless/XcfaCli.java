@@ -178,14 +178,12 @@ public class XcfaCli {
 		try {
 			if(outputResults) {
 				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-				System.out.println(resultsDir);
 				boolean bool = resultsDir.mkdir();
 				if(!bool){
 					throw new RuntimeException("Couldn't create results directory");
 				}
 
 				String basicFileName = resultsDir + "/" + model.getName();
-				System.out.println(basicFileName);
 				printxcfa = basicFileName + ".xcfa";
 				printcfa = true;
 				cexfile = basicFileName + ".cex";
@@ -263,9 +261,31 @@ public class XcfaCli {
 				if(statisticsfile!=null) {
 					File statistics = new File(statisticsfile);
 					BufferedWriter bw = new BufferedWriter(new FileWriter(statistics));
+					// TODO whenever algorithm selection is added - change to that from the flags
 					bw.write("input file name: " + model + System.lineSeparator());
 					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
 					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+					bw.write("Configuration used: ");
+					bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
+					bw.write(System.lineSeparator());
+					bw.write("Domain: " + domain);
+					bw.write(System.lineSeparator());
+					bw.write("Refinement: " + refinement);
+					bw.write(System.lineSeparator());
+					bw.write("Precision granularity: " + precGranularity);
+					bw.write(System.lineSeparator());
+					bw.write("Search: " + search);
+					bw.write(System.lineSeparator());
+					bw.write("Predicate splitting: " + predSplit);
+					bw.write(System.lineSeparator());
+					bw.write("Encoding: " + encoding);
+					bw.write(System.lineSeparator());
+					bw.write("maxEnum: " + maxEnum);
+					bw.write(System.lineSeparator());
+					bw.write("initPrec: " + initPrec);
+					bw.write(System.lineSeparator());
+					bw.write("pruneStrategy: " + pruneStrategy);
+					bw.write(System.lineSeparator());
 
 					bw.close();
 				}
@@ -296,10 +316,10 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildIntegerConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(CfaConfigBuilder.Domain.PRED_CART, CfaConfigBuilder.Refinement.BW_BIN_ITP, Z3SolverFactory.getInstance())
-					.precGranularity(CfaConfigBuilder.PrecGranularity.LOCAL).search(CfaConfigBuilder.Search.ERR)
-					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(50).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
-					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.INFO)).build(cfa, errLoc);
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -308,10 +328,10 @@ public class XcfaCli {
 
 	private CfaConfig<?, ?, ?> buildBitvectorConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
 		try {
-			return new CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.NWT_IT_SP, Z3SolverFactory.getInstance())
-					.precGranularity(CfaConfigBuilder.PrecGranularity.LOCAL).search(CfaConfigBuilder.Search.ERR)
-					.predSplit(CfaConfigBuilder.PredSplit.WHOLE).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(50).initPrec(CfaConfigBuilder.InitPrec.EMPTY)
-					.pruneStrategy(PruneStrategy.LAZY).logger(new ConsoleLogger(Logger.Level.INFO)).build(cfa, errLoc);
+			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
