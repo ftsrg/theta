@@ -115,7 +115,6 @@ Strategy for refining the precision of the abstraction, i.e., inferring new pred
 
 Floating point support *(known experimental problems)*:
  * As `FpType` uses bitvectors, interpolation is not supported by Z3. Therefore most refinement strategies produce an exception.
- * Some refinement strategies produce an Out-of-Bounds exception in the `ArgTracer` class (such as `NWT_IT_WP`)
  * The working `NWT_IT_*` strategies keep refining seemingly indefinitely, with no real progress
  * The refinement strategies that do work can only handle the simplest of tasks (`NWT_WP`, `NWT_SP`, `NWT_WP_LV`), up to around 10 expressions - any more and they usually time out
 
