@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class CRet extends CStatement{
 		builder.addLoc(endLoc);
         propagateMetadata(endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
-		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, key.getType()), cast(expr.getExpression(), key.getType()))));
+		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Assign(cast(key, key.getType()), cast(CComplexType.getType(key.getRef()).castTo(expr.getExpression()), key.getType()))));
 		builder.addEdge(edge);
         propagateMetadata(edge);
 		return endLoc;

@@ -3,8 +3,10 @@ package hu.bme.mit.theta.xcfa.transformation.grammar.expression;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -29,6 +31,8 @@ import hu.bme.mit.theta.xcfa.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.real.CReal;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -377,10 +381,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
 		Expr<?> accept = ctx.castExpression().accept(this);
+		CComplexType type;
 		switch(ctx.unaryOperator().getText()) {
 			case "-": {
 				Expr<?> negExpr = AbstractExprs.Neg(accept);
-				CComplexType type = CComplexType.getType(accept);
+				type = CComplexType.getType(accept);
 				XcfaMetadata.create(negExpr, "cType", type);
 				negExpr = type.castTo(negExpr);
 				XcfaMetadata.create(negExpr, "cType", type);
@@ -396,14 +401,37 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				checkState(accept.getType() instanceof BvType);
 				//noinspection unchecked
 				Expr<?> expr = BvExprs.Neg((Expr<BvType>) accept);
-				CComplexType type = CComplexType.getType(accept);
+				type = CComplexType.getType(accept);
+				XcfaMetadata.create(expr, "cType", type);
+				type = CComplexType.getType(accept);
 				expr = type.castTo(expr);
 				XcfaMetadata.create(expr, "cType", type);
 				return expr;
+			case "&":
+				checkState(accept instanceof RefExpr<?> && ((RefExpr<?>) accept).getDecl() instanceof VarDecl, "Referencing non-variable expressions is not allowed!");
+				return reference((RefExpr<?>) accept);
 			case "*":
-			case "&": throw new UnsupportedOperationException("Pointers are not yet supported!");
+				type = CComplexType.getType(accept);
+				checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
+				return dereference(accept, (CPointer) type);
 		}
 		return accept;
+	}
+
+	private Expr<?> dereference(Expr<?> accept, CPointer type) {
+		checkState(!(CComplexType.getType(accept) instanceof CReal), "Float pointers are not yet supported!");
+		Dereference<?, Type> of = Dereference.of(accept, type.getEmbeddedType().getSmtType());
+		XcfaMetadata.create(of, "cType", type.getEmbeddedType());
+		return of;
+	}
+
+	private Expr<?> reference(RefExpr<?> accept) {
+		checkState(!(CComplexType.getType(accept) instanceof CReal), "Float pointers are not yet supported!");
+		Reference<Type, ?> of = Reference.of(accept, CComplexType.getUnsignedLong().getSmtType());
+		XcfaMetadata.create(of, "cType", new CPointer(null, CComplexType.getType(accept)));
+		XcfaMetadata.create(accept, "referenced", true);
+		XcfaMetadata.create(accept, "ptrValue", of.getId());
+		return of;
 	}
 
 	@Override
