@@ -12,6 +12,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
@@ -31,6 +32,7 @@ public class XcfaPassManager {
 
 	static {
 		procedurePasses.addAll(List.of(
+				new ReferenceToMemory(),
 				new PthreadCallsToThreadStmts(),
 				new FpFunctionsToExprs(),
 				new CallsToFinalLocs(),
