@@ -36,6 +36,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
@@ -100,6 +101,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
 	boolean printcfa;
+
+	@Parameter(names = "--estimateMaxEnum", description = "Estimate the maxEnum value for the input program and exit.")
+	boolean estimateMaxEnum;
 
 	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
 	Long timeS = Long.MAX_VALUE;
@@ -224,6 +228,11 @@ public class XcfaCli {
 				} catch(IllegalStateException ex) {
 					System.out.println("CFA creation unsuccessful. Reason: " + ex.getMessage());
 				}
+				return;
+			}
+
+			if(estimateMaxEnum) {
+				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum());
 				return;
 			}
 

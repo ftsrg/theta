@@ -16,6 +16,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
+import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
@@ -247,6 +248,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}
+				MaxEnumAnalyzer.instance.consume(guard);
 				CComplexType signedInt = CComplexType.getSignedInt();
 				expr = Ite(guard, signedInt.getUnitValue(), signedInt.getNullValue());
 				XcfaMetadata.create(expr, "cType", signedInt);
@@ -508,7 +510,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 			BigFloat bigFloat;
 			if (text.startsWith("0x")) {
-				throw new UnsupportedOperationException("Hexadeximal FP constants are not yet supported!");
+				throw new UnsupportedOperationException("Hexadecimal FP constants are not yet supported!");
 			} else if (text.startsWith("0b")) {
 				throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
 			} else {
