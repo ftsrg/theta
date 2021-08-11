@@ -10,6 +10,7 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvect
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.NullValueVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.TypeVisitor;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.UnitValueVisitor;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.bitvector.ValueVisitor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,14 +26,14 @@ public class ArchitectureConfig {
 	 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 	 */
 	public enum ArchitectureType {
-		ILP32(1, 8,16,32,32,64, 24, 8, 53, 11, 113, 15),
-		LP64(1, 8,16,32,64,64, 24, 8, 53, 11, 113, 15);
+		ILP32(1, 8,16,32,32,64, 24, 8, 53, 11, 113, 15, 65),
+		LP64(1, 8,16,32,64,64, 24, 8, 53, 11, 113, 15, 65);
 
 		public final Map<String, Integer> standardTypeSizes = new HashMap<>();
 
 		ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong,
 						 int _float_significand, int _float_exponent, int _double_significand, int _double_exponent,
-						 int _longdouble_significand, int _longdouble_exponend) {
+						 int _longdouble_significand, int _longdouble_exponend, int _fitsall) {
 			standardTypeSizes.put("void", 1);
 			standardTypeSizes.put("bool", _bool);
 			standardTypeSizes.put("char", _char);
@@ -46,6 +47,7 @@ public class ArchitectureConfig {
 			standardTypeSizes.put("double_e", _double_exponent);
 			standardTypeSizes.put("longdouble_s", _longdouble_significand);
 			standardTypeSizes.put("longdouble_e", _longdouble_exponend);
+			standardTypeSizes.put("fitsall", _fitsall);
 		}
 
 		public int getBitWidth(String typeName) {
@@ -85,5 +87,9 @@ public class ArchitectureConfig {
 	public static CComplexType.CComplexTypeVisitor<Void, Type> getTypeVisitor() {
 		if(arithmetic == ArithmeticType.bitvector) return TypeVisitor.instance;
 		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.TypeVisitor.instance;
+	}
+	public static CComplexType.CComplexTypeVisitor<String, LitExpr<?>> getValueVisitor() {
+		if(arithmetic == ArithmeticType.bitvector) return ValueVisitor.instance;
+		else return hu.bme.mit.theta.xcfa.transformation.model.types.complex.visitors.integer.ValueVisitor.instance;
 	}
 }

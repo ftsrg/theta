@@ -12,6 +12,7 @@ import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CFuncti
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
@@ -42,6 +43,7 @@ import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getLimitVi
 import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getNullValueVisitor;
 import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getTypeVisitor;
 import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getUnitValueVisitor;
+import static hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig.getValueVisitor;
 
 public abstract class CComplexType {
 	private final CSimpleType origin;
@@ -60,6 +62,10 @@ public abstract class CComplexType {
 
 	public LitExpr<?> getUnitValue() {
 		return this.accept(getUnitValueVisitor(), null);
+	}
+
+	public LitExpr<?> getValue(String value) {
+		return this.accept(getValueVisitor(), value);
 	}
 
 	public AssumeStmt limit(Expr<?> expr) {
@@ -114,6 +120,7 @@ public abstract class CComplexType {
 	public static CComplexType getFloat() { return new CFloat(null); }
 	public static CComplexType getDouble() { return new CDouble(null); }
 	public static CComplexType getLongDouble() { return new CLongDouble(null); }
+	public static CComplexType getFitsall() { return new Fitsall(null); }
 
 	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
 		return visitor.visit(this, param);
@@ -155,6 +162,9 @@ public abstract class CComplexType {
 		}
 		public R visit(CSignedLongLong type, T param) {
 			return visit(((CLongLong) type), param);
+		}
+		public R visit(Fitsall type, T param) {
+			return visit(((CInteger) type), param);
 		}
 		public R visit(CUnsignedLongLong type, T param) {
 			return visit(((CLongLong) type), param);
@@ -210,7 +220,7 @@ public abstract class CComplexType {
 		}
 
 		public R visit(CPointer type, T param) {
-			return visit(((CCompound) type), param);
+			return CComplexType.getUnsignedLong().accept(this, param);
 		}
 	}
 

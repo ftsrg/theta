@@ -5,6 +5,8 @@ import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -29,6 +31,15 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
 	public static final CastVisitor instance = new CastVisitor();
+
+	@Override
+	public Expr<?> visit(Fitsall type, Expr<?> param) {
+		if(true) return param;
+		int width = ArchitectureConfig.architecture.getBitWidth("fitsall");
+		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
+		BigInteger upperLimit = BigInteger.TWO.pow(width);
+		return Sub(Rem(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+	}
 
 	@Override
 	public Expr<?> visit(CSignedShort type, Expr<?> param) {
@@ -123,6 +134,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	@Override
 	public Expr<?> visit(CArray type, Expr<?> param) {
 		checkState(CComplexType.getType(param) instanceof CArray, "Only arrays can be used in place of arrays!");
+		return param;
+	}
+
+	@Override
+	public Expr<?> visit(CPointer type, Expr<?> param) {
+		checkState(CComplexType.getType(param) instanceof CPointer, "Only pointers can be used in place of pointers!");
 		return param;
 	}
 }

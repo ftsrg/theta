@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -41,6 +42,14 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 		return Assume(And(
 				Geq(param, Int(0)),
 				Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+	}
+
+	@Override
+	public AssumeStmt visit(Fitsall type, Expr<?> param) {
+		int width = ArchitectureConfig.architecture.getBitWidth("fitsall");
+		return Assume(And(
+				Geq(param, Int(BigInteger.TWO.pow(width-1).negate())),
+				Leq(param, Int(BigInteger.TWO.pow(width-1).subtract(BigInteger.ONE)))));
 	}
 
 	@Override
