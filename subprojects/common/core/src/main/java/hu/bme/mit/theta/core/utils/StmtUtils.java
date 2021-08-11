@@ -16,11 +16,11 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.container.Containers;
-import java.util.List;
-import java.util.Set;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Utility functions related to statements.
