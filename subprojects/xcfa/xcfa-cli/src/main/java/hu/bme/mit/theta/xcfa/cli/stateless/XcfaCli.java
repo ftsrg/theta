@@ -102,7 +102,7 @@ public class XcfaCli {
 	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
 	boolean printcfa;
 
-	@Parameter(names = "--estimateMaxEnum", description = "Estimate the maxEnum value for the input program and exit.")
+	@Parameter(names = "--estimateMaxEnum", description = "Estimate maxenum automatically; overwrites the value of the --maxenum flag.")
 	boolean estimateMaxEnum;
 
 	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
@@ -178,6 +178,11 @@ public class XcfaCli {
 		}
 
 		ArchitectureConfig.arithmetic = arithmeticType;
+		if(estimateMaxEnum) {
+			MaxEnumAnalyzer.enabled = true;
+		} else {
+			MaxEnumAnalyzer.enabled = false;
+		}
 
 		try {
 			if(outputResults) {
@@ -232,8 +237,8 @@ public class XcfaCli {
 			}
 
 			if(estimateMaxEnum) {
-				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum());
-				return;
+				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum().intValue());
+				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
 			}
 
 			if(showGui) {
