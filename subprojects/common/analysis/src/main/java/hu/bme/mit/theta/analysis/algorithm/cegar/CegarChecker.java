@@ -17,7 +17,13 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.base.Stopwatch;
 
@@ -25,6 +31,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.Utils;
@@ -44,6 +51,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Refiner<S, A, P> refiner;
 	private final Logger logger;
 
+	// controlled restart
+	private Set<AbstractArg> args = new LinkedHashSet<>();
+	private P lastPrecision = null;
+
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
@@ -58,6 +69,28 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
 			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		return new CegarChecker<>(abstractor, refiner, logger);
+	}
+
+	private class AbstractArg {
+		private final Collection<State> states;
+
+
+		private AbstractArg(final Stream<ArgNode<S, A>> nodes){
+			states = nodes.map(ArgNode::getState).collect(Collectors.toSet());
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			AbstractArg that = (AbstractArg) o;
+			return states.equals(that.states);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(states);
+		}
 	}
 
 	@Override
@@ -80,6 +113,29 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
+
+			AbstractArg abstractArg = new AbstractArg(arg.getNodes());
+			if(args.contains(abstractArg) && lastPrecision != null && lastPrecision.equals(prec)) {
+				System.err.println("Not solvable!");
+				throw new RuntimeException("Not solvable!");
+			}
+			args.add(abstractArg);
+			lastPrecision = prec;
+
+			/*Stream<ArgNode<S, A>> argNodeStream = arg.getNodes().filter(saArgNode -> !saArgNode.getState().isTop() && saArgNode.isSafe());
+			List<ArgNode<S, A>> collect = arg.getNodes().filter(saArgNode -> !saArgNode.getState().isTop() && saArgNode.isSafe()).collect(Collectors.toList());
+
+			if(argNodeStream.count() == 0) {
+				System.err.println("True arg");
+				if(lastArgTrue && lastPrecision != null && lastPrecision.equals(prec)) {
+					System.err.println("Not solvable!");
+					throw new RuntimeException("Not solvable!");
+				}
+				lastArgTrue = true;
+			} else {
+				lastArgTrue = false;
+			}
+			lastPrecision = prec;*/
 
 			if (abstractorResult.isUnsafe()) {
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

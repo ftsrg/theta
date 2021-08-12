@@ -27,4 +27,6 @@ public interface State {
 	 */
 	boolean isBottom();
 
+	default boolean isTop() { return false; }
+
 }
