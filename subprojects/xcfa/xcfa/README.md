@@ -23,6 +23,34 @@ _XCFA_ models can be _static_ or _dynamic_ depending on whether all threads are 
 * [`xcfa-analysis`](../xcfa-analysis/README.md): The analyses that work on XCFAs: a BMC-like and a CEGAR based algorithm.
 * [`cat`](../cat/README.md): The memory modeling language that is used by the analyses above.
 
+## XCFA C-Frontend
+
+This subproject adds an ANTLR-grammar based C-Frontend to Theta. This is independent of any formalism, and aims to be as widely applicable as possible.
+
+### Features
+
+This frontend can handle preprocessed .c or .i file with the following features:
+
+* Basic C support: global declarations (functions and variables), function definitions, loops, various data types, global typedefs, etc.
+* Integer- and bitvector-arithmetic support based on required features (e.g. for floats or bitwise operators bitvector precision is necessary)
+* Basic struct and array support
+* Basic (and experimental) flat-memory based pointer handling
+* ILP32 and LP64 type system support (with possible extensibility)
+
+### Limitations, known bugs
+
+A number of features are either not well tested or in certain aspects buggy. Error handling is done on a best-effort level as the C specification is way too complex to handle entirely correctly. In most cases an error or a warning message is displayed, but in some unexpected situations a silent failure is also possible.
+
+In particular, the following features are either not implemented or can produce buggy models:
+
+* Floating-point pointers (produces an exception when (de)referred)
+* Structs including arrays and arrays including structs (produces an exception when accessed)
+* Enums (only produces a warning, behaves as a normal signed int would)
+* Alignof, Sizeof, various extensions (produces a parsing exception)
+* Pointer arithmetic (produces an exception)
+* Using a non-specific subtype of `char` (produces a warning) - use `(un)signed char` instead
+* Includes and other preprocessor directives (produces an exception or fails silently!)
+
 ## XCFA formalism
 
 An XCFA is a process- and procedure-based collection of directed graphs (`V`, `L`, `E`) with
