@@ -120,7 +120,7 @@ public class XcfaCli {
 	boolean oneStmt = false;
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.SUBSTEP;
+	Logger.Level logLevel = Logger.Level.MAINSTEP;
 
 	@Parameter(names = "--domain", description = "Abstract domain")
 	CfaConfigBuilder.Domain domain = CfaConfigBuilder.Domain.PRED_CART;
@@ -135,7 +135,7 @@ public class XcfaCli {
 	CfaConfigBuilder.PredSplit predSplit = CfaConfigBuilder.PredSplit.WHOLE;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
-	CfaConfigBuilder.PrecGranularity precGranularity = CfaConfigBuilder.PrecGranularity.GLOBAL;
+	CfaConfigBuilder.PrecGranularity precGranularity = CfaConfigBuilder.PrecGranularity.LOCAL;
 
 	@Parameter(names = "--encoding", description = "Block encoding")
 	CfaConfigBuilder.Encoding encoding = CfaConfigBuilder.Encoding.LBE;

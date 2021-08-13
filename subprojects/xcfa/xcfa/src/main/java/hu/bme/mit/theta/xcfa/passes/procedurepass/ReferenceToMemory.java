@@ -81,7 +81,7 @@ public class ReferenceToMemory extends ProcedurePass{
 				unifiedMemoryMap = fitsall.castTo(expr);
 			}
 		}
-		XcfaMetadata.create(unifiedMemoryMap, "cType", fitsall);
+		if(unifiedMemoryMap != null) XcfaMetadata.create(unifiedMemoryMap, "cType", fitsall);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<Stmt> newStmts = new ArrayList<>();
