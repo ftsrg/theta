@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.solver.z3;
 
-import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
@@ -18,7 +16,6 @@ import org.kframework.mpfr.BigFloat;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
@@ -43,14 +40,7 @@ public class Z3SolverFPTest {
 
 	@Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
 	public static Collection<?> operations() {
-		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.WINDOWS)) return ImmutableSet.of();
-		return Stream.concat(
-				FpTestUtils.BasicOperations().stream(),
-				Stream.concat(
-						FpTestUtils.NaNOperations().stream(),
-						FpTestUtils.InfinityOperations().stream()
-				)
-		).collect(Collectors.toUnmodifiableList());
+		return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
 	}
 
 	@Test

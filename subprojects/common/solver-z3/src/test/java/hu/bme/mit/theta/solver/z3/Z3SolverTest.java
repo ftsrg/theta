@@ -157,7 +157,7 @@ public final class Z3SolverTest {
 
 	@Test
 	public void testArrayInit() {
-        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+		final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 		var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
 		ConstDecl<IntType> noname = Const("noname", Int());
 		elems.add(Tuple2.of(Int(0), Int(1)));
@@ -165,19 +165,19 @@ public final class Z3SolverTest {
 		elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
 		var initarr = ArrayInit(elems, Int(100), Array(Int(), Int()));
 
-        solver.add(ArrayExprs.Eq(arr.getRef(), initarr));
+		solver.add(ArrayExprs.Eq(arr.getRef(), initarr));
 
-        // Check, the expression should be satisfiable
-        SolverStatus status = solver.check();
-        assertTrue(status.isSat());
+		// Check, the expression should be satisfiable
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
 
 		solver.add(Eq(noname.getRef(), Int(1)));
 		status = solver.check();
 		assertTrue(status.isSat());
 
 		Valuation valuation = solver.getModel();
-        final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
-        assertTrue(optVal.isPresent());
+		final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
+		assertTrue(optVal.isPresent());
 		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
 		assertTrue(val instanceof ArrayLitExpr);
 		var valLit = (ArrayLitExpr<IntType, IntType>)val;

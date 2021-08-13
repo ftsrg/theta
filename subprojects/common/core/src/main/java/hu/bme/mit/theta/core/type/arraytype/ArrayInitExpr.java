@@ -19,9 +19,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * ArrayInitExpr is a way to specify arbitrary array 'literals' that may contain non-literal elements as well.
- * Note that while this class is a descendant of MultiaryExpr, it is used in a non-standard way: ops is only used as a
- *     generic Type type, and they are solely used for inter-object interactions, intra-class the `elems` and `elseElem`
- *     is used. These are mapped to `ops` by first placing the `elseElem`, then all indices, then all elements.
+ * Note that while this class is a descendant of MultiaryExpr, it is used in a non-standard way:
+ *     - ops is only used as a generic Type type,
+ *     - ops are solely used for inter-object interactions, intra-class the `elems` and `elseElem` are used.
+ *     - `elems` and `elseElem` are mapped to `ops` by first placing the `elseElem`, then all indices, then all elements.
  */
 
 public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> extends MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
