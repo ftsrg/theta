@@ -39,17 +39,23 @@ This frontend can handle preprocessed .c or .i file with the following features:
 
 ### Limitations, known bugs
 
-A number of features are either not well tested or in certain aspects buggy. Error handling is done on a best-effort level as the C specification is way too complex to handle entirely correctly. In most cases an error or a warning message is displayed, but in some unexpected situations a silent failure is also possible.
+A number of features are either not well tested or in certain aspects buggy. Error handling is done on a best-effort level as the C specification is way too complex to handle entirely correctly. In most cases an error, or a warning message is displayed, but in some unexpected situations a silent failure is also possible.
 
 In particular, the following features are either not implemented or can produce buggy models:
 
 * Floating-point pointers (produces an exception when (de)referred)
 * Structs including arrays and arrays including structs (produces an exception when accessed)
 * Enums (only produces a warning, behaves as a normal signed int would)
+* Unions (produces an exception when any element is accessed) 
 * Alignof, Sizeof, various extensions (produces a parsing exception)
 * Pointer arithmetic (produces an exception)
 * Using a non-specific subtype of `char` (produces a warning) - use `(un)signed char` instead
 * Includes and other preprocessor directives (produces an exception or fails silently!)
+* Arrays are not pointers and pointers cannot be used as arrays (produces an exception)
+* Memory access is _not_ checked, and therefore it is easy to receive a faulty value by over-indexing an array (fails silently!)
+* Array elements are not range-checked and therefore false positives are possible (consider `char c[2]; if(c[1] > 500) reach_error()`)
+
+Note that only program elements that are (transitively) reachable from main() are checked against any violation of the above criteria, i.e. a program containing unsupported elements that are not utilized is handled correctly. This is necessary for handling most preprocessed (.i) files, as the standard library includes a lot of complex and unsupported code. 
 
 ## XCFA formalism
 
