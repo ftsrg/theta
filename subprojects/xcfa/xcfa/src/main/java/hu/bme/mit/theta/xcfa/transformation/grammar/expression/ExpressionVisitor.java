@@ -87,12 +87,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		return preStatements;
 	}
 
-	private Expr<BvType> checkAndGetBvType(Expr<?> expr) {
-		checkState(expr.getType() instanceof BvType);
-		//noinspection unchecked
-		return (Expr<BvType>) expr;
-	}
-
 	@Override
 	public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
 		if(ctx.expression() != null) {
@@ -354,7 +348,13 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitUnaryExpression(CParser.UnaryExpressionContext ctx) {
-		checkState(ctx.unaryExpressionSizeOrAlignOf() == null, "Sizeof and alignof are not yet implemented");
+		if(ctx.unaryExpressionSizeOrAlignOf() != null) {
+			System.err.println("WARNING: Sizeof and alignof are not yet implemented, using a literal 0 instead.");
+			CComplexType signedInt = CComplexType.getSignedInt();
+			LitExpr<?> zero = signedInt.getNullValue();
+			XcfaMetadata.create(zero, "cType", signedInt);
+			return zero;
+		}
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if(increment != 0) {

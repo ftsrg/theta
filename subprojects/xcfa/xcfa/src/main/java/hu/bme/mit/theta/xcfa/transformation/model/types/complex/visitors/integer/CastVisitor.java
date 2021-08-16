@@ -139,7 +139,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CPointer type, Expr<?> param) {
-		checkState(CComplexType.getType(param) instanceof CPointer, "Only pointers can be used in place of pointers!");
-		return param;
+		return visit((CUnsignedLong) CComplexType.getUnsignedLong(), param);
 	}
 }

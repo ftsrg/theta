@@ -12,6 +12,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.BitwiseChecker;
+import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
 import hu.bme.mit.theta.xcfa.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.xcfa.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.xcfa.transformation.grammar.type.TypeVisitor;
@@ -103,9 +104,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
 		ctx.accept(TypedefVisitor.instance);
 		// ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
-		BitwiseChecker.instance.checkIfBitwise(ctx);
+
+		List<CParser.ExternalDeclarationContext> globalUsages = GlobalDeclUsageVisitor.instance.getGlobalUsages(ctx);
+
+		BitwiseChecker.instance.checkIfBitwise(globalUsages);
 		CProgram program = new CProgram();
-		for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
+		for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
 			CStatement accept = externalDeclarationContext.accept(this);
 			if(accept instanceof CFunction) {
 				program.getFunctions().add((CFunction) accept);
@@ -144,20 +148,21 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
-			if(!declaration.isFunc()) { // functions should not be interpreted as global variables
-				createVars(declaration);
-				for (VarDecl<?> varDecl : declaration.getVarDecls()) {
-					decls.getcDeclarations().add(Tuple2.of(declaration, varDecl));
-				}
-			}
-			else {
-				CSimpleType returnType = declaration.getType();
-				declaration.setType(returnType);
-				if(!variables.peek().containsKey(declaration.getName())) {
-					XcfaMetadata.create(declaration.getName(), "cType", returnType.getActualType());
+			if(!declaration.getType().isTypedef()) {
+				if (!declaration.isFunc()) { // functions should not be interpreted as global variables
 					createVars(declaration);
 					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
-						functions.put(varDecl, declaration);
+						decls.getcDeclarations().add(Tuple2.of(declaration, varDecl));
+					}
+				} else {
+					CSimpleType returnType = declaration.getType();
+					declaration.setType(returnType);
+					if (!variables.peek().containsKey(declaration.getName())) {
+						XcfaMetadata.create(declaration.getName(), "cType", returnType.getActualType());
+						createVars(declaration);
+						for (VarDecl<?> varDecl : declaration.getVarDecls()) {
+							functions.put(varDecl, declaration);
+						}
 					}
 				}
 			}
@@ -169,8 +174,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
 		CSimpleType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+		if(returnType.isTypedef()) return new CCompound();
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setType(returnType);
+		createVars(funcDecl);
 		if(!variables.peek().containsKey(funcDecl.getName())) {
 			XcfaMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			createVars(funcDecl);

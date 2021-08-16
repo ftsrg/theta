@@ -42,11 +42,6 @@ public class Struct extends NamedType {
 	}
 
 	@Override
-	protected void patch(CSimpleType cSimpleType) {
-		throw new UnsupportedOperationException("Not patchable!");
-	}
-
-	@Override
 	public CSimpleType getBaseType() {
 		return this;
 	}

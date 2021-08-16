@@ -49,7 +49,10 @@ public class NamedType extends CSimpleType {
 			case "double": if(isLong()) type = new CLongDouble(this); else type = new CDouble(this); break;
 			case "float": type = new CFloat(this); break;
 			case "void": type = new CVoid(this); break;
-			default: throw new UnsupportedOperationException("Unknown simple type " + namedType);
+			default: {
+				System.err.println("WARNING: Unknown simple type " + namedType);
+				type = new CVoid(this); break;
+			}
 		}
 		for (int i = 0; i < getPointerLevel(); i++) {
 			type = new CPointer(this, type);

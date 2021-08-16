@@ -8,10 +8,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -24,8 +26,10 @@ public class CCall extends CStatement{
 	public CCall(String functionId, List<CStatement> params) {
 		this.functionId = functionId;
 		this.params = params;
-		ret = Var("call_" + functionId + "_ret" + counter++, ((CComplexType)XcfaMetadata.getMetadataValue(functionId, "cType").get()).getSmtType());
-		XcfaMetadata.create(ret.getRef(), "cType", XcfaMetadata.getMetadataValue(functionId, "cType").get());
+		Optional<Object> cTypeOpt = XcfaMetadata.getMetadataValue(functionId, "cType");
+		CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null));
+		ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
+		XcfaMetadata.create(ret.getRef(), "cType", type);
 	}
 
 	public String getId() {

@@ -38,11 +38,11 @@ public class XcfaPassManager {
 				new CallsToFinalLocs(),
 				new CallsToHavocs(),
 				new HavocAssignments(),
-				new AddHavocRange(),
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
 				new EmptyEdgeRemovalPass(),
 				new RemoveDeadEnds(),
+				new AddHavocRange(),
 				new SimplifyExprs(),
 				new SimplifyAssumptions()));
 		processPasses.addAll(List.of(

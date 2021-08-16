@@ -4,14 +4,18 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
 
+import java.util.List;
+
 public class BitwiseChecker extends CBaseVisitor<Void> {
 	public static final BitwiseChecker instance = new BitwiseChecker();
 	private static boolean isBitwise = false;
 
-	public boolean checkIfBitwise(CParser.CompilationUnitContext ctx) {
+	public boolean checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
 		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
 			isBitwise = false;
-			ctx.accept(instance);
+			for (CParser.ExternalDeclarationContext ctx : contexts) {
+				ctx.accept(instance);
+			}
 			ArchitectureConfig.arithmetic = isBitwise ? ArchitectureConfig.ArithmeticType.bitvector : ArchitectureConfig.ArithmeticType.integer;
 			return isBitwise;
 		} else return ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector;
