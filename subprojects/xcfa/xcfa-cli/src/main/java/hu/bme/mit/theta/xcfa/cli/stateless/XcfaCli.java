@@ -38,6 +38,7 @@ import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
+import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
@@ -279,7 +280,13 @@ public class XcfaCli {
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
 					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
-					status = check(configuration);
+					try {
+						status = check(configuration);
+					} catch (final NotSolvableException exception) {
+						System.err.println("Configuration failed (stuck)");
+						System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+						throw exception;
+					}
 					if(statisticsfile!=null) {
 						writeStatistics(cfa);
 					}
