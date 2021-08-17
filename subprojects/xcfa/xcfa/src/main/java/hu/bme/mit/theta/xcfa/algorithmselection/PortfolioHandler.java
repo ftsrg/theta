@@ -1,6 +1,6 @@
-package hu.bme.mit.theta.xcfa.algorithmselection.algorithmselection;
+package hu.bme.mit.theta.xcfa.algorithmselection;
 
-import hu.bme.mit.theta.analysis.algorithm.cegar.NotSolvableException;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
@@ -54,7 +54,9 @@ public class PortfolioHandler {
 		writeCfaStatistics(cfa);
 
 		for (Configuration configuration : configurationList) {
+			CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
 			try {
+				System.out.println(configuration);
 				statisticsPrint(configuration.toString());
 				return configuration.buildConfiguration(cfa, cfa.getErrorLoc().get(), logLevel).check();
 			} catch (final NotSolvableException exception) {
@@ -73,6 +75,8 @@ public class PortfolioHandler {
 
 		System.err.println("All configurations failed, task not solvable by portfolio");
 		statisticsPrint("All configurations failed");
+		// throw new RuntimeException("All configurations failed");
+		System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
 		throw new RuntimeException("All configurations failed");
 	}
 

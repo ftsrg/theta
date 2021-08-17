@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.algorithmselection.algorithmselection;
+package hu.bme.mit.theta.xcfa.algorithmselection;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;

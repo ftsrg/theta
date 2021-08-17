@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.cegar;
+package hu.bme.mit.theta.xcfa.algorithmselection;
 
 public class NotSolvableException extends RuntimeException {
 	NotSolvableException() {
