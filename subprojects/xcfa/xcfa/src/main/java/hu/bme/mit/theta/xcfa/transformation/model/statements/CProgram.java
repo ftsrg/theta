@@ -49,7 +49,7 @@ public class CProgram extends CStatement{
 			}
 			builder.addGlobalVar(globalDeclaration.get2(), type.getNullValue());
 			if(globalDeclaration.get1().getInitExpr() != null) {
-				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(globalDeclaration.get1().getInitExpr().getExpression(), globalDeclaration.get2().getType())));
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(type.castTo(globalDeclaration.get1().getInitExpr().getExpression()), globalDeclaration.get2().getType())));
 			} else {
 				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(type.getNullValue(), globalDeclaration.get2().getType())));
 			}
