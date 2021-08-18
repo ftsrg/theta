@@ -280,13 +280,7 @@ public class XcfaCli {
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
 					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
-					try {
-						status = check(configuration);
-					} catch (final NotSolvableException exception) {
-						System.err.println("Configuration failed (stuck)");
-						System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
-						throw exception;
-					}
+					status = check(configuration);
 					if(statisticsfile!=null) {
 						writeStatistics(cfa);
 					}
@@ -384,6 +378,10 @@ public class XcfaCli {
 	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
 		try {
 			return configuration.check();
+		} catch (final NotSolvableException exception) {
+			System.err.println("Configuration failed (stuck)");
+			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+			throw exception;
 		} catch (final Exception ex) {
 			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
 			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
