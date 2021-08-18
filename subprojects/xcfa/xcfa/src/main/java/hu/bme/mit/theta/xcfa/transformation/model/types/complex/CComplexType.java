@@ -57,15 +57,21 @@ public abstract class CComplexType {
 	}
 
 	public LitExpr<?> getNullValue() {
-		return this.accept(getNullValueVisitor(), null);
+		LitExpr<?> accept = this.accept(getNullValueVisitor(), null);
+		XcfaMetadata.create(accept, "cType", this);
+		return accept;
 	}
 
 	public LitExpr<?> getUnitValue() {
-		return this.accept(getUnitValueVisitor(), null);
+		LitExpr<?> accept = this.accept(getUnitValueVisitor(), null);
+		XcfaMetadata.create(accept, "cType", this);
+		return accept;
 	}
 
 	public LitExpr<?> getValue(String value) {
-		return this.accept(getValueVisitor(), value);
+		LitExpr<?> accept = this.accept(getValueVisitor(), value);
+		XcfaMetadata.create(accept, "cType", this);
+		return accept;
 	}
 
 	public AssumeStmt limit(Expr<?> expr) {

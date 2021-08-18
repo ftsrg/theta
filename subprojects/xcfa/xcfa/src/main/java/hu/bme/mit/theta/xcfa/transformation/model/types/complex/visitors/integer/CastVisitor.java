@@ -139,6 +139,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CPointer type, Expr<?> param) {
+		if(CComplexType.getType(param) instanceof CPointer) return param;
 		return visit((CUnsignedLong) CComplexType.getUnsignedLong(), param);
 	}
 }

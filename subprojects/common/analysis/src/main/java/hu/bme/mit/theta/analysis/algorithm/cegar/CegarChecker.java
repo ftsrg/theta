@@ -15,12 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Stopwatch;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -29,8 +24,12 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.logging.NullLogger;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation,

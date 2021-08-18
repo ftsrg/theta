@@ -102,6 +102,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
+		variables.clear();
+		variables.push(new LinkedHashMap<>());
+		flatVariables.clear();
+		functions.clear();
+
 		ctx.accept(TypedefVisitor.instance);
 		// ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
 
@@ -177,7 +182,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		if(returnType.isTypedef()) return new CCompound();
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setType(returnType);
-		createVars(funcDecl);
 		if(!variables.peek().containsKey(funcDecl.getName())) {
 			XcfaMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			createVars(funcDecl);
@@ -189,7 +193,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		locLUT.clear();
 		flatVariables.clear();
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			if(functionParam.getName() != null) createVars(functionParam);
+			if(functionParam.getName() != null)
+				createVars(functionParam);
 		}
 		CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
 		if(blockItemListContext != null) {

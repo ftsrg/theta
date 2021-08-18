@@ -9,6 +9,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -41,10 +42,12 @@ public class ExpressionReplacer<T extends Type, R extends Type> {
 		}
 		if(needsTransformation) {
 			Expr<T> tExpr = expr.withOps(ops);
-			try {
-				XcfaMetadata.create(tExpr, "cType", CComplexType.getType(expr));
-			} catch (RuntimeException ignored) {
-
+			Map<String, ?> keyMap = XcfaMetadata.lookupMetadata(expr);
+			if(keyMap != null) {
+				CComplexType cType = (CComplexType) keyMap.get("cType");
+				if(cType != null) {
+					XcfaMetadata.create(tExpr, "cType", cType);
+				}
 			}
 			return Optional.of(tExpr);
 		}

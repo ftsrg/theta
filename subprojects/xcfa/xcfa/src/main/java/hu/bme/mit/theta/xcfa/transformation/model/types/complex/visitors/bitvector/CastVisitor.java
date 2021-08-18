@@ -46,6 +46,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleSignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CPointer) that = CComplexType.getUnsignedLong();
 		if(that instanceof CReal) {
 			//noinspection unchecked
 			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), true);
@@ -64,6 +65,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleUnsignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CPointer) that = CComplexType.getUnsignedLong();
 		if(that instanceof CReal) {
 			//noinspection unchecked
 			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);

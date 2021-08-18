@@ -139,7 +139,11 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	@Override
 	public CDeclaration visitDirectDeclaratorFunctionDecl(CParser.DirectDeclaratorFunctionDeclContext ctx) {
 		CDeclaration decl = ctx.directDeclarator().accept(this);
-		checkState(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null, "Variable args are not yet supported!");
+		if(!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
+			System.err.println("WARNING: variable args are not supported!");
+			decl.setFunc(true);
+			return decl;
+		}
 		if(ctx.parameterTypeList() != null) {
 			for (CParser.ParameterDeclarationContext parameterDeclarationContext : ctx.parameterTypeList().parameterList().parameterDeclaration()) {
 				decl.addFunctionParam(parameterDeclarationContext.accept(this));

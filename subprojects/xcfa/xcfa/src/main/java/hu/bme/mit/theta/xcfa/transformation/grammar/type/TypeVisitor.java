@@ -231,7 +231,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	public CSimpleType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
 		Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.getText());
 		if(type.isPresent()) {
-			return type.get().getOrigin();
+			CSimpleType origin = type.get().getOrigin().copyOf();
+			origin.setTypedef(false);
+			return origin;
 		} else {
 			if(standardTypes.contains(ctx.getText())) {
 				return NamedType(ctx.getText());

@@ -38,6 +38,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 
 	@Override
 	public List<CDeclaration> visitCompilationUnit(CParser.CompilationUnitContext ctx) {
+		declarations.clear();
 		CParser.TranslationUnitContext translationUnitContext = ctx.translationUnit();
 		if(translationUnitContext!=null) {
 			for (CParser.ExternalDeclarationContext externalDeclarationContext : translationUnitContext.externalDeclaration()) {

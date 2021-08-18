@@ -58,4 +58,9 @@ public class XcfaMetadata {
 		if(object instanceof String) return object.hashCode();
 		else return System.identityHashCode(object);
 	}
+
+	public static void clear() {
+		lookupKeyValue.clear();
+		lookupOwner.clear();
+	}
 }

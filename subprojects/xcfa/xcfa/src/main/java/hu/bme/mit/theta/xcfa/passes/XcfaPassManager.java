@@ -7,6 +7,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AssignmentChainRemoval;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
@@ -41,7 +42,9 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new AssignmentChainRemoval(),
 				new EmptyEdgeRemovalPass(),
+				new ConditionalFinalsToAssumes(),
 				new RemoveDeadEnds(),
+				new UnusedVarRemovalPass(),
 				new AddHavocRange(),
 				new SimplifyExprs(),
 				new SimplifyAssumptions()));
