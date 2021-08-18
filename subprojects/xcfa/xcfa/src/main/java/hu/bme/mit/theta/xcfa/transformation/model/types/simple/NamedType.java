@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.transformation.model.types.simple;
 
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -29,26 +30,34 @@ public class NamedType extends CSimpleType {
 
 	@Override
 	public CComplexType getActualType() {
-		if(getPointerLevel() > 0) return new CUnsignedInt(this);
+		CComplexType type;
 		switch (namedType) {
-			case "char": if(isSigned()) return new CSignedChar(this); else return new CUnsignedChar(this);
-			case "int": if(isBool()) return new CBool(this);
+			case "char": if(isSigned()) type = new CSignedChar(this); else type = new CUnsignedChar(this); break;
+			case "int": if(isBool()) type = new CBool(this);
 						else if(isSigned()) {
-							if(isLong()) return new CSignedLong(this);
-							else if(isLongLong()) return new CSignedLongLong(this);
-							else if(isShort()) return new CSignedShort(this);
-							else return new CSignedInt(this);
+							if(isLong()) type = new CSignedLong(this);
+							else if(isLongLong()) type = new CSignedLongLong(this);
+							else if(isShort()) type = new CSignedShort(this);
+							else type = new CSignedInt(this);
 						} else {
-							if(isLong()) return new CUnsignedLong(this);
-							else if(isLongLong()) return new CUnsignedLongLong(this);
-							else if(isShort()) return new CUnsignedShort(this);
-							else return new CUnsignedInt(this);
+							if(isLong()) type = new CUnsignedLong(this);
+							else if(isLongLong()) type = new CUnsignedLongLong(this);
+							else if(isShort()) type = new CUnsignedShort(this);
+							else type = new CUnsignedInt(this);
 						}
-			case "double": if(isLong()) return new CLongDouble(this); else return new CDouble(this);
-			case "float": return new CFloat(this);
-			case "void": return new CVoid(this);
-			default: throw new UnsupportedOperationException("Unknown simple type " + namedType);
+				break;
+			case "double": if(isLong()) type = new CLongDouble(this); else type = new CDouble(this); break;
+			case "float": type = new CFloat(this); break;
+			case "void": type = new CVoid(this); break;
+			default: {
+				System.err.println("WARNING: Unknown simple type " + namedType);
+				type = new CVoid(this); break;
+			}
 		}
+		for (int i = 0; i < getPointerLevel(); i++) {
+			type = new CPointer(this, type);
+		}
+		return type;
 	}
 
 	public static NamedType getIntType() {

@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Atomic;
 import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.DeclaredName;
 import static hu.bme.mit.theta.xcfa.transformation.model.types.simple.CSimpleTypeFactory.Enum;
@@ -54,8 +53,13 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	private CSimpleType mergeCTypes(List<CSimpleType> cSimpleTypes) {
 		List<CSimpleType> enums = cSimpleTypes.stream().filter(cType -> cType instanceof Enum).collect(Collectors.toList());
-		checkState(enums.size() <= 0, "Declaration cannot contain any enums"); // not supported yet
+		if(enums.size() > 0) {
+			System.err.println("WARNING: enums are not yet supported! Using int instead.");
+			cSimpleTypes.add(NamedType("int"));
+			cSimpleTypes.removeAll(enums);
+		}
 		List<CSimpleType> namedElements = cSimpleTypes.stream().filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
+		if(namedElements.size() == 0) namedElements.add(NamedType("int"));
 		NamedType mainType = (NamedType) namedElements.get(namedElements.size() - 1);
 		if (shorthandTypes.contains(mainType.getNamedType())) {
 			mainType = NamedType("int");
@@ -192,6 +196,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	@Override
 	public CSimpleType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
 		CSimpleType subtype = ctx.typeSpecifier().accept(this);
+		if(subtype == null) return null;
 		for (Token star : ctx.pointer().stars) {
 			subtype.incrementPointer();
 		}
@@ -226,7 +231,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	public CSimpleType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
 		Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.getText());
 		if(type.isPresent()) {
-			return type.get().getOrigin();
+			CSimpleType origin = type.get().getOrigin().copyOf();
+			origin.setTypedef(false);
+			return origin;
 		} else {
 			if(standardTypes.contains(ctx.getText())) {
 				return NamedType(ctx.getText());

@@ -11,7 +11,9 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.integer.cbool.CBool;
@@ -44,13 +46,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleSignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CPointer) that = CComplexType.getUnsignedLong();
 		if(that instanceof CReal) {
 			//noinspection unchecked
 			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), true);
 		}
 		else if (that instanceof CInteger) {
 			if(that.width() < type.width()) {
-				if(that instanceof Unsigned) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
+				if(that instanceof Unsigned) return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 			} else if (that.width() > type.width()) {
 				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
@@ -62,6 +65,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	private Expr<? extends Type> handleUnsignedConversion(CInteger type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
+		if(that instanceof CPointer) that = CComplexType.getUnsignedLong();
 		if(that instanceof CReal) {
 			//noinspection unchecked
 			return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
@@ -71,7 +75,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 				if(that instanceof Signed) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
 				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 			} else if (that.width() > type.width()) {
-				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(type.width()-1), Int(0));
+				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
 			} else return param;
 		} else {
 			throw new IllegalStateException("Compound types are not directly supported!");
@@ -100,6 +104,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	@Override
 	public Expr<?> visit(CUnsignedShort type, Expr<?> param) {
 		return handleUnsignedConversion(type, param);
+	}
+
+	@Override
+	public Expr<?> visit(Fitsall type, Expr<?> param) {
+		return handleSignedConversion(type, param);
 	}
 
 	@Override
@@ -183,5 +192,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	public Expr<?> visit(CArray type, Expr<?> param) {
 		checkState(CComplexType.getType(param) instanceof CArray, "Only arrays can be used in place of arrays!");
 		return param;
+	}
+
+
+	@Override
+	public Expr<?> visit(CPointer type, Expr<?> param) {
+		return handleUnsignedConversion((CInteger) CComplexType.getUnsignedLong(), param);
 	}
 }

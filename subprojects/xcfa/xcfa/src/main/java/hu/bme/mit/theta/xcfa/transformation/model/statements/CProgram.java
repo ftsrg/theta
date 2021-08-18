@@ -8,6 +8,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.compound.CStruct;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +42,16 @@ public class CProgram extends CStatement{
 
 		List<Stmt> initStmtList = new ArrayList<>();
 		for (Tuple2<CDeclaration, VarDecl<?>> globalDeclaration : globalDeclarations) {
-			builder.addGlobalVar(globalDeclaration.get2(), CComplexType.getType(globalDeclaration.get2().getRef()).getNullValue());
+			CComplexType type = CComplexType.getType(globalDeclaration.get2().getRef());
+			if(type instanceof CVoid || type instanceof CStruct) {
+				System.err.println("WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable");
+				continue;
+			}
+			builder.addGlobalVar(globalDeclaration.get2(), type.getNullValue());
 			if(globalDeclaration.get1().getInitExpr() != null) {
-				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(globalDeclaration.get1().getInitExpr().getExpression(), globalDeclaration.get2().getType())));
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(type.castTo(globalDeclaration.get1().getInitExpr().getExpression()), globalDeclaration.get2().getType())));
 			} else {
-				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(CComplexType.getType(globalDeclaration.get2().getRef()).getNullValue(), globalDeclaration.get2().getType())));
+				initStmtList.add(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(type.getNullValue(), globalDeclaration.get2().getType())));
 			}
 		}
 		XcfaProcess.Builder procBuilder = XcfaProcess.builder();

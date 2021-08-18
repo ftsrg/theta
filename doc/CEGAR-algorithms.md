@@ -113,6 +113,11 @@ Strategy for refining the precision of the abstraction, i.e., inferring new pred
 
 `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually. However, they usually do not work if bitvector types are involved (due to the limitation of the underlying SMT solver). For bitvectors, `NWT_IT_WP` is recommended.
 
+Floating point support *(known experimental problems)*:
+ * As `FpType` uses bitvectors, interpolation is not supported by Z3. Therefore most refinement strategies produce an exception.
+ * The working `NWT_IT_*` strategies keep refining seemingly indefinitely, with no real progress
+ * The refinement strategies that do work can only handle the simplest of tasks (`NWT_WP`, `NWT_SP`, `NWT_WP_LV`), up to around 10 expressions - any more and they usually time out
+
 ### `--predsplit`
 
 Available if `--domain` is `PRED_*`.

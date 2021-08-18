@@ -29,9 +29,11 @@ public class SimplifyExprs extends ProcedurePass{
 					VarDecl<?> varDecl = ((AssignStmt<?>) stmt).getVarDecl();
 					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) stmt).getExpr(), ImmutableValuation.empty());
 					XcfaMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) stmt).getExpr()));
+					simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
+					XcfaMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
 					Stmt newStmt = Assign(
 							cast(varDecl, varDecl.getType()),
-							cast(CComplexType.getType(varDecl.getRef()).castTo(simplified), varDecl.getType()));
+							cast(simplified, varDecl.getType()));
 					newStmts.add(newStmt);
 					found = true;
 				} else newStmts.add(stmt);
@@ -42,5 +44,10 @@ public class SimplifyExprs extends ProcedurePass{
 			}
 		}
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }

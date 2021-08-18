@@ -22,10 +22,9 @@ import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class EmptyEdgeRemovalPass extends ProcedurePass {
 	@Override
@@ -91,6 +90,17 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 			if(duplicateEdge.isPresent()) {
 				notFound = false;
 				builder.removeEdge(duplicateEdge.get());
+			}
+		}
+
+		for (XcfaEdge incomingEdge : new LinkedHashSet<>(builder.getFinalLoc().getIncomingEdges())) {
+			if(incomingEdge.getStmts().size() == 0) {
+				XcfaLocation source = incomingEdge.getSource();
+				for (XcfaEdge edge : new LinkedHashSet<>(source.getIncomingEdges())) {
+					builder.removeEdge(edge);
+					builder.addEdge(new XcfaEdge(edge.getSource(), builder.getFinalLoc(), edge.getStmts()));
+				}
+				builder.removeEdge(incomingEdge);
 			}
 		}
 

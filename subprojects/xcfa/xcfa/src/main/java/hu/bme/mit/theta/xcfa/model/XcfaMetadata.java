@@ -25,22 +25,21 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 // TODO object clashes when hashcode is the same
 public class XcfaMetadata {
 	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new HashMap<>();
-	private static final Map<Object, Map<String, Object>> lookupKeyValue = new HashMap<>();
+	private static final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new HashMap<>();
 
 
 	public static <T> Set<Object> lookupMetadata(String key, T value) {
 		return lookupOwner.getOrDefault(Tuple2.of(key,value), Set.of());
 	}
 	public static <X> Map<String, ?> lookupMetadata(X owner) {
-		return lookupKeyValue.getOrDefault(owner, Map.of());
+		return lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of());
 	}
 	public static <X> Optional<Object> getMetadataValue(X owner, String key) {
-		return Optional.ofNullable(lookupKeyValue.getOrDefault(owner, Map.of()).get(key));
+		return Optional.ofNullable(lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of()).get(key));
 	}
 
 	public static <T,X> void create(X owner, String key, T value) {
@@ -50,8 +49,18 @@ public class XcfaMetadata {
 		Set<Object> set = lookupOwner.getOrDefault(tup, new HashSet<>());
 		set.add(owner);
 		lookupOwner.put(tup, set);
-		Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(owner, new HashMap<>());
+		Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), new HashMap<>());
 		keyvalues.put(key, value);
-		lookupKeyValue.put(owner, keyvalues);
+		lookupKeyValue.put(Tuple2.of(owner, getHashCode(owner)), keyvalues);
+	}
+
+	private static int getHashCode(Object object) {
+		if(object instanceof String) return object.hashCode();
+		else return System.identityHashCode(object);
+	}
+
+	public static void clear() {
+		lookupKeyValue.clear();
+		lookupOwner.clear();
 	}
 }

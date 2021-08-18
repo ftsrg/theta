@@ -18,24 +18,21 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.grammar.expression.Reference;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public class PthreadCallsToThreadStmts extends ProcedurePass {
 	private static final String threadStart = "pthread_create";
@@ -56,15 +53,17 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 						switch(((XcfaCallStmt) stmt).getProcedure()){
 							case threadStart:
 								Expr<?> handle = ((XcfaCallStmt) stmt).getParams().get(threadStartHandle + 1);
+								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								Expr<?> funcptr = ((XcfaCallStmt) stmt).getParams().get(threadStartFuncPtr + 1);
-								checkState(funcptr instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
+								checkState(funcptr instanceof RefExpr && ((RefExpr<?>) funcptr).getDecl() instanceof VarDecl);
 								Expr<?> param = ((XcfaCallStmt) stmt).getParams().get(threadStartParam + 1);
 								StartThreadStmt startThreadStmt = new StartThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
 								collect.add(startThreadStmt);
 								break;
 							case threadJoin:
 								handle = ((XcfaCallStmt) stmt).getParams().get(threadJoinHandle + 1);
+								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								JoinThreadStmt joinThreadStmt = new JoinThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
 								collect.add(joinThreadStmt);

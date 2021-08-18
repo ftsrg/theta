@@ -65,7 +65,7 @@ public class CDeclaration {
 	public CComplexType getActualType() {
 		CComplexType actualType = type.getActualType();
 		for (CStatement arrayDimension : arrayDimensions) {
-			actualType = new CArray(null, actualType);
+			actualType = new CArray(type, actualType);
 		}
 		return actualType;
 	}

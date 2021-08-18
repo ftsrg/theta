@@ -24,7 +24,9 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +48,12 @@ public class SimplifyAssumptions extends ProcedurePass {
 						Expr<?> leftOp = ops.get(0);
 						Expr<?> rightOp = ops.get(1);
 						if(leftOp instanceof  IteExpr && ((IteExpr<?>) leftOp).getElse().equals(rightOp)) {
-							if(cond instanceof NeqExpr) newStmts.add(Assume(((IteExpr<?>) leftOp).getCond()));
-							else newStmts.add(Assume(Not(((IteExpr<?>) leftOp).getCond())));
+							Expr<BoolType> expr;
+							if(cond instanceof NeqExpr) expr = ((IteExpr<?>) leftOp).getCond();
+							else expr = Not(((IteExpr<?>) leftOp).getCond());
 							found = true;
+							XcfaMetadata.create(expr, "cType", CComplexType.getType(leftOp));
+							newStmts.add(Assume(expr));
 						}
 					}
 				} else newStmts.add(stmt);
@@ -59,5 +64,10 @@ public class SimplifyAssumptions extends ProcedurePass {
 			}
 		}
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }

@@ -152,7 +152,6 @@ public class FunctionInlining extends ProcessPass {
 					CComplexType leftType = CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef());
 					checkNotNull(leftType);
 					Expr<?> expr = assignStmt.getExpr();
-					XcfaMetadata.create(expr, "cType", leftType);
 
 					Expr<?> truncatedExpr = leftType.castTo(expr);
 					XcfaMetadata.create(truncatedExpr, "cType", leftType);

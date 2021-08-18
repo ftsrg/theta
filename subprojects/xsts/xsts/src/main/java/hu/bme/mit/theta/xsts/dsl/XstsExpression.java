@@ -51,9 +51,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -64,6 +62,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AccessContext;
 import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AccessorExprContext;
@@ -506,7 +505,7 @@ final class XstsExpression {
 			}
 			valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-			final List<Tuple2<? extends Expr<T1>, ? extends Expr<T2>>> elems = IntStream
+			final List<Tuple2<Expr<T1>,Expr<T2>>> elems = IntStream
 					.range(0, ctx.indexExpr.size())
 					.mapToObj(i -> Tuple2.of(
 							cast(ctx.indexExpr.get(i).accept(this), indexType),
@@ -515,8 +514,7 @@ final class XstsExpression {
 					.collect(Collectors.toUnmodifiableList());
 
 			final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
-			return Array(elems, elseExpr, ArrayType.of(indexType, valueType));
-		}
+			return simplify(ArrayInit(elems, elseExpr, ArrayType.of(indexType, valueType)));		}
 
 		@Override
 		public Expr<?> visitIdExpr(final IdExprContext ctx) {

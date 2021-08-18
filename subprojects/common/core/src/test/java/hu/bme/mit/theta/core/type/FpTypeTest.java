@@ -14,7 +14,6 @@ import org.kframework.mpfr.BigFloat;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
@@ -39,13 +38,7 @@ public class FpTypeTest {
 
 	@Parameterized.Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
 	public static Collection<?> operations() {
-		return Stream.concat(
-				FpTestUtils.BasicOperations().stream(),
-				Stream.concat(
-						FpTestUtils.NaNOperations().stream(),
-						FpTestUtils.InfinityOperations().stream()
-				)
-		).collect(Collectors.toUnmodifiableList());
+		return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
 	}
 
 	@Test

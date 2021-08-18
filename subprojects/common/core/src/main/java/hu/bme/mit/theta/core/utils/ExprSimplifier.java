@@ -109,6 +109,7 @@ import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -206,6 +207,8 @@ public final class ExprSimplifier {
 			.addCase(IntDivExpr.class, ExprSimplifier::simplifyIntDiv)
 
 			.addCase(IntModExpr.class, ExprSimplifier::simplifyMod)
+
+			.addCase(IntRemExpr.class, ExprSimplifier::simplifyRem)
 
 			.addCase(IntEqExpr.class, ExprSimplifier::simplifyIntEq)
 
@@ -1012,6 +1015,25 @@ public final class ExprSimplifier {
 			final IntLitExpr leftLit = (IntLitExpr) leftOp;
 			final IntLitExpr rightLit = (IntLitExpr) rightOp;
 			return leftLit.mod(rightLit);
+		}
+		else if(leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
+			return leftOp;
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<IntType> simplifyRem(final IntRemExpr expr, final Valuation val) {
+		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+			final IntLitExpr leftLit = (IntLitExpr) leftOp;
+			final IntLitExpr rightLit = (IntLitExpr) rightOp;
+			return leftLit.rem(rightLit);
+		}
+		else if(leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
+			return simplify(leftOp, val);
 		}
 
 		return expr.with(leftOp, rightOp);
