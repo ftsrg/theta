@@ -59,6 +59,7 @@ public class XcfaCliParseTest {
 				{"/c/litmustest/singlethread/11ptrs.c"},
 				{"/c/litmustest/singlethread/12ptrtypes.c"},
 				{"/c/litmustest/singlethread/13typedef.c"},
+				{"/c/litmustest/singlethread/14ushort.c"},
 		});
 	}
 

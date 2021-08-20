@@ -57,7 +57,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 			} else if (that.width() > type.width()) {
 				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
-			} else return param;
+			} else return param.withOps(param.getOps());
 		} else {
 			throw new IllegalStateException("Compound types are not directly supported!");
 		}
@@ -76,7 +76,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
 			} else if (that.width() > type.width()) {
 				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
-			} else return param;
+			} else return param.withOps(param.getOps());
 		} else {
 			throw new IllegalStateException("Compound types are not directly supported!");
 		}
@@ -159,14 +159,14 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CVoid type, Expr<?> param) {
-		return param;
+		return param.withOps(param.getOps());
 	}
 
 	@Override
 	public Expr<?> visit(CDouble type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
 		if(that instanceof CDouble)
-			return param;
+			return param.withOps(param.getOps());
 		return handleFp(type, param);
 	}
 
@@ -174,7 +174,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	public Expr<?> visit(CFloat type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
 		if(that instanceof CFloat)
-			return param;
+			return param.withOps(param.getOps());
 		return handleFp(type, param);
 
 	}
@@ -183,7 +183,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	public Expr<?> visit(CLongDouble type, Expr<?> param) {
 		CComplexType that = CComplexType.getType(param);
 		if(that instanceof CLongDouble)
-			return param;
+			return param.withOps(param.getOps());
 		return handleFp(type, param);
 
 	}
@@ -191,7 +191,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 	@Override
 	public Expr<?> visit(CArray type, Expr<?> param) {
 		checkState(CComplexType.getType(param) instanceof CArray, "Only arrays can be used in place of arrays!");
-		return param;
+		return param.withOps(param.getOps());
 	}
 
 

@@ -25,6 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -34,7 +35,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(Fitsall type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("fitsall");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -43,7 +44,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CSignedShort type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("short");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -59,7 +60,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CSignedLongLong type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("longlong");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -82,7 +83,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CSignedLong type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("long");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -91,7 +92,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CSignedInt type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("int");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -107,7 +108,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CSignedChar type, Expr<?> param) {
-		if(true) return param;
+		if(true) return Pos(param);
 		int width = ArchitectureConfig.architecture.getBitWidth("char");
 		BigInteger minValue = BigInteger.TWO.pow(width-1).negate();
 		BigInteger upperLimit = BigInteger.TWO.pow(width);
@@ -128,18 +129,18 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
 	@Override
 	public Expr<?> visit(CVoid type, Expr<?> param) {
-		return param;
+		return param.withOps(param.getOps());
 	}
 
 	@Override
 	public Expr<?> visit(CArray type, Expr<?> param) {
 		checkState(CComplexType.getType(param) instanceof CArray, "Only arrays can be used in place of arrays!");
-		return param;
+		return param.withOps(param.getOps());
 	}
 
 	@Override
 	public Expr<?> visit(CPointer type, Expr<?> param) {
-		if(CComplexType.getType(param) instanceof CPointer) return param;
+		if(CComplexType.getType(param) instanceof CPointer) return param.withOps(param.getOps());
 		return visit((CUnsignedLong) CComplexType.getUnsignedLong(), param);
 	}
 }
