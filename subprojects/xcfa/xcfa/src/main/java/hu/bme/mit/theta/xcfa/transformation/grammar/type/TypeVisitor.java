@@ -85,16 +85,21 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	private CSimpleType createCType(CParser.SpecifierQualifierListContext specifierQualifierListContext) {
 		List<CSimpleType> cSimpleTypes = new ArrayList<>();
-		while(specifierQualifierListContext != null) {
-			CSimpleType qualifierSpecifier = null;
-			if(specifierQualifierListContext.typeSpecifier() != null) {
-				qualifierSpecifier = specifierQualifierListContext.typeSpecifier().accept(this);
+		if(specifierQualifierListContext != null) {
+			for (CParser.TypeSpecifierOrQualifierContext typeSpecifierOrQualifierContext : specifierQualifierListContext.typeSpecifierOrQualifier()) {
+				CSimpleType qualifierSpecifier = null;
+				if(typeSpecifierOrQualifierContext.typeSpecifier() != null) {
+					qualifierSpecifier = typeSpecifierOrQualifierContext.typeSpecifier().accept(this);
+				}
+				else if(typeSpecifierOrQualifierContext.typeQualifier() != null) {
+					qualifierSpecifier = typeSpecifierOrQualifierContext.typeQualifier().accept(this);
+				}
+				if(qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
 			}
-			else if(specifierQualifierListContext.typeQualifier() != null) {
-				qualifierSpecifier = specifierQualifierListContext.typeQualifier().accept(this);
+			if(specifierQualifierListContext.typeSpecifierPointer() != null) {
+				CSimpleType qualifierSpecifier = specifierQualifierListContext.typeSpecifierPointer().accept(this);
+				if(qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
 			}
-			if(qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
-			specifierQualifierListContext = specifierQualifierListContext.specifierQualifierList();
 		}
 
 		return mergeCTypes(cSimpleTypes);

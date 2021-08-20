@@ -201,6 +201,7 @@ declarationSpecifiers2
 
 declarationSpecifier
     :   storageClassSpecifier
+    |   typeSpecifierPointer
     |   typeSpecifier
     |   typeQualifier
     |   functionSpecifier
@@ -245,7 +246,11 @@ typeSpecifier
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
     |   '__typeof__' '(' constantExpression ')'                     # typeSpecifierTypeof
-    |   typeSpecifier pointer                                       # typeSpecifierPointer
+//    |   typeSpecifier pointer                                       # typeSpecifierPointer
+    ;
+
+typeSpecifierPointer
+    :   typeSpecifier pointer
     ;
 
 structOrUnionSpecifier
@@ -268,7 +273,13 @@ structDeclaration
     ;
 
 specifierQualifierList
-    :   (typeSpecifier| typeQualifier) specifierQualifierList?
+    :   typeSpecifierOrQualifier+ typeSpecifierPointer
+    |   typeSpecifierOrQualifier+
+    ;
+
+typeSpecifierOrQualifier
+    :   typeSpecifier
+    |   typeQualifier
     ;
 
 structDeclaratorList

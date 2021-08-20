@@ -63,6 +63,15 @@ public class XcfaPassManager {
 	public static void addXcfaPass(XcfaPass pass) {
 		xcfaPasses.add(pass);
 	}
+	public static void clearProcedurePasses() {
+		procedurePasses.clear();
+	}
+	public static void clearProcessPasses() {
+		processPasses.clear();
+	}
+	public static void clearXCFAPasses() {
+		xcfaPasses.clear();
+	}
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (ProcedurePass procedurePass : procedurePasses) {
