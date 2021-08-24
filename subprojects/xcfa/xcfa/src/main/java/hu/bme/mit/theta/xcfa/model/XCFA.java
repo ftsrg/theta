@@ -84,7 +84,7 @@ public final class XCFA {
 		}
 
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
-			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
+			CFA.Loc cfaLoc = builder.createLoc(loc.getName() + "_id" + counter++);
 			FrontendMetadata.create(loc, "cfaLoc", cfaLoc);
 			locationLUT.put(loc, cfaLoc);
 		}

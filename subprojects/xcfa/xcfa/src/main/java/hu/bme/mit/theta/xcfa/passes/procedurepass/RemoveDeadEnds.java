@@ -23,6 +23,7 @@ public class RemoveDeadEnds extends ProcedurePass{
 		for (XcfaEdge edge : collect) {
 			builder.removeEdge(edge);
 		}
+		builder.getLocs().removeIf(loc -> loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0);
 		return builder;
 	}
 
