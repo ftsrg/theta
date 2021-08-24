@@ -19,7 +19,7 @@ public class CDecls extends CStatement{
 	}
 
 	@Override
-	public Object build(Object param) {
-		throw new RuntimeException("Cannot build CDecls!");
+	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

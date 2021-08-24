@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 public class CExpr extends CStatement{
 	private final Expr<?> expr;
@@ -21,7 +19,7 @@ public class CExpr extends CStatement{
 	}
 
 	@Override
-	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
-		return lastLoc;
+	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

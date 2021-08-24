@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-
 public class CCase extends CStatement{
 	private final CStatement expr;
 	private final CStatement statement;
@@ -21,7 +18,7 @@ public class CCase extends CStatement{
 	}
 
 	@Override
-	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
-		return statement.build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
+	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

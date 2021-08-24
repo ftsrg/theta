@@ -1,20 +1,12 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
@@ -32,10 +24,6 @@ public class CCall extends CStatement{
 		FrontendMetadata.create(ret.getRef(), "cType", type);
 	}
 
-	public String getId() {
-		return functionId;
-	}
-
 	public List<CStatement> getParams() {
 		return params;
 	}
@@ -44,27 +32,12 @@ public class CCall extends CStatement{
 		return ret;
 	}
 
+	public String getFunctionId() {
+		return functionId;
+	}
+
 	@Override
-	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
-		XcfaLocation initLoc = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
-		builder.addLoc(initLoc);
-        propagateMetadata(initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
-		XcfaLocation location = getLoc() == null ? new XcfaLocation("loc" + counter++, Map.of()) : getLoc();
-		builder.addLoc(location);
-        propagateMetadata(location);
-		List<Expr<?>> params = new ArrayList<>();
-		builder.createVar(ret, null);
-		params.add(ret.getRef());
-		for (CStatement param : this.params) {
-			initLoc = param.build(builder, initLoc, breakLoc, continueLoc, returnLoc);
-		}
-		params.addAll(this.params.stream().map(CStatement::getExpression).collect(Collectors.toList()));
-		xcfaEdge = new XcfaEdge(initLoc, location, List.of(new XcfaCallStmt(params, functionId)));
-		builder.addEdge(xcfaEdge);
-        propagateMetadata(xcfaEdge);
-		return location;
+	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

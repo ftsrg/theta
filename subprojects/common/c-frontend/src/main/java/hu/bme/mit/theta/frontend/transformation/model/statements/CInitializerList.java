@@ -7,8 +7,6 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
@@ -32,6 +30,11 @@ public class CInitializerList extends CStatement{
 		return getTemplatedExpression();
 	}
 
+	@Override
+	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
+
 	@SuppressWarnings("unchecked")
 	private <I extends Type, E extends Type> Expr<?> getTemplatedExpression() {
 		List<Tuple2<Expr<I>, Expr<E>>> list = new ArrayList<>();
@@ -45,14 +48,6 @@ public class CInitializerList extends CStatement{
 		return ArrayInitExpr.of(list,
 				(Expr<E>) type.getNullValue(),
 				(ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(), type.getSmtType()));
-	}
-
-	@Override
-	public XcfaLocation build(XcfaProcedure.Builder builder, XcfaLocation lastLoc, XcfaLocation breakLoc, XcfaLocation continueLoc, XcfaLocation returnLoc) {
-		for (Tuple2<Optional<CStatement>, CStatement> statement : statements) {
-			lastLoc = statement.get2().build(builder, lastLoc, breakLoc, continueLoc, returnLoc);
-		}
-		return lastLoc;
 	}
 
 	public void addStatement(CStatement index, CStatement value) {
