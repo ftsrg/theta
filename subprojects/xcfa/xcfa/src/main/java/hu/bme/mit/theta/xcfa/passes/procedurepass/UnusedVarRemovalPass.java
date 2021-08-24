@@ -20,11 +20,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -76,8 +74,8 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 					builder.removeEdge(edge);
 					XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
 					builder.addEdge(xcfaEdge);
-					XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-						XcfaMetadata.create(xcfaEdge, s, o);
+					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+						FrontendMetadata.create(xcfaEdge, s, o);
 					});
 					atLeastOne = true;
 				}

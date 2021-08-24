@@ -19,10 +19,9 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 				notFound = false;
 				XcfaEdge xcfaEdge = new XcfaEdge(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
 				builder.addEdge(xcfaEdge);
-				XcfaMetadata.lookupMetadata(edge.get()).forEach((s, o) -> XcfaMetadata.create(xcfaEdge, s, o));
+				FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 				builder.removeEdge(edge.get());
 			}
 			edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() > 1).findFirst();
@@ -51,11 +50,11 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 				for (Stmt stmt : edge.get().getStmts()) {
 					interLoc = edge.get().getStmts().indexOf(stmt) == edge.get().getStmts().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
 					builder.addLoc(interLoc);
-					XcfaMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
+					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
 					XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, interLoc, List.of(stmt));
 					lastLoc = interLoc;
 					builder.addEdge(xcfaEdge);
-					XcfaMetadata.lookupMetadata(edge.get()).forEach((s, o) -> XcfaMetadata.create(xcfaEdge, s, o));
+					FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 				}
 				builder.removeEdge(edge.get());
 			}

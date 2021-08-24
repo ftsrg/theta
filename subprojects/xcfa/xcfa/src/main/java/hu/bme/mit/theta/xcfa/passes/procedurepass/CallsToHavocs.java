@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -53,8 +53,8 @@ public class CallsToHavocs extends ProcedurePass {
 				xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
 				builder.removeEdge(edge);
 				builder.addEdge(xcfaEdge);
-				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					XcfaMetadata.create(xcfaEdge, s, o);
+				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					FrontendMetadata.create(xcfaEdge, s, o);
 				});
 			}
 		}

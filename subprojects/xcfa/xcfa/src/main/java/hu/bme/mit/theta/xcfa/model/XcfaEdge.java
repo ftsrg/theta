@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +51,8 @@ public final class XcfaEdge {
 			newStmts.add(stmt1);
 		}
 		XcfaEdge xcfaEdge = new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
-		XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-			XcfaMetadata.create(xcfaEdge, s, o);
+		FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+			FrontendMetadata.create(xcfaEdge, s, o);
 		});
 		return xcfaEdge;
 	}

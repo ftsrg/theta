@@ -22,13 +22,10 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaStmtVarReplacer;
 
@@ -37,13 +34,11 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public class GlobalVarsToStoreLoad extends ProcedurePass {
 
@@ -71,7 +66,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 			}
 			builder.removeEdge(edge);
 			XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), stmts);
-			XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> XcfaMetadata.create(xcfaEdge, s, o));
+			FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 			builder.addEdge(xcfaEdge);
 
 		}

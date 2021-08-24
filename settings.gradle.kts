@@ -4,6 +4,7 @@ include(
         "common/analysis",
         "common/common",
         "common/core",
+        "common/c-frontend",
         "common/solver",
         "common/solver-z3",
 

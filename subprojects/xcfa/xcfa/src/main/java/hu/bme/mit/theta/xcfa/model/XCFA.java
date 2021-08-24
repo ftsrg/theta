@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ public final class XCFA {
 
 		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
 			CFA.Loc cfaLoc = builder.createLoc(loc.getName());
-			XcfaMetadata.create(loc, "cfaLoc", cfaLoc);
+			FrontendMetadata.create(loc, "cfaLoc", cfaLoc);
 			locationLUT.put(loc, cfaLoc);
 		}
 
@@ -97,7 +98,7 @@ public final class XCFA {
 			for (int i = 1; i < e.getStmts().size(); ++i) {
 				CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
 				locations.add(loc);
-				XcfaMetadata.create(e, "xcfaInterLoc", loc);
+				FrontendMetadata.create(e, "xcfaInterLoc", loc);
 			}
 			// Adding target
 			locations.add(locationLUT.get(e.getTarget()));
@@ -105,11 +106,11 @@ public final class XCFA {
 			for (int i = 0; i < e.getStmts().size(); ++i) {
 				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
 				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i).accept(new XcfaStmtVarReplacer(), varLut));
-				XcfaMetadata.create(e, "cfaEdge", edge);
+				FrontendMetadata.create(e, "cfaEdge", edge);
 			}
 			if (e.getStmts().size() == 0) {
 				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
-				XcfaMetadata.create(e, "cfaEdge", edge);
+				FrontendMetadata.create(e, "cfaEdge", edge);
 			}
 		}
 		//Theoretically, this is no longer necessary. However, if a "no final location" exception is ever thrown, start debugging here!

@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
@@ -68,15 +68,15 @@ public final class XcfaProcedure {
     }
 
     public XcfaProcedure(XcfaProcedure procedure, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
-        XcfaMetadata.lookupMetadata(procedure).forEach((s, o) -> {
-            XcfaMetadata.create(this, s, o);
+        FrontendMetadata.lookupMetadata(procedure).forEach((s, o) -> {
+            FrontendMetadata.create(this, s, o);
         });
         parent = null; // ProcessBuilder will fill out this field
 
         Map<VarDecl<?>, Direction> paramCollectList = new LinkedHashMap<>();
         procedure.params.forEach((varDecl, direction) -> {
             VarDecl<?> newVar = VarDecl.copyOf(varDecl);
-            XcfaMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> XcfaMetadata.create(newVar.getRef(), s, o));
+            FrontendMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> FrontendMetadata.create(newVar.getRef(), s, o));
             paramCollectList.put(newVar, direction);
             newVarLut.put(varDecl, newVar);
         });
@@ -85,7 +85,7 @@ public final class XcfaProcedure {
         Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
         procedure.localVars.forEach((varDecl, litExpr) -> {
             VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
-            XcfaMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> XcfaMetadata.create(newVar.getRef(), s, o));
+            FrontendMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> FrontendMetadata.create(newVar.getRef(), s, o));
             localVarsCollectList.put(newVar, litExpr);
             newVarLut.put(varDecl, newVar);
         });
@@ -96,8 +96,8 @@ public final class XcfaProcedure {
         List<XcfaLocation> locsCollectList = new ArrayList<>();
         procedure.locs.forEach(loc -> {
             XcfaLocation location = XcfaLocation.copyOf(loc);
-            XcfaMetadata.lookupMetadata(loc).forEach((s, o) -> {
-                XcfaMetadata.create(location, s, o);
+            FrontendMetadata.lookupMetadata(loc).forEach((s, o) -> {
+                FrontendMetadata.create(location, s, o);
             });
             locsCollectList.add(location);
             newLocLut.put(loc, location);
@@ -114,8 +114,8 @@ public final class XcfaProcedure {
         List<XcfaEdge> edgeCollectList = new ArrayList<>();
         procedure.edges.forEach(edge -> {
             XcfaEdge xcfaEdge = XcfaEdge.copyOf(edge, newLocLut, newVarLut);
-            XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-                XcfaMetadata.create(xcfaEdge, s, o);
+            FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+                FrontendMetadata.create(xcfaEdge, s, o);
             });
             edgeCollectList.add(xcfaEdge);
         });

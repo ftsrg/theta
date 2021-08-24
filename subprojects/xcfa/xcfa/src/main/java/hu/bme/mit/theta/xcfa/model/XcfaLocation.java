@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.model;
 
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +44,8 @@ public final class XcfaLocation {
 	private static int copyCnt = 0;
 	public static XcfaLocation copyOf(final XcfaLocation from) {
 		XcfaLocation xcfaLocation = new XcfaLocation(from.getName() + "_copy" + copyCnt++, Map.copyOf(from.dictionary == null ? Map.of() : from.dictionary));
-		XcfaMetadata.lookupMetadata(from).forEach((s, o) -> {
-			XcfaMetadata.create(xcfaLocation, s, o);
+		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
+			FrontendMetadata.create(xcfaLocation, s, o);
 		});
 		return xcfaLocation;
 	}

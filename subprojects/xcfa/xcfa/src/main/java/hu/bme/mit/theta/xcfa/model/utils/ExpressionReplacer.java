@@ -2,8 +2,8 @@ package hu.bme.mit.theta.xcfa.model.utils;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -42,11 +42,11 @@ public class ExpressionReplacer<T extends Type, R extends Type> {
 		}
 		if(needsTransformation) {
 			Expr<T> tExpr = expr.withOps(ops);
-			Map<String, ?> keyMap = XcfaMetadata.lookupMetadata(expr);
+			Map<String, ?> keyMap = FrontendMetadata.lookupMetadata(expr);
 			if(keyMap != null) {
 				CComplexType cType = (CComplexType) keyMap.get("cType");
 				if(cType != null) {
-					XcfaMetadata.create(tExpr, "cType", cType);
+					FrontendMetadata.create(tExpr, "cType", cType);
 				}
 			}
 			return Optional.of(tExpr);

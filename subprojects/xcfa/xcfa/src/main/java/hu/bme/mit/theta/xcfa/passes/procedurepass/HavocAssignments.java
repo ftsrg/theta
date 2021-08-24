@@ -18,17 +18,12 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -56,8 +51,8 @@ public class HavocAssignments extends ProcedurePass {
 					builder.removeEdge(assignEdge);
 					XcfaEdge xcfaEdge = new XcfaEdge(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl())));
 					builder.addEdge(xcfaEdge);
-					XcfaMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
-						XcfaMetadata.create(xcfaEdge, s, o);
+					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
+						FrontendMetadata.create(xcfaEdge, s, o);
 					});
 					builder.getLocs().remove(havocEdge.get().getTarget());
 				}

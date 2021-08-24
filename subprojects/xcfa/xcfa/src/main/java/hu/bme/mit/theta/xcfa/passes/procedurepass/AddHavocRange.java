@@ -20,9 +20,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +49,8 @@ public class AddHavocRange extends ProcedurePass {
 				xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
 				builder.removeEdge(edge);
 				builder.addEdge(xcfaEdge);
-				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					XcfaMetadata.create(xcfaEdge, s, o);
+				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					FrontendMetadata.create(xcfaEdge, s, o);
 				});
 			}
 		}

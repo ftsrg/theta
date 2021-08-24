@@ -24,9 +24,9 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public class SimplifyAssumptions extends ProcedurePass {
 							if(cond instanceof NeqExpr) expr = ((IteExpr<?>) leftOp).getCond();
 							else expr = Not(((IteExpr<?>) leftOp).getCond());
 							found = true;
-							XcfaMetadata.create(expr, "cType", CComplexType.getType(leftOp));
+							FrontendMetadata.create(expr, "cType", CComplexType.getType(leftOp));
 							newStmts.add(Assume(expr));
 						}
 					}

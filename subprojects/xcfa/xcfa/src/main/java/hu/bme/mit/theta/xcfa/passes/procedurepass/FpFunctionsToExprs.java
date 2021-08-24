@@ -31,9 +31,9 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -75,7 +75,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		AssignStmt<?> assign = Assign(
 				cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), type.getSmtType()),
 				cast(Ite(FpIsNanExpr.of((Expr<FpType>) callStmt.getParams().get(1)), type.getUnitValue(), type.getNullValue()), type.getSmtType()));
-		XcfaMetadata.create(assign.getExpr(), "cType", type);
+		FrontendMetadata.create(assign.getExpr(), "cType", type);
 		return assign;
 	}
 
@@ -85,7 +85,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 
@@ -95,7 +95,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpSqrtExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 
@@ -109,7 +109,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMinExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 
@@ -119,7 +119,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMaxExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 
@@ -129,7 +129,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, (Expr<FpType>) callStmt.getParams().get(1)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 
@@ -139,7 +139,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
 		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpAbsExpr.of((Expr<FpType>) callStmt.getParams().get(1)));
-		XcfaMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return assign;
 	}
 

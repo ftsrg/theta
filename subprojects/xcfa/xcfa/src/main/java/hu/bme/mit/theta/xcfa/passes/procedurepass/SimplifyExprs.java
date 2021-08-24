@@ -8,9 +8,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +28,9 @@ public class SimplifyExprs extends ProcedurePass{
 				if (stmt instanceof AssignStmt && !(((AssignStmt<?>) stmt).getVarDecl().getType() instanceof ArrayType)) {
 					VarDecl<?> varDecl = ((AssignStmt<?>) stmt).getVarDecl();
 					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) stmt).getExpr(), ImmutableValuation.empty());
-					XcfaMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) stmt).getExpr()));
+					FrontendMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) stmt).getExpr()));
 					simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
-					XcfaMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
+					FrontendMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
 					Stmt newStmt = Assign(
 							cast(varDecl, varDecl.getType()),
 							cast(simplified, varDecl.getType()));

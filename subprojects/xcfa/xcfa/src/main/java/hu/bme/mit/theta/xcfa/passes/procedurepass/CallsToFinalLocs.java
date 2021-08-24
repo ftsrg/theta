@@ -16,25 +16,17 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class CallsToFinalLocs extends ProcedurePass {
 	private static final List<String> errorFunc = List.of("reach_error");
@@ -67,8 +59,8 @@ public class CallsToFinalLocs extends ProcedurePass {
 				}
 				builder.removeEdge(edge);
 				builder.addEdge(xcfaEdge);
-				XcfaMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					XcfaMetadata.create(xcfaEdge, s, o);
+				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					FrontendMetadata.create(xcfaEdge, s, o);
 				});
 			}
 		}

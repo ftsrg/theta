@@ -25,12 +25,12 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +67,8 @@ public final class XcfaProcess {
     }
 
     public XcfaProcess(XcfaEdge edge, StartThreadStmt stmt, final XcfaProcess process) {
-        XcfaMetadata.lookupMetadata(process).forEach((s, o) -> {
-            XcfaMetadata.create(this, s, o);
+        FrontendMetadata.lookupMetadata(process).forEach((s, o) -> {
+            FrontendMetadata.create(this, s, o);
         });
 
         threadStartStmt = Tuple2.of(edge, stmt);

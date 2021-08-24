@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -45,15 +45,15 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 					if(xcfaEdge.getTarget() == xcfaEdge.getSource()) {
 						XcfaEdge e = new XcfaEdge(edge.get().getSource(), edge.get().getSource(), xcfaEdge.getStmts());
 						builder.addEdge(e);
-						XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
-							XcfaMetadata.create(e, s, o);
+						FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+							FrontendMetadata.create(e, s, o);
 						});
 					}
 					else {
 						XcfaEdge e = new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts());
 						builder.addEdge(e);
-						XcfaMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
-							XcfaMetadata.create(e, s, o);
+						FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
+							FrontendMetadata.create(e, s, o);
 						});
 					}
 				}

@@ -17,17 +17,15 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
 import java.util.Optional;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class AssignmentChainRemoval extends ProcedurePass {
@@ -58,8 +56,8 @@ public class AssignmentChainRemoval extends ProcedurePass {
 											cast(a2.getVarDecl(), a2.getVarDecl().getType()),
 											cast(a1.getExpr(), a2.getVarDecl().getType()))));
 					builder.addEdge(xcfaEdge);
-					XcfaMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
-						XcfaMetadata.create(xcfaEdge, s, o);
+					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
+						FrontendMetadata.create(xcfaEdge, s, o);
 					});
 					builder.getLocs().remove(assignEdge1.get().getTarget());
 				}

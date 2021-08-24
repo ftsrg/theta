@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
             if (varLut.get(((RefExpr<T>) expr).getDecl()) == null) return expr;
             else {
                 Expr<T> tExpr = cast(varLut.get(((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
-                XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
+                FrontendMetadata.lookupMetadata(expr).forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
                 return tExpr;
             }
         }
@@ -73,7 +74,7 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
             else newOps.add(replaceVars(op, varLut));
         }
         Expr<T> tExpr = expr.withOps(newOps);
-        XcfaMetadata.lookupMetadata(expr).forEach((s, o) -> XcfaMetadata.create(tExpr, s, o));
+        FrontendMetadata.lookupMetadata(expr).forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
         return tExpr;
     }
 

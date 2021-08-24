@@ -43,13 +43,13 @@ import hu.bme.mit.theta.xcfa.dsl.gen.CLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.CParser;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
-import hu.bme.mit.theta.xcfa.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.xcfa.transformation.grammar.function.FunctionVisitor;
-import hu.bme.mit.theta.xcfa.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -390,7 +390,7 @@ public class XcfaCli {
 		}
 		for (CfaAction action : concrTrace.getActions()) {
 			for (CFA.Edge edge : action.getEdges()) {
-				Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
+				Set<Object> xcfaEdges = FrontendMetadata.lookupMetadata("cfaEdge", edge);
 				for (Object xcfaEdge : xcfaEdges) {
 					XcfaEdge e = (XcfaEdge) xcfaEdge;
 					cexEdges.add(e);

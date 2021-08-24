@@ -12,14 +12,11 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaMetadata;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -116,11 +113,11 @@ public final class XcfaTraceToWitness {
 	 * @return null, if no line number; the corrresponding line number otherwise
 	 */
 	private static int getEdgeMetadata(CFA.Edge edge, String key) {
-		Set<Object> xcfaEdges = XcfaMetadata.lookupMetadata("cfaEdge", edge);
+		Set<Object> xcfaEdges = FrontendMetadata.lookupMetadata("cfaEdge", edge);
 		for (Object xcfaEdge : xcfaEdges) {
-			Object sourceStatement = XcfaMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
+			Object sourceStatement = FrontendMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
 			if(sourceStatement != null) {
-				Object metadataNumber = XcfaMetadata.lookupMetadata(sourceStatement).get(key);
+				Object metadataNumber = FrontendMetadata.lookupMetadata(sourceStatement).get(key);
 				if(metadataNumber instanceof Integer) {
 					return (int) metadataNumber;
 				}
