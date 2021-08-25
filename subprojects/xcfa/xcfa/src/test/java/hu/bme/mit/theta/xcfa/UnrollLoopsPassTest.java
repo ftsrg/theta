@@ -22,9 +22,9 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnrollLoopsPass;
 import org.junit.Test;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.copyBuilder;
 
 public final class UnrollLoopsPassTest {
 
@@ -91,23 +91,6 @@ public final class UnrollLoopsPassTest {
 		System.out.println(unrolled2);
 		System.out.println("}");
 		System.out.println("}");
-	}
-
-	private XcfaProcedure.Builder copyBuilder(XcfaProcedure.Builder builder) {
-		XcfaProcedure.Builder ret = XcfaProcedure.builder();
-		Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
-		builder.getLocs().forEach(location -> {
-			XcfaLocation copy = XcfaLocation.copyOf(location);
-			ret.addLoc(copy);
-			locationLut.put(location, copy);
-		});
-		ret.setFinalLoc(locationLut.get(builder.getFinalLoc()));
-		ret.setInitLoc(locationLut.get(builder.getInitLoc()));
-		if(builder.getErrorLoc() != null) ret.setErrorLoc(locationLut.get(builder.getErrorLoc()));
-		for (XcfaEdge edge : builder.getEdges()) {
-			ret.addEdge(new XcfaEdge(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getStmts()));
-		}
-		return ret;
 	}
 
 }

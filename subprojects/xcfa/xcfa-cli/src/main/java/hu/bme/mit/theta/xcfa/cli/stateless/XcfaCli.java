@@ -50,6 +50,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import org.antlr.v4.runtime.CharStream;
@@ -64,6 +65,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -111,6 +113,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
+
+	@Parameter(names = "--bmc", description = "Run BMC pre-check")
+	boolean runbmc = false;
 
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
@@ -246,6 +251,18 @@ public class XcfaCli {
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
 					bw.write(cfa.toString());
 				}
+			}
+
+			if (runbmc) {
+				if(xcfa.getProcesses().size() == 1) {
+					checkState(xcfa.getMainProcess().getProcedures().size() == 1, "Multiple procedures are not yet supported!");
+					List<XcfaEdge> cex = new BMC().getCex(xcfa.getMainProcess().getMainProcedure());
+					if(cex != null) {
+						System.out.println("SafetyResult Unsafe");
+						return;
+					}
+				}
+
 			}
 
 			CFA cfa;

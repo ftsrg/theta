@@ -69,7 +69,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 				for (XcfaEdge outgoingEdge : outgoingEdges) {
 					builder.removeEdge(outgoingEdge);
 				}
-				builder.getLocs().remove(loc.get());
+				builder.removeLoc(loc.get());
 			}
 		}
 //

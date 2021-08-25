@@ -59,7 +59,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
 						FrontendMetadata.create(xcfaEdge, s, o);
 					});
-					builder.getLocs().remove(assignEdge1.get().getTarget());
+					builder.removeLoc(assignEdge1.get().getTarget());
 				}
 			}
 		}

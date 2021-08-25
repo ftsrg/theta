@@ -221,6 +221,10 @@ public final class XcfaProcedure {
         this.parent = xcfaProcess;
     }
 
+    public Type getRetType() {
+        return retType;
+    }
+
     public static final class Builder {
         private static final String RESULT_NAME = "result";
 
@@ -283,6 +287,13 @@ public final class XcfaProcedure {
             return locs;
         }
 
+        public void removeLoc(XcfaLocation loc) {
+            checkArgument(loc != initLoc, "Cannot remove initloc!");
+            checkArgument(loc != finalLoc, "Cannot remove finalloc!");
+            checkArgument(loc != errorLoc, "Cannot remove errorloc!");
+            locs.remove(loc);
+        }
+
         public XcfaLocation addLoc(XcfaLocation loc) {
             checkNotBuilt();
             if(!locs.contains(loc))
@@ -334,8 +345,9 @@ public final class XcfaProcedure {
             checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
             checkArgument(initLoc == null || !initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
             checkArgument(finalLoc == null || !finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
+            if(errorLoc != null) errorLoc.setErrorLoc(true);
+            else this.errorLoc.setErrorLoc(false);
             this.errorLoc = errorLoc;
-            errorLoc.setErrorLoc(true);
         }
 
         // finalLoc

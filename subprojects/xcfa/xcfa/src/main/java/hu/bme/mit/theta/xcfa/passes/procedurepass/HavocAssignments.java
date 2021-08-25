@@ -54,7 +54,7 @@ public class HavocAssignments extends ProcedurePass {
 					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
 						FrontendMetadata.create(xcfaEdge, s, o);
 					});
-					builder.getLocs().remove(havocEdge.get().getTarget());
+					builder.removeLoc(havocEdge.get().getTarget());
 				}
 			}
 		}
