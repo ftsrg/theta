@@ -33,7 +33,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
-import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -246,7 +245,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}
-				MaxEnumAnalyzer.instance.consume(guard);
+//				MaxEnumAnalyzer.instance.consume(guard); TODO: handle circular dependency
 				CComplexType signedInt = CComplexType.getSignedInt();
 				expr = Ite(guard, signedInt.getUnitValue(), signedInt.getNullValue());
 				FrontendMetadata.create(expr, "cType", signedInt);

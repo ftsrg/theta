@@ -21,6 +21,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
@@ -44,6 +45,9 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
+import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
+import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
+import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
@@ -63,6 +67,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
@@ -99,6 +104,9 @@ public class XcfaCli {
 
 	// @Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
 	String printxcfa = null;
+
+	@Parameter(names = "--portfolio", description = "Use the built-in portfolio configurations")
+	boolean portfolio;
 
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
 	ArchitectureConfig.ArithmeticType arithmeticType = ArchitectureConfig.ArithmeticType.efficient;
@@ -287,41 +295,18 @@ public class XcfaCli {
 				cfa = null;
 			}
 			if(cfa != null) {
-				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-				final SafetyResult<?, ?> status = check(configuration);
-
-				if(statisticsfile!=null) {
-					File statistics = new File(statisticsfile);
-					BufferedWriter bw = new BufferedWriter(new FileWriter(statistics));
-					bw.write("input file name: " + model + System.lineSeparator());
-					bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
-					bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
-					// TODO whenever algorithm selection is added - change to that from the flags
-					bw.write("Configuration used: ");
-					bw.write(System.lineSeparator());
-					bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
-					bw.write(System.lineSeparator());
-					bw.write("Domain: " + domain);
-					bw.write(System.lineSeparator());
-					bw.write("Refinement: " + refinement);
-					bw.write(System.lineSeparator());
-					bw.write("Precision granularity: " + precGranularity);
-					bw.write(System.lineSeparator());
-					bw.write("Search: " + search);
-					bw.write(System.lineSeparator());
-					bw.write("Predicate splitting: " + predSplit);
-					bw.write(System.lineSeparator());
-					bw.write("Encoding: " + encoding);
-					bw.write(System.lineSeparator());
-					bw.write("maxEnum: " + maxEnum);
-					bw.write(System.lineSeparator());
-					bw.write("initPrec: " + initPrec);
-					bw.write(System.lineSeparator());
-					bw.write("pruneStrategy: " + pruneStrategy);
-					bw.write(System.lineSeparator());
-
-					bw.close();
+				final SafetyResult<?, ?> status;
+				if(!portfolio) {
+					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+					status = check(configuration);
+					if(statisticsfile!=null) {
+						writeStatistics(cfa);
+					}
+				} else {
+					status = PortfolioHandler.instance.executeAnalysis(cfa, logLevel, statisticsfile);
 				}
+
 				if (status.isUnsafe() && cexfile != null) {
 					writeCex(status.asUnsafe());
 				}
@@ -337,6 +322,44 @@ public class XcfaCli {
 			System.out.println(sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 		} catch (final Throwable ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	private void writeStatistics(CFA cfa) {
+		File statistics = new File(statisticsfile);
+		BufferedWriter bw = null;
+		try {
+			bw = new BufferedWriter(new FileWriter(statistics));
+
+			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
+			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+
+			bw.write("Configuration: ");
+			bw.write(System.lineSeparator());
+			bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
+			bw.write(System.lineSeparator());
+			bw.write("Domain: " + domain);
+			bw.write(System.lineSeparator());
+			bw.write("Refinement: " + refinement);
+			bw.write(System.lineSeparator());
+			bw.write("Precision granularity: " + precGranularity);
+			bw.write(System.lineSeparator());
+			bw.write("Search: " + search);
+			bw.write(System.lineSeparator());
+			bw.write("Predicate splitting: " + predSplit);
+			bw.write(System.lineSeparator());
+			bw.write("Encoding: " + encoding);
+			bw.write(System.lineSeparator());
+			bw.write("maxEnum: " + maxEnum);
+			bw.write(System.lineSeparator());
+			bw.write("initPrec: " + initPrec);
+			bw.write(System.lineSeparator());
+			bw.write("pruneStrategy: " + pruneStrategy);
+			bw.write(System.lineSeparator());
+
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -374,6 +397,10 @@ public class XcfaCli {
 	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
 		try {
 			return configuration.check();
+		} catch (final NotSolvableException exception) {
+			System.err.println("Configuration failed (stuck)");
+			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+			throw exception;
 		} catch (final Exception ex) {
 			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
 			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);

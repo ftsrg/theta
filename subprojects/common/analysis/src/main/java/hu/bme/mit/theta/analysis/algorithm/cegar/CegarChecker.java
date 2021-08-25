@@ -23,14 +23,18 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -53,6 +57,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	// controlled restart
 	private Set<AbstractArg> args = new LinkedHashSet<>();
 	private P lastPrecision = null;
+	private static NotSolvableThrower notSolvableThrower = null;
+
+	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
+		notSolvableThrower = thrower;
+	}
 
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
@@ -72,10 +81,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	private class AbstractArg {
 		private final Collection<State> states;
+		private final P prec;
 
-
-		private AbstractArg(final Stream<ArgNode<S, A>> nodes){
-			states = nodes.map(ArgNode::getState).collect(Collectors.toSet());
+		private AbstractArg(final Stream<ArgNode<S, A>> nodes, final P prec){
+			states = nodes.map(ArgNode::getState).collect(Collectors.toList());
+			this.prec = prec;
 		}
 
 		@Override
@@ -83,12 +93,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			AbstractArg that = (AbstractArg) o;
-			return states.equals(that.states);
+			return (states.equals(that.states) && prec.equals(that.prec));
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(states);
+			return Objects.hash(states, prec);
 		}
 	}
 
@@ -113,28 +123,22 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-			AbstractArg abstractArg = new AbstractArg(arg.getNodes());
-			if(args.contains(abstractArg) && lastPrecision != null && lastPrecision.equals(prec)) {
-				System.err.println("Not solvable!");
-				throw new RuntimeException("Not solvable!");
-			}
-			args.add(abstractArg);
-			lastPrecision = prec;
+			logger.write(Level.VERBOSE, "Printing ARG..." + System.lineSeparator());
+			Graph g = ArgVisualizer.getDefault().visualize(arg);
+			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
-			/*Stream<ArgNode<S, A>> argNodeStream = arg.getNodes().filter(saArgNode -> !saArgNode.getState().isTop() && saArgNode.isSafe());
-			List<ArgNode<S, A>> collect = arg.getNodes().filter(saArgNode -> !saArgNode.getState().isTop() && saArgNode.isSafe()).collect(Collectors.toList());
+			if (notSolvableThrower != null) {
+				// stopping verification, if it is stuck
+				AbstractArg abstractArg = new AbstractArg(arg.getNodes(), prec);
 
-			if(argNodeStream.count() == 0) {
-				System.err.println("True arg");
-				if(lastArgTrue && lastPrecision != null && lastPrecision.equals(prec)) {
-					System.err.println("Not solvable!");
-					throw new RuntimeException("Not solvable!");
+				if (args.contains(abstractArg)) {
+					Optional<AbstractArg> any = args.stream().filter(abstractArg1 -> abstractArg1.equals(abstractArg)).findAny();
+					// System.err.println("Not solvable!");
+					// throw new NotSolvableException();
+					notSolvableThrower.throwNotSolvableException();
 				}
-				lastArgTrue = true;
-			} else {
-				lastArgTrue = false;
+				args.add(abstractArg);
 			}
-			lastPrecision = prec;*/
 
 			if (abstractorResult.isUnsafe()) {
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

@@ -16,83 +16,140 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class EmptyEdgeRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		boolean notFound = false;
-		while(!notFound) {
-			notFound = true;
-			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge ->
-					xcfaEdge.getStmts().size() == 0
-							&& xcfaEdge.getTarget() != xcfaEdge.getSource()
-							&& !xcfaEdge.getTarget().isEndLoc()
-							&& !xcfaEdge.getTarget().isErrorLoc()
-			).findFirst();
-			if(edge.isPresent()) {
-				notFound = false;
-				List<XcfaEdge> outgoingEdges = new ArrayList<>(edge.get().getTarget().getOutgoingEdges());
-				for (XcfaEdge xcfaEdge : outgoingEdges) {
-					if(xcfaEdge.getTarget() == xcfaEdge.getSource()) {
-						XcfaEdge e = new XcfaEdge(edge.get().getSource(), edge.get().getSource(), xcfaEdge.getStmts());
-						builder.addEdge(e);
-						FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
-							FrontendMetadata.create(e, s, o);
-						});
-					}
-					else {
-						XcfaEdge e = new XcfaEdge(edge.get().getSource(), xcfaEdge.getTarget(), xcfaEdge.getStmts());
-						builder.addEdge(e);
-						FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
-							FrontendMetadata.create(e, s, o);
-						});
+		// removing empty loops (empty edge that has the same source and target) - they are completely unnecessary
+		List<XcfaEdge> emptyLoops = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0 && xcfaEdge.getTarget() == xcfaEdge.getSource()).collect(Collectors.toList());
+		for (XcfaEdge loop : emptyLoops) {
+			builder.removeEdge(loop);
+		}
+
+		// removing paralell empty edges
+		// (there can be more than two between two given locations and there can be more sets of paralell empty edges going out from a given locations)
+		for (XcfaLocation loc : builder.getLocs()) {
+			List<XcfaEdge> emptyEdges = loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
+			List<XcfaEdge> toRemove = new ArrayList<>();
+
+			while(!emptyEdges.isEmpty()) {
+				XcfaEdge emptyEdge = emptyEdges.get(0);
+				List<XcfaEdge> paralells = loc.getOutgoingEdges().stream().filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget()).collect(Collectors.toList());
+				emptyEdges.remove(emptyEdge);
+				emptyEdges.removeAll(paralells);
+				toRemove.addAll(paralells);
+			}
+
+			for (XcfaEdge paralell : toRemove) {
+				builder.removeEdge(paralell);
+			}
+		}
+
+		return removeEmptySequences(builder);
+	}
+
+	// Finding empty sequences (location-empty edge-location-empty edge-...-location)
+	// The sequence pattern we use is rather rigorous: starting locations have no other requirements but and outgoing empty edge
+	// but the other locations can have no other edges except one incoming and one outgoing empty edge
+	// these locations are then merged into the starting location, which means, that one empty edge will remain
+	// but this way, if the starting location can start more than one sequence, we can easily merge them all
+	private XcfaProcedure.Builder removeEmptySequences(XcfaProcedure.Builder builder) {
+		List<XcfaEdge> edgesToStartSequenceOn = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
+		while(edgesToStartSequenceOn.size() != 0) {
+			XcfaEdge startEdge = edgesToStartSequenceOn.get(0);
+			Set<XcfaLocation> sequence = new HashSet<>();
+			XcfaLocation startingLocation = startEdge.getSource();
+			XcfaLocation endLocation = startingLocation;
+			sequence.add(startingLocation);
+
+			boolean sequenceEnd = false;
+			XcfaEdge currentEdge = startEdge; // the next (possible) edge in the sequence
+
+			while (!sequenceEnd) {
+				XcfaLocation nextLocation = currentEdge.getTarget();
+				if (hasNoLoops(nextLocation) // has no loop edges
+						&& !nextLocation.isEndLoc() // not a final location
+						&& !nextLocation.isErrorLoc() // not an error location
+						&& hasNIncomingEdge(nextLocation, 1) // has exactly one incoming edge (which is the current edge)
+						&& !sequence.contains(nextLocation) // is not already in the sequence
+						&& hasNOutgoingEdge(nextLocation, 1) // has exactly one outgoing edge
+						&& hasNOutgoingEmptyEdge(nextLocation, 1) // which is empty
+				) {
+					// the next location can be added to the sequence
+					sequence.add(nextLocation);
+					endLocation = nextLocation;
+				} else {
+					// cannot be a part of the sequence - end of sequence BUT without this location
+					sequenceEnd = true;
+				}
+
+				edgesToStartSequenceOn.remove(currentEdge); // was checked already, we don't want to check it in the future
+				if (!sequenceEnd) { // a location was added and has exactly one outgoing edge, which will be the next edge to check
+					currentEdge = nextLocation.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().isEmpty()).findFirst().get();
+				}
+			}
+
+			// merge sequence into it's starting location
+			if (sequence.size() > 1) {
+				// all (non-empty) edges in the sequence should be moved to the starting location first
+				List<XcfaEdge> incomingEdges = new ArrayList<>();
+				List<XcfaEdge> outgoingEdges = new ArrayList<>();
+				// collect all edges in the sequence (except the starting location, as we will add these edges to that location)
+				for (XcfaLocation loc : sequence) {
+					if (loc != startingLocation) {
+						incomingEdges.addAll(loc.getIncomingEdges());
+						outgoingEdges.addAll(loc.getOutgoingEdges());
 					}
 				}
-				builder.removeEdge(edge.get());
-			}
-		}
 
-		notFound = false;
-		while(!notFound) {
-			notFound = true;
-			Optional<XcfaLocation> loc = builder.getLocs().stream().filter(xcfaLocation -> builder.getInitLoc() != xcfaLocation && builder.getFinalLoc() != xcfaLocation && xcfaLocation.getIncomingEdges().stream().filter(xcfaEdge -> xcfaEdge.getSource() != xcfaEdge.getTarget()).findAny().isEmpty()).findFirst();
-			if(loc.isPresent()) {
-				notFound = false;
-				List<XcfaEdge> outgoingEdges = new ArrayList<>(loc.get().getOutgoingEdges());
-				for (XcfaEdge outgoingEdge : outgoingEdges) {
-					builder.removeEdge(outgoingEdge);
+				// add the outgoing empty edge of the end location to the starting location
+				builder.addEdge(new XcfaEdge(startingLocation, endLocation.getOutgoingEdges().get(0).getTarget(), endLocation.getOutgoingEdges().get(0).getStmts()));
+
+				// remove the old edges and locations
+				for (XcfaEdge edge : incomingEdges) {
+					builder.removeEdge(edge);
 				}
-				builder.getLocs().remove(loc.get());
-			}
-		}
+				edgesToStartSequenceOn.removeAll(incomingEdges);
 
-		notFound = false;
-		while(!notFound) {
-			notFound = true;
-			Optional<XcfaEdge> duplicateEdge = builder.getEdges().stream().
-					filter(xcfaEdge ->
-							xcfaEdge.getStmts().size() == 0 &&
-									builder.getEdges().stream().anyMatch(xcfaEdge1 ->
-											xcfaEdge != xcfaEdge1 &&
-													xcfaEdge1.getSource() == xcfaEdge.getSource() &&
-													xcfaEdge1.getTarget() == xcfaEdge.getTarget() &&
-													xcfaEdge1.getStmts().size() == 0)).
-					findAny();
-			if(duplicateEdge.isPresent()) {
-				notFound = false;
-				builder.removeEdge(duplicateEdge.get());
-			}
-		}
+				for (XcfaEdge edge : outgoingEdges) {
+					builder.removeEdge(edge);
+				}
+				edgesToStartSequenceOn.removeAll(outgoingEdges);
 
+				for (XcfaLocation loc : sequence) {
+					if (loc != startingLocation) {
+						builder.getLocs().remove(loc);
+					}
+				}
+			}
+
+		}
 		return builder;
+	}
+
+	private boolean hasNOutgoingEmptyEdge(XcfaLocation loc, int n) {
+		return loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).count() == n;
+	}
+
+	private boolean hasNOutgoingEdge(XcfaLocation loc, int n) {
+		return loc.getOutgoingEdges().size() == n;
+	}
+
+	private boolean hasNIncomingEdge(XcfaLocation loc, int n) {
+		return loc.getIncomingEdges().size() == n;
+	}
+
+	private boolean hasNoLoops(XcfaLocation loc) {
+		return loc.getOutgoingEdges().stream().noneMatch(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget());
 	}
 
 	@Override
