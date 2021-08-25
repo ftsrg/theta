@@ -180,6 +180,10 @@ public final class XcfaProcedure {
         return List.copyOf(localVars.keySet());
     }
 
+    public Map<VarDecl<?>, Optional<LitExpr<?>>> getLocalVarMap() {
+        return localVars;
+    }
+
     public Optional<LitExpr<?>> getInitValue(VarDecl<?> varDecl) {
         return localVars.get(varDecl);
     }
@@ -296,8 +300,10 @@ public final class XcfaProcedure {
 
         public XcfaLocation addLoc(XcfaLocation loc) {
             checkNotBuilt();
-            if(!locs.contains(loc))
+            if(!locs.contains(loc)) {
+                checkArgument(loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0, "Loc already part of an XCFA procedure!");
                 locs.add(loc);
+            }
             return loc;
         }
 

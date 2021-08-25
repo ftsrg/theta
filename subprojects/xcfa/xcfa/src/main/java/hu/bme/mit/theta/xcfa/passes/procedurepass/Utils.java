@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 
@@ -44,6 +46,7 @@ public class Utils {
 			if(!path.contains(outgoingEdge)) {
 				path.push(outgoingEdge);
 				solver.push();
+				Map<VarDecl<?>, ConstDecl<?>> saved = new LinkedHashMap<>(varToLastConstMap);
 				for (Stmt stmt : outgoingEdge.getStmts()) {
 					for (VarDecl<?> var : StmtUtils.getVars(stmt)) {
 						if(!varToLastConstMap.containsKey(var)) varToLastConstMap.put(var, Const(var.getName(), var.getType()));
@@ -68,9 +71,16 @@ public class Utils {
 				if(ret != null) return ret;
 				solver.pop();
 				path.pop();
+				varToLastConstMap = saved;
 			}
 		}
 		return null;
+	}
+
+	private static void createConst(Map<VarDecl<?>, Stack<ConstDecl<?>>> varToLastConstMap, VarDecl<?> var) {
+		varToLastConstMap.putIfAbsent(var, new Stack<>());
+		varToLastConstMap.get(var).push(Const(var.getName(), var.getType()));
+
 	}
 
 
@@ -133,17 +143,19 @@ public class Utils {
 	}
 
 	public static XcfaProcedure.Builder copyBuilder(XcfaProcedure.Builder builder) {
-		return getBuilder(builder.getName(), builder.getRetType(), builder.getLocs(), builder.getFinalLoc(), builder.getInitLoc(), builder.getErrorLoc(), builder.getEdges());
+		return getBuilder(builder.getName(), builder.getRetType(), builder.getLocs(), builder.getFinalLoc(), builder.getInitLoc(), builder.getErrorLoc(), builder.getEdges(), builder.getParams(), builder.getLocalVars());
 	}
 
 	public static XcfaProcedure.Builder createBuilder(XcfaProcedure proc) {
-		return getBuilder(proc.getName(), proc.getRetType(), proc.getLocs(), proc.getFinalLoc(), proc.getInitLoc(), proc.getErrorLoc(), proc.getEdges());
+		return getBuilder(proc.getName(), proc.getRetType(), proc.getLocs(), proc.getFinalLoc(), proc.getInitLoc(), proc.getErrorLoc(), proc.getEdges(), proc.getParams(), proc.getLocalVarMap());
 	}
 
-	private static XcfaProcedure.Builder getBuilder(String name, Type retType, List<XcfaLocation> locs, XcfaLocation finalLoc, XcfaLocation initLoc, XcfaLocation errorLoc, List<XcfaEdge> edges) {
+	private static XcfaProcedure.Builder getBuilder(String name, Type retType, List<XcfaLocation> locs, XcfaLocation finalLoc, XcfaLocation initLoc, XcfaLocation errorLoc, List<XcfaEdge> edges, Map<VarDecl<?>, XcfaProcedure.Direction> params, Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
 		XcfaProcedure.Builder ret = XcfaProcedure.builder();
 		ret.setName(name);
 		ret.setRetType(retType);
+		params.forEach((varDecl, direction) -> ret.createParam(direction, varDecl));
+		localVars.forEach((varDecl, litExpr) -> ret.createVar(varDecl, litExpr.orElse(null)));
 		Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
 		for (XcfaLocation location : new LinkedHashSet<>(locs)) {
 			XcfaLocation copy = XcfaLocation.copyOf(location);

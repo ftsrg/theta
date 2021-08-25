@@ -2,6 +2,6 @@ void reach_error(){}
 
 int main() {
     for(int i = 0; i < 30; i++) {
-        if(i == 19) reach_error();
+        if(i == 2) reach_error();
     }
  }

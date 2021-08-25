@@ -80,6 +80,9 @@ public class UnrollLoopsPass extends ProcedurePass{
 			}
 		}
 
+		builder.addEdge(new XcfaEdge(locationLut.get(builder.getErrorLoc()), builder.getErrorLoc(), List.of()));
+		builder.addEdge(new XcfaEdge(locationLut.get(builder.getFinalLoc()), builder.getFinalLoc(), List.of()));
+
 		return builder;
 	}
 }

@@ -72,14 +72,16 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation> {
 
 	private final Map<String, XcfaLocation> locationLut = new LinkedHashMap<>();
-	private XcfaLocation getLoc(final String name) {
-		if(name == null) return getAnonymousLoc();
+	private XcfaLocation getLoc(final XcfaProcedure.Builder builder, final String name) {
+		if(name == null) return getAnonymousLoc(builder);
 		locationLut.putIfAbsent(name, new XcfaLocation(name, Map.of()));
-		return locationLut.get(name);
+		XcfaLocation location = locationLut.get(name);
+		builder.addLoc(location);
+		return location;
 	}
 	private int nameCounter = 0;
-	private XcfaLocation getAnonymousLoc() {
-		return getLoc("__loc_" + nameCounter++);
+	private XcfaLocation getAnonymousLoc(final XcfaProcedure.Builder builder) {
+		return getLoc(builder, "__loc_" + nameCounter++);
 	}
 
 	protected <T> void propagateMetadata(CStatement source, T newOwner) {
@@ -118,6 +120,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 	}
 
 	private XcfaProcedure buildFunction(CFunction function, List<Stmt> param) {
+		locationLut.clear();
 		List<VarDecl<?>> flatVariables = function.getFlatVariables();
 		CDeclaration funcDecl = function.getFuncDecl();
 		CStatement compound = function.getCompound();
@@ -147,12 +150,12 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 				if(varDecl != null) builder.createParam(XcfaProcedure.Direction.IN, varDecl);
 			}
 		}
-		XcfaLocation init = getAnonymousLoc();
+		XcfaLocation init = getAnonymousLoc(builder);
 		builder.addLoc(init);
 		propagateMetadata(function, init);
 		builder.setInitLoc(init);
 		if(param.size() > 0 && builder.getName().equals("main")) {
-			XcfaLocation endinit = getAnonymousLoc();
+			XcfaLocation endinit = getAnonymousLoc(builder);
 			builder.addLoc(endinit);
 			propagateMetadata(function, endinit);
 			XcfaEdge edge = new XcfaEdge(init, endinit, param);
@@ -160,7 +163,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			propagateMetadata(function, edge);
 			init = endinit;
 		}
-		XcfaLocation ret = getAnonymousLoc();
+		XcfaLocation ret = getAnonymousLoc(builder);
 		builder.addLoc(ret);
 		propagateMetadata(function, ret);
 		XcfaLocation end = compound.accept(this, new ParamPack(builder, init, null, null, ret));
@@ -184,13 +187,13 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement rValue = statement.getrValue();
 		Map<Type, VarDecl<ArrayType<?, ?>>> memoryMaps = CAssignment.getMemoryMaps();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		XcfaLocation location = getAnonymousLoc();
+		XcfaLocation location = getAnonymousLoc(builder);
 		builder.addLoc(location);
 		propagateMetadata(statement, location);
 		initLoc = rValue.accept(this, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
@@ -255,13 +258,13 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation continueLoc = param.continueLoc;
 		XcfaLocation returnLoc = param.returnLoc;
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		XcfaLocation location = getAnonymousLoc();
+		XcfaLocation location = getAnonymousLoc(builder);
 		builder.addLoc(location);
 		propagateMetadata(statement, location);
 
@@ -279,7 +282,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation continueLoc = param.continueLoc;
 		XcfaLocation returnLoc = param.returnLoc;
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
@@ -305,13 +308,13 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		VarDecl<?> ret = statement.getRet();
 		List<CStatement> myParams = statement.getParams();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		XcfaLocation location = getAnonymousLoc();
+		XcfaLocation location = getAnonymousLoc(builder);
 		builder.addLoc(location);
 		propagateMetadata(statement, location);
 		List<Expr<?>> params = new ArrayList<>();
@@ -349,7 +352,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement preStatements = statement.getPreStatements();
 		CStatement postStatements = statement.getPostStatements();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
@@ -371,7 +374,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation continueLoc = param.continueLoc;
 		XcfaLocation returnLoc = param.returnLoc;
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
@@ -407,11 +410,11 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement body = statement.getBody();
 		CStatement guard = statement.getGuard();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
-		XcfaLocation endLoc = getAnonymousLoc();
-		XcfaLocation innerEndLoc = getAnonymousLoc();
-		XcfaLocation innerInnerGuard = getAnonymousLoc();
-		XcfaLocation outerInnerGuard = getAnonymousLoc();
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
+		XcfaLocation endLoc = getAnonymousLoc(builder);
+		XcfaLocation innerEndLoc = getAnonymousLoc(builder);
+		XcfaLocation innerInnerGuard = getAnonymousLoc(builder);
+		XcfaLocation outerInnerGuard = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		builder.addLoc(innerInnerGuard);
@@ -471,11 +474,11 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement guard = statement.getGuard();
 		CStatement body = statement.getBody();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
-		XcfaLocation endLoc = getAnonymousLoc();
-		XcfaLocation endInit = getAnonymousLoc();
-		XcfaLocation startIncrement = getAnonymousLoc();
-		XcfaLocation outerLastTest = getAnonymousLoc();
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
+		XcfaLocation endLoc = getAnonymousLoc(builder);
+		XcfaLocation endInit = getAnonymousLoc(builder);
+		XcfaLocation startIncrement = getAnonymousLoc(builder);
+		XcfaLocation outerLastTest = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		builder.addLoc(outerLastTest);
@@ -528,14 +531,14 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation continueLoc = param.continueLoc;
 		XcfaLocation returnLoc = param.returnLoc;
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
-		edge = new XcfaEdge(initLoc, getLoc(statement.getLabel()), List.of());
-		builder.addLoc(getLoc(statement.getLabel()));
+		edge = new XcfaEdge(initLoc, getLoc(builder, statement.getLabel()), List.of());
+		builder.addLoc(getLoc(builder, statement.getLabel()));
 		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable", Map.of());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
@@ -555,10 +558,10 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement body = statement.getBody();
 		CStatement guard = statement.getGuard();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
-		XcfaLocation endLoc = getAnonymousLoc();
-		XcfaLocation mainBranch = getAnonymousLoc();
-		XcfaLocation elseBranch = getAnonymousLoc();
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
+		XcfaLocation endLoc = getAnonymousLoc(builder);
+		XcfaLocation mainBranch = getAnonymousLoc(builder);
+		XcfaLocation elseBranch = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		builder.addLoc(mainBranch);
@@ -622,14 +625,14 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement expr = statement.getExpr();
 
 		if(expr == null) return lastLoc;
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation endExpr = expr.accept(this, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
-		XcfaLocation endLoc = getAnonymousLoc();
+		XcfaLocation endLoc = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
@@ -649,10 +652,10 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement testValue = statement.getTestValue();
 		CStatement body = statement.getBody();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaLocation endLoc = getAnonymousLoc();
+		XcfaLocation endLoc = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
@@ -668,7 +671,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		}
 		XcfaLocation lastLocation = null;
 		for (CStatement cStatement : ((CCompound) body).getcStatementList()) {
-			XcfaLocation location = getAnonymousLoc();
+			XcfaLocation location = getAnonymousLoc(builder);
 			builder.addLoc(location);
 			propagateMetadata(statement, location);
 			XcfaEdge xcfaEdge;
@@ -710,16 +713,16 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		CStatement guard = statement.getGuard();
 		CStatement body = statement.getBody();
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		XcfaLocation endLoc = getAnonymousLoc();
+		XcfaLocation endLoc = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
-		XcfaLocation outerBeforeGuard = getAnonymousLoc();
+		XcfaLocation outerBeforeGuard = getAnonymousLoc(builder);
 		builder.addLoc(outerBeforeGuard);
 		propagateMetadata(statement, outerBeforeGuard);
 		for(int i = 0; i < (UNROLL_COUNT == 0 ? 1 : UNROLL_COUNT); ++i) {
@@ -729,12 +732,12 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 				propagateMetadata(statement, xcfaEdge);
 				return endLoc;
 			} else {
-				XcfaLocation innerLoop = getAnonymousLoc();
+				XcfaLocation innerLoop = getAnonymousLoc(builder);
 				builder.addLoc(innerLoop);
 				propagateMetadata(statement, innerLoop);
 				XcfaLocation testEndLoc = buildWithoutPostStatement(guard, new ParamPack(builder, initLoc, null, null, returnLoc));
 				if(UNROLL_COUNT > 0) {
-					initLoc = getAnonymousLoc();
+					initLoc = getAnonymousLoc(builder);
 					builder.addLoc(initLoc);
 					propagateMetadata(statement, initLoc);
 				}
@@ -771,7 +774,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		List<CStatement> cStatementList = statement.getcStatementList();
 
 
-		XcfaLocation initLoc = getLoc(statement.getId());
+		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
 		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());

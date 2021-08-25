@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.createBuilder;
 
 public class FunctionInlining extends ProcessPass {
 	private int counter = 0;
@@ -104,25 +105,7 @@ public class FunctionInlining extends ProcessPass {
 	}
 
 	private XcfaProcedure.Builder inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure procedure) {
-		XcfaProcedure.Builder procBuilder = XcfaProcedure.builder();
-		for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : procedure.getParams().entrySet()) {
-			VarDecl<?> varDecl = entry.getKey();
-			XcfaProcedure.Direction direction = entry.getValue();
-			procBuilder.createParam(direction, varDecl);
-		}
-		procBuilder.setName(procedure.getName());
-		for (VarDecl<?> localVar : procedure.getLocalVars()) {
-			procBuilder.createVar(localVar, null);
-		}
-		for (XcfaLocation loc : procedure.getLocs()) {
-			procBuilder.addLoc(loc);
-			loc.setEndLoc(false);
-		}
-		for (XcfaEdge edge : procedure.getEdges()) {
-			procBuilder.addEdge(edge);
-		}
-		procBuilder.setInitLoc(procedure.getInitLoc());
-		procBuilder.setFinalLoc(procedure.getFinalLoc());
+		XcfaProcedure.Builder procBuilder = createBuilder(procedure);
 //		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
 		Map<XcfaEdge, List<XcfaCallStmt>> splittingPoints = new LinkedHashMap<>();
 
@@ -216,8 +199,13 @@ public class FunctionInlining extends ProcessPass {
 				procBuilder.createVar(localVar, null);
 			}
 			procedure.getParams().forEach((varDecl, direction) -> procBuilder.createVar(varDecl, null));
-			procedure.getLocs().forEach(procBuilder::addLoc);
-			procedure.getEdges().forEach(procBuilder::addEdge);
+			Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
+			procedure.getLocs().forEach(loc -> {
+				XcfaLocation copy = XcfaLocation.copyOf(loc);
+				locationLut.put(loc, copy);
+				procBuilder.addLoc(copy);
+			});
+			procedure.getEdges().forEach(e -> procBuilder.addEdge(new XcfaEdge(locationLut.get(e.getSource()), locationLut.get(e.getTarget()), e.getStmts())));
 			procedure.getFinalLoc().setEndLoc(false);
 
 			int paramCnt = 0;
@@ -243,11 +231,11 @@ public class FunctionInlining extends ProcessPass {
 				}
 				++paramCnt;
 			}
-			XcfaEdge xcfaEdge1 = new XcfaEdge(start, procedure.getInitLoc(), initStmts);
+			XcfaEdge xcfaEdge1 = new XcfaEdge(start, locationLut.get(procedure.getInitLoc()), initStmts);
 			FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 				FrontendMetadata.create(xcfaEdge1, s, o);
 			});
-			XcfaEdge xcfaEdge2 = new XcfaEdge(procedure.getFinalLoc(), end, retStmts);
+			XcfaEdge xcfaEdge2 = new XcfaEdge(locationLut.get(procedure.getFinalLoc()), end, retStmts);
 			FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 				FrontendMetadata.create(xcfaEdge2, s, o);
 			});
