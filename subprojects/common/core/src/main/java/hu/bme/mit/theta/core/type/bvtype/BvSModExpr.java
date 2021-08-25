@@ -3,11 +3,12 @@ package hu.bme.mit.theta.core.type.bvtype;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvSModExpr extends BinaryExpr<BvType, BvType> {
+public final class BvSModExpr extends ModExpr<BvType> {
 
     private static final int HASH_SEED = 1451;
     private static final String OPERATOR_LABEL = "bvsmod";

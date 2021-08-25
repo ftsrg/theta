@@ -4,6 +4,7 @@ include(
         "common/analysis",
         "common/common",
         "common/core",
+        "common/c-frontend",
         "common/solver",
         "common/solver-z3",
 
@@ -14,6 +15,12 @@ include(
         "sts/sts",
         "sts/sts-analysis",
         "sts/sts-cli",
+
+        "xcfa/xcfa",
+        "xcfa/xcfa-analysis",
+        "xcfa/xcfa-cli",
+        "xcfa/cat",
+        "xcfa/algorithmselection",
 
         "xta/xta",
         "xta/xta-analysis",

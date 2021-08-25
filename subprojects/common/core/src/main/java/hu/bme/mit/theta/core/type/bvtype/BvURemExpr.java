@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvURemExpr extends BinaryExpr<BvType, BvType> {
+public final class BvURemExpr extends RemExpr<BvType> {
 
     private static final int HASH_SEED = 995;
 

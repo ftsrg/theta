@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
-public final class BvSDivExpr extends BinaryExpr<BvType, BvType> {
+public final class BvSDivExpr extends DivExpr<BvType> {
     private static final int HASH_SEED = 9830;
 
     private static final String OPERATOR_LABEL = "bvsdiv";

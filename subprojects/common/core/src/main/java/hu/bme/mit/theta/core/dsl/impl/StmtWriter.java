@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2021 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,15 @@
  */
 package hu.bme.mit.theta.core.dsl.impl;
 
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -43,6 +52,11 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	@Override
 	public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
 		return "havoc " + stmt.getVarDecl().getName();
+	}
+
+	@Override
+	public String visit(XcfaStmt xcfaStmt, Void param) {
+		throw new UnsupportedOperationException("Not yet implemented"); //TODO
 	}
 
 	@Override

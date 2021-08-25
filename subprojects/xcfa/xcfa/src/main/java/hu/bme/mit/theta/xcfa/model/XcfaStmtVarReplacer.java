@@ -1,0 +1,196 @@
+/*
+ * Copyright 2021 Budapest University of Technology and Economics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package hu.bme.mit.theta.xcfa.model;
+
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.NonDetStmt;
+import static hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarDecl<?>>, Stmt> {
+
+    public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> varLut) {
+        if (expr instanceof RefExpr<?>) {
+            if (varLut.get(((RefExpr<T>) expr).getDecl()) == null) return expr;
+            else {
+                Expr<T> tExpr = cast(varLut.get(((RefExpr<T>) expr).getDecl()).getRef(), expr.getType());
+                FrontendMetadata.lookupMetadata(expr).forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
+                return tExpr;
+            }
+        }
+
+        List<? extends Expr<?>> ops = expr.getOps();
+        List<Expr<?>> newOps = new ArrayList<>();
+        for (Expr<?> op : ops) {
+            if (op instanceof LitExpr<?>) newOps.add(op);
+            else newOps.add(replaceVars(op, varLut));
+        }
+        Expr<T> tExpr = expr.withOps(newOps);
+        FrontendMetadata.lookupMetadata(expr).forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
+        return tExpr;
+    }
+
+
+    @Override
+    public Stmt visit(SkipStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return stmt;
+    }
+
+    @Override
+    public Stmt visit(AssumeStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Assume(cast(replaceVars(stmt.getCond(), param), BoolType.getInstance()));
+    }
+
+    @Override
+    public <DeclType extends Type> Stmt visit(AssignStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Assign(cast(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()), stmt.getVarDecl().getType()), replaceVars(stmt.getExpr(), param));
+    }
+
+    @Override
+    public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()));
+    }
+
+    @Override
+    public Stmt visit(XcfaStmt xcfaStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return xcfaStmt.accept(this, param);
+    }
+
+    @Override
+    public Stmt visit(SequenceStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        List<Stmt> stmts = stmt.getStmts();
+        List<Stmt> newStmts = new ArrayList<>();
+        for (Stmt stmt1 : stmts) {
+            newStmts.add(stmt1.accept(this, param));
+        }
+        return SequenceStmt(newStmts);
+    }
+
+    @Override
+    public Stmt visit(NonDetStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        List<Stmt> stmts = stmt.getStmts();
+        List<Stmt> newStmts = new ArrayList<>();
+        for (Stmt stmt1 : stmts) {
+            newStmts.add(stmt1.accept(this, param));
+        }
+        return NonDetStmt(newStmts);
+    }
+
+    @Override
+    public Stmt visit(OrtStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        List<Stmt> stmts = stmt.getStmts();
+        List<Stmt> newStmts = new ArrayList<>();
+        for (Stmt stmt1 : stmts) {
+            newStmts.add(stmt1.accept(this, param));
+        }
+        return OrtStmt.of(newStmts);
+    }
+
+    @Override
+    public Stmt visit(LoopStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public Stmt visit(XcfaCallStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        List<Expr<?>> exprs = stmt.getParams();
+        List<Expr<?>> newExprs = new ArrayList<>();
+        exprs.forEach((expr) ->
+            newExprs.add(replaceVars(expr, param))
+        );
+        return stmt.of(newExprs, stmt.getProcedure());
+    }
+
+    @Override
+    public Stmt visit(StoreStmt storeStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return new StoreStmt(
+                param.getOrDefault(storeStmt.getLocal(), storeStmt.getLocal()),
+                param.getOrDefault(storeStmt.getGlobal(), storeStmt.getGlobal()),
+                storeStmt.isAtomic(),
+                storeStmt.getOrdering()
+        );
+    }
+
+    @Override
+    public Stmt visit(LoadStmt loadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return new LoadStmt(
+                param.getOrDefault(loadStmt.getGlobal(), loadStmt.getGlobal()),
+                param.getOrDefault(loadStmt.getLocal(), loadStmt.getLocal()),
+                loadStmt.isAtomic(),
+                loadStmt.getOrdering()
+        );
+    }
+
+    @Override
+    public Stmt visit(FenceStmt fenceStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return fenceStmt;
+    }
+
+    @Override
+    public Stmt visit(AtomicBeginStmt atomicBeginStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return atomicBeginStmt;
+    }
+
+    @Override
+    public Stmt visit(AtomicEndStmt atomicEndStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return atomicEndStmt;
+    }
+
+    @Override
+    public Stmt visit(StartThreadStmt startThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return new StartThreadStmt(startThreadStmt.getKey(), startThreadStmt.getThreadName(), startThreadStmt.getParam() == null ? null : replaceVars(startThreadStmt.getParam(), param));
+    }
+
+    @Override
+    public Stmt visit(JoinThreadStmt joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return joinThreadStmt;
+    }
+}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2021 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,63 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitorBase;
 import hu.bme.mit.theta.core.type.Type;
 
-final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
+import java.util.Collection;
+
+final class VarCollectorStmtVisitor extends XcfaStmtVisitorBase<Collection<VarDecl<?>>, Void> {
+
+	@Override
+	public Void visit(XcfaCallStmt stmt, Collection<VarDecl<?>> param) {
+		stmt.getParams().forEach(e -> {
+			ExprUtils.collectVars(e, param);
+		});
+		return null;
+	}
+
+	@Override
+	public Void visit(StoreStmt storeStmt, Collection<VarDecl<?>> param) {
+		param.add(storeStmt.getLocal());
+		param.add(storeStmt.getGlobal());
+		return null;
+	}
+
+	@Override
+	public Void visit(LoadStmt loadStmt, Collection<VarDecl<?>> param) {
+		param.add(loadStmt.getGlobal());
+		param.add(loadStmt.getLocal());
+		return null;
+	}
+
+	@Override
+	public Void visit(AtomicBeginStmt atomicBeginStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(AtomicEndStmt atomicEndStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
 
 	private static final class LazyHolder {
 		private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
@@ -59,6 +109,12 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	}
 
 	@Override
+	public Void visit(XcfaStmt xcfaStmt, Collection<VarDecl<?>> param) {
+		xcfaStmt.accept(this, param);
+		return null;
+	}
+
+	@Override
 	public Void visit(SequenceStmt stmt, Collection<VarDecl<?>> vars) {
 		for (Stmt subStmt : stmt.getStmts()) {
 			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
@@ -82,6 +138,20 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 		return null;
 	}
 
+	@Override
+	public Void visit(FenceStmt fenceStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(JoinThreadStmt joinThreadStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(StartThreadStmt startThreadStmt, Collection<VarDecl<?>> param) {
+		return null;
+	}
 	@Override
 	public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
 		ExprUtils.collectVars(stmt.getFrom(),vars);

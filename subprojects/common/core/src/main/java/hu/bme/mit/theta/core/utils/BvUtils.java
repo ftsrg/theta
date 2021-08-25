@@ -38,25 +38,29 @@ public final class BvUtils {
     }
 
     public static BvLitExpr bigIntegerToNeutralBvLitExpr(BigInteger integer, final int size) {
-        return bigIntegerToUnsignedBvLitExpr(integer, size);
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values);
     }
 
     public static BvLitExpr bigIntegerToUnsignedBvLitExpr(BigInteger integer, final int size) {
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values, false);
+    }
 
+    private static boolean[] getBvRepresentation(BigInteger integer, int size) {
         boolean[] values = new boolean[size];
         for(int i = 0; i < size; i++) {
             values[size - 1 - i] = integer.testBit(i);
         }
-
-        return Bv(values);
+        return values;
     }
 
     public static BvLitExpr bigIntegerToSignedBvLitExpr(BigInteger integer, final int size) {
         if(integer.compareTo(BigInteger.ZERO) < 0) {
             integer = integer.add(BigInteger.TWO.pow(size));
         }
-
-        return bigIntegerToUnsignedBvLitExpr(integer, size);
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values, true);
     }
 
     public static BigInteger fitBigIntegerIntoNeutralDomain(BigInteger integer, final int size) {

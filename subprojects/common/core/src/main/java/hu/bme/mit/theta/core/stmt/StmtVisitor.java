@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2021 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ public interface StmtVisitor<P, R> {
 	<DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
 	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
+
+	R visit(XcfaStmt xcfaStmt, P param);
 
 	R visit(SequenceStmt stmt, P param);
 
