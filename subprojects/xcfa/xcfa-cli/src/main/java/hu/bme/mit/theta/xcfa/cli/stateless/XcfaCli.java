@@ -33,6 +33,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -48,6 +49,7 @@ import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
+import hu.bme.mit.theta.xcfa.analysis.BMCTraditional;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
@@ -55,7 +57,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
+import hu.bme.mit.theta.xcfa.analysis.BMCUnrolling;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import org.antlr.v4.runtime.CharStream;
@@ -126,8 +128,11 @@ public class XcfaCli {
 	@Parameter(names = "--gui", description = "Show GUI")
 	boolean showGui = false;
 
-	@Parameter(names = "--bmc", description = "Run BMC pre-check")
-	boolean runbmc = false;
+	@Parameter(names = "--bmc-loops", description = "Run BMC pre-check with loop unrolling bound")
+	boolean bmcloop = false;
+
+	@Parameter(names = "--bmc-traditional", description = "Run BMC pre-check with depth bound")
+	boolean bmctraditional = false;
 
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
@@ -275,12 +280,27 @@ public class XcfaCli {
 				}
 			}
 
-			if (runbmc) {
+			if (bmcloop) {
 				if(xcfa.getProcesses().size() == 1) {
 					checkState(xcfa.getMainProcess().getProcedures().size() == 1, "Multiple procedures are not yet supported!");
-					List<XcfaEdge> cex = new BMC().getCex(xcfa.getMainProcess().getMainProcedure());
+					List<XcfaEdge> cex = new BMCUnrolling().getCex(xcfa.getMainProcess().getMainProcedure());
 					if(cex != null) {
 						System.out.println("SafetyResult Unsafe");
+						return;
+					}
+				}
+
+			}
+
+			if (bmctraditional) {
+				if(xcfa.getProcesses().size() == 1) {
+					checkState(xcfa.getMainProcess().getProcedures().size() == 1, "Multiple procedures are not yet supported!");
+					Tuple2<Boolean, List<XcfaEdge>> cex = new BMCTraditional().getCex(xcfa.getMainProcess().getMainProcedure());
+					if(cex != null) {
+						if(cex.get1())
+							System.out.println("SafetyResult Safe");
+						else
+							System.out.println("SafetyResult Unsafe");
 						return;
 					}
 				}

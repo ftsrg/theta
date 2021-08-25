@@ -42,11 +42,11 @@ public class Utils {
 			return path.getList();
 		}
 		List<XcfaEdge> outgoingEdges = current.getOutgoingEdges();
+		Map<VarDecl<?>, ConstDecl<?>> saved = new LinkedHashMap<>(varToLastConstMap);
 		for (XcfaEdge outgoingEdge : outgoingEdges) {
 			if(!path.contains(outgoingEdge)) {
 				path.push(outgoingEdge);
 				solver.push();
-				Map<VarDecl<?>, ConstDecl<?>> saved = new LinkedHashMap<>(varToLastConstMap);
 				for (Stmt stmt : outgoingEdge.getStmts()) {
 					for (VarDecl<?> var : StmtUtils.getVars(stmt)) {
 						if(!varToLastConstMap.containsKey(var)) varToLastConstMap.put(var, Const(var.getName(), var.getType()));
@@ -66,9 +66,10 @@ public class Utils {
 					} else throw new UnsupportedOperationException("Not yet implemented!");
 				}
 				solver.check();
-				if(solver.getStatus().isUnsat()) return null;
-				List<XcfaEdge> ret = collectPaths(outgoingEdge.getTarget(), path, end, varToLastConstMap, solver);
-				if(ret != null) return ret;
+				if(solver.getStatus().isSat()) {
+					List<XcfaEdge> ret = collectPaths(outgoingEdge.getTarget(), path, end, varToLastConstMap, solver);
+					if (ret != null) return ret;
+				}
 				solver.pop();
 				path.pop();
 				varToLastConstMap = saved;
