@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class EmptyEdgeRemovalPass extends ProcedurePass {
 	@Override
@@ -39,123 +40,144 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 		}
 
 		// removing paralell empty edges
-		List<XcfaEdge> emptyEdges = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
-		List<XcfaEdge> paralellsToRemove = new ArrayList<>();
-		List<XcfaEdge> paralellsToRemain = new ArrayList<>();
-		for (XcfaEdge emptyEdge : emptyEdges) {
-			if(!paralellsToRemain.contains(emptyEdge)) {
-				for (XcfaEdge emptyEdge1 : emptyEdges) {
-					if(emptyEdge != emptyEdge1
-					  && emptyEdge.getSource() == emptyEdge1.getSource()
-					  && emptyEdge.getTarget() == emptyEdge1.getTarget()) {
-						paralellsToRemain.add(emptyEdge1);
-						paralellsToRemove.add(emptyEdge);
-					}
-				}
+		// (there can be more than two between two given locations and there can be more sets of paralell empty edges going out from a given locations)
+		for (XcfaLocation loc : builder.getLocs()) {
+			List<XcfaEdge> emptyEdges = loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
+			List<XcfaEdge> toRemove = new ArrayList<>();
+
+			while(!emptyEdges.isEmpty()) {
+				XcfaEdge emptyEdge = emptyEdges.get(0);
+				List<XcfaEdge> paralells = loc.getOutgoingEdges().stream().filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget()).collect(Collectors.toList());
+				emptyEdges.remove(emptyEdge);
+				emptyEdges.removeAll(paralells);
+				toRemove.addAll(paralells);
+			}
+
+			for (XcfaEdge paralell : toRemove) {
+				builder.removeEdge(paralell);
 			}
 		}
-		for (XcfaEdge paralellEdge : paralellsToRemove) {
-			builder.removeEdge(paralellEdge);
-		}
 
-		// finding empty edge sequences and merging them into a single location, but with a few other requirements:
-		// - the locations included cannot come up twice while walking on the sequence
-		//   (no loops on the locations and no cycles of the locations in the sequence)
-		// - the locations included cannot have any other outgoing or incoming empty edges except those in the sequence
-		//   (the algorithm would merge those in another step, but that can easily lead to false transformations)
+		return removeEmptySequences(builder);
+	}
+
+	// finding empty sequences (location-empty edge-location-empty edge-...-location) and merging them into a single location, but with a few other requirements:
+	// - the locations included cannot come up twice while walking on the sequence
+	//   (no loops on the locations and no cycles of the locations in the sequence)
+	// - the locations included cannot have any other outgoing or incoming empty edges except those in the sequence
+	//   (the algorithm would merge those in another step, but that can easily lead to false transformations)
+	// - the locations included cannot be final/error locs (if they are in the sequence they will be removed, except if they start the sequence, but that would not make much sense)
+	private XcfaProcedure.Builder removeEmptySequences(XcfaProcedure.Builder builder) {
 		List<XcfaEdge> edgesToStartSequenceOn = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
 		while(edgesToStartSequenceOn.size() != 0) {
 			XcfaEdge startEdge = edgesToStartSequenceOn.get(0);
 			Set<XcfaLocation> sequence = new HashSet<>();
-			sequence.add(startEdge.getSource());
+			XcfaLocation startingLocation = startEdge.getSource();
+			if (!(hasNoLoops(startingLocation)
+					&& !startingLocation.isEndLoc()
+					&& !startingLocation.isErrorLoc()
+					&& hasNOutgoingEmptyEdge(startingLocation, 1)
+					// the starting location may have 0 incoming empty edges as well, as it starts the sequence
+					&& (hasNIncomingEmptyEdge(startingLocation, 0) || hasNIncomingEmptyEdge(startingLocation, 1)))) {
+				// not a valid sequence starter
+				edgesToStartSequenceOn.remove(startEdge);
+			} else { // valid location and edge to start the sequence on
+				sequence.add(startEdge.getSource());
+				boolean sequenceEnd = false;
+				XcfaEdge currentEdge = startEdge; // the next (possible) edge in the sequence
 
-			boolean sequenceEnd = false;
-			XcfaEdge currentEdge = startEdge;
-			// TODO check startedge for reqs as well
-			// TODO final/error loc should not be in sequence! (it will most likely be removed that way)
-			while(!sequenceEnd) {
-				edgesToStartSequenceOn.remove(currentEdge); // either it fits into the sequence and we'll remove it or it does not fit into the sequence and a seq. cannot be started on it
-				ArrayList<XcfaEdge> targetOutgoingEdges = new ArrayList<>(currentEdge.getTarget().getOutgoingEdges());
-				// target should not have any loop edges
-				if(targetOutgoingEdges.stream().filter(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget()).count() == 0) {
-					List<XcfaEdge> targetOutgoingEmptyEdges = targetOutgoingEdges.stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
-					// target should have exactly one incoming empty edge (the current edge)
-					if(currentEdge.getTarget().getIncomingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).count() == 1) {
-						// target should have exactly one outgoing empty edge
-						if(targetOutgoingEmptyEdges.size() == 1) {
-							// target should not be part of a cycle in the sequence
-							if(!sequence.contains(currentEdge.getTarget())) {
-								// add target to the sequence
-								sequence.add(currentEdge.getTarget());
-								currentEdge = targetOutgoingEmptyEdges.get(0);
-							} else {
-								// end of sequence (without target)
-								sequenceEnd = true;
-							}
-						} else if (targetOutgoingEmptyEdges.size() == 0) {
-							// if it has 0 then it is the end of the sequence (including target)
-							sequence.add(currentEdge.getTarget());
-							currentEdge = targetOutgoingEmptyEdges.get(0);
+				while (!sequenceEnd) {
+					XcfaLocation nextLocation = currentEdge.getTarget();
+					if (hasNoLoops(nextLocation) // has no loop edges
+							&& !nextLocation.isEndLoc() // not a final location
+							&& !nextLocation.isErrorLoc() // not an error location
+							&& hasNIncomingEmptyEdge(nextLocation, 1) // has exactly one incoming empty edge
+							&& !sequence.contains(nextLocation) // is not already in the sequence
+					) {
+						if (hasNOutgoingEmptyEdge(nextLocation, 1)) { // has exactly one outgoing empty edge
+							// it can be the next location of the sequence
+							sequence.add(nextLocation);
+						} else if (hasNOutgoingEmptyEdge(nextLocation, 0)) { // ha no outgoing empty edge
+							// this location is the end location of the sequence
+							sequence.add(nextLocation);
 							sequenceEnd = true;
 						} else {
-							// end of sequence (without target)
+							// cannot be a part of the sequence - end of sequence BUT without this location
 							sequenceEnd = true;
 						}
 					} else {
-						// end of sequence (without target)
+						// cannot be a part of the sequence - end of sequence BUT without this location
 						sequenceEnd = true;
 					}
-				} else {
-					// end of sequence (without target)
-					sequenceEnd = true;
-				}
-			}
 
-			if(sequence.size()>2) {
-				// merge sequence into it's start location
-				List<XcfaEdge> incomingEdges = new ArrayList<>();
-				List<XcfaEdge> outgoingEdges = new ArrayList<>();
-				// collect all edges in the sequence (except the starting location, as we will add these edges to that location)
-				for (XcfaLocation loc : sequence) {
-					if(loc != startEdge.getSource()) {
-						incomingEdges.addAll(loc.getIncomingEdges());
-						outgoingEdges.addAll(loc.getOutgoingEdges());
+					if (!sequenceEnd) { // a location was added and has exactly one outgoing edge, which will be the next edge to check
+						edgesToStartSequenceOn.remove(currentEdge); // was checked already, we don't want to check it in the future
+						currentEdge = nextLocation.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().isEmpty()).findFirst().get();
 					}
 				}
-				// filter out the empty edges
-				List<XcfaEdge> incomingNonEmptyEdges = incomingEdges.stream().filter(xcfaEdge -> !xcfaEdge.getStmts().isEmpty()).collect(Collectors.toList());
-				List<XcfaEdge> outgoingNonEmptyEdges = outgoingEdges.stream().filter(xcfaEdge -> !xcfaEdge.getStmts().isEmpty()).collect(Collectors.toList());
 
-				// add the edges to the starting location of the sequence
-				for (XcfaEdge edge : incomingNonEmptyEdges) {
-					// TODO we basically lose metadata here (and above as well) - turn the pass (or most of it) off, if that's a problem
-					XcfaEdge newEdge = new XcfaEdge(edge.getSource(), startEdge.getSource(), edge.getStmts());
-					builder.addEdge(newEdge);
-				}
+				if (sequence.size() > 1) {
+					// merge sequence into it's starting location
 
-				for (XcfaEdge edge : outgoingNonEmptyEdges) {
-					// TODO we basically lose metadata here (and above as well) - turn the pass (or most of it) off, if that's a problem
-					new XcfaEdge(startEdge.getSource(), edge.getTarget(), edge.getStmts());
-				}
+					// all (non-empty) edges in the sequence should be moved to the starting location first
+					List<XcfaEdge> incomingEdges = new ArrayList<>();
+					List<XcfaEdge> outgoingEdges = new ArrayList<>();
+					// collect all edges in the sequence (except the starting location, as we will add these edges to that location)
+					for (XcfaLocation loc : sequence) {
+						if (loc != startingLocation) {
+							incomingEdges.addAll(loc.getIncomingEdges());
+							outgoingEdges.addAll(loc.getOutgoingEdges());
+						}
+					}
+					// filter out the empty edges
+					List<XcfaEdge> incomingNonEmptyEdges = incomingEdges.stream().filter(xcfaEdge -> !xcfaEdge.getStmts().isEmpty()).collect(Collectors.toList());
+					List<XcfaEdge> outgoingNonEmptyEdges = outgoingEdges.stream().filter(xcfaEdge -> !xcfaEdge.getStmts().isEmpty()).collect(Collectors.toList());
 
-				// remove the edges and the locations
-				for (XcfaEdge edge : incomingEdges) {
-					builder.removeEdge(edge);
-				}
+					// add the edges to the starting location of the sequence
+					for (XcfaEdge edge : incomingNonEmptyEdges) {
+						// TODO we basically lose metadata here (and above as well) - turn the pass (or most of it) off, if that's a problem
+						XcfaEdge newEdge = new XcfaEdge(edge.getSource(), startEdge.getSource(), edge.getStmts());
+						builder.addEdge(newEdge);
+					}
 
-				for (XcfaEdge edge : outgoingEdges) {
-					builder.removeEdge(edge);
-				}
+					for (XcfaEdge edge : outgoingNonEmptyEdges) {
+						// TODO we basically lose metadata here (and above as well) - turn the pass (or most of it) off, if that's a problem
+						new XcfaEdge(startEdge.getSource(), edge.getTarget(), edge.getStmts());
+					}
 
-				for (XcfaLocation loc : sequence) {
-					if(loc!=startEdge.getSource()) {
-						builder.getLocs().remove(loc);
+					// remove the old edges and locations
+					for (XcfaEdge edge : incomingEdges) {
+						builder.removeEdge(edge);
+					}
+					edgesToStartSequenceOn.removeAll(incomingEdges);
+
+					for (XcfaEdge edge : outgoingEdges) {
+						builder.removeEdge(edge);
+					}
+					edgesToStartSequenceOn.removeAll(outgoingEdges);
+
+					for (XcfaLocation loc : sequence) {
+						if (loc != startingLocation) {
+							builder.getLocs().remove(loc);
+						}
 					}
 				}
+
 			}
 		}
-
 		return builder;
+	}
+
+	private boolean hasNOutgoingEmptyEdge(XcfaLocation loc, int n) {
+		return loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).count() == n;
+	}
+
+	private boolean hasNIncomingEmptyEdge(XcfaLocation loc, int n) {
+		return loc.getIncomingEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).count() == n;
+	}
+
+	private boolean hasNoLoops(XcfaLocation loc) {
+		return loc.getOutgoingEdges().stream().noneMatch(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget());
 	}
 
 	/*
