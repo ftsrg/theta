@@ -22,7 +22,9 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnrollLoopsPass;
 import org.junit.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class UnrollLoopsPassTest {
 
@@ -66,15 +68,46 @@ public final class UnrollLoopsPassTest {
 		builder.addEdge(e8);
 		builder.addEdge(e9);
 
+		XcfaPassManager.clearProcedurePasses();
+		String original = copyBuilder(builder).build().toDot(List.of(), List.of());
 
 		XcfaPassManager.clearProcedurePasses();
 		XcfaPassManager.addProcedurePass(new UnrollLoopsPass());
+		String unrolled1 = copyBuilder(builder).build().toDot(List.of(), List.of());
 
-		String unrolled = builder.build().toDot(List.of(), List.of());
+		XcfaPassManager.clearProcedurePasses();
+		XcfaPassManager.addProcedurePass(new UnrollLoopsPass());
+		XcfaPassManager.addProcedurePass(new UnrollLoopsPass());
+		String unrolled2 = copyBuilder(builder).build().toDot(List.of(), List.of());
 
 		System.out.println("digraph G{");
-		System.out.println(unrolled);
+		System.out.println("subgraph cluster_0 {");
+		System.out.println(original);
 		System.out.println("}");
+		System.out.println("subgraph cluster_1 {");
+		System.out.println(unrolled1);
+		System.out.println("}");
+		System.out.println("subgraph cluster_2 {");
+		System.out.println(unrolled2);
+		System.out.println("}");
+		System.out.println("}");
+	}
+
+	private XcfaProcedure.Builder copyBuilder(XcfaProcedure.Builder builder) {
+		XcfaProcedure.Builder ret = XcfaProcedure.builder();
+		Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
+		builder.getLocs().forEach(location -> {
+			XcfaLocation copy = XcfaLocation.copyOf(location);
+			ret.addLoc(copy);
+			locationLut.put(location, copy);
+		});
+		ret.setFinalLoc(locationLut.get(builder.getFinalLoc()));
+		ret.setInitLoc(locationLut.get(builder.getInitLoc()));
+		if(builder.getErrorLoc() != null) ret.setErrorLoc(locationLut.get(builder.getErrorLoc()));
+		for (XcfaEdge edge : builder.getEdges()) {
+			ret.addEdge(new XcfaEdge(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getStmts()));
+		}
+		return ret;
 	}
 
 }
