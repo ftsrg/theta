@@ -154,7 +154,6 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 
 	@Override
 	public boolean isPostInlining() {
-		// return true; // TODO
-		return false;
+		return true;
 	}
 }

@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa;
 
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.UnrollLoopsPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import org.junit.Test;
 
 import java.util.List;
 
-public final class UnrollLoopsPassTest {
-
+public final class EmptyEdgeRemovalPassTest {
 
 	@Test
 	public void test(){
@@ -48,14 +48,16 @@ public final class UnrollLoopsPassTest {
 		builder.setFinalLoc(Lf);
 
 		XcfaEdge e1 = new XcfaEdge(L0, L1, List.of());
-		XcfaEdge e2 = new XcfaEdge(L0, L2, List.of());
-		XcfaEdge e3 = new XcfaEdge(L1, L0, List.of());
-		XcfaEdge e4 = new XcfaEdge(L2, L3, List.of());
-		XcfaEdge e5 = new XcfaEdge(L3, L4, List.of());
-		XcfaEdge e6 = new XcfaEdge(L3, L0, List.of());
-		XcfaEdge e7 = new XcfaEdge(L4, L5, List.of());
-		XcfaEdge e8 = new XcfaEdge(L4, Lf, List.of());
-		XcfaEdge e9 = new XcfaEdge(L5, L2, List.of());
+		XcfaEdge e2 = new XcfaEdge(L1, L2, List.of());
+		XcfaEdge e3 = new XcfaEdge(L2, L3, List.of(SkipStmt.getInstance()));
+		XcfaEdge e4 = new XcfaEdge(L3, L4, List.of());
+		XcfaEdge e5 = new XcfaEdge(L4, L5, List.of());
+		XcfaEdge e6 = new XcfaEdge(L5, Lf, List.of());
+		XcfaEdge e7 = new XcfaEdge(L2, L2, List.of(SkipStmt.getInstance()));
+		XcfaEdge e8 = new XcfaEdge(L1, L2, List.of());
+		XcfaEdge e9 = new XcfaEdge(L1, L2, List.of());
+		XcfaEdge e10 = new XcfaEdge(L0, L4, List.of());
+
 		builder.addEdge(e1);
 		builder.addEdge(e2);
 		builder.addEdge(e3);
@@ -65,15 +67,15 @@ public final class UnrollLoopsPassTest {
 		builder.addEdge(e7);
 		builder.addEdge(e8);
 		builder.addEdge(e9);
-
+		builder.addEdge(e10);
 
 		XcfaPassManager.clearProcedurePasses();
-		XcfaPassManager.addProcedurePass(new UnrollLoopsPass());
+		XcfaPassManager.addProcedurePass(new EmptyEdgeRemovalPass());
 
-		String unrolled = builder.build().toDot(List.of(), List.of());
+		String afterPass = builder.build().toDot(List.of(), List.of());
 
 		System.out.println("digraph G{");
-		System.out.println(unrolled);
+		System.out.println(afterPass);
 		System.out.println("}");
 	}
 
