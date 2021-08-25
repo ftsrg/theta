@@ -33,9 +33,9 @@ public class UnrollLoopsPass extends ProcedurePass{
 	private final Set<XcfaEdge> reverseEdges = new LinkedHashSet<>();
 	private final Map<XcfaLocation, Stack<XcfaLocation>> locationCopies = new LinkedHashMap<>();
 
-	//TODO: eliminate self-loops!
 	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+	public XcfaProcedure.Builder run(XcfaProcedure.Builder input) {
+		XcfaProcedure.Builder builder = EliminateSelfLoops.instance.run(input);
 		if(originalLocs.isEmpty()) {
 			Set<XcfaEdge> reverseEdges = collectReverseEdges(builder.getInitLoc());
 			Set<XcfaLocation> toDuplicate = new LinkedHashSet<>();
