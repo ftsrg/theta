@@ -20,6 +20,7 @@ include(
         "xcfa/xcfa-analysis",
         "xcfa/xcfa-cli",
         "xcfa/cat",
+        "xcfa/algorithmselection",
 
         "xta/xta",
         "xta/xta-analysis",

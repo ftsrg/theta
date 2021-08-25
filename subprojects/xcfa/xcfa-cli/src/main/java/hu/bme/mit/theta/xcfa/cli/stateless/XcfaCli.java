@@ -43,6 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
@@ -104,6 +105,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
 	boolean printcfa;
+
+	@Parameter(names = "--estimateMaxEnum", description = "Estimate maxenum automatically; overwrites the value of the --maxenum flag.")
+	boolean estimateMaxEnum;
 
 	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
 	Long timeS = Long.MAX_VALUE;
@@ -181,6 +185,11 @@ public class XcfaCli {
 		}
 
 		ArchitectureConfig.arithmetic = arithmeticType;
+		if(estimateMaxEnum) {
+			MaxEnumAnalyzer.enabled = true;
+		} else {
+			MaxEnumAnalyzer.enabled = false;
+		}
 
 		try {
 			if(outputResults) {
@@ -232,6 +241,11 @@ public class XcfaCli {
 					System.out.println("CFA creation unsuccessful. Reason: " + ex.getMessage());
 				}
 				return;
+			}
+
+			if(estimateMaxEnum) {
+				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum().intValue());
+				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
 			}
 
 			if(showGui) {

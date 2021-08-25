@@ -58,6 +58,11 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
         return size;
     }
 
+    public Boolean getSigned() {
+        checkState(signed!=null);
+        return signed;
+    }
+
     @Override
     public EqExpr<BvType> Eq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
         return BvEqExpr.of(leftOp, rightOp);
