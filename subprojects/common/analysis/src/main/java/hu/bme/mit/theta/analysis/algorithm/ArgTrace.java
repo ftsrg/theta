@@ -37,6 +37,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 	private final List<ArgEdge<S, A>> edges;
 
 	private ArgTrace(final ArgNode<S, A> node) {
+		// adding items to first index will lead to O(N^2) performance
 		final List<ArgNode<S, A>> nodeList = new ArrayList<>();
 		final List<ArgEdge<S, A>> edgeList = new ArrayList<>();
 
@@ -46,9 +47,14 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 		while (running.getInEdge().isPresent()) {
 			final ArgEdge<S, A> inEdge = running.getInEdge().get();
 			running = inEdge.getSource();
-			edgeList.add(0, inEdge);
-			nodeList.add(0, running);
+			edgeList.add(inEdge);
+			nodeList.add(running);
 		}
+
+		// create the correct order by reversing O(N)
+		Collections.reverse(nodeList);
+		Collections.reverse(edgeList);
+
 		this.nodes = Collections.unmodifiableList(nodeList);
 		this.edges = Collections.unmodifiableList(edgeList);
 	}
