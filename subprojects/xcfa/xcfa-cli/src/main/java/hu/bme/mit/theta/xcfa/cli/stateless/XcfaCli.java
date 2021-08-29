@@ -38,6 +38,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -101,6 +102,8 @@ public class XcfaCli {
 
 	//@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
 	String statisticsfile = null;
+
+	String cfafile = null;
 
 	// @Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
 	String printxcfa = null;
@@ -210,11 +213,22 @@ public class XcfaCli {
 				String basicFileName = resultsDir + "/" + model.getName();
 				printxcfa = basicFileName + ".xcfa";
 				printcfa = true;
+				cfafile = basicFileName + ".cfa";
 				cexfile = basicFileName + ".cex";
 				witnessfile = basicFileName + ".witness.graphml";
 				dotwitnessfile = basicFileName + ".witness.dot";
 				highlighted = basicFileName + ".highlighted.xcfa";
 				statisticsfile = basicFileName + ".statistics.txt";
+			} else if(printcfa) {
+				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
+				boolean bool = resultsDir.mkdir();
+				if(!bool){
+					throw new RuntimeException("Couldn't create results directory");
+				}
+
+				String basicFileName = resultsDir + "/" + model.getName();
+				statisticsfile = basicFileName + ".statistics.txt";
+				cfafile = basicFileName + ".cfa";
 			}
 
 
@@ -267,12 +281,14 @@ public class XcfaCli {
 					bw.write(xcfa.toDot());
 				}
 			}
+
 			if (printcfa) {
 				CFA cfa = xcfa.createCFA();
-				File cfafile = new File(model.getAbsolutePath() + ".cfa");
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
 					bw.write(cfa.toString());
 				}
+				writeStatistics(cfa);
+				return;
 			}
 
 			if (runbmc) {
@@ -333,6 +349,9 @@ public class XcfaCli {
 
 			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
 			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+			bw.write("CFA-data edgeCount " + cfa.getEdges().size() + System.lineSeparator());
+			bw.write("CFA-data skipEdgeCount " + cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + System.lineSeparator());
+			bw.write("CFA-data cyclomatic complexity " + (cfa.getEdges().size() - cfa.getLocs().size() + 2) + System.lineSeparator());
 
 			bw.write("Configuration: ");
 			bw.write(System.lineSeparator());
