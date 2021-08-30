@@ -27,12 +27,14 @@ public final class ArgEdge<S extends State, A extends Action> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		ArgEdge<?, ?> argEdge = (ArgEdge<?, ?>) o;
-		return Objects.equals(source, argEdge.source) && Objects.equals(target, argEdge.target) && Objects.equals(action.toString(), argEdge.action.toString());
+		return Objects.equals(source.getState(), argEdge.source.getState())
+				&& Objects.equals(target.getState(), argEdge.target.getState())
+				&& Objects.equals(action.toString(), argEdge.action.toString());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(source, target, action.toString());
+		return Objects.hash(source.getState(), target.getState(), action.toString());
 	}
 
 	private final ArgNode<S, A> source;

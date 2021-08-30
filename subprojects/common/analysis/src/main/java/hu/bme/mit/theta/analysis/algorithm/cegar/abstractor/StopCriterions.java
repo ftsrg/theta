@@ -68,7 +68,7 @@ public final class StopCriterions {
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
 			return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
-					&& arg.getCexs().anyMatch(ctx -> cexStorage.checkCounterexample(ctx)));
+					&& arg.getCexs().anyMatch(ctx -> cexStorage.checkIfCounterexampleNew(ctx)));
 		}
 
 		@Override

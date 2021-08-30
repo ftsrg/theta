@@ -19,14 +19,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 
 /**
  * Represents a trace in the ARG, which is an alternating list of ArgNodes and
@@ -36,6 +39,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	private final List<ArgNode<S, A>> nodes;
 	private final List<ArgEdge<S, A>> edges;
+	private final Collection<State> states;
 
 	private ArgTrace(final ArgNode<S, A> node) {
 		final List<ArgNode<S, A>> nodeList = new ArrayList<>();
@@ -52,6 +56,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 		}
 		this.nodes = Collections.unmodifiableList(nodeList);
 		this.edges = Collections.unmodifiableList(edgeList);
+		states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
 	}
 
 	////
@@ -110,14 +115,13 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
-		return nodes.equals(argTrace.nodes) && edges.equals(argTrace.edges);
+		return states.equals(argTrace.states) && edges.equals(argTrace.edges);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(nodes, edges);
+		return Objects.hash(states, edges);
 	}
-
 	////
 
 }

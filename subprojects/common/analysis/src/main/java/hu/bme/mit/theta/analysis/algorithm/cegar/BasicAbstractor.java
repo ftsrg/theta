@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -124,6 +125,11 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
 			return AbstractorResult.safe();
 		} else {
+			if(arg.isComplete()) {
+				checkState(arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)), "Returning unsafe and complete ARG to refiner without before unrefined cex");
+			} else {
+				checkState(arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)), "Returning unsafe and incomplete ARG to refiner without before unrefined cex");
+			}
 			arg.getCexs().forEach(argTrace -> cexStorage.addCounterexample(argTrace));
 			return AbstractorResult.unsafe();
 		}

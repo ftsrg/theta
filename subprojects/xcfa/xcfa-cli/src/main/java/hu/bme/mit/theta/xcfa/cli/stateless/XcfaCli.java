@@ -245,7 +245,6 @@ public class XcfaCli {
 
 				String basicFileName = resultsDir + "/" + model.getName();
 				printxcfa = basicFileName + ".xcfa";
-				printcfa = true;
 				cfafile = basicFileName + ".cfa";
 				cexfile = basicFileName + ".cex";
 				witnessfile = basicFileName + ".witness.graphml";
@@ -315,7 +314,7 @@ public class XcfaCli {
 				}
 			}
 
-			if (printcfa) {
+			if (printcfa || outputResults) {
 				CFA cfa = xcfa.createCFA();
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
 					bw.write(cfa.toString());
@@ -333,7 +332,7 @@ public class XcfaCli {
 
 					bw.close();
 				}
-				return;
+				if(printcfa) return;
 			}
 
 			if (runbmc) {
