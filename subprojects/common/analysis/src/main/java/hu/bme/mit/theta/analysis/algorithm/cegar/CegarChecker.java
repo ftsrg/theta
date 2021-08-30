@@ -141,6 +141,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			}
 
 			if (abstractorResult.isUnsafe()) {
+				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
 				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 				refinerResult = refiner.refine(arg, prec);
@@ -149,6 +150,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 				if (refinerResult.isSpurious()) {
 					prec = refinerResult.asSpurious().getRefinedPrec();
+				}
+
+				if(lastPrec.equals(prec)) {
+					logger.write(Level.INFO, "! Precision did NOT change in this iteration"+System.lineSeparator());
+				} else {
+					logger.write(Level.INFO, "! Precision DID change in this iteration"+System.lineSeparator());
 				}
 			}
 
