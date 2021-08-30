@@ -18,7 +18,22 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 
+import java.util.Objects;
+
 public final class ArgEdge<S extends State, A extends Action> {
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ArgEdge<?, ?> argEdge = (ArgEdge<?, ?>) o;
+		return Objects.equals(source, argEdge.source) && Objects.equals(target, argEdge.target) && Objects.equals(action.toString(), argEdge.action.toString());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(source, target, action.toString());
+	}
 
 	private final ArgNode<S, A> source;
 	private final ArgNode<S, A> target;

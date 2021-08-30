@@ -42,4 +42,6 @@ public interface Abstractor<S extends State, A extends Action, P extends Prec> {
 	 */
 	AbstractorResult check(ARG<S, A> arg, P prec);
 
+	public void addCexStorage(CexStorage<S, A> cexStorage);
+
 }

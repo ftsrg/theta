@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
@@ -102,6 +103,19 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 	@Override
 	public Iterator<ArgNode<S, A>> iterator() {
 		return nodes.iterator();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
+		return nodes.equals(argTrace.nodes) && edges.equals(argTrace.edges);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(nodes, edges);
 	}
 
 	////

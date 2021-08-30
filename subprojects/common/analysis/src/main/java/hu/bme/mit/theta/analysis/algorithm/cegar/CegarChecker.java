@@ -59,13 +59,18 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private P lastPrecision = null;
 	private static NotSolvableThrower notSolvableThrower = null;
 
+	// counterexample checks
+	private CexStorage<S, A> cexStorage = new CexStorage<S, A>();
+
 	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
 		notSolvableThrower = thrower;
 	}
 
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
+		abstractor.addCexStorage(cexStorage);
 		this.refiner = checkNotNull(refiner);
+		refiner.addCexStorage(cexStorage);
 		this.logger = checkNotNull(logger);
 	}
 

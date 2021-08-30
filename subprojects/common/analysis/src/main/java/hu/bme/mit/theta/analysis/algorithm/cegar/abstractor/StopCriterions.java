@@ -16,11 +16,13 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar.abstractor;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CexStorage;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Collection;
@@ -56,6 +58,8 @@ public final class StopCriterions {
 	}
 
 	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
+		private CexStorage<S, A> cexStorage;
+
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
 			return arg.getUnsafeNodes().findAny().isPresent();
@@ -63,13 +67,18 @@ public final class StopCriterions {
 
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-			return newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded());
+			return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
+					&& arg.getCexs().anyMatch(ctx -> cexStorage.checkCounterexample(ctx)));
 		}
 
 		@Override
 		public String toString() {
 			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
+		}
+
+		public void addCexStorage(CexStorage<S, A> cexStorage) {
+			this.cexStorage = checkNotNull(cexStorage);
 		}
 	}
 
@@ -89,6 +98,9 @@ public final class StopCriterions {
 			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
+
+		// this kind of stop criterion does not use ctx comparisons (yet)
+		public void addCexStorage(CexStorage<S, A> cexStorage) {}
 	}
 
 	private static final class AtLeastNCexs<S extends State, A extends Action> implements StopCriterion<S, A> {
@@ -116,5 +128,8 @@ public final class StopCriterions {
 			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.add("N = " + n).toString();
 		}
+
+		// this kind of stop criterion does not use ctx comparisons (yet)
+		public void addCexStorage(CexStorage<S, A> cexStorage) {}
 	}
 }

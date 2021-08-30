@@ -22,13 +22,17 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CexStorage;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 /**
  * A Refiner implementation that can refine a single trace (of ExprStates and
@@ -41,6 +45,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 	private final PrecRefiner<S, A, P, R> precRefiner;
 	private final PruneStrategy pruneStrategy;
 	private final Logger logger;
+	private CexStorage<S, A> cexStorage;
 
 	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
 								   final PrecRefiner<S, A, P, R> precRefiner,
@@ -57,6 +62,10 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
 	}
 
+	public void addCexStorage(CexStorage<S, A> cexStorage) {
+		this.cexStorage = checkNotNull(cexStorage);
+	}
+
 	@Override
 	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
@@ -66,7 +75,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
-		logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
+		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
 
 		logger.write(Level.SUBSTEP, "|  |  Checking trace...");
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
@@ -84,11 +93,14 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
+			cexStorage.addCounterexample(cexToConcretize);
+
 			switch (pruneStrategy){
 				case LAZY:
 					logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
 					final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 					arg.prune(nodeToPrune);
+
 					break;
 				case FULL:
 					logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);

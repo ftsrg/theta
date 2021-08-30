@@ -20,6 +20,8 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Common interface for refiners. It takes an ARG and a precision, checks if the
  * counterexample in the ARG is feasible and if not, it refines the precision
@@ -36,4 +38,6 @@ public interface Refiner<S extends State, A extends Action, P extends Prec> {
 	 * @return
 	 */
 	RefinerResult<S, A, P> refine(ARG<S, A> arg, P prec);
+
+	public void addCexStorage(CexStorage<S, A> cexStorage);
 }

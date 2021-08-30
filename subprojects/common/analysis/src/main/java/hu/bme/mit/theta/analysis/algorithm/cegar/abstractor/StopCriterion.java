@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CexStorage;
 
 import java.util.Collection;
 
@@ -41,4 +42,6 @@ public interface StopCriterion<S extends State, A extends Action> {
 	 * @return True if abstraction can stop
 	 */
 	boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes);
+
+	public void addCexStorage(CexStorage<S, A> cexStorage);
 }
