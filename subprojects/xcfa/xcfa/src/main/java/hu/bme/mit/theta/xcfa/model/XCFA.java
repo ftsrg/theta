@@ -156,10 +156,6 @@ public final class XCFA {
 		return ret.toString();
 	}
 
-	public XcfaState getInitialState() {
-		return new XcfaState(this);
-	}
-
 	public List<VarDecl<? extends Type>> getGlobalVars() {
 		return List.copyOf(globalVars.keySet());
 	}

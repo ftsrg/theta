@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,7 +19,7 @@ public class BasicMultiStackableExprState<P, R extends ExprState, S extends Stac
 	private final Map<P, S> states;
 
 	private BasicMultiStackableExprState(final Map<P, S> states) {
-		this.states = Collections.unmodifiableMap(states);
+		this.states = Collections.unmodifiableMap(new LinkedHashMap<>(states));
 	}
 
 	public static <P, R extends ExprState, S extends StackableExprState<R>> BasicMultiStackableExprState<P, R, S> of(final Map<P, S> states) {

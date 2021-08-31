@@ -120,15 +120,6 @@ public class XcfaCli {
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
 
-	@Parameter(names = "--gui", description = "Show GUI")
-	boolean showGui = false;
-
-	@Parameter(names = "--bmc-loops", description = "Run BMC pre-check with loop unrolling bound")
-	boolean bmcloop = false;
-
-	@Parameter(names = "--bmc-traditional", description = "Run BMC pre-check with depth bound")
-	boolean bmctraditional = false;
-
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
 
@@ -160,7 +151,7 @@ public class XcfaCli {
 	XcfaConfigBuilder.Encoding encoding = XcfaConfigBuilder.Encoding.SBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 10;
+	Integer maxEnum = 40;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	XcfaConfigBuilder.InitPrec initPrec = XcfaConfigBuilder.InitPrec.EMPTY;
@@ -254,11 +245,6 @@ public class XcfaCli {
 			if(estimateMaxEnum) {
 				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum().intValue());
 				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
-			}
-
-			if(showGui) {
-				new XcfaGui(xcfa);
-				return;
 			}
 
 			if (printxcfa!=null) {

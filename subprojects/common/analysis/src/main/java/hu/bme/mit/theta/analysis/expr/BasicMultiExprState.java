@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,7 +19,7 @@ public class BasicMultiExprState<P, S extends ExprState> implements MultiExprSta
 	private final Map<P, S> states;
 
 	private BasicMultiExprState(final Map<P, S> states) {
-		this.states = Collections.unmodifiableMap(states);
+		this.states = Collections.unmodifiableMap(new LinkedHashMap<>(states));
 	}
 
 	public static <P, S extends ExprState> BasicMultiExprState<P, S> of(final Map<P, S> states) {
