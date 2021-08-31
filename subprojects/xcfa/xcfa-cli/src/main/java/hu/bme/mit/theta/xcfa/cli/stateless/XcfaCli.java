@@ -21,7 +21,6 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
@@ -31,9 +30,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.CliUtils;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -47,17 +44,16 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
-import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
-import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
-import hu.bme.mit.theta.xcfa.analysis.BMCTraditional;
-import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.config.XcfaConfig;
+import hu.bme.mit.theta.xcfa.analysis.config.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
-import hu.bme.mit.theta.xcfa.analysis.BMCUnrolling;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import org.antlr.v4.runtime.CharStream;
@@ -73,7 +69,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -147,28 +142,28 @@ public class XcfaCli {
 	Logger.Level logLevel = Logger.Level.MAINSTEP;
 
 	@Parameter(names = "--domain", description = "Abstract domain")
-	CfaConfigBuilder.Domain domain = CfaConfigBuilder.Domain.PRED_CART;
+	XcfaConfigBuilder.Domain domain = XcfaConfigBuilder.Domain.PRED_CART;
 
 	@Parameter(names = "--refinement", description = "Refinement strategy")
-	CfaConfigBuilder.Refinement refinement = CfaConfigBuilder.Refinement.BW_BIN_ITP;
+	XcfaConfigBuilder.Refinement refinement = XcfaConfigBuilder.Refinement.BW_BIN_ITP;
 
 	@Parameter(names = "--search", description = "Search strategy")
-	CfaConfigBuilder.Search search = CfaConfigBuilder.Search.ERR;
+	XcfaConfigBuilder.Search search = XcfaConfigBuilder.Search.ERR;
 
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
-	CfaConfigBuilder.PredSplit predSplit = CfaConfigBuilder.PredSplit.WHOLE;
+	XcfaConfigBuilder.PredSplit predSplit = XcfaConfigBuilder.PredSplit.WHOLE;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
-	CfaConfigBuilder.PrecGranularity precGranularity = CfaConfigBuilder.PrecGranularity.LOCAL;
+	XcfaConfigBuilder.PrecGranularity precGranularity = XcfaConfigBuilder.PrecGranularity.LOCAL;
 
 	@Parameter(names = "--encoding", description = "Block encoding")
-	CfaConfigBuilder.Encoding encoding = CfaConfigBuilder.Encoding.LBE;
+	XcfaConfigBuilder.Encoding encoding = XcfaConfigBuilder.Encoding.SBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 10;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
-	CfaConfigBuilder.InitPrec initPrec = CfaConfigBuilder.InitPrec.EMPTY;
+	XcfaConfigBuilder.InitPrec initPrec = XcfaConfigBuilder.InitPrec.EMPTY;
 
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
@@ -280,62 +275,59 @@ public class XcfaCli {
 				}
 			}
 
-			if (bmcloop) {
-				if(xcfa.getProcesses().size() == 1) {
-					checkState(xcfa.getMainProcess().getProcedures().size() == 1, "Multiple procedures are not yet supported!");
-					List<XcfaEdge> cex = new BMCUnrolling().getCex(xcfa.getMainProcess().getMainProcedure());
-					if(cex != null) {
-						System.out.println("SafetyResult Unsafe");
-						return;
+			XcfaLocation err = null;
+			outerloop:
+			for (XcfaProcess process : xcfa.getProcesses()) {
+				for (XcfaProcedure procedure : process.getProcedures()) {
+					XcfaLocation errorLoc = procedure.getErrorLoc();
+					if(errorLoc != null) {
+						err = errorLoc;
+						break outerloop;
 					}
 				}
-
 			}
 
-			if (bmctraditional) {
-				if(xcfa.getProcesses().size() == 1) {
-					checkState(xcfa.getMainProcess().getProcedures().size() == 1, "Multiple procedures are not yet supported!");
-					Tuple2<Boolean, List<XcfaEdge>> cex = new BMCTraditional().getCex(xcfa.getMainProcess().getMainProcedure());
-					if(cex != null) {
-						if(cex.get1())
-							System.out.println("SafetyResult Safe");
-						else
-							System.out.println("SafetyResult Unsafe");
-						return;
-					}
-				}
+			final XcfaConfig<?, ?, ?> config = new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.precGranularity(precGranularity).search(search)
+					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa, err);
+			final SafetyResult<?, ?> status = check(config);
 
+			if(status.isUnsafe()) {
+				System.err.println("Unsafe");
+			}
+			else {
+				System.err.println("Safe");
 			}
 
-			CFA cfa;
-			try {
-				cfa = xcfa.createCFA();
-			} catch(IllegalStateException e) {
-				System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
-				cfa = null;
-			}
-			if(cfa != null) {
-				final SafetyResult<?, ?> status;
-				if(!portfolio) {
-					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
-					status = check(configuration);
-					if(statisticsfile!=null) {
-						writeStatistics(cfa);
-					}
-				} else {
-					status = PortfolioHandler.instance.executeAnalysis(cfa, logLevel, statisticsfile);
-				}
-
-				if (status.isUnsafe() && cexfile != null) {
-					writeCex(status.asUnsafe());
-				}
-				if (status.isUnsafe() && highlighted != null) {
-					writeXcfaWithCex(xcfa, status.asUnsafe());
-				}
-			} else {
-				BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
-			}
+//			CFA cfa;
+//			try {
+//				cfa = xcfa.createCFA();
+//			} catch(IllegalStateException e) {
+//				System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
+//				cfa = null;
+//			}
+//			if(cfa != null) {
+//				final SafetyResult<?, ?> status;
+//				if(!portfolio) {
+//					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+//					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+//					status = check(configuration);
+//					if(statisticsfile!=null) {
+//						writeStatistics(cfa);
+//					}
+//				} else {
+//					status = PortfolioHandler.instance.executeAnalysis(cfa, logLevel, statisticsfile);
+//				}
+//
+//				if (status.isUnsafe() && cexfile != null) {
+//					writeCex(status.asUnsafe());
+//				}
+//				if (status.isUnsafe() && highlighted != null) {
+//					writeXcfaWithCex(xcfa, status.asUnsafe());
+//				}
+//			} else {
+//			}
 
 
 			sw.stop();
@@ -383,36 +375,36 @@ public class XcfaCli {
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc loc) throws Exception {
-		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
-			return buildBitvectorConfiguration(cfa, loc);
-		}
-		return buildIntegerConfiguration(cfa, loc);
-	}
-
-	private CfaConfig<?, ?, ?> buildIntegerConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
-		try {
-			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
-
-		} catch (final Exception ex) {
-			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
-		}
-	}
-
-	private CfaConfig<?, ?, ?> buildBitvectorConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
-		try {
-			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
-
-		} catch (final Exception ex) {
-			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
-		}
-	}
+//	private CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc loc) throws Exception {
+//		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
+//			return buildBitvectorConfiguration(cfa, loc);
+//		}
+//		return buildIntegerConfiguration(cfa, loc);
+//	}
+//
+//	private CfaConfig<?, ?, ?> buildIntegerConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+//		try {
+//			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+//					.precGranularity(precGranularity).search(search)
+//					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+//					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
+//
+//		} catch (final Exception ex) {
+//			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+//		}
+//	}
+//
+//	private CfaConfig<?, ?, ?> buildBitvectorConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+//		try {
+//			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+//					.precGranularity(precGranularity).search(search)
+//					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+//					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
+//
+//		} catch (final Exception ex) {
+//			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+//		}
+//	}
 
 	private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
 		try {
@@ -426,6 +418,20 @@ public class XcfaCli {
 			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
 		}
 	}
+
+	private SafetyResult<?, ?> check(XcfaConfig<?, ?, ?> configuration) throws Exception {
+		try {
+			return configuration.check();
+		} catch (final NotSolvableException exception) {
+			System.err.println("Configuration failed (stuck)");
+			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+			throw exception;
+		} catch (final Exception ex) {
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+		}
+	}
+
 
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
