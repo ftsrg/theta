@@ -145,7 +145,7 @@ public class XcfaCli {
 	XcfaConfigBuilder.PredSplit predSplit = XcfaConfigBuilder.PredSplit.WHOLE;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
-	XcfaConfigBuilder.PrecGranularity precGranularity = XcfaConfigBuilder.PrecGranularity.LOCAL;
+	XcfaConfigBuilder.PrecGranularity precGranularity = XcfaConfigBuilder.PrecGranularity.GLOBAL;
 
 	@Parameter(names = "--encoding", description = "Block encoding")
 	XcfaConfigBuilder.Encoding encoding = XcfaConfigBuilder.Encoding.SBE;

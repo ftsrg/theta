@@ -77,8 +77,6 @@ import hu.bme.mit.theta.xcfa.analysis.lts.XcfaLts;
 import hu.bme.mit.theta.xcfa.analysis.lts.XcfaSbeLts;
 import hu.bme.mit.theta.xcfa.analysis.prec.GlobalXcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.prec.GlobalXcfaPrecRefiner;
-import hu.bme.mit.theta.xcfa.analysis.prec.LocalXcfaPrec;
-import hu.bme.mit.theta.xcfa.analysis.prec.LocalXcfaPrecRefiner;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
@@ -150,7 +148,7 @@ public class XcfaConfigBuilder {
 					final RefutationToPrec<P, R> refToPrec) {
 				return GlobalXcfaPrecRefiner.create(refToPrec);
 			}
-		},
+		}/*,
 
 		LOCAL {
 			@Override
@@ -163,7 +161,7 @@ public class XcfaConfigBuilder {
 					final RefutationToPrec<P, R> refToPrec) {
 				return LocalXcfaPrecRefiner.create(refToPrec);
 			}
-		};
+		}*/;
 
 		public abstract <P extends Prec> XcfaPrec<P> createPrec(P innerPrec);
 
@@ -473,9 +471,9 @@ public class XcfaConfigBuilder {
 					break;
 				case ALLASSUMES:
 					switch (precGranularity){
-						case LOCAL:
+						/*case LOCAL:
 							prec = XcfaInitPrecs.collectAssumesLocal(xcfa);
-							break;
+							break;*/
 						case GLOBAL:
 							prec = XcfaInitPrecs.collectAssumesGlobal(xcfa);
 							break;
