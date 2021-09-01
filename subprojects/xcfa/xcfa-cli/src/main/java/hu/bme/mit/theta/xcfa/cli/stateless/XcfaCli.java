@@ -110,6 +110,9 @@ public class XcfaCli {
 	// @Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
 	String printxcfa = null;
 
+	@Parameter(names = "--no-bitvectors", description = "Stops the verification if the usage of bitvector arithmetics would be required for the task")
+	boolean noBitvectors = false;
+
 	@Parameter(names = "--cfa-input-statistics")
 	boolean cfaInputStatistics = false;
 
@@ -446,6 +449,12 @@ public class XcfaCli {
 	}
 
 	private CfaConfig<?, ?, ?> buildBitvectorConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+		// TODO for benchmarks
+		if(noBitvectors) {
+			System.err.println("Bitvectors required, stopping verification");
+			System.exit(-30); // TODO here for benchexec reasons
+		}
+
 		try {
 			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.precGranularity(precGranularity).search(search)
