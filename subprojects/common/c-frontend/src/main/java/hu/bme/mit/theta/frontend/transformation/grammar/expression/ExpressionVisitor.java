@@ -272,7 +272,16 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				rightOp = (Expr<BvType>) accept;
 				Expr<BvType> leftExpr = cast(smallestCommonType.castTo(expr), (BvType)smallestCommonType.getSmtType());
 				Expr<BvType> rightExpr = cast(smallestCommonType.castTo(rightOp), (BvType)smallestCommonType.getSmtType());
-				expr = BvExprs.ShiftLeft(leftExpr, rightExpr);
+				if(ctx.signs.get(i-1).getText().equals(">>")) {
+					//TODO: is this sound?
+					if(leftExpr.getType().getSigned()) {
+						expr = BvExprs.ArithShiftRight(leftExpr, rightExpr);
+					} else {
+						expr = BvExprs.LogicShiftRight(leftExpr, rightExpr);
+					}
+				} else {
+					expr = BvExprs.ShiftLeft(leftExpr, rightExpr);
+				}
 				FrontendMetadata.create(expr, "cType", smallestCommonType);
 			}
 			return expr;
@@ -399,14 +408,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				FrontendMetadata.create(accept, "cType", signedInt);
 				return accept;
 			case "~":
+				type = CComplexType.getType(accept);
+				CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(type));
 				checkState(accept.getType() instanceof BvType);
+				accept = smallestCommonType.castTo(accept);
 				//noinspection unchecked
 				Expr<?> expr = BvExprs.Neg((Expr<BvType>) accept);
-				type = CComplexType.getType(accept);
-				FrontendMetadata.create(expr, "cType", type);
-				type = CComplexType.getType(accept);
-				expr = type.castTo(expr);
-				FrontendMetadata.create(expr, "cType", type);
+				FrontendMetadata.create(expr, "cType", smallestCommonType);
+				expr = smallestCommonType.castTo(expr);
+				FrontendMetadata.create(expr, "cType", smallestCommonType);
 				return expr;
 			case "&":
 				checkState(accept instanceof RefExpr<?> && ((RefExpr<?>) accept).getDecl() instanceof VarDecl, "Referencing non-variable expressions is not allowed!");
