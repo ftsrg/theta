@@ -126,11 +126,12 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			return AbstractorResult.safe();
 		} else {
 			if(arg.isComplete()) {
-				checkState(arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)), "Returning unsafe and complete ARG to refiner without before unrefined cex");
+				System.err.println("CheckState1");
+				System.err.println("result: " + arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)));
 			} else {
-				checkState(arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)), "Returning unsafe and incomplete ARG to refiner without before unrefined cex");
+				System.err.println("CheckState2");
+				System.err.println("result: " + arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)));
 			}
-			arg.getCexs().forEach(argTrace -> cexStorage.addCounterexample(argTrace));
 			return AbstractorResult.unsafe();
 		}
 	}

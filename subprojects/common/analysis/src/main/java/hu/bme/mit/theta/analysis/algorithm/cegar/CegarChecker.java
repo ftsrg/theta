@@ -158,9 +158,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				}
 
 				if(lastPrec.equals(prec)) {
-					logger.write(Level.INFO, "! Precision did NOT change in this iteration"+System.lineSeparator());
+					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration"+System.lineSeparator());
 				} else {
-					logger.write(Level.INFO, "! Precision DID change in this iteration"+System.lineSeparator());
+					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration"+System.lineSeparator());
 				}
 			}
 
