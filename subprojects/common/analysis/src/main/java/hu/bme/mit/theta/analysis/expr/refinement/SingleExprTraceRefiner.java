@@ -72,7 +72,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
+		final ArgTrace<S, A> cexToConcretize = arg.getCexs().filter(cex -> cexStorage.checkIfCounterexampleNew(cex)).findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
 		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
