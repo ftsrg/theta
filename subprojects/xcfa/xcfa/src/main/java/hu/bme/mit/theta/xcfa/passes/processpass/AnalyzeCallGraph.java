@@ -43,7 +43,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 			for (Map.Entry<XcfaProcedure, Set<XcfaProcedure>> entry : calledBy.entrySet()) {
 				XcfaProcedure callee = entry.getKey();
 				Set<XcfaProcedure> callers = entry.getValue();
-				for (XcfaProcedure caller : callers) {
+				for (XcfaProcedure caller : new LinkedHashSet<>(callers)) {
 					Set<XcfaProcedure> newCallers = calledBy.get(caller);
 					if(!callers.containsAll(newCallers)) {
 						done = false;
