@@ -20,6 +20,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
+import hu.bme.mit.theta.analysis.algorithm.ArgStatisticsWriter;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -152,6 +154,9 @@ public class XcfaCli {
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
 
+	@Parameter(names = "--write-arg-statistics", description = "Write the number of nodes and incomplete nodes into a csv per iteration")
+	boolean writeArgStatistics = false;
+
 	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
 	boolean loadStore = false;
 
@@ -220,6 +225,10 @@ public class XcfaCli {
 		}
 
 		try {
+			if(writeArgStatistics) {
+				ArgStatisticsWriter.instance.setTaskfileName(model.getAbsolutePath());
+			}
+
 			if(outputResults) {
 				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
 				boolean bool = resultsDir.mkdir();
