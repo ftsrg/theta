@@ -120,6 +120,11 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 					refinedPrec = precRefiner.refine(refinedPrec, traces.get(i), refutations.get(i));
 				}
 			}
+
+			for(ArgTrace<S, A> cex : cexs) {
+				cexStorage.addCounterexample(cex);
+			}
+
 			switch (pruneStrategy){
 				case LAZY:
 					logger.write(Level.SUBSTEP, "|  |  Pruning (lazy)...");

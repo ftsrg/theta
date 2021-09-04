@@ -62,13 +62,13 @@ public final class StopCriterions {
 
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
-			return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs().anyMatch(ctx -> cexStorage.checkIfCounterexampleNew(ctx));
+			return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs().anyMatch(cex -> cexStorage.checkIfCounterexampleNew(cex));
 		}
 
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
 			return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
-					&& arg.getCexs().anyMatch(ctx -> cexStorage.checkIfCounterexampleNew(ctx)));
+					&& arg.getCexs().anyMatch(cex -> cexStorage.checkIfCounterexampleNew(cex)));
 		}
 
 		@Override

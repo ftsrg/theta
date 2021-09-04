@@ -15,7 +15,7 @@ public class CexStorage<S extends State, A extends Action> {
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
-		if(counterexamples.contains(cex)) {
+		if(counterexamples.contains(cex.hashCode())) {
 			System.err.println("Counterexample WAS present before");
 			return false;
 		} else {
