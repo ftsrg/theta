@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 
 /**
@@ -23,7 +23,7 @@ public class MaxEnumAnalyzer {
 	public static final MaxEnumAnalyzer instance = new MaxEnumAnalyzer();
 	public static boolean enabled = true;
 
-	HashMap<RefExpr<?>, Tuple2<Optional<BigInteger>, Optional<BigInteger>>> boundaries = new HashMap<>(); // k: variable ref, v: min, max
+	LinkedHashMap<RefExpr<?>, Tuple2<Optional<BigInteger>, Optional<BigInteger>>> boundaries = new LinkedHashMap<>(); // k: variable ref, v: min, max
 
 	public void consume(Expr<BoolType> relationalExpr) {
 		if(!enabled) {

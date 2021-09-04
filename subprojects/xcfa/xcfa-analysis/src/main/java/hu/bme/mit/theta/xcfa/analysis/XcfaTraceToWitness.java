@@ -15,7 +15,7 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -195,7 +195,7 @@ public final class XcfaTraceToWitness {
 	 * @return the resulting hashmap
 	 */
 	private static Map<Integer, String> collectExplicitStatesByStep() {
-		Map<Integer, String> explStates = new HashMap<>();
+		Map<Integer, String> explStates = new LinkedHashMap<>();
 		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
 			explStates.put(i - 1, concreteTrace.getState(i).getState().toString());
 		}

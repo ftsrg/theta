@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,7 +46,7 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XcfaLocation> {
 		error = (context.error != null);
 		name = context.id.getText();
 		canonicalName = parent.getCanonicalName() + "::" + name;
-		dictionary = new HashMap<>();
+		dictionary = new LinkedHashMap<>();
 	}
 
 	@Override

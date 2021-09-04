@@ -25,8 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +108,7 @@ public final class MutablePartitionedValuation extends Valuation {
 
 	@Override
 	public Collection<Decl<?>> getDecls() {
-		Set<Decl<?>> returnSet = new HashSet<>();
+		Set<Decl<?>> returnSet = new LinkedHashSet<>();
 		for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
 			returnSet.addAll(decls.keySet());
 		}
@@ -146,7 +145,7 @@ public final class MutablePartitionedValuation extends Valuation {
 
 	@Override
 	public Map<Decl<?>, LitExpr<?>> toMap() {
-		Map<Decl<?>, LitExpr<?>> ret = new HashMap<>();
+		Map<Decl<?>, LitExpr<?>> ret = new LinkedHashMap<>();
 		for (Map<Decl<?>, LitExpr<?>> decl : partitions) {
 			ret.putAll(decl);
 		}

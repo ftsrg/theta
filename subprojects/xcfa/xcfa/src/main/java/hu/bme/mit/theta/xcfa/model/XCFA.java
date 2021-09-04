@@ -28,7 +28,7 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,9 +74,9 @@ public final class XCFA {
 
 		int tmpcnt = 0;
 
-		Map<XcfaLocation, CFA.Loc> locationLUT = new HashMap<>();
+		Map<XcfaLocation, CFA.Loc> locationLUT = new LinkedHashMap<>();
 
-		HashMap<VarDecl<?>, VarDecl<?>> varLut = new HashMap<>();
+		LinkedHashMap<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		int counter = 0;
 
 		for (VarDecl<?> localVar : getMainProcess().getMainProcedure().getLocalVars()) {
