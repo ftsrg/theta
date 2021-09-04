@@ -36,26 +36,30 @@ public class CallsToHavocs extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean)FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
-			if(e.isPresent()) {
-				List<Stmt> collect = new ArrayList<>();
-				for (Stmt stmt : edge.getStmts()) {
-					if(stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
-						Expr<?> expr = ((XcfaCallStmt)e.get()).getParams().get(0);
-						checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
-						VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-						collect.add(Havoc(var));
+		boolean found = true;
+		while(found) {
+			found = false;
+			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+				Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
+				if (e.isPresent()) {
+					List<Stmt> collect = new ArrayList<>();
+					for (Stmt stmt : edge.getStmts()) {
+						if (stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
+							Expr<?> expr = ((XcfaCallStmt) e.get()).getParams().get(0);
+							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
+							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
+							collect.add(Havoc(var));
+						} else collect.add(stmt);
 					}
-					else collect.add(stmt);
+					XcfaEdge xcfaEdge;
+					xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
+					builder.removeEdge(edge);
+					builder.addEdge(xcfaEdge);
+					found = true;
+					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+						FrontendMetadata.create(xcfaEdge, s, o);
+					});
 				}
-				XcfaEdge xcfaEdge;
-				xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
-				builder.removeEdge(edge);
-				builder.addEdge(xcfaEdge);
-				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					FrontendMetadata.create(xcfaEdge, s, o);
-				});
 			}
 		}
 

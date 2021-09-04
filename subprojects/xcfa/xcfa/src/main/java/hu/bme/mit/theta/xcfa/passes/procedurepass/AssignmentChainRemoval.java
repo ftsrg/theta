@@ -43,6 +43,8 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
@@ -61,6 +63,9 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+/**
+ * Currently, this pass is not used due to performance issues. However, a similar one could be useful.
+ */
 public class AssignmentChainRemoval extends ProcedurePass {
 
 	@Override
@@ -201,7 +206,10 @@ public class AssignmentChainRemoval extends ProcedurePass {
 							else {
 								checkState(newExpr == null && !isHavoc, "New expression should not be overwritten!");
 								if(stmt instanceof HavocStmt) isHavoc = true;
-								else if(stmt instanceof AssignStmt) newExpr = ((AssignStmt<?>) stmt).getExpr();
+								else if(stmt instanceof AssignStmt) {
+									newExpr = ((AssignStmt<?>) stmt).getExpr();
+									FrontendMetadata.create(newExpr, "cType", CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef()));
+								}
 								else if(stmt instanceof StoreStmt) newExpr = ((StoreStmt) stmt).getLocal().getRef();
 								else if(stmt instanceof LoadStmt) newExpr = ((LoadStmt) stmt).getGlobal().getRef();
 								else throw new UnsupportedOperationException("Unknown lhs-modifying stmt: " + stmt);
@@ -229,8 +237,10 @@ public class AssignmentChainRemoval extends ProcedurePass {
 								}
 								else {
 									Optional<Stmt> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
-										if (expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar))
-											return Optional.of(cast(finalNewExpr, finalNewExpr.getType()));
+										if (expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar)) {
+											CComplexType type = CComplexType.getType(removableVar.getRef());
+											return Optional.of(cast(type.castTo(finalNewExpr), removableVar.getType()));
+										}
 										else return Optional.empty();
 									});
 									checkState(newStmt.isPresent(), "Rhs var is probably not used on the right side!");
@@ -260,10 +270,12 @@ public class AssignmentChainRemoval extends ProcedurePass {
 
 	// on every outgoing path, all reachable `goals` entries are reached before a recursion
 	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Set<Tuple2<XcfaEdge, Stmt>> goals) {
-		return onlyForwardReachable(start, start, goals, true);
+		return onlyForwardReachable(start, start, goals, true, new LinkedHashSet<>());
 	}
 
-	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Tuple2<XcfaEdge, Stmt> current, Set<Tuple2<XcfaEdge, Stmt>> goals, boolean init) {
+	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Tuple2<XcfaEdge, Stmt> current, Set<Tuple2<XcfaEdge, Stmt>> goals, boolean init, Set<Tuple2<XcfaEdge, Stmt>> visited) {
+		if(visited.contains(current)) return true;
+		visited.add(current);
 		if(!init && start.equals(current)) return false;
 		goals.remove(current);
 		if(goals.size() == 0) return true;
@@ -273,15 +285,10 @@ public class AssignmentChainRemoval extends ProcedurePass {
 		if(index == stmts.size() - 1) {
 			for (XcfaEdge outgoingEdge : current.get1().getTarget().getOutgoingEdges()) {
 				Stmt stmt = outgoingEdge.getStmts().size() == 0 ? Skip() : outgoingEdge.getStmts().get(0);
-				if(!onlyForwardReachable(start, Tuple2.of(outgoingEdge, stmt), new LinkedHashSet<>(goals), false)) return false;
+				if(!onlyForwardReachable(start, Tuple2.of(outgoingEdge, stmt), new LinkedHashSet<>(goals), false, new LinkedHashSet<>(visited))) return false;
 			}
 			return true;
 		}
-		else return onlyForwardReachable(start, Tuple2.of(current.get1(), stmts.get(index + 1)), goals, false);
-	}
-
-	@Override
-	public boolean isPostInlining() {
-		return true;
+		else return onlyForwardReachable(start, Tuple2.of(current.get1(), stmts.get(index + 1)), goals, false, visited);
 	}
 }
