@@ -16,4 +16,12 @@ public class PortfolioNotSolvableThrower implements NotSolvableThrower {
 			throw new NotSolvableException();
 		}
 	}
+
+	@Override
+	public void throwNoNewCexException() {
+		if(shouldThrow) {
+			System.err.println("Not solvable!");
+			throw new NoNewCexException();
+		}
+	}
 }

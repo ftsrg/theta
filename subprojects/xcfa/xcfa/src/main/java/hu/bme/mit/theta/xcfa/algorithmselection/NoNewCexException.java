@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.xcfa.algorithmselection;
 
-public class NotSolvableException extends RuntimeException {
-	NotSolvableException() {
-		super("Task is not solvable with this configuration!");
+public class NoNewCexException extends RuntimeException {
+	NoNewCexException() {
+		super("There was no new abstract counterexample found in task!");
 	}
 }
