@@ -125,13 +125,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
 			return AbstractorResult.safe();
 		} else {
-			if(arg.isComplete()) {
-				System.err.println("CheckState1");
-				System.err.println("result: " + arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)));
-			} else {
-				System.err.println("CheckState2");
-				System.err.println("result: " + arg.getCexs().anyMatch(argTrace -> cexStorage.checkIfCounterexampleNew(argTrace)));
-			}
 			return AbstractorResult.unsafe();
 		}
 	}

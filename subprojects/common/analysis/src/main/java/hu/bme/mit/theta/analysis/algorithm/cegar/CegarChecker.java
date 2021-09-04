@@ -55,8 +55,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Logger logger;
 
 	// controlled restart
-	private Set<AbstractArg> args = new LinkedHashSet<>();
-	private P lastPrecision = null;
+	// private Set<AbstractArg> args = new LinkedHashSet<>();
+	// private P lastPrecision = null;
 	private static NotSolvableThrower notSolvableThrower = null;
 
 	// counterexample checks
@@ -132,20 +132,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			Graph g = ArgVisualizer.getDefault().visualize(arg);
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
-			if (notSolvableThrower != null) {
-				// stopping verification, if it is stuck
-				AbstractArg abstractArg = new AbstractArg(arg.getNodes(), prec);
-
-				if (args.contains(abstractArg)) {
-					Optional<AbstractArg> any = args.stream().filter(abstractArg1 -> abstractArg1.equals(abstractArg)).findAny();
-					// System.err.println("Not solvable!");
-					// throw new NotSolvableException();
-					notSolvableThrower.throwNotSolvableException();
-				}
-				args.add(abstractArg);
-			}
-
 			if (abstractorResult.isUnsafe()) {
+				// stopping verification, if there is no new cex to refine (it would stop with an error in the refiner anyways)
+				if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
+					notSolvableThrower.throwNoNewCexException();
+				}
+
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
 				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
