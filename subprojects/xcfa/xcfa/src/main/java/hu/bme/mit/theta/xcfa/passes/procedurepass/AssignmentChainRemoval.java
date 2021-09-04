@@ -57,6 +57,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class AssignmentChainRemoval extends ProcedurePass {
@@ -182,7 +184,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 		boolean found = true;
 		while(found) {
 			found = false;
-			Set<VarDecl<?>> removableVars = filteredRhsUsages.entrySet().stream().filter(varDeclSetEntry -> varDeclSetEntry.getValue().size() == 1 && onlyForwardReachable(varDeclSetEntry.getValue().iterator().next(), new LinkedHashSet<>(filteredLhsUsages.get(varDeclSetEntry.getKey())))).map(Map.Entry::getKey).collect(Collectors.toSet());
+			Set<VarDecl<?>> removableVars = filteredRhsUsages.entrySet().stream().filter(varDeclSetEntry -> varDeclSetEntry.getValue().size() == 1 && onlyForwardReachable(varDeclSetEntry.getValue().iterator().next(), new LinkedHashSet<>(filteredLhsUsages.getOrDefault(varDeclSetEntry.getKey(), Set.of())))).map(Map.Entry::getKey).collect(Collectors.toSet());
 			if(removableVars.size() > 0) {
 				found = true;
 
@@ -212,20 +214,28 @@ public class AssignmentChainRemoval extends ProcedurePass {
 
 					boolean canInline = true;
 					rhsLoop:
-					for (Tuple2<XcfaEdge, Stmt> rhsEdge : filteredLhsUsages.get(removableVar)) {
+					for (Tuple2<XcfaEdge, Stmt> rhsEdge : filteredLhsUsages.getOrDefault(removableVar, Set.of())) {
 						XcfaEdge toRemove = rhsEdge.get1();
 						List<Stmt> newStmts = new ArrayList<>();
 						for (Stmt stmt : toRemove.getStmts()) {
 							if(stmt != rhsEdge.get2()) newStmts.add(stmt);
 							else {
-								if(isHavoc && (stmt instanceof StoreStmt || (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getExpr() instanceof RefExpr))) {
+								if(isHavoc && !(stmt instanceof AssignStmt && (((AssignStmt<?>) stmt).getExpr() instanceof RefExpr))) {
 									canInline = false;
 									break rhsLoop;
 								}
-								XcfaStmtUtils.replaceStmt(stmt, expr -> {
-									if(expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar)) return Optional.of(cast(finalNewExpr, removableVar.getType()));
-									else return Optional.empty();
-								});
+								else if(isHavoc) {
+									newStmts.add(Havoc(((AssignStmt<?>) stmt).getVarDecl()));
+								}
+								else {
+									Optional<Stmt> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
+										if (expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar))
+											return Optional.of(cast(finalNewExpr, finalNewExpr.getType()));
+										else return Optional.empty();
+									});
+									checkState(newStmt.isPresent(), "Rhs var is probably not used on the right side!");
+									newStmts.add(newStmt.get());
+								}
 							}
 						}
 						newEdgeMap.put(toRemove, new XcfaEdge(toRemove.getSource(), toRemove.getTarget(), newStmts));
@@ -250,11 +260,11 @@ public class AssignmentChainRemoval extends ProcedurePass {
 
 	// on every outgoing path, all reachable `goals` entries are reached before a recursion
 	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Set<Tuple2<XcfaEdge, Stmt>> goals) {
-		return onlyForwardReachable(start, start, goals);
+		return onlyForwardReachable(start, start, goals, true);
 	}
 
-	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Tuple2<XcfaEdge, Stmt> current, Set<Tuple2<XcfaEdge, Stmt>> goals) {
-		if(start.equals(current)) return false;
+	private boolean onlyForwardReachable(Tuple2<XcfaEdge, Stmt> start, Tuple2<XcfaEdge, Stmt> current, Set<Tuple2<XcfaEdge, Stmt>> goals, boolean init) {
+		if(!init && start.equals(current)) return false;
 		goals.remove(current);
 		if(goals.size() == 0) return true;
 
@@ -262,10 +272,16 @@ public class AssignmentChainRemoval extends ProcedurePass {
 		int index = stmts.indexOf(current.get2());
 		if(index == stmts.size() - 1) {
 			for (XcfaEdge outgoingEdge : current.get1().getTarget().getOutgoingEdges()) {
-				if(!onlyForwardReachable(Tuple2.of(outgoingEdge, outgoingEdge.getStmts().get(0)), new LinkedHashSet<>(goals))) return false;
+				Stmt stmt = outgoingEdge.getStmts().size() == 0 ? Skip() : outgoingEdge.getStmts().get(0);
+				if(!onlyForwardReachable(start, Tuple2.of(outgoingEdge, stmt), new LinkedHashSet<>(goals), false)) return false;
 			}
 			return true;
 		}
-		else return onlyForwardReachable(Tuple2.of(current.get1(), stmts.get(index + 1)), goals);
+		else return onlyForwardReachable(start, Tuple2.of(current.get1(), stmts.get(index + 1)), goals, false);
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }
