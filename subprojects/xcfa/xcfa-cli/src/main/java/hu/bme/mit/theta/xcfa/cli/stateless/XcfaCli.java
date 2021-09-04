@@ -33,21 +33,27 @@ import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.cfa.dsl.CfaWriter;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
+import hu.bme.mit.theta.xcfa.algorithmselection.NoNewCexException;
 import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
@@ -69,14 +75,17 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -203,34 +212,6 @@ public class XcfaCli {
 			return;
 		}
 
-		if(cfaInputStatistics) {
-			try {
-				CFA cfa = CfaDslManager.createCfa(new FileInputStream(model));
-				// cfa data in csv format
-				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-				boolean bool = resultsDir.mkdir();
-				if(!bool){
-					throw new RuntimeException("Couldn't create results directory");
-				}
-				String basicFileName = resultsDir + "/" + model.getName();
-
-				try	(BufferedWriter bw = new BufferedWriter(new FileWriter(basicFileName+".csv"))) {
-					bw.write(model.getName() + "\t");
-					bw.write(cfa.getVars().size() + "\t"); // varCount
-					bw.write(cfa.getLocs().size() + "\t"); // locCount
-					bw.write(cfa.getEdges().size() + "\t"); // edgeCount
-					bw.write(cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + "\t"); // skipEdgeCount
-					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\t"); // cyclomaticComplexity
-					bw.write(cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\n"); // havocCount
-
-					bw.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return;
-		}
-
 		ArchitectureConfig.arithmetic = arithmeticType;
 		if(estimateMaxEnum) {
 			MaxEnumAnalyzer.enabled = true;
@@ -319,19 +300,34 @@ public class XcfaCli {
 
 			if (printcfa || outputResults) {
 				CFA cfa = xcfa.createCFA();
-				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
-					bw.write(cfa.toString());
+				try (FileOutputStream filestream = new FileOutputStream(cfafile)) {
+					CfaWriter.write(cfa, filestream);
 				}
 				writeStatistics(cfa);
 
 				// cfa data only in csv format
 				try	(BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile+".csv"))) {
 					bw.write(model.getName() + "\t");
-					bw.write(cfa.getVars().size() + "\t");
-					bw.write(cfa.getLocs().size() + "\t");
-					bw.write(cfa.getEdges().size() + "\t");
-					bw.write(cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + "\t");
-					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\n");
+					bw.write(cfa.getVars().size() + "\t"); // vars
+					bw.write(cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\t"); // havocs
+					bw.write(cfa.getLocs().size() + "\t"); // locs
+					bw.write(cfa.getEdges().size() + "\t"); // edges
+					bw.write(cfa.getEdges().stream().
+							filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + "\t"); // skip edges
+					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\t"); // assumes
+					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\t"); // assign
+					List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
+					int avgGrade = 0;
+					for(Integer r : rs) {
+						avgGrade += r;
+					}
+					avgGrade /= cfa.getLocs().size()-1; // final loc does not count and there must be one final loc
+					bw.write(avgGrade + "\t"); // average grades of outgoing edges
+
+					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\t"); // cyclomatic complexity
+					bw.write(CStmtCounter.getForLoops() + "\t"); // for loops
+					bw.write(CStmtCounter.getWhileLoops() + "\t"); // while loops
+					bw.write(CStmtCounter.getBranches() + "\n"); // branches
 
 					bw.close();
 				}
@@ -395,10 +391,24 @@ public class XcfaCli {
 			bw = new BufferedWriter(new FileWriter(statistics));
 
 			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
+			bw.write("CFA-data havocs " + cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\t"); // havocs
 			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
 			bw.write("CFA-data edgeCount " + cfa.getEdges().size() + System.lineSeparator());
 			bw.write("CFA-data skipEdgeCount " + cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + System.lineSeparator());
+			bw.write("CFA-data assumeStmts"+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\t"); // assumes
+			bw.write("CFA-data assignStmts"+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\t"); // assign
 			bw.write("CFA-data cyclomatic complexity " + (cfa.getEdges().size() - cfa.getLocs().size() + 2) + System.lineSeparator());
+			List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
+			int avgGrade = 0;
+			for(Integer r : rs) {
+				avgGrade += r;
+			}
+			avgGrade /= cfa.getLocs().size();
+			bw.write("CFA-data averageOutEdgeGrade" + avgGrade + "\t"); // average grades of outgoing edges
+
+			bw.write("C-data forLoops"+CStmtCounter.getForLoops() + "\t"); // for loops
+			bw.write("C-data whileLoops"+CStmtCounter.getWhileLoops() + "\t"); // while loops
+			bw.write("C-data branches"+CStmtCounter.getBranches() + "\n"); // branches
 
 			bw.write("Configuration: ");
 			bw.write(System.lineSeparator());
@@ -452,7 +462,7 @@ public class XcfaCli {
 		// TODO for benchmarks
 		if(noBitvectors) {
 			System.err.println("Bitvectors required, stopping verification");
-			System.exit(-30); // TODO here for benchexec reasons
+			System.exit(-50); // TODO here for benchexec reasons
 		}
 
 		try {
@@ -472,6 +482,10 @@ public class XcfaCli {
 		} catch (final NotSolvableException exception) {
 			System.err.println("Configuration failed (stuck)");
 			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+			throw exception;
+		} catch (final NoNewCexException exception) {
+			System.err.println("Configuration failed (no new cex found)");
+			System.exit(-30); // TODO here for benchexec reasons; tool info should be changed instead
 			throw exception;
 		} catch (final Exception ex) {
 			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
