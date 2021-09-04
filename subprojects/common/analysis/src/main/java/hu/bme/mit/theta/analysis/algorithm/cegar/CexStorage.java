@@ -8,10 +8,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class CexStorage<S extends State, A extends Action> {
-	Set<ArgTrace<S, A>> counterexamples = new LinkedHashSet<>();
+	Set<Integer> counterexamples = new LinkedHashSet<>();
 
 	public void addCounterexample(ArgTrace<S,A> cex) {
-		counterexamples.add(cex);
+		counterexamples.add(cex.hashCode());
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
