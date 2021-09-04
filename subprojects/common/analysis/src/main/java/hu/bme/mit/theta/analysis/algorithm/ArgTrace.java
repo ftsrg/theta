@@ -94,7 +94,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 	////
 
 	/**
-	 * Converts the ArgTrace to a Trace by extrancting states and actions from
+	 * Converts the ArgTrace to a Trace by extracting states and actions from
 	 * nodes and edges respectively.
 	 */
 	public Trace<S, A> toTrace() {
