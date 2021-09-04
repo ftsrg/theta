@@ -21,7 +21,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,7 +66,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 		List<XcfaEdge> edgesToStartSequenceOn = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).collect(Collectors.toList());
 		while(edgesToStartSequenceOn.size() != 0) {
 			XcfaEdge startEdge = edgesToStartSequenceOn.get(0);
-			Set<XcfaLocation> sequence = new HashSet<>();
+			Set<XcfaLocation> sequence = new LinkedHashSet<>();
 			XcfaLocation startingLocation = startEdge.getSource();
 			XcfaLocation endLocation = startingLocation;
 			sequence.add(startingLocation);

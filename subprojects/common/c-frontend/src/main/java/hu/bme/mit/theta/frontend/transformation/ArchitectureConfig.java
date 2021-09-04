@@ -12,7 +12,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bit
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector.UnitValueVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector.ValueVisitor;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ArchitectureConfig {
@@ -29,7 +29,7 @@ public class ArchitectureConfig {
 		ILP32(1, 8,16,32,32,64, 24, 8, 53, 11, 113, 15, 65),
 		LP64(1, 8,16,32,64,64, 24, 8, 53, 11, 113, 15, 65);
 
-		public final Map<String, Integer> standardTypeSizes = new HashMap<>();
+		public final Map<String, Integer> standardTypeSizes = new LinkedHashMap<>();
 
 		ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong,
 						 int _float_significand, int _float_exponent, int _double_significand, int _double_exponent,

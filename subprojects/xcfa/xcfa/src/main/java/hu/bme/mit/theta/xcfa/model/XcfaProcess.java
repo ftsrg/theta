@@ -30,7 +30,7 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +73,7 @@ public final class XcfaProcess {
 
         threadStartStmt = Tuple2.of(edge, stmt);
 
-        Map<VarDecl<?>, VarDecl<?>> newVarLut = new HashMap<>();
+        Map<VarDecl<?>, VarDecl<?>> newVarLut = new LinkedHashMap<>();
 
         List<VarDecl<?>> paramCollectList = new ArrayList<>();
         process.params.forEach((varDecl) -> {
@@ -83,7 +83,7 @@ public final class XcfaProcess {
         });
         params = ImmutableList.copyOf(paramCollectList);
 
-        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
+        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new LinkedHashMap<>();
         process.threadLocalVars.forEach((varDecl, litExpr) -> {
             VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
             localVarsCollectList.put(newVar, litExpr);
@@ -197,7 +197,7 @@ public final class XcfaProcess {
         private Builder() {
             built = false;
             params = new ArrayList<>();
-            threadLocalVars = new HashMap<>();
+            threadLocalVars = new LinkedHashMap<>();
             procedures = new ArrayList<>();
         }
 

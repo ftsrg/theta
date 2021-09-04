@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class EliminateSelfLoops extends ProcedurePass {
+public class EliminateSelfLoops extends ProcedurePass {
 	static final EliminateSelfLoops instance = new EliminateSelfLoops();
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {

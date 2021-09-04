@@ -18,8 +18,8 @@ package hu.bme.mit.theta.frontend;
 
 import hu.bme.mit.theta.common.Tuple2;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -28,8 +28,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 // TODO object clashes when hashcode is the same
 public class FrontendMetadata {
-	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new HashMap<>();
-	private static final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new HashMap<>();
+	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new LinkedHashMap<>();
+	private static final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new LinkedHashMap<>();
 
 
 	public static <T> Set<Object> lookupMetadata(String key, T value) {
@@ -46,10 +46,10 @@ public class FrontendMetadata {
 		//checkState(!lookupKeyValue.containsKey(owner) || !lookupKeyValue.get(owner).containsKey(key));
 		checkNotNull(value);
 		Tuple2<String, T> tup = Tuple2.of(key, value);
-		Set<Object> set = lookupOwner.getOrDefault(tup, new HashSet<>());
+		Set<Object> set = lookupOwner.getOrDefault(tup, new LinkedHashSet<>());
 		set.add(owner);
 		lookupOwner.put(tup, set);
-		Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), new HashMap<>());
+		Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), new LinkedHashMap<>());
 		keyvalues.put(key, value);
 		lookupKeyValue.put(Tuple2.of(owner, getHashCode(owner)), keyvalues);
 	}

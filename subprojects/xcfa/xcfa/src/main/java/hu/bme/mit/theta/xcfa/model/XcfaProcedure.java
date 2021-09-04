@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +82,7 @@ public final class XcfaProcedure {
         });
         params = ImmutableMap.copyOf(paramCollectList);
 
-        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new HashMap<>();
+        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new LinkedHashMap<>();
         procedure.localVars.forEach((varDecl, litExpr) -> {
             VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
             FrontendMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> FrontendMetadata.create(newVar.getRef(), s, o));
@@ -91,7 +91,7 @@ public final class XcfaProcedure {
         });
         localVars = ImmutableMap.copyOf(localVarsCollectList);
 
-        Map<XcfaLocation, XcfaLocation> newLocLut = new HashMap<>();
+        Map<XcfaLocation, XcfaLocation> newLocLut = new LinkedHashMap<>();
 
         List<XcfaLocation> locsCollectList = new ArrayList<>();
         procedure.locs.forEach(loc -> {
@@ -246,7 +246,7 @@ public final class XcfaProcedure {
 
         private Builder() {
             params = new LinkedHashMap<>();
-            localVars = new HashMap<>();
+            localVars = new LinkedHashMap<>();
             locs = new ArrayList<>();
             edges = new ArrayList<>();
             built = false;

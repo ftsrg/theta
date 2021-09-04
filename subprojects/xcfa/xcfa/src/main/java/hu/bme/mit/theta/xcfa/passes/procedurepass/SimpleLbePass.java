@@ -29,9 +29,4 @@ public class SimpleLbePass extends ProcedurePass{
 		}
 		return builder;
 	}
-
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
 }
