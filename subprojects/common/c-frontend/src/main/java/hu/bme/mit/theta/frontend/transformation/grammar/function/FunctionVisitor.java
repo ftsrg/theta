@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
@@ -233,6 +234,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
+		CStmtCounter.incrementBranches();
 		CExpr cexpr = new CExpr(ctx.constantExpression().accept(ExpressionVisitor.create(variables, functions)));
 		CCase cCase = new CCase(
 				cexpr,
@@ -268,6 +270,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
+		CStmtCounter.incrementBranches();
 		variables.push(new LinkedHashMap<>());
 		CIf cIf = new CIf(
 				ctx.expression().accept(this),
@@ -291,6 +294,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
+		CStmtCounter.incrementWhileLoops();
 		variables.push(new LinkedHashMap<>());
 		CWhile cWhile = new CWhile(
 				ctx.statement().accept(this),
@@ -313,6 +317,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+		CStmtCounter.incrementForLoops();
 		variables.push(new LinkedHashMap<>());
 		CStatement init = ctx.forCondition().forInit().accept(this);
 		CStatement test = ctx.forCondition().forTest().accept(this);
