@@ -20,8 +20,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
-import hu.bme.mit.theta.analysis.algorithm.ArgStatisticsWriter;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -34,13 +32,11 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
-import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.cfa.dsl.CfaWriter;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -80,7 +76,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
@@ -154,9 +149,6 @@ public class XcfaCli {
 	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
 	boolean parsing = false;
 
-	@Parameter(names = "--write-arg-statistics", description = "Write the number of nodes and incomplete nodes into a csv per iteration")
-	boolean writeArgStatistics = false;
-
 	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
 	boolean loadStore = false;
 
@@ -225,10 +217,6 @@ public class XcfaCli {
 		}
 
 		try {
-			if(writeArgStatistics) {
-				ArgStatisticsWriter.instance.setTaskfileName(model.getAbsolutePath());
-			}
-
 			if(outputResults) {
 				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
 				boolean bool = resultsDir.mkdir();

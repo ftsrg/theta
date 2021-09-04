@@ -18,12 +18,9 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -31,8 +28,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgStatisticsWriter;
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
@@ -124,7 +119,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 
-		ArgStatisticsWriter.instance.writeArgStatistics(startNodes, startIncompleteNodes, arg.getNodes().count(), arg.getIncompleteNodes().count());
+		logger.write(Level.RESULT, "ArgStat: "+startNodes+","+startIncompleteNodes+","+arg.getNodes().count()+","+arg.getIncompleteNodes().count()+System.lineSeparator());
 
 		waitlist.clear(); // Optimization
 

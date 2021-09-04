@@ -13,7 +13,9 @@ import java.util.stream.Collectors;
 public class SimpleLbePass extends ProcedurePass{
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Set<XcfaLocation> pathlocs = builder.getLocs().stream().filter(xcfaLocation -> xcfaLocation.getIncomingEdges().size() == 1 && xcfaLocation.getOutgoingEdges().size() == 1).collect(Collectors.toSet());
+		Set<XcfaLocation> pathlocs = builder.getLocs().stream().filter(xcfaLocation -> xcfaLocation.getIncomingEdges().size() == 1
+				&& xcfaLocation.getOutgoingEdges().size() == 1
+				&& !xcfaLocation.getOutgoingEdges().get(0).equals(xcfaLocation.getIncomingEdges().get(0))).collect(Collectors.toSet());
 		for (XcfaLocation pathloc : pathlocs) {
 			XcfaEdge inEdge = pathloc.getIncomingEdges().get(0);
 			XcfaEdge outEdge = pathloc.getOutgoingEdges().get(0);

@@ -13,20 +13,31 @@ import java.util.stream.Collectors;
 public class RemoveDeadEnds extends ProcedurePass{
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = builder.getErrorLoc();
 		Set<XcfaEdge> nonDeadEndEdges = new LinkedHashSet<>();
 		Set<XcfaEdge> reachableEdges = new LinkedHashSet<>();
+		XcfaLocation errorLoc = builder.getErrorLoc();
+
+		Set<XcfaEdge> nonDeadEndFromErrorEdges = new LinkedHashSet<>();
 		if(errorLoc != null) {
-			collectNonDeadEndEdges(errorLoc, nonDeadEndEdges);
+			collectNonDeadEndEdges(errorLoc, nonDeadEndFromErrorEdges);
 		}
+
+		Set<XcfaEdge> nonDeadEndFromFinalEdges = new LinkedHashSet<>();
 		XcfaLocation finalLoc = builder.getFinalLoc();
-		collectNonDeadEndEdges(finalLoc, nonDeadEndEdges);
+		collectNonDeadEndEdges(finalLoc, nonDeadEndFromFinalEdges);
+
+		nonDeadEndEdges.addAll(nonDeadEndFromErrorEdges);
+		nonDeadEndEdges.addAll(nonDeadEndFromFinalEdges);
+
 		filterReachableEdges(builder.getInitLoc(), reachableEdges);
-		Set<XcfaEdge> collect = builder.getEdges().stream().filter(xcfaEdge -> !nonDeadEndEdges.contains(xcfaEdge) || !reachableEdges.contains(xcfaEdge)).collect(Collectors.toSet());
+		Set<XcfaEdge> collect = builder.getEdges().stream().filter(xcfaEdge -> !nonDeadEndEdges.contains(xcfaEdge)
+				|| !reachableEdges.contains(xcfaEdge)).collect(Collectors.toSet());
 		for (XcfaEdge edge : collect) {
 			builder.removeEdge(edge);
 		}
-		List<XcfaLocation> toRemove = builder.getLocs().stream().filter(loc -> loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0 && !loc.isEndLoc() && !loc.isErrorLoc()).collect(Collectors.toList());
+		List<XcfaLocation> toRemove = builder.getLocs().stream().filter(loc -> loc.getIncomingEdges().size() == 0
+				&& loc.getOutgoingEdges().size() == 0 && !loc.isEndLoc()
+				&& !loc.isErrorLoc()).collect(Collectors.toList());
 		for (XcfaLocation location : toRemove) {
 			if(builder.getInitLoc() != location)
 				builder.removeLoc(location);
@@ -35,16 +46,16 @@ public class RemoveDeadEnds extends ProcedurePass{
 	}
 
 	private void filterReachableEdges(XcfaLocation loc, Set<XcfaEdge> reachableEdges) {
-		Set<XcfaLocation> waitlist = new LinkedHashSet<>();
-		waitlist.add(loc);
-		while (waitlist.size() > 0) {
-			loc = waitlist.iterator().next();
-			waitlist.remove(loc);
-			List<XcfaEdge> outgoingEdges = loc.getOutgoingEdges();
-			outgoingEdges.stream().filter(xcfaEdge -> !reachableEdges.contains(xcfaEdge)).map(XcfaEdge::getTarget).forEach(waitlist::add);
-			reachableEdges.addAll(outgoingEdges);
+		Set<XcfaEdge> outgoingEdges = new LinkedHashSet<>(loc.getOutgoingEdges());
+		while(!outgoingEdges.isEmpty()) {
+			Optional<XcfaEdge> any = outgoingEdges.stream().findAny();
+			XcfaEdge outgoingEdge = any.get();
+			outgoingEdges.remove(outgoingEdge);
+			if (!reachableEdges.contains(outgoingEdge)) {
+				reachableEdges.add(outgoingEdge);
+				outgoingEdges.addAll(outgoingEdge.getTarget().getOutgoingEdges());
+			}
 		}
-
 	}
 
 	private void collectNonDeadEndEdges(XcfaLocation loc, Set<XcfaEdge> nonDeadEndEdges) {
@@ -58,5 +69,10 @@ public class RemoveDeadEnds extends ProcedurePass{
 				incomingEdges.addAll(incomingEdge.getSource().getIncomingEdges());
 			}
 		}
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }
