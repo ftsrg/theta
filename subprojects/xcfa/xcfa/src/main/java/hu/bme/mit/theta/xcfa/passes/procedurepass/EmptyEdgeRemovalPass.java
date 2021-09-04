@@ -152,8 +152,4 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 		return loc.getOutgoingEdges().stream().noneMatch(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget());
 	}
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
 }

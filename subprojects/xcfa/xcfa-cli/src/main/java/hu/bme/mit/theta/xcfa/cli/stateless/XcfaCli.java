@@ -253,13 +253,13 @@ public class XcfaCli {
 					bw.write(xcfa.toDot());
 				}
 			}
-			if (printcfa) {
-				CFA cfa = xcfa.createCFA();
-				File cfafile = new File(model.getAbsolutePath() + ".cfa");
-				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
-					bw.write(cfa.toString());
-				}
-			}
+//			if (printcfa) {
+//				CFA cfa = xcfa.createCFA();
+//				File cfafile = new File(model.getAbsolutePath() + ".cfa");
+//				try (BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile))) {
+//					bw.write(cfa.toString());
+//				}
+//			}
 
 			XcfaLocation err = null;
 			outerloop:

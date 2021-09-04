@@ -37,7 +37,7 @@ public class CallsToHavocs extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean)FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
 			if(e.isPresent()) {
 				List<Stmt> collect = new ArrayList<>();
 				for (Stmt stmt : edge.getStmts()) {

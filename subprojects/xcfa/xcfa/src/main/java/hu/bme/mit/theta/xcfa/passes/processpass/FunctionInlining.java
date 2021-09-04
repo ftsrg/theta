@@ -100,6 +100,9 @@ public class FunctionInlining extends ProcessPass {
 			newBuilder.addProcedure(procedure);
 			if(procBuilder == newMainProc) newBuilder.setMainProcedure(procedure);
 		}
+
+		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure).map(o -> (XcfaProcedure)o).forEach(newBuilder::addProcedure);
+
 		return newBuilder;
 
 	}
@@ -282,6 +285,10 @@ public class FunctionInlining extends ProcessPass {
 	private boolean shouldInlineCall(XcfaProcess.Builder builder, XcfaCallStmt callStmt) {
 		Optional<XcfaProcedure> procedure = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callStmt.getProcedure())).findAny();
 		if(procedure.isPresent()) {
+			Optional<Object> shouldInlineProc = FrontendMetadata.getMetadataValue(procedure.get(), "shouldInline");
+			if(shouldInlineProc.isPresent() && shouldInlineProc.get() instanceof Boolean) {
+				return (Boolean) shouldInlineProc.get();
+			}
 			Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(procedure.get(), "sourceStatement");
 			if(sourceStatement.isPresent()) {
 				Optional<Object> shouldInline = FrontendMetadata.getMetadataValue(sourceStatement.get(), "shouldInline");

@@ -19,6 +19,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.RemoveUnusedGlobals;
@@ -51,6 +52,7 @@ public class XcfaPassManager {
 				new SimplifyAssumptions(),
 				new SimpleLbePass()));
 		processPasses.addAll(List.of(
+				new AnalyzeCallGraph(),
 				new FunctionInlining()));
 		xcfaPasses.addAll((List.of(
 				new RemoveUnusedGlobals())));

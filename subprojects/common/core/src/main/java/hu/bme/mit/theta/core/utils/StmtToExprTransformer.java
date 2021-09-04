@@ -15,18 +15,12 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import java.util.*;
-
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -34,7 +28,15 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -76,7 +78,7 @@ final class StmtToExprTransformer {
 
 	////////
 
-	private static class StmtToExprVisitor implements StmtVisitor<VarIndexing, StmtUnfoldResult> {
+	private static class StmtToExprVisitor implements StmtVisitor<VarIndexing, StmtUnfoldResult>, XcfaStmtVisitor<VarIndexing, StmtUnfoldResult> {
 		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
 		private StmtToExprVisitor() {
@@ -104,7 +106,7 @@ final class StmtToExprTransformer {
 
 		@Override
 		public StmtUnfoldResult visit(XcfaStmt xcfaStmt, VarIndexing param) {
-			throw new UnsupportedOperationException("Not yet implemented"); //TODO
+			return xcfaStmt.accept(this, param);
 		}
 
 		@Override
@@ -169,6 +171,46 @@ final class StmtToExprTransformer {
 		@Override
 		public StmtUnfoldResult visit(LoopStmt stmt, VarIndexing indexing) {
 			throw new UnsupportedOperationException(String.format("Loop statement %s was not unrolled",stmt));
+		}
+
+		@Override
+		public StmtUnfoldResult visit(XcfaCallStmt stmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(StoreStmt storeStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(LoadStmt loadStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(FenceStmt fenceStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(AtomicBeginStmt atomicBeginStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(AtomicEndStmt atomicEndStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(StartThreadStmt startThreadStmt, VarIndexing param) {
+			return null;
+		}
+
+		@Override
+		public StmtUnfoldResult visit(JoinThreadStmt joinThreadStmt, VarIndexing param) {
+			return null;
 		}
 	}
 }
