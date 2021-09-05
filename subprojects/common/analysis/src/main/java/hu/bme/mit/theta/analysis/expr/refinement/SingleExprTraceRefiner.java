@@ -34,6 +34,8 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
+import java.util.Optional;
+
 /**
  * A Refiner implementation that can refine a single trace (of ExprStates and
  * ExprActions) using an ExprTraceChecker and a PrecRefiner.
@@ -72,7 +74,15 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-		final ArgTrace<S, A> cexToConcretize = arg.getCexs().filter(cex -> cexStorage.checkIfCounterexampleNew(cex)).findFirst().get();
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> cexStorage.checkIfCounterexampleNew(cex)).findFirst();
+		final ArgTrace<S, A> cexToConcretize;
+
+		if(optionalNewCex.isPresent()) {
+			cexToConcretize = optionalNewCex.get();
+		} else {
+			cexToConcretize = arg.getCexs().findFirst().get();
+		}
+
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
 		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);

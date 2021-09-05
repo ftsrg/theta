@@ -354,7 +354,7 @@ public class XcfaCli {
 				final SafetyResult<?, ?> status;
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(false));
 					status = check(configuration);
 					if(statisticsfile!=null) {
 						writeStatistics(cfa);
