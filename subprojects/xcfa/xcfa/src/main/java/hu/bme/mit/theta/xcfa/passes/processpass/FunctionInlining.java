@@ -20,6 +20,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.Utils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -101,7 +102,7 @@ public class FunctionInlining extends ProcessPass {
 			if(procBuilder == newMainProc) newBuilder.setMainProcedure(procedure);
 		}
 
-		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure).map(o -> (XcfaProcedure)o).forEach(newBuilder::addProcedure);
+		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure).map(o -> (XcfaProcedure)o).forEach(procedure -> newBuilder.addProcedure(Utils.createBuilder(procedure).build()));
 
 		return newBuilder;
 

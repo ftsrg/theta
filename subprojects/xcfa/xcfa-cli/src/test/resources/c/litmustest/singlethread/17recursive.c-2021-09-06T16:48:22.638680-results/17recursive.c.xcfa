@@ -1,0 +1,29 @@
+digraph G{
+subgraph cluster0{
+label="main(OUT (var main_ret Int),)"
+"main vars: {(var call_fibonacci_ret2 Int),}";
+"__loc_52_copy0"[xlabel=start];
+"__loc_63_copy5";
+"main_error"[xlabel=err];
+"main_final"[xlabel=final];
+"__loc_63_copy5" -> "main_error" [label="(assume (/= (+ call_fibonacci_ret2) (+ 144))), "];
+"__loc_52_copy0" -> "__loc_63_copy5" [label="(call fibonacci (call_fibonacci_ret2) (12)), "];
+"__loc_63_copy5" -> "main_final" [label="(assume (not (/= (+ call_fibonacci_ret2) (+ 144)))), "];
+}
+subgraph cluster1{
+label="fibonacci(OUT (var fibonacci_ret Int),IN (var i Int),)"
+"fibonacci vars: {(var i Int),(var call_fibonacci_ret0 Int),(var call_fibonacci_ret1 Int),}";
+"__loc_3_copy9"[xlabel=start];
+"__loc_4_copy10"[xlabel=final];
+"__loc_12_copy13";
+"__loc_27_copy17";
+"fibonacci_error"[xlabel=err];
+"fibonacci_final"[xlabel=final];
+"__loc_3_copy9" -> "__loc_12_copy13" [label=""];
+"__loc_4_copy10" -> "fibonacci_final" [label=""];
+"__loc_12_copy13" -> "__loc_27_copy17" [label="(assume (not (= (+ i) (+ 0)))), "];
+"__loc_12_copy13" -> "__loc_4_copy10" [label="(assume (= (+ i) (+ 0))), (assign fibonacci_ret 0), "];
+"__loc_27_copy17" -> "__loc_4_copy10" [label="(assume (= (+ i) (+ 1))), (assign fibonacci_ret 1), "];
+"__loc_27_copy17" -> "__loc_4_copy10" [label="(assume (not (= (+ i) (+ 1)))), (call fibonacci (call_fibonacci_ret0) ((+ (+ (+ i) (+ (- 1)))))), (call fibonacci (call_fibonacci_ret1) ((+ (+ (+ i) (+ (- 2)))))), (assign fibonacci_ret (+ call_fibonacci_ret0 call_fibonacci_ret1)), "];
+}
+}
