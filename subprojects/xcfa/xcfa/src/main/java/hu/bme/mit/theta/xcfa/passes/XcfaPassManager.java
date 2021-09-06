@@ -7,7 +7,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
@@ -36,7 +35,6 @@ public class XcfaPassManager {
 
 	static {
 		procedurePasses.addAll(List.of(
-				new EliminateSelfLoops(),
 				new ReferenceToMemory(),
 				new PthreadCallsToThreadStmts(),
 				new FpFunctionsToExprs(),
@@ -53,7 +51,8 @@ public class XcfaPassManager {
 				new AddHavocRange(),
 				new SimpleLbePass(),
 				new HavocPromotion(),
-				new UnusedVarRemovalPass()));
+				new UnusedVarRemovalPass()
+		));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
 				new FunctionInlining()));

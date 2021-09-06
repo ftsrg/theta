@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class SimpleLbePass extends ProcedurePass{
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		builder = EliminateSelfLoops.instance.run(builder);
 		Set<XcfaLocation> pathlocs = builder.getLocs().stream().filter(xcfaLocation -> xcfaLocation.getIncomingEdges().size() == 1 && xcfaLocation.getOutgoingEdges().size() == 1).collect(Collectors.toSet());
 		for (XcfaLocation pathloc : pathlocs) {
 			XcfaEdge inEdge = pathloc.getIncomingEdges().get(0);
@@ -28,5 +29,10 @@ public class SimpleLbePass extends ProcedurePass{
 			builder.addEdge(new XcfaEdge(inEdge.getSource(), outEdge.getTarget(), stmts));
 		}
 		return builder;
+	}
+
+	@Override
+	public boolean isPostInlining() {
+		return true;
 	}
 }
