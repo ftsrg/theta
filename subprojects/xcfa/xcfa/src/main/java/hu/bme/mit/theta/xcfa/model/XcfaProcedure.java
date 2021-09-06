@@ -28,7 +28,6 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -250,6 +249,48 @@ public final class XcfaProcedure {
             locs = new ArrayList<>();
             edges = new ArrayList<>();
             built = false;
+        }
+
+        public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
+            StringBuilder ret = new StringBuilder("label=\"");
+            ret.append(name).append("(");
+            params.forEach((varDecl, direction) -> {
+                ret.append(direction).append(" ");
+                ret.append(varDecl);
+                ret.append(",");
+            });
+            ret.append(")\"\n");
+            ret.append("\"").append(name).append(" vars: {");
+            localVars.forEach((varDecl, litExpr) -> {
+                ret.append(varDecl);
+                if (litExpr.isPresent()) {
+                    ret.append(" = ").append(litExpr);
+                }
+                ret.append(",");
+            });
+            ret.append("}\";\n");
+            for (XcfaLocation location : getLocs()) {
+                ret.append("\"").append(location.getName()).append("\"");
+                if(cexLocations.contains(location.getName())) ret.append(("[color=red]"));
+                else if (location.isErrorLoc()) ret.append("[xlabel=err]");
+                else if (location.isEndLoc()) ret.append("[xlabel=final]");
+                else if (getInitLoc() == location) ret.append("[xlabel=start]");
+                ret.append(";\n");
+            }
+            for (XcfaEdge edge : getEdges()) {
+                ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
+                ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
+                for (Stmt stmt : edge.getStmts()) {
+                    ret.append(stmt.toString());
+                    ret.append(", ");
+                }
+                ret.append("\"");
+                if(cexEdges.contains(edge)) {
+                    ret.append(",color=red");
+                }
+                ret.append("];\n");
+            }
+            return ret.toString();
         }
 
         private void checkNotBuilt() {
