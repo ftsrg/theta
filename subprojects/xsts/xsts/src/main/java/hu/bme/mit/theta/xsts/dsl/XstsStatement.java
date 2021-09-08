@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xsts.dsl;
 
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -11,18 +12,16 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import hu.bme.mit.theta.xsts.type.XstsCustomType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
@@ -34,9 +33,9 @@ public class XstsStatement {
 	private final DynamicScope scope;
 	private final SymbolTable typeTable;
 	private final StmtContext context;
-	private final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType;
+	private final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
 
-	public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context, final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType) {
+	public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context, final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
 		this.scope = checkNotNull(scope);
 		this.typeTable = checkNotNull(typeTable);
 		this.context = checkNotNull(context);
@@ -57,10 +56,10 @@ public class XstsStatement {
 
 		private DynamicScope currentScope;
 		private final SymbolTable typeTable;
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType;
+		final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
 		private final Env env;
 
-		public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env, final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType) {
+		public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env, final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
 			this.currentScope = checkNotNull(scope);
 			this.typeTable = checkNotNull(typeTable);
 			this.env = checkNotNull(env);
@@ -83,14 +82,15 @@ public class XstsStatement {
 			final String lhsId = ctx.lhs.getText();
 			final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
 			final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
-			if(varToType.containsKey(var)){
-				final XstsTypeDeclSymbol type = varToType.get(var);
-				final Expr<BoolType> expr = Or(type.getLiterals().stream()
-						.map(lit -> Eq(var.getRef(),Int(lit.getIntValue())))
-						.collect(Collectors.toList()));
+
+			final hu.bme.mit.theta.xsts.type.XstsType type = varToType.get(var);
+			if(type instanceof XstsCustomType){
+				var customType = (XstsCustomType) type;
+				final Expr<BoolType> expr = type.createBoundExpr(var);
 				final AssumeStmt assume = Assume(expr);
 				return SequenceStmt.of(List.of(Havoc(var),assume));
 			}
+
 			return Havoc(var);
 		}
 
@@ -191,20 +191,21 @@ public class XstsStatement {
 		@Override
 		public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
 			final String name = ctx.name.getText();
-			final Type type = new XstsType(typeTable,ctx.ttype).instantiate(env);
+			final hu.bme.mit.theta.xsts.type.XstsType xstsType = new XstsType(typeTable,ctx.ttype).instantiate(env);
+			final Type type = xstsType.getType();
 			final var decl = Decls.Var(name,type);
 			final Symbol symbol = DeclSymbol.of(decl);
 
-
 			final Stmt result;
+			final Stmt havoc = Havoc(decl);
 			if(ctx.initValue==null){
-				result = SkipStmt.getInstance();
+				result = havoc;
 			} else {
 				var expr = new XstsExpression(currentScope,typeTable,ctx.initValue).instantiate(env);
 				if (expr.getType().equals(decl.getType())) {
 					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
 					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
-					result = Assign(tVar, tExpr);
+					result = SequenceStmt(ImmutableList.of(havoc, Assign(tVar,tExpr)));
 				} else {
 					throw new IllegalArgumentException("Type of " + decl + " is incompatilbe with " + expr);
 				}

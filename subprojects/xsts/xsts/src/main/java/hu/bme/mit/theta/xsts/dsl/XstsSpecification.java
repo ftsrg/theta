@@ -9,6 +9,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
+import hu.bme.mit.theta.xsts.type.XstsCustomType;
+import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -47,27 +49,29 @@ public class XstsSpecification implements DynamicScope {
 	public XSTS instantiate(){
 		final Env env = new Env();
 
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = Containers.createMap();
+		final Map<VarDecl<?>, XstsType<?>> varToType = Containers.createMap();
 		final Set<VarDecl<?>> ctrlVars = Containers.createSet();
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 
 		for(var typeDeclContext: context.typeDeclarations){
-			final List<XstsTypeLiteralSymbol> literals = new ArrayList<>();
+			final List<XstsCustomLiteralSymbol> literalSymbols = new ArrayList<>();
 			for(var literalContext: typeDeclContext.literals){
 				var optSymbol = resolve(literalContext.name.getText());
 				if(optSymbol.isPresent()){
-					literals.add((XstsTypeLiteralSymbol) optSymbol.get());
+					literalSymbols.add((XstsCustomLiteralSymbol) optSymbol.get());
 				} else {
-					var symbol = new XstsTypeLiteralSymbol(literalContext.name.getText());
-					literals.add(symbol);
+					var symbol = new XstsCustomLiteralSymbol(literalContext.name.getText());
+					literalSymbols.add(symbol);
 					declare(symbol);
 					env.define(symbol,symbol.instantiate());
 				}
 			}
+			final List<XstsCustomType.XstsCustomLiteral> literals = literalSymbols.stream().map(XstsCustomLiteralSymbol::getLiteral).collect(Collectors.toList());
+			final XstsCustomType xstsCustomType = XstsCustomType.of(typeDeclContext.name.getText(),literals);
 
-			final XstsTypeDeclSymbol typeDeclSymbol = XstsTypeDeclSymbol.of(typeDeclContext.name.getText(),literals);
+			final XstsCustomTypeSymbol typeDeclSymbol = XstsCustomTypeSymbol.of(xstsCustomType);
 			typeTable.add(typeDeclSymbol);
-			env.define(typeDeclSymbol,typeDeclSymbol.instantiate());
+			env.define(typeDeclSymbol,typeDeclSymbol.getXstsType());
 		}
 
 		for(var varDeclContext: context.variableDeclarations){
@@ -78,20 +82,16 @@ public class XstsSpecification implements DynamicScope {
 			final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable,varDeclContext);
 			declare(symbol);
 
-			final VarDecl<?> var = symbol.instantiate(env);
+			final VarDecl var = symbol.instantiate(env);
 			final Optional<? extends Symbol> typeDeclSymbol = typeTable.get(varDeclContext.ttype.getText());
 			if (typeDeclSymbol.isPresent()) {
-				varToType.put(var, (XstsTypeDeclSymbol) typeDeclSymbol.get());
+				varToType.put(var, ((XstsCustomTypeSymbol) typeDeclSymbol.get()).getXstsType());
 			}
 			if(varDeclContext.CTRL()!=null) ctrlVars.add(var);
 			if(varDeclContext.initValue!=null){
 				initExprs.add(Eq(var.getRef(),new XstsExpression(this,typeTable,varDeclContext.initValue).instantiate(env)));
-			} else if(varToType.containsKey(var)) {
-				final var type = varToType.get(var);
-				final Expr<BoolType> expr = Or(type.getLiterals().stream()
-						.map(lit -> Eq(var.getRef(),Int(lit.getIntValue())))
-						.collect(Collectors.toList()));
-				initExprs.add(expr);
+			} else {
+				initExprs.add(varToType.get(var).createBoundExpr(var));
 			}
 			env.define(symbol,var);
 		}

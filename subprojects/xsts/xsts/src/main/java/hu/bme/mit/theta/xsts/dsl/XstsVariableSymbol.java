@@ -26,6 +26,6 @@ public class XstsVariableSymbol implements Symbol {
 	}
 
 	public VarDecl<?> instantiate(Env env) {
-		return Var(name, type.instantiate(env));
+		return Var(name, type.instantiate(env).getType());
 	}
 }
