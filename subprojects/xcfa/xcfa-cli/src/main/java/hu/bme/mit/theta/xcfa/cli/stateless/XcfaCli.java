@@ -313,6 +313,7 @@ public class XcfaCli {
 							filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + "\t"); // skip edges
 					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\t"); // assumes
 					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\t"); // assign
+
 					List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
 					int avgGrade = 0;
 					for(Integer r : rs) {
@@ -320,6 +321,21 @@ public class XcfaCli {
 					}
 					avgGrade /= cfa.getLocs().size()-1; // final loc does not count and there must be one final loc
 					bw.write(avgGrade + "\t"); // average grades of outgoing edges
+
+					long highInGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getInEdges().size()>1).count();
+					long highOutGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getOutEdges().size()>1).count();
+					bw.write(highOutGradeLocs + "\t"); // num of locations with more than one out-edges
+					bw.write(highInGradeLocs + "\t"); // num of locations with more than one in-edges
+
+					int maxOutGrade = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).max(Integer::compareTo).get();
+					int minOutGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getFinalLoc().get()) && !loc.equals(cfa.getErrorLoc().get())).map(loc -> loc.getOutEdges().size()).min(Integer::compareTo).get();
+					bw.write(maxOutGrade + "\t"); // max out grade on a single location
+					bw.write(minOutGrade + "\t"); // max out grade on a single location (except error/final)
+
+					int maxInGrade = cfa.getLocs().stream().map(loc -> loc.getInEdges().size()).max(Integer::compareTo).get();
+					int minInGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getInitLoc())).map(loc -> loc.getInEdges().size()).min(Integer::compareTo).get();
+					bw.write(maxInGrade + "\t"); // max in grade on a single location
+					bw.write(minInGrade + "\t"); // min in grade on a single location  (except init)
 
 					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\t"); // cyclomatic complexity
 					bw.write(CStmtCounter.getForLoops() + "\t"); // for loops
@@ -402,6 +418,21 @@ public class XcfaCli {
 			}
 			avgGrade /= cfa.getLocs().size();
 			bw.write("CFA-data averageOutEdgeGrade" + avgGrade + "\t"); // average grades of outgoing edges
+			long highOutGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getOutEdges().size()>1).count();
+			long highInGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getInEdges().size()>1).count();
+
+			bw.write("CFA-data locsWithHigherOutGrade" + highOutGradeLocs + "\t"); // num of locations with more than one out-edges
+			bw.write("CFA-data locsWithHigherInGrade" + highInGradeLocs + "\t"); // num of locations with more than one in-edges
+
+			int maxOutGrade = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).max(Integer::compareTo).get();
+			int minOutGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getFinalLoc().get()) && !loc.equals(cfa.getErrorLoc().get())).map(loc -> loc.getOutEdges().size()).min(Integer::compareTo).get();
+			bw.write("CFA-data maxOutGrade" + maxOutGrade + "\t"); // max out grade on a single location
+			bw.write("CFA-data minOutGrade" + minOutGrade + "\t"); // max out grade on a single location (except error/final)
+
+			int maxInGrade = cfa.getLocs().stream().map(loc -> loc.getInEdges().size()).max(Integer::compareTo).get();
+			int minInGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getInitLoc())).map(loc -> loc.getInEdges().size()).min(Integer::compareTo).get();
+			bw.write("CFA-data maxInGrade" + maxInGrade + "\t"); // max in grade on a single location
+			bw.write("CFA-data minInGrade" + minInGrade + "\t"); // min in grade on a single location  (except init)
 
 			bw.write("C-data forLoops"+CStmtCounter.getForLoops() + "\t"); // for loops
 			bw.write("C-data whileLoops"+CStmtCounter.getWhileLoops() + "\t"); // while loops
