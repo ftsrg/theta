@@ -85,7 +85,6 @@ public class XstsStatement {
 
 			final hu.bme.mit.theta.xsts.type.XstsType type = varToType.get(var);
 			if(type instanceof XstsCustomType){
-				var customType = (XstsCustomType) type;
 				final Expr<BoolType> expr = type.createBoundExpr(var);
 				final AssumeStmt assume = Assume(expr);
 				return SequenceStmt.of(List.of(Havoc(var),assume));

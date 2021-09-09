@@ -6,7 +6,6 @@ import hu.bme.mit.theta.xsts.type.XstsCustomType;
 
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class XstsCustomLiteralSymbol implements Symbol {

@@ -6,8 +6,6 @@ import hu.bme.mit.theta.xsts.type.XstsCustomType;
 
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public final class XstsCustomTypeSymbol implements Symbol {
 
 	private XstsCustomType xstsType;
