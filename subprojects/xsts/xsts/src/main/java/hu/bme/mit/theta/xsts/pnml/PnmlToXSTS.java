@@ -13,8 +13,8 @@ import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
+import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.io.InputStream;
 import java.util.*;
@@ -84,7 +84,7 @@ public class PnmlToXSTS {
 		final NonDetStmt init = NonDetStmt.of(ImmutableList.of());
 		final NonDetStmt env = NonDetStmt.of(ImmutableList.of());
 
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = ImmutableMap.of();
+		final Map<VarDecl<?>, XstsType<?>> varToType = ImmutableMap.of();
 		final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
 		final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
