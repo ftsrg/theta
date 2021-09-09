@@ -42,8 +42,8 @@ public final class XstsArrayType<IndexType extends Type, ElemType extends Type> 
         Preconditions.checkArgument(literal.getType().equals(type));
         final ArrayLitExpr<IndexType,ElemType> arrayLitExpr = (ArrayLitExpr<IndexType,ElemType>) literal;
         return Utils.lispStringBuilder("array")
-                .addAll(arrayLitExpr.getElements().stream().map(elem -> String.format("(%s %s)", elem.get1(), elem.get2())))
-                .add((String.format("(default %s)", arrayLitExpr.getElseElem())))
+                .addAll(arrayLitExpr.getElements().stream().map(elem -> String.format("(%s %s)", indexType.serializeLiteral(elem.get1()), elemType.serializeLiteral(elem.get2()))))
+                .add((String.format("(default %s)", elemType.serializeLiteral(arrayLitExpr.getElseElem()))))
                 .toString();
     }
 }

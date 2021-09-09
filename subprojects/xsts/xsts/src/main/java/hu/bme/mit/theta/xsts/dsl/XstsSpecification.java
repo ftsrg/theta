@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
 import hu.bme.mit.theta.xsts.type.XstsCustomType;
@@ -79,14 +80,10 @@ public class XstsSpecification implements DynamicScope {
 				throw new ParseException(varDeclContext, "Variable name '" + varDeclContext.name.getText() + "' is reserved!");
 			}
 
-			final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable,varDeclContext);
+			final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varToType, varDeclContext);
 			declare(symbol);
 
 			final VarDecl var = symbol.instantiate(env);
-			final Optional<? extends Symbol> typeDeclSymbol = typeTable.get(varDeclContext.ttype.getText());
-			if (typeDeclSymbol.isPresent()) {
-				varToType.put(var, ((XstsCustomTypeSymbol) typeDeclSymbol.get()).getXstsType());
-			}
 			if(varDeclContext.CTRL()!=null) ctrlVars.add(var);
 			if(varDeclContext.initValue!=null){
 				initExprs.add(Eq(var.getRef(),new XstsExpression(this,typeTable,varDeclContext.initValue).instantiate(env)));
@@ -96,7 +93,7 @@ public class XstsSpecification implements DynamicScope {
 			env.define(symbol,var);
 		}
 
-		final Expr<BoolType> initFormula = And(initExprs);
+		final Expr<BoolType> initFormula = ExprUtils.simplify(And(initExprs));
 
 		final NonDetStmt tranSet = new XstsTransitionSet(this,typeTable,context.tran.transitionSet(), varToType).instantiate(env);
 		final NonDetStmt initSet = new XstsTransitionSet(this,typeTable,context.init.transitionSet(), varToType).instantiate(env);

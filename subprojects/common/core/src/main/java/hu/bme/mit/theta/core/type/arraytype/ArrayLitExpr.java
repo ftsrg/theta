@@ -54,7 +54,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
 	public List<Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>> getElements() { return ImmutableList.copyOf(elems); }
 
-	public Expr<ElemType> getElseElem() { return elseElem; }
+	public LitExpr<ElemType> getElseElem() { return elseElem; }
 
 	@Override
 	public ArrayType<IndexType, ElemType> getType() {
