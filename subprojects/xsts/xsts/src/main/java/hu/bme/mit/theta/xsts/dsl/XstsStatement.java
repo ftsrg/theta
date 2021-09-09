@@ -199,7 +199,13 @@ public class XstsStatement {
 			final Stmt result;
 			final Stmt havoc = Havoc(decl);
 			if(ctx.initValue==null){
-				result = havoc;
+				if(xstsType instanceof XstsCustomType){
+					final Expr<BoolType> expr = xstsType.createBoundExpr(decl);
+					final AssumeStmt assume = Assume(expr);
+					result = SequenceStmt.of(List.of(havoc,assume));
+				} else {
+					result = havoc;
+				}
 			} else {
 				var expr = new XstsExpression(currentScope,typeTable,ctx.initValue).instantiate(env);
 				if (expr.getType().equals(decl.getType())) {
