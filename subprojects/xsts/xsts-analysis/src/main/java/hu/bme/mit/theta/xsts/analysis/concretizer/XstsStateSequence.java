@@ -75,7 +75,7 @@ public final class XstsStateSequence {
 		final LispStringBuilder sb = Utils.lispStringBuilder(ExplState.class.getSimpleName()).body();
 		for (VarDecl decl : xsts.getVars()) {
 			Optional<LitExpr> val = state.eval(decl);
-			if (val.isPresent()) {
+			if (val.isPresent() && xsts.getVarToType().containsKey(decl)) {
 				sb.add(String.format("(%s %s)", decl.getName(), xsts.getVarToType().get(decl).serializeLiteral(val.get())));
 			}
 		}

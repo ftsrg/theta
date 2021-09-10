@@ -78,6 +78,7 @@ public class XstsStatement {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public Stmt visitHavocStmt(final HavocStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
 			final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
@@ -188,6 +189,7 @@ public class XstsStatement {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
 			final String name = ctx.name.getText();
 			final hu.bme.mit.theta.xsts.type.XstsType xstsType = new XstsType(typeTable,ctx.ttype).instantiate(env);
@@ -196,8 +198,8 @@ public class XstsStatement {
 			final Symbol symbol = DeclSymbol.of(decl);
 
 			final Stmt result;
-			final Stmt havoc = Havoc(decl);
 			if(ctx.initValue==null){
+				final Stmt havoc = Havoc(decl);
 				if(xstsType instanceof XstsCustomType){
 					final Expr<BoolType> expr = xstsType.createBoundExpr(decl);
 					final AssumeStmt assume = Assume(expr);
@@ -210,7 +212,7 @@ public class XstsStatement {
 				if (expr.getType().equals(decl.getType())) {
 					@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
 					@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
-					result = SequenceStmt(ImmutableList.of(havoc, Assign(tVar,tExpr)));
+					result = Assign(tVar,tExpr);
 				} else {
 					throw new IllegalArgumentException("Type of " + decl + " is incompatilbe with " + expr);
 				}
