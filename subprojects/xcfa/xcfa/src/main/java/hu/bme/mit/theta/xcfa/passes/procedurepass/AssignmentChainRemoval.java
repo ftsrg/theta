@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
 import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
@@ -75,7 +74,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 		Set<VarDecl<?>> usableVars = new LinkedHashSet<>(builder.getLocalVars().keySet());
 
 		for (XcfaEdge edge : builder.getEdges()) {
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>> vars = stmt.accept(new XcfaStmtVisitor<Void, Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>>>() {
 					@Override
 					public Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>> visit(XcfaCallStmt stmt, Void param) {
@@ -201,7 +200,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 					for (Tuple2<XcfaEdge, Stmt> lhsEdge : filteredRhsUsages.get(removableVar)) {
 						XcfaEdge lhsToRemove = lhsEdge.get1();
 						List<Stmt> newStmts = new ArrayList<>();
-						for (Stmt stmt : lhsToRemove.getStmts()) {
+						for (Stmt stmt : lhsToRemove.getLabels()) {
 							if(stmt != lhsEdge.get2()) newStmts.add(stmt);
 							else {
 								checkState(newExpr == null && !isHavoc, "New expression should not be overwritten!");
@@ -225,7 +224,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 					for (Tuple2<XcfaEdge, Stmt> rhsEdge : filteredLhsUsages.getOrDefault(removableVar, Set.of())) {
 						XcfaEdge toRemove = rhsEdge.get1();
 						List<Stmt> newStmts = new ArrayList<>();
-						for (Stmt stmt : toRemove.getStmts()) {
+						for (Stmt stmt : toRemove.getLabels()) {
 							if(stmt != rhsEdge.get2()) newStmts.add(stmt);
 							else {
 								if(isHavoc && !(stmt instanceof AssignStmt && (((AssignStmt<?>) stmt).getExpr() instanceof RefExpr))) {
@@ -280,11 +279,11 @@ public class AssignmentChainRemoval extends ProcedurePass {
 		goals.remove(current);
 		if(goals.size() == 0) return true;
 
-		List<Stmt> stmts = current.get1().getStmts();
+		List<Stmt> stmts = current.get1().getLabels();
 		int index = stmts.indexOf(current.get2());
 		if(index == stmts.size() - 1) {
 			for (XcfaEdge outgoingEdge : current.get1().getTarget().getOutgoingEdges()) {
-				Stmt stmt = outgoingEdge.getStmts().size() == 0 ? Skip() : outgoingEdge.getStmts().get(0);
+				Stmt stmt = outgoingEdge.getLabels().size() == 0 ? Skip() : outgoingEdge.getLabels().get(0);
 				if(!onlyForwardReachable(start, Tuple2.of(outgoingEdge, stmt), new LinkedHashSet<>(goals), false, new LinkedHashSet<>(visited))) return false;
 			}
 			return true;

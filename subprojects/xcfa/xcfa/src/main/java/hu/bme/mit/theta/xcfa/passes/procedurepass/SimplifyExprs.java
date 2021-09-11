@@ -27,7 +27,7 @@ public class SimplifyExprs extends ProcedurePass{
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<Stmt> newStmts = new ArrayList<>();
 			boolean found = false;
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				if (stmt instanceof AssignStmt && !(((AssignStmt<?>) stmt).getVarDecl().getType() instanceof ArrayType)) {
 					VarDecl<?> varDecl = ((AssignStmt<?>) stmt).getVarDecl();
 					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) stmt).getExpr(), ImmutableValuation.empty());

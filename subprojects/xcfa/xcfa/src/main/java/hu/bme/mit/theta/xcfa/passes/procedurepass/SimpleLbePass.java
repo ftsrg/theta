@@ -23,8 +23,8 @@ public class SimpleLbePass extends ProcedurePass{
 			builder.removeEdge(outEdge);
 			builder.removeLoc(pathloc);
 
-			List<Stmt> stmts = new ArrayList<>(inEdge.getStmts());
-			stmts.addAll(outEdge.getStmts());
+			List<Stmt> stmts = new ArrayList<>(inEdge.getLabels());
+			stmts.addAll(outEdge.getLabels());
 
 			builder.addEdge(new XcfaEdge(inEdge.getSource(), outEdge.getTarget(), stmts));
 		}

@@ -86,7 +86,7 @@ public class ReferenceToMemory extends ProcedurePass{
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<Stmt> newStmts = new ArrayList<>();
 			boolean found = false;
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				found = handleStmt(unifiedMemoryMap, ptr, dereferencedLut, newStmts, found, stmt, placeholderVariable);
 			}
 			if(found) {

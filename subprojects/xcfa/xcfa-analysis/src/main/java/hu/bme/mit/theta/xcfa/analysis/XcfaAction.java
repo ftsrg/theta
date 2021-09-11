@@ -37,7 +37,7 @@ public final class XcfaAction extends StmtAction {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.edge = checkNotNull(edge);
-		this.stmts = Collections.unmodifiableList(edge.getStmts());
+		this.stmts = Collections.unmodifiableList(edge.getLabels());
 	}
 
 	public static XcfaAction create(final XcfaEdge edge) {

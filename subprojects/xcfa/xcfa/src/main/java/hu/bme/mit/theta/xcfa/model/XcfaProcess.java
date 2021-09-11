@@ -21,9 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
@@ -53,7 +50,7 @@ public final class XcfaProcess {
     private final ImmutableList<XcfaProcedure> procedures;
     private final XcfaProcedure mainProcedure;
     private XCFA parent;
-    private final Tuple2<XcfaEdge, StartThreadStmt> threadStartStmt;
+    private final Tuple2<XcfaEdge, XcfaLabel.StartThreadXcfaLabel> threadStartStmt;
 
 
     private XcfaProcess(final Builder builder) {
@@ -66,12 +63,12 @@ public final class XcfaProcess {
         threadStartStmt = null;
     }
 
-    public XcfaProcess(XcfaEdge edge, StartThreadStmt stmt, final XcfaProcess process) {
+    public XcfaProcess(XcfaEdge edge, XcfaLabel.StartThreadXcfaLabel label, final XcfaProcess process) {
         FrontendMetadata.lookupMetadata(process).forEach((s, o) -> {
             FrontendMetadata.create(this, s, o);
         });
 
-        threadStartStmt = Tuple2.of(edge, stmt);
+        threadStartStmt = Tuple2.of(edge, label);
 
         Map<VarDecl<?>, VarDecl<?>> newVarLut = new LinkedHashMap<>();
 
@@ -93,7 +90,7 @@ public final class XcfaProcess {
 
         Set<XcfaProcedure> usedProcedures = new LinkedHashSet<>();
         Set<XcfaProcedure> newUsedProcedures = new LinkedHashSet<>();
-        Optional<XcfaProcedure> proc = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(stmt.getThreadName())).findFirst();
+        Optional<XcfaProcedure> proc = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(label.getThreadName())).findFirst();
         checkState(proc.isPresent());
         usedProcedures.add(proc.get());
         boolean foundAny = true;
@@ -101,9 +98,9 @@ public final class XcfaProcess {
             foundAny = false;
             for (XcfaProcedure usedProcedure : usedProcedures) {
                 for (XcfaEdge edge1 : usedProcedure.getEdges()) {
-                    for (Stmt stmt1 : edge1.getStmts()) {
-                        if(stmt1 instanceof XcfaCallStmt) {
-                            Optional<XcfaProcedure> procedure = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaCallStmt) stmt1).getProcedure())).findFirst();
+                    for (XcfaLabel label1 : edge1.getLabels()) {
+                        if(label1 instanceof XcfaLabel.ProcedureCallXcfaLabel) {
+                            Optional<XcfaProcedure> procedure = process.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(((XcfaLabel.ProcedureCallXcfaLabel) label1).getProcedure())).findFirst();
                             if(procedure.isPresent() && !usedProcedures.contains(procedure.get())) {
                                 foundAny = true;
                                 newUsedProcedures.add(procedure.get());
@@ -119,7 +116,7 @@ public final class XcfaProcess {
         final XcfaProcedure[] toBeMain = new XcfaProcedure[1];
         procedures = ImmutableList.copyOf(process.procedures.stream().filter(usedProcedures::contains).map(xcfaProcedure -> {
             XcfaProcedure procedure = new XcfaProcedure(xcfaProcedure, newVarLut);
-            if(procedure.getName().equals(stmt.getThreadName())) {
+            if(procedure.getName().equals(label.getThreadName())) {
                 toBeMain[0] = procedure;
             }
             return procedure;
@@ -176,7 +173,7 @@ public final class XcfaProcess {
         this.parent = xcfa;
     }
 
-    public Tuple2<XcfaEdge, StartThreadStmt> getThreadStartStmt() {
+    public Tuple2<XcfaEdge, XcfaLabel.StartThreadXcfaLabel> getThreadStartStmt() {
         return threadStartStmt;
     }
 

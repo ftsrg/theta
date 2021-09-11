@@ -39,10 +39,10 @@ public class AddHavocRange extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof HavocStmt && !alreadyAssumed.contains(stmt)).findAny();
+				Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof HavocStmt && !alreadyAssumed.contains(stmt)).findAny();
 				if (e.isPresent()) {
 					List<Stmt> collect = new ArrayList<>();
-					for (Stmt stmt : edge.getStmts()) {
+					for (Stmt stmt : edge.getLabels()) {
 						if (stmt == e.get()) {
 							VarDecl<?> var = ((HavocStmt) e.get()).getVarDecl();
 							collect.add(stmt);

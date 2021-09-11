@@ -27,16 +27,6 @@ import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -54,8 +44,12 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.NonDetStmt;
 import static hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Load;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.StartThread;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
 
-public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarDecl<?>>, Stmt> {
+public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, VarDecl<?>>, XcfaLabel> {
 
     public static <T extends Type> Expr<T> replaceVars(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> varLut) {
         if (expr instanceof RefExpr<?>) {
@@ -80,117 +74,117 @@ public class XcfaStmtVarReplacer implements XcfaStmtVisitor<Map<VarDecl<?>, VarD
 
 
     @Override
-    public Stmt visit(SkipStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return stmt;
+    public XcfaLabel visit(SkipStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Stmt(stmt);
     }
 
     @Override
-    public Stmt visit(AssumeStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return Assume(cast(replaceVars(stmt.getCond(), param), BoolType.getInstance()));
+    public XcfaLabel visit(AssumeStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Stmt(Assume(cast(replaceVars(stmt.getCond(), param), BoolType.getInstance())));
     }
 
     @Override
-    public <DeclType extends Type> Stmt visit(AssignStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return Assign(cast(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()), stmt.getVarDecl().getType()), replaceVars(stmt.getExpr(), param));
+    public <DeclType extends Type> XcfaLabel visit(AssignStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Stmt(Assign(cast(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()), stmt.getVarDecl().getType()), replaceVars(stmt.getExpr(), param)));
     }
 
     @Override
-    public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()));
+    public <DeclType extends Type> XcfaLabel visit(HavocStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Stmt(Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl())));
     }
 
     @Override
-    public Stmt visit(XcfaStmt xcfaStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return xcfaStmt.accept(this, param);
-    }
-
-    @Override
-    public Stmt visit(SequenceStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(SequenceStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
         List<Stmt> stmts = stmt.getStmts();
         List<Stmt> newStmts = new ArrayList<>();
         for (Stmt stmt1 : stmts) {
-            newStmts.add(stmt1.accept(this, param));
+            newStmts.add(stmt1.accept(this, param).getStmt());
         }
-        return SequenceStmt(newStmts);
+        return Stmt(SequenceStmt(newStmts));
     }
 
     @Override
-    public Stmt visit(NonDetStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(NonDetStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
         List<Stmt> stmts = stmt.getStmts();
         List<Stmt> newStmts = new ArrayList<>();
         for (Stmt stmt1 : stmts) {
-            newStmts.add(stmt1.accept(this, param));
+            newStmts.add(stmt1.accept(this, param).getStmt());
         }
-        return NonDetStmt(newStmts);
+        return Stmt(NonDetStmt(newStmts));
     }
 
     @Override
-    public Stmt visit(OrtStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(OrtStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
         List<Stmt> stmts = stmt.getStmts();
         List<Stmt> newStmts = new ArrayList<>();
         for (Stmt stmt1 : stmts) {
-            newStmts.add(stmt1.accept(this, param));
+            newStmts.add(stmt1.accept(this, param).getStmt());
         }
-        return OrtStmt.of(newStmts);
+        return Stmt(OrtStmt.of(newStmts));
     }
 
     @Override
-    public Stmt visit(LoopStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(LoopStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public Stmt visit(XcfaCallStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        List<Expr<?>> exprs = stmt.getParams();
+    public XcfaLabel visit(XcfaLabel.ProcedureCallXcfaLabel label, Map<VarDecl<?>, VarDecl<?>> param) {
+        List<Expr<?>> exprs = label.getParams();
         List<Expr<?>> newExprs = new ArrayList<>();
         exprs.forEach((expr) ->
             newExprs.add(replaceVars(expr, param))
         );
-        return stmt.of(newExprs, stmt.getProcedure());
+        return XcfaLabel.ProcedureCallXcfaLabel.of(newExprs, label.getProcedure());
     }
 
     @Override
-    public Stmt visit(StoreStmt storeStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new StoreStmt(
-                param.getOrDefault(storeStmt.getLocal(), storeStmt.getLocal()),
-                param.getOrDefault(storeStmt.getGlobal(), storeStmt.getGlobal()),
-                storeStmt.isAtomic(),
-                storeStmt.getOrdering()
+    public <S extends Type> XcfaLabel visit(XcfaLabel.StoreXcfaLabel<S> label, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Store(
+                param.getOrDefault(label.getLocal(), label.getLocal()),
+                param.getOrDefault(label.getGlobal(), label.getGlobal()),
+                label.isAtomic(),
+                label.getOrdering()
         );
     }
 
     @Override
-    public Stmt visit(LoadStmt loadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new LoadStmt(
-                param.getOrDefault(loadStmt.getGlobal(), loadStmt.getGlobal()),
-                param.getOrDefault(loadStmt.getLocal(), loadStmt.getLocal()),
-                loadStmt.isAtomic(),
-                loadStmt.getOrdering()
+    public <S extends Type> XcfaLabel visit(XcfaLabel.LoadXcfaLabel<S> label, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Load(
+                param.getOrDefault(label.getLocal(), label.getLocal()),
+                param.getOrDefault(label.getGlobal(), label.getGlobal()),
+                label.isAtomic(),
+                label.getOrdering()
         );
     }
 
     @Override
-    public Stmt visit(FenceStmt fenceStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(XcfaLabel.FenceXcfaLabel fenceStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return fenceStmt;
     }
 
     @Override
-    public Stmt visit(AtomicBeginStmt atomicBeginStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(XcfaLabel.StmtXcfaLabel label, Map<VarDecl<?>, VarDecl<?>> param) {
+        return label.getStmt().accept(this, param);
+    }
+
+    @Override
+    public XcfaLabel visit(XcfaLabel.AtomicBeginXcfaLabel atomicBeginStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return atomicBeginStmt;
     }
 
     @Override
-    public Stmt visit(AtomicEndStmt atomicEndStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(XcfaLabel.AtomicEndXcfaLabel atomicEndStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return atomicEndStmt;
     }
 
     @Override
-    public Stmt visit(StartThreadStmt startThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return new StartThreadStmt(startThreadStmt.getKey(), startThreadStmt.getThreadName(), startThreadStmt.getParam() == null ? null : replaceVars(startThreadStmt.getParam(), param));
+    public XcfaLabel visit(XcfaLabel.StartThreadXcfaLabel startThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        return StartThread(startThreadStmt.getKey(), startThreadStmt.getThreadName(), startThreadStmt.getParam() == null ? null : replaceVars(startThreadStmt.getParam(), param));
     }
 
     @Override
-    public Stmt visit(JoinThreadStmt joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
+    public XcfaLabel visit(XcfaLabel.JoinThreadXcfaLabel joinThreadStmt, Map<VarDecl<?>, VarDecl<?>> param) {
         return joinThreadStmt;
     }
 }

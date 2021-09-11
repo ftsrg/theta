@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
@@ -28,7 +27,6 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +93,7 @@ public final class XCFA {
 			// Adding source
 			locations.add(locationLUT.get(e.getSource()));
 			// Adding intermediate locations (CFAs can only have one per edge)
-			for (int i = 1; i < e.getStmts().size(); ++i) {
+			for (int i = 1; i < e.getLabels().size(); ++i) {
 				CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
 				locations.add(loc);
 				FrontendMetadata.create(e, "xcfaInterLoc", loc);
@@ -103,21 +101,15 @@ public final class XCFA {
 			// Adding target
 			locations.add(locationLUT.get(e.getTarget()));
 			// Adding edges
-			for (int i = 0; i < e.getStmts().size(); ++i) {
-				checkState(!(e.getStmts().get(i) instanceof XcfaStmt), "XCFA statement " + e.getStmts().get(i) + " is not supported!");
-				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getStmts().get(i).accept(new XcfaStmtVarReplacer(), varLut));
+			for (int i = 0; i < e.getLabels().size(); ++i) {
+				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getLabels().get(i).accept(new XcfaLabelVarReplacer(), varLut).getStmt());
 				FrontendMetadata.create(e, "cfaEdge", edge);
 			}
-			if (e.getStmts().size() == 0) {
+			if (e.getLabels().size() == 0) {
 				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
 				FrontendMetadata.create(e, "cfaEdge", edge);
 			}
 		}
-		//Theoretically, this is no longer necessary. However, if a "no final location" exception is ever thrown, start debugging here!
-//		if(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc())==null) {
-//			CFA.Loc loc = builder.createLoc(getMainProcess().getMainProcedure().getFinalLoc().getName());
-//			locationLUT.put(getMainProcess().getMainProcedure().getFinalLoc(), loc);
-//		}
 
 		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));

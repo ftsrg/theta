@@ -16,7 +16,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaStmtVarReplacer;
+import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -47,7 +47,7 @@ public class Utils {
 			if(!path.contains(outgoingEdge)) {
 				path.push(outgoingEdge);
 				solver.push();
-				for (Stmt stmt : outgoingEdge.getStmts()) {
+				for (Stmt stmt : outgoingEdge.getLabels()) {
 					for (VarDecl<?> var : StmtUtils.getVars(stmt)) {
 						if(!varToLastConstMap.containsKey(var)) varToLastConstMap.put(var, Const(var.getName(), var.getType()));
 					}
@@ -55,12 +55,12 @@ public class Utils {
 						VarDecl<?> var = ((HavocStmt<?>) stmt).getVarDecl();
 						varToLastConstMap.put(var, Const(var.getName(), var.getType()));
 					} else if (stmt instanceof AssumeStmt) {
-						Expr<BoolType> expr = XcfaStmtVarReplacer.replaceVars(((AssumeStmt) stmt).getCond(), varToLastConstMap);
+						Expr<BoolType> expr = XcfaLabelVarReplacer.replaceVars(((AssumeStmt) stmt).getCond(), varToLastConstMap);
 						solver.add(expr);
 					} else if (stmt instanceof AssignStmt) {
 						VarDecl<?> var = ((AssignStmt<?>) stmt).getVarDecl();
 						ConstDecl<?> cnst = Const(var.getName(), var.getType());
-						Expr<BoolType> expr = Eq(cnst.getRef(), XcfaStmtVarReplacer.replaceVars(((AssignStmt<?>) stmt).getExpr(), varToLastConstMap));
+						Expr<BoolType> expr = Eq(cnst.getRef(), XcfaLabelVarReplacer.replaceVars(((AssignStmt<?>) stmt).getExpr(), varToLastConstMap));
 						solver.add(expr);
 						varToLastConstMap.put(var, cnst);
 					} else throw new UnsupportedOperationException("Not yet implemented!");
@@ -167,7 +167,7 @@ public class Utils {
 		ret.setInitLoc(locationLut.get(initLoc));
 		if(errorLoc != null) ret.setErrorLoc(locationLut.get(errorLoc));
 		for (XcfaEdge edge : edges) {
-			ret.addEdge(new XcfaEdge(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getStmts()));
+			ret.addEdge(new XcfaEdge(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels()));
 		}
 		return ret;
 	}

@@ -35,7 +35,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 		boolean notFound = false;
 		while(!notFound) {
 			notFound = true;
-			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() == 0).findFirst();
+			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
 				XcfaEdge xcfaEdge = new XcfaEdge(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
@@ -43,12 +43,12 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 				FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 				builder.removeEdge(edge.get());
 			}
-			edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getStmts().size() > 1).findFirst();
+			edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() > 1).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
 				XcfaLocation lastLoc = edge.get().getSource(), interLoc;
-				for (Stmt stmt : edge.get().getStmts()) {
-					interLoc = edge.get().getStmts().indexOf(stmt) == edge.get().getStmts().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
+				for (Stmt stmt : edge.get().getLabels()) {
+					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
 					builder.addLoc(interLoc);
 					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
 					XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, interLoc, List.of(stmt));

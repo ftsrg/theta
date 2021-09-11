@@ -1,11 +1,8 @@
 package hu.bme.mit.theta.xcfa.passes.xcfapass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -25,7 +22,7 @@ public class RemoveUnusedGlobals extends XcfaPass {
 		for (XcfaProcess process : builder.getProcesses()) {
 			for (XcfaProcedure procedure : process.getProcedures()) {
 				for (XcfaEdge edge : procedure.getEdges()) {
-					for (Stmt stmt : edge.getStmts()) {
+					for (Stmt stmt : edge.getLabels()) {
 						usedGlobals.addAll(StmtUtils.getVars(stmt));
 					}
 				}

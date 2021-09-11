@@ -37,7 +37,7 @@ public final class XcfaInitPrecs {
         for (XcfaProcess process : xcfa.getProcesses()) {
             for (XcfaProcedure procedure : process.getProcedures()) {
                 for (XcfaEdge edge : procedure.getEdges()) {
-                    for (Stmt stmt : edge.getStmts()) {
+                    for (Stmt stmt : edge.getLabels()) {
                         if(stmt instanceof AssumeStmt) {
                             AssumeStmt assumeStmt = (AssumeStmt)stmt;
                             assumes.add(ExprUtils.ponate(assumeStmt.getCond()));

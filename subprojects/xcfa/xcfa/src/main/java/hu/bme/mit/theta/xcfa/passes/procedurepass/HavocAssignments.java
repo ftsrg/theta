@@ -36,15 +36,15 @@ public class HavocAssignments extends ProcedurePass {
 		while(!notFound) {
 			notFound = true;
 			Optional<XcfaEdge> havocEdge = builder.getEdges().stream().filter(xcfaEdge ->
-					xcfaEdge.getStmts().size() == 1 && xcfaEdge.getStmts().get(0) instanceof HavocStmt &&
+					xcfaEdge.getLabels().size() == 1 && xcfaEdge.getLabels().get(0) instanceof HavocStmt &&
 					xcfaEdge.getTarget().getIncomingEdges().size() == 1 &&
-					xcfaEdge.getTarget().getOutgoingEdges().size() == 1 && xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().size() == 1 &&
-					xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().get(0) instanceof AssignStmt &&
-					((AssignStmt<?>) xcfaEdge.getTarget().getOutgoingEdges().get(0).getStmts().get(0)).getExpr() instanceof RefExpr).findAny();
+					xcfaEdge.getTarget().getOutgoingEdges().size() == 1 && xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().size() == 1 &&
+					xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0) instanceof AssignStmt &&
+					((AssignStmt<?>) xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0)).getExpr() instanceof RefExpr).findAny();
 			if(havocEdge.isPresent()) {
-				HavocStmt<?> h = (HavocStmt<?>) havocEdge.get().getStmts().get(0);
+				HavocStmt<?> h = (HavocStmt<?>) havocEdge.get().getLabels().get(0);
 				XcfaEdge assignEdge = havocEdge.get().getTarget().getOutgoingEdges().get(0);
-				AssignStmt<?> a = (AssignStmt<?>) assignEdge.getStmts().get(0);
+				AssignStmt<?> a = (AssignStmt<?>) assignEdge.getLabels().get(0);
 				if(h.getVarDecl() == ((RefExpr<?>)a.getExpr()).getDecl() && h.getVarDecl().getName().startsWith("call_")) {
 					notFound = false;
 					builder.removeEdge(havocEdge.get());

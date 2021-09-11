@@ -40,10 +40,10 @@ public class CallsToHavocs extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
+				Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
 				if (e.isPresent()) {
 					List<Stmt> collect = new ArrayList<>();
-					for (Stmt stmt : edge.getStmts()) {
+					for (Stmt stmt : edge.getLabels()) {
 						if (stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
 							Expr<?> expr = ((XcfaCallStmt) e.get()).getParams().get(0);
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);

@@ -19,7 +19,6 @@ package hu.bme.mit.theta.xcfa.model;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 
 import java.util.ArrayList;
@@ -29,26 +28,25 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaEdge {
-	private static final XcfaStmtVarReplacer varReplacer = new XcfaStmtVarReplacer();
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	private final List<Stmt> stmts;
+	private final List<XcfaLabel> labels;
 	private XcfaProcedure parent;
 
-	public XcfaEdge(final XcfaLocation source, final XcfaLocation target, final List<Stmt> stmts) {
+	public XcfaEdge(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
-		this.stmts = ImmutableList.copyOf(stmts);
+		this.labels = ImmutableList.copyOf(labels);
 		source.addOutgoingEdge(this);
 		target.addIncomingEdge(this);
 	}
 
 	public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
-		List<Stmt> newStmts = new ArrayList<>();
-		for (Stmt stmt : edge.stmts) {
-			Stmt stmt1 = stmt.accept(varReplacer, newVarLut);
-			newStmts.add(stmt1);
+		List<XcfaLabel> newStmts = new ArrayList<>();
+		for (XcfaLabel label : edge.getLabels()) {
+			XcfaLabel label1 = label.accept(new XcfaLabelVarReplacer(), newVarLut);
+			newStmts.add(label1);
 		}
 		XcfaEdge xcfaEdge = new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
 		FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
@@ -65,8 +63,8 @@ public final class XcfaEdge {
 		return target;
 	}
 
-	public List<Stmt> getStmts() {
-		return stmts;
+	public List<XcfaLabel> getLabels() {
+		return labels;
 	}
 
 	@Override
@@ -76,7 +74,7 @@ public final class XcfaEdge {
 		).add(
 				Utils.lispStringBuilder("Target").add(target)
 		).add(
-				Utils.lispStringBuilder("Stmts").addAll(stmts)
+				Utils.lispStringBuilder("Stmts").addAll(labels)
 		).toString();
 	}
 

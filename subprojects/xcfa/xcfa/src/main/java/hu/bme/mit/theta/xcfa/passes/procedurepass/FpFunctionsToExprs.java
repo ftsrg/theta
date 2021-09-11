@@ -149,7 +149,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<Stmt> newStmts = new ArrayList<>();
 			boolean found = false;
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				if(stmt instanceof XcfaCallStmt) {
 					if(handlers.containsKey(((XcfaCallStmt) stmt).getProcedure())) {
 						newStmts.add(handlers.get(((XcfaCallStmt) stmt).getProcedure()).apply(builder, (XcfaCallStmt) stmt));

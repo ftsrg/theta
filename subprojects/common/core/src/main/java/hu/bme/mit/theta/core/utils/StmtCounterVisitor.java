@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
 import hu.bme.mit.theta.core.type.Type;
 
 public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {

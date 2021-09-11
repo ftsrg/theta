@@ -158,8 +158,8 @@ public final class XcfaProcedure {
         for (XcfaEdge edge : getEdges()) {
             ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
             ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
-            for (Stmt stmt : edge.getStmts()) {
-                ret.append(stmt.toString());
+            for (XcfaLabel label : edge.getLabels()) {
+                ret.append(label.toString());
                 ret.append(", ");
             }
             ret.append("\"");
@@ -280,8 +280,8 @@ public final class XcfaProcedure {
             for (XcfaEdge edge : getEdges()) {
                 ret.append("\"").append(edge.getSource().getName()).append("\" -> ");
                 ret.append("\"").append(edge.getTarget().getName()).append("\" [label=\"");
-                for (Stmt stmt : edge.getStmts()) {
-                    ret.append(stmt.toString());
+                for (XcfaLabel label : edge.getLabels()) {
+                    ret.append(label.toString());
                     ret.append(", ");
                 }
                 ret.append("\"");

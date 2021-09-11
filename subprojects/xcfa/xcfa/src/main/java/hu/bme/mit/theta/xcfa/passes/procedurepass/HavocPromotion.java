@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaStmtVarReplacer;
+import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,7 +46,7 @@ public class HavocPromotion extends ProcedurePass {
 		reverseLut = new LinkedHashMap<>();
 		Map<VarDecl<?>, Set<Tuple2<XcfaEdge, Stmt>>> varUsage = new LinkedHashMap<>();
 		for (XcfaEdge edge : builder.getEdges()) {
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				Tuple2<XcfaEdge, Stmt> tup = Tuple2.of(edge, stmt);
 				Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
 				for (VarDecl<?> var : vars) {
@@ -60,14 +60,14 @@ public class HavocPromotion extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new LinkedHashSet<>(builder.getEdges())) {
-				for (Stmt stmt : edge.getStmts()) {
+				for (Stmt stmt : edge.getLabels()) {
 					if (stmt instanceof HavocStmt) {
 						VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
 						if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
 							Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2()).findAny();
 							Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2()).findAny();
 							if (assign.isPresent() && assume.isPresent()) {
-								if(replaceStmt(builder, edge, List.of(stmt, assume.get(), assign.get()), List.of(Havoc(assign.get().getVarDecl()), assume.get().accept(new XcfaStmtVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
+								if(replaceStmt(builder, edge, List.of(stmt, assume.get(), assign.get()), List.of(Havoc(assign.get().getVarDecl()), assume.get().accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
 									found = true;
 									break;
 								}
@@ -97,7 +97,7 @@ public class HavocPromotion extends ProcedurePass {
 	private boolean replaceStmt(XcfaProcedure.Builder builder, XcfaEdge edge, List<Stmt> oldStmts, List<Stmt> newStmts) {
 		List<Stmt> stmts = new ArrayList<>();
 		int i = 0;
-		for (Stmt stmt : edge.getStmts()) {
+		for (Stmt stmt : edge.getLabels()) {
 			if(oldStmts.size() > i && stmt == oldStmts.get(i)) {
 				if(newStmts.size() > i) stmts.add(newStmts.get(i));
 				++i;

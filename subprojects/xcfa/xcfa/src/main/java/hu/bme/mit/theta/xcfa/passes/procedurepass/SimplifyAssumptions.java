@@ -40,7 +40,7 @@ public class SimplifyAssumptions extends ProcedurePass {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			boolean found = false;
 			List<Stmt> newStmts = new ArrayList<>();
-			for (Stmt stmt : edge.getStmts()) {
+			for (Stmt stmt : edge.getLabels()) {
 				if(stmt instanceof AssumeStmt) {
 					Expr<BoolType> cond = ((AssumeStmt) stmt).getCond();
 					if(cond instanceof EqExpr || cond instanceof NeqExpr) {

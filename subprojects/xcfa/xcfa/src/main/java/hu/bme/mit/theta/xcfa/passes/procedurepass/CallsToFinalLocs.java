@@ -46,7 +46,7 @@ public class CallsToFinalLocs extends ProcedurePass {
 		builder.setErrorLoc(errorLoc);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
 			if(e.isPresent()) {
 				XcfaEdge xcfaEdge;
 				String procedure = ((XcfaCallStmt) e.get()).getProcedure();

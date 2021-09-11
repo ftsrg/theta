@@ -45,10 +45,10 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getStmts().stream().filter(stmt -> stmt instanceof XcfaCallStmt && ((XcfaCallStmt) stmt).getProcedure().startsWith("pthread_")).findAny();
+			Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt && ((XcfaCallStmt) stmt).getProcedure().startsWith("pthread_")).findAny();
 			if(e.isPresent()) {
 				List<Stmt> collect = new ArrayList<>();
-				for (Stmt stmt : edge.getStmts()) {
+				for (Stmt stmt : edge.getLabels()) {
 					if(stmt == e.get()) {
 						switch(((XcfaCallStmt) stmt).getProcedure()){
 							case threadStart:

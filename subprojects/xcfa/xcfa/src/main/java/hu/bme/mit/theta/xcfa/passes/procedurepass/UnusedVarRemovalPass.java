@@ -46,7 +46,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			if(usedVars == null) {
 				vars = new LinkedHashSet<>();
 				for (XcfaEdge edge : builder.getEdges()) {
-					for (Stmt stmt : edge.getStmts()) {
+					for (Stmt stmt : edge.getLabels()) {
 						Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
 						vars1.removeIf(varDecl ->
 							(
@@ -62,15 +62,15 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
 			for (int i = 0; i < edges.size(); i++) {
 				XcfaEdge edge = edges.get(i);
-				List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
-				for (Stmt stmt : edge.getStmts()) {
+				List<Stmt> newStmts = new ArrayList<>(edge.getLabels());
+				for (Stmt stmt : edge.getLabels()) {
 					if (stmt instanceof HavocStmt && !vars.contains(((HavocStmt<?>) stmt).getVarDecl())) {
 						newStmts.remove(stmt);
 					} else if (stmt instanceof AssignStmt && !vars.contains(((AssignStmt<?>) stmt).getVarDecl())) {
 						newStmts.remove(stmt);
 					}
 				}
-				if (newStmts.size() != edge.getStmts().size()) {
+				if (newStmts.size() != edge.getLabels().size()) {
 					builder.removeEdge(edge);
 					XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
 					builder.addEdge(xcfaEdge);

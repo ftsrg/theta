@@ -61,7 +61,7 @@ public class FunctionInlining extends ProcessPass {
 			foundOne = false;
 			for (XcfaProcedure.Builder procedure : new ArrayList<>(alreadyInlined)) {
 				for (XcfaEdge edge : procedure.getEdges()) {
-					for (Stmt stmt : edge.getStmts()) {
+					for (Stmt stmt : edge.getLabels()) {
 						if(stmt instanceof StartThreadStmt) {
 							String threadName = ((StartThreadStmt) stmt).getThreadName();
 							Optional<XcfaProcedure.Builder> func = alreadyInlined.stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
@@ -82,7 +82,7 @@ public class FunctionInlining extends ProcessPass {
 		Set<VarDecl<?>> usedVars = new LinkedHashSet<>();
 		for (XcfaProcedure.Builder procedure : alreadyInlined) {
 			for (XcfaEdge edge : procedure.getEdges()) {
-				for (Stmt stmt : edge.getStmts()) {
+				for (Stmt stmt : edge.getLabels()) {
 					if (stmt instanceof AssignStmt) {
 						usedVars.addAll(ExprUtils.getVars(((AssignStmt<?>) stmt).getExpr()));
 					} else if (stmt instanceof StoreStmt){
@@ -132,8 +132,8 @@ public class FunctionInlining extends ProcessPass {
 		List<XcfaEdge> edgesCopy = new ArrayList<>(procBuilder.getEdges());
 		for (XcfaEdge edge : edgesCopy) {
 			boolean atLeastOneAssignmentTruncated = false;
-			List<Stmt> newStmts = new ArrayList<>(edge.getStmts());
-			for (Stmt stmt : edge.getStmts()) {
+			List<Stmt> newStmts = new ArrayList<>(edge.getLabels());
+			for (Stmt stmt : edge.getLabels()) {
 				if (stmt instanceof AssignStmt && !(((AssignStmt<?>) stmt).getVarDecl().getType() instanceof ArrayType)) {
 					AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
 					CComplexType leftType = CComplexType.getType(((AssignStmt<?>) stmt).getVarDecl().getRef());
@@ -167,7 +167,7 @@ public class FunctionInlining extends ProcessPass {
 		splittingPoints.forEach((xcfaEdge, xcfaCallStmts) -> {
 			procBuilder.removeEdge(xcfaEdge);
 			XcfaCallStmt xcfaCallStmt = xcfaCallStmts.get(0);
-			int i = xcfaEdge.getStmts().indexOf(xcfaCallStmt);
+			int i = xcfaEdge.getLabels().indexOf(xcfaCallStmt);
 			XcfaLocation start = xcfaEdge.getSource();
 			XcfaLocation end = xcfaEdge.getTarget();
 			if(i > 0) {
@@ -176,20 +176,20 @@ public class FunctionInlining extends ProcessPass {
 					FrontendMetadata.create(loc1, s, o);
 				});
 				procBuilder.addLoc(loc1);
-				XcfaEdge edge = new XcfaEdge(start, loc1, sublist(xcfaEdge.getStmts(), 0, i));
+				XcfaEdge edge = new XcfaEdge(start, loc1, sublist(xcfaEdge.getLabels(), 0, i));
 				procBuilder.addEdge(edge);
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(edge, s, o);
 				});
 				start = loc1;
 			}
-			if(i < xcfaEdge.getStmts().size() - 1) {
+			if(i < xcfaEdge.getLabels().size() - 1) {
 				XcfaLocation loc1 = new XcfaLocation("inline" + counter++, Map.of());
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(loc1, s, o);
 				});
 				procBuilder.addLoc(loc1);
-				XcfaEdge edge = new XcfaEdge(loc1, end, sublist(xcfaEdge.getStmts(), i + 1, xcfaEdge.getStmts().size()));
+				XcfaEdge edge = new XcfaEdge(loc1, end, sublist(xcfaEdge.getLabels(), i + 1, xcfaEdge.getLabels().size()));
 				procBuilder.addEdge(edge);
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(edge, s, o);
@@ -209,7 +209,7 @@ public class FunctionInlining extends ProcessPass {
 				locationLut.put(loc, copy);
 				procBuilder.addLoc(copy);
 			});
-			procedure.getEdges().forEach(e -> procBuilder.addEdge(new XcfaEdge(locationLut.get(e.getSource()), locationLut.get(e.getTarget()), e.getStmts())));
+			procedure.getEdges().forEach(e -> procBuilder.addEdge(new XcfaEdge(locationLut.get(e.getSource()), locationLut.get(e.getTarget()), e.getLabels())));
 			procedure.getFinalLoc().setEndLoc(false);
 
 			int paramCnt = 0;
@@ -262,7 +262,7 @@ public class FunctionInlining extends ProcessPass {
 		for (XcfaEdge edge : mainProcBuilder.getEdges()) {
 			boolean stillExists = true;
 			while(stillExists) {
-				Optional<Stmt> callStmtOpt = edge.getStmts().stream().filter(stmt ->
+				Optional<Stmt> callStmtOpt = edge.getLabels().stream().filter(stmt ->
 						stmt instanceof XcfaCallStmt &&
 						!alreadyHandled.contains(Tuple2.of(stmt, edge)) &&
 						!nopFuncs.contains(((XcfaCallStmt)stmt).getProcedure()) &&

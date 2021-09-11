@@ -21,29 +21,26 @@ import hu.bme.mit.theta.frontend.FrontendMetadata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaLocation {
 	private final String name;
-	private final Map<String, String> dictionary;
 	private final List<XcfaEdge> incomingEdges;
 	private final List<XcfaEdge> outgoingEdges;
 	private XcfaProcedure parent;
 	private boolean isErrorLoc = false;
 	private boolean isEndLoc = false;
 
-	public XcfaLocation(final String name, final Map<String, String> dictionary) {
+	public XcfaLocation(final String name) {
 		this.name = checkNotNull(name);
-		this.dictionary = dictionary;
 		outgoingEdges = new ArrayList<>();
 		incomingEdges = new ArrayList<>();
 	}
 
 	private static int copyCnt = 0;
 	public static XcfaLocation copyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = new XcfaLocation(from.getName() + "_copy" + copyCnt++, Map.copyOf(from.dictionary == null ? Map.of() : from.dictionary));
+		XcfaLocation xcfaLocation = new XcfaLocation(from.getName() + "_copy" + copyCnt++);
 		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
 			FrontendMetadata.create(xcfaLocation, s, o);
 		});
@@ -52,10 +49,6 @@ public final class XcfaLocation {
 
 	public String getName() {
 		return name;
-	}
-
-	public Map<String, String> getDictionary() {
-		return dictionary;
 	}
 
 	public List<XcfaEdge> getIncomingEdges() {

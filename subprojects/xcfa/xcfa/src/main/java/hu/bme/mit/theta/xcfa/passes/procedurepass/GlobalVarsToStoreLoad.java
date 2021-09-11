@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaStmtVarReplacer;
+import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Set<Stmt> collect = edge.getStmts().stream().filter(stmt1 -> !(stmt1 instanceof LoadStmt) && !(stmt1 instanceof StoreStmt) && StmtUtils.getVars(stmt1).stream().anyMatch(
+			Set<Stmt> collect = edge.getLabels().stream().filter(stmt1 -> !(stmt1 instanceof LoadStmt) && !(stmt1 instanceof StoreStmt) && StmtUtils.getVars(stmt1).stream().anyMatch(
 					varDecl -> !builder.getLocalVars().containsKey(varDecl) && !builder.getParams().containsKey(varDecl)
 			)).collect(Collectors.toSet());
 			for(Stmt stmt : collect) {
@@ -61,7 +61,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 			}
 
 			List<Stmt> stmts = new ArrayList<>();
-			for (Stmt edgeStmt : edge.getStmts()) {
+			for (Stmt edgeStmt : edge.getLabels()) {
 				stmts.addAll(collectLoadStores(edgeStmt, varLut));
 			}
 			builder.removeEdge(edge);
@@ -77,7 +77,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 	private Collection<? extends Stmt> collectLoadStores(Stmt edgeStmt, Map<VarDecl<?>, VarDecl<?>> varLut) {
 		List<Stmt> loads = new ArrayList<>();
 		List<Stmt> stores = new ArrayList<>();
-		Stmt newEdgeStmt = edgeStmt.accept(new XcfaStmtVarReplacer(), varLut);
+		Stmt newEdgeStmt = edgeStmt.accept(new XcfaLabelVarReplacer(), varLut);
 		if(!StmtUtils.getVars(edgeStmt).containsAll(StmtUtils.getVars(newEdgeStmt))) {
 			if (edgeStmt instanceof AssignStmt && newEdgeStmt instanceof AssignStmt) {
 				if (varLut.containsKey(((AssignStmt<?>) edgeStmt).getVarDecl())) {

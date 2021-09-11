@@ -11,18 +11,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
-import hu.bme.mit.theta.core.stmt.XcfaStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicBeginStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.AtomicEndStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.FenceStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaStmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -31,6 +20,8 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +30,10 @@ import java.util.Optional;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.ProcedureCall;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
-public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaStmtVisitor<Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>>, List<Stmt>> {
+public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisitor<Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>>, List<XcfaLabel>> {
 
 	private Optional<Expr<Type>> getTypeExpr(Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param, Expr<Type> expr) {
 		if (expr instanceof RefExpr && param.containsKey(((RefExpr<Type>) expr).getDecl())) {
@@ -52,65 +45,60 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaStmtVisito
 
 
 	@Override
-	public List<Stmt> visit(SkipStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		return List.of(stmt);
+	public List<XcfaLabel> visit(SkipStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		return List.of(Stmt(stmt));
 	}
 
 	@Override
-	public List<Stmt> visit(AssumeStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(AssumeStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		Optional<Expr<BoolType>> newExpr = ExpressionReplacer.replace(stmt.getCond(), expr -> getTypeExpr(param, expr));
-		return List.of(newExpr.map(Stmts::Assume).orElse(stmt));
+		return List.of(newExpr.map(cond -> Stmt(Stmts.Assume(cond))).orElse(Stmt(stmt)));
 	}
 
 	@Override
-	public <DeclType extends Type> List<Stmt> visit(AssignStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public <DeclType extends Type> List<XcfaLabel> visit(AssignStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		Optional<Expr<DeclType>> declTypeExpr = ExpressionReplacer.replace(stmt.getExpr(), expr -> getTypeExpr(param, expr));
 		if (param.containsKey(stmt.getVarDecl())) {
 			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
-			return List.of(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), replacement.get2(), cast(declTypeExpr.orElse(stmt.getExpr()), replacement.get1().getType().getElemType())), replacement.get1().getType())));
+			return List.of(Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), replacement.get2(), cast(declTypeExpr.orElse(stmt.getExpr()), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
 		}
-		return List.of(declTypeExpr.map(declTypeExpr1 -> Assign(stmt.getVarDecl(), declTypeExpr1)).orElse(stmt));
+		return List.of(Stmt(declTypeExpr.map(declTypeExpr1 -> Assign(stmt.getVarDecl(), declTypeExpr1)).orElse(stmt)));
 	}
 
 	@Override
-	public <DeclType extends Type> List<Stmt> visit(HavocStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public <DeclType extends Type> List<XcfaLabel> visit(HavocStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		if (param.containsKey(stmt.getVarDecl())) {
 			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
-			return List.of(stmt, Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType())));
+			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
 		}
-		return List.of(stmt);
+		return List.of(Stmt(stmt));
 	}
 
 	@Override
-	public List<Stmt> visit(XcfaStmt xcfaStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		return xcfaStmt.accept(this, param);
-	}
-
-	@Override
-	public List<Stmt> visit(SequenceStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(SequenceStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
 	@Override
-	public List<Stmt> visit(NonDetStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(NonDetStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
 	@Override
-	public List<Stmt> visit(OrtStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(OrtStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
 	@Override
-	public List<Stmt> visit(LoopStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(LoopStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
 	@Override
-	public List<Stmt> visit(XcfaCallStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.ProcedureCallXcfaLabel label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		boolean needsTransformation = false;
 		List<Expr<?>> exprs = new ArrayList<>();
-		for (Expr<?> stmtParam : stmt.getParams()) {
+		for (Expr<?> stmtParam : label.getParams()) {
 			Optional<? extends Expr<?>> expr = ExpressionReplacer.replace(stmtParam, expr1 -> getTypeExpr(param, expr1));
 			if(expr.isPresent()) {
 				exprs.add(expr.get());
@@ -119,48 +107,53 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaStmtVisito
 				exprs.add(stmtParam);
 			}
 		}
-		if(needsTransformation) return List.of(new XcfaCallStmt(exprs, stmt.getProcedure()));
-		return List.of(stmt);
+		if(needsTransformation) return List.of(ProcedureCall(exprs, label.getProcedure()));
+		return List.of(label);
 	}
 
 	@Override
-	public List<Stmt> visit(StoreStmt storeStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		if (param.containsKey(storeStmt.getGlobal()) || param.containsKey(storeStmt.getLocal())) {
+	public <S extends Type> List<XcfaLabel> visit(XcfaLabel.StoreXcfaLabel<S> label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		if (param.containsKey(label.getGlobal()) || param.containsKey(label.getLocal())) {
 			throw new UnsupportedOperationException("Store/Load statements cannot be transformed to array write/reads!");
 		}
-		return List.of(storeStmt);
+		return List.of(label);
 	}
 
 	@Override
-	public List<Stmt> visit(LoadStmt loadStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		if (param.containsKey(loadStmt.getGlobal()) || param.containsKey(loadStmt.getLocal())) {
+	public <S extends Type> List<XcfaLabel> visit(XcfaLabel.LoadXcfaLabel<S> label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		if (param.containsKey(label.getGlobal()) || param.containsKey(label.getLocal())) {
 			throw new UnsupportedOperationException("Store/Load statements cannot be transformed to array write/reads!");
 		}
-		return List.of(loadStmt);
+		return List.of(label);
 	}
 
 	@Override
-	public List<Stmt> visit(FenceStmt fenceStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.FenceXcfaLabel fenceStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(fenceStmt);
 	}
 
 	@Override
-	public List<Stmt> visit(AtomicBeginStmt atomicBeginStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.StmtXcfaLabel label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		return label.getStmt().accept(this, param);
+	}
+
+	@Override
+	public List<XcfaLabel> visit(XcfaLabel.AtomicBeginXcfaLabel atomicBeginStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(atomicBeginStmt);
 	}
 
 	@Override
-	public List<Stmt> visit(AtomicEndStmt atomicEndStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.AtomicEndXcfaLabel atomicEndStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(atomicEndStmt);
 	}
 
 	@Override
-	public List<Stmt> visit(StartThreadStmt startThreadStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.StartThreadXcfaLabel startThreadStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(startThreadStmt);
 	}
 
 	@Override
-	public List<Stmt> visit(JoinThreadStmt joinThreadStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+	public List<XcfaLabel> visit(XcfaLabel.JoinThreadXcfaLabel joinThreadStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(joinThreadStmt);
 	}
 }

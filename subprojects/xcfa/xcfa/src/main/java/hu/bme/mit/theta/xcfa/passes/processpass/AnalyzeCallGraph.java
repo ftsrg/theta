@@ -23,7 +23,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 
 		for (XcfaProcedure procedure : builder.getProcedures()) {
 			for (XcfaEdge edge : procedure.getEdges()) {
-				for (Stmt stmt : edge.getStmts()) {
+				for (Stmt stmt : edge.getLabels()) {
 					if(stmt instanceof XcfaCallStmt) {
 						XcfaCallStmt callStmt = (XcfaCallStmt) stmt;
 						Optional<XcfaProcedure> procedureOpt = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callStmt.getProcedure())).findAny();
