@@ -16,17 +16,17 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class OneStmtPerEdgePass extends ProcedurePass {
 	private static int tmpcnt = 0;
@@ -38,7 +38,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
-				XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
+				XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(), List.of(Stmt(Skip())));
 				builder.addEdge(xcfaEdge);
 				FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 				builder.removeEdge(edge.get());
@@ -47,8 +47,8 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 			if(edge.isPresent()) {
 				notFound = false;
 				XcfaLocation lastLoc = edge.get().getSource(), interLoc;
-				for (Stmt stmt : edge.get().getLabels()) {
-					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
+				for (XcfaLabel stmt : edge.get().getLabels()) {
+					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++);
 					builder.addLoc(interLoc);
 					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
 					XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));

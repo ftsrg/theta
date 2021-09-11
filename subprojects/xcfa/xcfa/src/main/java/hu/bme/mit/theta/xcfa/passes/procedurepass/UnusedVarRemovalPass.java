@@ -17,12 +17,8 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -30,6 +26,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getModifiedVars;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class UnusedVarRemovalPass extends ProcedurePass {
 	@Override
@@ -46,38 +47,29 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			if(usedVars == null) {
 				vars = new LinkedHashSet<>();
 				for (XcfaEdge edge : builder.getEdges()) {
-					for (Stmt stmt : edge.getLabels()) {
-						Set<VarDecl<?>> vars1 = StmtUtils.getVars(stmt);
+					for (XcfaLabel label : edge.getLabels()) {
+						Set<VarDecl<?>> vars1 = new LinkedHashSet<>(getVars(label));
+						Set<VarDecl<?>> modifiedVars = getModifiedVars(label);
 						vars1.removeIf(varDecl ->
-							(
-								(stmt instanceof HavocStmt)
-								|| (stmt instanceof AssignStmt && ((AssignStmt<?>) stmt).getVarDecl() == varDecl
-										&& !builder.getParams().containsKey(((AssignStmt<?>) stmt).getVarDecl()))
-							) && builder.getLocalVars().containsKey(varDecl)
+								modifiedVars.contains(varDecl) &&
+								!builder.getParams().containsKey(varDecl) &&
+								builder.getLocalVars().containsKey(varDecl)
 						);
 						vars.addAll(vars1);
 					}
 				}
 			} else vars = usedVars;
 			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
-			for (int i = 0; i < edges.size(); i++) {
-				XcfaEdge edge = edges.get(i);
-				List<Stmt> newStmts = new ArrayList<>(edge.getLabels());
-				for (Stmt stmt : edge.getLabels()) {
-					if (stmt instanceof HavocStmt && !vars.contains(((HavocStmt<?>) stmt).getVarDecl())) {
-						newStmts.remove(stmt);
-					} else if (stmt instanceof AssignStmt && !vars.contains(((AssignStmt<?>) stmt).getVarDecl())) {
-						newStmts.remove(stmt);
-					}
-				}
-				if (newStmts.size() != edge.getLabels().size()) {
-					builder.removeEdge(edge);
-					XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), newStmts);
-					builder.addEdge(xcfaEdge);
-					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-						FrontendMetadata.create(xcfaEdge, s, o);
-					});
+			for (XcfaEdge edge : edges) {
+				XcfaEdge newEdge = edge.mapLabels(label -> {
+					if (getModifiedVars(label).containsAll(vars)) {
+						return Stmt(Skip());
+					} else return label;
+				});
+				if (!edge.getLabels().equals(newEdge.getLabels())) {
 					atLeastOne = true;
+					builder.removeEdge(edge);
+					builder.addEdge(newEdge);
 				}
 			}
 			List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());

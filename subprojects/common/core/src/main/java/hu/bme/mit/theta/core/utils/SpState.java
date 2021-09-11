@@ -176,11 +176,6 @@ public class SpState {
         }
 
         @Override
-        public SpState visit(XcfaStmt stmt, SpState param) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public SpState visit(LoopStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }

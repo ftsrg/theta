@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class AddHavocRange extends ProcedurePass {
 
@@ -39,18 +42,18 @@ public class AddHavocRange extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof HavocStmt && !alreadyAssumed.contains(stmt)).findAny();
+				Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof HavocStmt && !alreadyAssumed.contains((HavocStmt<?>) stmt.getStmt())).findAny();
 				if (e.isPresent()) {
-					List<Stmt> collect = new ArrayList<>();
-					for (Stmt stmt : edge.getLabels()) {
+					List<XcfaLabel> collect = new ArrayList<>();
+					for (XcfaLabel stmt : edge.getLabels()) {
 						if (stmt == e.get()) {
-							VarDecl<?> var = ((HavocStmt) e.get()).getVarDecl();
+							VarDecl<?> var = ((HavocStmt) e.get().getStmt()).getVarDecl();
 							collect.add(stmt);
 							Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).limit(var.getRef());
-							collect.add(wraparoundAssumption);
+							collect.add(Stmt(wraparoundAssumption));
 						} else collect.add(stmt);
 					}
-					alreadyAssumed.add((HavocStmt<?>) e.get());
+					alreadyAssumed.add((HavocStmt<?>) e.get().getStmt());
 					XcfaEdge xcfaEdge;
 					xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
 					builder.removeEdge(edge);

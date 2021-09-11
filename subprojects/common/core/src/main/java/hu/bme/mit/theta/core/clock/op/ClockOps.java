@@ -99,11 +99,6 @@ public final class ClockOps {
 		}
 
 		@Override
-		public ClockOp visit(XcfaStmt xcfaStmt, Void param) {
-			throw new UnsupportedOperationException("Not yet implemented");
-		}
-
-		@Override
 		public ClockOp visit(SequenceStmt stmt, Void param) {
 			throw new UnsupportedOperationException();
 		}

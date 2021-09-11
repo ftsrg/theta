@@ -110,17 +110,16 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		}
 		XcfaProcess.Builder procBuilder = XcfaProcess.builder();
 		for (CFunction function : cProgram.getFunctions()) {
-			XcfaProcedure build = buildFunction(function, initStmtList);
+			XcfaProcedure.Builder build = handleFunction(function, initStmtList);
 			procBuilder.addProcedure(build);
 			if(build.getName().equals("main")) procBuilder.setMainProcedure(build);
 		}
-		XcfaProcess mainproc = procBuilder.build(this);
-		builder.addProcess(mainproc);
-		builder.setMainProcess(mainproc);
+		builder.addProcess(procBuilder);
+		builder.setMainProcess(procBuilder);
 		return builder.build();
 	}
 
-	private XcfaProcedure buildFunction(CFunction function, List<XcfaLabel> param) {
+	private XcfaProcedure.Builder handleFunction(CFunction function, List<XcfaLabel> param) {
 		locationLut.clear();
 		List<VarDecl<?>> flatVariables = function.getFlatVariables();
 		CDeclaration funcDecl = function.getFuncDecl();
@@ -172,7 +171,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addEdge(edge);
 		propagateMetadata(function, edge);
 		builder.setFinalLoc(ret);
-		return builder.build(this);
+		return builder;
 	}
 
 

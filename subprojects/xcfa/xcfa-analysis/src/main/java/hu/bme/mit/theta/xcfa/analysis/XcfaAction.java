@@ -19,10 +19,11 @@ import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,7 +38,7 @@ public final class XcfaAction extends StmtAction {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.edge = checkNotNull(edge);
-		this.stmts = Collections.unmodifiableList(edge.getLabels());
+		this.stmts = edge.getLabels().stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
 	}
 
 	public static XcfaAction create(final XcfaEdge edge) {

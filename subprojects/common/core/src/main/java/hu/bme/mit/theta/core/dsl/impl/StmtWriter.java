@@ -54,11 +54,6 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	}
 
 	@Override
-	public String visit(XcfaStmt xcfaStmt, Void param) {
-		throw new UnsupportedOperationException("Not yet implemented"); //TODO
-	}
-
-	@Override
 	public String visit(SequenceStmt stmt, Void param) {
 		throw new UnsupportedOperationException();
 	}

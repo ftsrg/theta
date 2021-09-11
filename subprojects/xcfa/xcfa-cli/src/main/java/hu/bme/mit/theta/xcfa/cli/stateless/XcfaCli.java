@@ -31,7 +31,6 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.common.CliUtils;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
@@ -45,8 +44,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
-import hu.bme.mit.theta.xcfa.analysis.config.XcfaConfig;
-import hu.bme.mit.theta.xcfa.analysis.config.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -65,7 +62,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
@@ -131,30 +127,30 @@ public class XcfaCli {
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
 	Logger.Level logLevel = Logger.Level.MAINSTEP;
-
-	@Parameter(names = "--domain", description = "Abstract domain")
-	XcfaConfigBuilder.Domain domain = XcfaConfigBuilder.Domain.PRED_CART;
-
-	@Parameter(names = "--refinement", description = "Refinement strategy")
-	XcfaConfigBuilder.Refinement refinement = XcfaConfigBuilder.Refinement.BW_BIN_ITP;
-
-	@Parameter(names = "--search", description = "Search strategy")
-	XcfaConfigBuilder.Search search = XcfaConfigBuilder.Search.ERR;
-
-	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
-	XcfaConfigBuilder.PredSplit predSplit = XcfaConfigBuilder.PredSplit.WHOLE;
-
-	@Parameter(names = "--precgranularity", description = "Precision granularity")
-	XcfaConfigBuilder.PrecGranularity precGranularity = XcfaConfigBuilder.PrecGranularity.GLOBAL;
-
-	@Parameter(names = "--encoding", description = "Block encoding")
-	XcfaConfigBuilder.Encoding encoding = XcfaConfigBuilder.Encoding.SBE;
-
-	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 40;
-
-	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
-	XcfaConfigBuilder.InitPrec initPrec = XcfaConfigBuilder.InitPrec.EMPTY;
+//
+//	@Parameter(names = "--domain", description = "Abstract domain")
+//	XcfaConfigBuilder.Domain domain = XcfaConfigBuilder.Domain.PRED_CART;
+//
+//	@Parameter(names = "--refinement", description = "Refinement strategy")
+//	XcfaConfigBuilder.Refinement refinement = XcfaConfigBuilder.Refinement.BW_BIN_ITP;
+//
+//	@Parameter(names = "--search", description = "Search strategy")
+//	XcfaConfigBuilder.Search search = XcfaConfigBuilder.Search.ERR;
+//
+//	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+//	XcfaConfigBuilder.PredSplit predSplit = XcfaConfigBuilder.PredSplit.WHOLE;
+//
+//	@Parameter(names = "--precgranularity", description = "Precision granularity")
+//	XcfaConfigBuilder.PrecGranularity precGranularity = XcfaConfigBuilder.PrecGranularity.GLOBAL;
+//
+//	@Parameter(names = "--encoding", description = "Block encoding")
+//	XcfaConfigBuilder.Encoding encoding = XcfaConfigBuilder.Encoding.SBE;
+//
+//	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+//	Integer maxEnum = 40;
+//
+//	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
+//	XcfaConfigBuilder.InitPrec initPrec = XcfaConfigBuilder.InitPrec.EMPTY;
 
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
@@ -244,7 +240,7 @@ public class XcfaCli {
 
 			if(estimateMaxEnum) {
 				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum().intValue());
-				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
+//				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
 			}
 
 			if (printxcfa!=null) {
@@ -273,18 +269,18 @@ public class XcfaCli {
 				}
 			}
 
-			final XcfaConfig<?, ?, ?> config = new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa, err);
-			final SafetyResult<?, ?> status = check(config);
+//			final XcfaConfig<?, ?, ?> config = new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+//					.precGranularity(precGranularity).search(search)
+//					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+//					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa, err);
+//			final SafetyResult<?, ?> status = check(config);
 
-			if(status.isUnsafe()) {
-				System.err.println("Unsafe");
-			}
-			else {
-				System.err.println("Safe");
-			}
+//			if(status.isUnsafe()) {
+//				System.err.println("Unsafe");
+//			}
+//			else {
+//				System.err.println("Safe");
+//			}
 
 //			CFA cfa;
 //			try {
@@ -323,43 +319,43 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeStatistics(CFA cfa) {
-		File statistics = new File(statisticsfile);
-		BufferedWriter bw = null;
-		try {
-			bw = new BufferedWriter(new FileWriter(statistics));
-
-			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
-			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
-
-			bw.write("Configuration: ");
-			bw.write(System.lineSeparator());
-			bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
-			bw.write(System.lineSeparator());
-			bw.write("Domain: " + domain);
-			bw.write(System.lineSeparator());
-			bw.write("Refinement: " + refinement);
-			bw.write(System.lineSeparator());
-			bw.write("Precision granularity: " + precGranularity);
-			bw.write(System.lineSeparator());
-			bw.write("Search: " + search);
-			bw.write(System.lineSeparator());
-			bw.write("Predicate splitting: " + predSplit);
-			bw.write(System.lineSeparator());
-			bw.write("Encoding: " + encoding);
-			bw.write(System.lineSeparator());
-			bw.write("maxEnum: " + maxEnum);
-			bw.write(System.lineSeparator());
-			bw.write("initPrec: " + initPrec);
-			bw.write(System.lineSeparator());
-			bw.write("pruneStrategy: " + pruneStrategy);
-			bw.write(System.lineSeparator());
-
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	private void writeStatistics(CFA cfa) {
+//		File statistics = new File(statisticsfile);
+//		BufferedWriter bw = null;
+//		try {
+//			bw = new BufferedWriter(new FileWriter(statistics));
+//
+//			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
+//			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
+//
+//			bw.write("Configuration: ");
+//			bw.write(System.lineSeparator());
+//			bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
+//			bw.write(System.lineSeparator());
+//			bw.write("Domain: " + domain);
+//			bw.write(System.lineSeparator());
+//			bw.write("Refinement: " + refinement);
+//			bw.write(System.lineSeparator());
+//			bw.write("Precision granularity: " + precGranularity);
+//			bw.write(System.lineSeparator());
+//			bw.write("Search: " + search);
+//			bw.write(System.lineSeparator());
+//			bw.write("Predicate splitting: " + predSplit);
+//			bw.write(System.lineSeparator());
+//			bw.write("Encoding: " + encoding);
+//			bw.write(System.lineSeparator());
+//			bw.write("maxEnum: " + maxEnum);
+//			bw.write(System.lineSeparator());
+//			bw.write("initPrec: " + initPrec);
+//			bw.write(System.lineSeparator());
+//			bw.write("pruneStrategy: " + pruneStrategy);
+//			bw.write(System.lineSeparator());
+//
+//			bw.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 
 //	private CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc loc) throws Exception {
 //		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
@@ -405,18 +401,18 @@ public class XcfaCli {
 		}
 	}
 
-	private SafetyResult<?, ?> check(XcfaConfig<?, ?, ?> configuration) throws Exception {
-		try {
-			return configuration.check();
-		} catch (final NotSolvableException exception) {
-			System.err.println("Configuration failed (stuck)");
-			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
-			throw exception;
-		} catch (final Exception ex) {
-			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
-			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
-		}
-	}
+//	private SafetyResult<?, ?> check(XcfaConfig<?, ?, ?> configuration) throws Exception {
+//		try {
+//			return configuration.check();
+//		} catch (final NotSolvableException exception) {
+//			System.err.println("Configuration failed (stuck)");
+//			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
+//			throw exception;
+//		} catch (final Exception ex) {
+//			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+//			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+//		}
+//	}
 
 
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {

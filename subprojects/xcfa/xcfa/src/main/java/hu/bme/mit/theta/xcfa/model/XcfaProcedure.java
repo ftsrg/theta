@@ -342,6 +342,8 @@ public final class XcfaProcedure {
         }
 
         public XcfaProcedure build(XcfaProcess process) {
+            if(built != null) return built;
+
             checkState(initLoc != null, "Initial location must be set.");
             checkState(finalLoc != null, "Final location must be set.");
             checkState(finalLoc.getOutgoingEdges().isEmpty(), "Final location cannot have outgoing edges.");

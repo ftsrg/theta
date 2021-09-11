@@ -158,11 +158,6 @@ public final class WpState {
 		}
 
 		@Override
-		public WpState visit(XcfaStmt xcfaStmt, WpState param) {
-			throw new UnsupportedOperationException("Not yet implemented");
-		}
-
-		@Override
 		public WpState visit(SequenceStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
@@ -212,11 +207,6 @@ public final class WpState {
 		@Override
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
 			return WpVisitor.getInstance().visit(stmt, state);
-		}
-
-		@Override
-		public WpState visit(XcfaStmt xcfaStmt, WpState param) {
-			throw new UnsupportedOperationException("Not yet implemented");
 		}
 
 		@Override

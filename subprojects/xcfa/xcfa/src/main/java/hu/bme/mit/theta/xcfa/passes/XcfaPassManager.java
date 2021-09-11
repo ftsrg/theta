@@ -35,8 +35,8 @@ public class XcfaPassManager {
 
 	static {
 		procedurePasses.addAll(List.of(
-				new ReferenceToMemory(),
 				new PthreadCallsToThreadStmts(),
+				new ReferenceToMemory(),
 				new FpFunctionsToExprs(),
 				new SimplifyExprs(),
 				new SimplifyAssumptions(),

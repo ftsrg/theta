@@ -16,16 +16,14 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class CallsToFinalLocs extends ProcedurePass {
@@ -35,8 +33,8 @@ public class CallsToFinalLocs extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = new XcfaLocation(builder.getName() + "_error", Map.of());
-		XcfaLocation finalLoc = new XcfaLocation(builder.getName() + "_final", Map.of());
+		XcfaLocation errorLoc = new XcfaLocation(builder.getName() + "_error");
+		XcfaLocation finalLoc = new XcfaLocation(builder.getName() + "_final");
 		builder.addLoc(errorLoc);
 		builder.addLoc(finalLoc);
 		XcfaLocation oldFinalLoc = builder.getFinalLoc();
@@ -46,10 +44,10 @@ public class CallsToFinalLocs extends ProcedurePass {
 		builder.setErrorLoc(errorLoc);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt).findAny();
+			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
 			if(e.isPresent()) {
 				XcfaEdge xcfaEdge;
-				String procedure = ((XcfaCallStmt) e.get()).getProcedure();
+				String procedure = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure();
 				if (errorFunc.contains(procedure)) {
 					xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
 				} else if (abortFunc.contains(procedure)) {

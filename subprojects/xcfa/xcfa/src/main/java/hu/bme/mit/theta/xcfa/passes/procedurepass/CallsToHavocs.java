@@ -17,12 +17,11 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class CallsToHavocs extends ProcedurePass {
 
@@ -40,15 +40,15 @@ public class CallsToHavocs extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt && FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaCallStmt) stmt).getProcedure(), "ownFunction").get()).findAny();
+				Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get()).findAny();
 				if (e.isPresent()) {
-					List<Stmt> collect = new ArrayList<>();
-					for (Stmt stmt : edge.getLabels()) {
+					List<XcfaLabel> collect = new ArrayList<>();
+					for (XcfaLabel stmt : edge.getLabels()) {
 						if (stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
-							Expr<?> expr = ((XcfaCallStmt) e.get()).getParams().get(0);
+							Expr<?> expr = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getParams().get(0);
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
 							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-							collect.add(Havoc(var));
+							collect.add(Stmt(Havoc(var)));
 						} else collect.add(stmt);
 					}
 					XcfaEdge xcfaEdge;

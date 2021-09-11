@@ -17,22 +17,21 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.JoinThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StartThreadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.JoinThread;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.StartThread;
 
 public class PthreadCallsToThreadStmts extends ProcedurePass {
 	private static final String threadStart = "pthread_create";
@@ -45,34 +44,34 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<Stmt> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaCallStmt && ((XcfaCallStmt) stmt).getProcedure().startsWith("pthread_")).findAny();
+			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure().startsWith("pthread_")).findAny();
 			if(e.isPresent()) {
-				List<Stmt> collect = new ArrayList<>();
-				for (Stmt stmt : edge.getLabels()) {
-					if(stmt == e.get()) {
-						switch(((XcfaCallStmt) stmt).getProcedure()){
+				List<XcfaLabel> collect = new ArrayList<>();
+				for (XcfaLabel label : edge.getLabels()) {
+					if(label == e.get()) {
+						switch(((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure()){
 							case threadStart:
-								Expr<?> handle = ((XcfaCallStmt) stmt).getParams().get(threadStartHandle + 1);
+								Expr<?> handle = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartHandle + 1);
 								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
-								Expr<?> funcptr = ((XcfaCallStmt) stmt).getParams().get(threadStartFuncPtr + 1);
+								Expr<?> funcptr = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartFuncPtr + 1);
 								checkState(funcptr instanceof RefExpr && ((RefExpr<?>) funcptr).getDecl() instanceof VarDecl);
-								Expr<?> param = ((XcfaCallStmt) stmt).getParams().get(threadStartParam + 1);
-								StartThreadStmt startThreadStmt = new StartThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
+								Expr<?> param = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartParam + 1);
+								XcfaLabel.StartThreadXcfaLabel startThreadStmt = StartThread((VarDecl<?>) ((RefExpr<?>) handle).getDecl(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
 								collect.add(startThreadStmt);
 								break;
 							case threadJoin:
-								handle = ((XcfaCallStmt) stmt).getParams().get(threadJoinHandle + 1);
+								handle = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadJoinHandle + 1);
 								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
-								JoinThreadStmt joinThreadStmt = new JoinThreadStmt((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
+								XcfaLabel.JoinThreadXcfaLabel joinThreadStmt = JoinThread((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
 								collect.add(joinThreadStmt);
 								break;
 							default:
-								throw new UnsupportedOperationException("Not yet supported: " + ((XcfaCallStmt) stmt).getProcedure());
+								throw new UnsupportedOperationException("Not yet supported: " + ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
 						}
 					}
-					else collect.add(stmt);
+					else collect.add(label);
 				}
 				XcfaEdge xcfaEdge;
 				xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);

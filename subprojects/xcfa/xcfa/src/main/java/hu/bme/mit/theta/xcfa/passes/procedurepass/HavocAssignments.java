@@ -19,15 +19,16 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class HavocAssignments extends ProcedurePass {
 	@Override
@@ -36,20 +37,21 @@ public class HavocAssignments extends ProcedurePass {
 		while(!notFound) {
 			notFound = true;
 			Optional<XcfaEdge> havocEdge = builder.getEdges().stream().filter(xcfaEdge ->
-					xcfaEdge.getLabels().size() == 1 && xcfaEdge.getLabels().get(0) instanceof HavocStmt &&
+					xcfaEdge.getLabels().size() == 1 && xcfaEdge.getLabels().get(0) instanceof XcfaLabel.StmtXcfaLabel && xcfaEdge.getLabels().get(0).getStmt() instanceof HavocStmt &&
 					xcfaEdge.getTarget().getIncomingEdges().size() == 1 &&
 					xcfaEdge.getTarget().getOutgoingEdges().size() == 1 && xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().size() == 1 &&
-					xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0) instanceof AssignStmt &&
-					((AssignStmt<?>) xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0)).getExpr() instanceof RefExpr).findAny();
+					xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0) instanceof XcfaLabel.StmtXcfaLabel &&
+					xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0).getStmt() instanceof AssignStmt &&
+					((AssignStmt<?>) xcfaEdge.getTarget().getOutgoingEdges().get(0).getLabels().get(0).getStmt()).getExpr() instanceof RefExpr).findAny();
 			if(havocEdge.isPresent()) {
-				HavocStmt<?> h = (HavocStmt<?>) havocEdge.get().getLabels().get(0);
+				HavocStmt<?> h = (HavocStmt<?>) havocEdge.get().getLabels().get(0).getStmt();
 				XcfaEdge assignEdge = havocEdge.get().getTarget().getOutgoingEdges().get(0);
-				AssignStmt<?> a = (AssignStmt<?>) assignEdge.getLabels().get(0);
+				AssignStmt<?> a = (AssignStmt<?>) assignEdge.getLabels().get(0).getStmt();
 				if(h.getVarDecl() == ((RefExpr<?>)a.getExpr()).getDecl() && h.getVarDecl().getName().startsWith("call_")) {
 					notFound = false;
 					builder.removeEdge(havocEdge.get());
 					builder.removeEdge(assignEdge);
-					XcfaEdge xcfaEdge = XcfaEdge.of(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl())));
+					XcfaEdge xcfaEdge = XcfaEdge.of(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Stmt(Havoc(a.getVarDecl()))));
 					builder.addEdge(xcfaEdge);
 					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
 						FrontendMetadata.create(xcfaEdge, s, o);

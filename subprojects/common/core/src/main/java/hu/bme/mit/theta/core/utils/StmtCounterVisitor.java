@@ -61,11 +61,6 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	}
 
 	@Override
-	public Integer visit(XcfaStmt stmt, Void param) {
-		throw new UnsupportedOperationException("Not implemented.");
-	}
-
-	@Override
 	public Integer visit(SequenceStmt stmt, Void param) {
 		int count = 0;
 		for (var subStmt : stmt.getStmts()) {

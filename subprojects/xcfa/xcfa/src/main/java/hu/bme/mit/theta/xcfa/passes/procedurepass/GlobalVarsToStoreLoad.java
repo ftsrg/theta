@@ -19,13 +19,10 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.xcfa.LoadStmt;
-import hu.bme.mit.theta.core.stmt.xcfa.StoreStmt;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
@@ -37,8 +34,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Load;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class GlobalVarsToStoreLoad extends ProcedurePass {
 
@@ -46,11 +45,11 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Set<Stmt> collect = edge.getLabels().stream().filter(stmt1 -> !(stmt1 instanceof LoadStmt) && !(stmt1 instanceof StoreStmt) && StmtUtils.getVars(stmt1).stream().anyMatch(
+			Set<XcfaLabel> collect = edge.getLabels().stream().filter(stmt1 -> !(stmt1 instanceof XcfaLabel.LoadXcfaLabel) && !(stmt1 instanceof XcfaLabel.StoreXcfaLabel) && getVars(stmt1).stream().anyMatch(
 					varDecl -> !builder.getLocalVars().containsKey(varDecl) && !builder.getParams().containsKey(varDecl)
 			)).collect(Collectors.toSet());
-			for(Stmt stmt : collect) {
-				Set<VarDecl<?>> vars = StmtUtils.getVars(stmt).stream().filter(
+			for(XcfaLabel stmt : collect) {
+				Set<VarDecl<?>> vars = getVars(stmt).stream().filter(
 						varDecl -> !varLut.containsKey(varDecl) && !builder.getLocalVars().containsKey(varDecl) && !builder.getParams().containsKey(varDecl)
 				).collect(Collectors.toSet());
 				for (VarDecl<?> var : vars) {
@@ -60,8 +59,8 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 				}
 			}
 
-			List<Stmt> stmts = new ArrayList<>();
-			for (Stmt edgeStmt : edge.getLabels()) {
+			List<XcfaLabel> stmts = new ArrayList<>();
+			for (XcfaLabel edgeStmt : edge.getLabels()) {
 				stmts.addAll(collectLoadStores(edgeStmt, varLut));
 			}
 			builder.removeEdge(edge);
@@ -74,24 +73,25 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 		return builder;
 	}
 
-	private Collection<? extends Stmt> collectLoadStores(Stmt edgeStmt, Map<VarDecl<?>, VarDecl<?>> varLut) {
-		List<Stmt> loads = new ArrayList<>();
-		List<Stmt> stores = new ArrayList<>();
-		Stmt newEdgeStmt = edgeStmt.accept(new XcfaLabelVarReplacer(), varLut);
-		if(!StmtUtils.getVars(edgeStmt).containsAll(StmtUtils.getVars(newEdgeStmt))) {
-			if (edgeStmt instanceof AssignStmt && newEdgeStmt instanceof AssignStmt) {
-				if (varLut.containsKey(((AssignStmt<?>) edgeStmt).getVarDecl())) {
-					stores.add(new StoreStmt(((AssignStmt<?>) newEdgeStmt).getVarDecl(), ((AssignStmt<?>) edgeStmt).getVarDecl(), false, ""));
+	private Collection<? extends XcfaLabel> collectLoadStores(XcfaLabel edgeStmt, Map<VarDecl<?>, VarDecl<?>> varLut) {
+		List<XcfaLabel> loads = new ArrayList<>();
+		List<XcfaLabel> stores = new ArrayList<>();
+		XcfaLabel newEdgeStmt = edgeStmt.accept(new XcfaLabelVarReplacer(), varLut);
+		if(!getVars(edgeStmt).containsAll(getVars(newEdgeStmt))) {
+			if (edgeStmt instanceof XcfaLabel.StmtXcfaLabel && edgeStmt.getStmt() instanceof AssignStmt &&
+					newEdgeStmt instanceof XcfaLabel.StmtXcfaLabel && newEdgeStmt.getStmt() instanceof AssignStmt) {
+				if (varLut.containsKey(((AssignStmt<?>) edgeStmt.getStmt()).getVarDecl())) {
+					stores.add(Store(((AssignStmt<?>) newEdgeStmt.getStmt()).getVarDecl(), ((AssignStmt<?>) edgeStmt.getStmt()).getVarDecl(), false, ""));
 				}
-				ExprUtils.getVars(((AssignStmt<?>) edgeStmt).getExpr()).stream().filter(varLut::containsKey).forEach(varDecl ->
-						loads.add(new LoadStmt(varDecl, varLut.get(varDecl), false, "")));
+				ExprUtils.getVars(((AssignStmt<?>) edgeStmt.getStmt()).getExpr()).stream().filter(varLut::containsKey).forEach(varDecl ->
+						loads.add(Load(varDecl, varLut.get(varDecl), false, "")));
 			}
-			else if(edgeStmt instanceof HavocStmt && varLut.containsKey(((HavocStmt<?>) edgeStmt).getVarDecl())) {
-				stores.add(new StoreStmt(varLut.get(((HavocStmt<?>) edgeStmt).getVarDecl()), ((HavocStmt<?>) edgeStmt).getVarDecl(), false, ""));
+			else if(edgeStmt instanceof XcfaLabel.StmtXcfaLabel && edgeStmt.getStmt() instanceof HavocStmt && varLut.containsKey(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl())) {
+				stores.add(Store(varLut.get(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl()), ((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl(), false, ""));
 			}
 			else {
-				StmtUtils.getVars(edgeStmt).stream().filter(varLut::containsKey).forEach(varDecl ->
-						loads.add(new LoadStmt(varDecl, varLut.get(varDecl), false, "")));
+				getVars(edgeStmt).stream().filter(varLut::containsKey).forEach(varDecl ->
+						loads.add(Load(varDecl, varLut.get(varDecl), false, "")));
 			}
 		}
 		loads.add(newEdgeStmt);

@@ -43,11 +43,6 @@ public class StmtAtomCollector {
         }
 
         @Override
-        public Void visit(XcfaStmt xcfaStmt, Set<Expr<BoolType>> param) {
-            throw new UnsupportedOperationException("Not implemented.");
-        }
-
-        @Override
         public Void visit(SequenceStmt stmt, Set<Expr<BoolType>> atoms) {
             stmt.getStmts().forEach(s -> s.accept(this, atoms));
             return null;

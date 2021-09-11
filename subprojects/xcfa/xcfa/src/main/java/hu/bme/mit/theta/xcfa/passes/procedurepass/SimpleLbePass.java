@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
@@ -23,7 +23,7 @@ public class SimpleLbePass extends ProcedurePass{
 			builder.removeEdge(outEdge);
 			builder.removeLoc(pathloc);
 
-			List<Stmt> stmts = new ArrayList<>(inEdge.getLabels());
+			List<XcfaLabel> stmts = new ArrayList<>(inEdge.getLabels());
 			stmts.addAll(outEdge.getLabels());
 
 			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), stmts));

@@ -22,8 +22,8 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class HavocPromotion extends ProcedurePass {
 	private Map<XcfaEdge, XcfaEdge> forwardLut;
@@ -44,11 +46,11 @@ public class HavocPromotion extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		forwardLut = new LinkedHashMap<>();
 		reverseLut = new LinkedHashMap<>();
-		Map<VarDecl<?>, Set<Tuple2<XcfaEdge, Stmt>>> varUsage = new LinkedHashMap<>();
+		Map<VarDecl<?>, Set<Tuple2<XcfaEdge, XcfaLabel>>> varUsage = new LinkedHashMap<>();
 		for (XcfaEdge edge : builder.getEdges()) {
-			for (Stmt stmt : edge.getLabels()) {
-				Tuple2<XcfaEdge, Stmt> tup = Tuple2.of(edge, stmt);
-				Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
+			for (XcfaLabel stmt : edge.getLabels()) {
+				Tuple2<XcfaEdge, XcfaLabel> tup = Tuple2.of(edge, stmt);
+				Set<VarDecl<?>> vars = getVars(stmt);
 				for (VarDecl<?> var : vars) {
 					varUsage.putIfAbsent(var, new LinkedHashSet<>());
 					varUsage.get(var).add(tup);
@@ -60,25 +62,28 @@ public class HavocPromotion extends ProcedurePass {
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new LinkedHashSet<>(builder.getEdges())) {
-				for (Stmt stmt : edge.getLabels()) {
-					if (stmt instanceof HavocStmt) {
-						VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
-						if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
-							Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2()).findAny();
-							Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2()).findAny();
-							if (assign.isPresent() && assume.isPresent()) {
-								if(replaceStmt(builder, edge, List.of(stmt, assume.get(), assign.get()), List.of(Havoc(assign.get().getVarDecl()), assume.get().accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
-									found = true;
-									break;
+				for (XcfaLabel label : edge.getLabels()) {
+					if(label instanceof XcfaLabel.StmtXcfaLabel) {
+						Stmt stmt = label.getStmt();
+						if (stmt instanceof HavocStmt) {
+							VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
+							if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
+								Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
+								Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2().getStmt()).findAny();
+								if (assign.isPresent() && assume.isPresent()) {
+									if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assume.get()), Stmt(assign.get())), List.of(Stmt(Havoc(assign.get().getVarDecl())), Stmt(assume.get()).accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
+										found = true;
+										break;
+									}
 								}
 							}
-						}
-						if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
-							Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2()).findAny();
-							if(assign.isPresent()) {
-								if (replaceStmt(builder, edge, List.of(stmt, assign.get()), List.of(Havoc(assign.get().getVarDecl())))) {
-									found = true;
-									break;
+							if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
+								Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
+								if (assign.isPresent()) {
+									if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(Havoc(assign.get().getVarDecl()))))) {
+										found = true;
+										break;
+									}
 								}
 							}
 						}
@@ -94,10 +99,10 @@ public class HavocPromotion extends ProcedurePass {
 		return forwardLut.getOrDefault(oldEdge, oldEdge);
 	}
 
-	private boolean replaceStmt(XcfaProcedure.Builder builder, XcfaEdge edge, List<Stmt> oldStmts, List<Stmt> newStmts) {
-		List<Stmt> stmts = new ArrayList<>();
+	private boolean replaceStmt(XcfaProcedure.Builder builder, XcfaEdge edge, List<XcfaLabel> oldStmts, List<XcfaLabel> newStmts) {
+		List<XcfaLabel> stmts = new ArrayList<>();
 		int i = 0;
-		for (Stmt stmt : edge.getLabels()) {
+		for (XcfaLabel stmt : edge.getLabels()) {
 			if(oldStmts.size() > i && stmt == oldStmts.get(i)) {
 				if(newStmts.size() > i) stmts.add(newStmts.get(i));
 				++i;

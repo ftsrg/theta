@@ -3,22 +3,22 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.utils.ExpressionReplacer;
-import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.utils.ExpressionReplacer;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -84,9 +84,9 @@ public class ReferenceToMemory extends ProcedurePass{
 		if(unifiedMemoryMap != null) FrontendMetadata.create(unifiedMemoryMap, "cType", fitsall);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			List<Stmt> newStmts = new ArrayList<>();
+			List<XcfaLabel> newStmts = new ArrayList<>();
 			boolean found = false;
-			for (Stmt stmt : edge.getLabels()) {
+			for (XcfaLabel stmt : edge.getLabels()) {
 				found = handleStmt(unifiedMemoryMap, ptr, dereferencedLut, newStmts, found, stmt, placeholderVariable);
 			}
 			if(found) {
@@ -109,8 +109,8 @@ public class ReferenceToMemory extends ProcedurePass{
 		}
 	}
 
-	private <P extends Type> boolean handleStmt(Expr<?> memoryMap, CComplexType ptr, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> dereferencedLut, List<Stmt> newStmts, boolean found, Stmt stmt, VarDecl<?> placeholderVariable) {
-		Optional<Stmt> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
+	private <P extends Type> boolean handleStmt(Expr<?> memoryMap, CComplexType ptr, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> dereferencedLut, List<XcfaLabel> newStmts, boolean found, XcfaLabel stmt, VarDecl<?> placeholderVariable) {
+		Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
 			if (expr instanceof Dereference) {
 				Optional<? extends Expr<?>> replaced = ExpressionReplacer.replace(memoryMap, typeExpr -> {
 					if (typeExpr.equals(placeholderVariable.getRef())) {
@@ -138,7 +138,7 @@ public class ReferenceToMemory extends ProcedurePass{
 			newStmts.addAll(XcfaStmtUtils.replaceVarWithArrayItem(newStmt.get(), dereferencedLut));
 		}
 		else {
-			List<Stmt> stmts = XcfaStmtUtils.replaceVarWithArrayItem(stmt, dereferencedLut);
+			List<XcfaLabel> stmts = XcfaStmtUtils.replaceVarWithArrayItem(stmt, dereferencedLut);
 			newStmts.addAll(stmts);
 			if(stmts.size() != 1 || !stmts.get(0).equals(stmt)) found = true;
 		}

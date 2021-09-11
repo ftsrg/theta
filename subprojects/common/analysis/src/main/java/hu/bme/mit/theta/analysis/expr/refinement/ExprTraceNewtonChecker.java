@@ -287,11 +287,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public Stmt visit(XcfaStmt xcfaStmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public Stmt visit(SequenceStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
@@ -415,11 +410,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public Collection<VarDecl<?>> visit(XcfaStmt xcfaStmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
@@ -462,11 +452,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public Collection<VarDecl<?>> visit(XcfaStmt xcfaStmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
@@ -506,11 +491,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.singletonList(stmt.getVarDecl());
-            }
-
-            @Override
-            public Collection<VarDecl<?>> visit(XcfaStmt xcfaStmt, Void param) {
-                throw new UnsupportedOperationException();
             }
 
             @Override
