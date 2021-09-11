@@ -49,7 +49,7 @@ public class HavocAssignments extends ProcedurePass {
 					notFound = false;
 					builder.removeEdge(havocEdge.get());
 					builder.removeEdge(assignEdge);
-					XcfaEdge xcfaEdge = new XcfaEdge(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl())));
+					XcfaEdge xcfaEdge = XcfaEdge.of(havocEdge.get().getSource(), assignEdge.getTarget(), List.of(Havoc(a.getVarDecl())));
 					builder.addEdge(xcfaEdge);
 					FrontendMetadata.lookupMetadata(assignEdge).forEach((s, o) -> {
 						FrontendMetadata.create(xcfaEdge, s, o);

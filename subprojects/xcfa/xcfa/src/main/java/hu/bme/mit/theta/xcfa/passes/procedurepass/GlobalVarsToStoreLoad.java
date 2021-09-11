@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +65,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 				stmts.addAll(collectLoadStores(edgeStmt, varLut));
 			}
 			builder.removeEdge(edge);
-			XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), stmts);
+			XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), stmts);
 			FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 			builder.addEdge(xcfaEdge);
 

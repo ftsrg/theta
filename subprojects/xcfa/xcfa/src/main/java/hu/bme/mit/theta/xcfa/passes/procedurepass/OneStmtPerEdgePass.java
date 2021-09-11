@@ -38,7 +38,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
 			if(edge.isPresent()) {
 				notFound = false;
-				XcfaEdge xcfaEdge = new XcfaEdge(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
+				XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(), List.of(Skip()));
 				builder.addEdge(xcfaEdge);
 				FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
 				builder.removeEdge(edge.get());
@@ -51,7 +51,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++, Map.of());
 					builder.addLoc(interLoc);
 					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
-					XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, interLoc, List.of(stmt));
+					XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));
 					lastLoc = interLoc;
 					builder.addEdge(xcfaEdge);
 					FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));

@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -106,7 +106,7 @@ public class HavocPromotion extends ProcedurePass {
 		}
 		if(i == oldStmts.size()) {
 			builder.removeEdge(edge);
-			XcfaEdge newEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), stmts);
+			XcfaEdge newEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), stmts);
 			builder.addEdge(newEdge);
 			XcfaEdge originalEdge = reverseLut.getOrDefault(edge, edge);
 			forwardLut.put(originalEdge, newEdge);

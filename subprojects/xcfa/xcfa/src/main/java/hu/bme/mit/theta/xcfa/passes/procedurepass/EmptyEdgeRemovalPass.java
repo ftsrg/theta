@@ -112,7 +112,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 				}
 
 				// add the outgoing empty edge of the end location to the starting location
-				builder.addEdge(new XcfaEdge(startingLocation, endLocation.getOutgoingEdges().get(0).getTarget(), endLocation.getOutgoingEdges().get(0).getLabels()));
+				builder.addEdge(XcfaEdge.of(startingLocation, endLocation.getOutgoingEdges().get(0).getTarget(), endLocation.getOutgoingEdges().get(0).getLabels()));
 
 				// remove the old edges and locations
 				for (XcfaEdge edge : incomingEdges) {

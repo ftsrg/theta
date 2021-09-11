@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.model;
+package hu.bme.mit.theta.xcfa.model.utils;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -33,6 +33,8 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 
 import java.util.ArrayList;
 import java.util.List;

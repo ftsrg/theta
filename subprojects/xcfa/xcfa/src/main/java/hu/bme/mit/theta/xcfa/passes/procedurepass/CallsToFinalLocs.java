@@ -41,7 +41,7 @@ public class CallsToFinalLocs extends ProcedurePass {
 		builder.addLoc(finalLoc);
 		XcfaLocation oldFinalLoc = builder.getFinalLoc();
 		builder.setFinalLoc(finalLoc);
-		XcfaEdge toFinal = new XcfaEdge(oldFinalLoc, finalLoc, List.of());
+		XcfaEdge toFinal = XcfaEdge.of(oldFinalLoc, finalLoc, List.of());
 		builder.addEdge(toFinal);
 		builder.setErrorLoc(errorLoc);
 
@@ -51,9 +51,9 @@ public class CallsToFinalLocs extends ProcedurePass {
 				XcfaEdge xcfaEdge;
 				String procedure = ((XcfaCallStmt) e.get()).getProcedure();
 				if (errorFunc.contains(procedure)) {
-					xcfaEdge = new XcfaEdge(edge.getSource(), errorLoc, List.of());
+					xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
 				} else if (abortFunc.contains(procedure)) {
-					xcfaEdge = new XcfaEdge(edge.getSource(), finalLoc, List.of());
+					xcfaEdge = XcfaEdge.of(edge.getSource(), finalLoc, List.of());
 				} else {
 					continue;
 				}

@@ -114,7 +114,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			procBuilder.addProcedure(build);
 			if(build.getName().equals("main")) procBuilder.setMainProcedure(build);
 		}
-		XcfaProcess mainproc = procBuilder.build();
+		XcfaProcess mainproc = procBuilder.build(this);
 		builder.addProcess(mainproc);
 		builder.setMainProcess(mainproc);
 		return builder.build();
@@ -159,7 +159,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			XcfaLocation endinit = getAnonymousLoc(builder);
 			builder.addLoc(endinit);
 			propagateMetadata(function, endinit);
-			XcfaEdge edge = new XcfaEdge(init, endinit, param);
+			XcfaEdge edge = XcfaEdge.of(init, endinit, param);
 			builder.addEdge(edge);
 			propagateMetadata(function, edge);
 			init = endinit;
@@ -168,11 +168,11 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addLoc(ret);
 		propagateMetadata(function, ret);
 		XcfaLocation end = compound.accept(this, new ParamPack(builder, init, null, null, ret));
-		XcfaEdge edge = new XcfaEdge(end, ret, List.of());
+		XcfaEdge edge = XcfaEdge.of(end, ret, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(function, edge);
 		builder.setFinalLoc(ret);
-		return builder.build();
+		return builder.build(this);
 	}
 
 
@@ -191,7 +191,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation location = getAnonymousLoc(builder);
@@ -204,7 +204,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			Stack<Expr<?>> exprs = new Stack<>();
 			Expr<?> expr = rExpression;
 			VarDecl<?> var = createArrayWriteExpr((ArrayReadExpr<?, ? extends Type>) lValue, expr, exprs);
-			xcfaEdge = new XcfaEdge(initLoc, location, List.of(Stmt(Assign(cast(var, var.getType()), cast(exprs.pop(), var.getType())))));
+			xcfaEdge = XcfaEdge.of(initLoc, location, List.of(Stmt(Assign(cast(var, var.getType()), cast(exprs.pop(), var.getType())))));
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		} else if (lValue instanceof Dereference) {
@@ -221,12 +221,12 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 					cast(((Dereference<?, ?>) lValue).getOp(), ptrType),
 					cast(rExpression, type));
 			FrontendMetadata.create(write, "cType", new CArray(null, CComplexType.getType(((Dereference<?, ?>) lValue).getOp())));
-			xcfaEdge = new XcfaEdge(initLoc, location, List.of(Stmt(Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write))));
+			xcfaEdge = XcfaEdge.of(initLoc, location, List.of(Stmt(Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write))));
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		}
 		else {
-			xcfaEdge = new XcfaEdge(initLoc, location, List.of(Stmt(Assign(cast((VarDecl<?>) ((RefExpr<?>) lValue).getDecl(), ((VarDecl<?>) ((RefExpr<?>) lValue).getDecl()).getType()), cast(rExpression, rExpression.getType())))));
+			xcfaEdge = XcfaEdge.of(initLoc, location, List.of(Stmt(Assign(cast((VarDecl<?>) ((RefExpr<?>) lValue).getDecl(), ((VarDecl<?>) ((RefExpr<?>) lValue).getDecl()).getType()), cast(rExpression, rExpression.getType())))));
 			if(CComplexType.getType(lValue) instanceof CPointer && CComplexType.getType(rExpression) instanceof CPointer) {
 				checkState(rExpression instanceof RefExpr || rExpression instanceof Reference);
 				if(rExpression instanceof RefExpr) FrontendMetadata.create(lValue, "pointsTo", rExpression);
@@ -262,14 +262,14 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation location = getAnonymousLoc(builder);
 		builder.addLoc(location);
 		propagateMetadata(statement, location);
 
-		xcfaEdge = new XcfaEdge(initLoc, location, Collections.singletonList(Stmt(statement.getAssumeStmt())));
+		xcfaEdge = XcfaEdge.of(initLoc, location, Collections.singletonList(Stmt(statement.getAssumeStmt())));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return location;
@@ -286,10 +286,10 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
-		edge = new XcfaEdge(initLoc, breakLoc, List.of());
+		edge = XcfaEdge.of(initLoc, breakLoc, List.of());
 		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
@@ -312,7 +312,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation location = getAnonymousLoc(builder);
@@ -325,7 +325,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			initLoc = cStatement.accept(this, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
 		}
 		params.addAll(myParams.stream().map(CStatement::getExpression).collect(Collectors.toList()));
-		xcfaEdge = new XcfaEdge(initLoc, location, List.of(ProcedureCall(params, statement.getFunctionId())));
+		xcfaEdge = XcfaEdge.of(initLoc, location, List.of(ProcedureCall(params, statement.getFunctionId())));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return location;
@@ -356,7 +356,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		lastLoc = initLoc;
@@ -378,10 +378,10 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
-		edge = new XcfaEdge(initLoc, continueLoc, List.of());
+		edge = XcfaEdge.of(initLoc, continueLoc, List.of());
 		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
@@ -426,26 +426,26 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, innerEndLoc);
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation lastBody = body.accept(this, new ParamPack(builder, initLoc, endLoc, innerEndLoc, returnLoc));
-		xcfaEdge = new XcfaEdge(lastBody, innerEndLoc, List.of());
+		xcfaEdge = XcfaEdge.of(lastBody, innerEndLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation lastPre = buildWithoutPostStatement(guard, new ParamPack(builder, innerEndLoc, null, null, returnLoc));
-		xcfaEdge = new XcfaEdge(lastPre, innerInnerGuard, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(lastPre, innerInnerGuard, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastPre, outerInnerGuard, List.of(Stmt(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(lastPre, outerInnerGuard, List.of(Stmt(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation outerLastGuard = buildPostStatement(guard, new ParamPack(builder, outerInnerGuard, null, null, null));
 		XcfaLocation innerLastGuard = buildPostStatement(guard, new ParamPack(builder, innerInnerGuard, null, null, null));
-		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
+		xcfaEdge = XcfaEdge.of(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		xcfaEdge = new XcfaEdge(innerLastGuard, initLoc, List.of());
+		xcfaEdge = XcfaEdge.of(innerLastGuard, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return endLoc;
@@ -490,35 +490,35 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, initLoc);
 		builder.addLoc(startIncrement);
 		propagateMetadata(statement, startIncrement);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 
 		XcfaLocation lastInit = init.accept(this, new ParamPack(builder, initLoc, null, null, returnLoc));
 		XcfaLocation lastTest = buildWithoutPostStatement(guard, new ParamPack(builder, lastInit, null, null, returnLoc));
-		xcfaEdge = new XcfaEdge(lastTest, endInit, List.of(Stmt(Assume(Neq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(lastTest, endInit, List.of(Stmt(Assume(Neq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		xcfaEdge = new XcfaEdge(lastTest, outerLastTest, List.of(Stmt(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(lastTest, outerLastTest, List.of(Stmt(Assume(Eq(guard.getExpression(),  CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation innerLastGuard = buildPostStatement(guard, new ParamPack(builder, endInit, endLoc, startIncrement, returnLoc));
 		XcfaLocation lastBody = body.accept(this, new ParamPack(builder, innerLastGuard, endLoc, startIncrement, returnLoc));
-		xcfaEdge = new XcfaEdge(lastBody, startIncrement, List.of());
+		xcfaEdge = XcfaEdge.of(lastBody, startIncrement, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		if(increment!=null) {
 			XcfaLocation lastIncrement = increment.accept(this, new ParamPack(builder, startIncrement, null, null, returnLoc));
-			xcfaEdge = new XcfaEdge(lastIncrement, lastInit, List.of());
+			xcfaEdge = XcfaEdge.of(lastIncrement, lastInit, List.of());
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		} else {
-			xcfaEdge = new XcfaEdge(startIncrement, lastInit, List.of());
+			xcfaEdge = XcfaEdge.of(startIncrement, lastInit, List.of());
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		}
 		XcfaLocation outerLastGuard = buildPostStatement(guard, new ParamPack(builder, outerLastTest, endLoc, startIncrement, returnLoc));
-		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
+		xcfaEdge = XcfaEdge.of(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return endLoc;
@@ -535,10 +535,10 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
-		edge = new XcfaEdge(initLoc, getLoc(builder, statement.getLabel()), List.of());
+		edge = XcfaEdge.of(initLoc, getLoc(builder, statement.getLabel()), List.of());
 		builder.addLoc(getLoc(builder, statement.getLabel()));
 		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
 		builder.addLoc(unreachableLoc);
@@ -571,14 +571,14 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, elseBranch);
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation endGuard = buildWithoutPostStatement(guard, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
-		xcfaEdge = new XcfaEdge(endGuard, mainBranch, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(endGuard, mainBranch, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		xcfaEdge = new XcfaEdge(endGuard, elseBranch, List.of(Stmt(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+		xcfaEdge = XcfaEdge.of(endGuard, elseBranch, List.of(Stmt(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 
@@ -587,16 +587,16 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		if(elseStatement != null) {
 			XcfaLocation elseAfterGuard = buildPostStatement(guard, new ParamPack(builder, elseBranch, breakLoc, continueLoc, returnLoc));
 			XcfaLocation elseEnd = elseStatement.accept(this, new ParamPack(builder, elseAfterGuard, breakLoc, continueLoc, returnLoc));
-			xcfaEdge = new XcfaEdge(elseEnd, endLoc, List.of());
+			xcfaEdge = XcfaEdge.of(elseEnd, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		} else {
-			xcfaEdge = new XcfaEdge(elseBranch, endLoc, List.of());
+			xcfaEdge = XcfaEdge.of(elseBranch, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		}
 
-		xcfaEdge = new XcfaEdge(mainEnd, endLoc, List.of());
+		xcfaEdge = XcfaEdge.of(mainEnd, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return endLoc;	}
@@ -629,7 +629,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation endExpr = expr.accept(this, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
@@ -637,7 +637,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
 		VarDecl<?> key = builder.getParams().entrySet().iterator().next().getKey();
-		XcfaEdge edge = new XcfaEdge(endExpr, returnLoc, List.of(Stmt(Assign(cast(key, key.getType()), cast(CComplexType.getType(key.getRef()).castTo(expr.getExpression()), key.getType())))));
+		XcfaEdge edge = XcfaEdge.of(endExpr, returnLoc, List.of(Stmt(Assign(cast(key, key.getType()), cast(CComplexType.getType(key.getRef()).castTo(expr.getExpression()), key.getType())))));
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		return endLoc;	}
@@ -659,7 +659,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation endLoc = getAnonymousLoc(builder);
 		builder.addLoc(endLoc);
 		propagateMetadata(statement, endLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		XcfaLocation endInit = buildWithoutPostStatement(testValue, new ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc));
@@ -677,25 +677,25 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			propagateMetadata(statement, location);
 			XcfaEdge xcfaEdge;
 			if(lastLocation != null) {
-				xcfaEdge = new XcfaEdge(lastLocation, location, List.of());
+				xcfaEdge = XcfaEdge.of(lastLocation, location, List.of());
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 			}
 			if(cStatement instanceof CCase) {
 				XcfaLocation afterGuard = buildPostStatement(testValue, new ParamPack(builder, endInit, breakLoc, continueLoc, returnLoc));
-				xcfaEdge = new XcfaEdge(afterGuard, location, List.of(Stmt(Assume(Eq(testValue.getExpression(), ((CCase) cStatement).getExpr().getExpression())))));
+				xcfaEdge = XcfaEdge.of(afterGuard, location, List.of(Stmt(Assume(Eq(testValue.getExpression(), ((CCase) cStatement).getExpr().getExpression())))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 			} else if(cStatement instanceof CDefault) {
 				XcfaLocation afterGuard = buildPostStatement(testValue, new ParamPack(builder, endInit, breakLoc, continueLoc, returnLoc));
-				xcfaEdge = new XcfaEdge(afterGuard, location, List.of(Stmt(Assume(defaultExpr))));
+				xcfaEdge = XcfaEdge.of(afterGuard, location, List.of(Stmt(Assume(defaultExpr))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 			}
 			lastLocation = cStatement.accept(this, new ParamPack(builder, location, endLoc, continueLoc, returnLoc));
 		}
 		if(lastLocation != null) {
-			XcfaEdge xcfaEdge = new XcfaEdge(lastLocation, endLoc, List.of());
+			XcfaEdge xcfaEdge = XcfaEdge.of(lastLocation, endLoc, List.of());
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);
 		}
@@ -717,7 +717,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge xcfaEdge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		XcfaLocation endLoc = getAnonymousLoc(builder);
@@ -728,7 +728,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, outerBeforeGuard);
 		for(int i = 0; i < (UNROLL_COUNT == 0 ? 1 : UNROLL_COUNT); ++i) {
 			if (((CCompound) body).getcStatementList().size() == 0) {
-				xcfaEdge = new XcfaEdge(initLoc, endLoc, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+				xcfaEdge = XcfaEdge.of(initLoc, endLoc, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 				return endLoc;
@@ -742,21 +742,21 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 					builder.addLoc(initLoc);
 					propagateMetadata(statement, initLoc);
 				}
-				xcfaEdge = new XcfaEdge(testEndLoc, innerLoop, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+				xcfaEdge = XcfaEdge.of(testEndLoc, innerLoop, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
-				xcfaEdge = new XcfaEdge(testEndLoc, outerBeforeGuard, List.of(Stmt(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+				xcfaEdge = XcfaEdge.of(testEndLoc, outerBeforeGuard, List.of(Stmt(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 				XcfaLocation lastGuard = buildPostStatement(guard, new ParamPack(builder, innerLoop, endLoc, initLoc, returnLoc));
 				XcfaLocation lastBody = body.accept(this, new ParamPack(builder, lastGuard, endLoc, initLoc, returnLoc));
-				xcfaEdge = new XcfaEdge(lastBody, initLoc, List.of());
+				xcfaEdge = XcfaEdge.of(lastBody, initLoc, List.of());
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 			}
 		}
 		XcfaLocation outerLastGuard = buildPostStatement(guard, new ParamPack(builder, outerBeforeGuard, null, null, null));
-		xcfaEdge = new XcfaEdge(outerLastGuard, endLoc, List.of());
+		xcfaEdge = XcfaEdge.of(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
 		return endLoc;	}
@@ -778,7 +778,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		XcfaLocation initLoc = getLoc(builder, statement.getId());
 		builder.addLoc(initLoc);
 		propagateMetadata(statement, initLoc);
-		XcfaEdge edge = new XcfaEdge(lastLoc, initLoc, List.of());
+		XcfaEdge edge = XcfaEdge.of(lastLoc, initLoc, List.of());
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		lastLoc = initLoc;

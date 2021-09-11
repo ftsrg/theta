@@ -35,9 +35,9 @@ public class UnrollLoopsPass extends ProcedurePass{
 					builder.addLoc(copy);
 					for (XcfaEdge incomingEdge : new LinkedHashSet<>(location.getIncomingEdges())) {
 						builder.removeEdge(incomingEdge);
-						builder.addEdge(new XcfaEdge(incomingEdge.getSource(), copy, incomingEdge.getLabels()));
+						builder.addEdge(XcfaEdge.of(incomingEdge.getSource(), copy, incomingEdge.getLabels()));
 					}
-					builder.addEdge(new XcfaEdge(copy, location, List.of()));
+					builder.addEdge(XcfaEdge.of(copy, location, List.of()));
 				}
 				this.reverseEdges.addAll(collectReverseEdges(builder.getInitLoc()));
 			} else {
@@ -62,26 +62,26 @@ public class UnrollLoopsPass extends ProcedurePass{
 		});
 
 		//noinspection UnstableApiUsage
-		Streams.concat(forwardEdges.stream(), reverseEdges.stream()).forEach(xcfaEdge -> builder.addEdge(new XcfaEdge(locationLut.get(xcfaEdge.getSource()), locationLut.get(xcfaEdge.getTarget()), xcfaEdge.getLabels())));
+		Streams.concat(forwardEdges.stream(), reverseEdges.stream()).forEach(xcfaEdge -> builder.addEdge(XcfaEdge.of(locationLut.get(xcfaEdge.getSource()), locationLut.get(xcfaEdge.getTarget()), xcfaEdge.getLabels())));
 
 		for (XcfaEdge reverseEdge : reverseEdges) {
 			XcfaLocation source = lastLocationLut.get(reverseEdge.getSource());
 			XcfaLocation target = locationLut.get(reverseEdge.getTarget());
-			builder.addEdge(new XcfaEdge(source, target, reverseEdge.getLabels()));
+			builder.addEdge(XcfaEdge.of(source, target, reverseEdge.getLabels()));
 
 			for (XcfaEdge outgoingEdge : reverseEdge.getSource().getOutgoingEdges()) {
 				source = locationLut.get(reverseEdge.getSource());
 				if(forwardEdges.contains(outgoingEdge)) {
 					for (XcfaLocation forwardTarget : locationCopies.get(reverseEdge.getSource())) {
 						if(source != forwardTarget)
-							builder.addEdge(new XcfaEdge(source, forwardTarget, outgoingEdge.getLabels()));
+							builder.addEdge(XcfaEdge.of(source, forwardTarget, outgoingEdge.getLabels()));
 					}
 				}
 			}
 		}
 
-		builder.addEdge(new XcfaEdge(locationLut.get(builder.getErrorLoc()), builder.getErrorLoc(), List.of()));
-		builder.addEdge(new XcfaEdge(locationLut.get(builder.getFinalLoc()), builder.getFinalLoc(), List.of()));
+		builder.addEdge(XcfaEdge.of(locationLut.get(builder.getErrorLoc()), builder.getErrorLoc(), List.of()));
+		builder.addEdge(XcfaEdge.of(locationLut.get(builder.getFinalLoc()), builder.getFinalLoc(), List.of()));
 
 		return builder;
 	}

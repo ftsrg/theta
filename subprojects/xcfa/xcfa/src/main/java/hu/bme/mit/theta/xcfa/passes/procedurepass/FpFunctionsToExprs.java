@@ -160,7 +160,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 			}
 			if(found) {
 				builder.removeEdge(edge);
-				builder.addEdge(new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts));
+				builder.addEdge(XcfaEdge.of(edge.getSource(), edge.getTarget(), newStmts));
 			}
 		}
 		return builder;

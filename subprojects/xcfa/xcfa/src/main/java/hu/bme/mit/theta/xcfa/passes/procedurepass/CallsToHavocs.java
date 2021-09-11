@@ -52,7 +52,7 @@ public class CallsToHavocs extends ProcedurePass {
 						} else collect.add(stmt);
 					}
 					XcfaEdge xcfaEdge;
-					xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), collect);
+					xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
 					builder.removeEdge(edge);
 					builder.addEdge(xcfaEdge);
 					found = true;

@@ -214,7 +214,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 								else throw new UnsupportedOperationException("Unknown lhs-modifying stmt: " + stmt);
 							}
 						}
-						XcfaEdge lhsNewEdge = new XcfaEdge(lhsToRemove.getSource(), lhsToRemove.getTarget(), newStmts);
+						XcfaEdge lhsNewEdge = XcfaEdge.of(lhsToRemove.getSource(), lhsToRemove.getTarget(), newStmts);
 						newEdgeMap.put(lhsToRemove, lhsNewEdge);
 					}
 					final Expr<?> finalNewExpr = newExpr;
@@ -247,7 +247,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 								}
 							}
 						}
-						newEdgeMap.put(toRemove, new XcfaEdge(toRemove.getSource(), toRemove.getTarget(), newStmts));
+						newEdgeMap.put(toRemove, XcfaEdge.of(toRemove.getSource(), toRemove.getTarget(), newStmts));
 					}
 
 					if(canInline) {

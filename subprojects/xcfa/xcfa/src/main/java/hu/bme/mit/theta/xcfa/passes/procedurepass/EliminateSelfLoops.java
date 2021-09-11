@@ -34,10 +34,10 @@ public class EliminateSelfLoops extends ProcedurePass {
 			XcfaLocation source = selfLoop.getSource();
 			XcfaLocation target = XcfaLocation.copyOf(source);
 			builder.addLoc(target);
-			builder.addEdge(new XcfaEdge(source, target, List.of()));
+			builder.addEdge(XcfaEdge.of(source, target, List.of()));
 			for (XcfaEdge outgoingEdge : new LinkedHashSet<>(source.getOutgoingEdges())) {
 				builder.removeEdge(outgoingEdge);
-				builder.addEdge(new XcfaEdge(target, outgoingEdge.getTarget(), outgoingEdge.getLabels()));
+				builder.addEdge(XcfaEdge.of(target, outgoingEdge.getTarget(), outgoingEdge.getLabels()));
 			}
 		}
 		return builder;

@@ -19,10 +19,8 @@ package hu.bme.mit.theta.xcfa.model;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
@@ -46,9 +44,9 @@ public final class XcfaProcedure {
     private final XcfaLocation errorLoc;
     private final XcfaLocation finalLoc;
     private final ImmutableList<XcfaEdge> edges;
-    private XcfaProcess parent;
+    private final XcfaProcess parent;
 
-    private XcfaProcedure(final Builder builder) {
+    private XcfaProcedure(final Builder builder, final XcfaProcess parent) {
         params = ImmutableMap.copyOf(builder.params);
         localVars = ImmutableMap.copyOf(builder.localVars);
         locs = ImmutableList.copyOf(builder.locs);
@@ -57,72 +55,9 @@ public final class XcfaProcedure {
         errorLoc = builder.errorLoc;
         finalLoc = builder.finalLoc;
         edges = ImmutableList.copyOf(builder.edges);
-        edges.forEach(edge -> edge.setParent(this));
         name = builder.name;
         retType = builder.retType;
-    }
-
-    public XcfaProcedure(XcfaProcedure procedure) {
-        this(procedure, new LinkedHashMap<>());
-    }
-
-    public XcfaProcedure(XcfaProcedure procedure, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
-        FrontendMetadata.lookupMetadata(procedure).forEach((s, o) -> {
-            FrontendMetadata.create(this, s, o);
-        });
-        parent = null; // ProcessBuilder will fill out this field
-
-        Map<VarDecl<?>, Direction> paramCollectList = new LinkedHashMap<>();
-        procedure.params.forEach((varDecl, direction) -> {
-            VarDecl<?> newVar = VarDecl.copyOf(varDecl);
-            FrontendMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> FrontendMetadata.create(newVar.getRef(), s, o));
-            paramCollectList.put(newVar, direction);
-            newVarLut.put(varDecl, newVar);
-        });
-        params = ImmutableMap.copyOf(paramCollectList);
-
-        Map<VarDecl<?>, Optional<LitExpr<?>>> localVarsCollectList = new LinkedHashMap<>();
-        procedure.localVars.forEach((varDecl, litExpr) -> {
-            VarDecl<?> newVar = newVarLut.containsKey(varDecl) ? newVarLut.get(varDecl) : VarDecl.copyOf(varDecl);
-            FrontendMetadata.lookupMetadata(varDecl.getRef()).forEach((s, o) -> FrontendMetadata.create(newVar.getRef(), s, o));
-            localVarsCollectList.put(newVar, litExpr);
-            newVarLut.put(varDecl, newVar);
-        });
-        localVars = ImmutableMap.copyOf(localVarsCollectList);
-
-        Map<XcfaLocation, XcfaLocation> newLocLut = new LinkedHashMap<>();
-
-        List<XcfaLocation> locsCollectList = new ArrayList<>();
-        procedure.locs.forEach(loc -> {
-            XcfaLocation location = XcfaLocation.copyOf(loc);
-            FrontendMetadata.lookupMetadata(loc).forEach((s, o) -> {
-                FrontendMetadata.create(location, s, o);
-            });
-            locsCollectList.add(location);
-            newLocLut.put(loc, location);
-        });
-        locs = ImmutableList.copyOf(locsCollectList);
-        locs.forEach(location -> location.setParent(this));
-
-        initLoc = newLocLut.get(procedure.initLoc);
-        errorLoc = newLocLut.get(procedure.errorLoc);
-        if(errorLoc != null) errorLoc.setErrorLoc(true);
-        finalLoc = newLocLut.get(procedure.finalLoc);
-        if(finalLoc != null) finalLoc.setEndLoc(true);
-
-        List<XcfaEdge> edgeCollectList = new ArrayList<>();
-        procedure.edges.forEach(edge -> {
-            XcfaEdge xcfaEdge = XcfaEdge.copyOf(edge, newLocLut, newVarLut);
-            FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-                FrontendMetadata.create(xcfaEdge, s, o);
-            });
-            edgeCollectList.add(xcfaEdge);
-        });
-        edges = ImmutableList.copyOf(edgeCollectList);
-        edges.forEach(edge -> edge.setParent(this));
-
-        name = procedure.name;
-        retType = procedure.retType;
+        this.parent = parent;
     }
 
     public static Builder builder() {
@@ -220,10 +155,6 @@ public final class XcfaProcedure {
         return parent;
     }
 
-    void setParent(XcfaProcess xcfaProcess) {
-        this.parent = xcfaProcess;
-    }
-
     public Type getRetType() {
         return retType;
     }
@@ -241,14 +172,13 @@ public final class XcfaProcedure {
         private XcfaLocation errorLoc;
         private XcfaLocation finalLoc;
 
-        private boolean built;
+        private XcfaProcedure built = null;
 
         private Builder() {
             params = new LinkedHashMap<>();
             localVars = new LinkedHashMap<>();
             locs = new ArrayList<>();
             edges = new ArrayList<>();
-            built = false;
         }
 
         public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
@@ -294,7 +224,7 @@ public final class XcfaProcedure {
         }
 
         private void checkNotBuilt() {
-            checkState(!built, "A Procedure was already built.");
+            checkState(built == null, "A Procedure was already built.");
         }
 
 
@@ -411,15 +341,16 @@ public final class XcfaProcedure {
             finalLoc.setEndLoc(true);
         }
 
-        public XcfaProcedure build() {
+        public XcfaProcedure build(XcfaProcess process) {
             checkState(initLoc != null, "Initial location must be set.");
             checkState(finalLoc != null, "Final location must be set.");
             checkState(finalLoc.getOutgoingEdges().isEmpty(), "Final location cannot have outgoing edges.");
             if (errorLoc != null)
                 checkState(errorLoc.getOutgoingEdges().isEmpty(), "Error location cannot have outgoing edges.");
             Builder builder = XcfaPassManager.run(this);
-            built = true;
-            return new XcfaProcedure(builder);
+            XcfaProcedure procedure = new XcfaProcedure(builder, process);
+            built = procedure;
+            return procedure;
         }
 
         public void removeEdge(XcfaEdge xcfaEdge) {

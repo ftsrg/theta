@@ -16,7 +16,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaLabelVarReplacer;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -167,7 +167,7 @@ public class Utils {
 		ret.setInitLoc(locationLut.get(initLoc));
 		if(errorLoc != null) ret.setErrorLoc(locationLut.get(errorLoc));
 		for (XcfaEdge edge : edges) {
-			ret.addEdge(new XcfaEdge(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels()));
+			ret.addEdge(XcfaEdge.of(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels()));
 		}
 		return ret;
 	}

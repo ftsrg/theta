@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
@@ -50,9 +51,8 @@ public final class XCFA {
 
 	private XCFA(Builder builder) {
 		globalVars = ImmutableMap.copyOf(builder.globalVars);
-		processes = ImmutableList.copyOf(builder.processes);
-		processes.forEach(process -> process.setParent(this));
-		mainProcess = builder.mainProcess;
+		processes = builder.processes.stream().map(builder1 -> builder1.build(this)).collect(ImmutableList.toImmutableList());
+		mainProcess = builder.mainProcess.build(this);
 		name = builder.name;
 		dynamic = builder.dynamic;
 	}
@@ -166,12 +166,12 @@ public final class XCFA {
 
 	public static final class Builder {
 		private final Map<VarDecl<?>, Optional<LitExpr<?>>> globalVars;
-		private final List<XcfaProcess> processes;
-		private XcfaProcess mainProcess;
+		private final List<XcfaProcess.Builder> processes;
+		private XcfaProcess.Builder mainProcess;
 		private String name;
 		private boolean dynamic;
 
-		private boolean built;
+		private XCFA built = null;
 
 		private Builder() {
 			globalVars = new LinkedHashMap<>();
@@ -179,7 +179,7 @@ public final class XCFA {
 		}
 
 		private void checkNotBuilt() {
-			checkState(!built, "An XCFA was already built.");
+			checkState(built == null, "An XCFA was already built.");
 		}
 
 		// globalVars
@@ -193,21 +193,21 @@ public final class XCFA {
 		}
 
 		// processes
-		public List<XcfaProcess> getProcesses() {
+		public List<XcfaProcess.Builder> getProcesses() {
 			return processes;
 		}
 
-		public void addProcess(final XcfaProcess process) {
+		public void addProcess(final XcfaProcess.Builder process) {
 			checkNotBuilt();
 			processes.add(process);
 		}
 
 		// mainProcess
-		public XcfaProcess getMainProcess() {
+		public XcfaProcess.Builder getMainProcess() {
 			return mainProcess;
 		}
 
-		public void setMainProcess(final XcfaProcess mainProcess) {
+		public void setMainProcess(final XcfaProcess.Builder mainProcess) {
 			checkNotBuilt();
 			checkArgument(processes.contains(mainProcess), "Invalid main process.");
 			this.mainProcess = mainProcess;
@@ -224,11 +224,12 @@ public final class XCFA {
 		}
 
 		public XCFA build() {
-			checkNotBuilt();
+			if(built != null) return built;
+
 			checkState(mainProcess != null, "Main process must be set.");
 			Builder builder = XcfaPassManager.run(this);
 			XCFA xcfa = new XCFA(builder);
-			built = true;
+			built = xcfa;
 			return xcfa;
 		}
 	}

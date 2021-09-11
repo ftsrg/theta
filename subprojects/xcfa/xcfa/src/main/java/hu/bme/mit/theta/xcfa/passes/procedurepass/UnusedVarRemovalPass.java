@@ -72,7 +72,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 				}
 				if (newStmts.size() != edge.getLabels().size()) {
 					builder.removeEdge(edge);
-					XcfaEdge xcfaEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
+					XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), newStmts);
 					builder.addEdge(xcfaEdge);
 					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
 						FrontendMetadata.create(xcfaEdge, s, o);

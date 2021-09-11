@@ -20,10 +20,13 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,14 +35,25 @@ public final class XcfaEdge {
 	private final XcfaLocation target;
 
 	private final List<XcfaLabel> labels;
-	private XcfaProcedure parent;
 
-	public XcfaEdge(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+	private XcfaEdge(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.labels = ImmutableList.copyOf(labels);
 		source.addOutgoingEdge(this);
 		target.addIncomingEdge(this);
+	}
+
+	public XcfaEdge mapLabels(final Function<XcfaLabel, XcfaLabel> mapper) {
+		return new XcfaEdge(source, target, labels.stream().map(mapper).collect(Collectors.toList()));
+	}
+
+	public XcfaEdge withSource(final XcfaLocation source) {
+		return new XcfaEdge(source, target, labels);
+	}
+
+	public XcfaEdge withTarget(final XcfaLocation target) {
+		return new XcfaEdge(source, target, labels);
 	}
 
 	public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
@@ -48,11 +62,15 @@ public final class XcfaEdge {
 			XcfaLabel label1 = label.accept(new XcfaLabelVarReplacer(), newVarLut);
 			newStmts.add(label1);
 		}
-		XcfaEdge xcfaEdge = new XcfaEdge(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
+		XcfaEdge xcfaEdge = of(locationLut.get(edge.source), locationLut.get(edge.target), newStmts);
 		FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
 			FrontendMetadata.create(xcfaEdge, s, o);
 		});
 		return xcfaEdge;
+	}
+
+	public static XcfaEdge of(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+		return new XcfaEdge(source, target, labels);
 	}
 
 	public XcfaLocation getSource() {
@@ -78,11 +96,4 @@ public final class XcfaEdge {
 		).toString();
 	}
 
-	public XcfaProcedure getParent() {
-		return parent;
-	}
-
-	void setParent(XcfaProcedure xcfaProcedure) {
-		this.parent = xcfaProcedure;
-	}
 }

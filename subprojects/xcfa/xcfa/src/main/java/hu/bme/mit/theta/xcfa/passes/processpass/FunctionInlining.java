@@ -97,12 +97,12 @@ public class FunctionInlining extends ProcessPass {
 
 		for (XcfaProcedure.Builder procBuilder : alreadyInlined) {
 			UnusedVarRemovalPass.removeUnusedVars(procBuilder, usedVars);
-			XcfaProcedure procedure = procBuilder.build();
+			XcfaProcedure procedure = procBuilder.build(this);
 			newBuilder.addProcedure(procedure);
 			if(procBuilder == newMainProc) newBuilder.setMainProcedure(procedure);
 		}
 
-		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure).map(o -> (XcfaProcedure)o).forEach(procedure -> newBuilder.addProcedure(Utils.createBuilder(procedure).build()));
+		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure).map(o -> (XcfaProcedure)o).forEach(procedure -> newBuilder.addProcedure(Utils.createBuilder(procedure).build(this)));
 
 		return newBuilder;
 
@@ -151,7 +151,7 @@ public class FunctionInlining extends ProcessPass {
 				}
 			}
 			if (atLeastOneAssignmentTruncated) {
-				XcfaEdge newEdge = new XcfaEdge(edge.getSource(), edge.getTarget(), newStmts);
+				XcfaEdge newEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), newStmts);
 				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
 					FrontendMetadata.create(newEdge, s, o);
 				});
@@ -176,7 +176,7 @@ public class FunctionInlining extends ProcessPass {
 					FrontendMetadata.create(loc1, s, o);
 				});
 				procBuilder.addLoc(loc1);
-				XcfaEdge edge = new XcfaEdge(start, loc1, sublist(xcfaEdge.getLabels(), 0, i));
+				XcfaEdge edge = XcfaEdge.of(start, loc1, sublist(xcfaEdge.getLabels(), 0, i));
 				procBuilder.addEdge(edge);
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(edge, s, o);
@@ -189,7 +189,7 @@ public class FunctionInlining extends ProcessPass {
 					FrontendMetadata.create(loc1, s, o);
 				});
 				procBuilder.addLoc(loc1);
-				XcfaEdge edge = new XcfaEdge(loc1, end, sublist(xcfaEdge.getLabels(), i + 1, xcfaEdge.getLabels().size()));
+				XcfaEdge edge = XcfaEdge.of(loc1, end, sublist(xcfaEdge.getLabels(), i + 1, xcfaEdge.getLabels().size()));
 				procBuilder.addEdge(edge);
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(edge, s, o);
@@ -209,7 +209,7 @@ public class FunctionInlining extends ProcessPass {
 				locationLut.put(loc, copy);
 				procBuilder.addLoc(copy);
 			});
-			procedure.getEdges().forEach(e -> procBuilder.addEdge(new XcfaEdge(locationLut.get(e.getSource()), locationLut.get(e.getTarget()), e.getLabels())));
+			procedure.getEdges().forEach(e -> procBuilder.addEdge(XcfaEdge.of(locationLut.get(e.getSource()), locationLut.get(e.getTarget()), e.getLabels())));
 			procedure.getFinalLoc().setEndLoc(false);
 
 			int paramCnt = 0;
@@ -235,11 +235,11 @@ public class FunctionInlining extends ProcessPass {
 				}
 				++paramCnt;
 			}
-			XcfaEdge xcfaEdge1 = new XcfaEdge(start, locationLut.get(procedure.getInitLoc()), initStmts);
+			XcfaEdge xcfaEdge1 = XcfaEdge.of(start, locationLut.get(procedure.getInitLoc()), initStmts);
 			FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 				FrontendMetadata.create(xcfaEdge1, s, o);
 			});
-			XcfaEdge xcfaEdge2 = new XcfaEdge(locationLut.get(procedure.getFinalLoc()), end, retStmts);
+			XcfaEdge xcfaEdge2 = XcfaEdge.of(locationLut.get(procedure.getFinalLoc()), end, retStmts);
 			FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 				FrontendMetadata.create(xcfaEdge2, s, o);
 			});

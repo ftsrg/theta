@@ -26,7 +26,7 @@ public class SimpleLbePass extends ProcedurePass{
 			List<Stmt> stmts = new ArrayList<>(inEdge.getLabels());
 			stmts.addAll(outEdge.getLabels());
 
-			builder.addEdge(new XcfaEdge(inEdge.getSource(), outEdge.getTarget(), stmts));
+			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), stmts));
 		}
 		return builder;
 	}
