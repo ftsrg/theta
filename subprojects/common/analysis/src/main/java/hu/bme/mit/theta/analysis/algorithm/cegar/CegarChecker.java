@@ -61,6 +61,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	// counterexample checks
 	private CexStorage<S, A> cexStorage = new CexStorage<S, A>();
+	private boolean lastRoundNoNewCex = false;
 
 	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
 		notSolvableThrower = thrower;
@@ -135,7 +136,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			if (abstractorResult.isUnsafe()) {
 				// stopping verification, if there is no new cex to refine (it would stop with an error in the refiner anyways)
 				if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
-					notSolvableThrower.throwNoNewCexException();
+					if(lastRoundNoNewCex) {
+						notSolvableThrower.throwNoNewCexException();
+					} else {
+						lastRoundNoNewCex = true;
+					}
+				} else {
+					lastRoundNoNewCex = false;
 				}
 
 				P lastPrec = prec;

@@ -96,6 +96,9 @@ public class XcfaCli {
 	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", required = false)
 	boolean outputResults = false;
 
+	@Parameter(names = "--no-ctx-shoot-down")
+	boolean noCtxShootDown = false;
+
 	// @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
 
@@ -370,7 +373,11 @@ public class XcfaCli {
 				final SafetyResult<?, ?> status;
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-					CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(false));
+					if(noCtxShootDown) {
+						CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(false));
+					} else {
+						CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+					}
 					status = check(configuration);
 					if(statisticsfile!=null) {
 						writeStatistics(cfa);
