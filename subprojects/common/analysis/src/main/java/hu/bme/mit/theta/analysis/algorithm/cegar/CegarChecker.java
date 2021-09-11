@@ -55,13 +55,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Logger logger;
 
 	// controlled restart
-	// private Set<AbstractArg> args = new LinkedHashSet<>();
-	// private P lastPrecision = null;
+	//private Set<AbstractArg> args = new LinkedHashSet<>();
 	private static NotSolvableThrower notSolvableThrower = null;
 
 	// counterexample checks
 	private CexStorage<S, A> cexStorage = new CexStorage<S, A>();
-	private boolean lastRoundNoNewCex = false;
+	private boolean noNewCex = false;
+	private boolean argNotNew = false;
 
 	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
 		notSolvableThrower = thrower;
@@ -85,13 +85,14 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		return new CegarChecker<>(abstractor, refiner, logger);
 	}
 
+	/*
 	private class AbstractArg {
 		private final Collection<State> states;
-		private final P prec;
+		// private final P prec;
 
-		private AbstractArg(final Stream<ArgNode<S, A>> nodes, final P prec){
+		private AbstractArg(final Stream<ArgNode<S, A>> nodes) { //, final P prec){
 			states = nodes.map(ArgNode::getState).collect(Collectors.toList());
-			this.prec = prec;
+			// this.prec = prec;
 		}
 
 		@Override
@@ -99,14 +100,20 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			AbstractArg that = (AbstractArg) o;
-			return (states.equals(that.states) && prec.equals(that.prec));
+			return (states.equals(that.states)); //&& prec.equals(that.prec));
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(states, prec);
+			return Objects.hash(states);
 		}
+
+		//public int hashCode() {
+		//	return Objects.hash(states, prec);
+		//}
+
 	}
+	*/
 
 	@Override
 	public SafetyResult<S, A> check(final P initPrec) {
@@ -132,18 +139,25 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.VERBOSE, "Printing ARG..." + System.lineSeparator());
 			Graph g = ArgVisualizer.getDefault().visualize(arg);
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
+			/*
+			if(args.contains(new AbstractArg(arg.getNodes()))) {
+				logger.write(Level.MAINSTEP, "! ARG is NOT NEW"+System.lineSeparator());
+				argNotNew = true;
+			} else {
+				logger.write(Level.MAINSTEP, "! ARG is NEW"+System.lineSeparator());
+				argNotNew = false;
+			}
+			args.add(new AbstractArg(arg.getNodes()));
+			 */
 
 			if (abstractorResult.isUnsafe()) {
-				// stopping verification, if there is no new cex to refine (it would stop with an error in the refiner anyways)
-				if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
-					if(lastRoundNoNewCex) {
-						notSolvableThrower.throwNoNewCexException();
-					} else {
-						lastRoundNoNewCex = true;
-					}
-				} else {
-					lastRoundNoNewCex = false;
-				}
+				// stopping verification, if there is no new cex to refine AND the precision did not change (it would stop with an error in the refiner anyways)
+				//if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
+					// notSolvableThrower.throwNoNewCexException();
+					// noNewCex = true;
+				// } else {
+					// noNewCex = false;
+				// }
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
@@ -158,10 +172,15 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 				if(lastPrec.equals(prec)) {
 					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration"+System.lineSeparator());
+					// if(noNewCex && argNotNew) { // the precision did not change, there was no new cex added before that AND the cex was spurious -> stuck
+					//	notSolvableThrower.throwNoNewCexException();
+					//}
 				} else {
 					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration"+System.lineSeparator());
 				}
 			}
+
+			cexStorage.endOfIteration();
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 

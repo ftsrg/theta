@@ -21,6 +21,8 @@ import hu.bme.mit.theta.analysis.State;
 import java.util.Objects;
 
 public final class ArgEdge<S extends State, A extends Action> {
+	private static final int HASH_SEED = 3653;
+	private volatile int hashCode = 0;
 
 	@Override
 	public boolean equals(Object o) {
@@ -34,7 +36,16 @@ public final class ArgEdge<S extends State, A extends Action> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(source.getState(), target.getState(), action.toString());
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + source.getState().hashCode();
+			result = 31 * result + target.getState().hashCode();
+			result = 31 * result + action.toString().hashCode();
+			hashCode = result;
+		}
+		return result;
+		// return Objects.hash(source.getState(), target.getState(), action.toString());
 	}
 
 	private final ArgNode<S, A> source;

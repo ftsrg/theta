@@ -80,7 +80,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		if(optionalNewCex.isPresent()) {
 			cexToConcretize = optionalNewCex.get();
 		} else {
-			cexToConcretize = arg.getCexs().findFirst().get();
+			// ebben az esetben tobb is lehet - innen jon a nemdeterminizmus
+			cexToConcretize = cexStorage.getFirstCexInIteration();
 		}
 
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();

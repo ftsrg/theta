@@ -8,13 +8,25 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class CexStorage<S extends State, A extends Action> {
-	Set<Integer> counterexamples = new LinkedHashSet<>();
+	private Set<Integer> counterexamples = new LinkedHashSet<>();
+	private ArgTrace<S,A> firstCexInIteration = null;
+
+	public void endOfIteration() {
+		firstCexInIteration = null;
+	}
+
+	public ArgTrace<S,A> getFirstCexInIteration() {
+		return firstCexInIteration;
+	}
 
 	public void addCounterexample(ArgTrace<S,A> cex) {
 		counterexamples.add(cex.hashCode());
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
+		if(firstCexInIteration == null) {
+			firstCexInIteration = cex;
+		}
 		if(counterexamples.contains(cex.hashCode())) {
 			System.err.println("Counterexample WAS present before");
 			return false;
