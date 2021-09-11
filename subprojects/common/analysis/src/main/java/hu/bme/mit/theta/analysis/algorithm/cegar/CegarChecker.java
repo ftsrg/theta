@@ -55,12 +55,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Logger logger;
 
 	// controlled restart
-	//private Set<AbstractArg> args = new LinkedHashSet<>();
+	private Set<Integer> args = new LinkedHashSet<>();
 	private static NotSolvableThrower notSolvableThrower = null;
 
 	// counterexample checks
-	private CexStorage<S, A> cexStorage = new CexStorage<S, A>();
-	private boolean noNewCex = false;
+	private final CexStorage<S, A> cexStorage = new CexStorage<S, A>();
 	private boolean argNotNew = false;
 
 	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
@@ -85,14 +84,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		return new CegarChecker<>(abstractor, refiner, logger);
 	}
 
-	/*
 	private class AbstractArg {
 		private final Collection<State> states;
-		// private final P prec;
+		private final P prec;
 
-		private AbstractArg(final Stream<ArgNode<S, A>> nodes) { //, final P prec){
+		private AbstractArg(final Stream<ArgNode<S, A>> nodes, P prec) { //, final P prec){
 			states = nodes.map(ArgNode::getState).collect(Collectors.toList());
-			// this.prec = prec;
+			this.prec = prec;
 		}
 
 		@Override
@@ -100,20 +98,15 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			AbstractArg that = (AbstractArg) o;
-			return (states.equals(that.states)); //&& prec.equals(that.prec));
+			return (states.equals(that.states) && prec.equals(that.prec));
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(states);
+			return Objects.hash(states, prec);
 		}
 
-		//public int hashCode() {
-		//	return Objects.hash(states, prec);
-		//}
-
 	}
-	*/
 
 	@Override
 	public SafetyResult<S, A> check(final P initPrec) {
@@ -124,6 +117,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		RefinerResult<S, A, P> refinerResult = null;
 		AbstractorResult abstractorResult = null;
 		final ARG<S, A> arg = abstractor.createArg();
+		Integer lastAbstractArgHash = null;
 		P prec = initPrec;
 		int iteration = 0;
 		do {
@@ -139,16 +133,23 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.VERBOSE, "Printing ARG..." + System.lineSeparator());
 			Graph g = ArgVisualizer.getDefault().visualize(arg);
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
-			/*
-			if(args.contains(new AbstractArg(arg.getNodes()))) {
+
+			Integer abstractArgHash = new AbstractArg(arg.getNodes(), prec).hashCode();
+			if(lastAbstractArgHash != null && abstractArgHash.equals(lastAbstractArgHash)) {
+				logger.write(Level.MAINSTEP, "! ARG is SAME as last"+System.lineSeparator());
+				if(!argNotNew) {
+					argNotNew = true;
+					cexStorage.start();
+				}
+			} else if(args.contains(abstractArgHash)) {
 				logger.write(Level.MAINSTEP, "! ARG is NOT NEW"+System.lineSeparator());
-				argNotNew = true;
+				notSolvableThrower.throwNotSolvableException();
 			} else {
 				logger.write(Level.MAINSTEP, "! ARG is NEW"+System.lineSeparator());
 				argNotNew = false;
+				cexStorage.stop();
 			}
-			args.add(new AbstractArg(arg.getNodes()));
-			 */
+			args.add(new AbstractArg(arg.getNodes(), prec).hashCode());
 
 			if (abstractorResult.isUnsafe()) {
 				// stopping verification, if there is no new cex to refine AND the precision did not change (it would stop with an error in the refiner anyways)
@@ -158,6 +159,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				// } else {
 					// noNewCex = false;
 				// }
+
+				if(argNotNew && notSolvableThrower != null && arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
+					notSolvableThrower.throwNoNewCexException();
+				}
+				lastAbstractArgHash = new AbstractArg(arg.getNodes(), prec).hashCode();
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
@@ -172,15 +178,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 				if(lastPrec.equals(prec)) {
 					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration"+System.lineSeparator());
-					// if(noNewCex && argNotNew) { // the precision did not change, there was no new cex added before that AND the cex was spurious -> stuck
-					//	notSolvableThrower.throwNoNewCexException();
-					//}
 				} else {
 					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration"+System.lineSeparator());
 				}
-			}
 
-			cexStorage.endOfIteration();
+			}
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 

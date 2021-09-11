@@ -62,7 +62,8 @@ public final class StopCriterions {
 
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
-			return arg.getUnsafeNodes().findAny().isPresent(); // TODO delete && arg.getCexs().anyMatch(cex -> cexStorage.checkIfCounterexampleNew(cex));
+			// TODO is the second half superfluous?
+			return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs().anyMatch(cex -> cexStorage.checkIfCounterexampleNew(cex));
 		}
 
 		@Override

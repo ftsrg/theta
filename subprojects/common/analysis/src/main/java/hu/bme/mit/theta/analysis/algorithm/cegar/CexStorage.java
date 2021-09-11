@@ -10,29 +10,35 @@ import java.util.Set;
 public class CexStorage<S extends State, A extends Action> {
 	private Set<Integer> counterexamples = new LinkedHashSet<>();
 	private ArgTrace<S,A> firstCexInIteration = null;
+	private boolean active = false;
 
-	public void endOfIteration() {
-		firstCexInIteration = null;
+	public void stop() {
+		active = false;
 	}
 
-	public ArgTrace<S,A> getFirstCexInIteration() {
-		return firstCexInIteration;
+	public void start() {
+		counterexamples.clear();
+		active = true;
 	}
 
 	public void addCounterexample(ArgTrace<S,A> cex) {
-		counterexamples.add(cex.hashCode());
+		if(active) {
+			counterexamples.add(cex.hashCode());
+		}
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
-		if(firstCexInIteration == null) {
-			firstCexInIteration = cex;
-		}
-		if(counterexamples.contains(cex.hashCode())) {
-			System.err.println("Counterexample WAS present before");
-			return false;
+		if(active) {
+			if(counterexamples.contains(cex.hashCode())) {
+				System.err.println("Counterexample WAS present before");
+				return false;
+			} else {
+				System.err.println("Counterexample was NOT present before");
+				return true;
+			}
 		} else {
-			System.err.println("Counterexample was NOT present before");
 			return true;
 		}
+
 	}
 }

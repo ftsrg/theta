@@ -75,14 +75,17 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		assert !arg.isSafe() : "ARG must be unsafe";
 
 		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> cexStorage.checkIfCounterexampleNew(cex)).findFirst();
-		final ArgTrace<S, A> cexToConcretize;
+		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
+		/*
 		if(optionalNewCex.isPresent()) {
 			cexToConcretize = optionalNewCex.get();
 		} else {
+
 			// ebben az esetben tobb is lehet - innen jon a nemdeterminizmus
 			cexToConcretize = cexStorage.getFirstCexInIteration();
 		}
+		 */
 
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
