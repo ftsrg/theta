@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -81,6 +83,16 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 	@Override
 	public Integer visit(LoopStmt stmt, Void param) {
 		return stmt.accept(this,null)+1;
+	}
+
+	@Override
+	public <DeclType extends Type> Integer visit(PushStmt<DeclType> stmt, Void param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <DeclType extends Type> Integer visit(PopStmt<DeclType> stmt, Void param) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

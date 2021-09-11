@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -128,6 +130,16 @@ public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, Va
     @Override
     public XcfaLabel visit(LoopStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
         throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public <DeclType extends Type> XcfaLabel visit(PushStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <DeclType extends Type> XcfaLabel visit(PopStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

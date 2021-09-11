@@ -35,4 +35,8 @@ public interface StmtVisitor<P, R> {
 
 	R visit(LoopStmt stmt, P param);
 
+	<DeclType extends Type> R visit(PushStmt<DeclType> stmt, P param);
+
+	<DeclType extends Type> R visit(PopStmt<DeclType> stmt, P param);
+
 }

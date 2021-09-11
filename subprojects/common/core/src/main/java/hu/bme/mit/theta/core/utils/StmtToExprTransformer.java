@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -156,6 +158,16 @@ final class StmtToExprTransformer {
 		@Override
 		public StmtUnfoldResult visit(LoopStmt stmt, VarIndexing indexing) {
 			throw new UnsupportedOperationException(String.format("Loop statement %s was not unrolled",stmt));
+		}
+
+		@Override
+		public <DeclType extends Type> StmtUnfoldResult visit(PushStmt<DeclType> stmt, VarIndexing param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <DeclType extends Type> StmtUnfoldResult visit(PopStmt<DeclType> stmt, VarIndexing param) {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

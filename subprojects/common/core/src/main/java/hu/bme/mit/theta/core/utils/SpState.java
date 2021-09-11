@@ -179,5 +179,15 @@ public class SpState {
         public SpState visit(LoopStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public <DeclType extends Type> SpState visit(PushStmt<DeclType> stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <DeclType extends Type> SpState visit(PopStmt<DeclType> stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

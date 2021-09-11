@@ -25,6 +25,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -174,6 +176,16 @@ public final class WpState {
 		public WpState visit(LoopStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
 		@Override
+		public <DeclType extends Type> WpState visit(PushStmt<DeclType> stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(PopStmt<DeclType> stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
 			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
 			final int constCount = state.constCount;
@@ -224,6 +236,16 @@ public final class WpState {
 
 		@Override
 		public WpState visit(LoopStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+		@Override
+		public <DeclType extends Type> WpState visit(PushStmt<DeclType> stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(PopStmt<DeclType> stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
 
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {

@@ -168,6 +168,16 @@ public class StmtSimplifier {
             }
             throw new IllegalArgumentException(String.format("Couldn't unroll loop statement %s", stmt));
         }
+
+        @Override
+        public <DeclType extends Type> SimplifyResult visit(PushStmt<DeclType> stmt, MutableValuation param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <DeclType extends Type> SimplifyResult visit(PopStmt<DeclType> stmt, MutableValuation param) {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

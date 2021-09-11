@@ -9,6 +9,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -92,6 +94,16 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 	@Override
 	public List<XcfaLabel> visit(LoopStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public <DeclType extends Type> List<XcfaLabel> visit(PushStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <DeclType extends Type> List<XcfaLabel> visit(PopStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

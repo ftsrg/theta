@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -32,13 +33,15 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
-import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -52,10 +55,11 @@ import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
-import java.util.*;
-
-import hu.bme.mit.theta.common.container.Containers;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -305,6 +309,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Stmt visit(LoopStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public <DeclType extends Type> Stmt visit(PushStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public <DeclType extends Type> Stmt visit(PopStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -426,6 +440,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PushStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -468,6 +492,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PushStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -510,6 +544,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PushStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 

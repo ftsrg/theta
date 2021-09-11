@@ -25,6 +25,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -158,6 +160,16 @@ public class AssignmentChainRemoval extends ProcedurePass {
 					@Override
 					public Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>> visit(LoopStmt stmt, Void param) {
 						throw new UnsupportedOperationException("Not yet supported");
+					}
+
+					@Override
+					public <DeclType extends Type> Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>> visit(PushStmt<DeclType> stmt, Void param) {
+						throw new UnsupportedOperationException();
+					}
+
+					@Override
+					public <DeclType extends Type> Tuple3<Optional<VarDecl<?>>, Set<VarDecl<?>>, Set<VarDecl<?>>> visit(PopStmt<DeclType> stmt, Void param) {
+						throw new UnsupportedOperationException();
 					}
 				}, null);
 				Optional<VarDecl<?>> lhsVar = vars.get1();

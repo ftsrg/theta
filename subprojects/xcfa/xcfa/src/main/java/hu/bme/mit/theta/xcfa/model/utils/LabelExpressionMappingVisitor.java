@@ -6,6 +6,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.PopStmt;
+import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -66,6 +68,16 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 	@Override
 	public Optional<XcfaLabel> visit(LoopStmt stmt, Function<Expr<T>, Optional<Expr<T>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public <DeclType extends Type> Optional<XcfaLabel> visit(PushStmt<DeclType> stmt, Function<Expr<T>, Optional<Expr<T>>> param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <DeclType extends Type> Optional<XcfaLabel> visit(PopStmt<DeclType> stmt, Function<Expr<T>, Optional<Expr<T>>> param) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

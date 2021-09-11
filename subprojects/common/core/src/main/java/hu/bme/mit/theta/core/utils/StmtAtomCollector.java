@@ -64,6 +64,16 @@ public class StmtAtomCollector {
             stmt.getStmt().accept(this, atoms);
             return null;
         }
+
+        @Override
+        public <DeclType extends Type> Void visit(PushStmt<DeclType> stmt, Set<Expr<BoolType>> param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Set<Expr<BoolType>> param) {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }
