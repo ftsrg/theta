@@ -73,7 +73,7 @@ public class PathUtils {
 	 */
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return unfold(expr, VarIndexing.all(i));
+		return unfold(expr, BasicVarIndexing.all(i));
 	}
 
 	/**
@@ -99,7 +99,7 @@ public class PathUtils {
 	 */
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return foldin(expr, VarIndexing.all(i));
+		return foldin(expr, BasicVarIndexing.all(i));
 	}
 
 	/**
@@ -137,7 +137,7 @@ public class PathUtils {
 	 */
 	public static Valuation extractValuation(final Valuation model, final int i) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexing.all(i));
+		return extractValuation(model, BasicVarIndexing.all(i));
 	}
 
 	/**
@@ -175,7 +175,7 @@ public class PathUtils {
 	public static Valuation extractValuation(final Valuation model, final int i,
 											 final Collection<? extends VarDecl<?>> varDecls) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexing.all(i), varDecls);
+		return extractValuation(model, BasicVarIndexing.all(i), varDecls);
 	}
 
 	////

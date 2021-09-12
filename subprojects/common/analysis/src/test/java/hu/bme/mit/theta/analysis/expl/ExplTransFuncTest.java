@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,7 +37,6 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ExplTransFuncTest {
@@ -50,7 +50,7 @@ public class ExplTransFuncTest {
 	public void testNormal() {
 		final ExprAction action = mock(ExprAction.class);
 		doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
-		when(action.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(action.nextIndexing()).thenReturn(BasicVarIndexing.all(1));
 
 		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action, prec);
 		Assert.assertEquals(1, succStates.size());
@@ -62,7 +62,7 @@ public class ExplTransFuncTest {
 	public void testBottom() {
 		final ExprAction action = mock(ExprAction.class);
 		doReturn(Eq(x.getRef(), Int(2))).when(action).toExpr();
-		when(action.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(action.nextIndexing()).thenReturn(BasicVarIndexing.all(1));
 
 		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action, prec);
 		Assert.assertEquals(1, succStates.size());

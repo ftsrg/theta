@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.Collections;
 
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,7 +44,7 @@ public class ExprStatesTest {
 	@Test
 	public void test1() {
 		final Expr<BoolType> expr = Geq(vx.getRef(), Int(0));
-		final VarIndexing idx = VarIndexing.all(0);
+		final VarIndexing idx = BasicVarIndexing.all(0);
 
 		Assert.assertEquals(1, ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 1).size());
 		Assert.assertEquals(5, ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 5).size());
@@ -53,7 +54,7 @@ public class ExprStatesTest {
 	@Test
 	public void test2() {
 		final Expr<BoolType> expr = BoolExprs.And(Geq(vx.getRef(), Int(0)), Geq(Int(3), vx.getRef()));
-		final VarIndexing idx = VarIndexing.all(0);
+		final VarIndexing idx = BasicVarIndexing.all(0);
 
 		Assert.assertEquals(2, ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 2).size());
 		Assert.assertEquals(4, ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 4).size());

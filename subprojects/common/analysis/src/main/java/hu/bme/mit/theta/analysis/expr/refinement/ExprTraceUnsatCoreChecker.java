@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.IndexedVars;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -63,7 +64,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 		final int stateCount = trace.getStates().size();
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(VarIndexing.all(0));
+		indexings.add(BasicVarIndexing.all(0));
 
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));

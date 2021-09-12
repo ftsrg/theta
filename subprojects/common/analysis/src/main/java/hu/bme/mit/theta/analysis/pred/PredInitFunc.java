@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 
 public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
 
@@ -43,8 +43,8 @@ public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
 	@Override
 	public Collection<? extends PredState> getInitStates(final PredPrec prec) {
 		checkNotNull(prec);
-		final Collection<PredState> initStates = predAbstractor.createStatesForExpr(initExpr, VarIndexing.all(0), prec,
-				VarIndexing.all(0));
+		final Collection<PredState> initStates = predAbstractor.createStatesForExpr(initExpr, BasicVarIndexing.all(0), prec,
+				BasicVarIndexing.all(0));
 		return initStates.isEmpty() ? Collections.singleton(PredState.bottom()) : initStates;
 	}
 

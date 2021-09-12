@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
@@ -45,7 +45,7 @@ public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
 	public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
 		checkNotNull(prec);
 		final Collection<ExplState> initStates = ExprStates.createStatesForExpr(solver, initExpr, 0, prec::createState,
-				VarIndexing.all(0));
+				BasicVarIndexing.all(0));
 		return initStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : initStates;
 	}
 

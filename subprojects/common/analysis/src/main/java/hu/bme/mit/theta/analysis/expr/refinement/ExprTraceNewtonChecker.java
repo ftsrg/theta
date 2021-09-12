@@ -45,6 +45,7 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -125,7 +126,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         final int stateCount = ftrace.getStates().size();
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-        indexings.add(VarIndexing.all(0));
+        indexings.add(BasicVarIndexing.all(0));
 
         final Valuation model;
         final Collection<Expr<BoolType>> unsatCore;
@@ -135,7 +136,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             for (int i = 1; i < stateCount; ++i) {
                 var curIndexing = indexings.get(i - 1);
                 for(var stmt : ftrace.getAction(i - 1).getStmts()) {
-                    var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
+                    var stmtUnfoldResult = StmtUtils.toExpr(stmt, BasicVarIndexing.all(0));
                     solver.track(PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing));
                     curIndexing = curIndexing.add(stmtUnfoldResult.getIndexing());
                 }
@@ -243,14 +244,14 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         final Trace<? extends ExprState, ? extends StmtAction> trace
     ) {
         final var stateCount = trace.getStates().size();
-        var curIndexing = VarIndexing.all(0);
+        var curIndexing = BasicVarIndexing.all(0);
 
         final var actions = new ArrayList<NewtonAction>();
 
         for (int i = 1; i < stateCount; ++i) {
             final var stmts = new ArrayList<Stmt>();
             for(final var stmt : trace.getAction(i - 1).getStmts()) {
-                final var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
+                final var stmtUnfoldResult = StmtUtils.toExpr(stmt, BasicVarIndexing.all(0));
                 final var stmtExpr = PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing);
 
                 if(unsatCore.contains(stmtExpr)) {

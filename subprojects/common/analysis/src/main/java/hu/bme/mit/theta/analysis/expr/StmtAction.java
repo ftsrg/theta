@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.utils.VarIndexing.all;
-
-import java.util.List;
-
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
+
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.utils.BasicVarIndexing.all;
 
 public abstract class StmtAction implements ExprAction {
 

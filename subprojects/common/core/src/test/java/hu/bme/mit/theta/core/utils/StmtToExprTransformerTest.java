@@ -82,7 +82,7 @@ public class StmtToExprTransformerTest {
 	public void test() {
 		VarPoolUtil.returnInt(TEMP0);
 
-		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
+		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, BasicVarIndexing.all(0));
 		final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
 		Assert.assertEquals(expectedExprs, actualExprs);
 	}

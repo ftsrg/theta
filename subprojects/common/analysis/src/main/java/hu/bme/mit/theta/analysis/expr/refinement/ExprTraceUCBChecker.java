@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -78,7 +79,7 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
         final int stateCount = trace.getStates().size();
 
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-        indexings.add(VarIndexing.all(0));
+        indexings.add(BasicVarIndexing.all(0));
 
         final Valuation model;
         final Collection<Expr<BoolType>> unsatCore;

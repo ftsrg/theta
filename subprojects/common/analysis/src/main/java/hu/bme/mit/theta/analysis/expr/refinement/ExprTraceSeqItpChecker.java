@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Interpolant;
@@ -70,7 +71,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 			final ItpPattern pattern = solver.createSeqPattern(markers);
 
 			final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-			indexings.add(VarIndexing.all(0));
+			indexings.add(BasicVarIndexing.all(0));
 
 			solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
 			solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));

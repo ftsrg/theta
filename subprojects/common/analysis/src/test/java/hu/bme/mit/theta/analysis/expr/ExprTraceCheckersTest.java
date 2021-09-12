@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,7 +47,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -71,7 +71,7 @@ public final class ExprTraceCheckersTest {
 
 		final ExprAction actionMock = mock(ExprAction.class);
 		doReturn(trans).when(actionMock).toExpr();
-		when(actionMock.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(actionMock.nextIndexing()).thenReturn(BasicVarIndexing.all(1));
 
 		final List<ExprAction> actions = Arrays.asList(actionMock, actionMock, actionMock);
 		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
@@ -94,11 +94,11 @@ public final class ExprTraceCheckersTest {
 
 		final ExprAction action1Mock = mock(ExprAction.class);
 		doReturn(trans1).when(action1Mock).toExpr();
-		when(action1Mock.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(action1Mock.nextIndexing()).thenReturn(BasicVarIndexing.all(1));
 
 		final ExprAction action2Mock = mock(ExprAction.class);
 		doReturn(trans2).when(action2Mock).toExpr();
-		when(action2Mock.nextIndexing()).thenReturn(VarIndexing.all(0));
+		when(action2Mock.nextIndexing()).thenReturn(BasicVarIndexing.all(0));
 
 		final List<ExprAction> actions = Arrays.asList(action1Mock, action2Mock);
 		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);

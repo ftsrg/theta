@@ -24,7 +24,7 @@ import java.util.Collections;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 
 public final class PredTransFunc implements TransFunc<PredState, ExprAction, PredPrec> {
 
@@ -46,7 +46,7 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		checkNotNull(prec);
 
 		final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
-				And(state.toExpr(), action.toExpr()), VarIndexing.all(0), prec, action.nextIndexing());
+				And(state.toExpr(), action.toExpr()), BasicVarIndexing.all(0), prec, action.nextIndexing());
 		return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
 	}
 
