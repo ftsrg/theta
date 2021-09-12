@@ -157,7 +157,8 @@ public class BasicVarIndexing implements VarIndexing {
 		return defaultIndex + offset;
 	}
 
-	public static class BasicVarIndexingBuilder extends VarIndexingBuilder {
+	public static class BasicVarIndexingBuilder implements VarIndexingBuilder {
+		private int defaultIndex;
 		private Map<VarDecl<?>, Integer> varToOffset;
 
 		private BasicVarIndexingBuilder(final int defaultIndex) {
