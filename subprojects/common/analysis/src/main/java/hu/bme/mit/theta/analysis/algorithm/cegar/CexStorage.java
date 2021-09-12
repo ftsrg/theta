@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -19,7 +20,7 @@ public class CexStorage<S extends State, A extends Action> {
 	private final Map<Integer, Set<Integer>> counterexamples = new LinkedHashMap<>();
 	private Integer currentArgHash = null;
 
-	public void setCurrentArg(AbstractArg arg) {
+	public <P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
 		currentArgHash = arg.hashCode();
 	}
 
@@ -53,5 +54,9 @@ public class CexStorage<S extends State, A extends Action> {
 		} else {
 			return true;
 		}
+	}
+
+	public <P extends Prec> boolean checkIfArgNew(AbstractArg<S,A,P> arg) {
+		return counterexamples.containsKey(arg.hashCode());
 	}
 }

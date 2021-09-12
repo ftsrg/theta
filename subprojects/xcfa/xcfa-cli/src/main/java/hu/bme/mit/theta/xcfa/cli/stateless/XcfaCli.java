@@ -373,9 +373,13 @@ public class XcfaCli {
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
 					if(noArgCexCheck) {
-						ArgCexCheckHandler.instance.setArgCexCheck(false);
+						ArgCexCheckHandler.instance.setArgCexCheck(false, false);
 					} else {
-						ArgCexCheckHandler.instance.setArgCexCheck(true);
+						if(refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
+							ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+						} else {
+							ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+						}
 					}
 					status = check(configuration);
 					if(statisticsfile!=null) {

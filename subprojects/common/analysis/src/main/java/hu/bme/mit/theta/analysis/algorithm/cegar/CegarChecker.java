@@ -103,9 +103,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
 			if (abstractorResult.isUnsafe()) {
-				if(arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
-					ArgCexCheckHandler.instance.throwNotSolvableException();
-				}
+				ArgCexCheckHandler.instance.checkAndStop(arg, prec, cexStorage);
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

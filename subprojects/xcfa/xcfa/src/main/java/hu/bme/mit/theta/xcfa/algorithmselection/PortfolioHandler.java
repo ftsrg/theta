@@ -56,7 +56,11 @@ public class PortfolioHandler {
 		writeCfaStatistics(cfa);
 
 		for (Configuration configuration : configurationList) {
-			ArgCexCheckHandler.instance.setArgCexCheck(true);
+			if(configuration.refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+			} else {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+			}
 			try {
 				System.out.println(configuration);
 				statisticsPrint(configuration.toString());

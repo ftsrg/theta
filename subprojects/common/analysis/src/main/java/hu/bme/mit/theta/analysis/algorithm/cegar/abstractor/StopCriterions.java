@@ -102,7 +102,7 @@ public final class StopCriterions {
 					.toString();
 		}
 
-		// this kind of stop criterion does not use ctx comparisons (yet)
+		// this kind of stop criterion does not use ctx comparisons
 		public void addCexStorage(CexStorage<S, A> cexStorage) {}
 	}
 
