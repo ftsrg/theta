@@ -51,10 +51,9 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
-import hu.bme.mit.theta.xcfa.algorithmselection.NoNewCexException;
-import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
-import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioNotSolvableThrower;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
@@ -96,8 +95,8 @@ public class XcfaCli {
 	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", required = false)
 	boolean outputResults = false;
 
-	@Parameter(names = "--no-ctx-shoot-down")
-	boolean noCtxShootDown = false;
+	@Parameter(names = "--no-arg-cex-check")
+	boolean noArgCexCheck = false;
 
 	// @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
@@ -373,10 +372,10 @@ public class XcfaCli {
 				final SafetyResult<?, ?> status;
 				if(!portfolio) {
 					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-					if(noCtxShootDown) {
-						CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(false));
+					if(noArgCexCheck) {
+						ArgCexCheckHandler.instance.setArgCexCheck(false);
 					} else {
-						CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+						ArgCexCheckHandler.instance.setArgCexCheck(true);
 					}
 					status = check(configuration);
 					if(statisticsfile!=null) {
@@ -516,10 +515,6 @@ public class XcfaCli {
 			return configuration.check();
 		} catch (final NotSolvableException exception) {
 			System.err.println("Configuration failed (stuck)");
-			System.exit(-42); // TODO here for benchexec reasons; tool info should be changed instead
-			throw exception;
-		} catch (final NoNewCexException exception) {
-			System.err.println("Configuration failed (no new cex found)");
 			System.exit(-30); // TODO here for benchexec reasons; tool info should be changed instead
 			throw exception;
 		} catch (final Exception ex) {

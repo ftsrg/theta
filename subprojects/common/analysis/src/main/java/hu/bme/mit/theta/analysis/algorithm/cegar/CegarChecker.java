@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -55,15 +56,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Refiner<S, A, P> refiner;
 	private final Logger logger;
 
-	// controlled restart
-	private static NotSolvableThrower notSolvableThrower = null;
-
 	// counterexample checks
 	private final CexStorage<S, A> cexStorage = new CexStorage<S, A>();
-
-	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
-		notSolvableThrower = thrower;
-	}
 
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
@@ -92,7 +86,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		RefinerResult<S, A, P> refinerResult = null;
 		AbstractorResult abstractorResult = null;
 		final ARG<S, A> arg = abstractor.createArg();
-		Integer lastAbstractArgHash = null;
 		P prec = initPrec;
 		int iteration = 0;
 		do {
@@ -110,16 +103,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
 			if (abstractorResult.isUnsafe()) {
-				// stopping verification, if there is no new cex to refine AND the precision did not change (it would stop with an error in the refiner anyways)
-				//if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
-					// notSolvableThrower.throwNoNewCexException();
-					// noNewCex = true;
-				// } else {
-					// noNewCex = false;
-				// }
-
-				if(notSolvableThrower!= null && arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
-					notSolvableThrower.throwNoNewCexException();
+				if(arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
+					ArgCexCheckHandler.instance.throwNotSolvableException();
 				}
 
 				P lastPrec = prec;

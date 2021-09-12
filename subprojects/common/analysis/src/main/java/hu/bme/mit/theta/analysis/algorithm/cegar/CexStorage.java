@@ -6,6 +6,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -18,14 +19,13 @@ public class CexStorage<S extends State, A extends Action> {
 	private final Map<Integer, Set<Integer>> counterexamples = new LinkedHashMap<>();
 	private Integer currentArgHash = null;
 
-	// TODO any other calls of this needed outside the abstractor?
 	public void setCurrentArg(AbstractArg arg) {
 		currentArgHash = arg.hashCode();
 	}
 
 	public void addCounterexample(ArgTrace<S,A> cex) {
 		checkState(currentArgHash!=null);
-//		if(active) {
+		if(ArgCexCheckHandler.instance.shouldCheck()) {
 			int cexHashCode = cex.hashCode();
 			if(counterexamples.containsKey(currentArgHash)) {
 				counterexamples.get(currentArgHash).add(cexHashCode);
@@ -34,12 +34,12 @@ public class CexStorage<S extends State, A extends Action> {
 				cexHashCodes.add(cexHashCode);
 				counterexamples.put(currentArgHash, cexHashCodes);
 			}
-//		}
+		}
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
 		checkState(currentArgHash!=null);
-//		if(active) {
+		if(ArgCexCheckHandler.instance.shouldCheck()) {
 			int cexHashCode = cex.hashCode();
 			if (counterexamples.containsKey(currentArgHash)) {
 				if (counterexamples.get(currentArgHash).contains(cexHashCode)) {
@@ -50,8 +50,8 @@ public class CexStorage<S extends State, A extends Action> {
 
 			System.err.println("Counterexample was NOT present before");
 			return true;
-//		} else {
-//			return true;
-//		}
+		} else {
+			return true;
+		}
 	}
 }

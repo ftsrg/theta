@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.xcfa.algorithmselection;
 
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
@@ -54,7 +56,7 @@ public class PortfolioHandler {
 		writeCfaStatistics(cfa);
 
 		for (Configuration configuration : configurationList) {
-			CegarChecker.setNotSolvableThrower(new PortfolioNotSolvableThrower(true));
+			ArgCexCheckHandler.instance.setArgCexCheck(true);
 			try {
 				System.out.println(configuration);
 				statisticsPrint(configuration.toString());

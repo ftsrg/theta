@@ -7,7 +7,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 
 import java.io.BufferedWriter;
 import java.io.File;
