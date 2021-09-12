@@ -60,7 +60,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	// counterexample checks
 	private final CexStorage<S, A> cexStorage = new CexStorage<S, A>();
-	private boolean argNotNew = false;
 
 	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
 		notSolvableThrower = thrower;
@@ -119,8 +118,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 					// noNewCex = false;
 				// }
 
-				if(argNotNew && notSolvableThrower != null
-						&& arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
+				if(notSolvableThrower!= null && arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
 					notSolvableThrower.throwNoNewCexException();
 				}
 

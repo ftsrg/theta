@@ -30,7 +30,9 @@ public class CexStorage<S extends State, A extends Action> {
 			if(counterexamples.containsKey(currentArgHash)) {
 				counterexamples.get(currentArgHash).add(cexHashCode);
 			} else {
-				counterexamples.put(currentArgHash, new LinkedHashSet<>(cexHashCode));
+				LinkedHashSet<Integer> cexHashCodes = new LinkedHashSet<>();
+				cexHashCodes.add(cexHashCode);
+				counterexamples.put(currentArgHash, cexHashCodes);
 			}
 //		}
 	}
