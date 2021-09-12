@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -55,7 +56,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Logger logger;
 
 	// controlled restart
-	private Set<Integer> args = new LinkedHashSet<>();
 	private static NotSolvableThrower notSolvableThrower = null;
 
 	// counterexample checks
@@ -84,30 +84,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		return new CegarChecker<>(abstractor, refiner, logger);
 	}
 
-	private class AbstractArg {
-		private final Collection<State> states;
-		private final P prec;
-
-		private AbstractArg(final Stream<ArgNode<S, A>> nodes, P prec) { //, final P prec){
-			states = nodes.map(ArgNode::getState).collect(Collectors.toList());
-			this.prec = prec;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			AbstractArg that = (AbstractArg) o;
-			return (states.equals(that.states) && prec.equals(that.prec));
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(states, prec);
-		}
-
-	}
-
 	@Override
 	public SafetyResult<S, A> check(final P initPrec) {
 		logger.write(Level.INFO, "Configuration: %s%n", this);
@@ -134,23 +110,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			Graph g = ArgVisualizer.getDefault().visualize(arg);
 			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
-			Integer abstractArgHash = new AbstractArg(arg.getNodes(), prec).hashCode();
-			if(lastAbstractArgHash != null && abstractArgHash.equals(lastAbstractArgHash)) {
-				logger.write(Level.MAINSTEP, "! ARG is SAME as last"+System.lineSeparator());
-				if(!argNotNew) {
-					argNotNew = true;
-					cexStorage.start();
-				}
-			} else if(args.contains(abstractArgHash)) {
-				logger.write(Level.MAINSTEP, "! ARG is NOT NEW"+System.lineSeparator());
-				notSolvableThrower.throwNotSolvableException();
-			} else {
-				logger.write(Level.MAINSTEP, "! ARG is NEW"+System.lineSeparator());
-				argNotNew = false;
-				cexStorage.stop();
-			}
-			args.add(new AbstractArg(arg.getNodes(), prec).hashCode());
-
 			if (abstractorResult.isUnsafe()) {
 				// stopping verification, if there is no new cex to refine AND the precision did not change (it would stop with an error in the refiner anyways)
 				//if(notSolvableThrower!= null && arg.getCexs().noneMatch(cex -> cexStorage.checkIfCounterexampleNew(cex))) {
@@ -160,10 +119,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 					// noNewCex = false;
 				// }
 
-				if(argNotNew && notSolvableThrower != null && arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
+				if(argNotNew && notSolvableThrower != null
+						&& arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
 					notSolvableThrower.throwNoNewCexException();
 				}
-				lastAbstractArgHash = new AbstractArg(arg.getNodes(), prec).hashCode();
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

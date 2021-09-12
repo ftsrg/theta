@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Objects;

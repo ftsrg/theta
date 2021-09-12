@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -90,6 +91,8 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 		long startNodes = arg.getNodes().count();
 		long startIncompleteNodes = arg.getIncompleteNodes().count();
+
+		cexStorage.setCurrentArg(new AbstractArg<S,A,P>(arg, prec));
 		logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 		logger.write(Level.SUBSTEP, "|  |  Building ARG...");
@@ -111,6 +114,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 					reachedSet.addAll(newNodes);
 					waitlist.addAll(newNodes);
 				}
+				cexStorage.setCurrentArg(new AbstractArg<S,A,P>(arg, prec));
 				if (stopCriterion.canStop(arg, newNodes)) break;
 			}
 		}
