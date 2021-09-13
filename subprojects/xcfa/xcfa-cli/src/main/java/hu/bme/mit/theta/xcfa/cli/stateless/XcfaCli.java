@@ -39,10 +39,13 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
@@ -339,6 +342,9 @@ public class XcfaCli {
 					bw.write(maxInGrade + "\t"); // max in grade on a single location
 					bw.write(minInGrade + "\t"); // min in grade on a single location  (except init)
 
+					bw.write(countVariablesInAssignmentsRightSides(cfa) + "\t"); // num of variables on the right sides (assignments)
+					bw.write(countVariablesInAssumptions(cfa) + "\t"); // num of variables in conditions (assumptions)
+
 					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\t"); // cyclomatic complexity
 					bw.write(CStmtCounter.getForLoops() + "\t"); // for loops
 					bw.write(CStmtCounter.getWhileLoops() + "\t"); // while loops
@@ -407,6 +413,29 @@ public class XcfaCli {
 		}
 	}
 
+	private int countVariablesInAssumptions(CFA cfa) {
+		Set<VarDecl<?>> vars = new LinkedHashSet<>();
+		for (AssumeStmt assumeStmt : cfa.getEdges().stream().map(CFA.Edge::getStmt).filter(stmt -> stmt instanceof AssumeStmt).map(stmt -> (AssumeStmt)stmt).collect(Collectors.toList())) {
+			System.out.println(assumeStmt);
+			vars.addAll(StmtUtils.getVars(assumeStmt));
+			// TODO filter out overflow guards
+		}
+		for (VarDecl<?> var : vars) {
+			System.out.println(var);
+		}
+		return vars.size();
+	}
+
+	private int countVariablesInAssignmentsRightSides(CFA cfa) {
+		Set<VarDecl<?>> vars = new LinkedHashSet<>();
+		for (AssignStmt assignStmt : cfa.getEdges().stream().map(CFA.Edge::getStmt).filter(stmt -> stmt instanceof AssignStmt).map(stmt -> (AssignStmt)stmt).collect(Collectors.toList())) {
+			vars.addAll(ExprUtils.getVars(assignStmt.getExpr()));
+		}
+		return vars.size();
+	}
+
+
+
 	private void writeStatistics(CFA cfa) {
 		File statistics = new File(statisticsfile);
 		BufferedWriter bw = null;
@@ -414,12 +443,12 @@ public class XcfaCli {
 			bw = new BufferedWriter(new FileWriter(statistics));
 
 			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
-			bw.write("CFA-data havocs " + cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\t"); // havocs
+			bw.write("CFA-data havocs " + cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\n"); // havocs
 			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
 			bw.write("CFA-data edgeCount " + cfa.getEdges().size() + System.lineSeparator());
 			bw.write("CFA-data skipEdgeCount " + cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + System.lineSeparator());
-			bw.write("CFA-data assumeStmts"+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\t"); // assumes
-			bw.write("CFA-data assignStmts"+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\t"); // assign
+			bw.write("CFA-data assumeStmts "+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\n"); // assumes
+			bw.write("CFA-data assignStmts "+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\n"); // assign
 			bw.write("CFA-data cyclomatic complexity " + (cfa.getEdges().size() - cfa.getLocs().size() + 2) + System.lineSeparator());
 			List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
 			int avgGrade = 0;
@@ -427,26 +456,29 @@ public class XcfaCli {
 				avgGrade += r;
 			}
 			avgGrade /= cfa.getLocs().size();
-			bw.write("CFA-data averageOutEdgeGrade" + avgGrade + "\t"); // average grades of outgoing edges
+			bw.write("CFA-data averageOutEdgeGrade " + avgGrade + "\n"); // average grades of outgoing edges
 			long highOutGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getOutEdges().size()>1).count();
 			long highInGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getInEdges().size()>1).count();
 
-			bw.write("CFA-data locsWithHigherOutGrade" + highOutGradeLocs + "\t"); // num of locations with more than one out-edges
-			bw.write("CFA-data locsWithHigherInGrade" + highInGradeLocs + "\t"); // num of locations with more than one in-edges
+			bw.write("CFA-data locsWithHigherOutGrade " + highOutGradeLocs + "\n"); // num of locations with more than one out-edges
+			bw.write("CFA-data locsWithHigherInGrade " + highInGradeLocs + "\n"); // num of locations with more than one in-edges
 
 			int maxOutGrade = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).max(Integer::compareTo).get();
 			int minOutGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getFinalLoc().get()) && !loc.equals(cfa.getErrorLoc().get())).map(loc -> loc.getOutEdges().size()).min(Integer::compareTo).get();
-			bw.write("CFA-data maxOutGrade" + maxOutGrade + "\t"); // max out grade on a single location
-			bw.write("CFA-data minOutGrade" + minOutGrade + "\t"); // max out grade on a single location (except error/final)
+			bw.write("CFA-data maxOutGrade " + maxOutGrade + "\n"); // max out grade on a single location
+			bw.write("CFA-data minOutGrade " + minOutGrade + "\n"); // max out grade on a single location (except error/final)
 
 			int maxInGrade = cfa.getLocs().stream().map(loc -> loc.getInEdges().size()).max(Integer::compareTo).get();
 			int minInGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getInitLoc())).map(loc -> loc.getInEdges().size()).min(Integer::compareTo).get();
-			bw.write("CFA-data maxInGrade" + maxInGrade + "\t"); // max in grade on a single location
-			bw.write("CFA-data minInGrade" + minInGrade + "\t"); // min in grade on a single location  (except init)
+			bw.write("CFA-data maxInGrade " + maxInGrade + "\n"); // max in grade on a single location
+			bw.write("CFA-data minInGrade " + minInGrade + "\n"); // min in grade on a single location  (except init)
 
-			bw.write("C-data forLoops"+CStmtCounter.getForLoops() + "\t"); // for loops
-			bw.write("C-data whileLoops"+CStmtCounter.getWhileLoops() + "\t"); // while loops
-			bw.write("C-data branches"+CStmtCounter.getBranches() + "\n"); // branches
+			bw.write("CFA-data assignedVars " + countVariablesInAssignmentsRightSides(cfa) + "\n"); // num of variables on the right sides (assignments)
+			bw.write("CFA-data assumedVars " + countVariablesInAssumptions(cfa) + "\n"); // num of variables in conditions (assumptions)
+
+			bw.write("C-data forLoops "+CStmtCounter.getForLoops() + "\n"); // for loops
+			bw.write("C-data whileLoops "+CStmtCounter.getWhileLoops() + "\n"); // while loops
+			bw.write("C-data branches "+CStmtCounter.getBranches() + "\n"); // branches
 
 			bw.write("Configuration: ");
 			bw.write(System.lineSeparator());
