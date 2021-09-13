@@ -413,12 +413,15 @@ public class XcfaCli {
 		}
 	}
 
+	// TODO won't work well, if an assume is removed in the XCFA passes when it goes directly into the final location
 	private int countVariablesInAssumptions(CFA cfa) {
 		Set<VarDecl<?>> vars = new LinkedHashSet<>();
-		for (AssumeStmt assumeStmt : cfa.getEdges().stream().map(CFA.Edge::getStmt).filter(stmt -> stmt instanceof AssumeStmt).map(stmt -> (AssumeStmt)stmt).collect(Collectors.toList())) {
-			System.out.println(assumeStmt);
-			vars.addAll(StmtUtils.getVars(assumeStmt));
-			// TODO filter out overflow guards
+		// get the variables out of each edge that has a source location with at least 2 outgoing assume edges
+		for(CFA.Loc loc : cfa.getLocs().stream().filter(loc -> loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).count() >= 2).collect(Collectors.toList())) {
+			loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
+			for(CFA.Edge edge : loc.getOutEdges()) {
+				System.out.println(edge.getStmt());
+			}
 		}
 		for (VarDecl<?> var : vars) {
 			System.out.println(var);
