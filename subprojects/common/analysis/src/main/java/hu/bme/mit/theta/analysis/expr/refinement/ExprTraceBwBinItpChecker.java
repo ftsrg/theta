@@ -15,13 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -35,6 +29,11 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An ExprTraceChecker that generates a binary interpolant by incrementally
@@ -65,7 +64,7 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		// TODO: this could be done better
-		indexings.add(BasicVarIndexing.all(Integer.MAX_VALUE));
+		indexings.add(BasicVarIndexing.all(0));
 
 		solver.push();
 

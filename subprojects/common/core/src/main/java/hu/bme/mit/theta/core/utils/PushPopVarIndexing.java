@@ -35,10 +35,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * index. The inner builder class can also be used to create a new instance.
  */
 public class PushPopVarIndexing implements VarIndexing {
-	private final Map<VarDecl<?>, IndexStack> varToIndex;
+	private final Map<VarDecl<?>, IndexStack> varToOffset;
+	private int defaultValue;
 
 	private PushPopVarIndexing(final PushPopVarIndexingBuilder builder) {
-		varToIndex = ImmutableMap.copyOf(builder.varToIndex);
+		varToOffset = ImmutableMap.copyOf(builder.varToOffset);
+		defaultValue = builder.defaultValue;
 	}
 
 	/**
@@ -46,8 +48,8 @@ public class PushPopVarIndexing implements VarIndexing {
 	 *
 	 * @return New instance
 	 */
-	public static PushPopVarIndexing create() {
-		return builder().build();
+	public static PushPopVarIndexing all(final int defaultValue) {
+		return builder(defaultValue).build();
 	}
 
 	/**
@@ -55,8 +57,8 @@ public class PushPopVarIndexing implements VarIndexing {
 	 *
 	 * @return New builder
 	 */
-	public static PushPopVarIndexingBuilder builder() {
-		return new PushPopVarIndexingBuilder();
+	public static PushPopVarIndexingBuilder builder(final int defaultValue) {
+		return new PushPopVarIndexingBuilder(defaultValue);
 	}
 
 	/**
@@ -160,18 +162,21 @@ public class PushPopVarIndexing implements VarIndexing {
 	@Override
 	public int get(final VarDecl<?> varDecl) {
 		checkNotNull(varDecl);
-		return Optional.ofNullable(varToIndex.get(varDecl)).map(IndexStack::peek).orElse(0);
+		return Optional.ofNullable(varToOffset.get(varDecl)).map(IndexStack::peek).orElse(0) + defaultValue;
 	}
 
 	public static class PushPopVarIndexingBuilder implements VarIndexingBuilder {
-		private final Map<VarDecl<?>, IndexStack> varToIndex;
+		private final Map<VarDecl<?>, IndexStack> varToOffset;
+		private int defaultValue;
 
-		private PushPopVarIndexingBuilder() {
-			varToIndex = Containers.createMap();
+		private PushPopVarIndexingBuilder(final int defaultValue) {
+			varToOffset = Containers.createMap();
+			this.defaultValue = defaultValue;
 		}
 
 		private PushPopVarIndexingBuilder(final PushPopVarIndexing indexing) {
-			this.varToIndex = Containers.createMap(indexing.varToIndex);
+			this.varToOffset = Containers.createMap(indexing.varToOffset);
+			this.defaultValue = indexing.defaultValue;
 		}
 
 		@Override
@@ -179,10 +184,10 @@ public class PushPopVarIndexing implements VarIndexing {
 			checkNotNull(varDecl);
 
 			if (n != 0) {
-				IndexStack currentIndex = varToIndex.get(varDecl);
+				IndexStack currentIndex = varToOffset.get(varDecl);
 				if(currentIndex == null) currentIndex = IndexStack.create(n);
 				else currentIndex = currentIndex.incCurrent(n);
-				varToIndex.put(varDecl, currentIndex);
+				varToOffset.put(varDecl, currentIndex);
 			}
 
 			return this;
@@ -200,17 +205,17 @@ public class PushPopVarIndexing implements VarIndexing {
 
 		public PushPopVarIndexingBuilder push(final VarDecl<?> varDecl) {
 			checkNotNull(varDecl);
-			IndexStack currentIndex = varToIndex.get(varDecl);
+			IndexStack currentIndex = varToOffset.get(varDecl);
 			if(currentIndex == null) currentIndex = IndexStack.create(0);
-			varToIndex.put(varDecl, currentIndex.push(currentIndex.prevMax + 1));
+			varToOffset.put(varDecl, currentIndex.push(currentIndex.prevMax + 1));
 			return this;
 		}
 
 		public PushPopVarIndexingBuilder pop(final VarDecl<?> varDecl) {
 			checkNotNull(varDecl);
-			IndexStack currentIndex = varToIndex.get(varDecl);
+			IndexStack currentIndex = varToOffset.get(varDecl);
 			if(currentIndex == null) currentIndex = IndexStack.create(0);
-			varToIndex.put(varDecl, currentIndex.pop());
+			varToOffset.put(varDecl, currentIndex.pop());
 			return this;
 		}
 
@@ -221,10 +226,10 @@ public class PushPopVarIndexing implements VarIndexing {
 
 			PushPopVarIndexingBuilder that = (PushPopVarIndexingBuilder) genericThat;
 
-			for (Map.Entry<VarDecl<?>, IndexStack> entry : that.varToIndex.entrySet()) {
+			for (Map.Entry<VarDecl<?>, IndexStack> entry : that.varToOffset.entrySet()) {
 				final VarDecl<?> varDecl = entry.getKey();
 				final IndexStack thatIndexStack = entry.getValue();
-				IndexStack thisIndexStack = varToIndex.getOrDefault(varDecl, IndexStack.create(0));
+				IndexStack thisIndexStack = varToOffset.getOrDefault(varDecl, IndexStack.create(0));
 
 				int i;
 				for (i = 0; i < thatIndexStack.negativeCount; i++) {
@@ -236,9 +241,10 @@ public class PushPopVarIndexing implements VarIndexing {
 					thisIndexStack = thisIndexStack.push(thatIndexStack.indices.get(i));
 				}
 
-				varToIndex.put(varDecl, thisIndexStack);
+				varToOffset.put(varDecl, thisIndexStack);
 			}
 
+			defaultValue = defaultValue + that.defaultValue;
 			return this;
 		}
 
@@ -249,10 +255,10 @@ public class PushPopVarIndexing implements VarIndexing {
 
 			PushPopVarIndexingBuilder that = (PushPopVarIndexingBuilder) genericThat;
 
-			for (Map.Entry<VarDecl<?>, IndexStack> entry : that.varToIndex.entrySet()) {
+			for (Map.Entry<VarDecl<?>, IndexStack> entry : that.varToOffset.entrySet()) {
 				final VarDecl<?> varDecl = entry.getKey();
 				final IndexStack thatIndexStack = entry.getValue();
-				IndexStack thisIndexStack = varToIndex.getOrDefault(varDecl, IndexStack.create(0));
+				IndexStack thisIndexStack = varToOffset.getOrDefault(varDecl, IndexStack.create(0));
 
 				int i;
 				for (i = 0; i < thatIndexStack.negativeCount; i++) {
@@ -264,9 +270,10 @@ public class PushPopVarIndexing implements VarIndexing {
 					thisIndexStack = thisIndexStack.pop();
 				}
 
-				varToIndex.put(varDecl, thisIndexStack);
+				varToOffset.put(varDecl, thisIndexStack);
 			}
 
+			defaultValue = defaultValue - that.defaultValue;
 			return this;
 		}
 
@@ -278,7 +285,7 @@ public class PushPopVarIndexing implements VarIndexing {
 		@Override
 		public int get(final VarDecl<?> varDecl) {
 			checkNotNull(varDecl);
-			final IndexStack index = varToIndex.get(varDecl);
+			final IndexStack index = varToOffset.get(varDecl);
 			if(index == null) return 0;
 			else return index.peek();
 		}
@@ -380,7 +387,7 @@ public class PushPopVarIndexing implements VarIndexing {
 	@Override
 	public String toString() {
 		final StringJoiner sj = new StringJoiner(", ", "PushPopIndexMap(", ")");
-		for (final VarDecl<?> varDecl : varToIndex.keySet()) {
+		for (final VarDecl<?> varDecl : varToOffset.keySet()) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(varDecl.getName());
 			sb.append(" -> ");

@@ -15,6 +15,19 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BasicVarIndexing;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Collection;
+
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
@@ -23,21 +36,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import java.util.Collection;
-
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ExplTransFuncTest {
 	private final VarDecl<IntType> x = Var("x", Int());
