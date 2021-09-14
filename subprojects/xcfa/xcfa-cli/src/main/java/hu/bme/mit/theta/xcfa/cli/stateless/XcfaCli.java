@@ -62,6 +62,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
@@ -82,6 +83,7 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -416,9 +418,11 @@ public class XcfaCli {
 	// TODO won't work well, if an assume is removed in the XCFA passes when it goes directly into the final location
 	private int countVariablesInAssumptions(CFA cfa) {
 		Set<VarDecl<?>> vars = new LinkedHashSet<>();
+		Set<CFA.Edge> edgesOnErrorPaths = collectEdgesOnErrorPaths(cfa);
+
 		// get the variables out of each edge that has a source location with at least 2 outgoing assume edges
 		for(CFA.Loc loc : cfa.getLocs().stream().filter(loc -> loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).count() >= 2).collect(Collectors.toList())) {
-			loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
+			loc.getOutEdges().stream().filter(edge -> edgesOnErrorPaths.contains(edge) && edge.getStmt() instanceof AssumeStmt).map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
 			for(CFA.Edge edge : loc.getOutEdges()) {
 				System.out.println(edge.getStmt());
 			}
@@ -429,6 +433,49 @@ public class XcfaCli {
 		return vars.size();
 	}
 
+	private Set<CFA.Edge> collectEdgesOnErrorPaths(CFA cfa) {
+		Set<CFA.Edge> reachableEdges = new LinkedHashSet<>();
+		Set<CFA.Edge> nonDeadEndEdges = new LinkedHashSet<>();
+		filterReachableEdges(cfa.getInitLoc(), reachableEdges);
+
+		if(cfa.getErrorLoc().isPresent()) {
+			collectNonDeadEndEdges(cfa.getErrorLoc().get(), nonDeadEndEdges);
+			reachableEdges.retainAll(nonDeadEndEdges);
+			return reachableEdges;
+		} else {
+			return new LinkedHashSet<CFA.Edge>();
+		}
+	}
+
+	// same as in the remove dead ends pass
+	private void filterReachableEdges(CFA.Loc loc, Set<CFA.Edge> reachableEdges) {
+		Set<CFA.Edge> outgoingEdges = new LinkedHashSet<>(loc.getOutEdges());
+		while(!outgoingEdges.isEmpty()) {
+			Optional<CFA.Edge> any = outgoingEdges.stream().findAny();
+			CFA.Edge outgoingEdge = any.get();
+			outgoingEdges.remove(outgoingEdge);
+			if (!reachableEdges.contains(outgoingEdge)) {
+				reachableEdges.add(outgoingEdge);
+				outgoingEdges.addAll(outgoingEdge.getTarget().getOutEdges());
+			}
+		}
+	}
+
+	// same as in the remove dead ends pass
+	private void collectNonDeadEndEdges(CFA.Loc loc, Set<CFA.Edge> nonDeadEndEdges) {
+		Set<CFA.Edge> incomingEdges = new LinkedHashSet<>(loc.getInEdges());
+		while(!incomingEdges.isEmpty()) {
+			Optional<CFA.Edge> any = incomingEdges.stream().findAny();
+			CFA.Edge incomingEdge = any.get();
+			incomingEdges.remove(incomingEdge);
+			if (!nonDeadEndEdges.contains(incomingEdge)) {
+				nonDeadEndEdges.add(incomingEdge);
+				incomingEdges.addAll(incomingEdge.getSource().getInEdges());
+			}
+		}
+	}
+
+
 	private int countVariablesInAssignmentsRightSides(CFA cfa) {
 		Set<VarDecl<?>> vars = new LinkedHashSet<>();
 		for (AssignStmt assignStmt : cfa.getEdges().stream().map(CFA.Edge::getStmt).filter(stmt -> stmt instanceof AssignStmt).map(stmt -> (AssignStmt)stmt).collect(Collectors.toList())) {
@@ -436,8 +483,6 @@ public class XcfaCli {
 		}
 		return vars.size();
 	}
-
-
 
 	private void writeStatistics(CFA cfa) {
 		File statistics = new File(statisticsfile);
