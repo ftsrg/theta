@@ -427,9 +427,10 @@ public class XcfaCli {
 				System.out.println(edge.getStmt());
 			}
 		}
-		for (VarDecl<?> var : vars) {
-			System.out.println(var);
-		}
+
+		Set<VarDecl> havocedVars = cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
+
+		vars.removeAll(havocedVars);
 		return vars.size();
 	}
 
