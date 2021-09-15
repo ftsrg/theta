@@ -15,16 +15,16 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import java.util.Collection;
 import java.util.Collections;
 
-import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 public final class PredTransFunc implements TransFunc<PredState, ExprAction, PredPrec> {
 
@@ -46,7 +46,7 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		checkNotNull(prec);
 
 		final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
-				And(state.toExpr(), action.toExpr()), BasicVarIndexing.all(0), prec, action.nextIndexing());
+				And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec, action.nextIndexing());
 		return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
 	}
 

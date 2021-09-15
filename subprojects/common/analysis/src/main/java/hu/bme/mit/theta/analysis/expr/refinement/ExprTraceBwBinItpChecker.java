@@ -22,9 +22,9 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
@@ -64,7 +64,7 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		// TODO: this could be done better
-		indexings.add(BasicVarIndexing.all(0));
+		indexings.add(VarIndexingFactory.indexing(Integer.MAX_VALUE));
 
 		solver.push();
 

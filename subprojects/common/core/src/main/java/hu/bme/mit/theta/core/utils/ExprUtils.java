@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 import java.util.ArrayList;
 import java.util.Collection;

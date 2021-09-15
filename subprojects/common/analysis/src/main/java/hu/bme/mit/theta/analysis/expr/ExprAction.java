@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.expr;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 public interface ExprAction extends Action {
 

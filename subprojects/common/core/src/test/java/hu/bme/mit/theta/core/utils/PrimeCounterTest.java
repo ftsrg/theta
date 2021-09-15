@@ -15,25 +15,25 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-
-import java.util.Collection;
-
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.dsl.CoreDslManager;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.dsl.CoreDslManager;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.Collection;
+
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public final class PrimeCounterTest {

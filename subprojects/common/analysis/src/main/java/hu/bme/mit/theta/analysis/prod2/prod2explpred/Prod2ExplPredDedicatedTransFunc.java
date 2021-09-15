@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors.Prod2ExplPredAbstractor;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +37,7 @@ public class Prod2ExplPredDedicatedTransFunc<A extends ExprAction> implements Tr
         checkNotNull(prec);
 
         final Collection<Prod2State<ExplState,PredState>> succStates = prod2ExplPredAbstractor.createStatesForExpr(
-                And(state.toExpr(), action.toExpr()), BasicVarIndexing.all(0), prec, action.nextIndexing(), prec.getPrec1()::createState, 0);
+                And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec, action.nextIndexing(), prec.getPrec1()::createState, 0);
         return succStates.isEmpty() ? Collections.singleton(Prod2State.of(ExplState.bottom(),PredState.bottom())) : succStates;
     }
 }

@@ -15,14 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static java.util.Collections.singleton;
-
-import java.util.Collection;
-import java.util.List;
-
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
@@ -31,11 +23,19 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
+
+import java.util.Collection;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static java.util.Collections.singleton;
 
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
@@ -73,7 +73,7 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 			} else if (applyResult == ApplyResult.FAILURE) {
 				triedSolver = true;
 				final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
-				final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts, BasicVarIndexing.all(0));
+				final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts, VarIndexingFactory.indexing(0));
 				final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
 				final VarIndexing nextIdx = toExprResult.getIndexing();
 				// We query (max + 1) states from the solver to see if there

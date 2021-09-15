@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.utils;
+package hu.bme.mit.theta.core.utils.indexings;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -34,8 +34,8 @@ import static java.lang.Math.max;
  */
 public class BasicVarIndexing implements VarIndexing {
 
-	private static final VarIndexing ALL_ZERO = new BasicVarIndexingBuilder(0).build();
-	private static final VarIndexing ALL_ONE = new BasicVarIndexingBuilder(1).build();
+	private static final BasicVarIndexing ALL_ZERO = new BasicVarIndexingBuilder(0).build();
+	private static final BasicVarIndexing ALL_ONE = new BasicVarIndexingBuilder(1).build();
 
 	private final int defaultIndex;
 	private final Map<VarDecl<?>, Integer> varToOffset;
@@ -51,7 +51,7 @@ public class BasicVarIndexing implements VarIndexing {
 	 * @param defaultIndex Default index
 	 * @return New instance
 	 */
-	public static VarIndexing all(final int defaultIndex) {
+	static BasicVarIndexing all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		switch (defaultIndex) {
 			case 0:
@@ -69,7 +69,7 @@ public class BasicVarIndexing implements VarIndexing {
 	 * @param defaultIndex Default index
 	 * @return New builder
 	 */
-	public static BasicVarIndexingBuilder builder(final int defaultIndex) {
+	static BasicVarIndexingBuilder builder(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		return new BasicVarIndexingBuilder(defaultIndex);
 	}
@@ -91,7 +91,6 @@ public class BasicVarIndexing implements VarIndexing {
 	 * @param n       Amount to increment
 	 * @return Transformed indexing
 	 */
-	@Override
 	public BasicVarIndexing inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
 		return transform().inc(varDecl, n).build();
@@ -172,7 +171,6 @@ public class BasicVarIndexing implements VarIndexing {
 			this.varToOffset = Containers.createMap(indexing.varToOffset);
 		}
 
-		@Override
 		public BasicVarIndexingBuilder inc(final VarDecl<?> varDecl, final int n) {
 			checkNotNull(varDecl);
 

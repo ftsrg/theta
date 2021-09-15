@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 public final class StmtUnfoldResult {
 	final Collection<Expr<BoolType>> exprs;

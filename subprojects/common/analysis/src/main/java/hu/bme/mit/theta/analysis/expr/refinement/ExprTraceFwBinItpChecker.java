@@ -15,26 +15,25 @@
  */
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An ExprTraceChecker that generates a binary interpolant by incrementally
@@ -63,7 +62,7 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 		final int stateCount = trace.getStates().size();
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(BasicVarIndexing.all(0));
+		indexings.add(VarIndexingFactory.indexing(0));
 
 		solver.push();
 

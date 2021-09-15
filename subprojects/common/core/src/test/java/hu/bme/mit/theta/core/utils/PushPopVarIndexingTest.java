@@ -16,6 +16,9 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.indexings.PushPopVarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Test;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -30,12 +33,12 @@ public class PushPopVarIndexingTest {
 
 	@Test
 	public void testPushPop() {
-		final VarIndexing indexing0 = PushPopVarIndexing.builder(0).build();
-		final VarIndexing indexing1 = PushPopVarIndexing.builder(0).push(x).build();
-		final VarIndexing indexing2 = PushPopVarIndexing.builder(0).push(x).inc(x).build();
-		final VarIndexing indexing3 = PushPopVarIndexing.builder(0).push(x).inc(x).inc(x).build();
-		final VarIndexing indexing4 = PushPopVarIndexing.builder(0).push(x).inc(x).inc(x).pop(x).build();
-		final VarIndexing indexing5 = PushPopVarIndexing.builder(0).push(x).inc(x).inc(x).pop(x).inc(x).build();
+		final VarIndexing indexing0 = VarIndexingFactory.pushPopIndexingBuilder(0).build();
+		final VarIndexing indexing1 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).build();
+		final VarIndexing indexing2 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).inc(x).build();
+		final VarIndexing indexing3 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).inc(x).inc(x).build();
+		final VarIndexing indexing4 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).inc(x).inc(x).pop(x).build();
+		final VarIndexing indexing5 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).inc(x).inc(x).pop(x).inc(x).build();
 		assertEquals(0, indexing0.get(x));
 		assertEquals(1, indexing1.get(x));
 		assertEquals(2, indexing2.get(x));
@@ -46,12 +49,12 @@ public class PushPopVarIndexingTest {
 
 	@Test
 	public void testPopPush() {
-		final VarIndexing indexing0 = PushPopVarIndexing.builder(0).build();
-		final VarIndexing indexing1 = PushPopVarIndexing.builder(0).pop(x).build();
-		final VarIndexing indexing2 = PushPopVarIndexing.builder(0).pop(x).inc(x).build();
-		final VarIndexing indexing3 = PushPopVarIndexing.builder(0).pop(x).inc(x).inc(x).build();
-		final VarIndexing indexing4 = PushPopVarIndexing.builder(0).pop(x).inc(x).inc(x).push(x).build();
-		final VarIndexing indexing5 = PushPopVarIndexing.builder(0).pop(x).inc(x).inc(x).push(x).inc(x).build();
+		final VarIndexing indexing0 = VarIndexingFactory.pushPopIndexingBuilder(0).build();
+		final VarIndexing indexing1 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).build();
+		final VarIndexing indexing2 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).build();
+		final VarIndexing indexing3 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).inc(x).build();
+		final VarIndexing indexing4 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).inc(x).push(x).build();
+		final VarIndexing indexing5 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).inc(x).push(x).inc(x).build();
 		assertEquals(0, indexing0.get(x));
 		assertEquals(0, indexing1.get(x));
 		assertEquals(1, indexing2.get(x));
@@ -62,8 +65,8 @@ public class PushPopVarIndexingTest {
 
 	@Test
 	public void testAdd() {
-		final VarIndexing indexing0 = PushPopVarIndexing.builder(0).build();
-		final VarIndexing indexing1 = PushPopVarIndexing.builder(0).push(x).build();
+		final VarIndexing indexing0 = VarIndexingFactory.pushPopIndexingBuilder(0).build();
+		final VarIndexing indexing1 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).build();
 		final VarIndexing indexing2 = indexing0.add(indexing1);
 		assertEquals(0, indexing0.get(x));
 		assertEquals(1, indexing1.get(x));
@@ -72,12 +75,24 @@ public class PushPopVarIndexingTest {
 
 	@Test
 	public void testPopAdd() {
-		final VarIndexing indexing0 = PushPopVarIndexing.builder(0).build();
-		final VarIndexing indexing1 = PushPopVarIndexing.builder(0).pop(x).build();
-		final VarIndexing indexing2 = indexing0.add(indexing1);
-		assertEquals(0, indexing0.get(x));
-		assertEquals(0, indexing1.get(x));
-		assertEquals(0, indexing2.get(x));
+		final VarIndexing indexing0 = VarIndexingFactory.pushPopIndexingBuilder(0).push(x).build();
+		final VarIndexing indexing1 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).build();
+		final PushPopVarIndexing indexing2 = (PushPopVarIndexing) indexing0.add(indexing1);
+		final VarIndexing indexing3 = indexing2.pop(x);
+		assertEquals(1, indexing0.get(x));
+		assertEquals(1, indexing1.get(x));
+		assertEquals(2, indexing2.get(x));
+		assertEquals(0, indexing3.get(x));
+	}
+
+	@Test
+	public void testPopSub() {
+		final VarIndexing indexing0 = VarIndexingFactory.pushPopIndexingBuilder(Integer.MAX_VALUE).build();
+		final VarIndexing indexing1 = VarIndexingFactory.pushPopIndexingBuilder(0).pop(x).inc(x).build();
+		final PushPopVarIndexing indexing2 = (PushPopVarIndexing) indexing0.sub(indexing1);
+		assertEquals(Integer.MAX_VALUE, indexing0.get(x));
+		assertEquals(1, indexing1.get(x));
+		assertEquals(Integer.MAX_VALUE, indexing2.get(x));
 	}
 
 

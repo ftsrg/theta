@@ -20,12 +20,12 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.utils.BasicVarIndexing.all;
+import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
 public abstract class StmtAction implements ExprAction {
 
@@ -38,7 +38,7 @@ public abstract class StmtAction implements ExprAction {
 	public final Expr<BoolType> toExpr() {
 		Expr<BoolType> result = expr;
 		if (result == null) {
-			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), all(0));
+			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
 			expr = And(toExprResult.getExprs());
 			nextIndexing = toExprResult.getIndexing();
 			result = expr;
@@ -50,7 +50,7 @@ public abstract class StmtAction implements ExprAction {
 	public final VarIndexing nextIndexing() {
 		VarIndexing result = nextIndexing;
 		if (result == null) {
-			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), all(0));
+			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
 			expr = And(toExprResult.getExprs());
 			nextIndexing = toExprResult.getIndexing();
 			result = nextIndexing;

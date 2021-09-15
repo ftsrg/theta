@@ -8,26 +8,26 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.SpState;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -79,7 +79,7 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
         final int stateCount = trace.getStates().size();
 
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-        indexings.add(BasicVarIndexing.all(0));
+        indexings.add(VarIndexingFactory.indexing(0));
 
         final Valuation model;
         final Collection<Expr<BoolType>> unsatCore;

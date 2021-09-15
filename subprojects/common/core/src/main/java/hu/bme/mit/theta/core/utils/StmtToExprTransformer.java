@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 import java.util.ArrayList;
 import java.util.Collection;
