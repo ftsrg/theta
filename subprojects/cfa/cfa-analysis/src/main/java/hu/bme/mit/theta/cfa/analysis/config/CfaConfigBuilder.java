@@ -61,6 +61,9 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -469,6 +472,16 @@ public class CfaConfigBuilder {
 									" precision granularity is not supported with " + domain + " domain");
 					}
 					break;
+				case ANALYSE:
+					switch (precGranularity) {
+						case GLOBAL:
+							prec = precGranularity.createPrec(PredPrec.of(collectErrorPathAssumes(cfa)));
+							break;
+						default:
+							throw new UnsupportedOperationException(precGranularity +
+									" precision granularity is not supported with " + initPrec + " initial precision");
+					}
+					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
 							domain + " domain");
@@ -500,6 +513,36 @@ public class CfaConfigBuilder {
 				.map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
 		vars.removeAll(havocedVars);
 		return vars;
+	}
+
+	private Iterable<Expr<BoolType>> collectErrorPathAssumes(CFA cfa) {
+		Set<CFA.Edge> edgesOnErrorPaths = collectEdgesOnErrorPaths(cfa);
+		LinkedHashSet<Expr<BoolType>> preds = new LinkedHashSet<>();
+
+		Set<VarDecl> havocedVars = cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt)
+				.map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
+		// collect assume edges on the error paths
+		for(CFA.Edge edge : edgesOnErrorPaths.stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).collect(Collectors.toSet())) {
+			// if the edge is not an overflow guard assume
+			if(edge.getSource().getOutEdges().stream().filter(e -> e.getStmt() instanceof AssumeStmt).count() >= 2) {
+				AssumeStmt assume = (AssumeStmt) edge.getStmt();
+				boolean havocedAssume = false;
+				// check if the condition has any havoced variables in it
+				for(VarDecl var : StmtUtils.getVars(assume)) {
+					if(havocedVars.contains(var)) {
+						havocedAssume = true;
+						break;
+					}
+				}
+				if(!havocedAssume) {
+					preds.add(ExprUtils.ponate(assume.getCond()));
+					System.err.println(ExprUtils.ponate(assume.getCond()));
+				}
+			}
+		}
+
+		System.err.println("preds size: "+ preds.size());
+		return preds;
 	}
 
 	private Set<CFA.Edge> collectEdgesOnErrorPaths(CFA cfa) {
