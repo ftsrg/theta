@@ -423,9 +423,6 @@ public class XcfaCli {
 		// get the variables out of each edge that has a source location with at least 2 outgoing assume edges
 		for(CFA.Loc loc : cfa.getLocs().stream().filter(loc -> loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).count() >= 2).collect(Collectors.toList())) {
 			loc.getOutEdges().stream().filter(edge -> edgesOnErrorPaths.contains(edge) && edge.getStmt() instanceof AssumeStmt).map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
-			for(CFA.Edge edge : loc.getOutEdges()) {
-				System.out.println(edge.getStmt());
-			}
 		}
 
 		Set<VarDecl> havocedVars = cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
