@@ -126,6 +126,9 @@ public class XcfaCli {
 	@Parameter(names = "--no-bitvectors", description = "Stops the verification if the usage of bitvector arithmetics would be required for the task")
 	boolean noBitvectors = false;
 
+	@Parameter(names = "--no-integers", description = "Stops the verification if the usage of bitvector arithmetics would NOT be required for the task")
+	boolean noIntArithmetic = false;
+
 	@Parameter(names = "--cfa-input-statistics")
 	boolean cfaInputStatistics = false;
 
@@ -563,6 +566,12 @@ public class XcfaCli {
 	}
 
 	private CfaConfig<?, ?, ?> buildIntegerConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+		// TODO for benchmarks
+		if(noIntArithmetic) {
+			System.err.println("Bitvectors are NOT required, stopping verification");
+			System.exit(-75); // TODO here for benchexec reasons
+		}
+
 		try {
 			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.precGranularity(precGranularity).search(search)
