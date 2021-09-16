@@ -32,10 +32,6 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 		return new XcfaPrec<P>(globalPrec, localPrecs);
 	}
 
-	public P getPrec(final Integer key) {
-		return localPrecs.get(key);
-	}
-
 	public P getGlobalPrec() {
 		return globalPrec;
 	}

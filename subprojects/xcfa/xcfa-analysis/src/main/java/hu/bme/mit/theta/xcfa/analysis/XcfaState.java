@@ -15,45 +15,59 @@
  */
 package hu.bme.mit.theta.xcfa.analysis;
 
-import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class XcfaState<S extends ExprState> implements ExprState {
-	private final Map<Integer, XcfaProcessState<S>> processStates;
+	private final Map<Integer, XcfaLocation> processLocs;
 	private final Collection<Integer> enabledProcesses;
 	private final S globalState;
 
-	private XcfaState(final Map<Integer, XcfaProcessState<S>> processStates, final Collection<Integer> enabledProcesses, final S globalState) {
-		this.processStates = checkNotNull(processStates);
+	private XcfaState(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, final S globalState) {
+		this.processLocs = checkNotNull(processLocs);
 		this.enabledProcesses = checkNotNull(enabledProcesses);
 		this.globalState = checkNotNull(globalState);
 	}
 
-	public static <S extends ExprState> XcfaState<S> create(final Map<Integer, XcfaProcessState<S>> processStates, final Collection<Integer> enabledProcesses, final S globalState) {
-		return new XcfaState<>(processStates, enabledProcesses, globalState);
+	public static <S extends ExprState> XcfaState<S> create(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, final S globalState) {
+		return new XcfaState<>(processLocs, enabledProcesses, globalState);
 	}
 
 	@Override
 	public boolean isBottom() {
-		return enabledProcesses.size() == 0 || globalState.isBottom() || processStates.values().stream().anyMatch(XcfaProcessState::isBottom);
+		return enabledProcesses.size() == 0 || globalState.isBottom();
 	}
 
 	@Override
 	public Expr<BoolType> toExpr() {
-		return And(Streams.concat(processStates.values().stream().map(XcfaProcessState::toExpr), Stream.of(globalState.toExpr())).collect(Collectors.toList()));
+		return globalState.toExpr();
 	}
 
 	public Collection<Integer> getEnabledProcesses() {
 		return enabledProcesses;
+	}
+
+	public Map<Integer, XcfaLocation> getProcessLocs() {
+		return processLocs;
+	}
+
+	public S getGlobalState() {
+		return globalState;
+	}
+
+	public XcfaState<S> advance(final S succState, final Integer process, final XcfaLocation target) {
+		checkState(processLocs.containsKey(process));
+		final Map<Integer, XcfaLocation> newProcessLocs = new LinkedHashMap<>(processLocs);
+		newProcessLocs.put(process, target);
+		return new XcfaState<>(newProcessLocs, enabledProcesses, succState);
 	}
 }

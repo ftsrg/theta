@@ -28,21 +28,22 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaAction extends StmtAction {
-
+	private final Integer process;
 	private final XcfaEdge edge;
 	private final List<Stmt> stmts;
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	private XcfaAction(final XcfaLocation source, final XcfaLocation target, final XcfaEdge edge) {
+	private XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final XcfaEdge edge) {
+		this.process = checkNotNull(process);
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.edge = checkNotNull(edge);
 		this.stmts = edge.getLabels().stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
 	}
 
-	public static XcfaAction create(final XcfaEdge edge) {
-		return new XcfaAction(edge.getSource(), edge.getTarget(), edge);
+	public static XcfaAction create(final Integer process, final XcfaEdge edge) {
+		return new XcfaAction(process, edge.getSource(), edge.getTarget(), edge);
 	}
 
 	public XcfaLocation getSource() {
@@ -65,5 +66,9 @@ public final class XcfaAction extends StmtAction {
 	@Override
 	public String toString() {
 		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
+	}
+
+	public Integer getProcess() {
+		return process;
 	}
 }
