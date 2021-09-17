@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
 
 /**
  * Common interface for the abstractor component. It can create an initial ARG

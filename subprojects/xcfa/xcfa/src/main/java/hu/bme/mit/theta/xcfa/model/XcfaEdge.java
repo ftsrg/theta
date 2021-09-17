@@ -40,8 +40,6 @@ public final class XcfaEdge {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.stmts = ImmutableList.copyOf(stmts);
-		source.addOutgoingEdge(this);
-		target.addIncomingEdge(this);
 	}
 
 	public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut, Map<VarDecl<?>, VarDecl<?>> newVarLut) {

@@ -3,10 +3,12 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.utils.ExprSimplifier;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class SimplifyExprs extends ProcedurePass{
@@ -35,6 +38,9 @@ public class SimplifyExprs extends ProcedurePass{
 							cast(varDecl, varDecl.getType()),
 							cast(simplified, varDecl.getType()));
 					newStmts.add(newStmt);
+					found = true;
+				} else if(stmt instanceof AssumeStmt && ExprUtils.simplify(((AssumeStmt) stmt).getCond()).equals(True()) ) {
+					// no op
 					found = true;
 				} else newStmts.add(stmt);
 			}

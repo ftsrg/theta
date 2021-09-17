@@ -20,27 +20,16 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -56,7 +45,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Refiner<S, A, P> refiner;
 	private final Logger logger;
 
-	// counterexample checks
+	// for arg and counterexample checks
 	private final CexStorage<S, A> cexStorage = new CexStorage<S, A>();
 
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
@@ -97,12 +86,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
-
-			/*
-			logger.write(Level.INFO, "Printing ARG..." + System.lineSeparator());
-			Graph g = ArgVisualizer.getDefault().visualize(arg);
-			logger.write(Level.INFO, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
-			*/
 
 			if (abstractorResult.isUnsafe()) {
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec, cexStorage);

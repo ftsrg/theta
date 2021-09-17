@@ -262,7 +262,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			checkState(accept.getType() instanceof BvType);
 			//noinspection unchecked
 			Expr<BvType> expr = (Expr<BvType>) accept;
-			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(expr)));
+			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(accept)));
 			checkState(smallestCommonType.getSmtType() instanceof BvType);
 			for(int i = 1; i < ctx.additiveExpression().size(); ++i) {
 				Expr<BvType> rightOp;

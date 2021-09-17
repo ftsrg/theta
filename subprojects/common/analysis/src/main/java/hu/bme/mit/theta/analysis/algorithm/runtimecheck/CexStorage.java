@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.cegar;
+package hu.bme.mit.theta.analysis.algorithm.runtimecheck;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;

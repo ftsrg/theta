@@ -22,18 +22,14 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CexStorage;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.Optional;
 

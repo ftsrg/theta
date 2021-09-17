@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
