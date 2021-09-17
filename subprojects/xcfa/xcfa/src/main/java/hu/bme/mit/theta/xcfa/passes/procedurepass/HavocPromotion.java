@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -66,7 +67,7 @@ public class HavocPromotion extends ProcedurePass {
 						if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
 							Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2()).findAny();
 							Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2()).findAny();
-							if (assign.isPresent() && assume.isPresent()) {
+							if (assign.isPresent() && assume.isPresent() && assign.get().getExpr() instanceof RefExpr) {
 								if(replaceStmt(builder, edge, List.of(stmt, assume.get(), assign.get()), List.of(Havoc(assign.get().getVarDecl()), assume.get().accept(new XcfaStmtVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
 									found = true;
 									break;
@@ -75,7 +76,7 @@ public class HavocPromotion extends ProcedurePass {
 						}
 						if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
 							Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2()).findAny();
-							if(assign.isPresent()) {
+							if(assign.isPresent() && assign.get().getExpr() instanceof RefExpr) {
 								if (replaceStmt(builder, edge, List.of(stmt, assign.get()), List.of(Havoc(assign.get().getVarDecl())))) {
 									found = true;
 									break;

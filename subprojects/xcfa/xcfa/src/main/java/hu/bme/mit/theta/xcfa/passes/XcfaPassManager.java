@@ -52,7 +52,7 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new AddHavocRange(),
 				new SimpleLbePass(),
-				// new HavocPromotion(),
+				new HavocPromotion(),
 				new RemoveDeadEnds(),
 				new UnusedVarRemovalPass()));
 		processPasses.addAll(List.of(
