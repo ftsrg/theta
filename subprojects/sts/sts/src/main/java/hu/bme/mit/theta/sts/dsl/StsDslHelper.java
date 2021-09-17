@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,7 +87,7 @@ final class StsDslHelper {
 
 	public static Substitution createConstDefs(final Scope scope, final Substitution assignment,
 											   final List<? extends ConstDeclContext> constDeclCtxs) {
-		final Map<Decl<?>, Expr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, Expr<?>> declToExpr = Containers.createMap();
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}

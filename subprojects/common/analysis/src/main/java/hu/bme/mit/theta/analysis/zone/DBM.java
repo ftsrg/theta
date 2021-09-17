@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -478,7 +478,7 @@ final class DBM {
 	}
 
 	public Collection<ClockConstr> getConstrs() {
-		final Collection<ClockConstr> result = new HashSet<>();
+		final Collection<ClockConstr> result = Containers.createSet();
 
 		for (final VarDecl<RatType> leftVar : signature) {
 			for (final VarDecl<RatType> rightVar : signature) {

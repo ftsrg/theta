@@ -15,40 +15,17 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static java.lang.String.format;
-
-import java.math.BigInteger;
-import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.ArraySort;
+import com.microsoft.z3.FPNum;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
-
+import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -72,14 +49,47 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import org.kframework.mpfr.BigFloat;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static java.lang.String.format;
 
 final class Z3TermTransformer {
 	private static final String PARAM_NAME_FORMAT = "_p%d";
@@ -90,7 +100,7 @@ final class Z3TermTransformer {
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
 
-		environment = new HashMap<>();
+		environment = Containers.createMap();
 		environment.put("true", exprNullaryOperator(TrueExpr::getInstance));
 		environment.put("false", exprNullaryOperator(FalseExpr::getInstance));
 		environment.put("not", exprUnaryOperator(NotExpr::create));
@@ -111,6 +121,7 @@ final class Z3TermTransformer {
 		environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
 		environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
 		environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
+		environment.put("to_int", exprUnaryOperator(RatToIntExpr::create));
 		environment.put("mod", exprBinaryOperator(IntModExpr::create));
 	}
 
@@ -164,6 +175,9 @@ final class Z3TermTransformer {
 		} else if (/* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
 			return transformBvLit(term);
 
+		} else if (term instanceof FPNum) {
+			return transformFpLit(term);
+
 		} else if (term.isConstantArray()) {
 			return transformArrLit(term, model, vars);
 
@@ -186,8 +200,13 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
-		final var value = intNum.getBigInteger();
-		return Int(value);
+		try{
+			final var value = intNum.getInt64();
+			return Int(BigInteger.valueOf(value));
+		} catch (Z3Exception ex){
+			final var value = intNum.getBigInteger();
+			return Int(value);
+		}
 	}
 
 	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term) {
@@ -210,6 +229,19 @@ final class Z3TermTransformer {
 		BigInteger value = bvNum.getBigInteger();
 
 		return BvUtils.bigIntegerToNeutralBvLitExpr(value, bvNum.getSortSize());
+	}
+
+	private Expr<?> transformFpLit(final com.microsoft.z3.Expr term) {
+		FPNum fpTerm = (FPNum) term;
+		FpType type = FpType.of((fpTerm).getEBits(), (fpTerm).getSBits());
+		String printed = term.toString();
+		if(printed.equals("+oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()), type);
+		else if(printed.equals("-oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()), type);
+		else if(printed.equals("NaN")) return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
+		else if(printed.equals("+zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
+		else if(printed.equals("-zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
+		BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat((fpTerm).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
+		return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
 	}
 
 	private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
@@ -282,7 +314,7 @@ final class Z3TermTransformer {
 			return transformExists(term, model, vars);
 
 		} else {
-			throw new AssertionError("Unhandled case: " + term.toString());
+			throw new AssertionError("Unhandled case: " + term);
 		}
 	}
 
@@ -434,3 +466,4 @@ final class Z3TermTransformer {
 	}
 
 }
+ 

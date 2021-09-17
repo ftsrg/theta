@@ -2,19 +2,26 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.dsl.*;
+import hu.bme.mit.theta.common.dsl.DynamicScope;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
-import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -29,14 +36,69 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AccessContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AccessorExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AdditiveExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.AndExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ArrLitExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ArrayReadAccessContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ArrayWriteAccessContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.DIV;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.EQ;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.EqualityExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.FalseExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.GEQ;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.GT;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.IdExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.IffExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ImplyExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.IntLitExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.IteExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.LEQ;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.LT;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.MINUS;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.MOD;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.MUL;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.MultiplicativeExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.NEQ;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.NotExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.OrExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.PLUS;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.ParenExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.REM;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.RelationExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.TrueExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.UnaryExprContext;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XorExprContext;
 import static java.util.stream.Collectors.toList;
 
 final class XstsExpression {
@@ -436,14 +498,14 @@ final class XstsExpression {
 			final T2 valueType;
 
 			if(ctx.indexType != null) {
-				indexType = (T1) new XstsType(typeTable,ctx.indexType).instantiate(env);
+				indexType = (T1) new XstsType(typeTable,ctx.indexType).instantiate(env).getType();
 			}
 			else {
 				indexType = (T1) ctx.indexExpr.get(0).accept(this).getType();
 			}
 			valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-			final List<Tuple2<Expr<T1>, Expr<T2>>> elems = IntStream
+			final List<Tuple2<Expr<T1>,Expr<T2>>> elems = IntStream
 					.range(0, ctx.indexExpr.size())
 					.mapToObj(i -> Tuple2.of(
 							cast(ctx.indexExpr.get(i).accept(this), indexType),
@@ -452,8 +514,7 @@ final class XstsExpression {
 					.collect(Collectors.toUnmodifiableList());
 
 			final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
-			return Array(elems, elseExpr, ArrayType.of(indexType, valueType));
-		}
+			return simplify(ArrayInit(elems, elseExpr, ArrayType.of(indexType, valueType)));		}
 
 		@Override
 		public Expr<?> visitIdExpr(final IdExprContext ctx) {

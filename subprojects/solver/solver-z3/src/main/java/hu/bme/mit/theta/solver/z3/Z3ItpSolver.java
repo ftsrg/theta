@@ -15,6 +15,16 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Collection;
+import hu.bme.mit.theta.common.container.Containers;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -106,7 +116,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 			itpList.add(itpExpr);
 		}
 
-		final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
+		final Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
 		buildItpMapFormList(z3ItpPattern.getRoot(), itpList, itpMap);
 
 		return new Z3Interpolant(itpMap);

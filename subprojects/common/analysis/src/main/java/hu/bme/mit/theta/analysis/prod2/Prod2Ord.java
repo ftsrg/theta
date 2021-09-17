@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
-final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<Prod2State<S1, S2>> {
+public final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<Prod2State<S1, S2>> {
 
 	private final PartialOrd<S1> partialOrd1;
 	private final PartialOrd<S2> partialOrd2;

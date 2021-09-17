@@ -21,7 +21,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -44,7 +44,7 @@ public final class PredPrec implements Prec {
 
 	private PredPrec(final Iterable<Expr<BoolType>> preds) {
 		checkNotNull(preds);
-		this.predToNegMap = new HashMap<>();
+		this.predToNegMap = Containers.createMap();
 
 		for (final Expr<BoolType> pred : preds) {
 			if (pred instanceof BoolLitExpr) {

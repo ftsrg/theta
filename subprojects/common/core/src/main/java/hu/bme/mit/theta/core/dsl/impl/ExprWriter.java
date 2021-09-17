@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -42,36 +43,57 @@ import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -80,14 +102,14 @@ import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -286,6 +308,52 @@ public final class ExprWriter {
 
 				.addCase(ArrayLitExpr.class, this::arrayLit)
 
+				.addCase(ArrayInitExpr.class, this::arrayInit)
+
+				// FloatingPoint
+
+				.addCase(FpAbsExpr.class, e -> prefixUnary(e, " fpabs "))
+
+				.addCase(FpAddExpr.class, e -> infixMultiary(e, " + "))
+
+				.addCase(FpDivExpr.class, e -> infixBinary(e, " / "))
+
+				.addCase(FpEqExpr.class, e -> infixBinary(e, " == "))
+
+				.addCase(FpFromBvExpr.class, e -> prefixUnary(e, " fpfrombv "))
+
+				.addCase(FpGeqExpr.class, e -> infixBinary(e, " >= "))
+
+				.addCase(FpGtExpr.class, e -> infixBinary(e, " > "))
+
+				.addCase(FpLeqExpr.class, e -> infixBinary(e, " <= "))
+
+				.addCase(FpLtExpr.class, e -> infixBinary(e, " < "))
+
+				.addCase(FpLitExpr.class, FpLitExpr::toString)
+
+				.addCase(FpMaxExpr.class, e -> infixBinary(e, " fpmax "))
+
+				.addCase(FpMinExpr.class, e -> infixBinary(e, " fpmin "))
+
+				.addCase(FpMulExpr.class, e -> infixMultiary(e, " * "))
+
+				.addCase(FpNegExpr.class, e -> prefixUnary(e, " - "))
+
+				.addCase(FpNeqExpr.class, e -> infixBinary(e, " != "))
+
+				.addCase(FpPosExpr.class, e -> prefixUnary(e, " + "))
+
+				.addCase(FpRemExpr.class, e -> infixBinary(e, " % "))
+
+				.addCase(FpSqrtExpr.class, e -> prefixUnary(e, " sqrt "))
+
+				.addCase(FpSubExpr.class, e -> infixBinary(e, " - "))
+
+				.addCase(FpToBvExpr.class, e -> prefixUnary(e, " fptobv "))
+
+				.addCase(FpToFpExpr.class, e -> prefixUnary(e, " fptofp "))
+
 				// General
 
 				.addCase(RefExpr.class, e -> e.getDecl().getName())
@@ -405,4 +473,12 @@ public final class ExprWriter {
 		"]";
 	}
 
+	private String arrayInit(final ArrayInitExpr<?, ?> expr) {
+		return "[" +
+			expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2())).collect(Collectors.joining(", ")) +
+			"<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(expr.getElseElem()) +
+		"]";
+	}
+
 }
+ 

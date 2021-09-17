@@ -26,7 +26,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -87,7 +87,7 @@ public final class LuZoneState implements ExprState {
 		Expr<BoolType> result = expr;
 		if (result == null) {
 			// TODO create class for mapping
-			final Map<VarDecl<?>, ParamDecl<?>> mapping = new HashMap<>();
+			final Map<VarDecl<?>, ParamDecl<?>> mapping = Containers.createMap();
 			final Expr<BoolType> zoneExpr = ExprUtils.close(zone.toExpr(), mapping);
 			final Collection<Expr<BoolType>> conjuncts = new ArrayList<>();
 

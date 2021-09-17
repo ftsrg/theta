@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.FPExpr;
+import com.microsoft.z3.FPSort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -33,6 +35,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -81,6 +84,30 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
@@ -112,6 +139,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.util.List;
@@ -193,6 +221,8 @@ final class Z3ExprTransformer {
 				.addCase(RatLeqExpr.class, this::transformRatLeq)
 
 				.addCase(RatLtExpr.class, this::transformRatLt)
+
+				.addCase(RatToIntExpr.class, this::transformRatToInt)
 
 				// Integers
 
@@ -291,12 +321,60 @@ final class Z3ExprTransformer {
 				.addCase(BvULtExpr.class, this::transformBvULt)
 
 				.addCase(BvSGeqExpr.class, this::transformBvSGeq)
-	
+
 				.addCase(BvSGtExpr.class, this::transformBvSGt)
-	
+
 				.addCase(BvSLeqExpr.class, this::transformBvSLeq)
-	
+
 				.addCase(BvSLtExpr.class, this::transformBvSLt)
+
+				// Floating points
+
+				.addCase(FpLitExpr.class, this::transformFpLit)
+
+				.addCase(FpAddExpr.class, this::transformFpAdd)
+
+				.addCase(FpSubExpr.class, this::transformFpSub)
+
+				.addCase(FpPosExpr.class, this::transformFpPos)
+
+				.addCase(FpNegExpr.class, this::transformFpNeg)
+
+				.addCase(FpMulExpr.class, this::transformFpMul)
+
+				.addCase(FpDivExpr.class, this::transformFpDiv)
+
+				.addCase(FpEqExpr.class, this::transformFpEq)
+
+				.addCase(FpGeqExpr.class, this::transformFpGeq)
+
+				.addCase(FpLeqExpr.class, this::transformFpLeq)
+
+				.addCase(FpGtExpr.class, this::transformFpGt)
+
+				.addCase(FpLtExpr.class, this::transformFpLt)
+
+				.addCase(FpNeqExpr.class, this::transformFpNeq)
+
+				.addCase(FpAbsExpr.class, this::transformFpAbs)
+
+				.addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
+
+				.addCase(FpMaxExpr.class, this::transformFpMax)
+
+				.addCase(FpMinExpr.class, this::transformFpMin)
+
+				.addCase(FpSqrtExpr.class, this::transformFpSqrt)
+
+				.addCase(FpRemExpr.class, this::transformFpRem)
+
+				.addCase(FpIsNanExpr.class, this::transformFpIsNan)
+
+				.addCase(FpFromBvExpr.class, this::transformFpFromBv)
+
+				.addCase(FpToBvExpr.class, this::transformFpToBv)
+
+				.addCase(FpToFpExpr.class, this::transformFpToFp)
 
 				// Functions
 
@@ -314,14 +392,23 @@ final class Z3ExprTransformer {
 
 				.addCase(ArrayLitExpr.class, this::transformArrayLit)
 
+				.addCase(ArrayInitExpr.class, this::transformArrayInit)
+
 				.build();
 	}
 
-	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
-		try {
-			return exprToTerm.get(expr, () -> table.dispatch(expr));
-		} catch (final ExecutionException e) {
-			throw new AssertionError("Unhandled case: " + expr, e);
+	private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+		final Expr<?> func = expr.getFunc();
+		final Expr<?> arg = expr.getParam();
+		if (func instanceof FuncAppExpr) {
+			final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+			final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+			final Expr<?> resFunc = funcAndArgs.get1();
+			final List<Expr<?>> args = funcAndArgs.get2();
+			final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg).build();
+			return Tuple2.of(resFunc, resArgs);
+		} else {
+			return Tuple2.of(func, ImmutableList.of(arg));
 		}
 	}
 
@@ -330,6 +417,14 @@ final class Z3ExprTransformer {
 	/*
 	 * General
 	 */
+
+	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+		try {
+			return exprToTerm.get(expr, () -> table.dispatch(expr));
+		} catch (final ExecutionException e) {
+			throw new AssertionError("Unhandled case: " + expr, e);
+		}
+	}
 
 	private com.microsoft.z3.Expr transformRef(final RefExpr<?> expr) {
 		final Decl<?> decl = expr.getDecl();
@@ -344,16 +439,16 @@ final class Z3ExprTransformer {
 		}
 	}
 
+	/*
+	 * Booleans
+	 */
+
 	private com.microsoft.z3.Expr transformIte(final IteExpr<?> expr) {
 		final BoolExpr condTerm = (BoolExpr) toTerm(expr.getCond());
 		final com.microsoft.z3.Expr thenTerm = toTerm(expr.getThen());
 		final com.microsoft.z3.Expr elzeTerm = toTerm(expr.getElse());
 		return context.mkITE(condTerm, thenTerm, elzeTerm);
 	}
-
-	/*
-	 * Booleans
-	 */
 
 	private com.microsoft.z3.Expr transformFalse(final FalseExpr expr) {
 		return context.mkFalse();
@@ -389,15 +484,15 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {
 		final BoolExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (BoolExpr) toTerm(e))
-			.toArray(BoolExpr[]::new);
+				.map(e -> (BoolExpr) toTerm(e))
+				.toArray(BoolExpr[]::new);
 		return context.mkAnd(opTerms);
 	}
 
 	private com.microsoft.z3.Expr transformOr(final OrExpr expr) {
 		final BoolExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (BoolExpr) toTerm(e))
-			.toArray(BoolExpr[]::new);
+				.map(e -> (BoolExpr) toTerm(e))
+				.toArray(BoolExpr[]::new);
 		return context.mkOr(opTerms);
 	}
 
@@ -431,6 +526,10 @@ final class Z3ExprTransformer {
 		return paramTerms;
 	}
 
+	/*
+	 * Rationals
+	 */
+
 	private com.microsoft.z3.FuncDecl transformParamDecl(final ParamDecl<?> paramDecl) {
 		final Type type = paramDecl.getType();
 		if (type instanceof FuncType<?, ?>) {
@@ -441,10 +540,6 @@ final class Z3ExprTransformer {
 		}
 	}
 
-	/*
-	 * Rationals
-	 */
-
 	private com.microsoft.z3.Expr transformRatLit(final RatLitExpr expr) {
 		var num = context.mkReal(expr.getNum().toString());
 		var denom = context.mkReal(expr.getDenom().toString());
@@ -453,8 +548,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformRatAdd(final RatAddExpr expr) {
 		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-			.toArray(com.microsoft.z3.ArithExpr[]::new);
+				.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+				.toArray(com.microsoft.z3.ArithExpr[]::new);
 		return context.mkAdd(opTerms);
 	}
 
@@ -475,8 +570,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformRatMul(final RatMulExpr expr) {
 		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-			.toArray(com.microsoft.z3.ArithExpr[]::new);
+				.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+				.toArray(com.microsoft.z3.ArithExpr[]::new);
 		return context.mkMul(opTerms);
 	}
 
@@ -526,14 +621,19 @@ final class Z3ExprTransformer {
 	 * Integers
 	 */
 
+	private com.microsoft.z3.Expr transformRatToInt(final RatToIntExpr expr) {
+		final com.microsoft.z3.RealExpr opTerm = (com.microsoft.z3.RealExpr) toTerm(expr.getOp());
+		return context.mkReal2Int(opTerm);
+	}
+
 	private com.microsoft.z3.Expr transformIntLit(final IntLitExpr expr) {
 		return context.mkInt(expr.getValue().toString());
 	}
 
 	private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {
 		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-			.toArray(com.microsoft.z3.ArithExpr[]::new);
+				.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+				.toArray(com.microsoft.z3.ArithExpr[]::new);
 		return context.mkAdd(opTerms);
 	}
 
@@ -554,8 +654,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformIntMul(final IntMulExpr expr) {
 		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-			.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-			.toArray(com.microsoft.z3.ArithExpr[]::new);
+				.map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+				.toArray(com.microsoft.z3.ArithExpr[]::new);
 		return context.mkMul(opTerms);
 	}
 
@@ -613,14 +713,14 @@ final class Z3ExprTransformer {
 		return context.mkLt(leftOpTerm, rightOpTerm);
 	}
 
+	/*
+	 * Bitvectors
+	 */
+
 	private com.microsoft.z3.Expr transformIntToRat(final IntToRatExpr expr) {
 		final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
 		return context.mkInt2Real(opTerm);
 	}
-
-	/*
-	 * Bitvectors
-	 */
 
 	private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
 		return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
@@ -640,8 +740,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformBvConcat(final BvConcatExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkConcat);
 	}
@@ -670,8 +770,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAdd);
 	}
@@ -693,8 +793,8 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformBvMul(final BvMulExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVMul);
 	}
@@ -736,24 +836,24 @@ final class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformBvAnd(final BvAndExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAND);
 	}
 
 	private com.microsoft.z3.Expr transformBvOr(final BvOrExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVOR);
 	}
 
 	private com.microsoft.z3.Expr transformBvXor(final BvXorExpr expr) {
 		final BitVecExpr[] opTerms = expr.getOps().stream()
-			.map(e-> (BitVecExpr) toTerm(e))
-			.toArray(BitVecExpr[]::new);
+				.map(e -> (BitVecExpr) toTerm(e))
+				.toArray(BitVecExpr[]::new);
 
 		return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVXOR);
 	}
@@ -848,6 +948,10 @@ final class Z3ExprTransformer {
 		return context.mkBVSLE(leftOpTerm, rightOpTerm);
 	}
 
+	/*
+	 * Floating points
+	 */
+
 	private com.microsoft.z3.Expr transformBvSLt(final BvSLtExpr expr) {
 		final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
 		final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
@@ -855,9 +959,161 @@ final class Z3ExprTransformer {
 		return context.mkBVSLT(leftOpTerm, rightOpTerm);
 	}
 
+	private com.microsoft.z3.Expr transformFpLit(final FpLitExpr expr) {
+		return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1), (BitVecExpr) toTerm(expr.getExponent()), (BitVecExpr) toTerm(expr.getSignificand()));
+	}
+
+	private com.microsoft.z3.Expr transformFpAdd(final FpAddExpr expr) {
+		final FPExpr[] opTerms = expr.getOps().stream()
+				.map(e -> (FPExpr) toTerm(e))
+				.toArray(FPExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], (op1, op2) -> context.mkFPAdd(transformFpRoundingMode(expr.getRoundingMode()), op1, op2));
+	}
+
+	private com.microsoft.z3.Expr transformFpSub(final FpSubExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPSub(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpPos(final FpPosExpr expr) {
+		return toTerm(expr.getOp());
+	}
+
+	private com.microsoft.z3.Expr transformFpNeg(final FpNegExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPNeg(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpAbs(final FpAbsExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPAbs(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpIsNan(final FpIsNanExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPIsNaN(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPRoundToIntegral(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpMul(final FpMulExpr expr) {
+		final FPExpr[] opTerms = expr.getOps().stream()
+				.map(e -> (FPExpr) toTerm(e))
+				.toArray(FPExpr[]::new);
+
+		return Stream.of(opTerms).skip(1).reduce(opTerms[0], (op1, op2) -> context.mkFPMul(transformFpRoundingMode(expr.getRoundingMode()), op1, op2));
+	}
+
+	private com.microsoft.z3.Expr transformFpDiv(final FpDivExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+
+		return context.mkFPDiv(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpRem(final FpRemExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPRem(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpEq(final FpEqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpNeq(final FpNeqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkNot(context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm));
+	}
+
+	private com.microsoft.z3.Expr transformFpGeq(final FpGeqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPGEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpLeq(final FpLeqExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPLEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpGt(final FpGtExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPGt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpLt(final FpLtExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkFPLt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.FPRMExpr transformFpRoundingMode(final FpRoundingMode roundingMode) {
+		switch (roundingMode) {
+			case RNE:
+				return context.mkFPRoundNearestTiesToEven();
+			case RNA:
+				return context.mkFPRoundNearestTiesToAway();
+			case RTP:
+				return context.mkFPRoundTowardPositive();
+			case RTN:
+				return context.mkFPRoundTowardNegative();
+			case RTZ:
+				return context.mkFPRoundTowardZero();
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	private com.microsoft.z3.Expr transformFpMax(final FpMaxExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPMax(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpMin(final FpMinExpr expr) {
+		final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
+		final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
+		return context.mkFPMin(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
+		final BitVecExpr val = (BitVecExpr) toTerm(expr.getOp());
+		final FPSort fpSort = context.mkFPSort(expr.getFpType().getExponent(), expr.getFpType().getSignificand());
+		return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), val, fpSort, expr.isSigned());
+	}
+
+	private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
+		boolean sgn = expr.getSgn();
+		int size = expr.getSize();
+		final FPExpr op = (FPExpr) toTerm(expr.getOp());
+
+		return context.mkFPToBV(transformFpRoundingMode(expr.getRoundingMode()), op, size, sgn);
+	}
 	/*
 	 * Arrays
 	 */
+
+	private com.microsoft.z3.Expr transformFpToFp(final FpToFpExpr expr) {
+		final FPExpr op = (FPExpr) toTerm(expr.getOp());
+
+		return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), op, new FPSort(context, expr.getExpBits(), expr.getSignBits()));
+	}
 
 	private com.microsoft.z3.Expr transformArrayRead(final ArrayReadExpr<?, ?> expr) {
 		final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(expr.getArray());
@@ -884,6 +1140,10 @@ final class Z3ExprTransformer {
 		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
 	}
 
+	/*
+	 * Functions
+	 */
+
 	private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
 		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
 		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
@@ -892,9 +1152,13 @@ final class Z3ExprTransformer {
 		return running;
 	}
 
-	/*
-	 * Functions
-	 */
+	private com.microsoft.z3.Expr transformArrayInit(final ArrayInitExpr<?, ?> expr) {
+		com.microsoft.z3.ArrayExpr running = context.mkConstArray(transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
+		for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+			running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+		}
+		return running;
+	}
 
 	private com.microsoft.z3.Expr transformFuncApp(final FuncAppExpr<?, ?> expr) {
 		final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
@@ -905,26 +1169,11 @@ final class Z3ExprTransformer {
 			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
 			final List<Expr<?>> args = funcAndArgs.get2();
 			final com.microsoft.z3.Expr[] argTerms = args.stream()
-				.map(this::toTerm)
-				.toArray(com.microsoft.z3.Expr[]::new);
+					.map(this::toTerm)
+					.toArray(com.microsoft.z3.Expr[]::new);
 			return context.mkApp(funcDecl, argTerms);
 		} else {
 			throw new UnsupportedOperationException("Higher order functions are not supported: " + func);
-		}
-	}
-
-	private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-		final Expr<?> func = expr.getFunc();
-		final Expr<?> arg = expr.getParam();
-		if (func instanceof FuncAppExpr) {
-			final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-			final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-			final Expr<?> resFunc = funcAndArgs.get1();
-			final List<Expr<?>> args = funcAndArgs.get2();
-			final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg).build();
-			return Tuple2.of(resFunc, resArgs);
-		} else {
-			return Tuple2.of(func, ImmutableList.of(arg));
 		}
 	}
 

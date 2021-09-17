@@ -15,19 +15,13 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -48,15 +42,24 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -152,6 +155,37 @@ public final class Z3SolverTest {
 		assertEquals(2, valLit.getElements().size());
 		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
 		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+	}
+
+	@Test
+	public void testArrayInit() {
+		final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+		var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
+		ConstDecl<IntType> noname = Const("noname", Int());
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		elems.add(Tuple2.of(Int(1), Int(2)));
+		elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
+		var initarr = ArrayInit(elems, Int(100), Array(Int(), Int()));
+
+		solver.add(ArrayExprs.Eq(arr.getRef(), initarr));
+
+		// Check, the expression should be satisfiable
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		solver.add(Eq(noname.getRef(), Int(1)));
+		status = solver.check();
+		assertTrue(status.isSat());
+
+		Valuation valuation = solver.getModel();
+		final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
+		assertTrue(optVal.isPresent());
+		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
+		assertTrue(val instanceof ArrayLitExpr);
+		var valLit = (ArrayLitExpr<IntType, IntType>)val;
+		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+		assertEquals(Int(4), Read(valLit, Int(2)).eval(ImmutableValuation.empty()));
 	}
 
 	@Test

@@ -283,7 +283,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             return null;
         }
         else if(arrayLitExpr instanceof IteExpr) {
-            final var entryExprsBuilder = new ImmutableList.Builder<Tuple2<Expr<I>, Expr<E>>>();
+            final var entryExprsBuilder = new ImmutableList.Builder<Tuple2<? extends Expr<I>, ? extends Expr<E>>>();
             var iteExpr = (IteExpr<E>) arrayLitExpr;
             while (true) {
                 entryExprsBuilder.add(Tuple2.of((Expr<I>) iteExpr.getCond().getOps().get(1), iteExpr.getThen()));

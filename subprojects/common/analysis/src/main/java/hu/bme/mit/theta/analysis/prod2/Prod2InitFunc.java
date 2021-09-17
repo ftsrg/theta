@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
-final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec>
+public final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec>
 		implements InitFunc<Prod2State<S1, S2>, Prod2Prec<P1, P2>> {
 
 	private final InitFunc<S1, P1> initFunc1;

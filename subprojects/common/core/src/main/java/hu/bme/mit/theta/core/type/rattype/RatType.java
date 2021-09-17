@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 
 public final class RatType
-		implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType> {
+		implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType>{
 
 	private static final RatType INSTANCE = new RatType();
 	private static final int HASH_SEED = 385863;

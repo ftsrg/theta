@@ -1,0 +1,18 @@
+ctrl var x: integer = 0
+
+trans {
+    choice{
+        x:=3;
+    } or {
+        x:=3;
+    }
+    local var y: integer = 0;
+    for i from 1 to x*x/x+1 do y:=y+1;
+    for i from 1 to y+1 do {
+        x:=x-1;
+    }
+}
+
+init{}
+
+env{}

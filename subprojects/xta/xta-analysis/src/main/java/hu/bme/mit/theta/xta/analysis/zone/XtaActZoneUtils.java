@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xta.analysis.zone;
 
 import java.util.Collection;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +37,7 @@ public final class XtaActZoneUtils {
 	}
 
 	public static Set<VarDecl<RatType>> pre(final Set<VarDecl<RatType>> activeVars, final XtaAction action) {
-		final Set<VarDecl<RatType>> result = new HashSet<>();
+		final Set<VarDecl<RatType>> result = Containers.createSet();
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final List<Loc> targetLocs = action.getTargetLocs();

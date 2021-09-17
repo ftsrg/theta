@@ -15,9 +15,26 @@
  */
 package hu.bme.mit.theta.core.expr;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import org.junit.Test;
+
+import java.util.ArrayList;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
@@ -53,20 +70,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 import static org.junit.Assert.assertEquals;
-
-import hu.bme.mit.theta.common.Tuple2;
-import org.junit.Test;
-
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-
-import java.util.ArrayList;
 
 public class EvaluationTest {
 
@@ -255,6 +260,16 @@ public class EvaluationTest {
 		assertEquals(Int(0), evaluate(Rem(Int(3), Int(3))));
 	}
 
+	@Test
+	public void testRatToInt() {
+		assertEquals(Int(1), evaluate(ToInt(Rat(4, 3))));
+		assertEquals(Int(1), evaluate(ToInt(Rat(3, 3))));
+		assertEquals(Int(0), evaluate(ToInt(Rat(2, 3))));
+		assertEquals(Int(-1), evaluate(ToInt(Rat(-4, 3))));
+		assertEquals(Int(-1), evaluate(ToInt(Rat(4, -3))));
+		assertEquals(Int(1), evaluate(ToInt(Rat(-4, -3))));
+	}
+
 	// rattype
 
 	@Test
@@ -341,7 +356,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testRead() {
-		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
 		var arr = Array(elems, Int(100), Array(Int(), Int()));
@@ -352,7 +367,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testWrite() {
-		var elems = new ArrayList<Tuple2<Expr<IntType>,Expr<IntType>>>();
+		var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
 		elems.add(Tuple2.of(Int(0), Int(1)));
 		elems.add(Tuple2.of(Int(1), Int(2)));
 		var arr = Array(elems, Int(100), Array(Int(), Int()));
@@ -368,6 +383,24 @@ public class EvaluationTest {
 		assertEquals(Int(34), evaluate(Read(arr2, Int(2))));
 		assertEquals(Int(100), evaluate(Read(arr2, Int(5))));
 	}
+
+	@Test
+	public void testArrayInit() {
+		var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
+		VarDecl<IntType> noname = Var("noname", Int());
+		elems.add(Tuple2.of(Int(0), Int(1)));
+		elems.add(Tuple2.of(Int(1), Int(2)));
+		elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
+		var arr = ArrayInit(elems, Int(100), Array(Int(), Int()));
+
+		ImmutableValuation val = ImmutableValuation.builder().put(noname, Int(1)).build();
+		assertEquals(Int(1), evaluate(Read(arr, Int(0)), val));
+		assertEquals(Int(2), evaluate(Read(arr, Int(1)), val));
+		assertEquals(Int(4), evaluate(Read(arr, Int(2)), val));
+		assertEquals(Int(100), evaluate(Read(arr, Int(5)), val));
+	}
+
+
 
 	// anytype
 

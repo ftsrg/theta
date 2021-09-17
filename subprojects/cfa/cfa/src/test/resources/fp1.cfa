@@ -1,0 +1,21 @@
+main process cfa {
+	var f2 : fp[5:11]
+	var f3 : fp[11:53]
+	var f4 : fp[11:53]
+	var b1 : bv[4]
+
+    init loc L1
+    loc L2
+    loc L3
+    loc L4
+    loc L5
+    final loc END
+    error loc ERR
+
+    L1 -> L2 { f2 := 5'b10010.10'd0 }
+    L2 -> L3 { f3 := fptofp[11:53][RNE] f2 }
+    L3 -> L4 { b1 := 4'd8 }
+    L4 -> L5 { f4 := fpfrombv[11:53][u][RNE] b1 }
+    L5 -> END { assume f3 = f4 }
+    L5 -> ERR { assume not (f3 = f4) }
+}

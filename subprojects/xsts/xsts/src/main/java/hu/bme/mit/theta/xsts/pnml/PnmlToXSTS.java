@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.pnml;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
@@ -12,8 +13,8 @@ import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
+import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.io.InputStream;
 import java.util.*;
@@ -31,7 +32,7 @@ public class PnmlToXSTS {
 	}
 
 	public static XSTS createXSTS(final PnmlNet net, final InputStream propStream){
-		final Map<String, VarDecl<IntType>> placeIdToVar = new HashMap<>();
+		final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
 
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 		// Create a variable for each place and initialize them
@@ -83,7 +84,7 @@ public class PnmlToXSTS {
 		final NonDetStmt init = NonDetStmt.of(ImmutableList.of());
 		final NonDetStmt env = NonDetStmt.of(ImmutableList.of());
 
-		final Map<VarDecl<?>, XstsTypeDeclSymbol> varToType = ImmutableMap.of();
+		final Map<VarDecl<?>, XstsType<?>> varToType = ImmutableMap.of();
 		final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
 		final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");

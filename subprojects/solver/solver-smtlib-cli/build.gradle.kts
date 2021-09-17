@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     compile(project(":theta-solver-smtlib"))
+    testImplementation(testFixtures(project(":theta-core")))
 }
 
 application {

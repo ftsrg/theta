@@ -256,27 +256,37 @@ DEFAULT
 // S T A T E M E N T S
 
 stmt:	localVarDeclStmt
+    |   assignArrayWriteSugar
     |   assignStmt
 	|	havocStmt
 	|	assumeStmt
 	|   nonDetStmt
 	|   blockStmt
+	|   loopStmt
 	;
 
 nonDetStmt
-    :   CHOICE blocks+=blockStmt (NONDET_OR blocks+=blockStmt)*
+    :   CHOICE blocks+=stmt (NONDET_OR blocks+=stmt)*
     ;
 
 blockStmt
-    :   LCURLY subStmt=seqStmt RCURLY
+    :   LCURLY (stmts+=stmt)* RCURLY
+    ;
+
+loopStmt
+    :   FOR loopVar=ID FROM from=expr TO to=expr DO subStmt=stmt
     ;
 
 localVarDeclStmt
     :   LOCAL VAR name=ID DP ttype=type (EQUALS initValue=expr)? SEMICOLON
     ;
 
-seqStmt
-    :   (stmts+=stmt)*
+//seqStmt
+//    :
+//    ;
+
+assignArrayWriteSugar
+    :   array=ID LBRACK index=expr RBRACK ASSIGN value=expr SEMICOLON
     ;
 
 assignStmt
@@ -290,7 +300,6 @@ havocStmt
 assumeStmt
 	:	ASSUME cond=expr SEMICOLON
 	;
-
 
 //
 
@@ -308,6 +317,22 @@ ASSUME
 
 CHOICE
     :   'choice'
+    ;
+
+FOR
+    :   'for'
+    ;
+
+FROM
+    :   'from'
+    ;
+
+TO
+    :   'to'
+    ;
+
+DO
+    :   'do'
     ;
 
 NONDET_OR

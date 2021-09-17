@@ -26,7 +26,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -180,7 +180,7 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
                 /* Add the negated of the above expression as the new predicate */
                 predicates.add(
                     ExprSimplifier.simplify(
-                        Not(And(new HashSet<>(predicate))),
+                        Not(And(Containers.createSet(predicate))),
                         ImmutableValuation.empty()
                     )
                 );

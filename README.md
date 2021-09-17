@@ -1,6 +1,7 @@
 # Theta
 
-![Build Theta with Gradle](https://github.com/ftsrg/theta/workflows/Build%20Theta%20with%20Gradle/badge.svg)
+[![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
+[![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
 ![Build dockerfiles](https://github.com/ftsrg/theta/workflows/Build%20dockerfiles/badge.svg)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ftsrg/theta&amp;utm_campaign=Badge_Grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ftsrg/theta&utm_campaign=Badge_Coverage)
@@ -10,7 +11,7 @@
 
 ## About
 
-_Theta_ is a generic, modular and configurable model checking framework developed at the [Fault Tolerant Systems Research Group](http://inf.mit.bme.hu/en) of [Budapest University of Technology and Economics](http://www.bme.hu/?language=en), aiming to support the design and evaluation of abstraction refinement-based algorithms for the reachability analysis of various formalisms.
+_Theta_ is a generic, modular and configurable model checking framework developed at the [Critical Systems Research Group](http://inf.mit.bme.hu/en) of [Budapest University of Technology and Economics](http://www.bme.hu/?language=en), aiming to support the design and evaluation of abstraction refinement-based algorithms for the reachability analysis of various formalisms.
 The main distinguishing characteristic of Theta is its architecture that allows the definition of input formalisms with higher level language front-ends, and the combination of various abstract domains, interpreters, and strategies for abstraction and refinement.
 Theta can both serve as a model checking backend, and also includes ready-to-use, stand-alone tools.
 

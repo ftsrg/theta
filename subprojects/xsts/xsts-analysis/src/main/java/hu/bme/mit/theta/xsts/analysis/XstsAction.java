@@ -9,19 +9,23 @@ import java.util.List;
 
 public final class XstsAction extends StmtAction {
 
-	private final Stmt stmt;
+	private final List<Stmt> stmts;
 
-	private XstsAction(final Stmt stmt) {
-		this.stmt = stmt;
+	private XstsAction(final List<Stmt> stmts) {
+		this.stmts = stmts;
 	}
 
 	public static XstsAction create(final Stmt stmt) {
-		return new XstsAction(stmt);
+		return new XstsAction(ImmutableList.of(stmt));
+	}
+
+	public static XstsAction create(final List<Stmt> stmts) {
+		return new XstsAction(stmts);
 	}
 
 	@Override
 	public List<Stmt> getStmts() {
-		return ImmutableList.of(stmt);
+		return stmts;
 	}
 
 	@Override
@@ -30,7 +34,7 @@ public final class XstsAction extends StmtAction {
 			return true;
 		} else if (obj instanceof XstsAction) {
 			final XstsAction that = (XstsAction) obj;
-			return this.stmt.equals(that.stmt);
+			return this.stmts.equals(that.stmts);
 		} else {
 			return false;
 		}
@@ -38,6 +42,6 @@ public final class XstsAction extends StmtAction {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(stmt).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
 	}
 }

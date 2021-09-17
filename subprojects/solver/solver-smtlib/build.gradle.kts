@@ -8,4 +8,5 @@ dependencies {
     compile(project(":theta-core"))
     compile(project(":theta-solver"))
     compile("org.apache.commons:commons-compress:1.20")
+    testImplementation(testFixtures(project(":theta-core")))
 }

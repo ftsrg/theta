@@ -81,6 +81,7 @@ type:	boolType
 	|	funcType
 	|	arrayType
 	|	bvType
+	|   fpType
 	;
 
 typeList
@@ -111,6 +112,10 @@ bvType
     :   BVTYPE LBRACK size=INT RBRACK
     ;
 
+fpType
+    :   FPTYPE FP_TYPE_DECL
+    ;
+
 BOOLTYPE
 	:	'bool'
 	;
@@ -125,6 +130,10 @@ RATTYPE
 
 BVTYPE
     :   'bv'
+    ;
+
+FPTYPE
+    :   'fp'
     ;
 
 // E X P R E S S I O N S
@@ -155,7 +164,7 @@ implyExpr
 	;
 
 quantifiedExpr
-	:	orExpr
+	:	fpFuncExpr
 	|	forallExpr
 	|	existsExpr
 	;
@@ -167,6 +176,10 @@ forallExpr
 existsExpr
 	:	EXISTS LPAREN paramDecls=declList RPAREN op=quantifiedExpr
 	;
+
+fpFuncExpr
+    :   leftOp=orExpr (oper=(FPMAX | FPMIN) rightOp=orExpr)?
+    ;
 
 orExpr
 	:	ops+=xorExpr (OR ops+=xorExpr)*
@@ -210,11 +223,11 @@ bitwiseShiftExpr
     ;
 
 additiveExpr
-	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS | BV_ADD | BV_SUB) ops+=multiplicativeExpr)*
+	:	ops+=multiplicativeExpr (opers+=(PLUS | MINUS | BV_ADD | BV_SUB | FPADD | FPSUB) ops+=multiplicativeExpr)*
 	;
 
 multiplicativeExpr
-	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM) ops+=bvConcatExpr)*
+	:	ops+=bvConcatExpr (opers+=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM | FPREM | FPMUL | FPDIV) ops+=bvConcatExpr)*
 	;
 
 bvConcatExpr
@@ -227,7 +240,7 @@ bvExtendExpr
 
 unaryExpr
 	:	bitwiseNotExpr
-	|	oper=(PLUS | MINUS | BV_POS | BV_NEG) op=unaryExpr
+	|	oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_NAN | FPROUNDTOINT | FPSQRT | FPTOFP | FPTOBV | FP_FROM_BV | FPNEG | FPPOS ) op=unaryExpr
 	;
 
 bitwiseNotExpr
@@ -273,6 +286,7 @@ primaryExpr
 	|	intLitExpr
 	|	ratLitExpr
 	|	arrLitExpr
+	|   fpLitExpr
 	|	bvLitExpr
 	|	idExpr
 	|	parenExpr
@@ -301,6 +315,10 @@ arrLitExpr
 
 bvLitExpr
     :   bv=BV
+    ;
+
+fpLitExpr
+    :   sig=(PLUS | MINUS)? bvLitExpr DOT bvLitExpr
     ;
 
 idExpr
@@ -510,8 +528,88 @@ BV_SGE
     :   'bvsge'
     ;
 
+FP_ABS
+    :   'fpabs'
+    ;
+
+FP_FROM_BV
+    :   'fpfrombv' FP_TYPE_DECL (LBRACK SIGNEDNESS RBRACK) FP_ROUNDINGMODE?
+    ;
+
+FP_IS_NAN
+    :   'fpisnan'
+    ;
+
+FPMAX
+    :   'fpmax' FP_ROUNDINGMODE?
+    ;
+
+FPMIN
+    :   'fpmin' FP_ROUNDINGMODE?
+    ;
+
+FPREM
+    :   'fprem' FP_ROUNDINGMODE?
+    ;
+
+FPROUNDTOINT
+    :   'fproundtoint' FP_ROUNDINGMODE?
+    ;
+
+FPSQRT
+    :   'fpsqrt' FP_ROUNDINGMODE?
+    ;
+
+FPTOBV
+    :   'fptobv' BV_TYPE_DECL FP_ROUNDINGMODE?
+    ;
+
+FPTOFP
+    :   'fptofp' FP_TYPE_DECL FP_ROUNDINGMODE?
+    ;
+
+FPSUB
+    :   'fpsub' FP_ROUNDINGMODE?
+    ;
+
+FPADD
+    :   'fpadd' FP_ROUNDINGMODE?
+    ;
+
+FPMUL
+    :   'fpmul' FP_ROUNDINGMODE?
+    ;
+
+FPDIV
+    :   'fpdiv' FP_ROUNDINGMODE?
+    ;
+
+FPPOS
+    :   'fppos' FP_ROUNDINGMODE?
+    ;
+
+FPNEG
+    :   'fpneg' FP_ROUNDINGMODE?
+    ;
+
 TRUE:	'true'
 	;
+
+BV_TYPE_DECL
+    :   LBRACK NAT '\'' SIGNEDNESS RBRACK
+    ;
+
+SIGNEDNESS
+    :   ('u' | 's')
+    ;
+
+FP_TYPE_DECL
+    :   LBRACK NAT COLON NAT RBRACK
+    ;
+
+FP_ROUNDINGMODE
+    :   LBRACK [A-Z]* RBRACK
+    ;
 
 FALSE
 	:	'false'
@@ -660,3 +758,4 @@ COMMENT
 LINE_COMMENT
     :   '//' ~[\r\n]* -> skip
     ;
+ 

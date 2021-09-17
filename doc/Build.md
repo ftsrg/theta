@@ -2,7 +2,8 @@
 
 Theta uses Java (JDK) 11 with [Gradle 6](https://gradle.org/) as a build system.
 Currently, we use [OpenJDK 11](https://openjdk.java.net/projects/jdk/11/) (see instructions for [Windows](https://stackoverflow.com/questions/52511778/how-to-install-openjdk-11-on-windows) and [Ubuntu](https://www.linuxuprising.com/2019/01/how-to-install-openjdk-11-in-ubuntu.html)).
-We are mainly developing on Windows, but we also test Theta on Linux.
+We are developing Theta both on Linux and Windows.
+Currently, floating point types are only fully supported on Linux. Windows support is experimental and can cause cryptic exceptions to occur in native code. 
 Theta can be built from the command line, but you can also import it into [IntelliJ IDEA](https://www.jetbrains.com/idea/).
 Unfortunately, Eclipse [does not support](https://github.com/eclipse/buildship/issues/222) Gradle projects with Kotlin build scripts (yet).
 

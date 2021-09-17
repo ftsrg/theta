@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +67,7 @@ public final class ExprUtils {
 	 * @return Set of atoms
 	 */
 	public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
-		final Set<Expr<BoolType>> atoms = new HashSet<>();
+		final Set<Expr<BoolType>> atoms = Containers.createSet();
 		collectAtoms(expr, atoms);
 		return atoms;
 	}
@@ -144,7 +146,7 @@ public final class ExprUtils {
 	 * @return Set of variables appearing in the expression
 	 */
 	public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		collectVars(expr, vars);
 		return vars;
 	}
@@ -156,7 +158,7 @@ public final class ExprUtils {
 	 * @return Set of variables appearing in the expressions
 	 */
 	public static Set<VarDecl<?>> getVars(final Iterable<? extends Expr<?>> exprs) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = Containers.createSet();
 		collectVars(exprs, vars);
 		return vars;
 	}
@@ -283,6 +285,31 @@ public final class ExprUtils {
 			simplifiedArgs.add(simplifiedArg);
 		}
 		return simplifiedArgs;
+	}
+
+	/**
+	 * Return the canonical form of an expression.
+	 *
+	 * @param expr Original expression
+	 * @return Canonical form
+	 */
+	public static <ExprType extends Type> Expr<ExprType> canonize(final Expr<ExprType> expr) {
+		return ExprCanonizer.canonize(expr);
+	}
+
+	/**
+	 * Return the canonical form of a list of expressions.
+	 *
+	 * @param exprs Original expressions
+	 * @return Canonical forms
+	 */
+	public static List<Expr<?>> canonizeAll(final List<? extends Expr<?>> exprs) {
+		final List<Expr<?>> canonizedArgs = new ArrayList<>();
+		for (final Expr<?> expr : exprs) {
+			final Expr<?> canonizedArg = canonize(expr);
+			canonizedArgs.add(canonizedArg);
+		}
+		return canonizedArgs;
 	}
 
 	/**
