@@ -94,34 +94,47 @@ public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final String[] args;
 
+	//////////// CONFIGURATION OPTIONS BEGIN ////////////
+
+	//////////// input task ////////////
+
 	@Parameter(names = "--input", description = "Path of the input C program", required = true)
 	File model;
 
-	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", required = false)
+	//////////// output data and statistics ////////////
+
+	@Parameter(names = "--version", description = "Display version", help = true)
+	boolean versionInfo = false;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.MAINSTEP;
+
+	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", help = true)
 	boolean outputResults = false;
 
-	@Parameter(names = "--no-arg-cex-check")
-	boolean noArgCexCheck = false;
+	@Parameter(names = "--no-analysis", description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
+	boolean noAnalysis = false;
 
-	// @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+	// TODO remove, refactor
+	// @Parameter(names = "--print-cfa", description = "Print CFA and exit.", help = true)
+	// boolean printcfa;
+
+	// TODO remove, refactor
+	// @Parameter(names = "--cfa-input-statistics")
+	// boolean cfaInputStatistics = false;
+
 	String cexfile = null;
-
-	//@Parameter(names = "--witness", description = "Write witness to a file")
 	String witnessfile = null;
-
-	//@Parameter(names = "--dot-witness", description = "Write witness to a file, but in the dot format")
 	String dotwitnessfile = null;
-
-	//@Parameter(names = "--cex-highlighted", description = "Write the XCFA with a concrete counterexample to a file")
 	String highlighted = null;
-
-	//@Parameter(names = "--statistics", description = "Write CFA statistics to a file (in a simple textual format)")
 	String statisticsfile = null;
-
 	String cfafile = null;
-
-	// @Parameter(names = "--print-xcfa", description = "Print XCFA (as a dotfile) and exit.")
 	String printxcfa = null;
+
+	//////////// arithmetic types allowed/disabled ////////////
+
+	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
+	ArchitectureConfig.ArithmeticType arithmeticType = ArchitectureConfig.ArithmeticType.efficient;
 
 	@Parameter(names = "--no-bitvectors", description = "Stops the verification if the usage of bitvector arithmetics would be required for the task")
 	boolean noBitvectors = false;
@@ -129,44 +142,23 @@ public class XcfaCli {
 	@Parameter(names = "--no-integers", description = "Stops the verification if the usage of bitvector arithmetics would NOT be required for the task")
 	boolean noIntArithmetic = false;
 
-	@Parameter(names = "--cfa-input-statistics")
-	boolean cfaInputStatistics = false;
+	//////////// runtime interventions ////////////
 
-	@Parameter(names = "--portfolio", description = "Use the built-in portfolio configurations")
-	boolean portfolio;
+	@Parameter(names = "--portfolio", description = "Use this flag instead of the CEGAR options if you are not familiar with those options; includes a 900s timeout, that cannot be overwritten", help = true)
+	boolean portfolio = false;
 
-	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
-	ArchitectureConfig.ArithmeticType arithmeticType = ArchitectureConfig.ArithmeticType.efficient;
+	// TODO rename
+	@Parameter(names = "--no-arg-cex-check")
+	boolean noArgCexCheck = false;
 
-	@Parameter(names = "--print-cfa", description = "Print CFA and exit.")
-	boolean printcfa;
-
-	@Parameter(names = "--estimateMaxEnum", description = "Estimate maxenum automatically; overwrites the value of the --maxenum flag.")
-	boolean estimateMaxEnum;
+	// TODO remove for now, but save somewhere for later use and development
+	// @Parameter(names = "--estimateMaxEnum", description = "Estimate maxenum automatically; overwrites the value of the --maxenum flag.")
+	// boolean estimateMaxEnum;
 
 	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
 	Long timeS = Long.MAX_VALUE;
 
-	@Parameter(names = "--version", description = "Display version", help = true)
-	boolean versionInfo = false;
-
-	@Parameter(names = "--gui", description = "Show GUI")
-	boolean showGui = false;
-
-	@Parameter(names = "--bmc", description = "Run BMC pre-check")
-	boolean runbmc = false;
-
-	@Parameter(names = "--benchmark-parsing", description = "Run parsing tasks only")
-	boolean parsing = false;
-
-	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
-	boolean loadStore = false;
-
-	@Parameter(names = "--strict-stmtlist", description = "Exactly one statement per edge")
-	boolean oneStmt = false;
-
-	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.MAINSTEP;
+	//////////// CEGAR configuration options ////////////
 
 	@Parameter(names = "--domain", description = "Abstract domain")
 	CfaConfigBuilder.Domain domain = CfaConfigBuilder.Domain.PRED_CART;
@@ -195,6 +187,22 @@ public class XcfaCli {
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
+	//////////// XCFA options (experimental) ////////////
+
+	@Parameter(names = "--gui", description = "Show GUI")
+	boolean showGui = false;
+
+	@Parameter(names = "--bmc", description = "Run BMC pre-check")
+	boolean runbmc = false;
+
+	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
+	boolean loadStore = false;
+
+	@Parameter(names = "--strict-stmtlist", description = "Exactly one statement per edge")
+	boolean oneStmt = false;
+
+	//////////// CONFIGURATION OPTIONS END ////////////
+
 	public XcfaCli(final String[] args) {
 		this.args = args;
 	}
@@ -217,13 +225,6 @@ public class XcfaCli {
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
 			return;
-		}
-
-		ArchitectureConfig.arithmetic = arithmeticType;
-		if(estimateMaxEnum) {
-			MaxEnumAnalyzer.enabled = true;
-		} else {
-			MaxEnumAnalyzer.enabled = false;
 		}
 
 		try {
@@ -277,22 +278,6 @@ public class XcfaCli {
 			FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 			XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program);
 
-			if(parsing) {
-				System.out.println("XCFA creation successful");
-				try{
-					CFA cfa = xcfa.createCFA();
-					System.out.println("CFA creation successful");
-				} catch(IllegalStateException ex) {
-					System.out.println("CFA creation unsuccessful. Reason: " + ex.getMessage());
-				}
-				return;
-			}
-
-			if(estimateMaxEnum) {
-				System.out.println("Estimated maxEnum: " + MaxEnumAnalyzer.instance.estimateMaxEnum().intValue());
-				maxEnum = MaxEnumAnalyzer.instance.estimateMaxEnum().intValue();
-			}
-
 			if(showGui) {
 				new XcfaGui(xcfa);
 				return;
@@ -305,7 +290,7 @@ public class XcfaCli {
 				}
 			}
 
-			if (printcfa || outputResults) {
+			if (outputResults) {
 				CFA cfa = xcfa.createCFA();
 				try (FileOutputStream filestream = new FileOutputStream(cfafile)) {
 					CfaWriter.write(cfa, filestream);
@@ -357,7 +342,7 @@ public class XcfaCli {
 
 					bw.close();
 				}
-				if(printcfa) return;
+				if(noAnalysis) return;
 			}
 
 			if (runbmc) {
