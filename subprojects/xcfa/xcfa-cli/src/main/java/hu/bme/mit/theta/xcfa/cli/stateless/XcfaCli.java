@@ -21,7 +21,6 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
@@ -39,13 +38,10 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
@@ -53,7 +49,6 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
@@ -62,7 +57,6 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
@@ -78,12 +72,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -123,40 +115,27 @@ public class XcfaCli {
 	// @Parameter(names = "--cfa-input-statistics")
 	// boolean cfaInputStatistics = false;
 
-	String cexfile = null;
-	String witnessfile = null;
-	String dotwitnessfile = null;
-	String highlighted = null;
-	String statisticsfile = null;
-	String cfafile = null;
-	String printxcfa = null;
+	File cexfile = null;
+	File witnessfile = null;
+	File dotwitnessfile = null;
+	File highlightedxcfafile = null;
+	File statisticstxtfile = null;
+	File statisticscsvfile = null;
+	File cfafile = null;
+	File xcfafile = null;
 
-	//////////// arithmetic types allowed/disabled ////////////
+	//////////// arithmetic types allowed ////////////
 
 	@Parameter(names = "--arithmetic-type", description = "Arithmetic type to use when building an XCFA")
 	ArchitectureConfig.ArithmeticType arithmeticType = ArchitectureConfig.ArithmeticType.efficient;
-
-	@Parameter(names = "--no-bitvectors", description = "Stops the verification if the usage of bitvector arithmetics would be required for the task")
-	boolean noBitvectors = false;
-
-	@Parameter(names = "--no-integers", description = "Stops the verification if the usage of bitvector arithmetics would NOT be required for the task")
-	boolean noIntArithmetic = false;
 
 	//////////// runtime interventions ////////////
 
 	@Parameter(names = "--portfolio", description = "Use this flag instead of the CEGAR options if you are not familiar with those options; includes a 900s timeout, that cannot be overwritten", help = true)
 	boolean portfolio = false;
 
-	// TODO rename
 	@Parameter(names = "--no-arg-cex-check")
 	boolean noArgCexCheck = false;
-
-	// TODO remove for now, but save somewhere for later use and development
-	// @Parameter(names = "--estimateMaxEnum", description = "Estimate maxenum automatically; overwrites the value of the --maxenum flag.")
-	// boolean estimateMaxEnum;
-
-	@Parameter(names = "--timeout", description = "Seconds until timeout (not precise)")
-	Long timeS = Long.MAX_VALUE;
 
 	//////////// CEGAR configuration options ////////////
 
@@ -213,6 +192,7 @@ public class XcfaCli {
 	}
 
 	private void run() {
+		/// Checking flags
 		try {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 		} catch (final ParameterException ex) {
@@ -222,12 +202,15 @@ public class XcfaCli {
 			return;
 		}
 
+		/// version
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
 			return;
 		}
 
+		/// output results file creation
 		try {
+			// create filenames, if needed
 			if(outputResults) {
 				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
 				boolean bool = resultsDir.mkdir();
@@ -236,25 +219,15 @@ public class XcfaCli {
 				}
 
 				String basicFileName = resultsDir + "/" + model.getName();
-				printxcfa = basicFileName + ".xcfa";
-				cfafile = basicFileName + ".cfa";
-				cexfile = basicFileName + ".cex";
-				witnessfile = basicFileName + ".witness.graphml";
-				dotwitnessfile = basicFileName + ".witness.dot";
-				highlighted = basicFileName + ".highlighted.xcfa";
-				statisticsfile = basicFileName + ".statistics.txt";
-			} else if(printcfa) {
-				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-				boolean bool = resultsDir.mkdir();
-				if(!bool){
-					throw new RuntimeException("Couldn't create results directory");
-				}
-
-				String basicFileName = resultsDir + "/" + model.getName();
-				statisticsfile = basicFileName + ".statistics.txt";
-				cfafile = basicFileName + ".cfa";
+				xcfafile = new File(basicFileName + ".xcfa");
+				cfafile = new File(basicFileName + ".cfa");
+				cexfile = new File(basicFileName + ".cex");
+				witnessfile = new File(basicFileName + ".witness.graphml");
+				dotwitnessfile = new File(basicFileName + ".witness.dot");
+				highlightedxcfafile = new File(basicFileName + ".highlighted.xcfa");
+				statisticstxtfile = new File(basicFileName + ".statistics.txt");
+				statisticscsvfile = new File(basicFileName + ".csv");
 			}
-
 
 			if(loadStore) {
 				XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
@@ -263,6 +236,10 @@ public class XcfaCli {
 				XcfaPassManager.addProcedurePass(new OneStmtPerEdgePass());
 			}
 
+			/// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
+			ArchitectureConfig.arithmetic = arithmeticType;
+
+			/// Starting frontend
 			final Stopwatch sw = Stopwatch.createStarted();
 
 			final CharStream input = CharStreams.fromStream(new FileInputStream(model));
@@ -278,71 +255,16 @@ public class XcfaCli {
 			FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 			XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program);
 
-			if(showGui) {
-				new XcfaGui(xcfa);
-				return;
-			}
-
-			if (printxcfa!=null) {
-				File xcfafile = new File(printxcfa);
+			// write xcfa into file
+			if(outputResults) {
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
 					bw.write(xcfa.toDot());
 				}
 			}
 
-			if (outputResults) {
-				CFA cfa = xcfa.createCFA();
-				try (FileOutputStream filestream = new FileOutputStream(cfafile)) {
-					CfaWriter.write(cfa, filestream);
-				}
-				writeStatistics(cfa);
-
-				// cfa data only in csv format
-				try	(BufferedWriter bw = new BufferedWriter(new FileWriter(cfafile+".csv"))) {
-					bw.write(model.getName() + "\t");
-					bw.write(cfa.getVars().size() + "\t"); // vars
-					bw.write(cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\t"); // havocs
-					bw.write(cfa.getLocs().size() + "\t"); // locs
-					bw.write(cfa.getEdges().size() + "\t"); // edges
-					bw.write(cfa.getEdges().stream().
-							filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + "\t"); // skip edges
-					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\t"); // assumes
-					bw.write(cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\t"); // assign
-
-					List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
-					int avgGrade = 0;
-					for(Integer r : rs) {
-						avgGrade += r;
-					}
-					avgGrade /= cfa.getLocs().size()-1; // final loc does not count and there must be one final loc
-					bw.write(avgGrade + "\t"); // average grades of outgoing edges
-
-					long highInGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getInEdges().size()>1).count();
-					long highOutGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getOutEdges().size()>1).count();
-					bw.write(highOutGradeLocs + "\t"); // num of locations with more than one out-edges
-					bw.write(highInGradeLocs + "\t"); // num of locations with more than one in-edges
-
-					int maxOutGrade = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).max(Integer::compareTo).get();
-					int minOutGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getFinalLoc().get()) && !loc.equals(cfa.getErrorLoc().get())).map(loc -> loc.getOutEdges().size()).min(Integer::compareTo).get();
-					bw.write(maxOutGrade + "\t"); // max out grade on a single location
-					bw.write(minOutGrade + "\t"); // max out grade on a single location (except error/final)
-
-					int maxInGrade = cfa.getLocs().stream().map(loc -> loc.getInEdges().size()).max(Integer::compareTo).get();
-					int minInGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getInitLoc())).map(loc -> loc.getInEdges().size()).min(Integer::compareTo).get();
-					bw.write(maxInGrade + "\t"); // max in grade on a single location
-					bw.write(minInGrade + "\t"); // min in grade on a single location  (except init)
-
-					bw.write(countVariablesInAssignmentsRightSides(cfa) + "\t"); // num of variables on the right sides (assignments)
-					bw.write(countVariablesInAssumptions(cfa) + "\t"); // num of variables in conditions (assumptions)
-
-					bw.write((cfa.getEdges().size() - cfa.getLocs().size() + 2) + "\t"); // cyclomatic complexity
-					bw.write(CStmtCounter.getForLoops() + "\t"); // for loops
-					bw.write(CStmtCounter.getWhileLoops() + "\t"); // while loops
-					bw.write(CStmtCounter.getBranches() + "\n"); // branches
-
-					bw.close();
-				}
-				if(noAnalysis) return;
+			if(showGui) {
+				new XcfaGui(xcfa);
+				return;
 			}
 
 			if (runbmc) {
@@ -364,37 +286,35 @@ public class XcfaCli {
 				System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
 				cfa = null;
 			}
+
+			// write cfa into file and output statistics about (X)CFA and C input file
+			if(outputResults && cfa!=null) {
+				try (FileOutputStream filestream = new FileOutputStream(cfafile)) {
+					CfaWriter.write(cfa, filestream);
+				}
+				ModelStatistics statistics = ModelStatistics.createCfaStatistics(cfa, model.getName());
+				statistics.writeToCsv(statisticscsvfile);
+				statistics.writeToTxt(statisticstxtfile);
+			}
+
+			if(noAnalysis) return;
+
+			/// starting analysis
 			if(cfa != null) {
 				final SafetyResult<?, ?> status;
-				if(!portfolio) {
-					final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-					if(noArgCexCheck) {
-						ArgCexCheckHandler.instance.setArgCexCheck(false, false);
-					} else {
-						if(refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
-							ArgCexCheckHandler.instance.setArgCexCheck(true, true);
-						} else {
-							ArgCexCheckHandler.instance.setArgCexCheck(true, false);
-						}
-					}
-					status = check(configuration);
-					if(statisticsfile!=null) {
-						writeStatistics(cfa);
-					}
-				} else {
-					status = PortfolioHandler.instance.executeAnalysis(cfa, logLevel, statisticsfile);
-				}
+				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+				status = check(configuration);
 
-				if (status.isUnsafe() && cexfile != null) {
+				if (status.isUnsafe() && outputResults) {
 					writeCex(status.asUnsafe());
-				}
-				if (status.isUnsafe() && highlighted != null) {
+					writeWitness(status.asUnsafe());
 					writeXcfaWithCex(xcfa, status.asUnsafe());
 				}
 			} else {
-				BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
+				System.err.println("Cannot transform XCFA into CFA");
+				System.exit(-50); // Cannot create CFA
+				// BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
-
 
 			sw.stop();
 			System.out.println(sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
@@ -403,183 +323,24 @@ public class XcfaCli {
 		}
 	}
 
-	// TODO won't work well, if an assume is removed in the XCFA passes when it goes directly into the final location
-	private int countVariablesInAssumptions(CFA cfa) {
-		Set<VarDecl<?>> vars = new LinkedHashSet<>();
-		Set<CFA.Edge> edgesOnErrorPaths = collectEdgesOnErrorPaths(cfa);
-
-		// get the variables out of each edge that has a source location with at least 2 outgoing assume edges
-		for(CFA.Loc loc : cfa.getLocs().stream().filter(loc -> loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).count() >= 2).collect(Collectors.toList())) {
-			loc.getOutEdges().stream().filter(edge -> edgesOnErrorPaths.contains(edge) && edge.getStmt() instanceof AssumeStmt).map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
-		}
-
-		Set<VarDecl> havocedVars = cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
-
-		vars.removeAll(havocedVars);
-		return vars.size();
-	}
-
-	private Set<CFA.Edge> collectEdgesOnErrorPaths(CFA cfa) {
-		Set<CFA.Edge> reachableEdges = new LinkedHashSet<>();
-		Set<CFA.Edge> nonDeadEndEdges = new LinkedHashSet<>();
-		filterReachableEdges(cfa.getInitLoc(), reachableEdges);
-
-		if(cfa.getErrorLoc().isPresent()) {
-			collectNonDeadEndEdges(cfa.getErrorLoc().get(), nonDeadEndEdges);
-			reachableEdges.retainAll(nonDeadEndEdges);
-			return reachableEdges;
-		} else {
-			return new LinkedHashSet<CFA.Edge>();
-		}
-	}
-
-	// same as in the remove dead ends pass
-	private void filterReachableEdges(CFA.Loc loc, Set<CFA.Edge> reachableEdges) {
-		Set<CFA.Edge> outgoingEdges = new LinkedHashSet<>(loc.getOutEdges());
-		while(!outgoingEdges.isEmpty()) {
-			Optional<CFA.Edge> any = outgoingEdges.stream().findAny();
-			CFA.Edge outgoingEdge = any.get();
-			outgoingEdges.remove(outgoingEdge);
-			if (!reachableEdges.contains(outgoingEdge)) {
-				reachableEdges.add(outgoingEdge);
-				outgoingEdges.addAll(outgoingEdge.getTarget().getOutEdges());
-			}
-		}
-	}
-
-	// same as in the remove dead ends pass
-	private void collectNonDeadEndEdges(CFA.Loc loc, Set<CFA.Edge> nonDeadEndEdges) {
-		Set<CFA.Edge> incomingEdges = new LinkedHashSet<>(loc.getInEdges());
-		while(!incomingEdges.isEmpty()) {
-			Optional<CFA.Edge> any = incomingEdges.stream().findAny();
-			CFA.Edge incomingEdge = any.get();
-			incomingEdges.remove(incomingEdge);
-			if (!nonDeadEndEdges.contains(incomingEdge)) {
-				nonDeadEndEdges.add(incomingEdge);
-				incomingEdges.addAll(incomingEdge.getSource().getInEdges());
-			}
-		}
-	}
-
-
-	private int countVariablesInAssignmentsRightSides(CFA cfa) {
-		Set<VarDecl<?>> vars = new LinkedHashSet<>();
-		for (AssignStmt assignStmt : cfa.getEdges().stream().map(CFA.Edge::getStmt).filter(stmt -> stmt instanceof AssignStmt).map(stmt -> (AssignStmt)stmt).collect(Collectors.toList())) {
-			vars.addAll(ExprUtils.getVars(assignStmt.getExpr()));
-		}
-		return vars.size();
-	}
-
-	private void writeStatistics(CFA cfa) {
-		File statistics = new File(statisticsfile);
-		BufferedWriter bw = null;
-		try {
-			bw = new BufferedWriter(new FileWriter(statistics));
-
-			bw.write("CFA-data varCount " + cfa.getVars().size() + System.lineSeparator());
-			bw.write("CFA-data havocs " + cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt).count() + "\n"); // havocs
-			bw.write("CFA-data locCount " + cfa.getLocs().size() + System.lineSeparator());
-			bw.write("CFA-data edgeCount " + cfa.getEdges().size() + System.lineSeparator());
-			bw.write("CFA-data skipEdgeCount " + cfa.getEdges().stream().filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count() + System.lineSeparator());
-			bw.write("CFA-data assumeStmts "+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssumeStmt).count() + "\n"); // assumes
-			bw.write("CFA-data assignStmts "+cfa.getEdges().stream().filter(edge-> edge.getStmt() instanceof AssignStmt).count() + "\n"); // assign
-			bw.write("CFA-data cyclomatic complexity " + (cfa.getEdges().size() - cfa.getLocs().size() + 2) + System.lineSeparator());
-			List<Integer> rs = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).collect(Collectors.toList());
-			int avgGrade = 0;
-			for(Integer r : rs) {
-				avgGrade += r;
-			}
-			avgGrade /= cfa.getLocs().size();
-			bw.write("CFA-data averageOutEdgeGrade " + avgGrade + "\n"); // average grades of outgoing edges
-			long highOutGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getOutEdges().size()>1).count();
-			long highInGradeLocs = cfa.getLocs().stream().filter(loc -> loc.getInEdges().size()>1).count();
-
-			bw.write("CFA-data locsWithHigherOutGrade " + highOutGradeLocs + "\n"); // num of locations with more than one out-edges
-			bw.write("CFA-data locsWithHigherInGrade " + highInGradeLocs + "\n"); // num of locations with more than one in-edges
-
-			int maxOutGrade = cfa.getLocs().stream().map(loc -> loc.getOutEdges().size()).max(Integer::compareTo).get();
-			int minOutGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getFinalLoc().get()) && !loc.equals(cfa.getErrorLoc().get())).map(loc -> loc.getOutEdges().size()).min(Integer::compareTo).get();
-			bw.write("CFA-data maxOutGrade " + maxOutGrade + "\n"); // max out grade on a single location
-			bw.write("CFA-data minOutGrade " + minOutGrade + "\n"); // max out grade on a single location (except error/final)
-
-			int maxInGrade = cfa.getLocs().stream().map(loc -> loc.getInEdges().size()).max(Integer::compareTo).get();
-			int minInGrade = cfa.getLocs().stream().filter(loc -> !loc.equals(cfa.getInitLoc())).map(loc -> loc.getInEdges().size()).min(Integer::compareTo).get();
-			bw.write("CFA-data maxInGrade " + maxInGrade + "\n"); // max in grade on a single location
-			bw.write("CFA-data minInGrade " + minInGrade + "\n"); // min in grade on a single location  (except init)
-
-			bw.write("CFA-data assignedVars " + countVariablesInAssignmentsRightSides(cfa) + "\n"); // num of variables on the right sides (assignments)
-			bw.write("CFA-data assumedVars " + countVariablesInAssumptions(cfa) + "\n"); // num of variables in conditions (assumptions)
-
-			bw.write("C-data forLoops "+CStmtCounter.getForLoops() + "\n"); // for loops
-			bw.write("C-data whileLoops "+CStmtCounter.getWhileLoops() + "\n"); // while loops
-			bw.write("C-data branches "+CStmtCounter.getBranches() + "\n"); // branches
-
-			bw.write("Configuration: ");
-			bw.write(System.lineSeparator());
-			bw.write("Arithmetic: " + (ArchitectureConfig.arithmetic==ArchitectureConfig.ArithmeticType.bitvector? "bitvector" : "integer"));
-			bw.write(System.lineSeparator());
-			bw.write("Domain: " + domain);
-			bw.write(System.lineSeparator());
-			bw.write("Refinement: " + refinement);
-			bw.write(System.lineSeparator());
-			bw.write("Precision granularity: " + precGranularity);
-			bw.write(System.lineSeparator());
-			bw.write("Search: " + search);
-			bw.write(System.lineSeparator());
-			bw.write("Predicate splitting: " + predSplit);
-			bw.write(System.lineSeparator());
-			bw.write("Encoding: " + encoding);
-			bw.write(System.lineSeparator());
-			bw.write("maxEnum: " + maxEnum);
-			bw.write(System.lineSeparator());
-			bw.write("initPrec: " + initPrec);
-			bw.write(System.lineSeparator());
-			bw.write("pruneStrategy: " + pruneStrategy);
-			bw.write(System.lineSeparator());
-
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc loc) throws Exception {
-		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {
-			return buildBitvectorConfiguration(cfa, loc);
-		}
-		return buildIntegerConfiguration(cfa, loc);
-	}
-
-	private CfaConfig<?, ?, ?> buildIntegerConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
-		// TODO for benchmarks
-		if(noIntArithmetic) {
-			System.err.println("Bitvectors are NOT required, stopping verification");
-			System.exit(-75); // TODO here for benchexec reasons
+		// set up Arg-Cex check
+		if(noArgCexCheck) {
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+		} else {
+			if(refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+			} else {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+			}
 		}
 
+		// Build configuration
 		try {
 			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
 					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
-
-		} catch (final Exception ex) {
-			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
-		}
-	}
-
-	private CfaConfig<?, ?, ?> buildBitvectorConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
-		// TODO for benchmarks
-		if(noBitvectors) {
-			System.err.println("Bitvectors required, stopping verification");
-			System.exit(-50); // TODO here for benchexec reasons
-		}
-
-		try {
-			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, loc);
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -591,7 +352,7 @@ public class XcfaCli {
 			return configuration.check();
 		} catch (final NotSolvableException exception) {
 			System.err.println("Configuration failed (stuck)");
-			System.exit(-30); // TODO here for benchexec reasons; tool info should be changed instead
+			System.exit(-30);
 			throw exception;
 		} catch (final Exception ex) {
 			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
@@ -604,7 +365,7 @@ public class XcfaCli {
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 
 		if(cexfile!=null) {
-			final File file = new File(cexfile);
+			final File file = cexfile;
 			PrintWriter printWriter = null;
 			try {
 				printWriter = new PrintWriter(file);
@@ -615,20 +376,26 @@ public class XcfaCli {
 				}
 			}
 		}
+	}
+
+	private void writeWitness(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+
 		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
 		if(witnessfile!=null) {
-			final File file = new File(witnessfile);
-			// TODO handle more input flags to get the parameters instead of hardcoding them
+			final File file = witnessfile;
+			// TODO handle more input flags to get the witness' xml parameters instead of hardcoding them
 			// TODO make WitnessWriter singleton
 			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
 			try {
-				ww.writeFile(witnessGraph, witnessfile);
+				ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
 		if(dotwitnessfile!=null) {
-			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile);
+			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
 		}
 	}
 
@@ -649,7 +416,7 @@ public class XcfaCli {
 				}
 			}
 		}
-		final File file = new File(highlighted);
+		final File file = highlightedxcfafile;
 		try (PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
 		}

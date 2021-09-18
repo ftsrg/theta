@@ -18,6 +18,7 @@ import java.util.Optional;
 
 /**
  * Estimates the value boundaries of integer C variables to decide on a value for the configuration option maxEnum
+ * Experimental feature, under development
  */
 public class MaxEnumAnalyzer {
 	public static final MaxEnumAnalyzer instance = new MaxEnumAnalyzer();
