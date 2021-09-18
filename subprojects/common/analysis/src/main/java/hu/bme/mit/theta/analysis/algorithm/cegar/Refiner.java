@@ -19,9 +19,6 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Common interface for refiners. It takes an ARG and a precision, checks if the
@@ -39,6 +36,4 @@ public interface Refiner<S extends State, A extends Action, P extends Prec> {
 	 * @return
 	 */
 	RefinerResult<S, A, P> refine(ARG<S, A> arg, P prec);
-
-	public void addCexStorage(CexStorage<S, A> cexStorage);
 }

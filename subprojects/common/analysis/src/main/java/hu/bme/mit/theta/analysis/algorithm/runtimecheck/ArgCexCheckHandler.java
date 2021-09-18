@@ -4,39 +4,41 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 
 public class ArgCexCheckHandler<S extends State, A extends Action> {
 	public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
-	// private CexStorage<S,A> cexStorage;
-	private boolean shouldCheck = false;
-	private boolean multiseq = false;
+	private CexStorage<S,A> cexStorage;
 
-	public void setArgCexCheck(boolean shouldThrow, boolean multiseq) {
-		this.multiseq = multiseq;
-		this.shouldCheck = shouldThrow;
-		/*
-		if(shouldThrow) {
-			cexStorage = new CexStorage<S,A>();
+	public void setArgCexCheck(boolean shouldCheck, boolean multiseq) {
+		if(shouldCheck) {
+			if(multiseq) {
+				cexStorage = new MultiCexStorage<S,A>();
+			} else {
+				cexStorage = new SingleCexStorage<S,A>();
+			}
 		} else {
 			cexStorage = null;
 		}
-		*/
 	}
 
-	public boolean shouldCheck() {
-		return shouldCheck;
+	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
+		return cexStorage.checkIfCounterexampleNew(cex);
 	}
 
-	public <P extends Prec> void checkAndStop(ARG<S,A> arg, P prec, CexStorage<S,A> cexStorage) {
-		if(shouldCheck) {
-			if(multiseq && cexStorage.checkIfArgNew(new AbstractArg<>(arg, prec))) {
-				// TODO it would be better to create a "multiseq check storage" in this case so we only store the ARGs, as the cexs are superfluous in this case
-				System.err.println("Not solvable!");
-				throw new NotSolvableException();
-			} else if(arg.getCexs().noneMatch(cexStorage::checkIfCounterexampleNew)) {
-				System.err.println("Not solvable!");
-				throw new NotSolvableException();
-			}
+	public <P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
+		cexStorage.setCurrentArg(arg);
+	}
+
+	public <P extends Prec> void checkAndStop(ARG<S,A> arg, P prec) {
+		if(cexStorage!=null && cexStorage.check(arg,prec)) {
+			throw new NotSolvableException();
 		}
+	}
+
+	public void addCounterexample(ArgTrace<S,A> cexToConcretize) {
+		cexStorage.addCounterexample(cexToConcretize);
 	}
 }

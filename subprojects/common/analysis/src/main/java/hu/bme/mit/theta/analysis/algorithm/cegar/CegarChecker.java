@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -45,14 +44,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Refiner<S, A, P> refiner;
 	private final Logger logger;
 
-	// for arg and counterexample checks
-	private final CexStorage<S, A> cexStorage = new CexStorage<S, A>();
-
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
-		abstractor.addCexStorage(cexStorage);
 		this.refiner = checkNotNull(refiner);
-		refiner.addCexStorage(cexStorage);
 		this.logger = checkNotNull(logger);
 	}
 
@@ -88,7 +82,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
 			if (abstractorResult.isUnsafe()) {
-				ArgCexCheckHandler.instance.checkAndStop(arg, prec, cexStorage);
+				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

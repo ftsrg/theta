@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.CexStorage;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -44,7 +44,6 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 	private final PrecRefiner<S, A, P, R> precRefiner;
 	private final PruneStrategy pruneStrategy;
 	private final Logger logger;
-	private CexStorage<S, A> cexStorage;
 
 	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
 								   final PrecRefiner<S, A, P, R> precRefiner,
@@ -61,17 +60,13 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
 	}
 
-	public void addCexStorage(CexStorage<S, A> cexStorage) {
-		this.cexStorage = checkNotNull(cexStorage);
-	}
-
 	@Override
 	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> cexStorage.checkIfCounterexampleNew(cex)).findFirst();
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
 		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
 		/*
@@ -104,7 +99,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-			cexStorage.addCounterexample(cexToConcretize);
+			ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
 
 			switch (pruneStrategy){
 				case LAZY:
