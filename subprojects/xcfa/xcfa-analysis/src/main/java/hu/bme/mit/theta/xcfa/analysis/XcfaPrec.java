@@ -17,22 +17,26 @@ package hu.bme.mit.theta.xcfa.analysis;
 
 import hu.bme.mit.theta.analysis.Prec;
 
-import java.util.Map;
-
 public final class XcfaPrec<P extends Prec> implements Prec {
 	private final P globalPrec;
-	private final Map<Integer, P> localPrecs;
 
-	private XcfaPrec(final P globalPrec, final Map<Integer, P> localPrecs) {
+	private XcfaPrec(final P globalPrec) {
 		this.globalPrec = globalPrec;
-		this.localPrecs = localPrecs;
 	}
 
-	public static <P extends Prec> XcfaPrec<P> create(final P globalPrec, final Map<Integer, P> localPrecs) {
-		return new XcfaPrec<P>(globalPrec, localPrecs);
+	public static <P extends Prec> XcfaPrec<P> create(final P globalPrec) {
+		return new XcfaPrec<P>(globalPrec);
 	}
 
 	public P getGlobalPrec() {
 		return globalPrec;
+	}
+
+	public XcfaPrec<P> refine(P runningPrec) {
+		if (this.globalPrec.equals(runningPrec)) {
+			return this;
+		} else {
+			return create(runningPrec);
+		}
 	}
 }

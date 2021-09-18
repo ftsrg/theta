@@ -103,12 +103,14 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public <DeclType extends Type> Void visit(PushStmt<DeclType> stmt, Collection<VarDecl<?>> param) {
-		throw new UnsupportedOperationException();
+		param.add(stmt.getVarDecl());
+		return null;
 	}
 
 	@Override
 	public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Collection<VarDecl<?>> param) {
-		throw new UnsupportedOperationException();
+		param.add(stmt.getVarDecl());
+		return null;
 	}
 
 }

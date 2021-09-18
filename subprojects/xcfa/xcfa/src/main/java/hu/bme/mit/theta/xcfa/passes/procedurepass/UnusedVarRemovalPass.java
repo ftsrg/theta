@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
-import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getModifiedVars;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
@@ -62,9 +60,10 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
 			for (XcfaEdge edge : edges) {
 				XcfaEdge newEdge = edge.mapLabels(label -> {
-					if (getModifiedVars(label).containsAll(vars)) {
-						return Stmt(Skip());
-					} else return label;
+//					if (getModifiedVars(label).containsAll(vars)) {
+//						return Stmt(Skip());
+//					} else return label;
+					return label;
 				});
 				if (!edge.getLabels().equals(newEdge.getLabels())) {
 					atLeastOne = true;

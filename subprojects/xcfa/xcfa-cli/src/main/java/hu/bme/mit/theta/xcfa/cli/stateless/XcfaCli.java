@@ -19,10 +19,24 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
+import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.cfa.CFA;
@@ -31,6 +45,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
@@ -40,9 +55,17 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.algorithmselection.MaxEnumAnalyzer;
 import hu.bme.mit.theta.xcfa.algorithmselection.NotSolvableException;
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.XcfaConfig;
+import hu.bme.mit.theta.xcfa.analysis.XcfaLts;
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec;
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrecRefiner;
+import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -64,11 +87,16 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
@@ -256,6 +284,38 @@ public class XcfaCli {
 //					bw.write(cfa.toString());
 //				}
 //			}
+
+			final List<XcfaLocation> initLocList = xcfa.getProcesses().stream().map(process -> process.getMainProcedure().getInitLoc()).collect(Collectors.toList());
+			final Map<Integer, XcfaLocation> initLocs = new LinkedHashMap<>();
+			int i = 0;
+			for (XcfaLocation location : initLocList) {
+				initLocs.put(i++, location);
+			}
+
+			final ConsoleLogger consoleLogger = new ConsoleLogger(logLevel);
+			final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+
+			final Analysis<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> analysis = XcfaAnalysis
+					.create(initLocs, ExplStmtAnalysis.create(solver, True(), 10));
+			final ArgBuilder<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(new XcfaLts(),
+					analysis, XcfaState::isError, true);
+			final Abstractor<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> abstractor = BasicAbstractor
+					.builder(argBuilder).projection(XcfaState::getProcessLocs)
+					.waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs())))
+					.stopCriterion(StopCriterions.firstCex()).logger(consoleLogger).build();
+
+			final SingleExprTraceRefiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>, ItpRefutation> refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+					XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, consoleLogger);
+
+			final XcfaConfig<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> config = XcfaConfig.create(CegarChecker.create(abstractor, refiner, consoleLogger), XcfaPrec.create(ExplPrec.of(List.of())));
+
+			final SafetyResult<XcfaState<ExplState>, XcfaAction> result = config.check();
+			if(result.isUnsafe()) {
+				System.exit(0);
+			}
+			else if (result.isSafe()) {
+				System.exit(0);
+			}
 
 			XcfaLocation err = null;
 			outerloop:

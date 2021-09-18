@@ -284,6 +284,11 @@ public abstract class XcfaLabel {
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		@Override
+		public String toString() {
+			return stmt.toString();
+		}
 	}
 
 	public static AtomicBeginXcfaLabel AtomicBegin() {

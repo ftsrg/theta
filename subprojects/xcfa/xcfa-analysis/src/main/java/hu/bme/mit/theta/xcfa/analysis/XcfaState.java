@@ -70,4 +70,8 @@ public final class XcfaState<S extends ExprState> implements ExprState {
 		newProcessLocs.put(process, target);
 		return new XcfaState<>(newProcessLocs, enabledProcesses, succState);
 	}
+
+	public boolean isError() {
+		return processLocs.values().stream().anyMatch(XcfaLocation::isErrorLoc);
+	}
 }

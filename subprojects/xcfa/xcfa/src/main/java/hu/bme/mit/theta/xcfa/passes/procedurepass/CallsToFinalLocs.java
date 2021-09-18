@@ -38,7 +38,12 @@ public class CallsToFinalLocs extends ProcedurePass {
 		builder.addLoc(errorLoc);
 		builder.addLoc(finalLoc);
 		XcfaLocation oldFinalLoc = builder.getFinalLoc();
+		XcfaLocation oldErrorLoc = builder.getErrorLoc();
 		builder.setFinalLoc(finalLoc);
+		if(oldErrorLoc != null) {
+			XcfaEdge toError = XcfaEdge.of(oldErrorLoc, errorLoc, List.of());
+			builder.addEdge(toError);
+		}
 		XcfaEdge toFinal = XcfaEdge.of(oldFinalLoc, finalLoc, List.of());
 		builder.addEdge(toFinal);
 		builder.setErrorLoc(errorLoc);

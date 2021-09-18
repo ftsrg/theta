@@ -287,7 +287,11 @@ public final class XcfaProcedure {
             checkNotBuilt();
             checkArgument(locs.contains(e.getSource()), "Invalid source.");
             checkArgument(locs.contains(e.getTarget()), "Invalid target.");
-            if(!edges.contains(e)) edges.add(e);
+            if(!edges.contains(e)) {
+                edges.add(e);
+                e.getSource().addOutgoingEdge(e);
+                e.getTarget().addIncomingEdge(e);
+            }
         }
 
         // name

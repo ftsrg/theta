@@ -7,5 +7,5 @@ int fibonacci(int i) {
 }
 
 int main() {
-    if(fibonacci(12) != 144) reach_error();
+    if(fibonacci(12) != 143) reach_error();
 }

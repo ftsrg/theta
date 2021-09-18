@@ -27,7 +27,7 @@ public class XcfaAnalysis<S extends ExprState, P extends Prec>
 		transFunc = XcfaTransFunc.create(analysis.getTransFunc());
 	}
 
-	private static <S extends ExprState, P extends Prec> XcfaAnalysis<S, P> create(final Map<Integer, XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
+	public static <S extends ExprState, P extends Prec> XcfaAnalysis<S, P> create(final Map<Integer, XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
 		return new XcfaAnalysis<>(initLoc, analysis);
 	}
 

@@ -98,13 +98,19 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 
 	@Override
 	public <DeclType extends Type> List<XcfaLabel> visit(PushStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		throw new UnsupportedOperationException();
-	}
+		if (param.containsKey(stmt.getVarDecl())) {
+			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
+			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
+		}
+		return List.of(Stmt(stmt));	}
 
 	@Override
 	public <DeclType extends Type> List<XcfaLabel> visit(PopStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		throw new UnsupportedOperationException();
-	}
+		if (param.containsKey(stmt.getVarDecl())) {
+			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
+			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
+		}
+		return List.of(Stmt(stmt));	}
 
 	@Override
 	public List<XcfaLabel> visit(XcfaLabel.ProcedureCallXcfaLabel label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {

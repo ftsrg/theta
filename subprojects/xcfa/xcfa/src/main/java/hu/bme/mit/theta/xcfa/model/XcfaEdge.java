@@ -40,8 +40,6 @@ public final class XcfaEdge {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.labels = ImmutableList.copyOf(labels);
-		source.addOutgoingEdge(this);
-		target.addIncomingEdge(this);
 	}
 
 	public XcfaEdge mapLabels(final Function<XcfaLabel, XcfaLabel> mapper) {

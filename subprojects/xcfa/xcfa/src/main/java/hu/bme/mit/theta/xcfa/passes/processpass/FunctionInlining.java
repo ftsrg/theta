@@ -13,6 +13,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
@@ -85,11 +86,11 @@ public class FunctionInlining extends ProcessPass {
 
 		for (XcfaProcedure.Builder procBuilder : alreadyInlined) {
 			UnusedVarRemovalPass.removeUnusedVars(procBuilder, usedVars);
-			newBuilder.addProcedure(procBuilder);
+			newBuilder.addProcedure(XcfaPassManager.run(procBuilder));
 			if(procBuilder == newMainProc) newBuilder.setMainProcedure(procBuilder);
 		}
 
-		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure.Builder).map(o -> (XcfaProcedure.Builder)o).forEach(newBuilder::addProcedure);
+		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof XcfaProcedure.Builder).map(o -> (XcfaProcedure.Builder)o).forEach(procedure -> newBuilder.addProcedure(XcfaPassManager.run(procedure)));
 
 		return newBuilder;
 

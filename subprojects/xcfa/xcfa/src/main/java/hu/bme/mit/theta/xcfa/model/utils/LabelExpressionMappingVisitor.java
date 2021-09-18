@@ -72,12 +72,12 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 
 	@Override
 	public <DeclType extends Type> Optional<XcfaLabel> visit(PushStmt<DeclType> stmt, Function<Expr<T>, Optional<Expr<T>>> param) {
-		throw new UnsupportedOperationException();
+		return Optional.empty();
 	}
 
 	@Override
 	public <DeclType extends Type> Optional<XcfaLabel> visit(PopStmt<DeclType> stmt, Function<Expr<T>, Optional<Expr<T>>> param) {
-		throw new UnsupportedOperationException();
+		return Optional.empty();
 	}
 
 	@Override

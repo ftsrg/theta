@@ -39,7 +39,11 @@ public class SimplifyExprs extends ProcedurePass{
 							cast(simplified, varDecl.getType()));
 					return Stmt(newStmt);
 				} else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
-					List<Expr<?>> newExprs = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map(ExprUtils::simplify).collect(Collectors.toList());
+					List<Expr<?>> newExprs = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map((Expr<?> expr) -> {
+						final Expr<?> simplified = ExprUtils.simplify(expr);
+						FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
+						return simplified;
+					}).collect(Collectors.toList());
 					return ProcedureCall(newExprs, ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
 				} else return label;
 			});
