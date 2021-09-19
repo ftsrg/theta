@@ -89,8 +89,6 @@ public class ModelStatistics {
 		stringBuilder.append("CFA-data assumeStmts ").append(assumeCount).append("\n"); // assumes
 		stringBuilder.append("CFA-data assignStmts ").append(assignCount).append("\n"); // assign
 		stringBuilder.append("CFA-data cyclomatic complexity ").append(cyclomaticComplexity).append(System.lineSeparator());
-		stringBuilder.append("CFA-data assignedVars ").append(assignCount).append("\n"); // num of variables on the right sides (assignments)
-		stringBuilder.append("CFA-data assumedVars ").append(assumeCount).append("\n"); // num of variables in conditions (assumptions)
 
 		stringBuilder.append("C-data forLoops ").append(CStmtCounter.getForLoops()).append("\n"); // for loops
 		stringBuilder.append("C-data whileLoops ").append(CStmtCounter.getWhileLoops()).append("\n"); // while loops
