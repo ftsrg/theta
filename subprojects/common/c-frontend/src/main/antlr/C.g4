@@ -660,6 +660,7 @@ Identifier
     :   IdentifierNondigit
         (   IdentifierNondigit
         |   Digit
+        |   '$'
         )*
     ;
 
