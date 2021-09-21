@@ -22,9 +22,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils.replacesVarsInStmt;
 
 public class Utils {
 	public static Set<XcfaEdge> collectReverseEdges(XcfaLocation location) {
@@ -90,6 +94,7 @@ public class Utils {
 	}
 
 	public static XcfaProcedure.Builder createBuilder(XcfaProcedure proc) {
+
 		return getBuilder(proc.getName(), proc.getRetType(), proc.getLocs(), proc.getFinalLoc(), proc.getInitLoc(), proc.getErrorLoc(), proc.getEdges(), proc.getParams(), proc.getLocalVarMap());
 	}
 
@@ -97,8 +102,17 @@ public class Utils {
 		XcfaProcedure.Builder ret = XcfaProcedure.builder();
 		ret.setName(name);
 		ret.setRetType(retType);
-		params.forEach((varDecl, direction) -> ret.createParam(direction, varDecl));
-		localVars.forEach((varDecl, litExpr) -> ret.createVar(varDecl, litExpr.orElse(null)));
+		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
+		params.forEach((varDecl, direction) -> {
+			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			varLut.put(varDecl, newVar);
+			ret.createParam(direction, newVar);
+		});
+		localVars.forEach((varDecl, litExpr) -> {
+			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			varLut.put(varDecl, newVar);
+			ret.createVar(newVar, litExpr.orElse(null));
+		});
 		Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
 		for (XcfaLocation location : new LinkedHashSet<>(locs)) {
 			XcfaLocation copy = XcfaLocation.copyOf(location);
@@ -109,7 +123,7 @@ public class Utils {
 		ret.setInitLoc(locationLut.get(initLoc));
 		if(errorLoc != null) ret.setErrorLoc(locationLut.get(errorLoc));
 		for (XcfaEdge edge : edges) {
-			ret.addEdge(XcfaEdge.of(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels()));
+			ret.addEdge(XcfaEdge.of(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels().stream().map(label -> replacesVarsInStmt(label, v -> Optional.ofNullable(varLut.get(v)).map(varDecl -> cast(varDecl, v.getType()))).orElse(label)).collect(Collectors.toList())));
 		}
 		return ret;
 	}

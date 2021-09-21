@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AnalyzeCallGraph extends ProcessPass {
 	@Override
@@ -51,11 +52,17 @@ public class AnalyzeCallGraph extends ProcessPass {
 			}
 		}
 
+		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof String).collect(Collectors.toList()).forEach(o -> {
+			final Optional<XcfaProcedure.Builder> any = builder.getProcedures().stream().filter(builder1 -> builder1.getName().equals(o)).findAny();
+			FrontendMetadata.create(any.get(), "shouldInline", false);
+		});
+
 		calledBy.forEach((procedure, xcfaProcedures) -> {
 			if(xcfaProcedures.contains(procedure)) {
 				FrontendMetadata.create(procedure, "shouldInline", false);
 			}
 		});
+
 		return builder;
 	}
 }

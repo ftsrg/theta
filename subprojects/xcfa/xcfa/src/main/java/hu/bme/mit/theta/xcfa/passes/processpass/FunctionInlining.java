@@ -279,11 +279,8 @@ public class FunctionInlining extends ProcessPass {
 			if(shouldInlineProc.isPresent() && shouldInlineProc.get() instanceof Boolean) {
 				return (Boolean) shouldInlineProc.get();
 			}
-			Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(procedure.get(), "sourceStatement");
-			if(sourceStatement.isPresent()) {
-				Optional<Object> shouldInline = FrontendMetadata.getMetadataValue(sourceStatement.get(), "shouldInline");
-				return shouldInline.isEmpty() || !(shouldInline.get() instanceof Boolean) || (Boolean) shouldInline.get();
-			}
+			Optional<Object> shouldInline = FrontendMetadata.getMetadataValue(procedure.get().getName(), "shouldInline");
+			return shouldInline.isEmpty() || !(shouldInline.get() instanceof Boolean) || (Boolean) shouldInline.get();
 		}
 		return true;
 	}

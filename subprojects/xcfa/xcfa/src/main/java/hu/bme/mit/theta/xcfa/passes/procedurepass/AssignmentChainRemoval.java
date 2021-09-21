@@ -240,7 +240,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 									newStmts.add(Stmt(Havoc(((AssignStmt<?>) stmt.getStmt()).getVarDecl())));
 								}
 								else {
-									Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
+									Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceExprsInStmt(stmt, expr -> {
 										if (expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar)) {
 											CComplexType type = CComplexType.getType(removableVar.getRef());
 											return Optional.of(cast(type.castTo(finalNewExpr), removableVar.getType()));

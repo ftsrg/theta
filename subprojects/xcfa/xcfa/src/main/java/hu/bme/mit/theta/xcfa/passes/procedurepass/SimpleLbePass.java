@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SimpleLbePass extends ProcedurePass{
+	private int counter = 0;
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		builder = EliminateSelfLoops.instance.run(builder);
@@ -27,6 +28,31 @@ public class SimpleLbePass extends ProcedurePass{
 			stmts.addAll(outEdge.getLabels());
 
 			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), stmts));
+		}
+		final List<XcfaEdge> edgesToHandle = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().stream().anyMatch(label -> !(label instanceof XcfaLabel.StmtXcfaLabel))).collect(Collectors.toList());
+		for (XcfaEdge edge : edgesToHandle) {
+			builder.removeEdge(edge);
+			List<XcfaLabel> newLabelList = new ArrayList<>();
+			XcfaLocation source = edge.getSource();
+			for (XcfaLabel label : edge.getLabels()) {
+				if(!(label instanceof XcfaLabel.StmtXcfaLabel)) {
+					if(newLabelList.size() > 0) {
+						XcfaLocation tmpLoc = new XcfaLocation("_tmp" + counter++);
+						builder.addLoc(tmpLoc);
+						builder.addEdge(XcfaEdge.of(source, tmpLoc, newLabelList));
+						source = tmpLoc;
+					}
+					newLabelList.clear();
+					XcfaLocation tmpLoc = new XcfaLocation("_tmp" + counter++);
+					builder.addLoc(tmpLoc);
+					builder.addEdge(XcfaEdge.of(source, tmpLoc, List.of(label)));
+					source = tmpLoc;
+				}
+				else {
+					newLabelList.add(label);
+				}
+			}
+			builder.addEdge(XcfaEdge.of(source, edge.getTarget(), newLabelList));
 		}
 		return builder;
 	}

@@ -110,7 +110,7 @@ public class ReferenceToMemory extends ProcedurePass{
 	}
 
 	private <P extends Type> boolean handleStmt(Expr<?> memoryMap, CComplexType ptr, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> dereferencedLut, List<XcfaLabel> newStmts, boolean found, XcfaLabel stmt, VarDecl<?> placeholderVariable) {
-		Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceStmt(stmt, expr -> {
+		Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceExprsInStmt(stmt, expr -> {
 			if (expr instanceof Dereference) {
 				Optional<? extends Expr<?>> replaced = ExpressionReplacer.replace(memoryMap, typeExpr -> {
 					if (typeExpr.equals(placeholderVariable.getRef())) {

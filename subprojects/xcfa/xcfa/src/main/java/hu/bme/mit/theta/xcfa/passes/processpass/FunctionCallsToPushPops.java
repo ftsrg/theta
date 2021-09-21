@@ -127,7 +127,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 				}
 			}
 		}
-		builder.getProcedures().removeIf(builder1 -> builder1 != mainProcedure);
+//		builder.getProcedures().removeIf(builder1 -> builder1 != mainProcedure);
 		return builder;
 	}
 }

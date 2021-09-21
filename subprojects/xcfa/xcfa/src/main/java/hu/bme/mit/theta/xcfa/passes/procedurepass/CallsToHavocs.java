@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -48,7 +50,8 @@ public class CallsToHavocs extends ProcedurePass {
 							Expr<?> expr = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getParams().get(0);
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
 							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-							collect.add(Stmt(Havoc(var)));
+							if(!(CComplexType.getType(var.getRef()) instanceof CVoid))
+								collect.add(Stmt(Havoc(var)));
 						} else collect.add(stmt);
 					}
 					XcfaEdge xcfaEdge;
