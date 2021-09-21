@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.passes;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.passes.xcfapass.AddAtomicBeginEndsToFunctions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
@@ -11,6 +12,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
@@ -19,6 +21,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
 import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
@@ -37,6 +40,7 @@ public class XcfaPassManager {
 	static {
 		procedurePasses.addAll(List.of(
 				new PthreadCallsToThreadStmts(),
+				new VerifierFunctionsToLabels(),
 				new ReferenceToMemory(),
 				new FpFunctionsToExprs(),
 				new SimplifyExprs(),
@@ -52,13 +56,15 @@ public class XcfaPassManager {
 				new AddHavocRange(),
 				new SimpleLbePass(),
 				new HavocPromotion(),
-				new UnusedVarRemovalPass()
+				new UnusedVarRemovalPass(),
+				new OneStmtPerEdgePass()
 		));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
 				new FunctionInlining(),
 				new FunctionCallsToPushPops()));
 		xcfaPasses.addAll((List.of(
+				new AddAtomicBeginEndsToFunctions(),
 				new RemoveUnusedGlobals())));
 	}
 

@@ -32,6 +32,7 @@ public class XcfaTransFunc<S extends ExprState, P extends Prec> implements Trans
 
 		final List<XcfaLabel.StartThreadXcfaLabel> startThreadList = new ArrayList<>();
 		final List<XcfaLabel.JoinThreadXcfaLabel> joinThreadList = new ArrayList<>();
+		Boolean atomicBegin = null;
 
 		for (XcfaLabel label : action.getLabels()) {
 			if(label instanceof XcfaLabel.StmtXcfaLabel) {
@@ -40,6 +41,10 @@ public class XcfaTransFunc<S extends ExprState, P extends Prec> implements Trans
 				startThreadList.add((XcfaLabel.StartThreadXcfaLabel) label);
 			} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) {
 				joinThreadList.add((XcfaLabel.JoinThreadXcfaLabel) label);
+			} else if (label instanceof XcfaLabel.AtomicBeginXcfaLabel) {
+				atomicBegin = true;
+			} else if (label instanceof XcfaLabel.AtomicEndXcfaLabel) {
+				atomicBegin = false;
 			} else if (label instanceof XcfaLabel.LoadXcfaLabel) {
 				throw new UnsupportedOperationException("Could not handle label " + label);
 
@@ -56,7 +61,7 @@ public class XcfaTransFunc<S extends ExprState, P extends Prec> implements Trans
 
 		Collection<XcfaState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), prec.getGlobalPrec())) {
-			final XcfaState<S> newState = state.startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList).advance(succState, action.getProcess(), action.getTarget());
+			final XcfaState<S> newState = state.atomicbegin(action.getProcess(), atomicBegin).startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList).advance(succState, action.getProcess(), action.getTarget());
 			newStates.add(newState);
 		}
 		return newStates;

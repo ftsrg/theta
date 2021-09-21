@@ -40,42 +40,27 @@ public class FunctionInlining extends ProcessPass {
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
 		ProcedurePass.postInlining = true;
-		alreadyHandled.clear();
 		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
 		newBuilder.setName(builder.getName());
 		newBuilder.getThreadLocalVars().putAll(builder.getThreadLocalVars());
 		for (VarDecl<?> param : builder.getParams()) {
 			newBuilder.createParam(param);
 		}
+		Set<VarDecl<?>> usedVars = new LinkedHashSet<>();
+
 		XcfaProcedure.Builder mainProcedure = builder.getMainProcedure();
+		alreadyHandled.clear();
 		XcfaProcedure.Builder newMainProc = inlineProcedure(builder, newBuilder, mainProcedure);
 
 		Set<XcfaProcedure.Builder> alreadyInlined = new LinkedHashSet<>();
 		alreadyInlined.add(newMainProc);
-		boolean foundOne = true;
-		while(foundOne) {
-			foundOne = false;
-			for (XcfaProcedure.Builder procedure : new ArrayList<>(alreadyInlined)) {
-				for (XcfaEdge edge : procedure.getEdges()) {
-					for (XcfaLabel label : edge.getLabels()) {
-						if(label instanceof XcfaLabel.StartThreadXcfaLabel) {
-							String threadName = ((XcfaLabel.StartThreadXcfaLabel) label).getThreadName();
-							Optional<XcfaProcedure.Builder> func = alreadyInlined.stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
-							if(func.isEmpty()) {
-								Optional<XcfaProcedure.Builder> oldProc = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(threadName)).findAny();
-								if(oldProc.isPresent()) {
-									foundOne = true;
-									XcfaProcedure.Builder builder1 = inlineProcedure(builder, newBuilder, oldProc.get());
-									alreadyInlined.add(builder1);
-								}
-							}
-						}
-					}
-				}
-			}
+
+		for (final Object shouldKeepObj : FrontendMetadata.lookupMetadata("shouldKeep", true)) {
+			checkState(shouldKeepObj instanceof XcfaProcedure.Builder, "Bad shouldKeep metadata!");
+			final XcfaProcedure.Builder shouldKeep = (XcfaProcedure.Builder) shouldKeepObj;
+			alreadyInlined.add(inlineProcedure(builder, newBuilder, shouldKeep));
 		}
 
-		Set<VarDecl<?>> usedVars = new LinkedHashSet<>();
 		for (XcfaProcedure.Builder procedure : alreadyInlined) {
 			for (XcfaEdge edge : procedure.getEdges()) {
 				for (XcfaLabel label : edge.getLabels()) {

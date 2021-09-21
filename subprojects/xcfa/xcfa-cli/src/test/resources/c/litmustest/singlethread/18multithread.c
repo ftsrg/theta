@@ -689,19 +689,27 @@ void reach_error(){}
 int x = 0;
 
 void *thr1(void *_) {
+    __VERIFIER_atomic_begin();
     x++;
+    x++;
+    __VERIFIER_atomic_end();
 }
 
 void *thr2(void *_) {
+    __VERIFIER_atomic_begin();
     x++;
-}
+    x++;
+    __VERIFIER_atomic_end();}
 
 int main() {
-  pthread_t t1, t2;
-  pthread_create(&t1, 0, thr1, 0);
-  pthread_create(&t2, 0, thr2, 0);
-  pthread_join(t1, 0);
-  pthread_join(t2, 0);
-  if(x > 1) reach_error();
+  for(int i = 0; i < 16; ++i) {
+    pthread_t t1, t2;
+    pthread_create(&t1, 0, thr1, 0);
+    pthread_create(&t2, 0, thr2, 0);
+  if(x % 2 == 1) reach_error();
+    pthread_join(t1, 0);
+    pthread_join(t2, 0);
+  }
+
   return 0;
 }

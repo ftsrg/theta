@@ -54,7 +54,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 
 		FrontendMetadata.lookupMetadata("shouldInline", false).stream().filter(o -> o instanceof String).collect(Collectors.toList()).forEach(o -> {
 			final Optional<XcfaProcedure.Builder> any = builder.getProcedures().stream().filter(builder1 -> builder1.getName().equals(o)).findAny();
-			FrontendMetadata.create(any.get(), "shouldInline", false);
+			FrontendMetadata.create(any.get(), "shouldKeep", true);
 		});
 
 		calledBy.forEach((procedure, xcfaProcedures) -> {

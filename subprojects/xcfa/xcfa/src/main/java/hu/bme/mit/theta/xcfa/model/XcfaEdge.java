@@ -94,4 +94,7 @@ public final class XcfaEdge {
 		).toString();
 	}
 
+	public XcfaEdge withLabels(final List<XcfaLabel> labels) {
+		return new XcfaEdge(source, target, labels);
+	}
 }
