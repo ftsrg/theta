@@ -82,7 +82,7 @@ public class ModelStatistics {
 	void writeToTxt(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("CFA-data varCount ").append(locCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data havocs ").append(havocCount).append(System.lineSeparator());
+		stringBuilder.append("CFA-data havocCount ").append(havocCount).append(System.lineSeparator());
 		stringBuilder.append("CFA-data locCount ").append(locCount).append(System.lineSeparator());
 		stringBuilder.append("CFA-data edgeCount ").append(edgeCount).append(System.lineSeparator());
 		stringBuilder.append("CFA-data skipEdgeCount ").append(skipEdgeCount).append(System.lineSeparator());
