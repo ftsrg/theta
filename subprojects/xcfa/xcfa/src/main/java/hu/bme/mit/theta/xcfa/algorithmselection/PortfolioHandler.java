@@ -1,15 +1,15 @@
 package hu.bme.mit.theta.xcfa.algorithmselection;
 
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
-import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,8 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PortfolioHandler {
+/*
 	public static final PortfolioHandler instance = new PortfolioHandler();
-	private static final List<Configuration> configurationList = new ArrayList<>();
+	private static final List<CegarConfiguration> configurationList = new ArrayList<>();
 	private File statisticsfile;
 
 	static {
@@ -114,61 +115,21 @@ public class PortfolioHandler {
 		}
 	}
 
-	private static class Configuration {
-		public final CfaConfigBuilder.Domain domain;
-		public final CfaConfigBuilder.Refinement refinement;
-		public final CfaConfigBuilder.PrecGranularity precGranularity;
-		public final CfaConfigBuilder.Search search;
-		public final CfaConfigBuilder.PredSplit predSplit;
-		public final int maxEnum;
-		public final CfaConfigBuilder.InitPrec initPrec;
-		public final PruneStrategy pruneStrategy;
+	private enum Result { UNKNOWN, TIMEOUT, STUCK, SUCCESS }
 
-		Configuration(CfaConfigBuilder.Domain domain,
-					  CfaConfigBuilder.Refinement refinement,
-					  CfaConfigBuilder.PrecGranularity precGranularity,
-					  CfaConfigBuilder.Search search,
-					  CfaConfigBuilder.PredSplit predSplit,
-					  int maxEnum,
-					  CfaConfigBuilder.InitPrec initPrec,
-					  PruneStrategy pruneStrategy) {
-			this.domain = domain;
-			this.refinement = refinement;
-			this.precGranularity = precGranularity;
-			this.search = search;
-			this.predSplit = predSplit;
-			this.maxEnum = maxEnum;
-			this.initPrec = initPrec;
-			this.pruneStrategy = pruneStrategy;
-		}
+	private Tuple2<Result, SafetyResult<?,?>> executeConfiguration(CegarConfiguration configuration, Logger.Level logLevel, CFA cfa, long timeout) {
+		try {
+			TimeLimiter limiter = new SimpleTimeLimiter();
+			SafetyResult<?, ?> safetyResult = configuration.buildConfiguration(cfa, cfa.getErrorLoc().get(), logLevel).check();
 
-		public CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc errLoc, Logger.Level logLevel) throws Exception {
-			try {
-				return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-						.precGranularity(precGranularity).search(search)
-						.predSplit(predSplit).encoding(CfaConfigBuilder.Encoding.LBE).maxEnum(maxEnum).initPrec(initPrec)
-						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(cfa, errLoc);
-
-			} catch (final Exception ex) {
-				throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+			if(safetyResult.isSafe() || safetyResult.isUnsafe()) {
+				return Tuple2.of(Result.SUCCESS, safetyResult);
 			}
-
-			// if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) {}
-			// return buildIntegerConfiguration(cfa, loc);
-		}
-
-		@Override
-		public String toString() {
-			return "Configuration{" +
-					"domain=" + domain +
-					", refinement=" + refinement +
-					", precGranularity=" + precGranularity +
-					", search=" + search +
-					", predSplit=" + predSplit +
-					", maxEnum=" + maxEnum +
-					", initPrec=" + initPrec +
-					", pruneStrategy=" + pruneStrategy +
-					'}';
+		} catch (final NotSolvableException exception) {
+			return Tuple2.of(Result.STUCK, null);
+		} catch (final Exception ex) {
+			return Tuple2.of(Result.UNKNOWN, null);
 		}
 	}
+*/
 }
