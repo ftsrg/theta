@@ -72,6 +72,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
@@ -209,51 +210,62 @@ public class XcfaCli {
 		}
 
 		/// output results file creation
+		// create filenames, if needed
+		if(outputResults) {
+			File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
+			boolean bool = resultsDir.mkdir();
+			if(!bool){
+				throw new RuntimeException("Couldn't create results directory");
+			}
+
+			String basicFileName = resultsDir + "/" + model.getName();
+			xcfafile = new File(basicFileName + ".xcfa");
+			cfafile = new File(basicFileName + ".cfa");
+			cexfile = new File(basicFileName + ".cex");
+			witnessfile = new File(basicFileName + ".witness.graphml");
+			dotwitnessfile = new File(basicFileName + ".witness.dot");
+			highlightedxcfafile = new File(basicFileName + ".highlighted.xcfa");
+			statisticstxtfile = new File(basicFileName + ".statistics.txt");
+			statisticscsvfile = new File(basicFileName + ".csv");
+		}
+
+		if(loadStore) {
+			XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
+		}
+		if(oneStmt) {
+			XcfaPassManager.addProcedurePass(new OneStmtPerEdgePass());
+		}
+
+		/// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
+		ArchitectureConfig.arithmetic = arithmeticType;
+
+		/// Starting frontend
+		final Stopwatch sw = Stopwatch.createStarted();
+
+		final CharStream input;
+		XCFA xcfa = null;
 		try {
-			// create filenames, if needed
-			if(outputResults) {
-				File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-				boolean bool = resultsDir.mkdir();
-				if(!bool){
-					throw new RuntimeException("Couldn't create results directory");
-				}
-
-				String basicFileName = resultsDir + "/" + model.getName();
-				xcfafile = new File(basicFileName + ".xcfa");
-				cfafile = new File(basicFileName + ".cfa");
-				cexfile = new File(basicFileName + ".cex");
-				witnessfile = new File(basicFileName + ".witness.graphml");
-				dotwitnessfile = new File(basicFileName + ".witness.dot");
-				highlightedxcfafile = new File(basicFileName + ".highlighted.xcfa");
-				statisticstxtfile = new File(basicFileName + ".statistics.txt");
-				statisticscsvfile = new File(basicFileName + ".csv");
-			}
-
-			if(loadStore) {
-				XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
-			}
-			if(oneStmt) {
-				XcfaPassManager.addProcedurePass(new OneStmtPerEdgePass());
-			}
-
-			/// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
-			ArchitectureConfig.arithmetic = arithmeticType;
-
-			/// Starting frontend
-			final Stopwatch sw = Stopwatch.createStarted();
-
-			final CharStream input = CharStreams.fromStream(new FileInputStream(model));
-
+			input = CharStreams.fromStream(new FileInputStream(model));
 			final CLexer lexer = new CLexer(input);
 			final CommonTokenStream tokens = new CommonTokenStream(lexer);
 			final CParser parser = new CParser(tokens);
-
 			final CParser.CompilationUnitContext context = parser.compilationUnit();
 
 			CStatement program = context.accept(FunctionVisitor.instance);
 			checkState(program instanceof CProgram, "Parsing did not return a program!");
+
 			FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
-			XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program);
+
+			xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program);
+		} catch (IOException io) {
+			io.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Frontend failed!");
+			System.exit(-80);
+		}
+
+		try {
 
 			// write xcfa into file
 			if(outputResults) {
