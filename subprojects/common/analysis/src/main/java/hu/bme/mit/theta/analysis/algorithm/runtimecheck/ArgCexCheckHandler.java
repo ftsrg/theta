@@ -25,11 +25,15 @@ public class ArgCexCheckHandler<S extends State, A extends Action> {
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
-		return cexStorage.checkIfCounterexampleNew(cex);
+		if(cexStorage!=null) {
+			return cexStorage.checkIfCounterexampleNew(cex);
+		} else return true;
 	}
 
 	public <P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
-		cexStorage.setCurrentArg(arg);
+		if(cexStorage != null) {
+			cexStorage.setCurrentArg(arg);
+		}
 	}
 
 	public <P extends Prec> void checkAndStop(ARG<S,A> arg, P prec) {
@@ -39,6 +43,8 @@ public class ArgCexCheckHandler<S extends State, A extends Action> {
 	}
 
 	public void addCounterexample(ArgTrace<S,A> cexToConcretize) {
-		cexStorage.addCounterexample(cexToConcretize);
+		if(cexStorage!=null) {
+			cexStorage.addCounterexample(cexToConcretize);
+		}
 	}
 }
