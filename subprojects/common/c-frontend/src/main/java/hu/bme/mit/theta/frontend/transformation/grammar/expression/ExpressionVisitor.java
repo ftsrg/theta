@@ -71,7 +71,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			if(variableList.containsKey(name)) {
 				VarDecl<?> varDecl = variableList.get(name);
 				if(functions.containsKey(varDecl)) {
-					FrontendMetadata.create(functions.get(varDecl), "shouldInline", false);
+					FrontendMetadata.create(name, "shouldInline", false);
 				}
 				return varDecl;
 			}

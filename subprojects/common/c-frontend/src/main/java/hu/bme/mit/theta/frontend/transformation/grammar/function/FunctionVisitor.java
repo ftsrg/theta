@@ -83,8 +83,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		}
 		VarDecl<?> varDecl = Var(name, type.getSmtType());
 		Map<String, VarDecl<?>> peek = variables.peek();
-		//noinspection ConstantConditions
-		checkState(!peek.containsKey(name), "Variable already exists: " + name);
+		if(peek.containsKey(name)) {
+			System.err.println("WARNING: Variable already exists: " + name);
+		}
 		peek.put(name, varDecl);
 		flatVariables.add(varDecl);
 		FrontendMetadata.create(varDecl.getRef(), "cType", type);

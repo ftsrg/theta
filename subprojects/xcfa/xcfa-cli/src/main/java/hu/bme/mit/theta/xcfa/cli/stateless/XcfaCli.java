@@ -73,6 +73,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
@@ -87,10 +88,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -285,12 +284,7 @@ public class XcfaCli {
 //				}
 //			}
 
-			final List<XcfaLocation> initLocList = xcfa.getProcesses().stream().map(process -> process.getMainProcedure().getInitLoc()).collect(Collectors.toList());
-			final Map<Integer, XcfaLocation> initLocs = new LinkedHashMap<>();
-			int i = 0;
-			for (XcfaLocation location : initLocList) {
-				initLocs.put(i++, location);
-			}
+			final List<XcfaLocation> initLocs = xcfa.getProcesses().stream().map(process -> process.getMainProcedure().getInitLoc()).collect(Collectors.toList());
 
 			final ConsoleLogger consoleLogger = new ConsoleLogger(logLevel);
 			final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
@@ -307,7 +301,7 @@ public class XcfaCli {
 			final SingleExprTraceRefiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>, ItpRefutation> refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 					XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, consoleLogger);
 
-			final XcfaConfig<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> config = XcfaConfig.create(CegarChecker.create(abstractor, refiner, consoleLogger), XcfaPrec.create(ExplPrec.of(List.of())));
+			final XcfaConfig<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> config = XcfaConfig.create(CegarChecker.create(abstractor, refiner, consoleLogger), XcfaPrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa))));
 
 			final SafetyResult<XcfaState<ExplState>, XcfaAction> result = config.check();
 			if(result.isUnsafe()) {

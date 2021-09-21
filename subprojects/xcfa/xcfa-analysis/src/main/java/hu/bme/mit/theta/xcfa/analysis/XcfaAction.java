@@ -29,21 +29,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaAction extends StmtAction {
 	private final Integer process;
-	private final XcfaEdge edge;
-	private final List<Stmt> stmts;
+	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	private XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final XcfaEdge edge) {
+	private XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
 		this.process = checkNotNull(process);
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
-		this.edge = checkNotNull(edge);
-		this.stmts = edge.getLabels().stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
+		this.labels = checkNotNull(labels);
 	}
 
 	public static XcfaAction create(final Integer process, final XcfaEdge edge) {
-		return new XcfaAction(process, edge.getSource(), edge.getTarget(), edge);
+		return new XcfaAction(process, edge.getSource(), edge.getTarget(), edge.getLabels());
 	}
 
 	public XcfaLocation getSource() {
@@ -56,19 +54,23 @@ public final class XcfaAction extends StmtAction {
 
 	@Override
 	public List<Stmt> getStmts() {
-		return stmts;
+		return labels.stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
 	}
 
-	public XcfaEdge getEdge() {
-		return edge;
+	public List<XcfaLabel> getLabels() {
+		return labels;
 	}
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
 	}
 
 	public Integer getProcess() {
 		return process;
+	}
+
+	public XcfaAction withLabels(final List<XcfaLabel> stmts) {
+		return new XcfaAction(process, source, target, stmts);
 	}
 }

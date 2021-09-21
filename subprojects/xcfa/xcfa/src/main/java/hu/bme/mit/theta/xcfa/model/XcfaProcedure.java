@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 
 import java.util.ArrayList;
@@ -29,9 +30,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 @SuppressWarnings("unused")
 public final class XcfaProcedure {
@@ -57,6 +61,35 @@ public final class XcfaProcedure {
         edges = ImmutableList.copyOf(builder.edges);
         name = builder.name;
         retType = builder.retType;
+        this.parent = parent;
+    }
+
+    public XcfaProcedure(final XcfaProcess parent, final XcfaProcedure from, final Map<VarDecl<?>, VarDecl<?>> varLut) {
+        params = ImmutableMap.copyOf(from.params.entrySet().stream().map(e -> {
+            final VarDecl<?> varDecl = e.getKey();
+            final VarDecl<?> newVar = Var(varDecl.getName(), varDecl.getType());
+            varLut.put(varDecl, newVar);
+            return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
+        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        localVars = ImmutableMap.copyOf(from.localVars.entrySet().stream().map(e -> {
+            final VarDecl<?> varDecl = e.getKey();
+            final VarDecl<?> newVar = Var(varDecl.getName(), varDecl.getType());
+            varLut.put(varDecl, newVar);
+            return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
+        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        final Map<XcfaLocation, XcfaLocation> locLut = new LinkedHashMap<>();
+        locs = ImmutableList.copyOf(from.locs.stream().map(xcfaLocation -> {
+            final XcfaLocation newLoc = XcfaLocation.copyOf(xcfaLocation);
+            locLut.put(xcfaLocation, newLoc);
+            return newLoc;
+        }).collect(Collectors.toList()));
+        locs.forEach(location -> location.setParent(this));
+        initLoc = locLut.get(from.initLoc);
+        errorLoc = locLut.get(from.errorLoc);
+        finalLoc = locLut.get(from.finalLoc);
+        edges = ImmutableList.copyOf(from.edges.stream().map(xcfaEdge -> xcfaEdge.withSource(locLut.get(xcfaEdge.getSource())).withTarget(xcfaEdge.getTarget()).mapLabels(label -> XcfaStmtUtils.replacesVarsInStmt(label, varDecl -> Optional.ofNullable(varLut.get(varDecl)).map(varDecl1 -> cast(varDecl1, varDecl.getType()))).orElse(label))).collect(Collectors.toList()));
+        name = from.name;
+        retType = from.retType;
         this.parent = parent;
     }
 
@@ -157,6 +190,10 @@ public final class XcfaProcedure {
 
     public Type getRetType() {
         return retType;
+    }
+
+    public XcfaProcedure duplicate(final XcfaProcess parent, final Map<VarDecl<?>, VarDecl<?>> varLut) {
+        return new XcfaProcedure(parent, this, varLut);
     }
 
     public static final class Builder {

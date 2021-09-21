@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.Map;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -19,7 +19,7 @@ public class XcfaAnalysis<S extends ExprState, P extends Prec>
 	private final InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc;
 	private final TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>> transFunc;
 
-	private XcfaAnalysis(final Map<Integer, XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
+	private XcfaAnalysis(final List<XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		partialOrd = XcfaOrd.create(analysis.getPartialOrd());
@@ -27,7 +27,7 @@ public class XcfaAnalysis<S extends ExprState, P extends Prec>
 		transFunc = XcfaTransFunc.create(analysis.getTransFunc());
 	}
 
-	public static <S extends ExprState, P extends Prec> XcfaAnalysis<S, P> create(final Map<Integer, XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
+	public static <S extends ExprState, P extends Prec> XcfaAnalysis<S, P> create(final List<XcfaLocation> initLoc, final Analysis<S, ? super XcfaAction, ? super P> analysis) {
 		return new XcfaAnalysis<>(initLoc, analysis);
 	}
 

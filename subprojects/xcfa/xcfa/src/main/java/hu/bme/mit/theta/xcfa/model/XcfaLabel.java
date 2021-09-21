@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.model;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -7,7 +8,9 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
+import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -34,6 +37,11 @@ public abstract class XcfaLabel {
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("AtomicBegin").toString();
+		}
 	}
 
 	public static class AtomicEndXcfaLabel extends XcfaLabel {
@@ -51,6 +59,11 @@ public abstract class XcfaLabel {
 		@Override
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
+		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("AtomicEnd").toString();
 		}
 	}
 
@@ -77,24 +90,31 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			throw new UnsupportedOperationException("ProcedureCall cannot be transformed into a Stmt!");
+			return Skip();
 		}
 
 		@Override
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Call").add(procedure).addAll(params).toString();
+		}
 	}
 
 	public static class StartThreadXcfaLabel extends XcfaLabel {
 		private final VarDecl<?> key;
 		private final String threadName;
+		private Optional<XcfaProcess> process;
 		private final Expr<?> param;
 
 		private StartThreadXcfaLabel(final VarDecl<?> key, final String threadName, final Expr<?> param) {
 			this.key = key;
 			this.threadName = threadName;
 			this.param = param;
+			this.process = Optional.empty();
 		}
 
 		public static StartThreadXcfaLabel of(final VarDecl<?> key, final String threadName, final Expr<?> params) {
@@ -103,7 +123,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			throw new UnsupportedOperationException("StartThread cannot be transformed into a Stmt!");
+			return Skip();
 		}
 
 		public Expr<?> getParam() {
@@ -122,6 +142,21 @@ public abstract class XcfaLabel {
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		public void setProcedure(final XcfaProcedure startProc) {
+			final XcfaProcess process = startProc.getParent().withMainProcedure(startProc);
+			this.process = Optional.of(process);
+		}
+
+		public XcfaProcess getProcess() {
+			checkState(process.isPresent(), "Process was not substituted before usage!");
+			return process.get();
+		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Start").add(key).add(threadName).add(param).toString();
+		}
 	}
 
 	public static class JoinThreadXcfaLabel extends XcfaLabel {
@@ -137,7 +172,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			throw new UnsupportedOperationException("JoinThread cannot be transformed into a Stmt!");
+			return Skip();
 		}
 
 		public VarDecl<?> getKey() {
@@ -147,6 +182,11 @@ public abstract class XcfaLabel {
 		@Override
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
+		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Join").add(key).toString();
 		}
 	}
 
@@ -192,6 +232,11 @@ public abstract class XcfaLabel {
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Load").add(local).add(global).toString();
+		}
 	}
 
 	public static class StoreXcfaLabel<T extends Type> extends XcfaLabel {
@@ -236,6 +281,11 @@ public abstract class XcfaLabel {
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
 		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Load").add(global).add(local).toString();
+		}
 	}
 
 	public static class FenceXcfaLabel extends XcfaLabel {
@@ -261,6 +311,12 @@ public abstract class XcfaLabel {
 		@Override
 		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
 			return visitor.visit(this, param);
+		}
+
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("Fence").add(type).toString();
 		}
 	}
 

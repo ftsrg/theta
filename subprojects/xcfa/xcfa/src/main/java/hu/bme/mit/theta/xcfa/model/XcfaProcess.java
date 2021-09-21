@@ -30,9 +30,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /*
  * Process subclass
@@ -57,6 +60,33 @@ public final class XcfaProcess {
         name = builder.name == null ? mainProcedure.getName() : builder.name;
         threadStartStmt = null;
         this.parent = parent;
+    }
+
+    public XcfaProcess(final XcfaProcess from, final XcfaProcedure mainProcedure) {
+        final Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
+        params = ImmutableList.copyOf(from.params.stream().map(varDecl -> {
+            final VarDecl<?> newVar = Var(varDecl.getName(), varDecl.getType());
+            varLut.put(varDecl, newVar);
+            return cast(newVar, varDecl.getType());
+        }).collect(Collectors.toList()));
+        threadLocalVars = ImmutableMap.copyOf(from.threadLocalVars.entrySet().stream().map(e -> {
+            final VarDecl<?> varDecl = e.getKey();
+            final VarDecl<?> newVar = Var(varDecl.getName(), varDecl.getType());
+            varLut.put(varDecl, newVar);
+            return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
+        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        var anon = new Object() {
+            XcfaProcedure newMain = null;
+        };
+        procedures = ImmutableList.copyOf(from.procedures.stream().map(procedure -> {
+            final XcfaProcedure duplicate = procedure.duplicate(this, new LinkedHashMap<>(varLut));
+            if(procedure == mainProcedure) anon.newMain =  mainProcedure;
+            return duplicate;
+        }).collect(Collectors.toList()));
+        this.mainProcedure = anon.newMain;
+        name = this.mainProcedure.getName();
+        threadStartStmt = null;
+        this.parent = from.parent;
     }
 
     public static Builder builder() {
@@ -109,6 +139,10 @@ public final class XcfaProcess {
     @Override
     public String toString() {
         return Utils.lispStringBuilder().add(LABEL).add(name).toString();
+    }
+
+    public XcfaProcess withMainProcedure(final XcfaProcedure startProcedure) {
+        return new XcfaProcess(this, startProcedure);
     }
 
     public static final class Builder {
@@ -189,6 +223,17 @@ public final class XcfaProcess {
             Builder builder = XcfaPassManager.run(this);
             XcfaProcess process = new XcfaProcess(builder, parent);
             built = process;
+
+            for (XcfaProcedure procedure : process.getProcedures()) {
+                for (XcfaEdge edge : procedure.getEdges()) {
+                    for (XcfaLabel label : edge.getLabels()) {
+                        if (label instanceof XcfaLabel.StartThreadXcfaLabel) {
+                            ((XcfaLabel.StartThreadXcfaLabel) label).setProcedure(process.getProcedures().stream().filter(pr -> pr.getName().equals(((XcfaLabel.StartThreadXcfaLabel) label).getThreadName())).findAny().get());
+                        }
+                    }
+                }
+            }
+
             return process;
         }
     }
