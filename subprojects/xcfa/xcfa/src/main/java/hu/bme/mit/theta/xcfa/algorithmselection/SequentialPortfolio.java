@@ -8,9 +8,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 
-import java.sql.Time;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -19,14 +17,12 @@ import static com.google.common.base.Preconditions.checkState;
 // TODO remove arg/cex check
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
-	private final long maxTimeout; // in ms, third of analysisTime
 	private final long sumTime = 100*1000; // 900*1000; // in ms, with initialization time
 	private final long analysisTime; // in ms, init time subtracted from sumTime
 
 	public SequentialPortfolio(Logger.Level logLevel, Duration initializationTime) {
 		super(logLevel);
 		analysisTime = sumTime - initializationTime.toMillis();
-		maxTimeout = analysisTime/3;
 		configurations[0] = new CegarConfiguration(
 				CfaConfigBuilder.Domain.EXPL,
 				CfaConfigBuilder.Refinement.SEQ_ITP,
@@ -77,8 +73,10 @@ public class SequentialPortfolio extends AbstractPortfolio {
 			long timeout;
 			if(i==2) {
 				timeout = remainingTime;
+			} else if(i==1) {
+				timeout = remainingTime/2;
 			} else {
-				timeout = maxTimeout;
+				timeout = remainingTime/3;
 			}
 			Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, cfa, timeout);
 			if(result.get1().equals(Result.SUCCESS)) {
