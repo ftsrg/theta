@@ -153,8 +153,8 @@ public final class XcfaState<S extends ExprState> implements ExprState {
 	}
 
 	public boolean isLeq(final PartialOrd<S> partialOrd, final XcfaState<S> state2) {
-		return threadLookup.size() <= state2.threadLookup.size() &&
-		threadLookup.entrySet().stream().noneMatch(e -> enabledProcesses.contains(e.getValue()) ^ (state2.threadLookup.containsKey(e.getKey()) && state2.enabledProcesses.contains(state2.threadLookup.get(e.getKey())))) &&
+		return /*threadLookup.size() <= state2.threadLookup.size() &&
+		threadLookup.entrySet().stream().noneMatch(e -> enabledProcesses.contains(e.getValue()) ^ (state2.threadLookup.containsKey(e.getKey()) && state2.enabledProcesses.contains(state2.threadLookup.get(e.getKey())))) && */
 		partialOrd.isLeq(globalState, state2.globalState);
 	}
 

@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 
 import java.util.ArrayList;
 import java.util.List;

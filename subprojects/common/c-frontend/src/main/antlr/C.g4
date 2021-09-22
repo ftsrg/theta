@@ -351,7 +351,7 @@ directDeclarator
     ;
 
 gccDeclaratorExtension
-    :   '__asm' '(' StringLiteral+ ')'
+    :   ('__asm' | '__asm__') '(' StringLiteral+ ')'
     |   gccAttributeSpecifier
     ;
 

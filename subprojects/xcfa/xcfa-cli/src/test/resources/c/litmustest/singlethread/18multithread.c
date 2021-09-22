@@ -696,10 +696,9 @@ void *thr1(void *_) {
 }
 
 void *thr2(void *_) {
-    __VERIFIER_atomic_begin();
     x++;
     x++;
-    __VERIFIER_atomic_end();}
+}
 
 int main() {
   for(int i = 0; i < 16; ++i) {
