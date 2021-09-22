@@ -47,6 +47,8 @@ import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getVal
 
 public abstract class CComplexType {
 	private final CSimpleType origin;
+	private boolean threadLocal = false;
+	private boolean atomic = false;
 
 	protected CComplexType(CSimpleType origin) {
 		this.origin = origin;
@@ -113,6 +115,23 @@ public abstract class CComplexType {
 		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
 			return (CComplexType) cTypeOptional.get();
 		} else throw new RuntimeException("Type not known!");
+	}
+
+
+	public void setThreadLocal() {
+		threadLocal = true;
+	}
+
+	public boolean isThreadLocal() {
+		return threadLocal;
+	}
+
+	public void setAtomic() {
+		threadLocal = true;
+	}
+
+	public boolean isAtomic() {
+		return atomic;
 	}
 
 	public static CComplexType getSignedInt() {

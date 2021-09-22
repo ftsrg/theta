@@ -19,6 +19,7 @@ public abstract class CSimpleType {
 	private boolean isShort = false;
 	private boolean isLong = false;
 	private boolean isLongLong = false;
+	private boolean isThreadLocal = false;
 
 	/**
 	 * According to the grammar, the first declared variable is part of the type
@@ -144,5 +145,13 @@ public abstract class CSimpleType {
 
 	public CComplexType getActualType() {
 		throw new UnsupportedOperationException("Abstract base class CSimpleType should not be used");
+	}
+
+	protected void setThreadLocal(boolean threadLocal) {
+		this.isThreadLocal = threadLocal;
+	}
+
+	public boolean isThreadLocal() {
+		return isThreadLocal;
 	}
 }

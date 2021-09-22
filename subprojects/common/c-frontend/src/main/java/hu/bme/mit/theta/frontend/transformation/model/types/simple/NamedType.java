@@ -54,6 +54,8 @@ public class NamedType extends CSimpleType {
 				type = new CVoid(this); break;
 			}
 		}
+		if(isThreadLocal()) type.setThreadLocal();
+
 		for (int i = 0; i < getPointerLevel(); i++) {
 			type = new CPointer(this, type);
 		}

@@ -29,6 +29,7 @@ import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpl
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Typedef;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Unsigned;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Volatile;
+import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.ThreadLocal;
 
 public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	public static final TypeVisitor instance = new TypeVisitor();
@@ -220,6 +221,11 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 			default:
 				return NamedType(ctx.getText());
 		}
+	}
+
+	@Override
+	public CSimpleType visitTypeSpecifierGccThread(CParser.TypeSpecifierGccThreadContext ctx) {
+		return ThreadLocal();
 	}
 
 	@Override

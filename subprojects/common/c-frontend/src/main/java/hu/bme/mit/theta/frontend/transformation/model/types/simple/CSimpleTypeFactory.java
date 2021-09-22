@@ -30,4 +30,6 @@ public class CSimpleTypeFactory {
 	public static Enum Enum(final String id, final Map<String, Optional<Expr<?>>> fields) { return new Enum(id, fields); }
 
 	public static Struct Struct(final String name) { return new Struct(name); }
+
+	public static ThreadLocal ThreadLocal() { return ThreadLocal.instance; }
 }
