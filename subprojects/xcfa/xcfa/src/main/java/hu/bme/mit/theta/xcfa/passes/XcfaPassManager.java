@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xcfa.passes;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.xcfapass.AddAtomicBeginEndsToFunctions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
@@ -16,7 +15,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
@@ -26,6 +24,8 @@ import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
+import hu.bme.mit.theta.xcfa.passes.xcfapass.AddAtomicBeginEndsToFunctions;
+import hu.bme.mit.theta.xcfa.passes.xcfapass.DemoteThreadLocalGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.RemoveUnusedGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
@@ -51,7 +51,7 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new ConditionalFinalsToAssumes(),
-				new RemoveDeadEnds(),
+//				new RemoveDeadEnds(),
 				new UnusedVarRemovalPass(),
 				new AddHavocRange(),
 				new SimpleLbePass(),
@@ -65,7 +65,8 @@ public class XcfaPassManager {
 				new FunctionCallsToPushPops()));
 		xcfaPasses.addAll((List.of(
 				new AddAtomicBeginEndsToFunctions(),
-				new RemoveUnusedGlobals())));
+				new RemoveUnusedGlobals(),
+				new DemoteThreadLocalGlobals())));
 	}
 
 	public static void addProcedurePass(ProcedurePass pass) {

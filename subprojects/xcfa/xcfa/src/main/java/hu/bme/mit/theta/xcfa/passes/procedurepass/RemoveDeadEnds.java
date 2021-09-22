@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 public class RemoveDeadEnds extends ProcedurePass{
 
+	// TODO: thread start and procedure call should not be dead-end! Use-case: while(1) pthread_create(..);
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		XcfaLocation errorLoc = builder.getErrorLoc();

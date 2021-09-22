@@ -727,7 +727,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, outerBeforeGuard);
 		for(int i = 0; i < (UNROLL_COUNT == 0 ? 1 : UNROLL_COUNT); ++i) {
 			if (((CCompound) body).getcStatementList().size() == 0) {
-				xcfaEdge = XcfaEdge.of(initLoc, endLoc, List.of(Stmt(Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
+				xcfaEdge = XcfaEdge.of(initLoc, endLoc, List.of(Stmt(Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue())))));
 				builder.addEdge(xcfaEdge);
 				propagateMetadata(statement, xcfaEdge);
 				return endLoc;
@@ -758,7 +758,8 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		xcfaEdge = XcfaEdge.of(outerLastGuard, endLoc, List.of());
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);
-		return endLoc;	}
+		return endLoc;
+	}
 
 	private XcfaLocation buildWithoutPostStatement(CStatement cStatement, ParamPack param) {
 		checkState(cStatement instanceof CCompound, "Currently only CCompounds have pre- and post statements!");
