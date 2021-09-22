@@ -19,6 +19,7 @@ class CegarConfiguration {
 	public final CfaConfigBuilder.InitPrec initPrec;
 	public final PruneStrategy pruneStrategy;
 	public CfaConfigBuilder.Encoding encoding;
+	public boolean argCexCheck;
 
 	CegarConfiguration(CfaConfigBuilder.Domain domain,
 				  CfaConfigBuilder.Refinement refinement,
@@ -28,7 +29,8 @@ class CegarConfiguration {
 				  int maxEnum,
 				  CfaConfigBuilder.InitPrec initPrec,
 				  PruneStrategy pruneStrategy,
-				  CfaConfigBuilder.Encoding encoding) {
+				  CfaConfigBuilder.Encoding encoding,
+				  boolean argCexCheck) {
 		this.domain = domain;
 		this.refinement = refinement;
 		this.precGranularity = precGranularity;
@@ -38,15 +40,20 @@ class CegarConfiguration {
 		this.initPrec = initPrec;
 		this.pruneStrategy = pruneStrategy;
 		this.encoding = encoding;
+		this.argCexCheck = argCexCheck;
 	}
 
 	/** sets up arg cex check and builds configuration */
 	public CfaConfig<?, ?, ?> buildConfiguration(CFA cfa, CFA.Loc errLoc, ConsoleLogger logger) throws Exception {
 		// set up Arg-Cex check
-		if(refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
-			ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+		if(!argCexCheck) {
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
 		} else {
-			ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+			if(refinement.equals(CfaConfigBuilder.Refinement.MULTI_SEQ)) {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+			} else {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+			}
 		}
 
 		try {
@@ -71,6 +78,7 @@ class CegarConfiguration {
 				", maxEnum=" + maxEnum +
 				", initPrec=" + initPrec +
 				", pruneStrategy=" + pruneStrategy +
+				", argCexCheck=" + argCexCheck +
 				'}';
 	}
 

@@ -38,23 +38,17 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
-import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis;
+import hu.bme.mit.theta.xcfa.algorithmselection.Portfolio;
+import hu.bme.mit.theta.xcfa.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
-import hu.bme.mit.theta.xcfa.analysis.weakmemory.bounded.BoundedMultithreadedAnalysis;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
@@ -62,6 +56,7 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
+import jdk.jshell.spi.ExecutionControl;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -132,8 +127,8 @@ public class XcfaCli {
 
 	//////////// runtime interventions ////////////
 
-	@Parameter(names = "--portfolio", description = "Use this flag instead of the CEGAR options if you are not familiar with those options; includes a 900s timeout, that cannot be overwritten", help = true)
-	boolean portfolio = false;
+	@Parameter(names = "--portfolio", description = "Use this flag instead of the CEGAR options if you are not familiar with those; includes a 900s timeout and uses 2 threads", help = true)
+	Portfolio portfolio = Portfolio.NONE;
 
 	@Parameter(names = "--no-arg-cex-check")
 	boolean noArgCexCheck = false;
@@ -193,6 +188,8 @@ public class XcfaCli {
 	}
 
 	private void run() {
+		Stopwatch timer = Stopwatch.createStarted();
+
 		/// Checking flags
 		try {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
@@ -314,10 +311,24 @@ public class XcfaCli {
 			/// starting analysis
 			if(cfa != null) {
 				final SafetyResult<?, ?> status;
-				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
-				status = check(configuration);
 
-				if (status.isUnsafe() && outputResults) {
+				switch (portfolio) {
+					case NONE:
+						final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, cfa.getErrorLoc().get());
+						status = check(configuration);
+						break;
+					case SEQUENTIAL:
+						SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, timer.elapsed());
+						status = sequentialPortfolio.executeAnalysis(cfa); // check(configuration);
+						break;
+					case COMPLEX:
+						// TODO
+						throw new ExecutionControl.NotImplementedException("Complex portfolio is not implemented yet");
+					default:
+						throw new IllegalStateException("Unexpected value: " + portfolio);
+				}
+
+				if (status!=null && status.isUnsafe() && outputResults) {
 					writeCex(status.asUnsafe());
 					writeWitness(status.asUnsafe());
 					writeXcfaWithCex(xcfa, status.asUnsafe());
