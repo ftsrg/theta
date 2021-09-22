@@ -280,6 +280,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Stmt visit(LoopStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public Stmt visit(IfStmt stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -401,6 +406,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -443,6 +451,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -485,6 +496,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
+            @Override
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 

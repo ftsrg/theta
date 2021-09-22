@@ -64,6 +64,14 @@ public class StmtAtomCollector {
             stmt.getStmt().accept(this, atoms);
             return null;
         }
+
+        @Override
+        public Void visit(IfStmt stmt, Set<Expr<BoolType>> atoms){
+            stmt.getThen().accept(this, atoms);
+            stmt.getElze().accept(this, atoms);
+            atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
+            return null;
+        }
     }
 
 }

@@ -90,4 +90,12 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(),vars);
 	}
 
+	@Override
+	public Void visit(IfStmt stmt, Collection<VarDecl<?>> vars) {
+		ExprUtils.collectVars(stmt.getCond(), vars);
+		stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);
+		stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
+		return null;
+	}
+
 }
