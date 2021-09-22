@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 // TODO remove arg/cex check
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
-	private final long sumTime = 100*1000; // 900*1000; // in ms, with initialization time
+	private final long sumTime = 900*1000; // 900*1000; // in ms, with initialization time
 	private final long analysisTime; // in ms, init time subtracted from sumTime
 
 	public SequentialPortfolio(Logger.Level logLevel, Duration initializationTime) {
@@ -81,10 +81,13 @@ public class SequentialPortfolio extends AbstractPortfolio {
 			Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, cfa, timeout);
 			if(result.get1().equals(Result.SUCCESS)) {
 				checkState(result.get2().isPresent());
+				logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + configuration);
+				logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+
 				return result.get2().get();
 			}
 		}
-		logger.write(Logger.Level.MAINSTEP, "Sequential portfolio done");
+		logger.write(Logger.Level.MAINSTEP, "Sequential portfolio was unsuccessful");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
 		return null;
