@@ -1,8 +1,10 @@
-package hu.bme.mit.theta.xcfa.analysis;
+package hu.bme.mit.theta.xcfa.analysis.interleavings;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;

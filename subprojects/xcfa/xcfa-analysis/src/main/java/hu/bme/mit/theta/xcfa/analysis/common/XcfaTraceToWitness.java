@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis;
+package hu.bme.mit.theta.xcfa.analysis.common;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -18,8 +18,6 @@ import hu.bme.mit.theta.frontend.FrontendMetadata;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public final class XcfaTraceToWitness {
 	private static Trace<CfaState<ExplState>, CfaAction> concreteTrace;

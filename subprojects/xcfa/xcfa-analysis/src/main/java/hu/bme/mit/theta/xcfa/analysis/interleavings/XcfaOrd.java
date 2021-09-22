@@ -1,7 +1,8 @@
-package hu.bme.mit.theta.xcfa.analysis;
+package hu.bme.mit.theta.xcfa.analysis.interleavings;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings.XcfaState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
