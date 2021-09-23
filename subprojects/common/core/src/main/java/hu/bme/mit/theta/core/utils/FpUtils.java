@@ -9,6 +9,10 @@ import org.kframework.mpfr.BinaryMathContext;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeInfinity;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
+
 public final class FpUtils {
 	private FpUtils() {
 	}
@@ -36,11 +40,11 @@ public final class FpUtils {
 
 	public static FpLitExpr bigFloatToFpLitExpr(final BigFloat bigFloat, final FpType type) {
 		if (bigFloat.isNaN()) {
-			return FpLitExpr.NaN(type);
+			return NaN(type);
 		} else if (bigFloat.isInfinite() && bigFloat.greaterThan(BigFloat.zero(type.getSignificand()))) {
-			return FpLitExpr.PositiveInfinity(type);
+			return PositiveInfinity(type);
 		} else if (bigFloat.isInfinite() && bigFloat.lessThan(BigFloat.zero(type.getSignificand()))) {
-			return FpLitExpr.NegativeInfinity(type);
+			return NegativeInfinity(type);
 		} else {
 			final var minExponent = -(1L << (type.getExponent() - 1)) + 2;
 			final var maxExponent = (1L << (type.getExponent() - 1)) - 1;
@@ -58,6 +62,10 @@ public final class FpUtils {
 	}
 
 	public static RoundingMode getMathContextRoundingMode(final FpRoundingMode roundingMode) {
+		if(roundingMode == null) {
+			return RoundingMode.UNNECESSARY;
+		}
+
 		switch (roundingMode) {
 			case RNE:
 				return RoundingMode.HALF_EVEN;

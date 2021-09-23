@@ -14,24 +14,20 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 	private static final int HASH_SEED = 6667;
 	private static final String OPERATOR_LABEL = "fpmin";
 
-	private final FpRoundingMode roundingMode;
-
-	private FpMinExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+	private FpMinExpr(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		super(leftOp, rightOp);
 		checkAllTypesEqual(leftOp, rightOp);
-		checkNotNull(roundingMode);
-		this.roundingMode = roundingMode;
 	}
 
-	public static FpMinExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return new FpMinExpr(roundingMode, leftOp, rightOp);
+	public static FpMinExpr of(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return new FpMinExpr(leftOp, rightOp);
 	}
 
-	public static FpMinExpr create(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+	public static FpMinExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
 		checkNotNull(leftOp, rightOp);
 		final Expr<FpType> newLeftOp = castFp(leftOp);
 		final Expr<FpType> newRightOp = castFp(rightOp);
-		return FpMinExpr.of(roundingMode, newLeftOp, newRightOp);
+		return FpMinExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -39,7 +35,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return FpMinExpr.of(roundingMode, leftOp, rightOp);
+			return FpMinExpr.of(leftOp, rightOp);
 		}
 	}
 
@@ -74,7 +70,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 			return true;
 		} else if (obj instanceof FpMinExpr) {
 			final FpMinExpr that = (FpMinExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;
 		}
@@ -83,7 +79,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 	public LitExpr<FpType> eval(Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-		if (FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal).lessThan(FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal))) {
+		if (FpUtils.fpLitExprToBigFloat(null, leftOpVal).lessThan(FpUtils.fpLitExprToBigFloat(null, rightOpVal))) {
 			return leftOpVal;
 		} else {
 			return rightOpVal;

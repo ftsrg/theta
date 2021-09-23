@@ -541,15 +541,15 @@ FP_IS_NAN
     ;
 
 FPMAX
-    :   'fpmax' FP_ROUNDINGMODE?
+    :   'fpmax'
     ;
 
 FPMIN
-    :   'fpmin' FP_ROUNDINGMODE?
+    :   'fpmin'
     ;
 
 FPREM
-    :   'fprem' FP_ROUNDINGMODE?
+    :   'fprem'
     ;
 
 FPROUNDTOINT
