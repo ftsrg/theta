@@ -63,6 +63,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         return sb.toString().trim();
     }
 
+    @Override
+    public void close() {
+        solverProcess.destroyForcibly();
+    }
+
     private static final class ReadProcessor {
         private enum ReadStatus {
             INIT, LINE, PARENTHESES, STRING, COMMENT, READY

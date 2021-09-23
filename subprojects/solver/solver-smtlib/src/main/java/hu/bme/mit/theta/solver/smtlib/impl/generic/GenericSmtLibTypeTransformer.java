@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -33,6 +34,7 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
                 .addCase(IntType.class, this::intType)
                 .addCase(RatType.class, this::ratType)
                 .addCase(BvType.class, this::bvType)
+                .addCase(FpType.class, this::fpType)
                 .addCase(ArrayType.class, this::arrayType)
                 .build();
     }
@@ -60,6 +62,10 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
 
     protected String bvType(final BvType type) {
         return String.format("(_ BitVec %d)", type.getSize());
+    }
+
+    protected String fpType(final FpType type) {
+        return String.format("(_ FloatingPoint %d %d)", type.getExponent(), type.getSignificand());
     }
 
     protected String arrayType(final ArrayType<?, ?> type) {

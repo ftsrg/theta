@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
+import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -64,19 +65,38 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
-import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
-import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -187,6 +207,27 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             put("bvsgt", exprBinaryOperator(BvSGtExpr::create));
             put("bvuge", exprBinaryOperator(BvUGeqExpr::create));
             put("bvsge", exprBinaryOperator(BvSGeqExpr::create));
+
+            // Floating point
+
+            put("fp", exprFpLit());
+            put("fp.add", exprFpMultiaryOperator(FpAddExpr::create));
+            put("fp.sub", exprFpBinaryOperator(FpSubExpr::create));
+            put("fp.neg", exprUnaryOperator(FpNegExpr::create));
+            put("fp.mul", exprFpMultiaryOperator(FpMulExpr::create));
+            put("fp.div", exprFpBinaryOperator(FpDivExpr::create));
+            put("fp.eq", exprBinaryOperator(FpEqExpr::create));
+            put("fp.geq", exprBinaryOperator(FpGeqExpr::create));
+            put("fp.gt", exprBinaryOperator(FpGtExpr::create));
+            put("fp.leq", exprBinaryOperator(FpLeqExpr::create));
+            put("fp.lt", exprBinaryOperator(FpLtExpr::create));
+            put("fp.abs", exprUnaryOperator(FpAbsExpr::create));
+            put("fp.roundToIntegral", exprFpUnaryOperator(FpRoundToIntegralExpr::create));
+            put("fp.min", exprBinaryOperator(FpMinExpr::create));
+            put("fp.max", exprBinaryOperator(FpMaxExpr::create));
+            put("fp.sqrt", exprFpUnaryOperator(FpSqrtExpr::create));
+            put("fp.rem", exprBinaryOperator(FpRemExpr::create));
+            put("fp.isNaN", exprUnaryOperator(FpIsNanExpr::create));
 
             // Array
             put("select", exprArrayReadOperator());
@@ -496,6 +537,26 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var bvSize = Integer.parseInt(ctx.index().get(0).getText());
             return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(value), bvSize);
         }
+        else if(ctx.symbol().getText().equals("+oo")) {
+            final var eb = Integer.parseInt(ctx.index().get(0).getText());
+            final var sb = Integer.parseInt(ctx.index().get(1).getText());
+            return FpExprs.PositiveInfinity(FpExprs.FpType(eb, sb));
+        }
+        else if(ctx.symbol().getText().equals("-oo")) {
+            final var eb = Integer.parseInt(ctx.index().get(0).getText());
+            final var sb = Integer.parseInt(ctx.index().get(1).getText());
+            return FpExprs.NegativeInfinity(FpExprs.FpType(eb, sb));
+        }
+        else if(ctx.symbol().getText().equals("+zero")) {
+            final var eb = Integer.parseInt(ctx.index().get(0).getText());
+            final var sb = Integer.parseInt(ctx.index().get(1).getText());
+            return FpExprs.PositiveZero(FpExprs.FpType(eb, sb));
+        }
+        else if(ctx.symbol().getText().equals("-zero")) {
+            final var eb = Integer.parseInt(ctx.index().get(0).getText());
+            final var sb = Integer.parseInt(ctx.index().get(1).getText());
+            return FpExprs.NegativeZero(FpExprs.FpType(eb, sb));
+        }
         else {
             return transformSymbol(ctx.symbol(), model, vars);
         }
@@ -729,6 +790,65 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
             return function.apply(ops.stream().map(op -> transformTerm(op, model, vars)).collect(Collectors.toUnmodifiableList()));
         };
+    }
+
+    private OperatorCreatorFunction exprFpLit() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 3, "Three operators expected");
+
+            final var hidden = (BvLitExpr) transformTerm(ops.get(1), model, vars);
+            final var exponent = (BvLitExpr) transformTerm(ops.get(1), model, vars);
+            final var significand = (BvLitExpr) transformTerm(ops.get(2), model, vars);
+
+            return FpExprs.Fp(hidden.getValue()[0], exponent, significand);
+        };
+    }
+
+    private OperatorCreatorFunction exprFpUnaryOperator(final BiFunction<FpRoundingMode, Expr<?>, Expr<?>> function) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Unary floating point operator expected");
+
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var op = transformTerm(ops.get(1), model, vars);
+            return function.apply(roundingMode, op);
+        };
+    }
+
+    private OperatorCreatorFunction exprFpBinaryOperator(final TriFunction<FpRoundingMode, Expr<?>, Expr<?>, Expr<?>> function) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 3, "Binary floating point operator expected");
+
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var op1 = transformTerm(ops.get(1), model, vars);
+            final var op2 = transformTerm(ops.get(2), model, vars);
+            return function.apply(roundingMode, op1, op2);
+        };
+    }
+
+    private OperatorCreatorFunction exprFpMultiaryOperator(final BiFunction<FpRoundingMode, List<Expr<?>>, Expr<?>> function) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() >= 1);
+
+            return function.apply(
+                fpOperatorRoundingMode(ops.get(0)),
+                ops.stream().skip(1).map(op -> transformTerm(op, model, vars)).collect(Collectors.toUnmodifiableList())
+            );
+        };
+    }
+
+    private FpRoundingMode fpOperatorRoundingMode(final TermContext term) {
+        switch(term.getText()) {
+            case "RNE": return FpRoundingMode.RNE;
+            case "RNA": return FpRoundingMode.RNA;
+            case "RTP": return FpRoundingMode.RTP;
+            case "RTN": return FpRoundingMode.RTN;
+            case "RTZ": return FpRoundingMode.RTZ;
+            default: throw new UnsupportedOperationException();
+        }
     }
 
     private interface OperatorCreatorFunction extends QuadFunction<
