@@ -25,6 +25,9 @@ import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,6 +36,8 @@ import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -116,6 +121,12 @@ public class CfaTest {
 
 				{ "src/test/resources/counter_bv_false.cfa", PRED_CART, UCB, false, 13 },
 
+				{ "src/test/resources/fp1.cfa", PRED_CART, NWT_IT_WP, false, 5 },
+
+				{ "src/test/resources/fp2.cfa", PRED_CART, NWT_IT_WP, false, 5 },
+
+				{ "src/test/resources/counter_fp_true.cfa", EXPL, SEQ_ITP, true, 0 },
+
 				{ "src/test/resources/ifelse.cfa", PRED_CART, SEQ_ITP, false, 3 },
 
 				{ "src/test/resources/ifelse.cfa", PRED_BOOL, BW_BIN_ITP, false, 3 },
@@ -128,7 +139,7 @@ public class CfaTest {
 	}
 
 	@Test
-	public void test() throws IOException {
+	public void test() throws IOException, SmtLibSolverInstallerException {
 		CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
 		CfaConfig<? extends State, ? extends Action, ? extends Prec> config
 				= new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance()).build(cfa, cfa.getErrorLoc().get());
@@ -137,7 +148,7 @@ public class CfaTest {
 		if (result.isUnsafe()) {
 			Trace<CfaState<ExplState>, CfaAction> trace = CfaTraceConcretizer.concretize(
 					(Trace<CfaState<?>, CfaAction>) result.asUnsafe().getTrace(),
-					Z3SolverFactory.getInstance());
+				Z3SolverFactory.getInstance());
 			Assert.assertEquals(cexLength, trace.length());
 		}
 	}
