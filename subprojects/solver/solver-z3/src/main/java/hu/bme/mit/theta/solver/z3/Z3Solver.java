@@ -226,6 +226,11 @@ final class Z3Solver implements UCSolver, Solver {
 		unsatCore = null;
 	}
 
+	@Override
+	public void close() {
+		z3Context.close();
+	}
+
 	////
 
 	private final class Z3Model extends Valuation {

@@ -76,4 +76,9 @@ public final class NullSolver implements Solver {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public void close() throws Exception {
+		throw new UnsupportedOperationException();
+	}
+
 }
