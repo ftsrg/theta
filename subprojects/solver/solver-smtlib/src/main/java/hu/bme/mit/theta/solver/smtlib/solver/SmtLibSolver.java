@@ -241,6 +241,11 @@ public class SmtLibSolver implements UCSolver, Solver {
         return assertions.toCollection();
     }
 
+    @Override
+    public void close() throws Exception {
+        solverBinary.close();
+    }
+
     private void init() {
         issueGeneralCommand("(set-option :print-success true)");
         issueGeneralCommand("(set-option :produce-models true)");
@@ -278,5 +283,4 @@ public class SmtLibSolver implements UCSolver, Solver {
             throw new SmtLibSolverException("Could not parse solver output: " + response, e);
         }
     }
-
 }

@@ -201,6 +201,11 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         return assertions.toCollection();
     }
 
+    @Override
+    public void close() throws Exception {
+        solverBinary.close();
+    }
+
     protected void clearState() {
         status = null;
         model = null;

@@ -193,4 +193,9 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 		return solver.getAssertions();
 	}
 
+	@Override
+	public void close() {
+		z3Context.close();
+		solver.close();
+	}
 }

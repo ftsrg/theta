@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.Collection;
 
-public interface SolverBase {
+public interface SolverBase extends AutoCloseable {
 
 
     /**
