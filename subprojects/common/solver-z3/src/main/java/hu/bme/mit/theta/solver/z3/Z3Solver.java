@@ -48,6 +48,7 @@ import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
 final class Z3Solver implements Solver {
+	public static com.microsoft.z3.Context currentContext;
 
 	private final Z3SymbolTable symbolTable;
 	private final Z3TransformationManager transformationManager;
@@ -69,6 +70,7 @@ final class Z3Solver implements Solver {
 	public Z3Solver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
 					final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
 					final com.microsoft.z3.Solver z3Solver) {
+		currentContext = z3Context;
 		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
