@@ -8,20 +8,20 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 
-// TODO remove arg/cex check
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
-	private final long sumTime = 900*1000; // 900*1000; // in ms, with initialization time
+	private final long sumTime = 900*1000; // in ms, with initialization time
 	private final long analysisTime; // in ms, init time subtracted from sumTime
 
-	public SequentialPortfolio(Logger.Level logLevel, Duration initializationTime) {
-		super(logLevel);
+	public SequentialPortfolio(Logger.Level logLevel, Duration initializationTime, String basicFileName, String modelName) {
+		super(logLevel, basicFileName, modelName);
 		analysisTime = sumTime - initializationTime.toMillis();
 		configurations[0] = new CegarConfiguration(
 				CfaConfigBuilder.Domain.EXPL,
