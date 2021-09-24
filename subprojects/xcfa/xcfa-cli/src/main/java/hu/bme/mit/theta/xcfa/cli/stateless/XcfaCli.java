@@ -303,6 +303,8 @@ public class XcfaCli {
 
 			/// starting analysis
 			if(cfa != null) {
+				System.err.println("Arithmetic: " + ArchitectureConfig.arithmetic);
+
 				final SafetyResult<?, ?> status;
 
 				switch (portfolio) {
