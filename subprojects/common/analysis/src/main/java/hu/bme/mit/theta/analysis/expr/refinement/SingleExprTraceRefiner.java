@@ -69,16 +69,6 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
 		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
-		/*
-		if(optionalNewCex.isPresent()) {
-			cexToConcretize = optionalNewCex.get();
-		} else {
-
-			// ebben az esetben tobb is lehet - innen jon a nemdeterminizmus
-			cexToConcretize = cexStorage.getFirstCexInIteration();
-		}
-		 */
-
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
 		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
