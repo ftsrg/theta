@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings;
+package hu.bme.mit.theta.xcfa.analysis.interleavings;
 
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.analysis.PartialOrd;
@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
@@ -41,6 +42,7 @@ public class XcfaState<S extends ExprState> implements ExprState {
 	private final Collection<Integer> oldEnabledProcesses;
 	private final Map<VarDecl<?>, Integer> threadLookup;
 	private final Map<Integer, Collection<Integer>> waitForEnd;
+	private final XcfaAction lastAction;
 	private final S globalState;
 
 	protected XcfaState(final Map<XcfaLocation, Boolean> processLocs, final S globalState) {
@@ -55,15 +57,17 @@ public class XcfaState<S extends ExprState> implements ExprState {
 		waitForEnd = new LinkedHashMap<>();
 		this.threadLookup = new LinkedHashMap<>();
 		oldEnabledProcesses = null;
+		lastAction = null;
 	}
 
-	protected XcfaState(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, Collection<Integer> oldEnabledProcesses, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Map<Integer, Collection<Integer>> waitForEnd) {
+	protected XcfaState(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, Collection<Integer> oldEnabledProcesses, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Map<Integer, Collection<Integer>> waitForEnd, final XcfaAction lastAction) {
 		this.processLocs = ImmutableMap.copyOf(checkNotNull(processLocs));
 		this.enabledProcesses = new ArrayList<>(checkNotNull(enabledProcesses));
 		this.oldEnabledProcesses = oldEnabledProcesses; // this can deliberately be null!
 		this.threadLookup = ImmutableMap.copyOf((checkNotNull(threadLookup)));
 		this.globalState = checkNotNull(globalState);
 		this.waitForEnd = waitForEnd.entrySet().stream().map(e -> Map.entry(e.getKey(), new ArrayList<>(e.getValue()))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		this.lastAction = lastAction;
 
 		final Collection<Integer> endOrError = new ArrayList<>();
 		this.processLocs.forEach((integer, xcfaLocation) -> {if(xcfaLocation.isEndLoc() || xcfaLocation.isErrorLoc()) endOrError.add(integer);});
@@ -81,8 +85,8 @@ public class XcfaState<S extends ExprState> implements ExprState {
 		return new XcfaState<>(processLocs, globalState);
 	}
 
-	protected XcfaState<S> withParams(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, Collection<Integer> oldEnabledProcesses, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Map<Integer, Collection<Integer>> waitForEnd) {
-		return new XcfaState<S>(processLocs, enabledProcesses, oldEnabledProcesses, threadLookup, globalState, waitForEnd);
+	protected XcfaState<S> withParams(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, Collection<Integer> oldEnabledProcesses, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Map<Integer, Collection<Integer>> waitForEnd, final XcfaAction lastAction) {
+		return new XcfaState<S>(processLocs, enabledProcesses, oldEnabledProcesses, threadLookup, globalState, waitForEnd, lastAction);
 	}
 
 	@Override
@@ -107,11 +111,19 @@ public class XcfaState<S extends ExprState> implements ExprState {
 		return globalState;
 	}
 
-	public XcfaState<S> advance(final S succState, final Integer process, final XcfaLocation target) {
-		checkState(processLocs.containsKey(process));
+	public Map<VarDecl<?>, Integer> getThreadLookup() {
+		return threadLookup;
+	}
+
+	public Collection<Integer> getOldEnabledProcesses() {
+		return oldEnabledProcesses;
+	}
+
+	public XcfaState<S> advance(final S succState, final XcfaAction action) {
+		checkState(processLocs.containsKey(action.getProcess()));
 		final Map<Integer, XcfaLocation> newProcessLocs = new LinkedHashMap<>(processLocs);
-		newProcessLocs.put(process, target);
-		return withParams(newProcessLocs, enabledProcesses, oldEnabledProcesses, threadLookup, succState, waitForEnd);
+		newProcessLocs.put(action.getProcess(), action.getTarget());
+		return withParams(newProcessLocs, enabledProcesses, oldEnabledProcesses, threadLookup, succState, waitForEnd, action);
 	}
 
 	public boolean isError() {
@@ -127,7 +139,7 @@ public class XcfaState<S extends ExprState> implements ExprState {
 			threadLookup.put(startThreadXcfaLabel.getKey(), processLocs.size());
 			processLocs.put(processLocs.size(), startThreadXcfaLabel.getProcess().getMainProcedure().getInitLoc());
 		}
-		return withParams(processLocs, enabledProcesses, oldEnabledProcesses, threadLookup, globalState, waitForEnd);
+		return withParams(processLocs, enabledProcesses, oldEnabledProcesses, threadLookup, globalState, waitForEnd, lastAction);
 	}
 
 	public XcfaState<S> jointhreads(final Integer process, final List<XcfaLabel.JoinThreadXcfaLabel> joinThreadList) {
@@ -138,11 +150,15 @@ public class XcfaState<S extends ExprState> implements ExprState {
 			newWaitForEnd.putIfAbsent(process, new LinkedHashSet<>());
 			newWaitForEnd.get(process).add(threadLookup.get(joinThreadXcfaLabel.getKey()));
 		}
-		return withParams(processLocs, newEnabledProcesses, oldEnabledProcesses, threadLookup, globalState, newWaitForEnd);
+		return withParams(processLocs, newEnabledProcesses, oldEnabledProcesses, threadLookup, globalState, newWaitForEnd, lastAction);
 	}
 
 	public Map<Integer, Collection<Integer>> getWaitForEnd() {
 		return waitForEnd;
+	}
+
+	public XcfaAction getLastAction() {
+		return lastAction;
 	}
 
 	@Override
@@ -168,10 +184,10 @@ public class XcfaState<S extends ExprState> implements ExprState {
 			final ArrayList<Integer> newEnabledProcesses = new ArrayList<>();
 			checkState(enabledProcesses.contains(process), "Not active process cannot become atomic!");
 			newEnabledProcesses.add(process);
-			return withParams(processLocs, newEnabledProcesses, oldEnabledProcesses == null ? enabledProcesses : oldEnabledProcesses, threadLookup, globalState, waitForEnd);
+			return withParams(processLocs, newEnabledProcesses, oldEnabledProcesses == null ? enabledProcesses : oldEnabledProcesses, threadLookup, globalState, waitForEnd, lastAction);
 		} else {
 			checkState(enabledProcesses.contains(process), "Not active process cannot become non-atomic!");
-			return withParams(processLocs, oldEnabledProcesses, null, threadLookup, globalState, waitForEnd);
+			return withParams(processLocs, oldEnabledProcesses, null, threadLookup, globalState, waitForEnd, lastAction);
 		}
 	}
 }

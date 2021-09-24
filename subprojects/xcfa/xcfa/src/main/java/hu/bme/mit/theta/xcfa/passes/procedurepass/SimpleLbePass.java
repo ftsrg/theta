@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SimpleLbePass extends ProcedurePass{
-	private int counter = 0;
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		builder = EliminateSelfLoops.instance.run(builder);
@@ -37,13 +36,13 @@ public class SimpleLbePass extends ProcedurePass{
 			for (XcfaLabel label : edge.getLabels()) {
 				if(!(label instanceof XcfaLabel.StmtXcfaLabel)) {
 					if(newLabelList.size() > 0) {
-						XcfaLocation tmpLoc = new XcfaLocation("_tmp" + counter++);
+						XcfaLocation tmpLoc = XcfaLocation.create("_tmp" + XcfaLocation.uniqeCounter());
 						builder.addLoc(tmpLoc);
 						builder.addEdge(XcfaEdge.of(source, tmpLoc, newLabelList));
 						source = tmpLoc;
 					}
 					newLabelList.clear();
-					XcfaLocation tmpLoc = new XcfaLocation("_tmp" + counter++);
+					XcfaLocation tmpLoc = XcfaLocation.create("_tmp" + XcfaLocation.uniqeCounter());
 					builder.addLoc(tmpLoc);
 					builder.addEdge(XcfaEdge.of(source, tmpLoc, List.of(label)));
 					source = tmpLoc;

@@ -60,12 +60,12 @@ public class FunctionCallsToPushPops extends ProcessPass{
 						XcfaLocation source = edge.getSource();
 						XcfaLocation target = edge.getTarget();
 						if (i > 0) {
-							source = new XcfaLocation("__tmp" + counter++);
+							source = XcfaLocation.create("__tmp" + XcfaLocation.uniqeCounter());
 							mainProcedure.addLoc(source);
 							mainProcedure.addEdge(XcfaEdge.of(edge.getSource(), source, labels.subList(0, i)));
 						}
 						if (labels.size() > i + 1) {
-							target = new XcfaLocation("__tmp" + counter++);
+							target = XcfaLocation.create("__tmp" + XcfaLocation.uniqeCounter());
 							mainProcedure.addLoc(target);
 							mainProcedure.addEdge(XcfaEdge.of(target, edge.getTarget(), labels.subList(i+1, labels.size())));
 						}
@@ -82,7 +82,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 							procedure.getParams().forEach((varDecl, direction) -> mainProcedure.createVar(varDecl, null));
 							procedure.getLocalVars().forEach((varDecl, litExpr) -> mainProcedure.createVar(varDecl, litExpr.orElse(null)));
 							for (XcfaLocation xcfaLocation : procedure.getLocs()) {
-								final XcfaLocation newLocation = XcfaLocation.copyOf(xcfaLocation);
+								final XcfaLocation newLocation = XcfaLocation.uniqeCopyOf(xcfaLocation);
 								locationLut.put(xcfaLocation, newLocation);
 								mainProcedure.addLoc(newLocation);
 							}

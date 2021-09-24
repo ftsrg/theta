@@ -144,7 +144,7 @@ public class FunctionInlining extends ProcessPass {
 			XcfaLocation start = xcfaEdge.getSource();
 			XcfaLocation end = xcfaEdge.getTarget();
 			if(i > 0) {
-				XcfaLocation loc1 = new XcfaLocation("inline" + counter++);
+				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqeCounter());
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(loc1, s, o);
 				});
@@ -157,7 +157,7 @@ public class FunctionInlining extends ProcessPass {
 				start = loc1;
 			}
 			if(i < xcfaEdge.getLabels().size() - 1) {
-				XcfaLocation loc1 = new XcfaLocation("inline" + counter++);
+				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqeCounter());
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(loc1, s, o);
 				});
@@ -179,7 +179,7 @@ public class FunctionInlining extends ProcessPass {
 			procedure.getParams().forEach((varDecl, direction) -> procBuilder.createVar(varDecl, null));
 			Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
 			procedure.getLocs().forEach(loc -> {
-				XcfaLocation copy = XcfaLocation.copyOf(loc);
+				XcfaLocation copy = XcfaLocation.uniqeCopyOf(loc);
 				locationLut.put(loc, copy);
 				procBuilder.addLoc(copy);
 			});

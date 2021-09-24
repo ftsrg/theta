@@ -309,6 +309,7 @@ public final class XcfaProcedure {
         public XcfaLocation addLoc(XcfaLocation loc) {
             checkNotBuilt();
             if(!locs.contains(loc)) {
+                checkState(locs.stream().noneMatch(l -> l.getName().equals(loc.getName())));
                 checkArgument(loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0, "Loc already part of an XCFA procedure!");
                 locs.add(loc);
             }

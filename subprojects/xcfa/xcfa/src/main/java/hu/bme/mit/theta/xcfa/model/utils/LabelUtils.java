@@ -15,6 +15,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 
@@ -24,6 +25,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LabelUtils {
+
+	public static boolean isGlobal(XcfaLabel label, XCFA xcfa) {
+		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
+	}
 
 	public static Collection<VarDecl<?>> getVars(XcfaLabel xcfaLabel) {
 		return xcfaLabel.accept(new XcfaLabelVisitor<Void, Collection<VarDecl<?>>>() {

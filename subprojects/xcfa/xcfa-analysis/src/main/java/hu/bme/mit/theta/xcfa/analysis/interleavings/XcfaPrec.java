@@ -16,6 +16,20 @@
 package hu.bme.mit.theta.xcfa.analysis.interleavings;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+
+import java.util.Objects;
+import java.util.Set;
 
 public final class XcfaPrec<P extends Prec> implements Prec {
 	private final P globalPrec;
@@ -28,6 +42,23 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 		return new XcfaPrec<P>(globalPrec);
 	}
 
+	public static XcfaPrec<PredPrec> collectAssumes(XCFA xcfa) {
+		Set<Expr<BoolType>> assumes = Containers.createSet();
+		for (XcfaProcess process : xcfa.getProcesses()) {
+			for (XcfaProcedure procedure : process.getProcedures()) {
+				for (XcfaEdge edge : procedure.getEdges()) {
+					for (XcfaLabel label : edge.getLabels()) {
+						if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssumeStmt) {
+							AssumeStmt assumeStmt = (AssumeStmt)label.getStmt();
+							assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
+						}
+					}
+				}
+			}
+		}
+		return XcfaPrec.create(PredPrec.of(assumes));
+	}
+
 	public P getGlobalPrec() {
 		return globalPrec;
 	}
@@ -38,5 +69,18 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 		} else {
 			return create(runningPrec);
 		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		XcfaPrec<?> xcfaPrec = (XcfaPrec<?>) o;
+		return Objects.equals(globalPrec, xcfaPrec.globalPrec);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(globalPrec);
 	}
 }

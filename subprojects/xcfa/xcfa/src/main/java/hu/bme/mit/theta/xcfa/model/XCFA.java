@@ -233,5 +233,4 @@ public final class XCFA {
 			return xcfa;
 		}
 	}
-
 }

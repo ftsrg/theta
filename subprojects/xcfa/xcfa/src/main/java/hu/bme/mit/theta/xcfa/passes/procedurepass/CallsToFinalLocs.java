@@ -31,10 +31,11 @@ public class CallsToFinalLocs extends ProcedurePass {
 	private static final List<String> abortFunc = List.of("abort", "exit");
 	public boolean postInlining = false;
 
+	private int nameCounter = 0;
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = new XcfaLocation(builder.getName() + "_error");
-		XcfaLocation finalLoc = new XcfaLocation(builder.getName() + "_final");
+		XcfaLocation errorLoc = XcfaLocation.create(builder.getName() + "_error" + nameCounter++);
+		XcfaLocation finalLoc = XcfaLocation.create(builder.getName() + "_final" + nameCounter++);
 		builder.addLoc(errorLoc);
 		builder.addLoc(finalLoc);
 		XcfaLocation oldFinalLoc = builder.getFinalLoc();

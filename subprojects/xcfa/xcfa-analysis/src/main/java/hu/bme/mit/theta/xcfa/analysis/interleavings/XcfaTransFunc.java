@@ -4,7 +4,6 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;
@@ -63,7 +62,7 @@ public class XcfaTransFunc<S extends ExprState, P extends Prec> implements Trans
 
 		Collection<XcfaState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), prec.getGlobalPrec())) {
-			final XcfaState<S> newState = state.atomicbegin(action.getProcess(), atomicBegin).startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList).advance(succState, action.getProcess(), action.getTarget());
+			final XcfaState<S> newState = state.atomicbegin(action.getProcess(), atomicBegin).startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList).advance(succState, action);
 			newStates.add(newState);
 		}
 		return newStates;

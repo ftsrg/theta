@@ -48,7 +48,7 @@ public class OneStmtPerEdgePass extends ProcedurePass {
 				notFound = false;
 				XcfaLocation lastLoc = edge.get().getSource(), interLoc;
 				for (XcfaLabel stmt : edge.get().getLabels()) {
-					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : new XcfaLocation("tmp_" + tmpcnt++);
+					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : XcfaLocation.create("tmp_" + tmpcnt++);
 					builder.addLoc(interLoc);
 					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
 					XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));

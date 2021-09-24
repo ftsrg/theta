@@ -31,7 +31,7 @@ public class UnrollLoopsPass extends ProcedurePass{
 			reverseEdges.stream().filter(xcfaEdge -> reverseEdges.stream().anyMatch(xcfaEdge1 -> xcfaEdge.getTarget() == xcfaEdge1.getSource())).forEach(xcfaEdge -> toDuplicate.add(xcfaEdge.getTarget()));
 			if(!toDuplicate.isEmpty()) {
 				for (XcfaLocation location : toDuplicate) {
-					XcfaLocation copy = XcfaLocation.copyOf(location);
+					XcfaLocation copy = XcfaLocation.uniqeCopyOf(location);
 					builder.addLoc(copy);
 					for (XcfaEdge incomingEdge : new LinkedHashSet<>(location.getIncomingEdges())) {
 						builder.removeEdge(incomingEdge);
@@ -54,7 +54,7 @@ public class UnrollLoopsPass extends ProcedurePass{
 		Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
 		Map<XcfaLocation, XcfaLocation> lastLocationLut = new LinkedHashMap<>();
 		originalLocs.forEach(location -> {
-			XcfaLocation copy = XcfaLocation.copyOf(location);
+			XcfaLocation copy = XcfaLocation.uniqeCopyOf(location);
 			locationLut.put(location, copy);
 			lastLocationLut.put(location, locationCopies.get(location).peek());
 			locationCopies.get(location).push(copy);

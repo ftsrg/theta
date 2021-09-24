@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings.XcfaState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

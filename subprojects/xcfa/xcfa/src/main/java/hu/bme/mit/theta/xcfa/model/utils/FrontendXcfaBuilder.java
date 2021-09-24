@@ -75,14 +75,13 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 	private final Map<String, XcfaLocation> locationLut = new LinkedHashMap<>();
 	private XcfaLocation getLoc(final XcfaProcedure.Builder builder, final String name) {
 		if(name == null) return getAnonymousLoc(builder);
-		locationLut.putIfAbsent(name, new XcfaLocation(name));
+		locationLut.putIfAbsent(name, XcfaLocation.create(name));
 		XcfaLocation location = locationLut.get(name);
 		builder.addLoc(location);
 		return location;
 	}
-	private int nameCounter = 0;
 	private XcfaLocation getAnonymousLoc(final XcfaProcedure.Builder builder) {
-		return getLoc(builder, "__loc_" + nameCounter++);
+		return getLoc(builder, "__loc_" + XcfaLocation.uniqeCounter());
 	}
 
 	protected <T> void propagateMetadata(CStatement source, T newOwner) {
@@ -289,7 +288,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, breakLoc, List.of());
-		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);
@@ -381,7 +380,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, continueLoc, List.of());
-		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);
@@ -539,7 +538,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, getLoc(builder, statement.getLabel()), List.of());
 		builder.addLoc(getLoc(builder, statement.getLabel()));
-		XcfaLocation unreachableLoc = new XcfaLocation("Unreachable");
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);

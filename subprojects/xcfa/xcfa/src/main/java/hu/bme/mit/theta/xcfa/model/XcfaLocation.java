@@ -21,6 +21,7 @@ import hu.bme.mit.theta.frontend.FrontendMetadata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,15 +33,31 @@ public final class XcfaLocation {
 	private boolean isErrorLoc = false;
 	private boolean isEndLoc = false;
 
-	public XcfaLocation(final String name) {
+	private XcfaLocation(final String name) {
 		this.name = checkNotNull(name);
 		outgoingEdges = new ArrayList<>();
 		incomingEdges = new ArrayList<>();
 	}
 
-	private static int copyCnt = 0;
 	public static XcfaLocation copyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = new XcfaLocation(from.getName() + "_copy" + copyCnt++);
+		XcfaLocation xcfaLocation = create(from.getName());
+		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
+			FrontendMetadata.create(xcfaLocation, s, o);
+		});
+		return xcfaLocation;
+	}
+
+	public static XcfaLocation create(final String name) {
+		return new XcfaLocation(name);
+	}
+
+	private static int counter = 0;
+	public static int uniqeCounter() {
+		return counter++;
+	}
+
+	public static XcfaLocation uniqeCopyOf(final XcfaLocation from) {
+		XcfaLocation xcfaLocation = create(from.getName() + uniqeCounter());
 		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
 			FrontendMetadata.create(xcfaLocation, s, o);
 		});
@@ -102,5 +119,18 @@ public final class XcfaLocation {
 
 	void setParent(XcfaProcedure xcfaProcedure) {
 		this.parent = xcfaProcedure;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		XcfaLocation location = (XcfaLocation) o;
+		return name.equals(location.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name);
 	}
 }
