@@ -35,22 +35,31 @@ class CegarAnalysisThread extends Thread {
 
 	@Override
 	public void run() {
-		checkState(cfa.getErrorLoc().isPresent());
 		try {
-			safetyResult = configuration.buildConfiguration(cfa, cfa.getErrorLoc().get(), logger).check();
+			checkState(cfa.getErrorLoc().isPresent());
+			try {
+				safetyResult = configuration.buildConfiguration(cfa, cfa.getErrorLoc().get(), logger).check();
 
-			if(safetyResult.isUnsafe() || safetyResult.isSafe()) {
-				result = Result.SUCCESS;
-			} else {
+				if(safetyResult.isUnsafe() || safetyResult.isSafe()) {
+					result = Result.SUCCESS;
+				} else {
+					result = Result.UNKNOWN;
+				}
+			} catch (NotSolvableException nse) {
+				safetyResult = null;
+				result = Result.STUCK;
+			} catch (Exception e) {
+				safetyResult = null;
 				result = Result.UNKNOWN;
+				e.printStackTrace();
 			}
-		} catch (NotSolvableException nse) {
+		} catch (OutOfMemoryError E) {
+			System.err.println(System.lineSeparator());
+			System.err.println("Used memory before gc: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+			System.gc();
+			result = Result.OUTOFMEMORY;
 			safetyResult = null;
-			result = Result.STUCK;
-		} catch (Exception e) {
-			safetyResult = null;
-			result = Result.UNKNOWN;
-			e.printStackTrace();
+			System.err.println("Used memory after gc: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 		}
 	}
 
