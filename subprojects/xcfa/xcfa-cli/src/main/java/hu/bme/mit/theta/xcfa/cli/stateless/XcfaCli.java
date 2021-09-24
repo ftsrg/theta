@@ -103,14 +103,6 @@ public class XcfaCli {
 	@Parameter(names = "--no-analysis", description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
 	boolean noAnalysis = false;
 
-	// TODO remove, refactor
-	// @Parameter(names = "--print-cfa", description = "Print CFA and exit.", help = true)
-	// boolean printcfa;
-
-	// TODO remove, refactor
-	// @Parameter(names = "--cfa-input-statistics")
-	// boolean cfaInputStatistics = false;
-
 	File cexfile = null;
 	File witnessfile = null;
 	File dotwitnessfile = null;
@@ -206,16 +198,17 @@ public class XcfaCli {
 			return;
 		}
 
+		// portfolios and output-results uses these
+		File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
+		boolean bool = resultsDir.mkdir();
+		if(!bool){
+			throw new RuntimeException("Couldn't create results directory");
+		}
+		String basicFileName = resultsDir + "/" + model.getName();
+
 		/// output results file creation
 		// create filenames, if needed
 		if(outputResults) {
-			File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-			boolean bool = resultsDir.mkdir();
-			if(!bool){
-				throw new RuntimeException("Couldn't create results directory");
-			}
-
-			String basicFileName = resultsDir + "/" + model.getName();
 			xcfafile = new File(basicFileName + ".xcfa");
 			cfafile = new File(basicFileName + ".cfa");
 			cexfile = new File(basicFileName + ".cex");
@@ -318,7 +311,7 @@ public class XcfaCli {
 						status = check(configuration);
 						break;
 					case SEQUENTIAL:
-						SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, timer.elapsed());
+						SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, timer.elapsed(), basicFileName, model.getName());
 						status = sequentialPortfolio.executeAnalysis(cfa); // check(configuration);
 						break;
 					case COMPLEX:
