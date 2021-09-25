@@ -329,8 +329,6 @@ public class XcfaCli {
 							System.err.println(pte.getMessage());
 							long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
 							sw.stop();
-							System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
-							System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
 							System.out.println("walltime: " + elapsed + " ms");
 							System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 							System.exit(-43); // portfolio timeout
@@ -344,8 +342,6 @@ public class XcfaCli {
 							System.err.println(pte.getMessage());
 							long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
 							sw.stop();
-							System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
-							System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
 							System.out.println("walltime: " + elapsed + " ms");
 							System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 							System.exit(-43); // portfolio timeout
@@ -368,8 +364,6 @@ public class XcfaCli {
 
 			long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
 			sw.stop();
-			System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
-			System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
 			System.out.println("walltime: " + elapsed + " ms");
 			System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 
