@@ -60,29 +60,29 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		}
 
 		if(statistics.getHavocCount()<=5 && statistics.getVarCount()>10) {
-			runAllvarsExpl(cfa);
+			result = runAllvarsExpl(cfa);
 		} else {
-			runEmptyExpl(cfa);
+			result = runEmptyExpl(cfa);
 		}
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
 		}
 
-		runLongPred(cfa);
+		result = runLongPred(cfa);
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
-		}
-
-		runPredBool(cfa);
-		if(result.get1().equals(Result.SUCCESS)) {
-			checkState(result.get2().isPresent());
-			return result.get2().get();
-		} else if(result.get1().equals(Result.TIMEOUT)) {
+		} else if(!result.get1().equals(Result.TIMEOUT)) {
+			result = runPredBool(cfa);
+			if(result.get1().equals(Result.SUCCESS)) {
+				checkState(result.get2().isPresent());
+				return result.get2().get();
+			} else {
+				return null; // unsuccessful, but not a timeout
+			}
+		} else { // long pred timed out
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
-		} else {
-			return null; // unsuccessful, but not a timeout
 		}
 	}
 
@@ -228,7 +228,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + bitvecConf1);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 			return result.get2().get();
-		} else {
+		} else if(!result.get1().equals(Result.TIMEOUT)) {
 			CegarConfiguration bitvecConf2 = new CegarConfiguration(
 					CfaConfigBuilder.Domain.EXPL,
 					CfaConfigBuilder.Refinement.NWT_IT_WP,
@@ -248,9 +248,13 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + bitvecConf2);
 				logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 				return result.get2().get();
+			} else if(result.get1().equals(Result.TIMEOUT)) {
+				throw new PortfolioTimeoutException("Complex portfolio timed out");
 			} else {
 				return null; // TODO maybe try another config here
 			}
+		} else {
+			return null; // first nwt timed out
 		}
 	}
 
