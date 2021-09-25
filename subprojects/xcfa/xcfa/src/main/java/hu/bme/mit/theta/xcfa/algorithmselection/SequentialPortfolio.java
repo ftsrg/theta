@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.xcfa.algorithmselection;
 
-import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
@@ -10,14 +9,12 @@ import hu.bme.mit.theta.common.logging.Logger;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
 	private final long sumTime = 100*1000; // in ms, with initialization time
-	private long gcTime = 0;
 	private long analysisTime; // in ms, init time subtracted from sumTime
 
 	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
@@ -64,18 +61,14 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	public SafetyResult<?, ?> executeAnalysis(CFA cfa, Duration initializationTime) {
 		logger.write(Logger.Level.MAINSTEP, "Executing sequential portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		Stopwatch stopwatch = Stopwatch.createStarted();
-
-		gcTime = GcTimer.getGcTime();
-		analysisTime = sumTime - initializationTime.toMillis() - gcTime;
+		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
+		analysisTime = sumTime - initializationTime.toMillis();
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = null;
 		for (int i = 0; i < configurations.length; i++) {
 			CegarConfiguration configuration = configurations[i];
 
-			long newGcTime = GcTimer.getGcTime();
-			long remainingTime = analysisTime-stopwatch.elapsed(TimeUnit.MILLISECONDS)-(newGcTime-gcTime);
-			gcTime = newGcTime;
+			long remainingTime = analysisTime-(CpuTimeKeeper.getCurrentCpuTime()*1000-startCpuTime);
 
 			long timeout;
 			if(i==2) {

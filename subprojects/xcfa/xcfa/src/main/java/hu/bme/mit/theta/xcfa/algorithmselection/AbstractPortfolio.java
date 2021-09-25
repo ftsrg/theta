@@ -52,7 +52,7 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
-		long earlierGcTime = GcTimer.getGcTime();
+		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime();
 
 		com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
 
@@ -67,18 +67,15 @@ public abstract class AbstractPortfolio {
 					cegarAnalysisThread.wait();
 				}
 			} else {
-				long pastGcTime = GcTimer.getGcTime();
-				long gcTime;
-				Stopwatch stopwatch1;
-				while(timeout>5 && cegarAnalysisThread.isAlive()) {
-					stopwatch1 = Stopwatch.createStarted();
+				long startTime;
+				long decreasingTimeout = timeout/1000; // in seconds!
+				while(decreasingTimeout > 0 && cegarAnalysisThread.isAlive()) {
+					startTime = CpuTimeKeeper.getCurrentCpuTime();
 					synchronized (cegarAnalysisThread) {
-						cegarAnalysisThread.wait(timeout/2, 0);
+						cegarAnalysisThread.wait(decreasingTimeout*1000/2, 0);
 					}
-					gcTime = GcTimer.getGcTime();
-					long newGcTime = gcTime-pastGcTime;
-					timeout = timeout-stopwatch1.elapsed(TimeUnit.MILLISECONDS)-newGcTime;
-					pastGcTime = gcTime;
+					long elapsedCpuTime = CpuTimeKeeper.getCurrentCpuTime()-startTime;
+					decreasingTimeout -= elapsedCpuTime;
 				}
 			}
 		} catch (InterruptedException e) {
@@ -110,26 +107,28 @@ public abstract class AbstractPortfolio {
 		SafetyResult<?, ?> safetyResult = cegarAnalysisThread.getSafetyResult();
 
 		long timeTaken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+		long cpuTimeTaken = CpuTimeKeeper.getCurrentCpuTime() - startCpuTime;
 
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, "Execution done, result: ");
 		logger.write(Logger.Level.MAINSTEP, result.toString());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, "Time taken in this configuration: ");
-		logger.write(Logger.Level.MAINSTEP, (timeTaken+(GcTimer.getGcTime()-earlierGcTime))/1000.0 + " sec (cputime)");
+		logger.write(Logger.Level.MAINSTEP,  cpuTimeTaken + " sec (cputime)");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
-		writeCsvLine(configuration, timeout, timeTaken, result);
-		writeTxtLine(configuration, timeout, timeTaken, result);
+		writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+		writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
 		return Tuple2.of(result, Optional.ofNullable(safetyResult));
 	}
 
-	private void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, Result result) {
+	private void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(configuration);
-		stringBuilder.append(", timeout (ms): ").append(timeout);
-		stringBuilder.append(", time taken (ms): ").append(timeTaken);
+		stringBuilder.append(", timeout (ms, cputime): ").append(timeout);
+		stringBuilder.append(", walltime taken (ms): ").append(timeTaken);
+		stringBuilder.append(", cputime taken (s): ").append(cpuTimeTaken);
 		stringBuilder.append(", result: ").append(result);
 		stringBuilder.append(System.lineSeparator());
 
@@ -140,12 +139,13 @@ public abstract class AbstractPortfolio {
 		}
 	}
 
-	private void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, Result result) {
+	private void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(modelName).append("\t");
 		stringBuilder.append(configuration).append("\t");
 		stringBuilder.append(timeout).append("\t");
 		stringBuilder.append(timeTaken).append("\t");
+		stringBuilder.append(cpuTimeTaken).append("\t");
 		stringBuilder.append(result).append("\t");
 		stringBuilder.append(System.lineSeparator());
 

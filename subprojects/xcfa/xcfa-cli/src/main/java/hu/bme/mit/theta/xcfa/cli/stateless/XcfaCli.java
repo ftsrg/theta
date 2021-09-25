@@ -47,11 +47,11 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.xcfa.algorithmselection.ComplexPortfolio;
-import hu.bme.mit.theta.xcfa.algorithmselection.GcTimer;
 import hu.bme.mit.theta.xcfa.algorithmselection.ModelStatistics;
 import hu.bme.mit.theta.xcfa.algorithmselection.Portfolio;
 import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioTimeoutException;
 import hu.bme.mit.theta.xcfa.algorithmselection.SequentialPortfolio;
+import hu.bme.mit.theta.xcfa.algorithmselection.CpuTimeKeeper;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -60,7 +60,6 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.BMC;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
-import jdk.jshell.spi.ExecutionControl;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -79,7 +78,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -186,6 +184,8 @@ public class XcfaCli {
 	}
 
 	private void run() {
+		long beginTime = System.nanoTime();
+		long beginMillis = System.currentTimeMillis();
 		Stopwatch timer = Stopwatch.createStarted();
 
 		/// Checking flags
@@ -313,7 +313,7 @@ public class XcfaCli {
 
 				SafetyResult<?, ?> status = null;
 
-				Duration initTime = Duration.of(timer.elapsed().toMillis()+GcTimer.getGcTime(), ChronoUnit.MILLIS);
+				Duration initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS);
 				System.err.println("Time of model transformation: " + initTime.toMillis() + "ms");
 
 				switch (portfolio) {
@@ -327,6 +327,12 @@ public class XcfaCli {
 							status = sequentialPortfolio.executeAnalysis(cfa, initTime); // check(configuration);
 						} catch (PortfolioTimeoutException pte) {
 							System.err.println(pte.getMessage());
+							long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+							sw.stop();
+							System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
+							System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
+							System.out.println("walltime: " + elapsed + " ms");
+							System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 							System.exit(-43); // portfolio timeout
 						}
 						break;
@@ -336,6 +342,12 @@ public class XcfaCli {
 							status = complexPortfolio.executeAnalysis(cfa, initTime);
 						} catch (PortfolioTimeoutException pte) {
 							System.err.println(pte.getMessage());
+							long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+							sw.stop();
+							System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
+							System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
+							System.out.println("walltime: " + elapsed + " ms");
+							System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 							System.exit(-43); // portfolio timeout
 						}
 						break;
@@ -354,9 +366,12 @@ public class XcfaCli {
 				// BoundedMultithreadedAnalysis parametricAnalysis = XcfaAnalysis.createParametricAnalysis(xcfa);
 			}
 
+			long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
 			sw.stop();
-			System.out.println("walltime: " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
-			System.out.println("cputime: " + (sw.elapsed(TimeUnit.MILLISECONDS)+ GcTimer.getGcTime()) + " ms");
+			System.out.println("Millis diff: " + (System.currentTimeMillis() - beginMillis) + " ms");
+			System.out.println("Nanotime diff: " + (System.nanoTime() - beginTime)/1000.0/1000.0 + " ms");
+			System.out.println("walltime: " + elapsed + " ms");
+			System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s");
 
 		} catch (final Throwable ex) {
 			ex.printStackTrace();

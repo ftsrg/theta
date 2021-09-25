@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.xcfa.algorithmselection;
 
-import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
@@ -8,20 +7,16 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 
-import java.io.File;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class ComplexPortfolio extends AbstractPortfolio {
 	private final long sumTime = 900*1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
-	private long gcTime = 0;
-	private Stopwatch stopwatch = null;
+	private long startCpuTime;
 
 	public ComplexPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
 		super(logLevel, basicFileName, modelName);
@@ -32,9 +27,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		logger.write(Logger.Level.MAINSTEP, "Executing complex portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
-		gcTime = GcTimer.getGcTime();
-		analysisTime = sumTime - initializationTime.toMillis() - gcTime;
-		stopwatch = Stopwatch.createStarted();
+		startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
+		analysisTime = sumTime - initializationTime.toMillis();
 
 		if(ArchitectureConfig.arithmetic.equals(ArchitectureConfig.ArithmeticType.bitvector)) {
 			logger.write(Logger.Level.SUBSTEP, "Choosing bitvector arithmetic");
@@ -87,9 +81,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	}
 
 	private long calculateRemainingTime() {
-		long newGcTime = GcTimer.getGcTime();
-		long remainingTime = analysisTime-stopwatch.elapsed(TimeUnit.MILLISECONDS)-(newGcTime-gcTime);
-		gcTime = newGcTime;
+		long remainingTime = analysisTime-(CpuTimeKeeper.getCurrentCpuTime()*1000-startCpuTime);
 		return remainingTime;
 	}
 
