@@ -46,7 +46,11 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.xcfa.algorithmselection.ComplexPortfolio;
+import hu.bme.mit.theta.xcfa.algorithmselection.GcTimer;
+import hu.bme.mit.theta.xcfa.algorithmselection.ModelStatistics;
 import hu.bme.mit.theta.xcfa.algorithmselection.Portfolio;
+import hu.bme.mit.theta.xcfa.algorithmselection.PortfolioTimeoutException;
 import hu.bme.mit.theta.xcfa.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.model.XCFA;
@@ -69,12 +73,14 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -305,7 +311,10 @@ public class XcfaCli {
 			if(cfa != null) {
 				System.err.println("Arithmetic: " + ArchitectureConfig.arithmetic);
 
-				final SafetyResult<?, ?> status;
+				SafetyResult<?, ?> status = null;
+
+				Duration initTime = Duration.of(timer.elapsed().toMillis()+GcTimer.getGcTime(), ChronoUnit.MILLIS);
+				System.err.println("Time of model transformation: " + initTime.toMillis() + "ms");
 
 				switch (portfolio) {
 					case NONE:
@@ -313,12 +322,23 @@ public class XcfaCli {
 						status = check(configuration);
 						break;
 					case SEQUENTIAL:
-						SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, timer.elapsed(), basicFileName, model.getName());
-						status = sequentialPortfolio.executeAnalysis(cfa); // check(configuration);
+						SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, basicFileName, model.getName());
+						try {
+							status = sequentialPortfolio.executeAnalysis(cfa, initTime); // check(configuration);
+						} catch (PortfolioTimeoutException pte) {
+							System.err.println(pte.getMessage());
+							System.exit(-43); // portfolio timeout
+						}
 						break;
 					case COMPLEX:
-						// TODO
-						throw new ExecutionControl.NotImplementedException("Complex portfolio is not implemented yet");
+						ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, basicFileName, model.getName());
+						try {
+							status = complexPortfolio.executeAnalysis(cfa, initTime);
+						} catch (PortfolioTimeoutException pte) {
+							System.err.println(pte.getMessage());
+							System.exit(-43); // portfolio timeout
+						}
+						break;
 					default:
 						throw new IllegalStateException("Unexpected value: " + portfolio);
 				}
@@ -335,7 +355,9 @@ public class XcfaCli {
 			}
 
 			sw.stop();
-			System.out.println(sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
+			System.out.println("walltime: " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
+			System.out.println("cputime: " + (sw.elapsed(TimeUnit.MILLISECONDS)+ GcTimer.getGcTime()) + " ms");
+
 		} catch (final Throwable ex) {
 			ex.printStackTrace();
 		}

@@ -8,7 +8,6 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 
-import java.io.File;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -17,12 +16,12 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
-	private final long sumTime = 900*1000; // in ms, with initialization time
-	private final long analysisTime; // in ms, init time subtracted from sumTime
+	private final long sumTime = 100*1000; // in ms, with initialization time
+	private long gcTime = 0;
+	private long analysisTime; // in ms, init time subtracted from sumTime
 
-	public SequentialPortfolio(Logger.Level logLevel, Duration initializationTime, String basicFileName, String modelName) {
+	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
 		super(logLevel, basicFileName, modelName);
-		analysisTime = sumTime - initializationTime.toMillis();
 		configurations[0] = new CegarConfiguration(
 				CfaConfigBuilder.Domain.EXPL,
 				CfaConfigBuilder.Refinement.SEQ_ITP,
@@ -62,14 +61,22 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	}
 
 	@Override
-	public SafetyResult<?, ?> executeAnalysis(CFA cfa) {
+	public SafetyResult<?, ?> executeAnalysis(CFA cfa, Duration initializationTime) {
 		logger.write(Logger.Level.MAINSTEP, "Executing sequential portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		Stopwatch stopwatch = Stopwatch.createStarted();
 
+		gcTime = GcTimer.getGcTime();
+		analysisTime = sumTime - initializationTime.toMillis() - gcTime;
+
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = null;
 		for (int i = 0; i < configurations.length; i++) {
 			CegarConfiguration configuration = configurations[i];
-			long remainingTime = analysisTime-stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
+			long newGcTime = GcTimer.getGcTime();
+			long remainingTime = analysisTime-stopwatch.elapsed(TimeUnit.MILLISECONDS)-(newGcTime-gcTime);
+			gcTime = newGcTime;
+
 			long timeout;
 			if(i==2) {
 				timeout = remainingTime;
@@ -78,7 +85,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 			} else {
 				timeout = remainingTime/3;
 			}
-			Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, cfa, timeout);
+			result = executeConfiguration(configuration, cfa, timeout);
 			if(result.get1().equals(Result.SUCCESS)) {
 				checkState(result.get2().isPresent());
 				logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + configuration);
@@ -89,6 +96,11 @@ public class SequentialPortfolio extends AbstractPortfolio {
 		}
 		logger.write(Logger.Level.MAINSTEP, "Sequential portfolio was unsuccessful");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+
+		checkState(result!=null);
+		if(result.get1().equals(Result.TIMEOUT)) {
+			throw new PortfolioTimeoutException("Sequential portfolio timed out");
+		}
 
 		return null;
 	}

@@ -1,19 +1,16 @@
-package hu.bme.mit.theta.xcfa.cli.stateless;
+package hu.bme.mit.theta.xcfa.algorithmselection;
 
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class that extracts statistical information out of the input C program and the (X)CFA
@@ -33,10 +30,9 @@ public class ModelStatistics {
 	private int whileLoops;
 	private int branches;
 
-	private ModelStatistics() {
-	}
+	private ModelStatistics() {}
 
-	static ModelStatistics createCfaStatistics(CFA cfa, String modelName) {
+	public static ModelStatistics createCfaStatistics(CFA cfa, String modelName) {
 		ModelStatistics ret = new ModelStatistics();
 		ret.modelName = modelName;
 		ret.varCount = cfa.getVars().size();
@@ -57,7 +53,7 @@ public class ModelStatistics {
 		return ret;
 	}
 
-	void writeToCsv(File file) {
+	public void writeToCsv(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(modelName).append("\t");
 		stringBuilder.append(varCount).append("\t");
@@ -79,7 +75,7 @@ public class ModelStatistics {
 		}
 	}
 
-	void writeToTxt(File file) {
+	public void writeToTxt(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("CFA-data varCount ").append(locCount).append(System.lineSeparator());
 		stringBuilder.append("CFA-data havocCount ").append(havocCount).append(System.lineSeparator());
@@ -90,14 +86,62 @@ public class ModelStatistics {
 		stringBuilder.append("CFA-data assignStmts ").append(assignCount).append("\n"); // assign
 		stringBuilder.append("CFA-data cyclomatic complexity ").append(cyclomaticComplexity).append(System.lineSeparator());
 
-		stringBuilder.append("C-data forLoops ").append(CStmtCounter.getForLoops()).append("\n"); // for loops
-		stringBuilder.append("C-data whileLoops ").append(CStmtCounter.getWhileLoops()).append("\n"); // while loops
-		stringBuilder.append("C-data branches ").append(CStmtCounter.getBranches()).append("\n"); // branches
+		stringBuilder.append("C-data forLoops ").append(forLoops).append("\n"); // for loops
+		stringBuilder.append("C-data whileLoops ").append(whileLoops).append("\n"); // while loops
+		stringBuilder.append("C-data branches ").append(branches).append("\n"); // branches
 
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
 			bw.write(stringBuilder.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public int getBranches() {
+		return branches;
+	}
+
+	public int getCyclomaticComplexity() {
+		return cyclomaticComplexity;
+	}
+
+	public int getEdgeCount() {
+		return edgeCount;
+	}
+
+	public int getForLoops() {
+		return forLoops;
+	}
+
+	public int getLocCount() {
+		return locCount;
+	}
+
+	public int getVarCount() {
+		return varCount;
+	}
+
+	public int getWhileLoops() {
+		return whileLoops;
+	}
+
+	public long getAssignCount() {
+		return assignCount;
+	}
+
+	public long getAssumeCount() {
+		return assumeCount;
+	}
+
+	public long getHavocCount() {
+		return havocCount;
+	}
+
+	public long getSkipEdgeCount() {
+		return skipEdgeCount;
+	}
+
+	public String getModelName() {
+		return modelName;
 	}
 }

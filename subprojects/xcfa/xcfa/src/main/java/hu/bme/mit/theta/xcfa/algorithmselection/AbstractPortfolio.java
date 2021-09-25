@@ -9,10 +9,10 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.ContextInterrupt;
 
 import java.io.BufferedWriter;
-import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +26,7 @@ public abstract class AbstractPortfolio {
 	protected final ConsoleLogger logger;
 	private final File configurationTxt;
 	private final File configurationCsv;
-	private final String modelName;
+	protected final String modelName;
 
 	public AbstractPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
 		logger = new ConsoleLogger(logLevel);
@@ -35,7 +35,7 @@ public abstract class AbstractPortfolio {
 		this.modelName = modelName;
 	}
 
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(CFA cfa);
+	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(CFA cfa, Duration initializationTime);
 
 	/**
 	 *
@@ -48,9 +48,11 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.MAINSTEP, "Executing ");
 		logger.write(Logger.Level.MAINSTEP, configuration.toString());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		logger.write(Logger.Level.SUBSTEP, "Timeout is set to " + timeout/1000.0 + " sec...");
+		logger.write(Logger.Level.MAINSTEP, "Timeout is set to " + timeout/1000.0 + " sec (cputime)...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+
+		long earlierGcTime = GcTimer.getGcTime();
 
 		com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
 
@@ -60,8 +62,24 @@ public abstract class AbstractPortfolio {
 		cegarAnalysisThread.start();
 
 		try {
-			synchronized (cegarAnalysisThread) {
-				cegarAnalysisThread.wait(timeout, 0);
+			if(timeout==-1) {
+				synchronized (cegarAnalysisThread) {
+					cegarAnalysisThread.wait();
+				}
+			} else {
+				long pastGcTime = GcTimer.getGcTime();
+				long gcTime;
+				Stopwatch stopwatch1;
+				while(timeout>5) {
+					stopwatch1 = Stopwatch.createStarted();
+					synchronized (cegarAnalysisThread) {
+						cegarAnalysisThread.wait(timeout/2, 0);
+					}
+					gcTime = GcTimer.getGcTime();
+					long newGcTime = gcTime-pastGcTime;
+					timeout = timeout-stopwatch1.elapsed(TimeUnit.MILLISECONDS)-newGcTime;
+					pastGcTime = gcTime;
+				}
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -96,9 +114,9 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, "Execution done, result: ");
 		logger.write(Logger.Level.MAINSTEP, result.toString());
-		logger.write(Logger.Level.INFO, System.lineSeparator());
-		logger.write(Logger.Level.INFO, "Time taken in this configuration: ");
-		logger.write(Logger.Level.INFO, timeTaken/1000.0 + " sec");
+		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		logger.write(Logger.Level.MAINSTEP, "Time taken in this configuration: ");
+		logger.write(Logger.Level.MAINSTEP, (timeTaken+(GcTimer.getGcTime()-earlierGcTime))/1000.0 + " sec (cputime)");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
