@@ -63,7 +63,6 @@ import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaPrecRefiner;
 import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings.XcfaLts;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.dpor.DporXcfaLts;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
@@ -84,7 +83,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public enum Algoritm {
-		INT_ALL, INT_DPOR
+		INT_ALL
 	}
 
 	public enum Search {
@@ -174,7 +173,7 @@ public class XcfaConfigBuilder {
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
-		final LTS<XcfaState<?>, XcfaAction> lts = algoritm == Algoritm.INT_DPOR ? new DporXcfaLts() : new XcfaLts();
+		final LTS<XcfaState<?>, XcfaAction> lts = new XcfaLts();
 		
 		final List<XcfaLocation> initLocs = xcfa.getProcesses().stream().map(process -> process.getMainProcedure().getInitLoc()).collect(Collectors.toList());
 

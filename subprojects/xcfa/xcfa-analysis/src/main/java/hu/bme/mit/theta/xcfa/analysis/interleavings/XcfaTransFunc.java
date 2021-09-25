@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
 
@@ -27,8 +26,6 @@ public class XcfaTransFunc<S extends ExprState, P extends Prec> implements Trans
 
 	@Override
 	public Collection<? extends XcfaState<S>> getSuccStates(final XcfaState<S> state, final XcfaAction action, final XcfaPrec<P> prec) {
-		checkState(state.getEnabledProcesses().contains(action.getProcess()), "Non-enabled process chosen!");
-
 		final List<XcfaLabel> stmts = new ArrayList<>();
 
 		final List<XcfaLabel.StartThreadXcfaLabel> startThreadList = new ArrayList<>();

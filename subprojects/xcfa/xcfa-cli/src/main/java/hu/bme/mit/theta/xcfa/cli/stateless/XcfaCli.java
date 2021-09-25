@@ -144,8 +144,8 @@ public class XcfaCli {
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 40;
 
-	@Parameter(names = "--algorithm", description = "Solver to use (INT_DPOR for DPOR, INT_ALL for all interleavings)")
-	XcfaConfigBuilder.Algoritm algorithm = XcfaConfigBuilder.Algoritm.INT_DPOR;
+	@Parameter(names = "--algorithm", description = "Solver to use (currently only INT_ALL is supported)")
+	XcfaConfigBuilder.Algoritm algorithm = XcfaConfigBuilder.Algoritm.INT_ALL;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	XcfaConfigBuilder.InitPrec initPrec = XcfaConfigBuilder.InitPrec.EMPTY;

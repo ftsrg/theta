@@ -21,19 +21,20 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class XcfaAction extends StmtAction {
+public class XcfaAction extends StmtAction {
 	private final Integer process;
 	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	private XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+	protected XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
 		this.process = checkNotNull(process);
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
@@ -64,6 +65,10 @@ public final class XcfaAction extends StmtAction {
 	@Override
 	public String toString() {
 		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
+	}
+
+	public boolean touchesGlobal() {
+		return labels.stream().anyMatch(label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
 	}
 
 	public Integer getProcess() {

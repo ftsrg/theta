@@ -730,7 +730,7 @@ void *thr1(void *_) {
     i++;
     i++;
     i++;
-    x = i;
+    x += i;
 }
 
 void *thr2(void *_) {
@@ -775,7 +775,7 @@ void *thr2(void *_) {
     i++;
     i++;
     i++;
-    x = i;
+    x += i;
 }
 
 int main() {
@@ -783,7 +783,7 @@ int main() {
     pthread_t t1, t2;
     pthread_create(&t1, 0, thr1, 0);
     pthread_create(&t2, 0, thr2, 0);
-  if(x % 2 == 1) reach_error();
+  if(x > 41) reach_error();
     pthread_join(t1, 0);
     pthread_join(t2, 0);
 //  }
