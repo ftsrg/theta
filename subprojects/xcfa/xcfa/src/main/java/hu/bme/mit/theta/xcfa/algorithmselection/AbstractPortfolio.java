@@ -70,7 +70,7 @@ public abstract class AbstractPortfolio {
 				long pastGcTime = GcTimer.getGcTime();
 				long gcTime;
 				Stopwatch stopwatch1;
-				while(timeout>5) {
+				while(timeout>5 && cegarAnalysisThread.isAlive()) {
 					stopwatch1 = Stopwatch.createStarted();
 					synchronized (cegarAnalysisThread) {
 						cegarAnalysisThread.wait(timeout/2, 0);
