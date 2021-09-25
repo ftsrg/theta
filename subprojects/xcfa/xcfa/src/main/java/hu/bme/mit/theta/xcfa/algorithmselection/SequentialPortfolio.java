@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
-	private final long sumTime = 100*1000; // in ms, with initialization time
+	private final long sumTime = 900*1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
 
 	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
