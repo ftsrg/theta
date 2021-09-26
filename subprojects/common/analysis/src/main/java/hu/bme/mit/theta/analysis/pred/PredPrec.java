@@ -15,24 +15,26 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Streams;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableSet;
-
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 /**
  * Represents an immutable, simple predicate precision that is a set of
@@ -117,5 +119,10 @@ public final class PredPrec implements Prec {
 	@Override
 	public int hashCode() {
 		return 31 * predToNegMap.keySet().hashCode();
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return predToNegMap.keySet().stream().map(ExprUtils::getVars).reduce((vars1, vars2) -> Streams.concat(vars1.stream(), vars2.stream()).collect(Collectors.toSet())).orElse(Set.of());
 	}
 }

@@ -15,10 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.prod3;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> implements Prec {
 	private static final int HASH_SEED = 4073;
@@ -81,4 +86,8 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
 		return Utils.lispStringBuilder("Prod3Prec").add(prec1).add(prec2).add(prec3).toString();
 	}
 
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return Streams.concat(prec1.getUsedVars().stream(), prec2.getUsedVars().stream(), prec3.getUsedVars().stream()).collect(Collectors.toSet());
+	}
 }

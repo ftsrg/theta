@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis.declarative;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
@@ -82,5 +84,10 @@ public final class XcfaDeclarativePrec<P extends Prec> implements Prec {
 	@Override
 	public int hashCode() {
 		return Objects.hash(globalPrec);
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return globalPrec.getUsedVars();
 	}
 }

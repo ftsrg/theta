@@ -15,21 +15,20 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents an immutable, simple explicit precision that is a set of
@@ -108,5 +107,10 @@ public final class ExplPrec implements Prec {
 	@Override
 	public int hashCode() {
 		return 31 * vars.hashCode();
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return vars;
 	}
 }

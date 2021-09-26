@@ -16,6 +16,10 @@
 package hu.bme.mit.theta.analysis.unit;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Collection;
+import java.util.Set;
 
 public final class UnitPrec implements Prec {
 
@@ -31,5 +35,10 @@ public final class UnitPrec implements Prec {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName();
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return Set.of();
 	}
 }

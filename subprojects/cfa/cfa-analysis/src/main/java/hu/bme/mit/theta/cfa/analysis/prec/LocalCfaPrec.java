@@ -15,23 +15,27 @@
  */
 package hu.bme.mit.theta.cfa.analysis.prec;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collections;
-import hu.bme.mit.theta.common.container.Containers;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-
+import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents an immutable local precision that can assign a precision to each
@@ -126,5 +130,10 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 	@Override
 	public int hashCode() {
 		return 31 * (defaultPrec.hashCode() + 13 * mapping.hashCode());
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return mapping.values().stream().map(Prec::getUsedVars).reduce((varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream()).collect(Collectors.toSet())).orElse(Set.of());
 	}
 }

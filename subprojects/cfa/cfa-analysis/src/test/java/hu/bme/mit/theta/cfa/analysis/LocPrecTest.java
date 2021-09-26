@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,12 +26,19 @@ import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 
+import java.util.Collection;
+import java.util.Set;
+
 public class LocPrecTest {
 	private final PrecStub p0 = new PrecStub();
 	private final PrecStub p1 = new PrecStub();
 	private final PrecStub p2 = new PrecStub();
 
 	public static class PrecStub implements Prec {
+		@Override
+		public Collection<VarDecl<?>> getUsedVars() {
+			return Set.of();
+		}
 	}
 
 	@Test

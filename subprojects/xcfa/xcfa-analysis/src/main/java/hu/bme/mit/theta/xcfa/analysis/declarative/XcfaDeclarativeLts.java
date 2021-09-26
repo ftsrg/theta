@@ -24,7 +24,7 @@ public final class XcfaDeclarativeLts implements LTS<XcfaDeclarativeState<?>, Xc
 			final Optional<Map.Entry<Integer, XcfaProcess>> backlogEntryOpt = state.getBacklog().entrySet().stream().findAny();
 			if(backlogEntryOpt.isPresent()) {
 				final XcfaLocation initLoc = backlogEntryOpt.get().getValue().getMainProcedure().getInitLoc();
-				final XcfaDeclarativeAction xcfaAction = XcfaDeclarativeAction.create(XcfaEdge.of(state.getCurrentLoc(), initLoc, List.of()));
+				final XcfaDeclarativeAction xcfaAction = XcfaDeclarativeAction.createThreadChange(backlogEntryOpt.get().getKey(), XcfaEdge.of(state.getCurrentLoc(), initLoc, List.of()));
 				xcfaActions.add(xcfaAction);
 			}
 		}

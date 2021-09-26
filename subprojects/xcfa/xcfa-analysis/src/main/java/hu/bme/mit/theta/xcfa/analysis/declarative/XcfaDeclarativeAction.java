@@ -42,6 +42,10 @@ public class XcfaDeclarativeAction extends StmtAction {
 		return new XcfaDeclarativeAction(edge.getSource(), edge.getTarget(), edge.getLabels());
 	}
 
+	public static XcfaDeclarativeAction createThreadChange(final Integer process, final XcfaEdge edge) {
+		return new XcfaDeclarativeThreadChangeAction(process, edge.getSource(), edge.getTarget(), edge.getLabels());
+	}
+
 	public XcfaLocation getSource() {
 		return source;
 	}
@@ -66,5 +70,18 @@ public class XcfaDeclarativeAction extends StmtAction {
 
 	public XcfaDeclarativeAction withLabels(final List<XcfaLabel> stmts) {
 		return new XcfaDeclarativeAction(source, target, stmts);
+	}
+
+	public static class XcfaDeclarativeThreadChangeAction extends XcfaDeclarativeAction {
+		private final Integer process;
+
+		private XcfaDeclarativeThreadChangeAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+			super(source, target, labels);
+			this.process = process;
+		}
+
+		public Integer getProcess() {
+			return process;
+		}
 	}
 }
