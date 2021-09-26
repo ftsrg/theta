@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 

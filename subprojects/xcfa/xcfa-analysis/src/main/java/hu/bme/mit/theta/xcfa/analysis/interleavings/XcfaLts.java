@@ -1,8 +1,6 @@
-package hu.bme.mit.theta.xcfa.analysis.interleavings.allinterleavings;
+package hu.bme.mit.theta.xcfa.analysis.interleavings;
 
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
