@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.analysis.algorithm.runtimecheck;
 
 public class NotSolvableException extends RuntimeException {
 	NotSolvableException() {

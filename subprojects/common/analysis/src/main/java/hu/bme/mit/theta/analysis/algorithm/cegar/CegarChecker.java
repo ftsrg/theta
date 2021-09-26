@@ -20,25 +20,15 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,15 +44,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	private final Refiner<S, A, P> refiner;
 	private final Logger logger;
 
-	// controlled restart
-	private Set<AbstractArg> args = new LinkedHashSet<>();
-	private P lastPrecision = null;
-	private static NotSolvableThrower notSolvableThrower = null;
-
-	public static void setNotSolvableThrower(NotSolvableThrower thrower) {
-		notSolvableThrower = thrower;
-	}
-
 	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
@@ -77,29 +58,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
 			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		return new CegarChecker<>(abstractor, refiner, logger);
-	}
-
-	private class AbstractArg {
-		private final Collection<State> states;
-		private final P prec;
-
-		private AbstractArg(final Stream<ArgNode<S, A>> nodes, final P prec){
-			states = nodes.map(ArgNode::getState).collect(Collectors.toList());
-			this.prec = prec;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			AbstractArg that = (AbstractArg) o;
-			return (states.equals(that.states) && prec.equals(that.prec));
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(states, prec);
-		}
 	}
 
 	@Override
@@ -123,24 +81,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-			logger.write(Level.VERBOSE, "Printing ARG..." + System.lineSeparator());
-			Graph g = ArgVisualizer.getDefault().visualize(arg);
-			logger.write(Level.VERBOSE, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
-
-			if (notSolvableThrower != null) {
-				// stopping verification, if it is stuck
-				AbstractArg abstractArg = new AbstractArg(arg.getNodes(), prec);
-
-				if (args.contains(abstractArg)) {
-					Optional<AbstractArg> any = args.stream().filter(abstractArg1 -> abstractArg1.equals(abstractArg)).findAny();
-					// System.err.println("Not solvable!");
-					// throw new NotSolvableException();
-					notSolvableThrower.throwNotSolvableException();
-				}
-				args.add(abstractArg);
-			}
-
 			if (abstractorResult.isUnsafe()) {
+				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
+
+				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
 				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 				refinerResult = refiner.refine(arg, prec);
@@ -150,6 +94,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				if (refinerResult.isSpurious()) {
 					prec = refinerResult.asSpurious().getRefinedPrec();
 				}
+
+				if(lastPrec.equals(prec)) {
+					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration"+System.lineSeparator());
+				} else {
+					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration"+System.lineSeparator());
+				}
+
 			}
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());

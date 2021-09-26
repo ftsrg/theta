@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -29,6 +30,8 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+
+import java.util.Optional;
 
 /**
  * A Refiner implementation that can refine a single trace (of ExprStates and
@@ -63,10 +66,12 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
+
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
-		logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
+		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
 
 		logger.write(Level.SUBSTEP, "|  |  Checking trace...");
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
@@ -84,11 +89,14 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
+			ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
+
 			switch (pruneStrategy){
 				case LAZY:
 					logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
 					final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 					arg.prune(nodeToPrune);
+
 					break;
 				case FULL:
 					logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);

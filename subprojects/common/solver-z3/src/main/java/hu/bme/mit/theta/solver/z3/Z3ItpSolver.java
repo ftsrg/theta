@@ -38,6 +38,7 @@ import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
 final class Z3ItpSolver implements ItpSolver {
+	public static com.microsoft.z3.InterpolationContext currentContext;
 
 	private final Z3TransformationManager transformationManager;
 	private final Z3TermTransformer termTransformer;
@@ -55,6 +56,7 @@ final class Z3ItpSolver implements ItpSolver {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Context = z3Context;
+		currentContext = z3Context;
 		this.z3Solver = z3Solver;
 
 		solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
