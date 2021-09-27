@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -27,6 +28,8 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -59,20 +62,28 @@ public final class SmtLibSolverTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        Path home = SmtLibSolverManager.HOME;
+        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            Path home = SmtLibSolverManager.HOME;
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        try {
-            solverManager.install("z3", "4.5.0", "4.5.0", null, false);
-            solverInstalled = true;
-        } catch(SmtLibSolverInstallerException e) {}
+            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+            try {
+                solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+                solverInstalled = true;
+            } catch (SmtLibSolverInstallerException e) {
+            }
 
-        solverFactory = solverManager.getSolverFactory("z3", "4.5.0");
+            solverFactory = solverManager.getSolverFactory("z3", "4.5.0");
+        }
     }
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
         if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
+    }
+
+    @Before
+    public void before() {
+        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
     }
 
     @Test
