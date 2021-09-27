@@ -1,5 +1,7 @@
 ## Overview
 
+**This project is in alpha state. Expect breaking changes in the near future!**
+
 This project wraps a generic solver that supports the SMT-LIB2 interface into our common interfaces for solvers (located in the [solver](..) project).
 
 ### Related projects
