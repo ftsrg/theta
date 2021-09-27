@@ -18,7 +18,10 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -147,7 +150,7 @@ final class StmtToExprTransformer {
             final StmtUnfoldResult elzeResult = toExpr(ifStmt.getElze(), indexing.transform().build());
 
             final VarIndexing thenIndexing = thenResult.indexing;
-            final VarIndexing elzeIndexing = thenResult.indexing;
+            final VarIndexing elzeIndexing = elzeResult.indexing;
 
             final Expr<BoolType> thenExpr = And(thenResult.getExprs());
             final Expr<BoolType> elzeExpr = And(elzeResult.getExprs());
@@ -163,13 +166,13 @@ final class StmtToExprTransformer {
                     if (thenIndex > 0) {
                         thenAdditions.add(Eq(Prime(decl.getRef(), thenIndex), Prime(decl.getRef(), elzeIndex)));
                     } else {
-                        thenAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), thenIndex)));
+                        thenAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), elzeIndex)));
                     }
                 } else if (elzeIndex < thenIndex) {
                     if (elzeIndex > 0) {
                         elzeAdditions.add(Eq(Prime(decl.getRef(), elzeIndex), Prime(decl.getRef(), thenIndex)));
                     } else {
-                        elzeAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), elzeIndex)));
+                        elzeAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), thenIndex)));
                     }
                 }
             }
