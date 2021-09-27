@@ -52,6 +52,7 @@ import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -61,8 +62,10 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -96,7 +99,7 @@ public class CfaCli {
 	String refinementSolver;
 
 	@Parameter(names = "--home", description = "The path of the solver registry")
-	String home = Path.of(System.getProperty("user.home"), ".theta").toAbsolutePath().toString();
+	String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
@@ -177,8 +180,12 @@ public class CfaCli {
 		}
 
 		try {
-			final var homePath = Path.of(home);
-			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+			SolverManager.registerSolverManager(Z3SolverManager.getInstance());
+			if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+				final var homePath = Path.of(home);
+				final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+				SolverManager.registerSolverManager(smtLibSolverManager);
+			}
 
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
@@ -210,30 +217,20 @@ public class CfaCli {
 			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
 
 			final SolverFactory abstractionSolverFactory;
-			if(abstractionSolver != null && !abstractionSolver.equals("Z3")) {
-				final var s = abstractionSolver.split("\\.");
-				abstractionSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
-			}
-			else if(!solver.equals("Z3")) {
-				final var s = solver.split("\\.");
-				abstractionSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			if(abstractionSolver != null) {
+				abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
 			}
 			else {
-				abstractionSolverFactory = Z3SolverFactory.getInstance();
+				abstractionSolverFactory = SolverManager.resolveSolverFactory(solver);
 			}
 
 
 			final SolverFactory refinementSolverFactory;
-			if(refinementSolver != null && !refinementSolver.equals("Z3")) {
-				final var s = refinementSolver.split("\\.");
-				refinementSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
-			}
-			else if(!solver.equals("Z3")) {
-				final var s = solver.split("\\.");
-				refinementSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			if(refinementSolver != null) {
+				refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 			}
 			else {
-				refinementSolverFactory = Z3SolverFactory.getInstance();
+				refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
 			}
 
 			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);

@@ -26,7 +26,7 @@ public class SmtLibCli {
 
     static class MainParams {
         @Parameter(names = "--home", description = "The path of the solver registry")
-        String home = Path.of(System.getProperty("user.home"), ".theta").toAbsolutePath().toString();
+        String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
         @Parameter(names = "--loglevel", description = "Detailedness of logging")
         Logger.Level logLevel = Logger.Level.MAINSTEP;
@@ -293,13 +293,7 @@ public class SmtLibCli {
     }
 
     private static Tuple2<String, String> decodeVersionString(final String version) {
-        final var versionArr = version.split(":");
-
-        if(versionArr.length != 2) {
-            throw new IllegalArgumentException("Invalid version string: " + version);
-        }
-
-        return Tuple2.of(versionArr[0], versionArr[1]);
+        return Tuple2.of(SmtLibSolverManager.getSolverName(version), SmtLibSolverManager.getSolverVersion(version));
     }
 
     private Path createIfNotExists(final Path path) throws IOException {

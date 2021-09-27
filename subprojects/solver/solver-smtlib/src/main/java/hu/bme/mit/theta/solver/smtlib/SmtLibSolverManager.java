@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
@@ -29,7 +30,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public final class SmtLibSolverManager {
+public final class SmtLibSolverManager extends SolverManager {
+    public static final Path HOME = Path.of(System.getProperty("user.home"), ".theta");
+
     private static final Map<String, Class<? extends SmtLibSolverInstaller>> installerDeclarations = new HashMap<>();
     private static Tuple2<String, Class<? extends GenericSmtLibSolverInstaller>> genericInstallerDeclaration;
 
@@ -51,6 +54,36 @@ public final class SmtLibSolverManager {
         registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
         registerInstaller("princess", PrincessSmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
+    }
+
+    public static String getSolverName(final String name) {
+        final var solverName = decodeSolverName(name, 0);
+        if(solverName != null) {
+            return solverName;
+        }
+        else {
+            throw new IllegalArgumentException("Invalid version string: " + name);
+        }
+    }
+
+    public static String getSolverVersion(final String name) {
+        final var solverVersion = decodeSolverName(name, 1);
+        if(solverVersion != null) {
+            return solverVersion;
+        }
+        else {
+            throw new IllegalArgumentException("Invalid version string: " + name);
+        }
+    }
+
+    private static String decodeSolverName(final String name, final int part) {
+        final var versionArr = name.split(":");
+
+        if(versionArr.length != 2) {
+            return null;
+        }
+
+        return versionArr[part];
     }
 
     private final Path home;
@@ -96,6 +129,12 @@ public final class SmtLibSolverManager {
 
     public String getGenericInstallerName() {
         return genericInstaller.get1();
+    }
+
+    @Override
+    public boolean managesSolver(final String name) {
+        final var solverName = decodeSolverName(name, 0);
+        return solverName != null && installers.containsKey(solverName);
     }
 
     public void install(final String solver, final String version, final String name, final Path solverPath, final boolean installUnsupported) throws SmtLibSolverInstallerException {
@@ -167,6 +206,12 @@ public final class SmtLibSolverManager {
         }
 
         return installers.get(solver).getArgsFile(home.resolve(solver), getVersionString(solver, version, true));
+    }
+
+    @Override
+    public SolverFactory getSolverFactory(final String name) throws SmtLibSolverInstallerException {
+        checkArgument(managesSolver(name));
+        return getSolverFactory(getSolverName(name), getSolverVersion(name));
     }
 
     public SolverFactory getSolverFactory(final String solver, final String version) throws SmtLibSolverInstallerException {
