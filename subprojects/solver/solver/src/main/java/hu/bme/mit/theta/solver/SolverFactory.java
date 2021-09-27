@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver;
 
 /**
  * Interface for solver factories that can instantiate solvers.
+ * Stores a configuration of a solver, and creates instances with that configuration.
  */
 public interface SolverFactory {
 

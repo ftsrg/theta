@@ -197,7 +197,6 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
 	@Override
 	public void close() {
-		z3Context.close();
 		solver.close();
 	}
 }
