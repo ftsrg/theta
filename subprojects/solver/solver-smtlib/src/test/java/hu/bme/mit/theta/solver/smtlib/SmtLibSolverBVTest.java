@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -8,6 +9,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +30,7 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
     private static final String SOLVER = "z3";
+    private static final String VERSION = "4.5.0";
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
 
@@ -42,18 +45,21 @@ public class SmtLibSolverBVTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        Path home = SmtLibSolverManager.HOME;
+        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            Path home = SmtLibSolverManager.HOME;
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        try {
-            solverManager.install(SOLVER, "latest", "latest", null, false);
-            solverInstalled = true;
-        } catch(SmtLibSolverInstallerException e) {}
+            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+            try {
+                solverManager.install(SOLVER, VERSION, VERSION, null, false);
+                solverInstalled = true;
+            } catch (SmtLibSolverInstallerException e) {
+            }
+        }
     }
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall(SOLVER, "latest");
+        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
@@ -69,6 +75,8 @@ public class SmtLibSolverBVTest {
 
     @Test
     public void testOperationEquals() throws Exception {
+        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -86,7 +94,7 @@ public class SmtLibSolverBVTest {
         );
 
         // Equality check
-        try(final Solver solver = solverManager.getSolverFactory(SOLVER, "latest").createSolver()) {
+        try(final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
             solver.push();
 
             solver.add(EqExpr.create2(expected, actual));

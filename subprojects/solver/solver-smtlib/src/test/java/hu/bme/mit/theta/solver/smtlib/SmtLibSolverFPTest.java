@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.smtlib;
 
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -13,6 +14,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,13 +54,16 @@ public class SmtLibSolverFPTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        Path home = SmtLibSolverManager.HOME;
+        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            Path home = SmtLibSolverManager.HOME;
 
-        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        try {
-            solverManager.install("z3", "4.5.0", "4.5.0", null, false);
-            solverInstalled = true;
-        } catch(SmtLibSolverInstallerException e) {}
+            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+            try {
+                solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+                solverInstalled = true;
+            } catch (SmtLibSolverInstallerException e) {
+            }
+        }
     }
 
     @AfterClass
@@ -73,6 +78,8 @@ public class SmtLibSolverFPTest {
 
     @Test
     public void testOperationEquals() throws Exception {
+        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
