@@ -20,8 +20,8 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 final class StmtToExprTransformer {
@@ -177,8 +178,8 @@ final class StmtToExprTransformer {
                 }
             }
 
-            final Expr<BoolType> thenExprExtended = thenAdditions.size() > 0 ? And(thenExpr, And(thenAdditions)) : thenExpr;
-            final Expr<BoolType> elzeExprExtended = elzeAdditions.size() > 0 ? And(elzeExpr, And(elzeAdditions)) : elzeExpr;
+            final Expr<BoolType> thenExprExtended = thenAdditions.size() > 0 ? SmartBoolExprs.And(thenExpr, And(thenAdditions)) : thenExpr;
+            final Expr<BoolType> elzeExprExtended = elzeAdditions.size() > 0 ? SmartBoolExprs.And(elzeExpr, And(elzeAdditions)) : elzeExpr;
 
             final Expr<BoolType> ite = cast(Ite(condExpr, thenExprExtended, elzeExprExtended), Bool());
             return StmtUnfoldResult.of(ImmutableList.of(ite), jointIndexing);
