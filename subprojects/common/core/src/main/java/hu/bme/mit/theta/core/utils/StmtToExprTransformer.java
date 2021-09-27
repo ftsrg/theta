@@ -29,7 +29,6 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
-import com.google.errorprone.annotations.Var;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;

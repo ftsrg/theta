@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.analysis.stmtoptimizer;
 
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.analysis.expl.StmtApplier;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
