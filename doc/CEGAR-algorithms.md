@@ -146,7 +146,7 @@ It is recommended to first try `LAZY` and fall back to `FULL` if there is no ref
 
 Available for CFA. The SMT-solver to use during verification. The `--abstraction-solver` specifies the solver to use during the abstraction phase, while `--refinement-solver` specifies the solver to use during the refinement phase. The option `--solver` sets both the abstraction and the refinement solver to be the same. Possible values:
 
-* `Z3`: The native integration of Microsoft's Z3 solver. (See subproject [solver-z3](../../solver/solver-z3) for more details.)
-* `<solver_name>:<solver_version>`: An installed SMT-LIB solver. (See subprojects [solver-smtlib](../../solver/solver-smtlib) and [solver-smtlib-cli](../../solver/solver-smtlib-cli) for more details.)
+* `Z3`: The native integration of Microsoft's Z3 solver. (See subproject [solver-z3](../subprojects/solver/solver-z3) for more details.)
+* `<solver_name>:<solver_version>`: An installed SMT-LIB solver. (See subprojects [solver-smtlib](../subprojects/solver/solver-smtlib) and [solver-smtlib-cli](../subprojects/solver/solver-smtlib-cli) for more details.)
 
 It is recommended to stick with the default `Z3` option at first, and only use the SMT-LIB based solvers, if some required features are not supported by `Z3` (e.g. interpolating with bitvectors, floating points).

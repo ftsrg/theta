@@ -57,10 +57,10 @@ Each project contains a README.md in its root directory describing its purpose i
 
 |  | Common | CFA | STS | XTA | XSTS |
 |--|--|--|--|--|--|
-| **Tools** | [`solver-smtlib-cli`](subprojects/common/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) |
+| **Tools** | [`solver-smtlib-cli`](subprojects/solver/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) |
 | **Analyses** | [`analysis`](subprojects/common/analysis) | [`cfa-analysis`](subprojects/cfa/cfa-analysis) | [`sts-analysis`](subprojects/sts/sts-analysis) | [`xta-analysis`](subprojects/xta/xta-analysis) | [`xsts-analysis`](subprojects/xsts/xsts-analysis) |
 | **Formalisms** | [`core`](subprojects/common/core), [`common`](subprojects/common/common) | [`cfa`](subprojects/cfa/cfa) | [`sts`](subprojects/sts/sts) | [`xta`](subprojects/xta/xta) | [`xsts`](subprojects/xsts/xsts) |
-| **SMT solvers** | [`solver`](subprojects/common/solver), [`solver-z3`](subprojects/common/solver-z3), [`solver-smtlib`](subprojects/solver-smtlib) |
+| **SMT solvers** | [`solver`](subprojects/solver/solver), [`solver-z3`](subprojects/solver/solver-z3), [`solver-smtlib`](subprojects/solver/solver-smtlib) |
 
 ## Extend Theta
 
