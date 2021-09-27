@@ -67,4 +67,6 @@ class SolverStub implements Solver {
 		return null;
 	}
 
+	@Override
+	public void close() {}
 }

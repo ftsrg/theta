@@ -35,6 +35,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverFPTest {
+    private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
 
     @Parameterized.Parameter(0)
@@ -48,15 +49,18 @@ public class SmtLibSolverFPTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        Path home = Files.createTempDirectory("theta-solver");
+        Path home = SmtLibSolverManager.HOME;
 
         solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-        solverManager.install("z3", "latest", "latest", null, false);
+        try {
+            solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+            solverInstalled = true;
+        } catch(SmtLibSolverInstallerException e) {}
     }
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        solverManager.uninstall("z3", "latest");
+        if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
