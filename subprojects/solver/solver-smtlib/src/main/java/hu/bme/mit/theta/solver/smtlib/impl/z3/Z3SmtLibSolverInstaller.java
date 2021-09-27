@@ -30,6 +30,20 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         super(logger);
 
         versions = new ArrayList<>();
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.12"))
+            .addString(LINUX, X64, "x64-glibc-2.31")
+            .addString(WINDOWS, X64, "x64-win")
+            .addString(WINDOWS, X86, "x86-win")
+            .addString(MAC, X64, "x64-osx-10.15.7")
+            .build()
+        );
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.10"))
+            .addString(LINUX, X64, "x64-ubuntu-18.04")
+            .addString(WINDOWS, X64, "x64-win")
+            .addString(WINDOWS, X86, "x86-win")
+            .addString(MAC, X64, "x64-osx-10.15.7")
+            .build()
+        );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.5"))
             .addString(LINUX, X64, "x64-ubuntu-16.04")
             .addString(WINDOWS, X64, "x64-win")
@@ -134,8 +148,8 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-            "4.8.9", "4.8.8", "4.8.7", "4.8.6", "4.8.5", "4.8.4", "4.8.3", "4.8.2", "4.8.1",
-            "4.7.1", "4.6.0", "4.5.0", "4.4.1", "4.4.0", "4.3.2"
+            "4.8.12", "4.8.11", "3.8.10", "4.8.9", "4.8.8", "4.8.7", "4.8.6", "4.8.5", "4.8.4", "4.8.3",
+            "4.8.2", "4.8.1", "4.7.1", "4.6.0", "4.5.0", "4.4.1", "4.4.0", "4.3.2"
         );
     }
 

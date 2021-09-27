@@ -6,6 +6,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
+import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 
 import java.io.IOException;
 import java.net.URI;
@@ -63,11 +64,19 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {
-            "--smt2",
-            "--smt2-model",
-            "-i"
-        };
+        if(SemVer.of(version).compareTo(SemVer.of("3.2.2")) >= 0) {
+            return new String[]{
+                "--smt2",
+                "-i"
+            };
+        }
+        else {
+            return new String[]{
+                "--smt2",
+                "--smt2-model",
+                "-i"
+            };
+        }
     }
 
     @Override
@@ -78,7 +87,7 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("3.2.1", "3.2.0", "3.1.0", "3.0.0");
+        return Arrays.asList("3.2.2", "3.2.1", "3.2.0", "3.1.0", "3.0.0");
     }
 
     private String getSolverBinaryName() {
