@@ -27,7 +27,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
-    private static final String SOLVER = "princess";
+    private static final String SOLVER = "z3";
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
 
