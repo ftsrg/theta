@@ -1,5 +1,7 @@
 ## Overview
 
+**This project is in alpha state. Expect breaking changes in the near future!**
+
 The `solver-smtlib-cli` project is an executable (command line) tool for managing the SMT-LIB compatible solvers.
 For more information about the SMT-LIB compatibility in Theta, take a look at the [`solver-smtlib`](../solver-smtlib/README.md) project.
 
