@@ -67,4 +67,11 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 		}
 		return count+1;
 	}
+
+	@Override
+	public Integer visit(IfStmt stmt, Void param){
+		return stmt.getThen().accept(this, null)
+				+ stmt.getElze().accept(this, null)
+				+ 1;
+	}
 }

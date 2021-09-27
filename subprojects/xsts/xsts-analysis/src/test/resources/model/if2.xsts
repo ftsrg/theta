@@ -1,0 +1,13 @@
+ctrl var a : integer = 5
+ctrl var b : integer = 0
+
+trans{
+    for i from 0 to a do {
+        local var x : integer = b+1;
+        if (i<a) b:=x;
+    }
+}
+
+init{}
+
+env{}

@@ -222,7 +222,11 @@ public class XstsTest {
 
 				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/arraywrite_sugar.xsts", "src/test/resources/property/arraywrite_sugar.prop", false, XstsConfigBuilder.Domain.PRED_CART}
+				{ "src/test/resources/model/arraywrite_sugar.xsts", "src/test/resources/property/arraywrite_sugar.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/if1.xsts", "src/test/resources/property/if1.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+
+				{ "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
 		});
 	}
 
