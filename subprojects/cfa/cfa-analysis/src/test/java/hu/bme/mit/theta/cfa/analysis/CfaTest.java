@@ -121,11 +121,11 @@ public class CfaTest {
 
 				{ "src/test/resources/counter_bv_false.cfa", PRED_CART, UCB, false, 13 },
 
-				{ "src/test/resources/fp1.cfa", PRED_CART, NWT_IT_WP, false, 5 },
+				{ "src/test/resources/fp1.cfa", PRED_CART, NWT_IT_WP, true, 0 },
 
 				{ "src/test/resources/fp2.cfa", PRED_CART, NWT_IT_WP, false, 5 },
 
-				{ "src/test/resources/counter_fp_true.cfa", EXPL, SEQ_ITP, true, 0 },
+				{ "src/test/resources/counter_fp_true.cfa", EXPL, NWT_IT_WP, true, 0 },
 
 				{ "src/test/resources/ifelse.cfa", PRED_CART, SEQ_ITP, false, 3 },
 

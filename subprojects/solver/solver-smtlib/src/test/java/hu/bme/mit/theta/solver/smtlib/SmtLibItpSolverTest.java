@@ -59,22 +59,26 @@ import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 public final class SmtLibItpSolverTest {
+	private static boolean solverInstalled = false;
 	private static SmtLibSolverManager solverManager;
 	private static SolverFactory solverFactory;
 
 	@BeforeClass
 	public static void init() throws SmtLibSolverInstallerException, IOException {
-		Path home = Files.createTempDirectory("theta-solver");
+		Path home = SmtLibSolverManager.HOME;
 
 		solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-		solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+		try {
+			solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+			solverInstalled = true;
+		} catch(SmtLibSolverInstallerException e) {}
 
-		solverFactory = solverManager.getSolverFactory("z3", "latest");
+		solverFactory = solverManager.getSolverFactory("z3", "4.5.0");
 	}
 
 	@AfterClass
 	public static void destroy() throws SmtLibSolverInstallerException {
-		solverManager.uninstall("z3", "latest");
+		if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
 	}
 
 	ItpSolver solver;
