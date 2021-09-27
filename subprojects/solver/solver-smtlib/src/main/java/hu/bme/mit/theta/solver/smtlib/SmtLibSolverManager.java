@@ -3,8 +3,12 @@ package hu.bme.mit.theta.solver.smtlib;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverBase;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
@@ -21,8 +25,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +98,9 @@ public final class SmtLibSolverManager extends SolverManager {
     private final Map<String, SmtLibSolverInstaller> installers;
     private final Tuple2<String, GenericSmtLibSolverInstaller> genericInstaller;
 
+    private boolean closed = false;
+    private final Set<SolverBase> instantiatedSolvers;
+
     private SmtLibSolverManager(final Path home, final Logger logger) {
         this.logger = logger;
         checkNotNull(home);
@@ -120,6 +129,7 @@ public final class SmtLibSolverManager extends SolverManager {
             throw new RuntimeException(e);
         }
 
+        this.instantiatedSolvers = new HashSet<>();
     }
 
     public static SmtLibSolverManager create(final Path home, final Logger logger) throws IOException {
@@ -219,7 +229,7 @@ public final class SmtLibSolverManager extends SolverManager {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
-        return installers.get(solver).getSolverFactory(home.resolve(solver), getVersionString(solver, version, true));
+        return new ManagedFactory(installers.get(solver).getSolverFactory(home.resolve(solver), getVersionString(solver, version, true)));
     }
 
     public List<String> getSupportedSolvers() {
@@ -283,5 +293,45 @@ public final class SmtLibSolverManager extends SolverManager {
             Files.createDirectory(path);
         }
         return path;
+    }
+
+    @Override
+    public void close() throws Exception {
+        for(final var solver : instantiatedSolvers) {
+            solver.close();
+        }
+        closed = true;
+    }
+
+    private final class ManagedFactory implements SolverFactory {
+        private final SolverFactory solverFactory;
+
+        private ManagedFactory(final SolverFactory solverFactory) {
+            this.solverFactory = solverFactory;
+        }
+
+        @Override
+        public Solver createSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
+
+        @Override
+        public UCSolver createUCSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createUCSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
+
+        @Override
+        public ItpSolver createItpSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createItpSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
     }
 }

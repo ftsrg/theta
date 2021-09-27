@@ -72,7 +72,7 @@ public class SmtLibSolverFPTest {
     }
 
     @Test
-    public void testOperationEquals() throws SmtLibSolverInstallerException {
+    public void testOperationEquals() throws Exception {
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -90,28 +90,29 @@ public class SmtLibSolverFPTest {
         );
 
         // Equality check
-        final Solver solver = solverManager.getSolverFactory("z3", "latest").createSolver();
-        solver.push();
+        try(final Solver solver = solverManager.getSolverFactory("z3", "latest").createSolver()) {
+            solver.push();
 
-        if (expected instanceof FpLitExpr && actual.getType() instanceof FpType) {
-            if (((FpLitExpr) expected).isNaN()) {
-                //noinspection unchecked
-                solver.add(IsNan((Expr<FpType>) actual));
-            } else if (((FpLitExpr) expected).isNegativeInfinity()) {
-                solver.add(EqExpr.create2(expected, actual));
-            } else if (((FpLitExpr) expected).isPositiveInfinity()) {
-                solver.add(EqExpr.create2(expected, actual));
+            if (expected instanceof FpLitExpr && actual.getType() instanceof FpType) {
+                if (((FpLitExpr) expected).isNaN()) {
+                    //noinspection unchecked
+                    solver.add(IsNan((Expr<FpType>) actual));
+                } else if (((FpLitExpr) expected).isNegativeInfinity()) {
+                    solver.add(EqExpr.create2(expected, actual));
+                } else if (((FpLitExpr) expected).isPositiveInfinity()) {
+                    solver.add(EqExpr.create2(expected, actual));
+                } else {
+                    //noinspection unchecked
+                    FpLeqExpr leq = Leq(Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual)),
+                        FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2", FpUtils.getMathContext((FpType) actual.getType(), RNE)), (FpType) actual.getType()));
+                    solver.add(leq);
+                }
             } else {
-                //noinspection unchecked
-                FpLeqExpr leq = Leq(Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual)),
-                    FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2", FpUtils.getMathContext((FpType) actual.getType(), RNE)), (FpType) actual.getType()));
-                solver.add(leq);
+                solver.add(EqExpr.create2(expected, actual));
             }
-        } else {
-            solver.add(EqExpr.create2(expected, actual));
-        }
 
-        SolverStatus status = solver.check();
-        assertTrue(status.isSat());
+            SolverStatus status = solver.check();
+            assertTrue(status.isSat());
+        }
     }
 }

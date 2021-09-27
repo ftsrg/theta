@@ -180,7 +180,7 @@ public class CfaCli {
 		}
 
 		try {
-			SolverManager.registerSolverManager(Z3SolverManager.getInstance());
+			SolverManager.registerSolverManager(Z3SolverManager.create());
 			if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
 				final var homePath = Path.of(home);
 				final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);

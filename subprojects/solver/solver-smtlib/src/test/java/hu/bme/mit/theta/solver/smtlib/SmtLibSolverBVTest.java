@@ -27,6 +27,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
+    private static final String SOLVER = "princess";
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
 
@@ -45,14 +46,14 @@ public class SmtLibSolverBVTest {
 
         solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
         try {
-            solverManager.install("z3", "latest", "latest", null, false);
+            solverManager.install(SOLVER, "latest", "latest", null, false);
             solverInstalled = true;
         } catch(SmtLibSolverInstallerException e) {}
     }
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall("z3", "latest");
+        if(solverInstalled) solverManager.uninstall(SOLVER, "latest");
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
@@ -67,7 +68,7 @@ public class SmtLibSolverBVTest {
     }
 
     @Test
-    public void testOperationEquals() throws SmtLibSolverInstallerException {
+    public void testOperationEquals() throws Exception {
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -85,12 +86,13 @@ public class SmtLibSolverBVTest {
         );
 
         // Equality check
-        final Solver solver = solverManager.getSolverFactory("z3", "latest").createSolver();
-        solver.push();
+        try(final Solver solver = solverManager.getSolverFactory(SOLVER, "latest").createSolver()) {
+            solver.push();
 
-        solver.add(EqExpr.create2(expected, actual));
+            solver.add(EqExpr.create2(expected, actual));
 
-        SolverStatus status = solver.check();
-        assertTrue(status.isSat());
+            SolverStatus status = solver.check();
+            assertTrue(status.isSat());
+        }
     }
 }
