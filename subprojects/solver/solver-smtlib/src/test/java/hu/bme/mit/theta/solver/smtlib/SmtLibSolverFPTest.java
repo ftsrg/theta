@@ -6,7 +6,6 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -20,11 +19,9 @@ import org.junit.runners.Parameterized;
 import org.kframework.mpfr.BigFloat;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;

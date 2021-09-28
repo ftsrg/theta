@@ -15,28 +15,28 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Collection;
 import hu.bme.mit.theta.common.container.Containers;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpMarkerTree;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 final class Z3ItpSolver implements ItpSolver, Solver {
 
@@ -64,13 +64,13 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 	}
 
 	@Override
-	public ItpPattern createPattern(final ItpMarker marker) {
-		checkNotNull(marker);
-		return new ItpPatternImpl(marker);
+	public ItpPattern createTreePattern(final ItpMarkerTree<? extends ItpMarker> root) {
+		checkNotNull(root);
+		return Z3ItpPattern.of(root);
 	}
 
 	@Override
-	public ItpMarker createMarker() {
+	public Z3ItpMarker createMarker() {
 		final Z3ItpMarker marker = new Z3ItpMarker();
 		markers.add(marker);
 		return marker;
@@ -90,9 +90,11 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 	@Override
 	public Interpolant getInterpolant(final ItpPattern pattern) {
 		checkState(solver.getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
+		checkArgument(pattern instanceof Z3ItpPattern);
+		final Z3ItpPattern z3ItpPattern = (Z3ItpPattern) pattern;
 
 		final com.microsoft.z3.Expr proof = z3Solver.getProof();
-		final com.microsoft.z3.Expr term = patternToTerm(pattern);
+		final com.microsoft.z3.Expr term = patternToTerm(z3ItpPattern.getRoot());
 		final com.microsoft.z3.Params params = z3Context.mkParams();
 
 		final com.microsoft.z3.BoolExpr[] itpArray = z3Context.GetInterpolant(proof, term, params);
@@ -104,31 +106,31 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 		}
 
 		final Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
-		buildItpMapFormList(pattern, itpList, itpMap);
+		buildItpMapFormList(z3ItpPattern.getRoot(), itpList, itpMap);
 
 		return new Z3Interpolant(itpMap);
 	}
 
-	private com.microsoft.z3.BoolExpr patternToTerm(final ItpPattern pattern) {
+	private com.microsoft.z3.BoolExpr patternToTerm(final ItpMarkerTree<Z3ItpMarker> markerTree) {
 		final Collection<com.microsoft.z3.BoolExpr> opTerms = new LinkedList<>();
 
-		final Z3ItpMarker marker = (Z3ItpMarker) pattern.getMarker();
+		final Z3ItpMarker marker = (Z3ItpMarker) markerTree.getMarker();
 		opTerms.addAll(marker.getTerms());
 
-		for (final ItpPattern child : pattern.getChildren()) {
+		for (final ItpMarkerTree<Z3ItpMarker> child : markerTree.getChildren()) {
 			final com.microsoft.z3.BoolExpr childTerm = patternToTerm(child);
 			opTerms.add(childTerm);
 		}
 
 		final com.microsoft.z3.BoolExpr andTerm = z3Context
-				.mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
+			.mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
 		final com.microsoft.z3.BoolExpr term = z3Context.MkInterpolant(andTerm);
 		return term;
 	}
 
-	private void buildItpMapFormList(final ItpPattern pattern, final List<Expr<BoolType>> itpList,
+	private void buildItpMapFormList(final ItpMarkerTree<Z3ItpMarker> pattern, final List<Expr<BoolType>> itpList,
 									 final Map<ItpMarker, Expr<BoolType>> itpMap) {
-		for (final ItpPattern child : pattern.getChildren()) {
+		for (final ItpMarkerTree<Z3ItpMarker> child : pattern.getChildren()) {
 			buildItpMapFormList(child, itpList, itpMap);
 		}
 		final ItpMarker marker = pattern.getMarker();
