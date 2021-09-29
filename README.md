@@ -35,32 +35,32 @@ Currently, the following tools are available (follow the links for more informat
 Theta can be divided into the following four layers.
 
 * **Formalisms**: The core elements of Theta are the formalisms, which represent models of real life systems (e.g., software, hardware, protocols).
-Formalisms are usually low level, mathematical representations based on first order logic expressions and graph like structures.
-Formalisms can also support higher level languages that can be mapped to that particular formalism by a language front-end (consisting of a specific parser and possibly reductions for simplification of the model).
-The common features of the different formalisms reside in the [`core`](subprojects/common/core) project (e.g., expressions and statements) and each formalism has its own project.
-Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts/sts) / [`xsts`](subprojects/xsts/xsts)), control-flow automata ([`cfa`](subprojects/cfa/cfa)) and timed automata ([`xta`](subprojects/xta/xta)).
+  Formalisms are usually low level, mathematical representations based on first order logic expressions and graph like structures.
+  Formalisms can also support higher level languages that can be mapped to that particular formalism by a language front-end (consisting of a specific parser and possibly reductions for simplification of the model).
+  The common features of the different formalisms reside in the [`core`](subprojects/common/core) project (e.g., expressions and statements) and each formalism has its own project.
+  Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts/sts) / [`xsts`](subprojects/xsts/xsts)), control-flow automata ([`cfa`](subprojects/cfa/cfa)) and timed automata ([`xta`](subprojects/xta/xta)).
 * **Analysis back-end**: The analysis back-end provides the verification algorithms that can formally prove whether a model meets certain requirements.
-There is an interpreter for each formalism, providing a common interface towards the algorithms (e.g., calculating initial states and successors).
-This ensures that most components of the algorithms work for all formalisms (as long as they provide the interpreter).
-The verification algorithms are mostly based on abstraction.
-The analysis back-end defines various abstract domains (e.g., predicates, explicit values, zones), strategies for performing abstraction and refinement (e.g., interpolation), and algorithms built from these components.
-The common components reside in the [`analysis`](subprojects/common/analysis) project (e.g., CEGAR loop) and the formalism-specific modules (e.g., the interpreters) are implemented in separate analysis projects (with suffix `-analysis`) for each formalism.
+  There is an interpreter for each formalism, providing a common interface towards the algorithms (e.g., calculating initial states and successors).
+  This ensures that most components of the algorithms work for all formalisms (as long as they provide the interpreter).
+  The verification algorithms are mostly based on abstraction.
+  The analysis back-end defines various abstract domains (e.g., predicates, explicit values, zones), strategies for performing abstraction and refinement (e.g., interpolation), and algorithms built from these components.
+  The common components reside in the [`analysis`](subprojects/common/analysis) project (e.g., CEGAR loop) and the formalism-specific modules (e.g., the interpreters) are implemented in separate analysis projects (with suffix `-analysis`) for each formalism.
 * **SMT solver interface and SMT solvers**: Many components of the algorithms rely on satisfiability modulo theories (SMT) solvers.
-The framework provides a general SMT solver interface in the project [`solver`](subprojects/common/solver) that supports incremental solving, unsat cores, and the generation of binary and sequence interpolants.
-Currently, the interface is implemented by the [Z3](https://github.com/Z3Prover/z3) SMT solver in the project [`solver-z3`](subprojects/common/solver-z3), but it can easily be extended with new solvers.
+  The framework provides a general SMT solver interface in the project [`solver`](subprojects/common/solver) that supports incremental solving, unsat cores, and the generation of binary and sequence interpolants.
+  Currently, the interface is implemented by the [Z3](https://github.com/Z3Prover/z3) SMT solver in the project [`solver-z3`](subprojects/common/solver-z3), but it can easily be extended with new solvers.
 * **Tools**: Tools are command line applications that can be compiled into a runnable jar file.
-Tools usually read some input and then instantiate and run the algorithms.
-Tools are implemented in separate projects, currently with the `-cli` suffix.
+  Tools usually read some input and then instantiate and run the algorithms.
+  Tools are implemented in separate projects, currently with the `-cli` suffix.
 
 The table below shows the architecture and the projects.
 Each project contains a README.md in its root directory describing its purpose in more detail.
 
 |  | Common | CFA | STS | XTA | XSTS |
 |--|--|--|--|--|--|
-| **Tools** |  | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) |
+| **Tools** | [`solver-smtlib-cli`](subprojects/solver/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) |
 | **Analyses** | [`analysis`](subprojects/common/analysis) | [`cfa-analysis`](subprojects/cfa/cfa-analysis) | [`sts-analysis`](subprojects/sts/sts-analysis) | [`xta-analysis`](subprojects/xta/xta-analysis) | [`xsts-analysis`](subprojects/xsts/xsts-analysis) |
 | **Formalisms** | [`core`](subprojects/common/core), [`common`](subprojects/common/common) | [`cfa`](subprojects/cfa/cfa) | [`sts`](subprojects/sts/sts) | [`xta`](subprojects/xta/xta) | [`xsts`](subprojects/xsts/xsts) |
-| **SMT solvers** | [`solver`](subprojects/common/solver), [`solver-z3`](subprojects/common/solver-z3) |
+| **SMT solvers** | [`solver`](subprojects/solver/solver), [`solver-z3`](subprojects/solver/solver-z3), [`solver-smtlib`](subprojects/solver/solver-smtlib) |
 
 ## Extend Theta
 

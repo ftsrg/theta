@@ -1,0 +1,17 @@
+main process cfa {
+	var x : fp[8:24]
+
+	init loc L0
+    loc L1
+    loc L2
+    loc L3
+    final loc END
+    error loc ERR
+
+	L0 -> L1 { x := 8'd0.23'd0 }
+    L1 -> L2 { assume x < 8'b10000001.23'b01000000000000000000000 }
+    L1 -> L3 { assume not (x < 8'b10000001.23'b01000000000000000000000) }
+    L2 -> L1 { x := (x fpadd[RNE] 8'b01111111.23'd0) }
+    L3 -> END { assume x >= 8'b10000001.23'b01000000000000000000000 }
+    L3 -> ERR { assume not (x >= 8'b10000001.23'b01000000000000000000000) }
+}
