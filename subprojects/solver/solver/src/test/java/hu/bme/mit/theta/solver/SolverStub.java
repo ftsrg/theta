@@ -31,6 +31,7 @@ class SolverStub implements Solver {
 
 	@Override
 	public void add(final Expr<BoolType> assertion) {
+		// Stub
 	}
 
 	@Override
@@ -50,6 +51,7 @@ class SolverStub implements Solver {
 
 	@Override
 	public void reset() {
+		// Stub
 	}
 
 	@Override
@@ -68,5 +70,7 @@ class SolverStub implements Solver {
 	}
 
 	@Override
-	public void close() {}
+	public void close() {
+		// Nothing to close
+	}
 }

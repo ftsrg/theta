@@ -283,7 +283,7 @@ final class Z3Solver implements UCSolver, Solver {
 			} else if (type instanceof ArrayType) {
 				return extractArrayLiteral(funcDecl);
 			} else if (type instanceof BvType) {
-				return extractBvConstLiteral(funcDecl, (BvType) type);
+				return extractBvConstLiteral(funcDecl);
 			} else {
 				return extractConstLiteral(funcDecl);
 			}
@@ -299,7 +299,7 @@ final class Z3Solver implements UCSolver, Solver {
 			return (LitExpr<?>) expr;
 		}
 
-		private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl, final BvType type) {
+		private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl) {
 			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
 			if (term == null) {
 				return null;
@@ -331,11 +331,12 @@ final class Z3Solver implements UCSolver, Solver {
 				if (symbolTable.definesSymbol(symbol)) {
 					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
 					builder.add(constDecl);
-				} else {
+				}
+				/* else {
 					if (!assumptions.containsKey(symbol.getName().toString())) {
 						// Quantifier?
 					}
-				}
+				} */
 			}
 			return builder.build();
 		}

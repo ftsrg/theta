@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 public class SmtLibCli {
     private static final String JAR_NAME = "theta-solver-smtlib-cli.jar";
@@ -38,8 +39,13 @@ public class SmtLibCli {
         private boolean help = false;
     }
 
+    interface Command {
+        String getCommand();
+        void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException;
+    }
+
     @Parameters(commandDescription = "Installs the solver")
-    static class InstallCommand {
+    static class InstallCommand implements Command {
         static final String COMMAND = "install";
 
         @Parameter(description = "The solver to install (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
@@ -53,10 +59,32 @@ public class SmtLibCli {
 
         @Parameter(names = "--tempt-murphy", description = "Allows the installation of unsupported solver version")
         boolean temptMurphy = false;
+        
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(final SmtLibSolverManager smtLibSolverManager, final Logger logger) throws SmtLibSolverInstallerException{
+            final var solver = decodeVersionString(this.solver);
+
+            if(solver.get1().equals(smtLibSolverManager.getGenericInstallerName())) {
+                logger.write(Logger.Level.RESULT, "To install a generic solver, use the \"%s\" command", InstallGenericCommand.COMMAND);
+                return;
+            }
+
+            if(name != null) {
+                smtLibSolverManager.install(solver.get1(), solver.get2(), name, solverPath != null ? Path.of(solverPath) : null, temptMurphy);
+            }
+            else {
+                smtLibSolverManager.install(solver.get1(), solver.get2(), solver.get2(), solverPath != null ? Path.of(solverPath) : null, temptMurphy);
+            }
+        }
     }
 
     @Parameters(commandDescription = "Installs a generic solver")
-    static class InstallGenericCommand {
+    static class InstallGenericCommand implements Command {
         static final String COMMAND = "install-generic";
 
         @Parameter(names = "--solver-path", description = "The path of the generic solver to install", required = true)
@@ -67,18 +95,43 @@ public class SmtLibCli {
 
         @Parameter(names = "--name", description = "Install the solver version under this custom name (<solver_name>:<name>), instead of the default (<solver_name>:<solver_version>)", required = true)
         String name;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(final SmtLibSolverManager smtLibSolverManager, final Logger logger) throws SmtLibSolverInstallerException {
+            smtLibSolverManager.installGeneric(
+                name,
+                Path.of(solverPath),
+                (solverArgs == null ? "" : solverArgs).split(" ")
+            );
+        }
     }
 
     @Parameters(commandDescription = "Uninstalls the solver")
-    static class UninstallCommand {
+    static class UninstallCommand implements Command {
         static final String COMMAND = "uninstall";
 
         @Parameter(description = "The solver to uninstall (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
         String solver;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            final var solver = decodeVersionString(this.solver);
+            smtLibSolverManager.uninstall(solver.get1(), solver.get2());
+        }
     }
 
     @Parameters(commandDescription = "Renames one installed solver version")
-    static class RenameCommand {
+    static class RenameCommand implements Command {
         static final String COMMAND = "rename";
 
         @Parameter(description = "The solver to reinstall (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
@@ -86,18 +139,41 @@ public class SmtLibCli {
 
         @Parameter(names = "--name", description = "Rename the solver version to this custom name (<solver_name>:<name>).", required = true)
         String name;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            final var solver = decodeVersionString(this.solver);
+            smtLibSolverManager.rename(solver.get1(), solver.get2(), name);
+        }
     }
 
     @Parameters(commandDescription = "Prints info about the solver")
-    static class GetInfoCommand {
+    static class GetInfoCommand implements Command {
         static final String COMMAND = "get-info";
 
         @Parameter(description = "The solver to print info about (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
         String solver;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            final var solver = decodeVersionString(this.solver);
+            final var info = smtLibSolverManager.getInfo(solver.get1(), solver.get2());
+            logger.write(Logger.Level.RESULT, "%s\n", info);
+        }
     }
 
     @Parameters(commandDescription = "Edits the runtime arguments passed to the solver")
-    static class EditArgsCommand {
+    static class EditArgsCommand implements Command {
         static final String COMMAND = "edit-args";
 
         @Parameter(description = "The solver, whose runtime arguments are to be edited (<solver_name>:<solver_version>)", validateWith = SolverNameAndVersionValidator.class, required = true)
@@ -105,22 +181,94 @@ public class SmtLibCli {
 
         @Parameter(names = "--print", description = "Print the path instead of opening it for editing")
         boolean print = false;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            final var solver = decodeVersionString(this.solver);
+            final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
+
+            if(print) {
+                logger.write(Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath()));
+            }
+            else if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.EDIT)) {
+                try {
+                    Desktop.getDesktop().edit(argsFilePath.toFile());
+                } catch (IOException e) {
+                    throw new SmtLibSolverInstallerException(e);
+                }
+            }
+            else {
+                logger.write(Logger.Level.MAINSTEP, "Open the following text file in your favourite editor, and edit the content:\n");
+                logger.write(Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath()));
+            }
+        }
     }
 
     @Parameters(commandDescription = "Lists installed solvers and their versions")
-    static class ListInstalledCommand {
+    static class ListInstalledCommand implements Command {
         static final String COMMAND = "list-installed";
 
         @Parameter(description = "The solver, whose installed versions are to be listed (<solver_name>)", validateWith = SolverNameValidator.class)
         String solver;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            if(solver != null) {
+                logger.write(Logger.Level.MAINSTEP, "The currently installed versions of solver %s are: \n", solver);
+                smtLibSolverManager.getInstalledVersions(solver).forEach(version -> {
+                    logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver, version);
+                });
+            }
+            else {
+                logger.write(Logger.Level.MAINSTEP, "The currently installed solvers are: \n");
+                smtLibSolverManager.getInstalledVersions().forEach(solver -> {
+                    solver.get2().forEach(version -> {
+                        logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver.get1(), version);
+                    });
+                });
+            }
+        }
     }
 
     @Parameters(commandDescription = "Lists supported solvers and their versions")
-    static class ListSupportedCommand {
+    static class ListSupportedCommand implements Command {
         static final String COMMAND = "list-supported";
 
         @Parameter(description = "The solver, whose supported versions are to be listed (<solver_name>)", validateWith = SolverNameValidator.class)
         String solver;
+
+        @Override
+        public String getCommand() {
+            return COMMAND;
+        }
+
+        @Override
+        public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger) throws SmtLibSolverInstallerException {
+            if(solver != null) {
+                logger.write(Logger.Level.MAINSTEP, "The currently supported versions of solver %s are: \n", solver);
+                smtLibSolverManager.getSupportedVersions(solver).forEach(version -> {
+                    logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver, version);
+                });
+            }
+            else {
+                logger.write(Logger.Level.MAINSTEP, "The currently supported solvers are: \n");
+                smtLibSolverManager.getSupportedVersions().forEach(solver -> {
+                    solver.get2().forEach(version -> {
+                        logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver.get1(), version);
+                    });
+                });
+            }
+        }
     }
 
     public SmtLibCli(final String[] args) {
@@ -134,27 +282,20 @@ public class SmtLibCli {
 
     private void run() {
         final var mainParams = new MainParams();
-        final var installCommand = new InstallCommand();
-        final var installGenericCommand = new InstallGenericCommand();
-        final var uninstallCommand = new UninstallCommand();
-        final var renameCommand = new RenameCommand();
-        final var getInfoCommand = new GetInfoCommand();
-        final var editArgsCommand = new EditArgsCommand();
-        final var listInstalledCommand = new ListInstalledCommand();
-        final var listSupportedCommand = new ListSupportedCommand();
+        List<Command> commands = List.of(
+            new InstallCommand(),
+            new InstallGenericCommand(),
+            new UninstallCommand(),
+            new RenameCommand(),
+            new GetInfoCommand(),
+            new EditArgsCommand(),
+            new ListInstalledCommand(),
+            new ListSupportedCommand()
+        );
 
-        final var jc = JCommander.newBuilder()
-            .addObject(mainParams)
-            .addCommand(InstallCommand.COMMAND, installCommand)
-            .addCommand(InstallGenericCommand.COMMAND, installGenericCommand)
-            .addCommand(UninstallCommand.COMMAND, uninstallCommand)
-            .addCommand(RenameCommand.COMMAND, renameCommand)
-            .addCommand(GetInfoCommand.COMMAND, getInfoCommand)
-            .addCommand(EditArgsCommand.COMMAND, editArgsCommand)
-            .addCommand(ListInstalledCommand.COMMAND, listInstalledCommand)
-            .addCommand(ListSupportedCommand.COMMAND, listSupportedCommand)
-            .programName(JAR_NAME)
-            .build();
+        final var jcBuilder = JCommander.newBuilder().addObject(mainParams);
+        commands.forEach(command -> jcBuilder.addCommand(command.getCommand(), command));
+        final var jc = jcBuilder.programName(JAR_NAME).build();
 
         try {
             jc.parse(args);
@@ -181,105 +322,15 @@ public class SmtLibCli {
                 return;
             }
 
-            switch(jc.getParsedCommand()) {
-                case InstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(installCommand.solver);
-
-                    if(solver.get1().equals(smtLibSolverManager.getGenericInstallerName())) {
-                        logger.write(Logger.Level.RESULT, "To install a generic solver, use the \"%s\" command", InstallGenericCommand.COMMAND);
-                        return;
-                    }
-
-                    if(installCommand.name != null) {
-                        smtLibSolverManager.install(solver.get1(), solver.get2(), installCommand.name, installCommand.solverPath != null ? Path.of(installCommand.solverPath) : null, installCommand.temptMurphy);
-                    }
-                    else {
-                        smtLibSolverManager.install(solver.get1(), solver.get2(), solver.get2(), installCommand.solverPath != null ? Path.of(installCommand.solverPath) : null, installCommand.temptMurphy);
-                    }
-
-                    return;
-                }
-                case InstallGenericCommand.COMMAND: {
-                    smtLibSolverManager.installGeneric(
-                        installGenericCommand.name,
-                        Path.of(installGenericCommand.solverPath),
-                        (installGenericCommand.solverArgs == null ? "" : installGenericCommand.solverArgs).split(" ")
-                    );
-                    return;
-                }
-                case UninstallCommand.COMMAND: {
-                    final var solver = decodeVersionString(uninstallCommand.solver);
-                    smtLibSolverManager.uninstall(solver.get1(), solver.get2());
-                    return;
-                }
-                case RenameCommand.COMMAND: {
-                    final var solver = decodeVersionString(renameCommand.solver);
-                    smtLibSolverManager.rename(solver.get1(), solver.get2(), renameCommand.name);
-                    return;
-                }
-                case GetInfoCommand.COMMAND: {
-                    final var solver = decodeVersionString(getInfoCommand.solver);
-                    final var info = smtLibSolverManager.getInfo(solver.get1(), solver.get2());
-                    logger.write(Logger.Level.RESULT, "%s\n", info);
-                    return;
-                }
-                case EditArgsCommand.COMMAND: {
-                    final var solver = decodeVersionString(editArgsCommand.solver);
-                    final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
-
-                    if(editArgsCommand.print) {
-                        logger.write(Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath().toString()));
-                    }
-                    else if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.EDIT)) {
-                        Desktop.getDesktop().edit(argsFilePath.toFile());
-                    }
-                    else {
-                        logger.write(Logger.Level.MAINSTEP, "Open the following text file in your favourite editor, and edit the content:\n");
-                        logger.write(Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath().toString()));
-                    }
-
-                    return;
-                }
-                case ListInstalledCommand.COMMAND: {
-                    if(listInstalledCommand.solver != null) {
-                        logger.write(Logger.Level.MAINSTEP, "The currently installed versions of solver %s are: \n", listInstalledCommand.solver);
-                        smtLibSolverManager.getInstalledVersions(listInstalledCommand.solver).forEach(version -> {
-                            logger.write(Logger.Level.RESULT, "\t%s:%s\n", listInstalledCommand.solver, version);
-                        });
-                    }
-                    else {
-                        logger.write(Logger.Level.MAINSTEP, "The currently installed solvers are: \n");
-                        smtLibSolverManager.getInstalledVersions().forEach(solver -> {
-                            solver.get2().forEach(version -> {
-                                logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver.get1(), version);
-                            });
-                        });
-                    }
-                    return;
-                }
-                case ListSupportedCommand.COMMAND: {
-                    if(listSupportedCommand.solver != null) {
-                        logger.write(Logger.Level.MAINSTEP, "The currently supported versions of solver %s are: \n", listSupportedCommand.solver);
-                        smtLibSolverManager.getSupportedVersions(listSupportedCommand.solver).forEach(version -> {
-                            logger.write(Logger.Level.RESULT, "\t%s:%s\n", listSupportedCommand.solver, version);
-                        });
-                    }
-                    else {
-                        logger.write(Logger.Level.MAINSTEP, "The currently supported solvers are: \n");
-                        smtLibSolverManager.getSupportedVersions().forEach(solver -> {
-                            solver.get2().forEach(version -> {
-                                logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver.get1(), version);
-                            });
-                        });
-                    }
-                    return;
-                }
-                default: {
-                    logger.write(Logger.Level.RESULT, "Unknown command\n");
-                    jc.usage();
+            final var parsedCommand = jc.getParsedCommand();
+            for(final var command : commands) {
+                if(command.getCommand().equals(parsedCommand)) {
+                    command.handle(smtLibSolverManager, logger);
                     return;
                 }
             }
+            logger.write(Logger.Level.RESULT, "Unknown command\n");
+            jc.usage();
         }
         catch (SmtLibSolverInstallerException e) {
             logger.write(Logger.Level.RESULT, "%s\n", e.getMessage());

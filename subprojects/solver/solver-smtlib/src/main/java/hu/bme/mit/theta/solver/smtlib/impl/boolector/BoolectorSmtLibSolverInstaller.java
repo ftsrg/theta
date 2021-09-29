@@ -60,7 +60,9 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     }
 
     @Override
-    protected void uninstallSolver(final Path installDir, final String version) { }
+    protected void uninstallSolver(final Path installDir, final String version) {
+        // Default uninstall is suitable
+    }
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {

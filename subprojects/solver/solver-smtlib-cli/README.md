@@ -33,12 +33,12 @@ The tool supports the following commands and their arguments:
     * `--solver-path`: The path of the solver to install. The solver will not be downloaded, instead the binary on this path will be used. Caveat emptor: the version must be specified correctly, there is no automatic detection.
     * `--tempt-murphy`: Enables the installation of unsupported solver versions. If you enable this, you can expect things to break, as these solvers were not tested with Theta at all!
 * `install-generic`: Installs an SMT-LIB compatible solver with the generic driver. For more information see the [Generic driver](#Generic-driver) section.
-    * `--solver-path` **[required]**: Denotes the path to the binary of the solver.
+    * `--solver-path` **(required)**: Denotes the path to the binary of the solver.
     * `--solver-args`: The command line arguments to pass to the generic solver.
-    * `--name` **[required]**: Install the solver under this custom name (generic:<name>)
+    * `--name` **(required)**: Install the solver under this custom name (generic:<name>)
 * `uninstall <solver_name>:<solver_version>`: Uninstalls a solver with the given name and version from the current solver registry. (See the list of installed solvers and their versions with `list-installed`)
 * `rename <solver_name>:<solver_version>`: Renames one installed solver version. (See the list of installed solvers and their versions with `list-installed`)
-  * `--name` **[required]**: Rename the solver version to this custom name (<solver_name>:<name>).
+  * `--name` **(required)**: Rename the solver version to this custom name (<solver_name>:<name>).
 * `get-info <solver_name>:<solver_version>`: Gets the stored information about the solver with the given name and version in the current solver registry. (See the list of installed solvers and their versions with `list-installed`)
 * `edit-args <solver_name>:<solver_version>`: Edits the command line arguments of the solver with the given name and version. The command opens a txt file that stores the command line arguments to edit with the default editor, or prints the path of the file to edit if the default editor is not applicable (e.g. CLI). (See the list of installed solvers and their versions with `list-installed`) 
     * `--print`: If given, the path of the file to edit will be printed instead of opening.
@@ -75,7 +75,7 @@ Currently, the following solvers are supported.
 * MathSAT5: Supported with interpolation
 * Princess: Supported with interpolation
 * SMTInterpol: Supported with interpolation
-* Yices2: *Partial, error-prone support*
+* Yices2: _Partial, error-prone support_
 * Z3
     * `4.4.0` - `4.6.0`: Supported with interpolation.
     * `4.7.1` - : Supported without interpolation. Interpolation was removed in `4.7.0`.

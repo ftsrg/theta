@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.solver;
 
-import java.util.Collection;
 import java.util.List;
 
 /**

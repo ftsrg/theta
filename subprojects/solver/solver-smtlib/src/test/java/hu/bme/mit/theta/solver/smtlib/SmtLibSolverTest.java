@@ -34,7 +34,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +45,9 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -100,7 +97,7 @@ public final class SmtLibSolverTest {
         );
         assertNotNull(expr);
         assertTrue(expr instanceof ForallExpr);
-        assertEquals(Array(x.getType(), Int()), ((ForallExpr) expr).getParamDecls().get(0).getType());
+        assertEquals(Array(x.getType(), IntExprs.Int()), ((ForallExpr) expr).getParamDecls().get(0).getType());
     }
 
     @Test
@@ -108,11 +105,11 @@ public final class SmtLibSolverTest {
         final Solver solver = solverFactory.createSolver();
 
         // Create two integer constants x and y
-        final ConstDecl<IntType> cx = Const("x", Int());
-        final ConstDecl<IntType> cy = Const("y", Int());
+        final ConstDecl<IntType> cx = Const("x", IntExprs.Int());
+        final ConstDecl<IntType> cy = Const("y", IntExprs.Int());
 
         // Add x == y + 1 to the solver
-        solver.add(IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), Int(1))));
+        solver.add(IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), IntExprs.Int(1))));
 
         // Check, the expression should be satisfiable
         SolverStatus status = solver.check();
@@ -131,7 +128,7 @@ public final class SmtLibSolverTest {
         final UCSolver solver = solverFactory.createUCSolver();
 
         final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
-        final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
+        final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), BoolExprs.True());
 
         solver.push();
         solver.track(expr);
@@ -198,13 +195,13 @@ public final class SmtLibSolverTest {
     public void testFunc() {
         // Arrange
         final Solver solver = solverFactory.createSolver();
-        final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
+        final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(IntExprs.Int(), IntExprs.Int()));
         final Expr<FuncType<IntType, IntType>> a = ca.getRef();
-        final ParamDecl<IntType> px = Param("x", Int());
+        final ParamDecl<IntType> px = Param("x", IntExprs.Int());
         final Expr<IntType> x = px.getRef();
 
-        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, Int(0)), IntExprs.Eq(App(a, x), Int(0)))));
-        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, Int(1)), IntExprs.Eq(App(a, x), Int(1)))));
+        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, IntExprs.Int(0)), IntExprs.Eq(App(a, x), IntExprs.Int(0)))));
+        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, IntExprs.Int(1)), IntExprs.Eq(App(a, x), IntExprs.Int(1)))));
 
         // Act
         final SolverStatus status = solver.check();
@@ -221,10 +218,10 @@ public final class SmtLibSolverTest {
     public void testArray() {
         final Solver solver = solverFactory.createSolver();
 
-        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(IntExprs.Int(), IntExprs.Int()));
 
-        solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
-        solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(1), Int(2)), arr.getRef()));
+        solver.add(ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(0), IntExprs.Int(1)), arr.getRef()));
+        solver.add(ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(1), IntExprs.Int(2)), arr.getRef()));
 
         // Check, the expression should be satisfiable
         SolverStatus status = solver.check();
@@ -236,8 +233,8 @@ public final class SmtLibSolverTest {
         assertTrue(val instanceof ArrayLitExpr);
         var valLit = (ArrayLitExpr<IntType, IntType>)val;
         assertTrue(2 <= valLit.getElements().size());
-        assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
-        assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+        assertEquals(IntExprs.Int(1), Read(valLit, IntExprs.Int(0)).eval(ImmutableValuation.empty()));
+        assertEquals(IntExprs.Int(2), Read(valLit, IntExprs.Int(1)).eval(ImmutableValuation.empty()));
     }
 
     @Test
@@ -264,7 +261,6 @@ public final class SmtLibSolverTest {
         final Solver solver = solverFactory.createSolver();
 
         final ConstDecl<BvType> cx = Const("x", BvExprs.BvType(4));
-        final ConstDecl<BvType> cy = Const("y", BvExprs.BvType(4));
         final ConstDecl<BvType> cz = Const("z", BvExprs.BvType(4));
 
         solver.push();

@@ -122,6 +122,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                     }
                     break;
                 case READY:
+                default:
                     throw new AssertionError();
             }
         }

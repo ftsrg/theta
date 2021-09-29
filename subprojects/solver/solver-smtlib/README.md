@@ -15,9 +15,9 @@ The [SMT-LIB2 standard](http://smtlib.cs.uiowa.edu/) is an international initiat
 
 However, there are some limitation to this standard, both in terms of its content and its practical application by the solvers that support it:
 
-- There are no standard way of denoting an array literal in SMT-LIB. Each solver that support the said theory used to come up with a solution of their own in this matter. This lead to the creation of the `as-array` (Z3), and the `as const` (CVC4, MathSAT) constructs. Nowadays, solvers tend to support the `as const` construct (event the newer versions of Z3).
-- There are no standard way of denoting interpolation. Solvers that support interpolation (Z3, SMTInterpol, MathSAT) have their own extension added to SMT-LIB to support this feature.
-- The support for the standard tends to be loose in some solvers. For example, MathSAT expects a numeric argument to `push` and `pop`, does not default to 1, like the standard. Moreover, MathSAT uses a custom output language when outputting models, that is not part of the standard. 
+* There are no standard way of denoting an array literal in SMT-LIB. Each solver that support the said theory used to come up with a solution of their own in this matter. This lead to the creation of the `as-array` (Z3), and the `as const` (CVC4, MathSAT) constructs. Nowadays, solvers tend to support the `as const` construct (event the newer versions of Z3).
+* There are no standard way of denoting interpolation. Solvers that support interpolation (Z3, SMTInterpol, MathSAT) have their own extension added to SMT-LIB to support this feature.
+* The support for the standard tends to be loose in some solvers. For example, MathSAT expects a numeric argument to `push` and `pop`, does not default to 1, like the standard. Moreover, MathSAT uses a custom output language when outputting models, that is not part of the standard. 
 
 This list is unfortunately far from being complete, so one has to be careful when integrating a new solver with SMT-LIB support.
 
@@ -29,20 +29,20 @@ The issues of compatibility described in the earlier section warranted to be con
 
 In general, to have an SMT-LIB supporting solver, components implementing the following interfaces has to be developed:
 
-- `SmtLibTransformationManager`: Transforms anything in Theta to their SMT-LIB counterpart. It uses further components for this feature:
-    - `SmtLibTypeTransformer`: Transforms a Theta type to and SMT-LIB type.
-    - `SmtLibDeclTransformer`: Transforms a Theta declaration to an SMT-LIB declaration.
-    - `SmtLibExprTransformer`: Transforms a Theta expression to an SMT-LIB expression.
-    - `SmtLibSymbolTable`: Caches the Theta declarations and their SMT-LIB counterpart.
-- `SmtLibTermTransformer`: Transforms an SMT-LIB expression to a Theta expression. It provides methods that ensure type-safety.
-- `SmtLibSolverBinary`: Provides an interface to communicate with the binary of the solver.
-- `SmtLibSolverInstaller`: An interface to support installation scripts and solver management.
+* `SmtLibTransformationManager`: Transforms anything in Theta to their SMT-LIB counterpart. It uses further components for this feature:
+    * `SmtLibTypeTransformer`: Transforms a Theta type to and SMT-LIB type.
+    * `SmtLibDeclTransformer`: Transforms a Theta declaration to an SMT-LIB declaration.
+    * `SmtLibExprTransformer`: Transforms a Theta expression to an SMT-LIB expression.
+    * `SmtLibSymbolTable`: Caches the Theta declarations and their SMT-LIB counterpart.
+* `SmtLibTermTransformer`: Transforms an SMT-LIB expression to a Theta expression. It provides methods that ensure type-safety.
+* `SmtLibSolverBinary`: Provides an interface to communicate with the binary of the solver.
+* `SmtLibSolverInstaller`: An interface to support installation scripts and solver management.
 
 The SMT-LIB grammar that the component supports is defined using ANTLR. The ANTLR grammar can be found in the source folder (`SMTLIBv2.g4`).
 
 The components above are integrated into a working solver implementation with Theta's solver interface by the following classes:
-- `SmtLibSolver`: Provides a solver implementing Theta's `Solver` and `UCSolver` interface supporting basic satisfiability checks, model querying and unsat core querying.
-- `BaseSmtLibItpSolver`: Provides a solver implementing Theta's `ItpSolver` interface supporting interpolating solvers. **Note**: As interpolation is not part of the SMT-LIB standard, this class is abstract. Each solver supporting interpolation has to extend this class and configure it properly.
+* `SmtLibSolver`: Provides a solver implementing Theta's `Solver` and `UCSolver` interface supporting basic satisfiability checks, model querying and unsat core querying.
+* `BaseSmtLibItpSolver`: Provides a solver implementing Theta's `ItpSolver` interface supporting interpolating solvers. **Note**: As interpolation is not part of the SMT-LIB standard, this class is abstract. Each solver supporting interpolation has to extend this class and configure it properly.
 
 ### Generic interface implementation
 
@@ -52,10 +52,10 @@ The interfaces above have a default, generic implementation that works with solv
 
 Right now, the solver-smtlib subproject supports the following solvers. Each package contains the specialization of the interfaces above that communicate with the said solver:
 
-- **Boolector** (`hu.bme.mit.theta.solver.smtlib.impl.boolector`): The solver specializes in bitvector and array theories, but lacks support for others. It cannot interpolate or produce unsat cores, so it can only be used for abstraction.
-- **CVC4** (`hu.bme.mit.theta.solver.smtlib.impl.cvc4`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).
-- **Mathsat5** (`hu.bme.mit.theta.solver.smtlib.impl.mathsat`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, floating points). It also supports interpolation (binary, sequential and tree interpolation) with many of them.
-- **Princess** (`hu.bme.mit.theta.solver.smtlib.impl.princess`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors). It also supports interpolation (binary, sequential and tree interpolation) with many of them.
-- **SMTInterpol** (`hu.bme.mit.theta.solver.smtlib.impl.smtinterpol`): The solver specializes in integer and rational theories. It also supports interpolation (binary, sequential and tree interpolation) with them.
-- **Yices2** (`hu.bme.mit.theta.solver.smtlib.impl.yices2`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).
-- **Z3** (`hu.bme.mit.theta.solver.smtlib.impl.z3`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, functions), and supports interpolation as well (binary, sequential and tree interpolation) up to version 4.7.
+* **Boolector** (`hu.bme.mit.theta.solver.smtlib.impl.boolector`): The solver specializes in bitvector and array theories, but lacks support for others. It cannot interpolate or produce unsat cores, so it can only be used for abstraction.
+* **CVC4** (`hu.bme.mit.theta.solver.smtlib.impl.cvc4`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).
+* **Mathsat5** (`hu.bme.mit.theta.solver.smtlib.impl.mathsat`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, floating points). It also supports interpolation (binary, sequential and tree interpolation) with many of them.
+* **Princess** (`hu.bme.mit.theta.solver.smtlib.impl.princess`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors). It also supports interpolation (binary, sequential and tree interpolation) with many of them.
+* **SMTInterpol** (`hu.bme.mit.theta.solver.smtlib.impl.smtinterpol`): The solver specializes in integer and rational theories. It also supports interpolation (binary, sequential and tree interpolation) with them.
+* **Yices2** (`hu.bme.mit.theta.solver.smtlib.impl.yices2`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors).
+* **Z3** (`hu.bme.mit.theta.solver.smtlib.impl.z3`): The solver supports basic satisfiability problems for numerous theories (integers, rationals, quantifiers, arrays, bitvectors, functions), and supports interpolation as well (binary, sequential and tree interpolation) up to version 4.7.

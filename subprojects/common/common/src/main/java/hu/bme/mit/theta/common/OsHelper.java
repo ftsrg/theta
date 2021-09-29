@@ -49,9 +49,9 @@ public final class OsHelper {
 	public static Architecture getArch() {
 		final String arch = StandardSystemProperty.OS_ARCH.value();
 
-		if (arch.toLowerCase().equals("x86")) {
+		if (arch.equalsIgnoreCase("x86")) {
 			return Architecture.X86;
-		} else if (arch.toLowerCase().equals("amd64")) {
+		} else if (arch.equalsIgnoreCase("amd64")) {
 			return Architecture.X64;
 		} else {
 			throw new UnsupportedOperationException("Architecture \"" + arch + "\" not supported.");

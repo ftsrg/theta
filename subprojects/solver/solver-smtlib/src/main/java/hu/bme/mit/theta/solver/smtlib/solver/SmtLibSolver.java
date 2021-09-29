@@ -13,13 +13,13 @@ import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GetModelResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GetUnsatCoreResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
-import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class SmtLibSolver implements UCSolver, Solver {

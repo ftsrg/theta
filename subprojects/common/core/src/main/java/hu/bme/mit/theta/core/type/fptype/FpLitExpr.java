@@ -7,8 +7,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 
-import java.util.Arrays;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr;

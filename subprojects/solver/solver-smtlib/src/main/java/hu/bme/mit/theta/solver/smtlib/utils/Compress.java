@@ -27,6 +27,8 @@ public class Compress {
             case TARGZ:
                 extract(new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(inputStream))), extractDir);
                 break;
+            default:
+                throw new AssertionError();
         }
     }
 

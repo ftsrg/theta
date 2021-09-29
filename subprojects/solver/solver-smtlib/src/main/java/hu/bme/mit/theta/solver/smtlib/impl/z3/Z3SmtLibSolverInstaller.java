@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.solver.smtlib.impl.z3;
 
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.utils.Compress;
-import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.utils.Compress;
+import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
 import static hu.bme.mit.theta.common.OsHelper.Architecture.X86;
 import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
@@ -132,7 +130,9 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     }
 
     @Override
-    protected void uninstallSolver(Path installDir, String version) { }
+    protected void uninstallSolver(Path installDir, String version) {
+        // Default uninstall is suitable
+    }
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {

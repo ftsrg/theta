@@ -80,7 +80,7 @@ public final class Z3SolverTest {
 		final ConstDecl<IntType> cy = Const("y", Int());
 
 		// Add x == y + 1 to the solver
-		solver.add(IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), Int(1))));
+		solver.add(Eq(cx.getRef(), Add(cy.getRef(), Int(1))));
 
 		// Check, the expression should be satisfiable
 		SolverStatus status = solver.check();
@@ -122,8 +122,8 @@ public final class Z3SolverTest {
 		final ParamDecl<IntType> px = Param("x", Int());
 		final Expr<IntType> x = px.getRef();
 
-		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, Int(0)), IntExprs.Eq(App(a, x), Int(0)))));
-		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, Int(1)), IntExprs.Eq(App(a, x), Int(1)))));
+		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
+		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
 
 		// Act
 		final SolverStatus status = solver.check();
@@ -193,7 +193,7 @@ public final class Z3SolverTest {
 		final ConstDecl<IntType> cx = Const("x", Int());
 		final ConstDecl<IntType> cy = Const("y", Int());
 
-		IntEqExpr eqExpr = IntExprs.Eq(cx.getRef(), IntExprs.Add(cy.getRef(), Int(1)));
+		IntEqExpr eqExpr = Eq(cx.getRef(), Add(cy.getRef(), Int(1)));
 		solver.add(eqExpr);
 		SolverStatus status = solver.check();
 		assertTrue(status.isSat());
@@ -455,9 +455,4 @@ public final class Z3SolverTest {
 
 		solver.pop();
 	}
-
-	private static BvLitExpr uint16ToBvLitExpr(int value) {
-		return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(value), 16);
-	}
-
 }

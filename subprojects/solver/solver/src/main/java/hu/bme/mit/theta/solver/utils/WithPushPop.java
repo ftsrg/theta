@@ -15,10 +15,9 @@
  */
 package hu.bme.mit.theta.solver.utils;
 
-import java.io.Closeable;
-
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverBase;
+
+import java.io.Closeable;
 
 /**
  * A helper class for automatic push and pop for solvers using the
