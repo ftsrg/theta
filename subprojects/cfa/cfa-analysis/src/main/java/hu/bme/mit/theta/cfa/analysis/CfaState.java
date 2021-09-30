@@ -68,11 +68,6 @@ public final class CfaState<S extends ExprState> implements ExprState {
 	}
 
 	@Override
-	public boolean isTop() {
-		return state.isTop();
-	}
-
-	@Override
 	public Expr<BoolType> toExpr() {
 		// TODO Should be loc = l and toExpr(state)
 		return state.toExpr();

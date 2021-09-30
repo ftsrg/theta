@@ -54,6 +54,10 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
         return new BvType(size, signed);
     }
 
+    public BvType withSize(final int size) {
+        return new BvType(size, signed);
+    }
+
     public int getSize() {
         return size;
     }

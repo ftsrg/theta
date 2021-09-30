@@ -53,8 +53,8 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 		}
 		else if (that instanceof CInteger) {
 			if(that.width() < type.width()) {
-				if(that instanceof Unsigned) return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
-				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
+				if(that instanceof Unsigned) return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width(),true));
+				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width(),true));
 			} else if (that.width() > type.width()) {
 				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
 			} else return param.withOps(param.getOps());
@@ -73,7 +73,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 		else if (that instanceof CInteger) {
 			if(that.width() < type.width()) {
 				if(that instanceof Signed) param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
-				return BvExprs.SExt(cast(param, BvType.of(that.width())), BvType.of(type.width()));
+				return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
 			} else if (that.width() > type.width()) {
 				return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
 			} else return param.withOps(param.getOps());

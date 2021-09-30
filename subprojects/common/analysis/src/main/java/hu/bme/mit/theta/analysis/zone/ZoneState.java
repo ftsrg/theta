@@ -153,10 +153,6 @@ public final class ZoneState implements ExprState {
 
 	////
 
-	public boolean isTop() {
-		return DBM.top(Collections.emptySet()).getRelation(dbm) == DbmRelation.EQUAL;
-	}
-
 	@Override
 	public boolean isBottom() {
 		return !dbm.isConsistent();

@@ -74,7 +74,7 @@ public final class BvExtractExpr implements Expr<BvType> {
 
     @Override
     public BvType getType() {
-        return BvType.of(until.getValue().subtract(from.getValue()).intValue());
+        return bitvec.getType().withSize(until.getValue().subtract(from.getValue()).intValue());
     }
 
     @Override

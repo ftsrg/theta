@@ -125,11 +125,6 @@ public abstract class ExplState extends Valuation implements ExprState {
 		}
 
 		@Override
-		public boolean isTop() {
-			return val.getDecls().isEmpty();
-		}
-
-		@Override
 		public String toString() {
 			return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
 					.addAll(val.getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))

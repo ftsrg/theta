@@ -7,6 +7,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
