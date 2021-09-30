@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -209,7 +208,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			return Assign(local, global.getRef());
+			return Skip();
 		}
 
 		public boolean isAtomic() {
@@ -274,7 +273,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			return Assign(global, local.getRef());
+			return Skip();
 		}
 
 		@Override
@@ -284,7 +283,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public String toString() {
-			return Utils.lispStringBuilder("Load").add(global).add(local).toString();
+			return Utils.lispStringBuilder("Store").add(global).add(local).toString();
 		}
 	}
 

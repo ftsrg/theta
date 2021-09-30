@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.core.type.functype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements Expr<ResultType> {
 
@@ -86,8 +85,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	@Override
 	public Expr<ResultType> withOps(final List<? extends Expr<?>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return cast(create(ops.get(0), ops.get(1)), getType());
 	}
 
 	public FuncAppExpr<ParamType, ResultType> with(final Expr<FuncType<ParamType, ResultType>> func,

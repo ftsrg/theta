@@ -58,18 +58,15 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaAction;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaAnalysis;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaPrec;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaPrecRefiner;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaState;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaLts;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAnalysis;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeChecker;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeLts;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativePrec;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativePrecRefiner;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -174,52 +171,50 @@ public class XcfaConfigBuilder {
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
-		final LTS<XcfaState<?>, XcfaAction> lts = new XcfaLts();
+		final LTS<XcfaDeclarativeState<?>, XcfaDeclarativeAction> lts = new XcfaDeclarativeLts();
 		
-		final List<XcfaLocation> initLocs = xcfa.getProcesses().stream().map(process -> process.getMainProcedure().getInitLoc()).collect(Collectors.toList());
-
 		if (domain == Domain.EXPL) {
-			final Analysis<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> analysis = XcfaAnalysis
-					.create(initLocs, ExplStmtAnalysis.create(solver, True(), maxEnum));
-			final ArgBuilder<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
-					analysis, XcfaState::isError, true);
-			final Abstractor<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> abstractor = BasicAbstractor
-					.builder(argBuilder).projection(XcfaState::getProcessLocs)
+			final Analysis<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> analysis = XcfaDeclarativeAnalysis
+					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), ExplStmtAnalysis.create(solver, True(), maxEnum));
+			final ArgBuilder<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
+					analysis, XcfaDeclarativeState::isError, true);
+			final Abstractor<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> abstractor = BasicAbstractor
+					.builder(argBuilder).projection(XcfaDeclarativeState::getCurrentLoc)
 					.waitlist(PriorityWaitlist.create(search.getComp()))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
-			Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> refiner;
+			Refiner<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> refiner;
 
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), solver)),
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
+							XcfaDeclarativePrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UCB:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUCBChecker.create(True(), True(), solver),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case NWT_SP:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV(),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -227,7 +222,7 @@ public class XcfaConfigBuilder {
 				case NWT_WP:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV(),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -235,7 +230,7 @@ public class XcfaConfigBuilder {
 				case NWT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV(),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -243,7 +238,7 @@ public class XcfaConfigBuilder {
 				case NWT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV(),
-							XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -251,7 +246,7 @@ public class XcfaConfigBuilder {
 				case NWT_IT_SP:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV(),
-						XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -259,7 +254,7 @@ public class XcfaConfigBuilder {
 				case NWT_IT_WP:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV(),
-						XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -267,7 +262,7 @@ public class XcfaConfigBuilder {
 				case NWT_IT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV(),
-						XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -275,7 +270,7 @@ public class XcfaConfigBuilder {
 				case NWT_IT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
 						ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV(),
-						XcfaPrecRefiner.create(new ItpRefToExplPrec()),
+						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
 					);
@@ -285,17 +280,17 @@ public class XcfaConfigBuilder {
 							domain + " domain does not support " + refinement + " refinement.");
 			}
 
-			final SafetyChecker<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> checker = CegarChecker
+			final SafetyChecker<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			XcfaPrec<ExplPrec> prec;
+			XcfaDeclarativePrec<ExplPrec> prec;
 
 			switch (initPrec){
 				case EMPTY:
-					prec = XcfaPrec.create(ExplPrec.empty());
+					prec = XcfaDeclarativePrec.create(ExplPrec.empty());
 					break;
 				case ALLVARS:
-					prec = XcfaPrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)));
+					prec = XcfaDeclarativePrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)));
 					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
@@ -319,12 +314,12 @@ public class XcfaConfigBuilder {
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
-			final Analysis<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>> analysis = XcfaAnalysis
-					.create(initLocs, PredAnalysis.create(solver, predAbstractor, True()));
-			final ArgBuilder<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
-					analysis, XcfaState::isError, true);
-			final Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>> abstractor = BasicAbstractor
-					.builder(argBuilder).projection(XcfaState::getProcessLocs)
+			final Analysis<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> analysis = XcfaDeclarativeAnalysis
+					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), PredAnalysis.create(solver, predAbstractor, True()));
+			final ArgBuilder<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
+					analysis, XcfaDeclarativeState::isError, true);
+			final Abstractor<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> abstractor = BasicAbstractor
+					.builder(argBuilder).projection(XcfaDeclarativeState::getCurrentLoc)
 					.waitlist(PriorityWaitlist.create(search.getComp()))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
@@ -335,7 +330,7 @@ public class XcfaConfigBuilder {
 					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
 					break;
 				case BW_BIN_ITP:
-					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
+					exprTraceChecker = XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), solver));
 					break;
 				case SEQ_ITP:
 					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
@@ -375,27 +370,27 @@ public class XcfaConfigBuilder {
 							domain + " domain does not support " + refinement + " refinement.");
 			}
 			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
-			Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>> refiner;
+			Refiner<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> refiner;
 
 			if (refinement == Refinement.MULTI_SEQ) {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-						XcfaPrecRefiner.create(refToPrec), pruneStrategy, logger);
+						XcfaDeclarativePrecRefiner.create(refToPrec), pruneStrategy, logger);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-						XcfaPrecRefiner.create(refToPrec), pruneStrategy, logger);
+						XcfaDeclarativePrecRefiner.create(refToPrec), pruneStrategy, logger);
 			}
 
-			final SafetyChecker<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>> checker = CegarChecker
+			final SafetyChecker<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			XcfaPrec<PredPrec> prec;
+			XcfaDeclarativePrec<PredPrec> prec;
 
 			switch (initPrec){
 				case EMPTY:
-					prec = XcfaPrec.create(PredPrec.of());
+					prec = XcfaDeclarativePrec.create(PredPrec.of());
 					break;
 				case ALLASSUMES:
-					prec = XcfaPrec.collectAssumes(xcfa);
+					prec = XcfaDeclarativePrec.collectAssumes(xcfa);
 					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +

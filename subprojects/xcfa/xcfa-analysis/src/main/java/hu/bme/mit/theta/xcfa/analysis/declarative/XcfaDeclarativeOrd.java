@@ -20,6 +20,8 @@ public class XcfaDeclarativeOrd<S extends ExprState> implements PartialOrd<XcfaD
 	@Override
 	public boolean isLeq(final XcfaDeclarativeState<S> state1, final XcfaDeclarativeState<S> state2) {
 		return 	state1.getCurrentLoc().equals(state2.getCurrentLoc()) &&
+				state1.getBacklog().size() == state2.getBacklog().size() &&
+				state1.getBacklog().keySet().equals(state2.getBacklog().keySet()) &&
 				partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState()) &&
 				state1.getStores().equals(state2.getStores()) &&
 				state1.getLoads().equals(state2.getLoads());
