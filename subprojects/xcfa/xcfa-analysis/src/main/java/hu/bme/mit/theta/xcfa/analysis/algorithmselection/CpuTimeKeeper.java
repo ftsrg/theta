@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import java.io.BufferedReader;
 import java.io.IOException;

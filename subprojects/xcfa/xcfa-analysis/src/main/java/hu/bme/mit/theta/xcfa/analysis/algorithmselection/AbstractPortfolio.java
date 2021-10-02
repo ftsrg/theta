@@ -1,12 +1,12 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3.ContextInterrupt;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,16 +35,16 @@ public abstract class AbstractPortfolio {
 		this.modelName = modelName;
 	}
 
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(CFA cfa, Duration initializationTime);
+	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime);
 
 	/**
 	 *
 	 * @param configuration
-	 * @param cfa
+	 * @param xcfa
 	 * @param timeout in ms
 	 * @return
 	 */
-	protected Tuple2<Result, Optional<SafetyResult<?,?>>> executeConfiguration(CegarConfiguration configuration, CFA cfa, long timeout) {
+	protected Tuple2<Result, Optional<SafetyResult<?,?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
 		logger.write(Logger.Level.MAINSTEP, "Executing ");
 		logger.write(Logger.Level.MAINSTEP, configuration.toString());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -56,7 +56,7 @@ public abstract class AbstractPortfolio {
 
 		com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
 
-		CegarAnalysisThread cegarAnalysisThread = new CegarAnalysisThread(cfa, logger, configuration);
+		CegarAnalysisThread cegarAnalysisThread = new CegarAnalysisThread(xcfa, logger, configuration);
 
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		cegarAnalysisThread.start();

@@ -1,25 +1,20 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
-import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.Logger;
-
-import java.util.concurrent.Future;
-
-import static com.google.common.base.Preconditions.checkState;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 
 class CegarAnalysisThread extends Thread {
-	private final CFA cfa;
+	private final XCFA xcfa;
 	private final CegarConfiguration configuration;
 	private final ConsoleLogger logger;
 
 	private volatile Result result = Result.UNKNOWN;
 	private volatile SafetyResult<?, ?> safetyResult;
 
-	CegarAnalysisThread(CFA cfa, ConsoleLogger logger, CegarConfiguration configuration) {
-		this.cfa = cfa;
+	CegarAnalysisThread(XCFA xcfa, ConsoleLogger logger, CegarConfiguration configuration) {
+		this.xcfa = xcfa;
 		this.logger = logger;
 		this.configuration = configuration;
 		this.safetyResult = null;
@@ -36,9 +31,8 @@ class CegarAnalysisThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			checkState(cfa.getErrorLoc().isPresent());
 			try {
-				safetyResult = configuration.buildConfiguration(cfa, cfa.getErrorLoc().get(), logger).check();
+				safetyResult = configuration.buildConfiguration(xcfa, logger).check();
 
 				if(safetyResult.isUnsafe() || safetyResult.isSafe()) {
 					result = Result.SUCCESS;

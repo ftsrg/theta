@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;

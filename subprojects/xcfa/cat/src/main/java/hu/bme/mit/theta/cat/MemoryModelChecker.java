@@ -107,18 +107,21 @@ public class MemoryModelChecker {
 			}
 		}
 
-		if(solver.getStatus().isSat()) {
-			solver.push();
+		while(solver.getStatus().isSat()) {
 			final Map<Decl<?>, LitExpr<?>> valuation = solver.getModel().toMap();
-			List<Tuple2<Object, Object>> currentRf = new ArrayList<>();
-			builder.reads.forEach((objects, integer) -> {
+			final List<Tuple2<Object, Object>> currentRf = new ArrayList<>();
+			Expr<BoolType> ref = True();
+			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : builder.reads.entrySet()) {
+				Tuple2<Decl<IntType>, Object> objects = entry.getKey();
 				final Object read = objects.get2();
 				final IntLitExpr value = (IntLitExpr) cast(valuation.get(objects.get1()), Int());
 				final int idx = (int) value.getValue().longValue();
 				final Object write = builder.idxFactLut.get(idx);
 				currentRf.add(Tuple2.of(write, read));
-			});
+				ref = And(ref, Eq(objects.get1().getRef(), value));
+			}
 			rf.add(currentRf);
+			solver.add(Not(ref));
 		}
 	}
 

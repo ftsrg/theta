@@ -65,7 +65,9 @@ import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeLts;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativePrec;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativePrecRefiner;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -80,26 +82,33 @@ public class XcfaConfigBuilder {
 		NWT_WP, NWT_SP, NWT_WP_LV, NWT_SP_LV, NWT_IT_WP, NWT_IT_SP, NWT_IT_WP_LV, NWT_IT_SP_LV
 	}
 
-	public enum Algoritm {
-		INT_ALL
+	public enum Algorithm {
+		INT_ALL, DECL
 	}
 
 	public enum Search {
 		BFS {
 			@Override
-			public ArgNodeComparator getComp() {
+			public ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc) {
 				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs());
 			}
 		},
 
 		DFS {
 			@Override
-			public ArgNodeComparator getComp() {
+			public ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc) {
 				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs());
+			}
+		},
+
+		ERR {
+			@Override
+			public ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc) {
+				return new XcfaDistToErrComparator(cfa, errLoc);
 			}
 		};
 
-		public abstract ArgNodeComparator getComp();
+		public abstract ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc);
 
 	}
 
@@ -125,18 +134,18 @@ public class XcfaConfigBuilder {
 	private final SolverFactory solverFactory;
 	private final Domain domain;
 	private final Refinement refinement;
-	private final Algoritm algoritm;
+	private final Algorithm algorithm;
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private int maxEnum = 0;
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
-	public XcfaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory, final Algoritm algoritm) {
+	public XcfaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory, final Algorithm algorithm) {
 		this.domain = domain;
 		this.refinement = refinement;
 		this.solverFactory = solverFactory;
-		this.algoritm = algoritm;
+		this.algorithm = algorithm;
 	}
 
 	public XcfaConfigBuilder logger(final Logger logger) {
@@ -180,7 +189,7 @@ public class XcfaConfigBuilder {
 					analysis, XcfaDeclarativeState::isError, true);
 			final Abstractor<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(XcfaDeclarativeState::getCurrentLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp()))
+					.waitlist(PriorityWaitlist.create(search.getComp(xcfa, xcfa.getMainProcess().getMainProcedure().getErrorLoc())))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 
@@ -320,7 +329,7 @@ public class XcfaConfigBuilder {
 					analysis, XcfaDeclarativeState::isError, true);
 			final Abstractor<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(XcfaDeclarativeState::getCurrentLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp()))
+					.waitlist(PriorityWaitlist.create(search.getComp(xcfa, xcfa.getMainProcess().getMainProcedure().getErrorLoc())))
 					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 							: StopCriterions.firstCex()).logger(logger).build();
 

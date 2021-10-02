@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -6,6 +6,9 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -50,6 +53,45 @@ public class ModelStatistics {
 		ret.whileLoops = CStmtCounter.getWhileLoops();
 		ret.branches = CStmtCounter.getWhileLoops();
 
+		return ret;
+	}
+
+	public static ModelStatistics createXcfaStatistics(final XCFA xcfa, final String modelName) {
+		ModelStatistics ret = new ModelStatistics();
+		ret.modelName = modelName;
+		ret.varCount = XcfaUtils.getVars(xcfa).size();
+		ret.havocCount = xcfa.getProcesses().stream().map(
+				proc -> proc.getProcedures().stream().map(
+						p -> p.getEdges().stream().map(
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof HavocStmt).count()
+						).reduce(Long::sum).orElse(0L)
+				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+		ret.locCount = xcfa.getProcesses().stream().map(proc -> proc.getProcedures().stream().map(p -> p.getLocs().size()).reduce(Integer::sum).orElse(0)).reduce(Integer::sum).orElse(0);
+		ret.edgeCount = xcfa.getProcesses().stream().map(proc -> proc.getProcedures().stream().map(p -> p.getEdges().size()).reduce(Integer::sum).orElse(0)).reduce(Integer::sum).orElse(0);
+		ret.skipEdgeCount = xcfa.getProcesses().stream().map(
+				proc -> proc.getProcedures().stream().map(
+						p -> p.getEdges().stream().map(
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof SkipStmt).count()
+						).reduce(Long::sum).orElse(0L)
+				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+		ret.assumeCount = xcfa.getProcesses().stream().map(
+				proc -> proc.getProcedures().stream().map(
+						p -> p.getEdges().stream().map(
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof AssumeStmt).count()
+						).reduce(Long::sum).orElse(0L)
+				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+		ret.assignCount = xcfa.getProcesses().stream().map(
+				proc -> proc.getProcedures().stream().map(
+						p -> p.getEdges().stream().map(
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof AssignStmt).count()
+						).reduce(Long::sum).orElse(0L)
+				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+
+		ret.cyclomaticComplexity = ret.edgeCount - ret.locCount + 2;
+
+		ret.forLoops = CStmtCounter.getForLoops();
+		ret.whileLoops = CStmtCounter.getWhileLoops();
+		ret.branches = CStmtCounter.getWhileLoops();
 		return ret;
 	}
 

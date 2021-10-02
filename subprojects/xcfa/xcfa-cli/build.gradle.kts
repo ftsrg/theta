@@ -9,6 +9,7 @@ dependencies {
     compile(project(":theta-solver-z3"))
     compile(project(":theta-cfa-analysis"))
     compile(project(":theta-cfa"))
+    compile(project(":theta-cfa-cli"))
 }
 
 application {
