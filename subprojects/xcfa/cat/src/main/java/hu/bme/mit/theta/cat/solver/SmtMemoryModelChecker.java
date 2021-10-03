@@ -43,12 +43,12 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class MemoryModelChecker implements MemoryModelSolver<Object, Object> {
+public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> {
 	private static final FuncType<IntType, BoolType> unaryPredicate  = FuncExprs.Func(Int(), Bool());
 	private static final FuncType<IntType, FuncType<IntType, BoolType>> binaryPredicate = FuncExprs.Func(Int(), FuncExprs.Func(Int(), Bool()));
 
 	private final List<List<Tuple2<Object, Object>>> rf;
-	private MemoryModelChecker(final Builder builder) {
+	private SmtMemoryModelChecker(final Builder builder) {
 		this.rf = new ArrayList<>();
 
 		final ParamDecl<IntType> a = builder.a;
@@ -229,7 +229,7 @@ public class MemoryModelChecker implements MemoryModelSolver<Object, Object> {
 			createBinaryRule(fr, Exists(List.of(c), And(App(App(rf.getRef(), c.getRef()), a.getRef()), App(App(co.getRef(), c.getRef()), b.getRef()))));
 			createBinaryRule(ex, Not(App(App(in.getRef(), a.getRef()), b.getRef())));
 
-			// co constraint (special case, itreflexivity and location-specific total order)
+			// co constraint (special case, irreflexivity and location-specific total order)
 			createBinaryAssumption(
 					Imply(App(App(co.getRef(), a.getRef()), b.getRef()), Not(App(App(co.getRef(), b.getRef()), a.getRef()))),
 					Not(App(App(co.getRef(), a.getRef()), b.getRef())));
@@ -325,13 +325,13 @@ public class MemoryModelChecker implements MemoryModelSolver<Object, Object> {
 		}
 
 		@Override
-		public MemoryModelChecker build() {
+		public SmtMemoryModelChecker build() {
 			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : reads.entrySet()) {
 				final Tuple2<Decl<IntType>, Object> read = entry.getKey();
 				final Integer idx = entry.getValue();
 				nullaryAssumptions.add(App(App(getBinaryRel("rf").getRef(), read.get1().getRef()), Int(idx)));
 			}
-			return new MemoryModelChecker(this);
+			return new SmtMemoryModelChecker(this);
 		}
 
 		@Override

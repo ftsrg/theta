@@ -10,6 +10,7 @@ package hu.bme.mit.theta.common.datalog;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.TupleN;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -27,6 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class Datalog {
 	private final Map<String, Relation> relations;
 	private boolean debug = false;
+	private int stackDepth = 0;
 
 	protected Datalog() {
 		relations = new LinkedHashMap<>();
@@ -38,6 +41,17 @@ public class Datalog {
 
 	public Map<String, Relation> getRelations() {
 		return relations;
+	}
+
+	public void push() {
+		relations.forEach((s, relation) -> relation.push());
+		++stackDepth;
+	}
+
+	public void pop() {
+		checkState(stackDepth > 0, "Cannot pop() if no push() was called!");
+		relations.forEach((s, relation) -> relation.pop());
+		--stackDepth;
 	}
 
 	/*
@@ -119,6 +133,7 @@ public class Datalog {
 	}
 
 	public Relation createRelation(String name, int n) {
+		checkState(stackDepth == 0, "Cannot create a relation when the program is in temporary (pushed) state");
 		checkState(n > 0, "Relation must have positive arity");
 		Relation ret = new Relation(n);
 		relations.put(name, ret);
@@ -240,6 +255,7 @@ public class Datalog {
 		private final Set<TupleN<DatalogArgument>> toAdd;
 		private final Set<Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>>> rules;
 		private final int arity;
+		private final Stack<Tuple3<Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>>> stack;
 
 		private Relation(int n) {
 			this("", n);
@@ -256,6 +272,7 @@ public class Datalog {
 			newElements = new LinkedHashSet<>();
 			rules = new LinkedHashSet<>();
 			toAdd = new LinkedHashSet<>();
+			stack = new Stack<>();
 		}
 
 		public void addFact(TupleN<DatalogArgument> fact) {
@@ -269,6 +286,7 @@ public class Datalog {
 		}
 
 		public void addRule(TupleN<Variable> args, Set<Tuple2<Relation, TupleN<Variable>>> dependencies) {
+			checkState(stackDepth == 0, "Cannot create new rule when the program is in temporary (pushed) state");
 			checkState(args.arity() == arity);
 			for (Tuple2<Relation, TupleN<Variable>> dependency : dependencies) {
 				checkState(dependency.get1().arity == dependency.get2().arity());
@@ -404,5 +422,19 @@ public class Datalog {
 		}
 
 
+		public void push() {
+			stack.push(Tuple3.of(elements, newElements, toAdd));
+		}
+
+		public void pop() {
+			final Tuple3<Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>> popped = stack.pop();
+			elements.clear();
+			elements.addAll(popped.get1());
+			newElements.clear();
+			newElements.addAll(popped.get2());
+			toAdd.clear();
+			toAdd.addAll(popped.get3());
+
+		}
 	}
 }

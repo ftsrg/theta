@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public final class Utils {
 
@@ -51,6 +54,17 @@ public final class Utils {
 	public static <T> List<T> tail(final List<T> list) {
 		checkArgument(!list.isEmpty(), "Empty list");
 		return list.subList(1, list.size());
+	}
+
+	public static <T> T head(final Set<? extends T> collection) {
+		checkArgument(!collection.isEmpty(), "Empty collection");
+		return collection.iterator().next();
+	}
+
+	public static <T> Set<T> tail(final Set<T> collection) {
+		checkArgument(!collection.isEmpty(), "Empty collection");
+		final T head = head(collection);
+		return Sets.difference(collection, Set.of(head));
 	}
 
 	////

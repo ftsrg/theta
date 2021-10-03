@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
-import hu.bme.mit.theta.cat.solver.MemoryModelChecker;
+import hu.bme.mit.theta.cat.solver.DatalogMemoryModelChecker;
 import hu.bme.mit.theta.cat.solver.MemoryModelSolver;
 import hu.bme.mit.theta.cat.solver.ProgramBuilder;
 import hu.bme.mit.theta.common.Tuple2;
@@ -47,7 +47,8 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		this.traceChecker = traceChecker;
 		this.solver = solver;
 		this.preCheck = preCheck;
-		programBuilder = MemoryModelChecker.builder(solver);
+		programBuilder = DatalogMemoryModelChecker.builder();
+//		programBuilder = SmtMemoryModelChecker.builder(solver);
 	}
 
 	public static <R extends Refutation> XcfaDeclarativeChecker<R> create(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
