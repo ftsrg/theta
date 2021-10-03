@@ -47,7 +47,7 @@ public final class TypeUtils {
 		checkNotNull(type);
 
 		if (decl.getType().equals(type)) {
-			@SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) type;
+			@SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) decl;
 			return result;
 		} else {
 			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);

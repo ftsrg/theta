@@ -53,13 +53,13 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 
 	@Override
 	public List<XcfaLabel> visit(AssumeStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		Optional<Expr<BoolType>> newExpr = ExpressionReplacer.replace(stmt.getCond(), expr -> getTypeExpr(param, expr));
+		Optional<Expr<BoolType>> newExpr = ExpressionReplacer.replace(stmt.getCond(), expr -> getTypeExpr(param, (Expr<Type>) expr));
 		return List.of(newExpr.map(cond -> Stmt(Stmts.Assume(cond))).orElse(Stmt(stmt)));
 	}
 
 	@Override
 	public <DeclType extends Type> List<XcfaLabel> visit(AssignStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		Optional<Expr<DeclType>> declTypeExpr = ExpressionReplacer.replace(stmt.getExpr(), expr -> getTypeExpr(param, expr));
+		Optional<Expr<DeclType>> declTypeExpr = ExpressionReplacer.replace(stmt.getExpr(), expr -> getTypeExpr(param, (Expr<Type>) expr));
 		if (param.containsKey(stmt.getVarDecl())) {
 			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
 			return List.of(Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), replacement.get2(), cast(declTypeExpr.orElse(stmt.getExpr()), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
@@ -117,7 +117,7 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 		boolean needsTransformation = false;
 		List<Expr<?>> exprs = new ArrayList<>();
 		for (Expr<?> stmtParam : label.getParams()) {
-			Optional<? extends Expr<?>> expr = ExpressionReplacer.replace(stmtParam, expr1 -> getTypeExpr(param, expr1));
+			Optional<? extends Expr<?>> expr = ExpressionReplacer.replace(stmtParam, expr1 -> getTypeExpr(param, (Expr<Type>) expr1));
 			if(expr.isPresent()) {
 				exprs.add(expr.get());
 				needsTransformation = true;

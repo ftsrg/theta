@@ -141,23 +141,23 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 
 
 	public static class Mapper<T extends Type> {
-		private final Function<Expr<T>, Optional<Expr<T>>> exprMapper;
-		private final Function<VarDecl<T>, Optional<VarDecl<T>>> varMapper;
+		private final Function<Expr<?>, Optional<Expr<T>>> exprMapper;
+		private final Function<VarDecl<?>, Optional<VarDecl<T>>> varMapper;
 
-		private Mapper(final Function<Expr<T>, Optional<Expr<T>>> exprMapper, final Function<VarDecl<T>, Optional<VarDecl<T>>> varMapper) {
+		private Mapper(final Function<Expr<?>, Optional<Expr<T>>> exprMapper, final Function<VarDecl<?>, Optional<VarDecl<T>>> varMapper) {
 			this.exprMapper = exprMapper;
 			this.varMapper = varMapper;
 		}
 
-		public static <T extends Type> Mapper<T> create(final Function<Expr<T>, Optional<Expr<T>>> exprMapper, final Function<VarDecl<T>, Optional<VarDecl<T>>> varMapper) {
+		public static <T extends Type> Mapper<T> create(final Function<Expr<?>, Optional<Expr<T>>> exprMapper, final Function<VarDecl<?>, Optional<VarDecl<T>>> varMapper) {
 			return new Mapper<T>(exprMapper, varMapper);
 		}
 
-		public Function<Expr<T>, Optional<Expr<T>>> getExprMapper() {
+		public Function<Expr<?>, Optional<Expr<T>>> getExprMapper() {
 			return exprMapper;
 		}
 
-		public Function<VarDecl<T>, Optional<VarDecl<T>>> getVarMapper() {
+		public Function<VarDecl<?>, Optional<VarDecl<T>>> getVarMapper() {
 			return varMapper;
 		}
 	}

@@ -6,7 +6,9 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
-import hu.bme.mit.theta.cat.MemoryModelChecker;
+import hu.bme.mit.theta.cat.solver.MemoryModelChecker;
+import hu.bme.mit.theta.cat.solver.MemoryModelSolver;
+import hu.bme.mit.theta.cat.solver.ProgramBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -18,6 +20,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +41,13 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 	private final ExprTraceChecker<R> traceChecker;
 	private final Solver solver;
 	private final boolean preCheck;
+	private final ProgramBuilder<Object, Object, Object> programBuilder;
 
 	private XcfaDeclarativeChecker(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
 		this.traceChecker = traceChecker;
 		this.solver = solver;
 		this.preCheck = preCheck;
+		programBuilder = MemoryModelChecker.builder(solver);
 	}
 
 	public static <R extends Refutation> XcfaDeclarativeChecker<R> create(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
@@ -61,7 +66,6 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		if(!containsLoads) return preCheck ? result : traceChecker.check(trace);
 
 		solver.push();
-		MemoryModelChecker.Builder model = MemoryModelChecker.builder(solver);
 //		String w1 = "w1";
 //		String w2 = "w2";
 //		String r1 = "r1";
@@ -84,7 +88,7 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		final List<XcfaDeclarativeAction> newActions = new ArrayList<>();
 		checkState(trace.getState(0) instanceof XcfaDeclarativeState, "Wrong type for XcfaDeclarativeState");
 		Object lastPo = ((XcfaDeclarativeState<?>) trace.getState(0)).getCurrentLoc().getParent().getParent();
-		model.addUnaryFact("meta", lastPo);
+		programBuilder.addProgramLoc(lastPo);
 		final Map<VarDecl<?>, XcfaProcess> varLut = new LinkedHashMap<>();
 		XcfaLocation lastLoc = null;
 		for (ExprAction action : trace.getActions()) {
@@ -92,66 +96,61 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			XcfaDeclarativeAction xcfaAction = (XcfaDeclarativeAction) action;
 			if(xcfaAction instanceof XcfaDeclarativeAction.XcfaDeclarativeThreadChangeAction) {
 				newActions.add(xcfaAction);
-				model.addUnaryFact("meta", Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
-				model.addBinaryFact("poRaw", lastPo, Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
+				programBuilder.addProgramLoc(Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
+				programBuilder.addPoEdge(lastPo, Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
 				lastPo = Tuple2.of(xcfaAction.getTarget().getParent().getParent(), ProcessLabel.START);
-				model.addUnaryFact("meta", lastPo);
+				programBuilder.addProgramLoc(lastPo);
 				lastLoc = xcfaAction.getTarget();
 			} else {
 				final List<XcfaLabel> newLabels = new ArrayList<>();
 				final XcfaProcess process = xcfaAction.getSource().getParent().getParent();
-				model.addUnaryFact("meta", process);
+				programBuilder.addProgramLoc(process);
 				for (XcfaLabel label : xcfaAction.getLabels()) {
 					if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
-						model.addUnaryFact("W", label);
-						model.addBinaryFact("poRaw", lastPo, label);
-						model.addUnaryFact("meta", ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
-						model.addBinaryFact("locRaw", label, ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
-						model.addBinaryFact("intRaw", label, process);
+						programBuilder.addProgramLoc(((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+						programBuilder.addWriteProgramLoc(label, process, ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						final VarDecl<?> var = Var("dataflow" + dataFlow.size(), ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getType());
 						dataFlow.put(label, var);
 						newLabels.add(Stmt(Assign(cast(var, var.getType()), cast(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getRef(), var.getType()))));
 					} else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
-						model.addUnaryFact("R", label);
-						model.addBinaryFact("poRaw", lastPo, label);
-						model.addUnaryFact("meta", ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
-						model.addBinaryFact("locRaw", label, ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
-						model.addBinaryFact("intRaw", label, process);
+						programBuilder.addProgramLoc(((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+						programBuilder.addReadProgramLoc(label, process, ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						final VarDecl<?> var = Var("dataflow" + dataFlow.size(), ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal().getType());
 						dataFlow.put(label, var);
 						newLabels.add(Stmt(Assign(cast(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), var.getType()), cast(var.getRef(), var.getType()))));
 					} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-						model.addUnaryFact("F", label);
-						model.addBinaryFact("poRaw", lastPo, label);
-						model.addBinaryFact("intRaw", label, process);
+						programBuilder.addFenceLoc(label, process);
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						newLabels.add(label);
 					} else if (label instanceof XcfaLabel.StartThreadXcfaLabel) {
-						model.addUnaryFact("meta", label);
-						model.addBinaryFact("poRaw", lastPo, label);
+						programBuilder.addProgramLoc(label);
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
-						model.addUnaryFact("meta", Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
-						model.addBinaryFact("poRaw", lastPo, Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
+						programBuilder.addProgramLoc(Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
+						programBuilder.addPoEdge(lastPo, Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
 						varLut.put(((XcfaLabel.StartThreadXcfaLabel) label).getKey(), ((XcfaLabel.StartThreadXcfaLabel) label).getProcess());
 						newLabels.add(label);
 					} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) {
-						model.addUnaryFact("meta", label);
-						model.addBinaryFact("poRaw", lastPo, label);
+						programBuilder.addProgramLoc(label);
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						final VarDecl<?> key = ((XcfaLabel.JoinThreadXcfaLabel) label).getKey();
-						model.addUnaryFact("meta", Tuple2.of(varLut.get(key), ProcessLabel.END));
-						model.addBinaryFact("poRaw", Tuple2.of(varLut.get(key), ProcessLabel.END), label);
+						programBuilder.addProgramLoc(Tuple2.of(varLut.get(key), ProcessLabel.END));
+						programBuilder.addPoEdge(Tuple2.of(varLut.get(key), ProcessLabel.END), label);
 						newLabels.add(label);
 					} else if (label instanceof XcfaLabel.AtomicBeginXcfaLabel) {
-						model.addUnaryFact("meta", label);
-						model.addBinaryFact("poRaw", lastPo, label);
+						programBuilder.addProgramLoc(label);
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						newLabels.add(label);
 					} else if (label instanceof XcfaLabel.AtomicEndXcfaLabel) {
-						model.addUnaryFact("meta", label);
-						model.addBinaryFact("poRaw", lastPo, label);
+						programBuilder.addProgramLoc(label);
+						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
 						newLabels.add(label);
 					} else {
@@ -162,9 +161,9 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 				newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(xcfaAction.getSource(), xcfaAction.getTarget(), newLabels)));
 			}
 		}
-		final MemoryModelChecker built = model.build();
+		final MemoryModelSolver<Object, Object> built = programBuilder.build();
 		Expr<BoolType> memoryModel = False();
-		for (List<Tuple2<Object, Object>> tuple2s : built.getRf()) {
+		for (Collection<Tuple2<Object, Object>> tuple2s : built.getAllRf()) {
 			Expr<BoolType> rfSet = True();
 			for (Tuple2<Object, Object> rf : tuple2s) {
 				checkState(dataFlow.containsKey(rf.get1()) && dataFlow.containsKey(rf.get2()), "Loads and stores do not exist!");

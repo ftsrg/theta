@@ -17,15 +17,14 @@ import java.util.function.Function;
  * This utility class helps with the awful state of generics in Java.
  * In particular, this solves the problem that equality among type parameters is not runtime checkable in functions.
  */
-@SuppressWarnings("unchecked")
 public class ExpressionReplacer<T extends Type, R extends Type> {
-	public static <T extends Type, R extends Type> Optional<Expr<T>> replace(Expr<T> expr, Function<Expr<R>, Optional<Expr<R>>> mapper) {
+	public static <T extends Type, R extends Type> Optional<Expr<T>> replace(Expr<T> expr, Function<Expr<?>, Optional<Expr<R>>> mapper) {
 		return new ExpressionReplacer<T, R>().replaceExpr(expr, mapper);
 	}
 
-	private Optional<Expr<T>> replaceExpr(Expr<T> expr, Function<Expr<R>, Optional<Expr<R>>> mapper) {
+	private Optional<Expr<T>> replaceExpr(Expr<T> expr, Function<Expr<?>, Optional<Expr<R>>> mapper) {
 		if(Arrays.stream(getClass().getTypeParameters()).map(TypeVariable::getGenericDeclaration).distinct().count() == 1) {
-			Optional<Expr<R>> transformed = mapper.apply((Expr<R>) expr);
+			Optional<Expr<R>> transformed = mapper.apply(expr);
 			if(transformed.isPresent()) return Optional.of((Expr<T>)transformed.get());
 		}
 		boolean needsTransformation = false;

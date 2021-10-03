@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.cat;
+package hu.bme.mit.theta.cat.solver;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -16,6 +16,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class MemoryModelChecker {
+public class MemoryModelChecker implements MemoryModelSolver<Object, Object> {
 	private static final FuncType<IntType, BoolType> unaryPredicate  = FuncExprs.Func(Int(), Bool());
 	private static final FuncType<IntType, FuncType<IntType, BoolType>> binaryPredicate = FuncExprs.Func(Int(), FuncExprs.Func(Int(), Bool()));
 
@@ -121,13 +122,6 @@ public class MemoryModelChecker {
 		}
 	}
 
-	public void printRf() {
-		for (List<Tuple2<Object, Object>> objectObjectMap : rf) {
-			printOneRfSet(objectObjectMap);
-		}
-		System.out.println("=======END-RF========");
-	}
-
 	private void printOneRfSet(List<Tuple2<Object, Object>> objectObjectMap) {
 		for (Tuple2<Object, Object> entry : objectObjectMap) {
 			Object o = entry.get1();
@@ -137,15 +131,16 @@ public class MemoryModelChecker {
 		System.out.println("=======END-SET=======");
 	}
 
-	public List<List<Tuple2<Object, Object>>> getRf() {
-		return rf;
-	}
-
 	public static Builder builder(Solver solver) {
 		return new Builder(solver);
 	}
 
-	public static class Builder {
+	@Override
+	public Collection<? extends Collection<Tuple2<Object, Object>>> getAllRf() {
+		return rf;
+	}
+
+	public static class Builder implements ProgramBuilder<Object, Object, Object> {
 		private final Map<String, Decl<FuncType<IntType, FuncType<IntType, BoolType>>>> binaryRelations;
 		private final Map<String, Decl<FuncType<IntType, BoolType>>> unaryRelations;
 		private final Map<Object, Integer> factIdxLut;
@@ -262,35 +257,35 @@ public class MemoryModelChecker {
 			createBinaryAssumption(Imply(Not(And(App(write.getRef(), a.getRef()), App(read.getRef(), b.getRef()))), Not(App(App(rf.getRef(), a.getRef()), b.getRef()))), Not(App(App(rf.getRef(), a.getRef()), b.getRef())));
 		}
 
-		public Decl<FuncType<IntType, FuncType<IntType, BoolType>>> createBinaryRelation(final String name) {
+		private Decl<FuncType<IntType, FuncType<IntType, BoolType>>> createBinaryRelation(final String name) {
 			final ConstDecl<FuncType<IntType, FuncType<IntType, BoolType>>> rel = Const(name, binaryPredicate);
 			binaryRelations.put(name, rel);
 			return rel;
 		}
 
-		public Decl<FuncType<IntType, BoolType>> createUnaryPredicate(final String name) {
+		private Decl<FuncType<IntType, BoolType>> createUnaryPredicate(final String name) {
 			final ConstDecl<FuncType<IntType, BoolType>> rel = Const(name, unaryPredicate);
 			unaryRelations.put(name, rel);
 			return rel;
 		}
 
-		public void createBinaryRule(final Decl<FuncType<IntType, FuncType<IntType, BoolType>>> rel, final Expr<BoolType> rule) {
+		private void createBinaryRule(final Decl<FuncType<IntType, FuncType<IntType, BoolType>>> rel, final Expr<BoolType> rule) {
 			binaryAssumptions.add(Ite(True(), Eq(App(App(rel.getRef(), a.getRef()), b.getRef()), /*ExprUtils.simplify*/(rule)), Not(App(App(rel.getRef(), a.getRef()), b.getRef()))));
 		}
 
-		public void createUnaryRule(final Decl<FuncType<IntType, BoolType>> rel, final Expr<BoolType> rule) {
+		private void createUnaryRule(final Decl<FuncType<IntType, BoolType>> rel, final Expr<BoolType> rule) {
 			unaryAssumptions.add(Ite(True(), Eq(App(rel.getRef(), a.getRef()), /*ExprUtils.simplify*/(rule)), Not(App(rel.getRef(), a.getRef()))));
 		}
 
-		public void createBinaryAssumption(final Expr<BoolType> inRange, final Expr<BoolType> notInRange) {
+		private void createBinaryAssumption(final Expr<BoolType> inRange, final Expr<BoolType> notInRange) {
 			binaryAssumptions.add(/*ExprUtils.simplify*/Ite(True(), inRange, notInRange));
 		}
 
-		public void createUnaryAssumption(final Expr<BoolType> inRange, final Expr<BoolType> notInRange) {
+		private void createUnaryAssumption(final Expr<BoolType> inRange, final Expr<BoolType> notInRange) {
 			unaryAssumptions.add(/*ExprUtils.simplify*/Ite(True(), inRange, notInRange));
 		}
 
-		public int addUnaryFact(final String name, final Object object) {
+		private int addUnaryFact(final String name, final Object object) {
 			if(factIdxLut.containsKey(object)) return factIdxLut.get(object);
 			int currentSize = factIdxLut.size();
 			factIdxLut.put(object, currentSize);
@@ -304,31 +299,32 @@ public class MemoryModelChecker {
 			return currentSize;
 		}
 
-		public void addBinaryFact(final String name, final Object obj1, final Object obj2) {
+		private void addBinaryFact(final String name, final Object obj1, final Object obj2) {
 			checkArgument(factIdxLut.containsKey(obj1) && factIdxLut.containsKey(obj2), "Facts of a relation have to be added manually!");
 			final int idx1 = factIdxLut.get(obj1);
 			final int idx2 = factIdxLut.get(obj2);
 			facts.put(name, /*ExprUtils.simplify*/(Or(facts.getOrDefault(name, False()), And(Eq(a.getRef(), Int(idx1)), Eq(b.getRef(), Int(idx2))))));
 		}
 
-		public Decl<FuncType<IntType, FuncType<IntType, BoolType>>> getBinaryRel(final String name) {
+		private Decl<FuncType<IntType, FuncType<IntType, BoolType>>> getBinaryRel(final String name) {
 			checkArgument(binaryRelations.containsKey(name));
 			return binaryRelations.get(name);
 		}
 
-		public Decl<FuncType<IntType, BoolType>> getUnaryRel(final String name) {
+		private Decl<FuncType<IntType, BoolType>> getUnaryRel(final String name) {
 			checkArgument(unaryRelations.containsKey(name));
 			return unaryRelations.get(name);
 		}
 
-		public ParamDecl<IntType> getA() {
+		private ParamDecl<IntType> getA() {
 			return a;
 		}
 
-		public ParamDecl<IntType> getB() {
+		private ParamDecl<IntType> getB() {
 			return b;
 		}
 
+		@Override
 		public MemoryModelChecker build() {
 			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : reads.entrySet()) {
 				final Tuple2<Decl<IntType>, Object> read = entry.getKey();
@@ -338,5 +334,47 @@ public class MemoryModelChecker {
 			return new MemoryModelChecker(this);
 		}
 
+		@Override
+		public void addReadProgramLoc(Object o, Object o2, Object o3) {
+			addUnaryFact("R", o);
+			addBinaryFact("intRaw",o, o2);
+			addBinaryFact("locRaw", o, o3);
+		}
+
+		@Override
+		public void addWriteProgramLoc(Object o, Object o2, Object o3) {
+			addUnaryFact("W", o);
+			addBinaryFact("intRaw",o, o2);
+			addBinaryFact("locRaw", o, o3);
+
+		}
+
+		@Override
+		public void addFenceLoc(Object o, Object o2) {
+			addUnaryFact("F", o);
+			addBinaryFact("intRaw",o, o2);
+		}
+
+		@Override
+		public void addProgramLoc(Object o) {
+			addUnaryFact("meta", o);
+		}
+
+		@Override
+		public void addProgramLoc(Object o, Object o2) {
+			addProgramLoc(o);
+			addBinaryFact("intRaw", o, o2);
+		}
+
+		@Override
+		public void addProgramLoc(Object o, Object o2, Object o3) {
+			addProgramLoc(o, o2);
+			addBinaryFact("locRaw", o, o3);
+		}
+
+		@Override
+		public void addPoEdge(Object programLocA, Object programLocB) {
+			addBinaryFact("poRaw", programLocA, programLocB);
+		}
 	}
 }

@@ -22,7 +22,7 @@ public class XcfaStmtUtils {
 	 * @param mapper	Mapping function that returns a new Expression when necessary, empty otherwise
 	 * @return 			Optional.empty() when no modification was necessary, the new XcfaLabel otherwise
 	 */
-	public static <T extends Type> Optional<XcfaLabel> replaceExprsInStmt(final XcfaLabel stmt, final Function<Expr<T>, Optional<Expr<T>>> mapper) {
+	public static <T extends Type> Optional<XcfaLabel> replaceExprsInStmt(final XcfaLabel stmt, final Function<Expr<?>, Optional<Expr<T>>> mapper) {
 		return stmt.accept(new LabelExpressionMappingVisitor<>(), LabelExpressionMappingVisitor.Mapper.create(mapper, v -> Optional.empty()));
 	}
 
@@ -32,7 +32,7 @@ public class XcfaStmtUtils {
 	 * @param mapper	Mapping function that returns a new VarDecl when necessary, empty otherwise
 	 * @return 			Optional.empty() when no modification was necessary, the new XcfaLabel otherwise
 	 */
-	public static <T extends Type> Optional<XcfaLabel> replacesVarsInStmt(final XcfaLabel stmt, final Function<VarDecl<T>, Optional<VarDecl<T>>> mapper) {
+	public static <T extends Type> Optional<XcfaLabel> replacesVarsInStmt(final XcfaLabel stmt, final Function<VarDecl<?>, Optional<VarDecl<T>>> mapper) {
 		return stmt.accept(new LabelExpressionMappingVisitor<>(), LabelExpressionMappingVisitor.Mapper.create(e -> {
 			Optional<VarDecl<T>> vOpt;
 			if(e instanceof RefExpr && (vOpt = mapper.apply((VarDecl<T>) ((RefExpr<T>) e).getDecl())).isPresent()) return Optional.of(vOpt.get().getRef());
