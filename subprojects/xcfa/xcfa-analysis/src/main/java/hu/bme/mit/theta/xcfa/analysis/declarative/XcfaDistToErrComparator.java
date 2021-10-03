@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.xcfa.analysis.interleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -64,9 +63,9 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 	}
 
 	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-		checkArgument(node.getState() instanceof XcfaState, "XcfaState expected.");
-		final XcfaState<?> state = (XcfaState<?>) node.getState();
-		final int distanceToError = getDistanceToError(state.getLastAction() == null ? xcfa.getMainProcess().getMainProcedure().getInitLoc() : state.getLastAction().getTarget());
+		checkArgument(node.getState() instanceof XcfaDeclarativeState, "XcfaDeclarativeState expected.");
+		final XcfaDeclarativeState<?> state = (XcfaDeclarativeState<?>) node.getState();
+		final int distanceToError = getDistanceToError(state.getCurrentLoc());
 		if (distanceToError == Integer.MAX_VALUE) {
 			return distanceToError;
 		}

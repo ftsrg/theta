@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -83,5 +84,18 @@ public class XcfaDeclarativeAction extends StmtAction {
 		public Integer getProcess() {
 			return process;
 		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		XcfaDeclarativeAction that = (XcfaDeclarativeAction) o;
+		return labels.equals(that.labels) && source.equals(that.source) && target.equals(that.target);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(labels, source, target);
 	}
 }

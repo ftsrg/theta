@@ -12,7 +12,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
@@ -20,7 +19,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
 import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
@@ -38,10 +36,12 @@ public class XcfaPassManager {
 	private static final List<ProcessPass> processPasses = new ArrayList<>();
 	private static final List<XcfaPass> xcfaPasses = new ArrayList<>();
 
+	private static final boolean bottomUp = true;
+
 	static {
 		procedurePasses.addAll(List.of(
+				new EliminateSelfLoops(),
 				new PthreadCallsToThreadStmts(),
-				new VerifierFunctionsToLabels(),
 				new ReferenceToMemory(),
 				new FpFunctionsToExprs(),
 				new SimplifyExprs(),
@@ -52,14 +52,15 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new ConditionalFinalsToAssumes(),
-//				new RemoveDeadEnds(),
 				new UnusedVarRemovalPass(),
 				new AddHavocRange(),
-				new SimpleLbePass(),
 				new HavocPromotion(),
+//				new RemoveDeadEnds(),
 				new UnusedVarRemovalPass(),
-				new OneStmtPerEdgePass()
-		));
+				new SimplifyExprs(),
+				new EmptyEdgeRemovalPass(),
+				new SimpleLbePass()
+				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
 				new FunctionInlining(),
@@ -97,15 +98,31 @@ public class XcfaPassManager {
 	}
 
 	public static XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		if(bottomUp) {
+			builder.runProcedurePasses();
+		}
+
 		for (ProcessPass processPass : processPasses) {
 			builder = processPass.run(builder);
+		}
+
+		if(!bottomUp) {
+			builder.runProcedurePasses();
 		}
 		return builder;
 	}
 
 	public static XCFA.Builder run(XCFA.Builder builder) {
+		if(bottomUp) {
+			builder.runProcessPasses();
+		}
+
 		for (XcfaPass xcfaPass : xcfaPasses) {
 			builder = xcfaPass.run(builder);
+		}
+
+		if(!bottomUp) {
+			builder.runProcessPasses();
 		}
 		return builder;
 	}

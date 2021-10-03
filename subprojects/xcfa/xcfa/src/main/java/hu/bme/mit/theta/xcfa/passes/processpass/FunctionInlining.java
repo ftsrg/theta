@@ -33,7 +33,6 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getNonModifiedVars;
 
 public class FunctionInlining extends ProcessPass {
-	private int counter = 0;
 	private final List<String> nopFuncs = List.of("reach_error", "abort");
 	private final Set<Tuple2<XcfaLabel, XcfaEdge>> alreadyHandled = new LinkedHashSet<>();
 
@@ -82,18 +81,17 @@ public class FunctionInlining extends ProcessPass {
 	}
 
 	private XcfaProcedure.Builder inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure.Builder procedure) {
-		XcfaProcedure.Builder procBuilder = procedure;
-//		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
+		//		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
 		Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints = new LinkedHashMap<>();
 
 
-		while(handleCallStmts(builder, procedure, procBuilder, splittingPoints)) {
-			splitAndInlineEdges(builder, procBuilder, splittingPoints);
+		while(handleCallStmts(builder, procedure, splittingPoints)) {
+			splitAndInlineEdges(builder, procedure, splittingPoints);
 			splittingPoints.clear();
 		}
-		truncateAssignments(builder, procBuilder);
+		truncateAssignments(builder, procedure);
 
-		return procBuilder;
+		return procedure;
 	}
 
 	/**
@@ -231,7 +229,7 @@ public class FunctionInlining extends ProcessPass {
 	}
 
 
-	private boolean handleCallStmts(XcfaProcess.Builder builder, XcfaProcedure.Builder mainProcedure, XcfaProcedure.Builder mainProcBuilder, Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
+	private boolean handleCallStmts(XcfaProcess.Builder builder, XcfaProcedure.Builder mainProcBuilder, Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
 		boolean anyMatch = false;
 		for (XcfaEdge edge : mainProcBuilder.getEdges()) {
 			boolean stillExists = true;

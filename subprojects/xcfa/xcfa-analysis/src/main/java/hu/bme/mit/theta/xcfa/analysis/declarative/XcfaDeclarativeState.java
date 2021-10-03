@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -165,5 +166,18 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 
 	public Integer getCurrentProcess() {
 		return currentProcess;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		XcfaDeclarativeState<?> that = (XcfaDeclarativeState<?>) o;
+		return currentProcess.equals(that.currentProcess) && Objects.equals(currentLoc, that.currentLoc) && backlog.size() == that.backlog.size() && globalState.equals(that.globalState) && loads.equals(that.loads) && stores.equals(that.stores);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(currentProcess, currentLoc, backlog.size(), globalState, loads, stores);
 	}
 }

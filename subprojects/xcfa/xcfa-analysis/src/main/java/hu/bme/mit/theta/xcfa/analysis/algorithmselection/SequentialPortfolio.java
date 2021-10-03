@@ -2,10 +2,10 @@ package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -20,45 +20,42 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
 		super(logLevel, basicFileName, modelName);
 		configurations[0] = new CegarConfiguration(
-				CfaConfigBuilder.Domain.EXPL,
-				CfaConfigBuilder.Refinement.SEQ_ITP,
-				CfaConfigBuilder.PrecGranularity.GLOBAL,
-				CfaConfigBuilder.Search.ERR,
-				CfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Domain.EXPL,
+				XcfaConfigBuilder.Refinement.SEQ_ITP,
+				XcfaConfigBuilder.Search.ERR,
+				XcfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Algorithm.DECL,
 				1,
-				CfaConfigBuilder.InitPrec.EMPTY,
+				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				CfaConfigBuilder.Encoding.LBE,
 				false
 		);
 		configurations[1] = new CegarConfiguration(
-				CfaConfigBuilder.Domain.PRED_CART,
-				CfaConfigBuilder.Refinement.BW_BIN_ITP,
-				CfaConfigBuilder.PrecGranularity.GLOBAL,
-				CfaConfigBuilder.Search.ERR,
-				CfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Domain.PRED_CART,
+				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
+				XcfaConfigBuilder.Search.ERR,
+				XcfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Algorithm.DECL,
 				1,
-				CfaConfigBuilder.InitPrec.EMPTY,
+				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				CfaConfigBuilder.Encoding.LBE,
 				false
 		);
 		configurations[2] = new CegarConfiguration(
-				CfaConfigBuilder.Domain.EXPL,
-				CfaConfigBuilder.Refinement.NWT_IT_WP,
-				CfaConfigBuilder.PrecGranularity.GLOBAL,
-				CfaConfigBuilder.Search.ERR,
-				CfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Domain.EXPL,
+				XcfaConfigBuilder.Refinement.NWT_IT_WP,
+				XcfaConfigBuilder.Search.ERR,
+				XcfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Algorithm.DECL,
 				1,
-				CfaConfigBuilder.InitPrec.EMPTY,
+				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				CfaConfigBuilder.Encoding.LBE,
 				false
 		);
 	}
 
 	@Override
-	public SafetyResult<?, ?> executeAnalysis(CFA cfa, Duration initializationTime) {
+	public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) {
 		logger.write(Logger.Level.MAINSTEP, "Executing sequential portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
@@ -78,7 +75,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 			} else {
 				timeout = remainingTime/3;
 			}
-			result = executeConfiguration(configuration, cfa, timeout);
+			result = executeConfiguration(configuration, xcfa, timeout);
 			if(result.get1().equals(Result.SUCCESS)) {
 				checkState(result.get2().isPresent());
 				logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + configuration);

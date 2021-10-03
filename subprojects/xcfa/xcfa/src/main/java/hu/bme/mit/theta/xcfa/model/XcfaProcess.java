@@ -220,8 +220,7 @@ public final class XcfaProcess {
             if(built != null) return built;
 
             checkState(mainProcedure != null, "Main procedure must be set.");
-            Builder builder = XcfaPassManager.run(this);
-            XcfaProcess process = new XcfaProcess(builder, parent);
+            XcfaProcess process = new XcfaProcess(this, parent);
             built = process;
 
             for (XcfaProcedure procedure : process.getProcedures()) {
@@ -235,6 +234,16 @@ public final class XcfaProcess {
             }
 
             return process;
+        }
+
+        public void runProcedurePasses() {
+            final ArrayList<XcfaProcedure.Builder> newProcs = new ArrayList<>(procedures);
+            for (XcfaProcedure.Builder procedure : procedures) {
+                final XcfaProcedure.Builder newProc = XcfaPassManager.run(procedure);
+                if(mainProcedure == procedure) mainProcedure = newProc;
+            }
+            procedures.clear();
+            procedures.addAll(newProcs);
         }
     }
 }

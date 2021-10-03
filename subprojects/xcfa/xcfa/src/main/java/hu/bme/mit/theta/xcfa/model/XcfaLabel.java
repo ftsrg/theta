@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -101,6 +102,19 @@ public abstract class XcfaLabel {
 		public String toString() {
 			return Utils.lispStringBuilder("Call").add(procedure).addAll(params).toString();
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			ProcedureCallXcfaLabel that = (ProcedureCallXcfaLabel) o;
+			return Objects.equals(params, that.params) && Objects.equals(procedure, that.procedure);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(params, procedure);
+		}
 	}
 
 	public static class StartThreadXcfaLabel extends XcfaLabel {
@@ -156,6 +170,19 @@ public abstract class XcfaLabel {
 		public String toString() {
 			return Utils.lispStringBuilder("Start").add(key).add(threadName).add(param).toString();
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			StartThreadXcfaLabel that = (StartThreadXcfaLabel) o;
+			return key.equals(that.key) && threadName.equals(that.threadName) && param.equals(that.param);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key, threadName, param);
+		}
 	}
 
 	public static class JoinThreadXcfaLabel extends XcfaLabel {
@@ -186,6 +213,19 @@ public abstract class XcfaLabel {
 		@Override
 		public String toString() {
 			return Utils.lispStringBuilder("Join").add(key).toString();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			JoinThreadXcfaLabel that = (JoinThreadXcfaLabel) o;
+			return key.equals(that.key);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key);
 		}
 	}
 
@@ -236,6 +276,19 @@ public abstract class XcfaLabel {
 		public String toString() {
 			return Utils.lispStringBuilder("Load").add(local).add(global).toString();
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			LoadXcfaLabel<?> that = (LoadXcfaLabel<?>) o;
+			return atomic == that.atomic && global.equals(that.global) && local.equals(that.local) && Objects.equals(ordering, that.ordering);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(global, local, atomic, ordering);
+		}
 	}
 
 	public static class StoreXcfaLabel<T extends Type> extends XcfaLabel {
@@ -285,6 +338,19 @@ public abstract class XcfaLabel {
 		public String toString() {
 			return Utils.lispStringBuilder("Store").add(global).add(local).toString();
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			StoreXcfaLabel<?> that = (StoreXcfaLabel<?>) o;
+			return atomic == that.atomic && local.equals(that.local) && global.equals(that.global) && Objects.equals(ordering, that.ordering);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(local, global, atomic, ordering);
+		}
 	}
 
 	public static class FenceXcfaLabel extends XcfaLabel {
@@ -317,6 +383,19 @@ public abstract class XcfaLabel {
 		public String toString() {
 			return Utils.lispStringBuilder("Fence").add(type).toString();
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			FenceXcfaLabel that = (FenceXcfaLabel) o;
+			return Objects.equals(type, that.type);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(type);
+		}
 	}
 
 	public static class StmtXcfaLabel extends XcfaLabel {
@@ -343,6 +422,19 @@ public abstract class XcfaLabel {
 		@Override
 		public String toString() {
 			return stmt.toString();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			StmtXcfaLabel that = (StmtXcfaLabel) o;
+			return stmt.equals(that.stmt);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(stmt);
 		}
 	}
 

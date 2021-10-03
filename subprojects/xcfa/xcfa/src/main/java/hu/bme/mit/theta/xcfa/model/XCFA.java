@@ -29,7 +29,6 @@ import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -232,6 +231,17 @@ public final class XCFA {
 			XCFA xcfa = new XCFA(builder);
 			built = xcfa;
 			return xcfa;
+		}
+
+		public void runProcessPasses() {
+			final ArrayList<XcfaProcess.Builder> newProcesses = new ArrayList<>(processes);
+			for (XcfaProcess.Builder process : processes) {
+				final XcfaProcess.Builder newProc = XcfaPassManager.run(process);
+				newProcesses.add(newProc);
+				if(mainProcess == process) mainProcess = newProc;
+			}
+			this.processes.clear();
+			this.processes.addAll(newProcesses);
 		}
 	}
 }

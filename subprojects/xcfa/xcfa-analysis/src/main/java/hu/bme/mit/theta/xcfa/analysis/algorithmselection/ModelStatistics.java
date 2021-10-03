@@ -35,6 +35,7 @@ public class ModelStatistics {
 
 	private ModelStatistics() {}
 
+	// currently not used, but could be useful later
 	public static ModelStatistics createCfaStatistics(CFA cfa, String modelName) {
 		ModelStatistics ret = new ModelStatistics();
 		ret.modelName = modelName;
@@ -119,14 +120,14 @@ public class ModelStatistics {
 
 	public void writeToTxt(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("CFA-data varCount ").append(locCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data havocCount ").append(havocCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data locCount ").append(locCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data edgeCount ").append(edgeCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data skipEdgeCount ").append(skipEdgeCount).append(System.lineSeparator());
-		stringBuilder.append("CFA-data assumeStmts ").append(assumeCount).append("\n"); // assumes
-		stringBuilder.append("CFA-data assignStmts ").append(assignCount).append("\n"); // assign
-		stringBuilder.append("CFA-data cyclomatic complexity ").append(cyclomaticComplexity).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data varCount ").append(locCount).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data havocCount ").append(havocCount).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data locCount ").append(locCount).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data edgeCount ").append(edgeCount).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data skipEdgeCount ").append(skipEdgeCount).append(System.lineSeparator());
+		stringBuilder.append("XCFA-data assumeStmts ").append(assumeCount).append("\n"); // assumes
+		stringBuilder.append("XCFA-data assignStmts ").append(assignCount).append("\n"); // assign
+		stringBuilder.append("XCFA-data cyclomatic complexity ").append(cyclomaticComplexity).append(System.lineSeparator());
 
 		stringBuilder.append("C-data forLoops ").append(forLoops).append("\n"); // for loops
 		stringBuilder.append("C-data whileLoops ").append(whileLoops).append("\n"); // while loops

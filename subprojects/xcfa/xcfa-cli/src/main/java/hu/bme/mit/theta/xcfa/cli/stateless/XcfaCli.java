@@ -150,13 +150,13 @@ public class XcfaCli {
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
-	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
+	@Parameter(names = "--header", description = "Print only a header (for benchmarks) (only valid together with the -legacy switch)", help = true)
 	boolean headerOnly = false;
 
-	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
+	@Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm (only valid together with the -legacy switch)")
 	boolean metrics = false;
 
-	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception (only valid together with the -legacy switch)")
 	boolean stacktrace = false;
 
 	//////////// Legacy (CFA-only) options ////////////
@@ -167,10 +167,10 @@ public class XcfaCli {
 	@Parameter(names = "--encoding", description = "Block encoding (only valid together with the -legacy switch)")
 	CfaConfigBuilder.Encoding encoding = CfaConfigBuilder.Encoding.LBE;
 
-	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
+	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics) (only valid together with the -legacy switch)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = "--legacy", description = "Use legacy (cfa) analysis when possible")
+	@Parameter(names = "--legacy", description = "Use legacy (cfa-cli, without portfolio) analysis when possible")
 	boolean legacy = false;
 
 	//////////// XCFA options (experimental) ////////////
@@ -194,10 +194,6 @@ public class XcfaCli {
 	}
 
 	private void run() {
-		long beginTime = System.nanoTime();
-		long beginMillis = System.currentTimeMillis();
-		Stopwatch timer = Stopwatch.createStarted();
-
 		/// Checking flags
 		try {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
