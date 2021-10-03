@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -55,6 +56,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 				for (VarDecl<?> var : vars) {
 					VarDecl<?> newVar = Var(var.getName() + "_local", var.getType());
 					varLut.put(var, newVar);
+					if(FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent())FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(var.getRef()));
 					builder.createVar(newVar, null);
 				}
 			}

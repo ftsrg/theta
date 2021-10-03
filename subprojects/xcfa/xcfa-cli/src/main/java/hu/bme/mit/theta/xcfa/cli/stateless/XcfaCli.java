@@ -57,8 +57,6 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
-import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -174,9 +172,12 @@ public class XcfaCli {
 	boolean legacy = false;
 
 	//////////// XCFA options (experimental) ////////////
+//
+//	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
+//	boolean loadStore = false;
 
-	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
-	boolean loadStore = false;
+	@Parameter(names = "--precheck", description = "Perform a pre-check when refining a multithreaded program for possibly higher efficiency", arity = 1)
+	boolean preCheck = true;
 
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.DECL;
@@ -229,10 +230,6 @@ public class XcfaCli {
 			highlightedxcfafile = new File(basicFileName + ".highlighted.xcfa");
 			statisticstxtfile = new File(basicFileName + ".statistics.txt");
 			statisticscsvfile = new File(basicFileName + ".csv");
-		}
-
-		if(loadStore) {
-			XcfaPassManager.addProcedurePass(new GlobalVarsToStoreLoad());
 		}
 
 		/// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
@@ -389,7 +386,7 @@ public class XcfaCli {
 		// Build configuration
 		try {
 			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), algorithm)
-					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
+					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa);
 
 		} catch (final Exception ex) {

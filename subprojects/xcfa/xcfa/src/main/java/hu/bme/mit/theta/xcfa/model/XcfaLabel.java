@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -248,7 +249,7 @@ public abstract class XcfaLabel {
 
 		@Override
 		public Stmt getStmt() {
-			return Skip();
+			return Havoc(local);
 		}
 
 		public boolean isAtomic() {

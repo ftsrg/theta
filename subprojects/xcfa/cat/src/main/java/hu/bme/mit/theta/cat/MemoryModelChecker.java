@@ -12,8 +12,8 @@ import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -52,7 +52,7 @@ public class MemoryModelChecker {
 
 		final ParamDecl<IntType> a = builder.a;
 		final ParamDecl<IntType> b = builder.b;
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		final Solver solver = builder.solver;
 
 		final int maxId = builder.factIdxLut.size() - 1;
 		final Expr<BoolType> binaryRange = And(List.of(
@@ -67,26 +67,20 @@ public class MemoryModelChecker {
 		));
 
 		for (IteExpr<BoolType> assumption : builder.binaryAssumptions) {
-			solver.add(/*ExprUtils.simplify*/(Forall(List.of(a, b), assumption.withCond(binaryRange))));
-			solver.check();
-			if(solver.getStatus().isUnsat()) {
-				break;
-			}
+			final Expr<BoolType> simplified = ExprUtils.simplify(Forall(List.of(a, b), assumption.withCond(binaryRange)));
+			System.err.println("Adding assumption: " + simplified);
+			solver.add(simplified);
 		}
 		for (IteExpr<BoolType> assumption : builder.unaryAssumptions) {
-			solver.add(/*ExprUtils.simplify*/(Forall(List.of(a), assumption.withCond(unaryRange))));
-			solver.check();
-			if(solver.getStatus().isUnsat()) {
-				break;
-			}
+			final Expr<BoolType> simplified = ExprUtils.simplify(Forall(List.of(a), assumption.withCond(unaryRange)));
+			System.err.println("Adding assumption: " + simplified);
+			solver.add(simplified);
 		}
 
 		for (Expr<BoolType> nullaryAssumption : builder.nullaryAssumptions) {
-			solver.add(/*ExprUtils.simplify*/(nullaryAssumption));
-			solver.check();
-			if(solver.getStatus().isUnsat()) {
-				break;
-			}
+			final Expr<BoolType> simplified = ExprUtils.simplify(nullaryAssumption);
+			System.err.println("Adding assumption: " + simplified);
+			solver.add(simplified);
 		}
 
 		for (Map.Entry<String, Expr<BoolType>> entry : builder.facts.entrySet()) {
@@ -100,13 +94,12 @@ public class MemoryModelChecker {
 				final Decl<FuncType<IntType, FuncType<IntType, BoolType>>> rel = builder.binaryRelations.get(s);
 				assumption = Forall(List.of(a, b), Ite(binaryRange, Eq(App(App(rel.getRef(), a.getRef()), b.getRef()), boolTypeExpr), Not(App(App(rel.getRef(), a.getRef()), b.getRef()))));
 			} else throw new RuntimeException("Relation " + s + " does not exist.");
-			solver.add(/*ExprUtils.simplify*/(assumption));
-			solver.check();
-			if(solver.getStatus().isUnsat()) {
-				break;
-			}
+			final Expr<BoolType> simplified = ExprUtils.simplify(assumption);
+			System.err.println("Adding assumption: " + simplified);
+			solver.add(simplified);
 		}
 
+		solver.check();
 		while(solver.getStatus().isSat()) {
 			final Map<Decl<?>, LitExpr<?>> valuation = solver.getModel().toMap();
 			final List<Tuple2<Object, Object>> currentRf = new ArrayList<>();
@@ -121,22 +114,35 @@ public class MemoryModelChecker {
 				ref = And(ref, Eq(objects.get1().getRef(), value));
 			}
 			rf.add(currentRf);
+			System.err.println("Found new set of rf-edges:");
+			printOneRfSet(currentRf);
 			solver.add(Not(ref));
+			solver.check();
 		}
 	}
 
 	public void printRf() {
 		for (List<Tuple2<Object, Object>> objectObjectMap : rf) {
-			for (Tuple2<Object, Object> entry : objectObjectMap) {
-				Object o = entry.get1();
-				Object o2 = entry.get2();
-				System.out.println("rf(" + o + ", " + o2 + ")");
-			}
+			printOneRfSet(objectObjectMap);
 		}
+		System.out.println("=======END-RF========");
 	}
 
-	public static Builder builder() {
-		return new Builder();
+	private void printOneRfSet(List<Tuple2<Object, Object>> objectObjectMap) {
+		for (Tuple2<Object, Object> entry : objectObjectMap) {
+			Object o = entry.get1();
+			Object o2 = entry.get2();
+			System.out.println("rf(" + o + " -> " + o2 + ")");
+		}
+		System.out.println("=======END-SET=======");
+	}
+
+	public List<List<Tuple2<Object, Object>>> getRf() {
+		return rf;
+	}
+
+	public static Builder builder(Solver solver) {
+		return new Builder(solver);
 	}
 
 	public static class Builder {
@@ -152,8 +158,10 @@ public class MemoryModelChecker {
 		private final Map<String, Expr<BoolType>> facts;
 		private final ParamDecl<IntType> a;
 		private final ParamDecl<IntType> b;
+		private final Solver solver;
 
-		private Builder() {
+		private Builder(final Solver solver) {
+			this.solver = solver;
 			binaryAssumptions = new ArrayList<>();
 			unaryAssumptions = new ArrayList<>();
 			nullaryAssumptions  = new ArrayList<>();
@@ -167,6 +175,8 @@ public class MemoryModelChecker {
 
 			a = Param("a", Int());
 			b = Param("b", Int());
+
+			final Decl<FuncType<IntType, BoolType>> meta = createUnaryPredicate("meta");
 
 			final Decl<FuncType<IntType, BoolType>> fence = createUnaryPredicate("F");
 			final Decl<FuncType<IntType, BoolType>> write = createUnaryPredicate("W");
@@ -281,7 +291,7 @@ public class MemoryModelChecker {
 		}
 
 		public int addUnaryFact(final String name, final Object object) {
-			checkArgument(!factIdxLut.containsKey(object), "Object " + object + " is already a fact!");
+			if(factIdxLut.containsKey(object)) return factIdxLut.get(object);
 			int currentSize = factIdxLut.size();
 			factIdxLut.put(object, currentSize);
 			idxFactLut.put(currentSize, object);

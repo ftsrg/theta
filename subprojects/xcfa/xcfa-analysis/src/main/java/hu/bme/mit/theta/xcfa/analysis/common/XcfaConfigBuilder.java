@@ -135,6 +135,7 @@ public class XcfaConfigBuilder {
 	private final Domain domain;
 	private final Refinement refinement;
 	private final Algorithm algorithm;
+	private boolean preCheck = true;
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private int maxEnum = 0;
@@ -146,6 +147,11 @@ public class XcfaConfigBuilder {
 		this.refinement = refinement;
 		this.solverFactory = solverFactory;
 		this.algorithm = algorithm;
+	}
+
+	public XcfaConfigBuilder preCheck(final boolean preCheck) {
+		this.preCheck = preCheck;
+		return this;
 	}
 
 	public XcfaConfigBuilder logger(final Logger logger) {
@@ -197,32 +203,32 @@ public class XcfaConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceFwBinItpChecker.create(True(), True(), solver)),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceFwBinItpChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), solver)),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver)),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver)),
+					refiner = MultiExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver)),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UCB:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUCBChecker.create(True(), True(), solver)),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUCBChecker.create(True(), True(), solver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case NWT_SP:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV()),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -230,7 +236,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_WP:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV()),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -238,7 +244,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV()),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -246,7 +252,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV()),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -254,7 +260,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_SP:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV()),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -262,7 +268,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_WP:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV()),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -270,7 +276,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV()),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -278,7 +284,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV()),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -379,7 +385,7 @@ public class XcfaConfigBuilder {
 					throw new UnsupportedOperationException(
 							domain + " domain does not support " + refinement + " refinement.");
 			}
-			exprTraceChecker = XcfaDeclarativeChecker.create(exprTraceChecker);
+			exprTraceChecker = XcfaDeclarativeChecker.create(exprTraceChecker, solver, preCheck);
 
 			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
 			Refiner<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> refiner;

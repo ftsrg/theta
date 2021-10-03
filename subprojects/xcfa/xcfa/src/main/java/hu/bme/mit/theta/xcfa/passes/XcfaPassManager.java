@@ -10,6 +10,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
@@ -59,7 +60,8 @@ public class XcfaPassManager {
 				new UnusedVarRemovalPass(),
 				new SimplifyExprs(),
 				new EmptyEdgeRemovalPass(),
-				new SimpleLbePass()
+				new SimpleLbePass(),
+				new GlobalVarsToStoreLoad()
 				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),

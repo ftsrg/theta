@@ -6,21 +6,62 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
+import hu.bme.mit.theta.cat.MemoryModelChecker;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceChecker<R> {
 	private final ExprTraceChecker<R> traceChecker;
+	private final Solver solver;
+	private final boolean preCheck;
 
-	private XcfaDeclarativeChecker(final ExprTraceChecker<R> traceChecker) {
+	private XcfaDeclarativeChecker(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
 		this.traceChecker = traceChecker;
+		this.solver = solver;
+		this.preCheck = preCheck;
 	}
 
-	public static <R extends Refutation> XcfaDeclarativeChecker<R> create(final ExprTraceChecker<R> traceChecker) {
-		return new XcfaDeclarativeChecker<R>(traceChecker);
+	public static <R extends Refutation> XcfaDeclarativeChecker<R> create(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
+		return new XcfaDeclarativeChecker<R>(traceChecker, solver, preCheck);
 	}
 
 	@Override
 	public ExprTraceStatus<R> check(Trace<? extends ExprState, ? extends ExprAction> trace) {
-//		MemoryModelChecker.Builder model = MemoryModelChecker.builder();
+		ExprTraceStatus<R> result = null;
+		if(preCheck) {
+			result = traceChecker.check(trace);
+			if(result.isInfeasible()) return result;
+		}
+
+		final boolean containsLoads = trace.getActions().stream().filter(exprAction -> exprAction instanceof XcfaDeclarativeAction).anyMatch(exprAction -> ((XcfaDeclarativeAction) exprAction).getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.LoadXcfaLabel));
+		if(!containsLoads) return preCheck ? result : traceChecker.check(trace);
+
+		solver.push();
+		MemoryModelChecker.Builder model = MemoryModelChecker.builder(solver);
 //		String w1 = "w1";
 //		String w2 = "w2";
 //		String r1 = "r1";
@@ -37,39 +78,109 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 //		model.addBinaryFact("intRaw", r1, r2);
 //		model.addBinaryFact("intRaw", w1, w2);
 //		model.build().printRf();
-//
-//
-//		final List<XcfaDeclarativeAction> newActions = new ArrayList<>();
-//		for (ExprAction action : trace.getActions()) {
-//			checkState(action instanceof XcfaDeclarativeAction, "Wrong type for XcfaDeclarativeChecker!");
-//			XcfaDeclarativeAction xcfaAction = (XcfaDeclarativeAction) action;
-//			if(xcfaAction instanceof XcfaDeclarativeAction.XcfaDeclarativeThreadChangeAction) {
-//				newActions.add(xcfaAction);
-//			} else {
-//				final List<XcfaLabel> newLabels = new ArrayList<>();
-//				for (XcfaLabel label : xcfaAction.getLabels()) {
-//					if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
-//
-//					} else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
-//
-//					} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-//
-//					} else if (label instanceof XcfaLabel.StartThreadXcfaLabel) {
-//
-//					} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) {
-//
-//					} else if (label instanceof XcfaLabel.AtomicBeginXcfaLabel) {
-//
-//					} else if (label instanceof XcfaLabel.AtomicEndXcfaLabel) {
-//
-//					} else {
-//						newLabels.add(label);
-//					}
-//				}
-//				newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(xcfaAction.getSource(), xcfaAction.getTarget(), newLabels)));
-//			}
-//		}
-//		return traceChecker.check(Trace.of(trace.getStates(), newActions));
-		return traceChecker.check(trace);
+
+
+		final Map<XcfaLabel, VarDecl<?>> dataFlow = new LinkedHashMap<>();
+		final List<XcfaDeclarativeAction> newActions = new ArrayList<>();
+		checkState(trace.getState(0) instanceof XcfaDeclarativeState, "Wrong type for XcfaDeclarativeState");
+		Object lastPo = ((XcfaDeclarativeState<?>) trace.getState(0)).getCurrentLoc().getParent().getParent();
+		model.addUnaryFact("meta", lastPo);
+		final Map<VarDecl<?>, XcfaProcess> varLut = new LinkedHashMap<>();
+		XcfaLocation lastLoc = null;
+		for (ExprAction action : trace.getActions()) {
+			checkState(action instanceof XcfaDeclarativeAction, "Wrong type for XcfaDeclarativeChecker!");
+			XcfaDeclarativeAction xcfaAction = (XcfaDeclarativeAction) action;
+			if(xcfaAction instanceof XcfaDeclarativeAction.XcfaDeclarativeThreadChangeAction) {
+				newActions.add(xcfaAction);
+				model.addUnaryFact("meta", Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
+				model.addBinaryFact("poRaw", lastPo, Tuple2.of(xcfaAction.getSource().getParent().getParent(), ProcessLabel.END));
+				lastPo = Tuple2.of(xcfaAction.getTarget().getParent().getParent(), ProcessLabel.START);
+				model.addUnaryFact("meta", lastPo);
+				lastLoc = xcfaAction.getTarget();
+			} else {
+				final List<XcfaLabel> newLabels = new ArrayList<>();
+				final XcfaProcess process = xcfaAction.getSource().getParent().getParent();
+				model.addUnaryFact("meta", process);
+				for (XcfaLabel label : xcfaAction.getLabels()) {
+					if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
+						model.addUnaryFact("W", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						model.addUnaryFact("meta", ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+						model.addBinaryFact("locRaw", label, ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+						model.addBinaryFact("intRaw", label, process);
+						lastPo = label;
+						final VarDecl<?> var = Var("dataflow" + dataFlow.size(), ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getType());
+						dataFlow.put(label, var);
+						newLabels.add(Stmt(Assign(cast(var, var.getType()), cast(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getRef(), var.getType()))));
+					} else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
+						model.addUnaryFact("R", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						model.addUnaryFact("meta", ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+						model.addBinaryFact("locRaw", label, ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+						model.addBinaryFact("intRaw", label, process);
+						lastPo = label;
+						final VarDecl<?> var = Var("dataflow" + dataFlow.size(), ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal().getType());
+						dataFlow.put(label, var);
+						newLabels.add(Stmt(Assign(cast(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), var.getType()), cast(var.getRef(), var.getType()))));
+					} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
+						model.addUnaryFact("F", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						model.addBinaryFact("intRaw", label, process);
+						lastPo = label;
+						newLabels.add(label);
+					} else if (label instanceof XcfaLabel.StartThreadXcfaLabel) {
+						model.addUnaryFact("meta", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						lastPo = label;
+						model.addUnaryFact("meta", Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
+						model.addBinaryFact("poRaw", lastPo, Tuple2.of(((XcfaLabel.StartThreadXcfaLabel) label).getProcess(), ProcessLabel.START));
+						varLut.put(((XcfaLabel.StartThreadXcfaLabel) label).getKey(), ((XcfaLabel.StartThreadXcfaLabel) label).getProcess());
+						newLabels.add(label);
+					} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) {
+						model.addUnaryFact("meta", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						lastPo = label;
+						final VarDecl<?> key = ((XcfaLabel.JoinThreadXcfaLabel) label).getKey();
+						model.addUnaryFact("meta", Tuple2.of(varLut.get(key), ProcessLabel.END));
+						model.addBinaryFact("poRaw", Tuple2.of(varLut.get(key), ProcessLabel.END), label);
+						newLabels.add(label);
+					} else if (label instanceof XcfaLabel.AtomicBeginXcfaLabel) {
+						model.addUnaryFact("meta", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						lastPo = label;
+						newLabels.add(label);
+					} else if (label instanceof XcfaLabel.AtomicEndXcfaLabel) {
+						model.addUnaryFact("meta", label);
+						model.addBinaryFact("poRaw", lastPo, label);
+						lastPo = label;
+						newLabels.add(label);
+					} else {
+						newLabels.add(label);
+					}
+				}
+				lastLoc = xcfaAction.getTarget();
+				newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(xcfaAction.getSource(), xcfaAction.getTarget(), newLabels)));
+			}
+		}
+		final MemoryModelChecker built = model.build();
+		Expr<BoolType> memoryModel = False();
+		for (List<Tuple2<Object, Object>> tuple2s : built.getRf()) {
+			Expr<BoolType> rfSet = True();
+			for (Tuple2<Object, Object> rf : tuple2s) {
+				checkState(dataFlow.containsKey(rf.get1()) && dataFlow.containsKey(rf.get2()), "Loads and stores do not exist!");
+				rfSet = And(rfSet, Eq(dataFlow.get(rf.get1()).getRef(), dataFlow.get(rf.get2()).getRef()));
+			}
+			memoryModel = Or(memoryModel, rfSet);
+		}
+		final List<ExprState> newStates = new ArrayList<>(trace.getStates());
+		newStates.add(newStates.get(newStates.size() - 1));
+		newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(lastLoc, lastLoc, List.of(Stmt(Assume(memoryModel))))));
+		solver.pop();
+		return traceChecker.check(Trace.of(newStates, newActions));
+	}
+
+	private enum ProcessLabel {
+		START,
+		END
 	}
 }
