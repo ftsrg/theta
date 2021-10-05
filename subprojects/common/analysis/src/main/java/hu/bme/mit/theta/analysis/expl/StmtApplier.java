@@ -65,6 +65,12 @@ public final class StmtApplier {
 		} else if (stmt instanceof LoopStmt) {
 			final LoopStmt loopStmt = (LoopStmt) stmt;
 			return applyLoop(loopStmt, val, approximate);
+		} else if (stmt instanceof PushStmt) {
+			final PushStmt<?> pushStmt = (PushStmt<?>) stmt;
+			return applyPush(pushStmt, val);
+		} else if (stmt instanceof PopStmt) {
+			final PopStmt<?> pushStmt = (PopStmt<?>) stmt;
+			return applyPop(pushStmt, val);
 		} else {
 			throw new UnsupportedOperationException("Unhandled statement: " + stmt);
 		}
@@ -218,5 +224,18 @@ public final class StmtApplier {
 		throw new UnsupportedOperationException();
 	}
 
+
+	private static ApplyResult applyPush(final PushStmt<?> stmt, final MutableValuation val) {
+		final VarDecl<?> varDecl = stmt.getVarDecl();
+		val.remove(varDecl);
+		return ApplyResult.SUCCESS;
+	}
+
+
+	private static ApplyResult applyPop(final PopStmt<?> stmt, final MutableValuation val) {
+		final VarDecl<?> varDecl = stmt.getVarDecl();
+		val.remove(varDecl);
+		return ApplyResult.SUCCESS;
+	}
 
 }

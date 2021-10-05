@@ -5,21 +5,24 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
@@ -41,7 +44,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> {
 	private static final FuncType<IntType, BoolType> unaryPredicate  = FuncExprs.Func(Int(), Bool());
@@ -100,26 +102,26 @@ public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> 
 			solver.add(simplified);
 		}
 
-		solver.check();
-		while(solver.getStatus().isSat()) {
-			final Map<Decl<?>, LitExpr<?>> valuation = solver.getModel().toMap();
-			final List<Tuple2<Object, Object>> currentRf = new ArrayList<>();
-			Expr<BoolType> ref = True();
-			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : builder.reads.entrySet()) {
-				Tuple2<Decl<IntType>, Object> objects = entry.getKey();
-				final Object read = objects.get2();
-				final IntLitExpr value = (IntLitExpr) cast(valuation.get(objects.get1()), Int());
-				final int idx = (int) value.getValue().longValue();
-				final Object write = builder.idxFactLut.get(idx);
-				currentRf.add(Tuple2.of(write, read));
-				ref = And(ref, Eq(objects.get1().getRef(), value));
-			}
-			rf.add(currentRf);
-			System.err.println("Found new set of rf-edges:");
-			printOneRfSet(currentRf);
-			solver.add(Not(ref));
-			solver.check();
-		}
+//		solver.check();
+//		while(solver.getStatus().isSat()) {
+//			final Map<Decl<?>, LitExpr<?>> valuation = solver.getModel().toMap();
+//			final List<Tuple2<Object, Object>> currentRf = new ArrayList<>();
+//			Expr<BoolType> ref = True();
+//			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : builder.reads.entrySet()) {
+//				Tuple2<Decl<IntType>, Object> objects = entry.getKey();
+//				final Object read = objects.get2();
+//				final IntLitExpr value = (IntLitExpr) cast(valuation.get(objects.get1()), Int());
+//				final int idx = (int) value.getValue().longValue();
+//				final Object write = builder.idxFactLut.get(idx);
+//				currentRf.add(Tuple2.of(write, read));
+//				ref = And(ref, Eq(objects.get1().getRef(), value));
+//			}
+//			rf.add(currentRf);
+//			System.err.println("Found new set of rf-edges:");
+//			printOneRfSet(currentRf);
+//			solver.add(Not(ref));
+//			solver.check();
+//		}
 	}
 
 	private void printOneRfSet(List<Tuple2<Object, Object>> objectObjectMap) {
@@ -160,13 +162,13 @@ public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> 
 			binaryAssumptions = new ArrayList<>();
 			unaryAssumptions = new ArrayList<>();
 			nullaryAssumptions  = new ArrayList<>();
-			reads = new LinkedHashMap<>();
-			writes = new LinkedHashMap<>();
-			factIdxLut = new LinkedHashMap<>();
-			idxFactLut = new LinkedHashMap<>();
-			facts = new LinkedHashMap<>();
-			binaryRelations = new LinkedHashMap<>();
-			unaryRelations  = new LinkedHashMap<>();
+			reads = new EqualityLinkedHashMap<>();
+			writes = new EqualityLinkedHashMap<>();
+			factIdxLut = new EqualityLinkedHashMap<>();
+			idxFactLut = new EqualityLinkedHashMap<>();
+			facts = new EqualityLinkedHashMap<>();
+			binaryRelations = new EqualityLinkedHashMap<>();
+			unaryRelations  = new EqualityLinkedHashMap<>();
 
 			a = Param("a", Int());
 			b = Param("b", Int());
@@ -285,7 +287,7 @@ public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> 
 			unaryAssumptions.add(/*ExprUtils.simplify*/Ite(True(), inRange, notInRange));
 		}
 
-		private int addUnaryFact(final String name, final Object object) {
+		private int addUnaryFact(final String name, Object object) {
 			if(factIdxLut.containsKey(object)) return factIdxLut.get(object);
 			int currentSize = factIdxLut.size();
 			factIdxLut.put(object, currentSize);
@@ -325,13 +327,33 @@ public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> 
 		}
 
 		@Override
-		public SmtMemoryModelChecker build() {
-			for (Map.Entry<Tuple2<Decl<IntType>, Object>, Integer> entry : reads.entrySet()) {
-				final Tuple2<Decl<IntType>, Object> read = entry.getKey();
-				final Integer idx = entry.getValue();
-				nullaryAssumptions.add(App(App(getBinaryRel("rf").getRef(), read.get1().getRef()), Int(idx)));
+		public SmtMemoryModelChecker build(List<Tuple2<XcfaLabel, ConstDecl<?>>> dataFlow) {
+			for (Tuple2<XcfaLabel, ConstDecl<?>> objects : dataFlow) {
+				if(objects.get1() instanceof XcfaLabel.StoreXcfaLabel) {
+					for (Tuple2<XcfaLabel, ConstDecl<?>> objects1 : dataFlow) {
+						if(objects1.get1() instanceof XcfaLabel.LoadXcfaLabel) {
+							final ConstDecl<?> storeVar = objects.get2();
+							final ConstDecl<?> loadVar = objects1.get2();
+							final XcfaLabel store = objects.get1();
+							final XcfaLabel load = objects1.get1();
+							final ImplyExpr rf = Imply(App(App(binaryRelations.get("rf").getRef(), Int(factIdxLut.get(store))), Int(factIdxLut.get(load))), Eq(storeVar.getRef(), loadVar.getRef()));
+							solver.add(rf);
+							System.err.println("Adding assumption: " + rf);
+						}
+					}
+				}
 			}
 			return new SmtMemoryModelChecker(this);
+		}
+
+		@Override
+		public void pop() {
+			solver.pop();
+		}
+
+		@Override
+		public void push() {
+			solver.push();
 		}
 
 		@Override
@@ -375,6 +397,190 @@ public class SmtMemoryModelChecker implements MemoryModelSolver<Object, Object> 
 		@Override
 		public void addPoEdge(Object programLocA, Object programLocB) {
 			addBinaryFact("poRaw", programLocA, programLocB);
+		}
+
+		@Override
+		public String createProduct(String newRule, String existingRule1, String existingRule2) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createAlternative(String newRule, String existingRule) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createUnion(String newRule, String existingRule1, String existingRule2) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createIntersection(String newRule, String existingRule1, String existingRule2) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createDifference(String newRule, String existingRule1, String existingRule2) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createInverse(String newRule, String existingRule) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createTransitive(String newRule, String existingRule) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createSelfTransitive(String newRule, String existingRule) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createSuccessor(String newRule, String existingRule1, String existingRule2) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public String createRelation(String newRelation, int arity) {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+
+		@Override
+		public void assertIrreflexive(String rule) {
+
+		}
+
+		@Override
+		public void assertEmpty(String rule) {
+
+		}
+
+		@Override
+		public void assertAcyclic(String rule) {
+
+		}
+	}
+
+	private static class EqualityLinkedHashMap<K, V> implements Map<K, V>{
+		private final Map<K, Collection<Tuple2<K, Integer>>> buckets;
+		private final List<V> heap;
+
+		public EqualityLinkedHashMap() {
+			buckets = new LinkedHashMap<>();
+			heap = new LinkedList<>();
+		}
+
+		public EqualityLinkedHashMap(final EqualityLinkedHashMap<K, V> map) {
+			buckets = new LinkedHashMap<>(map.buckets);
+			heap = new LinkedList<>(map.heap);
+		}
+
+		@Override
+		public int size() {
+			return heap.size();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return heap.isEmpty();
+		}
+
+		@Override
+		public boolean containsKey(Object o) {
+			final Collection<Tuple2<K, Integer>> entries = buckets.get(o);
+			if(entries != null) {
+				for (Tuple2<K, Integer> entry : entries) {
+					if (entry.get1() == o) return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public boolean containsValue(Object o) {
+			return heap.contains(o);
+		}
+
+		private Integer getIndex(Object o) {
+			final Collection<Tuple2<K, Integer>> entries = buckets.get(o);
+			if(entries != null) {
+				for (Tuple2<K, Integer> entry : entries) {
+					if (entry.get1() == o) return entry.get2();
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public V get(Object o) {
+			final Integer index = getIndex(o);
+			return index == null ? null : heap.get(index);
+		}
+
+		@Override
+		public V put(K k, V v) {
+			final Integer index = getIndex(k);
+			if(index == null) {
+				buckets.putIfAbsent(k, new ArrayList<>());
+				buckets.get(k).add(Tuple2.of(k, heap.size()));
+				heap.add(v);
+			} else {
+				heap.remove((int)index);
+				heap.add(index, v);
+			}
+			return v;
+		}
+
+		@Override
+		public V remove(Object o) {
+			final Integer index = getIndex(o);
+			if(index == null) {
+				return null;
+			} else {
+				final V v = heap.get(index);
+				buckets.get(o).remove(Tuple2.of(o, index));
+				heap.remove((int)index);
+				return v;
+			}
+		}
+
+		@Override
+		public void putAll(Map<? extends K, ? extends V> map) {
+			map.forEach(this::put);
+
+		}
+
+		@Override
+		public void clear() {
+			heap.clear();
+			buckets.clear();
+		}
+
+		@Override
+		public Set<K> keySet() {
+			throw new UnsupportedOperationException("Key set is not possible for an EqualityLinkedHashMap!");
+		}
+
+		@Override
+		public Collection<V> values() {
+			return heap;
+		}
+
+		@Override
+		public Set<Entry<K, V>> entrySet() {
+			Set<Entry<K, V>> ret = new LinkedHashSet<>();
+			for (Entry<K, Collection<Tuple2<K, Integer>>> entry : buckets.entrySet()) {
+				K k = entry.getKey();
+				Collection<Tuple2<K, Integer>> tuple2s = entry.getValue();
+				for (Tuple2<K, Integer> tuple2 : tuple2s) {
+					ret.add(Map.entry(k, heap.get(tuple2.get2())));
+				}
+			}
+			return ret;
 		}
 	}
 }

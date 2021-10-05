@@ -397,19 +397,25 @@ public class PushPopVarIndexing implements VarIndexing {
 		}
 
 		private OffsetStack sub(final OffsetStack that) {
-			checkArgument(this.currentHeight >= that.currentHeight, "Cannot sub stacks due to mismatched depths!");
-
 			int i;
 			final List<Integer> newOffsets = new ArrayList<>(this.offsets);
 			int newCurrentHeight = this.currentHeight;
 			int newPrevMin = this.prevMin;
 			int newNegativeCount = negativeCount;
+			if(this.currentHeight < that.currentHeight) {
+				int toAdd = that.currentHeight - this.currentHeight;
+				newNegativeCount+=toAdd;
+				for (int i1 = 0; i1 < toAdd; i1++) {
+					newOffsets.add(0, 0);
+				}
+			}
+			int savedNegativeCount = newNegativeCount;
 			final int toPop = Math.max(that.currentHeight, 0);
 			for (i = 0; i < that.negativeCount; i++) {
 				final int newOffset = prevMin - that.offsets.get(i);
-				if(currentHeight - toPop - (that.negativeCount - i) >= 0) {
-					newOffsets.remove(currentHeight - toPop - (that.negativeCount - i));
-					newOffsets.add(currentHeight - toPop - (that.negativeCount - i), newOffset);
+				if(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i) >= 0) {
+					newOffsets.remove(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i));
+					newOffsets.add(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i), newOffset);
 				} else {
 					newOffsets.add(0, newOffset);
 					++newNegativeCount;
@@ -418,8 +424,8 @@ public class PushPopVarIndexing implements VarIndexing {
 			}
 			if(that.currentHeight >= 0) {
 				final int newOffset = prevMin - that.offsets.get(i);
-				newOffsets.remove(currentHeight - toPop);
-				newOffsets.add(currentHeight - toPop, newOffset);
+				newOffsets.remove(savedNegativeCount + currentHeight - toPop);
+				newOffsets.add(savedNegativeCount + currentHeight - toPop, newOffset);
 				newPrevMin = Math.min(newPrevMin, newOffset);
 				++i;
 				for (int i1 = toPop; i1 > 0; --i1) {

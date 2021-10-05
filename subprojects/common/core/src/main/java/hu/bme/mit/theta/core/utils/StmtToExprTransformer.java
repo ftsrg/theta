@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.indexings.PushPopVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 import java.util.ArrayList;
@@ -163,11 +164,21 @@ final class StmtToExprTransformer {
 
 		@Override
 		public <DeclType extends Type> StmtUnfoldResult visit(PushStmt<DeclType> stmt, VarIndexing param) {
+			if(param instanceof PushPopVarIndexing) {
+				final PushPopVarIndexing newIndexing = ((PushPopVarIndexing) param).push(stmt.getVarDecl());
+				return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
+			}
+//			return StmtUnfoldResult.of(ImmutableList.of(True()), param);
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
 		public <DeclType extends Type> StmtUnfoldResult visit(PopStmt<DeclType> stmt, VarIndexing param) {
+			if(param instanceof PushPopVarIndexing) {
+				final PushPopVarIndexing newIndexing = ((PushPopVarIndexing) param).pop(stmt.getVarDecl());
+				return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
+			}
+//			return StmtUnfoldResult.of(ImmutableList.of(True()), param);
 			throw new UnsupportedOperationException();
 		}
 	}

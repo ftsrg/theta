@@ -90,4 +90,9 @@ public final class XcfaDeclarativePrec<P extends Prec> implements Prec {
 	public Collection<VarDecl<?>> getUsedVars() {
 		return globalPrec.getUsedVars();
 	}
+
+	@Override
+	public String toString() {
+		return globalPrec.toString();
+	}
 }

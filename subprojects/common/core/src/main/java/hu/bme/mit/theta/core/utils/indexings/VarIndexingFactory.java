@@ -11,7 +11,7 @@ public class VarIndexingFactory {
 	}
 
 	public static VarIndexing indexing(final int defaultOffset) {
-		return basicVarIndexing(defaultOffset);
+		return pushPopIndexing(defaultOffset);
 	}
 
 	public static PushPopVarIndexing.PushPopVarIndexingBuilder pushPopIndexingBuilder(final int defaultOffset) {

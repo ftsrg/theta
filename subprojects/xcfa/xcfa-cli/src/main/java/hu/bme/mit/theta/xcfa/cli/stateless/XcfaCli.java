@@ -239,6 +239,7 @@ public class XcfaCli {
 		final Stopwatch sw = Stopwatch.createStarted();
 
 		final CharStream input;
+		XCFA.Builder xcfaBuilder = null;
 		XCFA xcfa = null;
 		try {
 			input = CharStreams.fromStream(new FileInputStream(model));
@@ -252,7 +253,7 @@ public class XcfaCli {
 
 			FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 
-			xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program);
+			xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Frontend failed!");
@@ -260,16 +261,10 @@ public class XcfaCli {
 		}
 
 		try {
-			// write xcfa into file
-			if(outputResults) {
-				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
-					bw.write(xcfa.toDot());
-				}
-			}
-
 			if(legacy) {
 				CFA cfa;
 				try {
+					if(xcfa == null) xcfa = xcfaBuilder.build();
 					cfa = xcfa.createCFA();
 				} catch(IllegalStateException e) {
 					System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
@@ -305,6 +300,11 @@ public class XcfaCli {
 
 			// write cfa into file and output statistics about (X)CFA and C input file
 			if(outputResults) {
+				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
+					if(xcfa == null) xcfa = xcfaBuilder.build();
+					bw.write(xcfa.toDot());
+				}
+				if(xcfa == null) xcfa = xcfaBuilder.build();
 				ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, model.getName());
 				statistics.writeToCsv(statisticscsvfile);
 				statistics.writeToTxt(statisticstxtfile);
@@ -313,12 +313,13 @@ public class XcfaCli {
 			if(noAnalysis) return;
 
 			/// starting analysis
-			checkState(xcfa != null, "XCFA cannot be null");
+			checkState(xcfaBuilder != null, "XCFA cannot be null");
 			System.err.println("Arithmetic: " + ArchitectureConfig.arithmetic);
 			SafetyResult<?, ?> status = null;
 
 			Duration initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS);
 			System.err.println("Time of model transformation: " + initTime.toMillis() + "ms");
+			if(xcfa == null) xcfa = xcfaBuilder.build();
 
 			switch (portfolio) {
 				case NONE:

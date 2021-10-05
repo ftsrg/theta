@@ -687,21 +687,23 @@ extern int pthread_atfork (void (*__prepare) (void),
 void reach_error(){}
 
 int x = 0;
+int ERR = 0;
 
 void *thr1(void *_) {
-    x++;
-    x++;
+    x = 1;
+    x = 2;
 }
 
 void *thr2(void *_) {
-    x++;
-    x++;
+    int i = x;
+    int j = x;
+    if(i == 2 && j == 1) ERR = 1;
 }
 
 int main() {
     pthread_t t1, t2;
     pthread_create(&t1, 0, thr1, 0);
     pthread_create(&t2, 0, thr2, 0);
-    if(x % 2 == 1) reach_error();
+    if(ERR) reach_error();
     return 0;
 }

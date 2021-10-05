@@ -89,7 +89,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 	}
 
 
-	public XCFA buildXcfa(CProgram cProgram) {
+	public XCFA.Builder buildXcfa(CProgram cProgram) {
 		XCFA.Builder builder = XCFA.builder();
 		builder.setDynamic(true);
 
@@ -115,7 +115,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		}
 		builder.addProcess(procBuilder);
 		builder.setMainProcess(procBuilder);
-		return builder.build();
+		return builder;
 	}
 
 	private XcfaProcedure.Builder handleFunction(CFunction function, List<XcfaLabel> param) {
