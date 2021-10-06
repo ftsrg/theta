@@ -5,7 +5,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.z3.ContextInterrupt;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
@@ -85,7 +84,7 @@ public abstract class AbstractPortfolio {
 		if(cegarAnalysisThread.isAlive()) {
 			Stopwatch dieTimer = Stopwatch.createStarted();
 
-			ContextInterrupt.interruptContexts();
+//			ContextInterrupt.interruptContexts(); TODO: interrupt solver?
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {

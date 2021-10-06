@@ -57,7 +57,9 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAnalysis;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeChecker;
@@ -185,7 +187,9 @@ public class XcfaConfigBuilder {
 	}
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final ItpSolver solver = solverFactory.createItpSolver();
+		final Solver solver = solverFactory.createSolver();
+		final ItpSolver itpSolver = solverFactory.createItpSolver();
+		final UCSolver ucSolver = solverFactory.createUCSolver();
 		final LTS<XcfaDeclarativeState<?>, XcfaDeclarativeAction> lts = new XcfaDeclarativeLts();
 		
 		if (domain == Domain.EXPL) {
@@ -203,32 +207,32 @@ public class XcfaConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceFwBinItpChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceBwBinItpChecker.create(True(), True(), itpSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), itpSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = MultiExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceSeqItpChecker.create(True(), True(), itpSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UCB:
-					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUCBChecker.create(True(), True(), solver), solver, preCheck),
+					refiner = SingleExprTraceRefiner.create(XcfaDeclarativeChecker.create(ExprTraceUCBChecker.create(True(), True(), ucSolver), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case NWT_SP:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV(), solver, preCheck),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withSP().withoutLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -236,7 +240,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_WP:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV(), solver, preCheck),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withWP().withoutLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -244,7 +248,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV(), solver, preCheck),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withSP().withLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -252,7 +256,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
-							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV(), solver, preCheck),
+							XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withWP().withLV(), solver, preCheck),
 							XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -260,7 +264,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_SP:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV(), solver, preCheck),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withSP().withoutLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -268,7 +272,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_WP:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV(), solver, preCheck),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withWP().withoutLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -276,7 +280,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_SP_LV:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV(), solver, preCheck),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withSP().withLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -284,7 +288,7 @@ public class XcfaConfigBuilder {
 					break;
 				case NWT_IT_WP_LV:
 					refiner = SingleExprTraceRefiner.create(
-						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV(), solver, preCheck),
+						XcfaDeclarativeChecker.create(ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withWP().withLV(), solver, preCheck),
 						XcfaDeclarativePrecRefiner.create(new ItpRefToExplPrec()),
 						pruneStrategy,
 						logger
@@ -343,43 +347,43 @@ public class XcfaConfigBuilder {
 			ExprTraceChecker<ItpRefutation> exprTraceChecker;
 			switch (refinement) {
 				case FW_BIN_ITP:
-					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), itpSolver);
 					break;
 				case BW_BIN_ITP:
-					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), itpSolver);
 					break;
 				case SEQ_ITP:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), itpSolver);
 					break;
 				case MULTI_SEQ:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), itpSolver);
 					break;
 				case UCB:
-					exprTraceChecker = ExprTraceUCBChecker.create(True(), True(), solver);
+					exprTraceChecker = ExprTraceUCBChecker.create(True(), True(), ucSolver);
 					break;
 				case NWT_SP:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withoutLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withSP().withoutLV();
 					break;
 				case NWT_WP:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withoutLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withWP().withoutLV();
 					break;
 				case NWT_SP_LV:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withSP().withLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withSP().withLV();
 					break;
 				case NWT_WP_LV:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withoutIT().withWP().withLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withoutIT().withWP().withLV();
 					break;
 				case NWT_IT_SP:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withoutLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withSP().withoutLV();
 					break;
 				case NWT_IT_WP:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withoutLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withWP().withoutLV();
 					break;
 				case NWT_IT_SP_LV:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withSP().withLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withSP().withLV();
 					break;
 				case NWT_IT_WP_LV:
-					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), solver).withIT().withWP().withLV();
+					exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(), ucSolver).withIT().withWP().withLV();
 					break;
 				default:
 					throw new UnsupportedOperationException(
