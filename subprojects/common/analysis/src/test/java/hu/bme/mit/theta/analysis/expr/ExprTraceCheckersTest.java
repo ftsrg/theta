@@ -15,6 +15,28 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import hu.bme.mit.theta.solver.UCSolver;
+import org.junit.Before;
+import org.junit.Test;
+
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -54,12 +76,13 @@ public final class ExprTraceCheckersTest {
 
 	@Before
 	public void before() {
-		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+		final ItpSolver itpSolver = Z3SolverFactory.getInstance().createItpSolver();
+		final UCSolver ucSolver = Z3SolverFactory.getInstance().createUCSolver();
 		traceCheckers = new ArrayList<>();
-		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), solver));
+		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver));
 	}
 
 	@Test

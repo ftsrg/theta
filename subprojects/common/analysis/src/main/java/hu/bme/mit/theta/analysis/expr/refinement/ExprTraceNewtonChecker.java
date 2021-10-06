@@ -38,6 +38,10 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.PopStmt;
 import hu.bme.mit.theta.core.stmt.PushStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -54,6 +58,7 @@ import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
@@ -61,6 +66,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -83,7 +90,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private enum AssertionGeneratorMethod { SP, WP }
 
-    private final Solver solver;
+    private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
@@ -92,7 +99,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private final boolean LV; // Whether to project the assertions to live variables
 
     private ExprTraceNewtonChecker(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver,
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver,
         boolean it, AssertionGeneratorMethod sPorWP, boolean lv
     ) {
         this.solver = checkNotNull(solver);
@@ -104,7 +111,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static ExprTraceNewtonCheckerITBuilder create(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
     ) {
         return new ExprTraceNewtonCheckerITBuilder(solver, init, target);
     }
@@ -175,8 +182,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         for(var i = 1; i < stateCount; i++) {
             var initStream =
                 (i == 1)
-                ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
-                : Stream.<AssumeStmt>empty();
+                    ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
+                    : Stream.<AssumeStmt>empty();
 
             var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
 
@@ -184,11 +191,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             var targetStream =
                 (i == stateCount - 1)
-                ? Stream.concat(
+                    ? Stream.concat(
                     ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream().map(AssumeStmt::of),
                     ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of)
                 )
-                : Stream.<AssumeStmt>empty();
+                    : Stream.<AssumeStmt>empty();
 
             flattenedActions.add(
                 NewtonAction.of(
@@ -320,6 +327,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Stmt visit(PopStmt<DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+            public Stmt visit(IfStmt stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -390,7 +400,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     private Collection<VarDecl<?>> collectVariablesInTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
-        Set<VarDecl<?>> variables = Containers.createSet();
+        var variables = new HashSet<VarDecl<?>>();
 
         for(var state : trace.getStates()) {
             ExprUtils.collectVars(state.toExpr(), variables);
@@ -451,6 +461,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -501,6 +514,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException();
+
+            }
+
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
         }, null);
@@ -555,6 +573,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                throw new UnsupportedOperationException();
+            }
         }, null);
     }
 
@@ -576,7 +597,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         futureLiveVariables.set(stateCount - 1, Collections.emptySet());
         for(var i = stateCount - 2; i >= 0; i--) {
-            var vars = Containers.createSet(futureLiveVariables.get(i + 1));
+            var vars = new HashSet<>(futureLiveVariables.get(i + 1));
             vars.addAll(actionReadsVariables(trace.getAction(i)));
             vars.removeAll(actionWritesVariables(trace.getAction(i)));
             vars.removeAll(actionHavocsVariables(trace.getAction(i)));
@@ -592,7 +613,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         pastLiveVariables.set(0, Collections.emptySet());
         for(var i = 1; i < stateCount; i++) {
-            var vars = Containers.createSet(pastLiveVariables.get(i - 1));
+            var vars = new HashSet<>(pastLiveVariables.get(i - 1));
             vars.addAll(actionReadsVariables(trace.getAction(i - 1)));
             vars.addAll(actionWritesVariables(trace.getAction(i - 1)));
             vars.removeAll(actionHavocsVariables(trace.getAction(i - 1)));
@@ -636,8 +657,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             .collect(Collectors.toUnmodifiableSet());
 
         var substitution = BasicSubstitution.builder()
-           .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
-           .build();
+            .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+            .build();
 
         return params.size() > 0
             ? Forall(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
@@ -649,11 +670,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     public static class ExprTraceNewtonCheckerITBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
-        public ExprTraceNewtonCheckerITBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target) {
+        public ExprTraceNewtonCheckerITBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -669,13 +690,13 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static class ExprTraceNewtonCheckerAssertBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
         private final boolean IT;
 
-        public ExprTraceNewtonCheckerAssertBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
+        public ExprTraceNewtonCheckerAssertBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -692,14 +713,14 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static class ExprTraceNewtonCheckerLVBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
         private final boolean IT;
         private final AssertionGeneratorMethod SPorWP;
 
-        public ExprTraceNewtonCheckerLVBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
+        public ExprTraceNewtonCheckerLVBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
             this.solver = solver;
             this.init = init;
             this.target = target;

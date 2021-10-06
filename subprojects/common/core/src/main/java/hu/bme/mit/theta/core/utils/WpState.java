@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -185,6 +186,10 @@ public final class WpState {
 			throw new UnsupportedOperationException();
 		}
 
+		public WpState visit(IfStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
 		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
 			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
@@ -244,6 +249,9 @@ public final class WpState {
 
 		@Override
 		public <DeclType extends Type> WpState visit(PopStmt<DeclType> stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+		public WpState visit(IfStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
 

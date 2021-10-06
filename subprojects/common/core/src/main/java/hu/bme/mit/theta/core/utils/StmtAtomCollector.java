@@ -74,6 +74,13 @@ public class StmtAtomCollector {
         public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Set<Expr<BoolType>> param) {
             throw new UnsupportedOperationException();
         }
+
+        public Void visit(IfStmt stmt, Set<Expr<BoolType>> atoms){
+            stmt.getThen().accept(this, atoms);
+            stmt.getElze().accept(this, atoms);
+            atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
+            return null;
+        }
     }
 
 }

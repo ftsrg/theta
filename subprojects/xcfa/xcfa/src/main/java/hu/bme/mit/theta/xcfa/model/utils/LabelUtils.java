@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -124,6 +125,11 @@ public class LabelUtils {
 
 			@Override
 			public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
+				return StmtUtils.getVars(stmt);
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
 				return StmtUtils.getVars(stmt);
 			}
 		}, null);

@@ -1,0 +1,14 @@
+var a : integer = 0
+var b : integer = 0
+
+trans{
+    if(a<5) {
+        a:=a+1;
+    } else {
+        b:=b-1;
+    }
+}
+
+init{}
+
+env{}

@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
@@ -31,27 +30,19 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 
 	private static final String OPERATOR_LABEL = "fprem";
 
-	private final FpRoundingMode roundingMode;
-
-	private FpRemExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+	private FpRemExpr(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		super(leftOp, rightOp);
 		checkAllTypesEqual(leftOp, rightOp);
-		checkNotNull(roundingMode);
-		this.roundingMode = roundingMode;
 	}
 
-	public static FpRemExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return new FpRemExpr(roundingMode, leftOp, rightOp);
+	public static FpRemExpr of(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return new FpRemExpr(leftOp, rightOp);
 	}
 
-	public static FpRemExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp, final Expr<?> rightOp) {
+	public static FpRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Expr<FpType> newLeftOp = castFp(leftOp);
 		final Expr<FpType> newRightOp = castFp(rightOp);
-		return FpRemExpr.of(roundingMode, newLeftOp, newRightOp);
-	}
-
-	public FpRoundingMode getRoundingMode() {
-		return roundingMode;
+		return FpRemExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -63,9 +54,9 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 	public FpLitExpr eval(final Valuation val) {
 		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
 		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-		BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(roundingMode, leftOpVal);
-		BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(roundingMode, rightOpVal);
-		BigFloat remainder = leftFloat.remainder(rightFloat, FpUtils.getMathContext(this.getType(), roundingMode));
+		BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(null, leftOpVal);
+		BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(null, rightOpVal);
+		BigFloat remainder = leftFloat.remainder(rightFloat, FpUtils.getMathContext(this.getType(), null));
 
 		return FpUtils.bigFloatToFpLitExpr(remainder, this.getType());
 	}
@@ -77,7 +68,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return FpRemExpr.of(roundingMode, leftOp, rightOp);
+			return FpRemExpr.of(leftOp, rightOp);
 		}
 	}
 
@@ -97,7 +88,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 			return true;
 		} else if (obj instanceof FpRemExpr) {
 			final FpRemExpr that = (FpRemExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;
 		}

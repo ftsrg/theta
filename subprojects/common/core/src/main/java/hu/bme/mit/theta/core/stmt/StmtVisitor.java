@@ -39,4 +39,6 @@ public interface StmtVisitor<P, R> {
 
 	<DeclType extends Type> R visit(PopStmt<DeclType> stmt, P param);
 
+	R visit(IfStmt stmt, P param);
+
 }

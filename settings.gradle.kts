@@ -5,8 +5,6 @@ include(
         "common/common",
         "common/core",
         "common/c-frontend",
-        "common/solver",
-        "common/solver-z3",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
@@ -27,7 +25,12 @@ include(
 
         "xsts/xsts",
         "xsts/xsts-analysis",
-        "xsts/xsts-cli"
+        "xsts/xsts-cli",
+
+        "solver/solver",
+        "solver/solver-z3",
+        "solver/solver-smtlib",
+        "solver/solver-smtlib-cli"
 )
 
 for (project in rootProject.children) {

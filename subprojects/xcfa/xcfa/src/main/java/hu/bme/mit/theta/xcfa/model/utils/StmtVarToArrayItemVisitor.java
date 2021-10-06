@@ -6,6 +6,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -111,6 +112,11 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
 		}
 		return List.of(Stmt(stmt));	}
+
+	@Override
+	public List<XcfaLabel> visit(IfStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
 
 	@Override
 	public List<XcfaLabel> visit(XcfaLabel.ProcedureCallXcfaLabel label, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {

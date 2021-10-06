@@ -78,5 +78,8 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	public <DeclType extends Type> String visit(PopStmt<DeclType> stmt, Void param) {
 		throw new UnsupportedOperationException();
 	}
+	public String visit(IfStmt stmt, Void param) {
+		throw new UnsupportedOperationException();
+	}
 
 }

@@ -108,7 +108,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		Expr<?> expr = callStmt.getParams().get(0);
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
-		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMinExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMinExpr.of((Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
 		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return Stmt(assign);
 	}
@@ -118,7 +118,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		Expr<?> expr = callStmt.getParams().get(0);
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
-		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMaxExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpMaxExpr.of((Expr<FpType>) callStmt.getParams().get(1), (Expr<FpType>) callStmt.getParams().get(2)));
 		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return Stmt(assign);
 	}

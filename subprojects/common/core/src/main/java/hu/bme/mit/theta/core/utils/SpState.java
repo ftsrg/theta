@@ -189,5 +189,8 @@ public class SpState {
         public <DeclType extends Type> SpState visit(PopStmt<DeclType> stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
+        public SpState visit(IfStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

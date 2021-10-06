@@ -19,6 +19,7 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -102,5 +103,12 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 			count+=subStmt.accept(this,null);
 		}
 		return count+1;
+	}
+
+	@Override
+	public Integer visit(IfStmt stmt, Void param){
+		return stmt.getThen().accept(this, null)
+				+ stmt.getElze().accept(this, null)
+				+ 1;
 	}
 }

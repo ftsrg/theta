@@ -123,6 +123,7 @@ public final class ClockOps {
 		public <DeclType extends Type> ClockOp visit(PopStmt<DeclType> stmt, Void param) {
 			throw new UnsupportedOperationException();
 		}
+		public ClockOp visit(IfStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
 		@Override
 		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {

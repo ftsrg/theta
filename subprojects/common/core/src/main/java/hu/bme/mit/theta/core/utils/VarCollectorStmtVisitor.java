@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -110,6 +111,13 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	@Override
 	public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Collection<VarDecl<?>> param) {
 		param.add(stmt.getVarDecl());
+		return null;
+	}
+
+	public Void visit(IfStmt stmt, Collection<VarDecl<?>> vars) {
+		ExprUtils.collectVars(stmt.getCond(), vars);
+		stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);
+		stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
 		return null;
 	}
 

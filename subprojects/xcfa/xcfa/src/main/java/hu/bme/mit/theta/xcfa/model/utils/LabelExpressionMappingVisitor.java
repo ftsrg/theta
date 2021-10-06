@@ -4,6 +4,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
@@ -78,6 +79,17 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 
 	@Override
 	public <DeclType extends Type> Optional<XcfaLabel> visit(PopStmt<DeclType> stmt, Mapper<T> param) {
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<XcfaLabel> visit(IfStmt stmt, Mapper<T> param) {
+		Optional<Expr<BoolType>> condOpt = ExpressionReplacer.replace(stmt.getCond(), param.getExprMapper());
+		Optional<XcfaLabel> thenOpt = stmt.getThen().accept(this, param);
+		Optional<XcfaLabel> elzeOpt = stmt.getElze().accept(this, param);
+		if (condOpt.isPresent() || thenOpt.isPresent() || elzeOpt.isPresent()) {
+			return Optional.of(Stmt(IfStmt.of(condOpt.orElse(stmt.getCond()), thenOpt.map(XcfaLabel::getStmt).orElse(stmt.getThen()), elzeOpt.map(XcfaLabel::getStmt).orElse(stmt.getElze()))));
+		}
 		return Optional.empty();
 	}
 

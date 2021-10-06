@@ -1,0 +1,21 @@
+main process cfa {
+	var f2 : fp[2:3]
+	var f3 : fp[2:3]
+	var f4 : fp[2:3]
+	var f5 : fp[2:3]
+
+    init loc L1
+    loc L2
+    loc L3
+    loc L4
+    loc L5
+    final loc END
+    error loc ERR
+
+    L1 -> L2 { f2 := 2'b01.2'b00 }
+    L2 -> L3 { f3 := 2'b10.2'b11 }
+    L3 -> L4 { f4 := f2 fpdiv[RTP] f3 }
+    L4 -> L5 { f5 := f2 / f3 }
+    L5 -> END { assume (f4 = f5) }
+    L5 -> ERR { assume not (f4 = f5) }
+}
