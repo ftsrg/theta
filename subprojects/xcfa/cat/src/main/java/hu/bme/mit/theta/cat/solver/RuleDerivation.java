@@ -3,7 +3,7 @@ package hu.bme.mit.theta.cat.solver;
 public abstract class RuleDerivation {
 	private final String rule;
 
-	protected RuleDerivation(final String rule) {
+	public RuleDerivation(final String rule) {
 		this.rule = rule;
 	}
 
@@ -17,7 +17,7 @@ public abstract class RuleDerivation {
 
 	public static class Element extends RuleDerivation {
 		private final int arity;
-		protected Element(String rule, int arity) {
+		public Element(String rule, int arity) {
 			super(rule);
 			this.arity = arity;
 		}
@@ -36,7 +36,7 @@ public abstract class RuleDerivation {
 		private final RuleDerivation lhs;
 		private final RuleDerivation rhs;
 
-		protected Union(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+		public Union(String rule, RuleDerivation lhs, RuleDerivation rhs) {
 			super(rule);
 			this.lhs = lhs;
 			this.rhs = rhs;
@@ -65,7 +65,7 @@ public abstract class RuleDerivation {
 		private final RuleDerivation lhs;
 		private final RuleDerivation rhs;
 
-		protected Intersection(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+		public Intersection(String rule, RuleDerivation lhs, RuleDerivation rhs) {
 			super(rule);
 			this.lhs = lhs;
 			this.rhs = rhs;
@@ -94,7 +94,7 @@ public abstract class RuleDerivation {
 		private final RuleDerivation lhs;
 		private final RuleDerivation rhs;
 
-		protected Difference(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+		public Difference(String rule, RuleDerivation lhs, RuleDerivation rhs) {
 			super(rule);
 			this.lhs = lhs;
 			this.rhs = rhs;
@@ -122,7 +122,7 @@ public abstract class RuleDerivation {
 	public static class Inverse extends RuleDerivation {
 		private final RuleDerivation lhs;
 
-		protected Inverse(String rule, RuleDerivation lhs) {
+		public Inverse(String rule, RuleDerivation lhs) {
 			super(rule);
 			this.lhs = lhs;
 		}
@@ -145,7 +145,7 @@ public abstract class RuleDerivation {
 	public static class Transitive extends RuleDerivation {
 		private final Element lhs;
 
-		protected Transitive(String rule, Element lhs) {
+		public Transitive(String rule, Element lhs) {
 			super(rule);
 			this.lhs = lhs;
 		}
@@ -168,7 +168,7 @@ public abstract class RuleDerivation {
 	public static class SelfOrTransitive extends RuleDerivation {
 		private final Element lhs;
 
-		protected SelfOrTransitive(String rule, Element lhs) {
+		public SelfOrTransitive(String rule, Element lhs) {
 			super(rule);
 			this.lhs = lhs;
 		}
@@ -192,7 +192,7 @@ public abstract class RuleDerivation {
 		private final RuleDerivation lhs;
 		private final RuleDerivation rhs;
 
-		protected Consecutive(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+		public Consecutive(String rule, RuleDerivation lhs, RuleDerivation rhs) {
 			super(rule);
 			this.lhs = lhs;
 			this.rhs = rhs;
@@ -221,7 +221,7 @@ public abstract class RuleDerivation {
 		private final RuleDerivation lhs;
 		private final RuleDerivation rhs;
 
-		protected CartesianProduct(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+		public CartesianProduct(String rule, RuleDerivation lhs, RuleDerivation rhs) {
 			super(rule);
 			this.lhs = lhs;
 			this.rhs = rhs;

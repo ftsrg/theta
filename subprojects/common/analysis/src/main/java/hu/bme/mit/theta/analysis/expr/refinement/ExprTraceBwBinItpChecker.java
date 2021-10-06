@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -114,7 +115,14 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus.feasible(Trace.of(builder.build().reverse(), trace.getActions()));
+			// FROM HERE
+			final List<Valuation> valuations = new ArrayList<>(builder.build().reverse());
+			valuations.add(ImmutableValuation.copyOf(model));
+			final List<ExprAction> exprActions = new ArrayList<>(trace.getActions());
+			exprActions.add(exprActions.get(exprActions.size() - 1));
+			status = ExprTraceStatus.feasible(Trace.of(valuations, exprActions));
+			// TODO: replace the above lines with this:
+//			status = ExprTraceStatus.feasible(Trace.of(builder.build().reverse(), trace.getActions()));
 		} else {
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPostfix));

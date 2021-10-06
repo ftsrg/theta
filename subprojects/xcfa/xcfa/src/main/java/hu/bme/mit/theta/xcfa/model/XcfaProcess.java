@@ -80,7 +80,7 @@ public final class XcfaProcess {
         };
         procedures = ImmutableList.copyOf(from.procedures.stream().map(procedure -> {
             final XcfaProcedure duplicate = procedure.duplicate(this, new LinkedHashMap<>(varLut));
-            if(procedure == mainProcedure) anon.newMain =  mainProcedure;
+            if(procedure == mainProcedure) anon.newMain =  duplicate;
             return duplicate;
         }).collect(Collectors.toList()));
         this.mainProcedure = anon.newMain;

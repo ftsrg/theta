@@ -123,7 +123,8 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		final Integer process;
 		if(action instanceof XcfaDeclarativeAction.XcfaDeclarativeThreadChangeAction) {
 			process = ((XcfaDeclarativeAction.XcfaDeclarativeThreadChangeAction) action).getProcess();
-			if(currentProcess >= 0) newBackLog.remove(currentProcess);
+			if(currentProcess >= 0)
+				newBackLog.remove(currentProcess);
 		} else process = currentProcess;
 		return fromParams(unsafe || action.getTarget().isErrorLoc(), process, action.getTarget(), newBackLog, threadLookup, succState, loads, stores);
 	}

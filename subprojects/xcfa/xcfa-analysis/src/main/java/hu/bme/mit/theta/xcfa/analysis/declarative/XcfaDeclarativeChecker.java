@@ -6,12 +6,13 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
+import hu.bme.mit.theta.cat.models.CoherenceMemory;
 import hu.bme.mit.theta.cat.solver.BoolSmtMemoryModelBuilder;
-import hu.bme.mit.theta.cat.solver.MemoryModel;
-import hu.bme.mit.theta.cat.solver.archive.ProgramBuilder;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -34,13 +35,11 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 	private final ExprTraceChecker<R> traceChecker;
 	private final Solver solver;
 	private final boolean preCheck;
-	private ProgramBuilder<Object, Object, Object> programBuilder;
 
 	private XcfaDeclarativeChecker(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
 		this.traceChecker = traceChecker;
 		this.solver = solver;
 		this.preCheck = preCheck;
-//		programBuilder = SmtMemoryModelChecker.builder(solver);
 	}
 
 	public static <R extends Refutation> XcfaDeclarativeChecker<R> create(final ExprTraceChecker<R> traceChecker, final Solver solver, final boolean preCheck) {
@@ -58,9 +57,9 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		final boolean containsLoads = trace.getActions().stream().filter(exprAction -> exprAction instanceof XcfaDeclarativeAction).anyMatch(exprAction -> ((XcfaDeclarativeAction) exprAction).getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.LoadXcfaLabel));
 		if(!containsLoads) return preCheck ? result : traceChecker.check(trace);
 
-		BoolSmtMemoryModelBuilder programBuilder = BoolSmtMemoryModelBuilder.create(new MemoryModel());
+		BoolSmtMemoryModelBuilder programBuilder = BoolSmtMemoryModelBuilder.create(new CoherenceMemory());
 
-		final List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>> dataFlowW = new ArrayList<>();
+		final List<Tuple2<?, ConstDecl<?>>> dataFlowW = new ArrayList<>();
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowR = new ArrayList<>();
 		final List<XcfaDeclarativeAction> newActions = new ArrayList<>();
 		checkState(trace.getState(0) instanceof XcfaDeclarativeState, "Wrong type for XcfaDeclarativeState");
@@ -139,6 +138,64 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		solver.push();
 		programBuilder.addConstraints(dataFlowW, dataFlowR, solver);
 		final ExprTraceStatus<R> check = traceChecker.check(Trace.of(trace.getStates(), newActions));
+		if(check.isFeasible()) {
+			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
+			final List<TupleN<?>> rf = programBuilder.get("rf", model);
+			final List<TupleN<?>> co = programBuilder.get("co", model);
+			final List<TupleN<?>> po = programBuilder.get("po", model);
+			final List<TupleN<?>> loc = programBuilder.get("loc", model);
+			final List<TupleN<?>> locRaw = programBuilder.get("locRaw", model);
+			final List<TupleN<?>> locConsecutive1 = programBuilder.get("locConsecutive1", model);
+			final List<TupleN<?>> r = programBuilder.get("R", model);
+			final List<TupleN<?>> w = programBuilder.get("W", model);
+
+			System.err.println("R: ");
+			for (TupleN<?> objects : r) {
+				System.err.println(objects.get(0));
+			}
+			System.err.println("==============");
+
+			System.err.println("W: ");
+			for (TupleN<?> objects : w) {
+				System.err.println(objects.get(0));
+			}
+			System.err.println("==============");
+
+			System.err.println("rf: ");
+			for (TupleN<?> objects : rf) {
+				System.err.println(objects.get(0) + "(" + model.eval(((XcfaLabel.StoreXcfaLabel<?>)objects.get(0)).getLocal()) +  ") -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("co: ");
+			for (TupleN<?> objects : co) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("po: ");
+			for (TupleN<?> objects : po) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("loc: ");
+			for (TupleN<?> objects : loc) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("locRaw: ");
+			for (TupleN<?> objects : locRaw) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("locConsecutive1: ");
+			for (TupleN<?> objects : locConsecutive1) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+		}
 		solver.pop();
 		return check;
 	}

@@ -3,8 +3,8 @@ package hu.bme.mit.theta.cat.solver;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public abstract class MemoryModelBuilder {
 		final Integer idxB = indexMap.get(thread);
 		addFact("intRaw", TupleN.of(idxA, idxB));
 	}
-	public void addConstraints(final List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>> writeConst, final List<Tuple2<? extends Object, ConstDecl<?>>> readConst, final Solver solver) {
+	public void addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst, final Solver solver) {
 		final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();
 		for (Tuple2<?, ConstDecl<?>> objects : writeConst) {
 			final Object object = objects.get1();
@@ -75,6 +75,10 @@ public abstract class MemoryModelBuilder {
 		addRfConstraints(stores, loads, solver);
 	}
 
+	public abstract List<TupleN<?>> get(final String rule, final Valuation valuation);
+	public abstract void assertAcyclic(final String ruleDerivation);
+	public abstract void assertIrreflexive(final String ruleDerivation);
+	public abstract void assertEmpty(final String ruleDerivation);
 	public abstract void addRule(final RuleDerivation ruleDerivation);
 	public abstract void addFact(final String name, final TupleN<Integer> fact);
 	public abstract int addPrimitive(final String name, final Object primitive);
