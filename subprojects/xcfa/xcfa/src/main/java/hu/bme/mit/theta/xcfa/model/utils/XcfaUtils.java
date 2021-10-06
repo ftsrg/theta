@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.xcfa.model.utils;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.util.Collection;
@@ -20,5 +22,18 @@ public class XcfaUtils {
 			});
 		});
 		return ret;
+	}
+	public static Set<Expr<BoolType>> getAtoms(XCFA xcfa) {
+		Set<Expr<BoolType>> atoms = new LinkedHashSet<>();
+		xcfa.getProcesses().forEach(process -> {
+			process.getProcedures().forEach(procedure -> {
+				procedure.getEdges().forEach(xcfaEdge -> {
+					xcfaEdge.getLabels().forEach(label -> {
+						label.accept(XcfaAtomCollecter.INSTANCE, atoms);
+					});
+				});
+			});
+		});
+		return atoms;
 	}
 }

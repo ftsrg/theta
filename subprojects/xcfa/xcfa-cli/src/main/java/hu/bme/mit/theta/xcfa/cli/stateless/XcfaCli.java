@@ -386,7 +386,7 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), algorithm)
+			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance(), algorithm)
 					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa);
 

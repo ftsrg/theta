@@ -49,7 +49,7 @@ class CegarConfiguration {
 		}
 
 		try {
-			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), algorithm)
+			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance(), algorithm)
 					.search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xcfa);
