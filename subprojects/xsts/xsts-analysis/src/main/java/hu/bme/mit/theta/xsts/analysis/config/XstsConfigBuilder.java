@@ -358,18 +358,18 @@ public class XstsConfigBuilder {
 					Prod2ExplPredPreStrengtheningOperator.create(),
 					Prod2ExplPredStrengtheningOperator.create(abstractionSolver));
 			} else {
-				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-				prod2Analysis = Prod2ExplPredAnalysis.create(
-						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
-						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
-						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-						prodAbstractor);
 //				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-//				prod2Analysis = Prod2ExplPredStmtAnalysis.create(
-//					ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
-//					PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
-//					Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-//					prodAbstractor, abstractionSolver, maxEnum);
+//				prod2Analysis = Prod2ExplPredAnalysis.create(
+//						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
+//						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
+//						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
+//						prodAbstractor);
+				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
+				prod2Analysis = Prod2ExplPredStmtAnalysis.create(
+					ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
+					PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
+					Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
+					prodAbstractor, abstractionSolver, maxEnum);
 			}
 			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis = XstsAnalysis.create(prod2Analysis);
 
