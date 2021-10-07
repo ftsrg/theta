@@ -29,7 +29,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
-import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
@@ -59,7 +58,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAnalysis;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtAnalysis;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -452,16 +451,16 @@ public class XcfaConfigBuilder {
 			return XcfaConfig.create(checker, prec);
 
 		} else if (domain == Domain.EXPL_PRED_COMBINED) {
-			final Analysis<Prod2State<ExplState,PredState>, XcfaDeclarativeAction, Prod2Prec<ExplPrec,PredPrec>> prod2PrecAnalysis;
+			final Prod2ExplPredStmtAnalysis prod2PrecAnalysis;
 			final Solver abstractionSolver = abstractionSolverFactory.createSolver();
 			switch (domain) {
 				case EXPL_PRED_COMBINED:
 					final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-					prod2PrecAnalysis = Prod2ExplPredAnalysis.create(
-							ExplAnalysis.create(abstractionSolver, True()),
+					prod2PrecAnalysis = Prod2ExplPredStmtAnalysis.create(
+							ExplStmtAnalysis.create(abstractionSolver, True()),
 							PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), True()),
 							Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-							prodAbstractor);
+							prodAbstractor, abstractionSolver, maxEnum);
 					break;
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");

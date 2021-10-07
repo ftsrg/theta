@@ -5,7 +5,6 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.StmtApplier;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -13,7 +12,6 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors.Prod2ExplPredAbstractor;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -23,11 +21,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -70,7 +68,7 @@ public class Prod2ExplPredDedicatedStmtTransFunc<A extends ExprAction> implement
         final MutableValuation preciseVal = MutableValuation.copyOf(state.getState1());
         final StmtApplier.ApplyResult applyResult = StmtApplier.apply(SequenceStmt.of(stmts), preciseVal, false);
 
-        final StmtUnfoldResult toExprResult = StmtUtils.toExpr(stmts, VarIndexing.all(0));
+        final StmtUnfoldResult toExprResult = StmtUtils.toExpr(stmts, VarIndexingFactory.indexing(0));
         final Expr<BoolType> expr = And(state.toExpr(), And(toExprResult.getExprs()));
         final VarIndexing nextIdx = toExprResult.getIndexing();
 
@@ -84,7 +82,7 @@ public class Prod2ExplPredDedicatedStmtTransFunc<A extends ExprAction> implement
             // would be more than max
             final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
             final Collection<Prod2State<ExplState,PredState>> succStates = prod2ExplPredAbstractor.createStatesForExpr(
-                    expr, VarIndexing.all(0), prec, nextIdx, prec.getPrec1()::createState, maxToQuery);
+                    expr, VarIndexingFactory.indexing(0), prec, nextIdx, prec.getPrec1()::createState, maxToQuery);
 
             if (succStates.isEmpty()) {
                 return singleton(Prod2State.bottom1(ExplState.bottom()));
@@ -104,7 +102,7 @@ public class Prod2ExplPredDedicatedStmtTransFunc<A extends ExprAction> implement
         final Expr<BoolType> explExpr = ExprUtils.applyPrimes(explState.toExpr(), nextIdx);
         final Expr<BoolType> extendedExpr = And(expr, explExpr);
 
-        final Collection<PredState> predStates = PredAbstractors.cartesianAbstractor(solver).createStatesForExpr(extendedExpr, VarIndexing.all(0), prec.getPrec2(), nextIdx);
+        final Collection<PredState> predStates = PredAbstractors.cartesianAbstractor(solver).createStatesForExpr(extendedExpr, VarIndexingFactory.indexing(0), prec.getPrec2(), nextIdx);
         if(predStates.size()==0) return singleton(Prod2State.bottom2(PredState.bottom()));
         assert predStates.size()==1 : "Cartesian abstraction returned more than one state";
 
