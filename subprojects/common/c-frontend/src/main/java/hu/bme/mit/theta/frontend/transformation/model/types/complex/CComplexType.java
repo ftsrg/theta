@@ -114,7 +114,10 @@ public abstract class CComplexType {
 		Optional<Object> cTypeOptional = FrontendMetadata.getMetadataValue(expr,"cType");
 		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
 			return (CComplexType) cTypeOptional.get();
-		} else throw new RuntimeException("Type not known!");
+		} else if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
+			return ((CSimpleType) cTypeOptional.get()).getActualType();
+		}
+		else throw new RuntimeException("Type not known!");
 	}
 
 

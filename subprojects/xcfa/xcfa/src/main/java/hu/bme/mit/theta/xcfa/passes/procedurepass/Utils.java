@@ -9,6 +9,8 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -105,11 +107,15 @@ public class Utils {
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		params.forEach((varDecl, direction) -> {
 			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
+				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
 			ret.createParam(direction, newVar);
 		});
 		localVars.forEach((varDecl, litExpr) -> {
 			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
+				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
 			ret.createVar(newVar, litExpr.orElse(null));
 		});

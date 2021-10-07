@@ -15,6 +15,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
@@ -54,8 +55,8 @@ public class XcfaPassManager {
 				new ConditionalFinalsToAssumes(),
 				new UnusedVarRemovalPass(),
 				new AddHavocRange(),
+				new RemoveDeadEnds(),
 				new HavocPromotion(),
-//				new RemoveDeadEnds(),
 				new UnusedVarRemovalPass(),
 				new SimplifyExprs(),
 				new EmptyEdgeRemovalPass(),
