@@ -26,7 +26,7 @@ import java.util.Collections;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
-public final class PredTransFunc implements TransFunc<PredState, ExprAction, PredPrec> {
+public final class PredTransFunc<A extends ExprAction> implements TransFunc<PredState, A, PredPrec> {
 
 	private final PredAbstractor predAbstractor;
 
@@ -34,8 +34,8 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		this.predAbstractor = checkNotNull(predAbstractor);
 	}
 
-	public static PredTransFunc create(final PredAbstractor predAbstractor) {
-		return new PredTransFunc(predAbstractor);
+	public static <A extends ExprAction> PredTransFunc<A> create(final PredAbstractor predAbstractor) {
+		return new PredTransFunc<A>(predAbstractor);
 	}
 
 	@Override
