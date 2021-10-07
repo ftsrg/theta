@@ -57,11 +57,11 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements RefutationToPre
 	public Prod2Prec<ExplPrec, PredPrec> join(Prod2Prec<ExplPrec, PredPrec> prec1, Prod2Prec<ExplPrec, PredPrec> prec2) {
 		final ExplPrec joinedExpl = prec1.getPrec1().join(prec2.getPrec1());
 		final PredPrec joinedPred = prec1.getPrec2().join(prec2.getPrec2());
-		final var filteredPreds = joinedPred.getPreds().stream()
-				.filter(pred -> !joinedExpl.getVars().containsAll(ExprUtils.getVars(pred)))
-				.collect(Collectors.toList());
-		final PredPrec filteredPred = PredPrec.of(filteredPreds);
-		return Prod2Prec.of(joinedExpl,filteredPred);
+//		final var filteredPreds = joinedPred.getPreds().stream()
+//				.filter(pred -> !joinedExpl.getVars().containsAll(ExprUtils.getVars(pred)))
+//				.collect(Collectors.toList());
+//		final PredPrec filteredPred = PredPrec.of(filteredPreds);
+		return Prod2Prec.of(joinedExpl,joinedPred);
 	}
 
 	@Override

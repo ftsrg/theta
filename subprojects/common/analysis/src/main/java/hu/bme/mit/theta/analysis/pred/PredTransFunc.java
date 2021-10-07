@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 
-public final class PredTransFunc implements TransFunc<PredState, ExprAction, PredPrec> {
+public final class PredTransFunc<A extends ExprAction> implements TransFunc<PredState, A, PredPrec> {
 
 	private final PredAbstractor predAbstractor;
 
@@ -34,8 +34,8 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		this.predAbstractor = checkNotNull(predAbstractor);
 	}
 
-	public static PredTransFunc create(final PredAbstractor predAbstractor) {
-		return new PredTransFunc(predAbstractor);
+	public static <A extends ExprAction> PredTransFunc<A> create(final PredAbstractor predAbstractor) {
+		return new PredTransFunc<A>(predAbstractor);
 	}
 
 	@Override
