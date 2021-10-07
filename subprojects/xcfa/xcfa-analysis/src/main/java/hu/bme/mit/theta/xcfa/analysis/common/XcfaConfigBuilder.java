@@ -139,7 +139,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public enum InitPrec {
-		EMPTY, ALLVARS, EVERYTHING, ALLASSUMES
+		EMPTY, ALLVARS, ALLGLOBALS, EVERYTHING, ALLASSUMES
 	}
 
 	public enum AutoExpl {
@@ -338,6 +338,9 @@ public class XcfaConfigBuilder {
 					break;
 				case ALLVARS:
 					prec = XcfaDeclarativePrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)));
+					break;
+				case ALLGLOBALS:
+					prec = XcfaDeclarativePrec.create(ExplPrec.of(xcfa.getGlobalVars()));
 					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
@@ -548,6 +551,9 @@ public class XcfaConfigBuilder {
 					break;
 				case ALLVARS:
 					explPrec = ExplPrec.of(XcfaUtils.getVars(xcfa));
+					break;
+				case ALLGLOBALS:
+					explPrec = ExplPrec.of(xcfa.getGlobalVars());
 					break;
 				case EVERYTHING:
 					predPrec = XcfaDeclarativePrec.collectAssumes(xcfa).getGlobalPrec();
