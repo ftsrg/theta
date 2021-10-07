@@ -30,7 +30,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
-import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.copyBuilder;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getNonModifiedVars;
 
 public class FunctionInlining extends ProcessPass {
@@ -82,7 +81,6 @@ public class FunctionInlining extends ProcessPass {
 	}
 
 	private XcfaProcedure.Builder inlineProcedure(XcfaProcess.Builder builder, XcfaProcess.Builder newBuilder, XcfaProcedure.Builder procedure) {
-		procedure = copyBuilder(procedure);
 		//		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
 		Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints = new LinkedHashMap<>();
 

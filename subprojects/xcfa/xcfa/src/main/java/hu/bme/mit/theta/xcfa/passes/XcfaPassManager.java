@@ -60,7 +60,8 @@ public class XcfaPassManager {
 				new SimplifyExprs(),
 				new EmptyEdgeRemovalPass(),
 				new SimpleLbePass(),
-				new HavocPromotion()
+				new HavocPromotion(),
+				new UnusedVarRemovalPass()
 				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),

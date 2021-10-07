@@ -103,7 +103,7 @@ public class HavocPromotion extends ProcedurePass {
 		List<XcfaLabel> stmts = new ArrayList<>();
 		int i = 0;
 		for (XcfaLabel stmt : edge.getLabels()) {
-			if(oldStmts.size() > i && stmt == oldStmts.get(i)) {
+			if(oldStmts.size() > i && stmt.equals(oldStmts.get(i))) {
 				if(newStmts.size() > i) stmts.add(newStmts.get(i));
 				++i;
 			}
