@@ -25,10 +25,10 @@ public class W2R2WR extends Program{
 		final String var2 = "var2";
 		final String write1 = "write1";
 		final String write2 = "write2";
-		final String write3 = "write2";
+		final String write3 = "write3";
 		final String read1 = "read1";
 		final String read2 = "read2";
-		final String read3 = "read2";
+		final String read3 = "read3";
 
 		builder.addProgramLoc(start);
 		builder.addProgramLoc(thr);

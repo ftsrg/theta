@@ -234,7 +234,7 @@ public final class XCFA {
 		}
 
 		public void runProcessPasses() {
-			final ArrayList<XcfaProcess.Builder> newProcesses = new ArrayList<>(processes);
+			final ArrayList<XcfaProcess.Builder> newProcesses = new ArrayList<>();
 			for (XcfaProcess.Builder process : processes) {
 				final XcfaProcess.Builder newProc = XcfaPassManager.run(process);
 				newProcesses.add(newProc);

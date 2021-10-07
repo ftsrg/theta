@@ -237,10 +237,11 @@ public final class XcfaProcess {
         }
 
         public void runProcedurePasses() {
-            final ArrayList<XcfaProcedure.Builder> newProcs = new ArrayList<>(procedures);
+            final ArrayList<XcfaProcedure.Builder> newProcs = new ArrayList<>();
             for (XcfaProcedure.Builder procedure : procedures) {
                 final XcfaProcedure.Builder newProc = XcfaPassManager.run(procedure);
                 if(mainProcedure == procedure) mainProcedure = newProc;
+                newProcs.add(newProc);
             }
             procedures.clear();
             procedures.addAll(newProcs);

@@ -53,7 +53,7 @@ public class BoolSmtTest {
 		return Arrays.asList(new Object[][] {
 				{new NoassertMemory(), new W2R2(), false},
 				{new CoherenceMemory(), new W2R2(), true},
-//				{new NoassertMemory(), new W2R2WR(), false},
+				{new NoassertMemory(), new W2R2WR(), false},
 				{new CoherenceMemory(), new W2R2WR(), true},
 		});
 	}

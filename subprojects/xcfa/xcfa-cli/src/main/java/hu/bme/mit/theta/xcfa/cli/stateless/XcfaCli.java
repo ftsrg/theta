@@ -54,6 +54,8 @@ import hu.bme.mit.theta.xcfa.analysis.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
@@ -156,6 +158,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception (only valid together with the -legacy switch)")
 	boolean stacktrace = false;
+
+	@Parameter(names = "--autoexpl", description = "AutoExpl method to use when Product Abstraction is used")
+	XcfaConfigBuilder.AutoExpl autoExpl = XcfaConfigBuilder.AutoExpl.STATIC;
 
 	//////////// Legacy (CFA-only) options ////////////
 
@@ -388,7 +393,7 @@ public class XcfaCli {
 		try {
 			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance(), algorithm)
 					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).build(xcfa);
+					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -409,8 +414,8 @@ public class XcfaCli {
 	}
 
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
-		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
+		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
 
 		if(cexfile!=null) {
 			final File file = cexfile;

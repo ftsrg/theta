@@ -8,7 +8,6 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
@@ -129,8 +128,8 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			final Relation relation = relations.get(rule.getKey().get1());
 			final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relation.getElements();
 			elements.forEach((objects, boolTypeConstDecl) -> {
-				final EqExpr<?> constraint = Eq(boolTypeConstDecl.getRef(), exprs.get(objects));
-//				System.err.println("Adding constraint " + constraint);
+				final Expr<BoolType> constraint = Eq(boolTypeConstDecl.getRef(), exprs.get(objects));
+				System.err.println("Adding constraint " + constraint);
 				solver.add(constraint);
 			});
 		}
@@ -140,31 +139,47 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		final Map<TupleN<Integer>, ConstDecl<BoolType>> writes = relations.get("W").getElements();
 		final Map<TupleN<Integer>, ConstDecl<BoolType>> reads = relations.get("R").getElements();
 
+		System.err.println("------------------");
+
 		for (Tuple2<Integer, ConstDecl<?>> objects : readConst) {
 			final List<Expr<BoolType>> operands = new ArrayList<>();
 			for (int i = 0; i < writeConst.size(); i++) {
 				Tuple2<Integer, ConstDecl<?>> constDeclTuple1 = writeConst.get(i);
 				final ConstDecl<BoolType> rfAB1 = rf.get(TupleN.of(constDeclTuple1.get1(), objects.get1()));
-				solver.add(Imply(Not(loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef()), Not(rfAB1.getRef())));
+				final Expr<BoolType> constraint = Imply(Not(loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef()), Not(rfAB1.getRef()));
+				System.err.println("Adding constraint " + constraint);
+				solver.add(constraint);
 				for (int j = i + 1, writeConstSize = writeConst.size(); j < writeConstSize; j++) {
 					Tuple2<Integer, ConstDecl<?>> constDeclTuple2 = writeConst.get(j);
 					final ConstDecl<BoolType> rfAB2 = rf.get(TupleN.of(constDeclTuple2.get1(), objects.get1()));
-					solver.add(Imply(
+					final Expr<BoolType> implConstraint = Imply(
 							And(
 									loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef(),
-									loc.get(TupleN.of(constDeclTuple2.get1(), objects.get1())).getRef()), Not(And(rfAB1.getRef(), rfAB2.getRef()))));
+									loc.get(TupleN.of(constDeclTuple2.get1(), objects.get1())).getRef()), Not(And(rfAB1.getRef(), rfAB2.getRef())));
+					System.err.println("Adding constraint " + implConstraint);
+
+					solver.add(implConstraint);
 				}
 				operands.add(And(loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef(), rfAB1.getRef()));
 			}
-			solver.add(Or(operands));
+			final Expr<BoolType> constraint = Or(operands);
+			System.err.println("Adding constraint " + constraint);
+			solver.add(constraint);
 		}
+
+		System.err.println("------------------");
+
 
 		for (Map.Entry<TupleN<Integer>, ConstDecl<BoolType>> entry : rf.entrySet()) {
 			final TupleN<Integer> key = entry.getKey();
 			final Integer key1 = key.get(0);
 			final Integer key2 = key.get(1);
-			solver.add(Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), reads.get(TupleN.of(key2)).getRef())), Not(entry.getValue().getRef())));
+			final Expr<BoolType> constraint = Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), reads.get(TupleN.of(key2)).getRef())), Not(entry.getValue().getRef()));
+			System.err.println("Adding constraint " + constraint);
+			solver.add(constraint);
 		}
+
+		System.err.println("------------------");
 
 		for (Map.Entry<TupleN<Integer>, ConstDecl<BoolType>> entry : co.entrySet()) {
 			final TupleN<Integer> key = entry.getKey();
@@ -175,25 +190,37 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 				final ConstDecl<BoolType> one = entry.getValue();
 				final ConstDecl<BoolType> other = co.get(reverseKey);
 				final ConstDecl<BoolType> locVar = loc.get(key);
-				solver.add(Imply(And(locVar.getRef(), And(writes.get(TupleN.of(key1)).getRef(), writes.get(TupleN.of(key2)).getRef())), Xor(one.getRef(), other.getRef())));
-				solver.add(Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), writes.get(TupleN.of(key2)).getRef())), Not(one.getRef())));
+				final Expr<BoolType> constraint0 = Imply(And(locVar.getRef(), And(writes.get(TupleN.of(key1)).getRef(), writes.get(TupleN.of(key2)).getRef())), Xor(one.getRef(), other.getRef()));
+				final Expr<BoolType> constraint1 = Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), writes.get(TupleN.of(key2)).getRef())), Not(one.getRef()));
+				System.err.println("Adding constraint " + constraint0);
+				System.err.println("Adding constraint " + constraint1);
+				solver.add(constraint0);
+				solver.add(constraint1);
 			}
 			else {
-				solver.add(Not(entry.getValue().getRef()));
-			}
-		}
-
-		for (Tuple2<Integer, ConstDecl<?>> objects : writeConst) {
-			for (Tuple2<Integer, ConstDecl<?>> objects1 : readConst) {
-				final Expr<BoolType> constraint = Imply(rf.get(TupleN.of(objects.get1(), objects1.get1())).getRef(), Eq(objects.get2().getRef(), objects1.get2().getRef()));
-//				System.err.println("Adding constraint " + constraint);
+				final Expr<BoolType> constraint = Not(entry.getValue().getRef());
+				System.err.println("Adding constraint " + constraint);
 				solver.add(constraint);
 			}
 		}
 
+		System.err.println("------------------");
+
+		for (Tuple2<Integer, ConstDecl<?>> objects : writeConst) {
+			for (Tuple2<Integer, ConstDecl<?>> objects1 : readConst) {
+				final Expr<BoolType> constraint = Imply(rf.get(TupleN.of(objects.get1(), objects1.get1())).getRef(), Eq(objects.get2().getRef(), objects1.get2().getRef()));
+				System.err.println("Adding constraint " + constraint);
+				solver.add(constraint);
+			}
+		}
+
+		System.err.println("------------------");
+
 		for (String emptyAssertion : emptyAssertions) {
 			final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relations.get(emptyAssertion).getElements();
-			solver.add(Not(Or(elements.values().stream().map(Decl::getRef).collect(Collectors.toList()))));
+			final Expr<BoolType> constraint = Not(Or(elements.values().stream().map(Decl::getRef).collect(Collectors.toList())));
+			System.err.println("Adding constraint " + constraint);
+			solver.add(constraint);
 		}
 	}
 
