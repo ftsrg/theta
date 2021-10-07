@@ -14,6 +14,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,8 +29,8 @@ public final class XcfaTraceToWitness {
 	private XcfaTraceToWitness() {}
 
 	public static Graph buildWitness(
-			final Trace<CfaState<ExplState>, CfaAction> trace) {
-		concreteTrace = trace;
+			final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> trace) {
+		concreteTrace = null; // TODO
 		witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
 		addNodes();

@@ -55,7 +55,10 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		}
 
 		final boolean containsLoads = trace.getActions().stream().filter(exprAction -> exprAction instanceof XcfaDeclarativeAction).anyMatch(exprAction -> ((XcfaDeclarativeAction) exprAction).getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.LoadXcfaLabel));
-		if(!containsLoads) return preCheck ? result : traceChecker.check(trace);
+		if(!containsLoads) {
+			if(preCheck) return result;
+			else return traceChecker.check(trace);
+		}
 
 		BoolSmtMemoryModelBuilder programBuilder = BoolSmtMemoryModelBuilder.create(new CoherenceMemory());
 

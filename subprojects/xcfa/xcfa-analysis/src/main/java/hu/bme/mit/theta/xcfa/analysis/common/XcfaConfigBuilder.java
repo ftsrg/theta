@@ -221,7 +221,7 @@ public class XcfaConfigBuilder {
 		
 		if (domain == Domain.EXPL) {
 			final Analysis<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> analysis = XcfaDeclarativeAnalysis
-					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), ExplStmtAnalysis.create(refinementSolverFactory.createSolver(), True(), maxEnum));
+					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), True(), maxEnum));
 			final ArgBuilder<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, XcfaDeclarativeState::isError, true);
 			final Abstractor<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction, XcfaDeclarativePrec<ExplPrec>> abstractor = BasicAbstractor
@@ -353,13 +353,13 @@ public class XcfaConfigBuilder {
 			PredAbstractor predAbstractor;
 			switch (domain) {
 				case PRED_BOOL:
-					predAbstractor = PredAbstractors.booleanAbstractor(refinementSolverFactory.createSolver());
+					predAbstractor = PredAbstractors.booleanAbstractor(abstractionSolverFactory.createSolver());
 					break;
 				case PRED_SPLIT:
-					predAbstractor = PredAbstractors.booleanSplitAbstractor(refinementSolverFactory.createSolver());
+					predAbstractor = PredAbstractors.booleanSplitAbstractor(abstractionSolverFactory.createSolver());
 					break;
 				case PRED_CART:
-					predAbstractor = PredAbstractors.cartesianAbstractor(refinementSolverFactory.createSolver());
+					predAbstractor = PredAbstractors.cartesianAbstractor(abstractionSolverFactory.createSolver());
 					break;
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
@@ -453,7 +453,7 @@ public class XcfaConfigBuilder {
 
 		} else if (domain == Domain.EXPL_PRED_COMBINED) {
 			final Analysis<Prod2State<ExplState,PredState>, XcfaDeclarativeAction, Prod2Prec<ExplPrec,PredPrec>> prod2PrecAnalysis;
-			final Solver abstractionSolver = refinementSolverFactory.createSolver();
+			final Solver abstractionSolver = abstractionSolverFactory.createSolver();
 			switch (domain) {
 				case EXPL_PRED_COMBINED:
 					final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);

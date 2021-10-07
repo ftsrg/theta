@@ -27,7 +27,6 @@ public class XcfaTraceConcretizer {
 
 		sbeStates.add(trace.getState(0));
 		for (int i = 0; i < trace.getActions().size(); ++i) {
-			sbeStates.add(XcfaDeclarativeState.create(trace.getState(i+1).getCurrentLoc(), ExplState.top()));
 			final XcfaEdge edge = XcfaEdge.of(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabels());
 			sbeActions.add(XcfaDeclarativeAction.create(edge));
 			sbeStates.add(trace.getState(i+1));
