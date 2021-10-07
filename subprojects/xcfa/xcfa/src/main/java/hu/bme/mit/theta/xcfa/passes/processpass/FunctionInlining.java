@@ -171,7 +171,7 @@ public class FunctionInlining extends ProcessPass {
 			}
 			Optional<XcfaProcedure.Builder> procedureOpt = oldBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(xcfaCallStmt.getProcedure())).findAny();
 			checkState(procedureOpt.isPresent());
-			XcfaProcedure.Builder procedure = copyBuilder(procedureOpt.get());
+			XcfaProcedure.Builder procedure = procedureOpt.get();
 			for (VarDecl<?> localVar : procedure.getLocalVars().keySet()) {
 				checkState(procedure.getLocalVars().get(localVar).isEmpty(), "Non-global variable should not have a starting expression!");
 				procBuilder.createVar(localVar, null);

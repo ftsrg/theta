@@ -100,20 +100,21 @@ public class Utils {
 		return getBuilder(proc.getName(), proc.getRetType(), proc.getLocs(), proc.getFinalLoc(), proc.getInitLoc(), proc.getErrorLoc(), proc.getEdges(), proc.getParams(), proc.getLocalVarMap());
 	}
 
+	private static int counter = 0;
 	private static XcfaProcedure.Builder getBuilder(String name, Type retType, List<XcfaLocation> locs, XcfaLocation finalLoc, XcfaLocation initLoc, XcfaLocation errorLoc, List<XcfaEdge> edges, Map<VarDecl<?>, XcfaProcedure.Direction> params, Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
 		XcfaProcedure.Builder ret = XcfaProcedure.builder();
 		ret.setName(name);
 		ret.setRetType(retType);
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		params.forEach((varDecl, direction) -> {
-			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			final VarDecl<?> newVar = Var(varDecl.getName() + "_" + counter++, varDecl.getType());
 			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
 				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
 			ret.createParam(direction, newVar);
 		});
 		localVars.forEach((varDecl, litExpr) -> {
-			final VarDecl<?> newVar = Var(varDecl.getName() + "_c", varDecl.getType());
+			final VarDecl<?> newVar = Var(varDecl.getName() + "_" + counter++, varDecl.getType());
 			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
 				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
