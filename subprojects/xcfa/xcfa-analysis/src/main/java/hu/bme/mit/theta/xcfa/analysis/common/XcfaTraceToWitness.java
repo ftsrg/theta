@@ -16,13 +16,14 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 public final class XcfaTraceToWitness {
-	private static Trace<CfaState<ExplState>, CfaAction> concreteTrace;
+	private static Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concreteTrace;
 	private static Graph witnessGraph;
 	private static final boolean addExplicitStates = true;
 
@@ -50,21 +51,20 @@ public final class XcfaTraceToWitness {
 			StringBuilder edgeLabel = new StringBuilder();
 
 			// add startline if there is a line number
-			Integer startLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getEdges().get(0), "lineNumberStart");
+			Integer startLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getSource(), "lineNumberStart");
 			if (startLineNumber != -1) {
 				edgeLabel.append("<data key=\"startline\">").append(startLineNumber).append("</data>").append(System.lineSeparator());
 			}
 
 			// add endline if there is a line number
-			/* TODO endlines at conditions (assumeStmts) should not include the whole control expression (whole scope of if/for/etc.)
-			Integer endLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getEdges().get(0), "lineNumberStop");
+			// TODO endlines at conditions (assumeStmts) should not include the whole control expression (whole scope of if/for/etc.)
+			Integer endLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getTarget(), "lineNumberStop");
 			if (endLineNumber != -1) {
 				edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
 			}
-			 */
 
 			// add offset if there is an offset start
-			Integer offsetStartNumber = getEdgeMetadata(concreteTrace.getAction(i).getEdges().get(0), "offsetStart");
+			Integer offsetStartNumber = getEdgeMetadata(concreteTrace.getAction(i).getSource(), "offsetStart");
 			if (offsetStartNumber != -1) {
 				edgeLabel.append("<data key=\"offset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
 			}
@@ -106,13 +106,8 @@ public final class XcfaTraceToWitness {
 		}
 	}
 
-	/**
-	 * CFAs made from a C program with Theta were converted from an XCFA, which is able to hold the line number metadata
-	 * if there is such a metadata, this function extracts is
-	 * @param edge the edge we need the line number for
-	 * @return null, if no line number; the corrresponding line number otherwise
-	 */
-	private static int getEdgeMetadata(CFA.Edge edge, String key) {
+	private static int getEdgeMetadata(XcfaLocation loc, String key) {
+		/*
 		Set<Object> xcfaEdges = FrontendMetadata.lookupMetadata("cfaEdge", edge);
 		for (Object xcfaEdge : xcfaEdges) {
 			Object sourceStatement = FrontendMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
@@ -122,7 +117,7 @@ public final class XcfaTraceToWitness {
 					return (int) metadataNumber;
 				}
 			}
-		}
+		}*/
 		return -1;
 	}
 
@@ -133,8 +128,8 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="entry">true</data>
 	 */
 	private static void addWitnessEdge(int index, String label) {
-		witnessGraph.addEdge(concreteTrace.getState(index).getLoc().getName()+"_c"+index,
-						concreteTrace.getState(index+1).getLoc().getName()+"_c"+(index+1),
+		witnessGraph.addEdge(concreteTrace.getState(index).getCurrentLoc().getName()+"_c"+index,
+						concreteTrace.getState(index+1).getCurrentLoc().getName()+"_c"+(index+1),
 							new EdgeAttributes.Builder().label(label).build()
 							);
 	}
@@ -147,7 +142,7 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="entry">true</data>
 	 */
 	private static void addWitnessNode(int index, String label) {
-		witnessGraph.addNode( concreteTrace.getState(index).getLoc().getName()+"_c"+index,
+		witnessGraph.addNode( concreteTrace.getState(index).getCurrentLoc().getName()+"_c"+index,
 				new NodeAttributes.Builder().label(label).build()
 		);
 	}
@@ -160,7 +155,7 @@ public final class XcfaTraceToWitness {
 		if(addExplicitStates) {
 			entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
 			entryLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(0)
-					.getState().toString()).append("</data>").append(System.lineSeparator());
+					.toString()).append("</data>").append(System.lineSeparator());
 		}
 		// add entry state as a node
 		addWitnessNode(0, entryLabel.toString());
@@ -173,7 +168,7 @@ public final class XcfaTraceToWitness {
 			StringBuilder nodeLabel = new StringBuilder();
 			if(addExplicitStates) {
 				nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
-					.getState().toString()).append("</data>").append(System.lineSeparator());
+					.toString()).append("</data>").append(System.lineSeparator());
 			}
 			addWitnessNode(i, nodeLabel.toString());
 		}
@@ -182,7 +177,7 @@ public final class XcfaTraceToWitness {
 		if(addExplicitStates) {
 			endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
 			endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size() - 1)
-				.getState().toString()).append("</data>").append(System.lineSeparator());
+				.toString()).append("</data>").append(System.lineSeparator());
 		}
 		// add violation (end) state/node
 		addWitnessNode(concreteTrace.getStates().size()-1, endLabel.toString());
@@ -197,7 +192,7 @@ public final class XcfaTraceToWitness {
 	private static Map<Integer, String> collectExplicitStatesByStep() {
 		Map<Integer, String> explStates = new LinkedHashMap<>();
 		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
-			explStates.put(i - 1, concreteTrace.getState(i).getState().toString());
+			explStates.put(i - 1, concreteTrace.getState(i).toString());
 		}
 		return explStates;
 	}
