@@ -2,9 +2,6 @@ package hu.bme.mit.theta.xcfa.analysis.common;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
@@ -20,7 +17,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public final class XcfaTraceToWitness {
 	private static Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concreteTrace;
@@ -51,20 +47,20 @@ public final class XcfaTraceToWitness {
 			StringBuilder edgeLabel = new StringBuilder();
 
 			// add startline if there is a line number
-			Integer startLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getSource(), "lineNumberStart");
+			Integer startLineNumber = getLocMetadata(concreteTrace.getAction(i).getSource(), "lineNumberStart");
 			if (startLineNumber != -1) {
 				edgeLabel.append("<data key=\"startline\">").append(startLineNumber).append("</data>").append(System.lineSeparator());
 			}
 
 			// add endline if there is a line number
 			// TODO endlines at conditions (assumeStmts) should not include the whole control expression (whole scope of if/for/etc.)
-			Integer endLineNumber = getEdgeMetadata(concreteTrace.getAction(i).getTarget(), "lineNumberStop");
+			Integer endLineNumber = getLocMetadata(concreteTrace.getAction(i).getTarget(), "lineNumberStop");
 			if (endLineNumber != -1) {
 				edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
 			}
 
 			// add offset if there is an offset start
-			Integer offsetStartNumber = getEdgeMetadata(concreteTrace.getAction(i).getSource(), "offsetStart");
+			Integer offsetStartNumber = getLocMetadata(concreteTrace.getAction(i).getSource(), "offsetStart");
 			if (offsetStartNumber != -1) {
 				edgeLabel.append("<data key=\"offset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
 			}
@@ -106,18 +102,14 @@ public final class XcfaTraceToWitness {
 		}
 	}
 
-	private static int getEdgeMetadata(XcfaLocation loc, String key) {
-		/*
-		Set<Object> xcfaEdges = FrontendMetadata.lookupMetadata("cfaEdge", edge);
-		for (Object xcfaEdge : xcfaEdges) {
-			Object sourceStatement = FrontendMetadata.lookupMetadata(xcfaEdge).get("sourceStatement");
-			if(sourceStatement != null) {
-				Object metadataNumber = FrontendMetadata.lookupMetadata(sourceStatement).get(key);
-				if(metadataNumber instanceof Integer) {
-					return (int) metadataNumber;
-				}
+	private static int getLocMetadata(XcfaLocation loc, String key) {
+		Object sourceStatement = FrontendMetadata.lookupMetadata(loc).get("sourceStatement");
+		if(sourceStatement != null) {
+			Object metadataNumber = FrontendMetadata.lookupMetadata(sourceStatement).get(key);
+			if(metadataNumber instanceof Integer) {
+				return (int) metadataNumber;
 			}
-		}*/
+		}
 		return -1;
 	}
 
@@ -129,9 +121,9 @@ public final class XcfaTraceToWitness {
 	 */
 	private static void addWitnessEdge(int index, String label) {
 		witnessGraph.addEdge(concreteTrace.getState(index).getCurrentLoc().getName()+"_c"+index,
-						concreteTrace.getState(index+1).getCurrentLoc().getName()+"_c"+(index+1),
-							new EdgeAttributes.Builder().label(label).build()
-							);
+				concreteTrace.getState(index+1).getCurrentLoc().getName()+"_c"+(index+1),
+				new EdgeAttributes.Builder().label(label).build()
+		);
 	}
 
 
@@ -168,7 +160,7 @@ public final class XcfaTraceToWitness {
 			StringBuilder nodeLabel = new StringBuilder();
 			if(addExplicitStates) {
 				nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
-					.toString()).append("</data>").append(System.lineSeparator());
+						.toString()).append("</data>").append(System.lineSeparator());
 			}
 			addWitnessNode(i, nodeLabel.toString());
 		}
@@ -177,7 +169,7 @@ public final class XcfaTraceToWitness {
 		if(addExplicitStates) {
 			endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
 			endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size() - 1)
-				.toString()).append("</data>").append(System.lineSeparator());
+					.toString()).append("</data>").append(System.lineSeparator());
 		}
 		// add violation (end) state/node
 		addWitnessNode(concreteTrace.getStates().size()-1, endLabel.toString());
