@@ -44,7 +44,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ModelStatistics;
@@ -391,7 +391,7 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance(), algorithm)
+			return new XcfaConfigBuilder(domain, refinement, Z3SolverManager.resolveSolverFactory("Z3"), Z3SolverManager.resolveSolverFactory("Z3"), algorithm)
 					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
 
@@ -413,9 +413,9 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
 
 		if(cexfile!=null) {
 			final File file = cexfile;
@@ -431,9 +431,9 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeWitness(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+	private void writeWitness(final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
 
 		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
 		if(witnessfile!=null) {
@@ -452,9 +452,9 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverFactory.getInstance());
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
 		Set<String> cexLocations = new LinkedHashSet<>();
 		Set<XcfaEdge> cexEdges = new LinkedHashSet<>();
 		for (CfaState<ExplState> state : concrTrace.getStates()) {

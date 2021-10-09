@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
@@ -84,7 +85,12 @@ public abstract class AbstractPortfolio {
 		if(cegarAnalysisThread.isAlive()) {
 			Stopwatch dieTimer = Stopwatch.createStarted();
 
-//			ContextInterrupt.interruptContexts(); TODO: interrupt solver?
+			try {
+				SolverManager.closeAll();
+			} catch (Exception e) {
+				System.err.println("Could not close solver; possible resource leak");
+				e.printStackTrace();
+			}
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {
