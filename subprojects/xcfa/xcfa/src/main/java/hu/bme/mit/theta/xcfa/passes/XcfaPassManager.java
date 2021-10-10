@@ -10,6 +10,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
@@ -17,7 +18,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyAssumptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
@@ -46,7 +46,7 @@ public class XcfaPassManager {
 				new ReferenceToMemory(),
 				new FpFunctionsToExprs(),
 				new SimplifyExprs(),
-				new SimplifyAssumptions(),
+//				new SimplifyAssumptions(),
 				new CallsToFinalLocs(),
 				new CallsToHavocs(),
 				new HavocAssignments(),
@@ -61,6 +61,7 @@ public class XcfaPassManager {
 				new EmptyEdgeRemovalPass(),
 				new SimpleLbePass(),
 				new HavocPromotion(),
+				new GlobalVarsToStoreLoad(),
 				new UnusedVarRemovalPass()
 				));
 		processPasses.addAll(List.of(

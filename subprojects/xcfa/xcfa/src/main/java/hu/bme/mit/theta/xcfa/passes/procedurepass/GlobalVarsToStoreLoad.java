@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -44,6 +45,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		if(!ArchitectureConfig.multiThreading) return builder;
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Set<XcfaLabel> collect = edge.getLabels().stream().filter(stmt1 -> !(stmt1 instanceof XcfaLabel.LoadXcfaLabel) && !(stmt1 instanceof XcfaLabel.StoreXcfaLabel) && getVars(stmt1).stream().anyMatch(

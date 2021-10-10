@@ -42,7 +42,7 @@ public class W2R2 extends Program{
 		final List<Tuple2<?, ConstDecl<?>>> writes = List.of(Tuple2.of(write1, Const(write1, Int())), Tuple2.of(write2, Const(write2, Int())));
 		final List<Tuple2<?, ConstDecl<?>>> reads = List.of(Tuple2.of(read1, Const(read1, Int())), Tuple2.of(read2, Const(read2, Int())));
 
-		builder.addConstraints(writes, reads, solver);
+		solver.add(builder.addConstraints(writes, reads));
 
 		final Expr<BoolType> and =  And(List.of(
 				Eq(writes.get(0).get2().getRef(), Int(1)),

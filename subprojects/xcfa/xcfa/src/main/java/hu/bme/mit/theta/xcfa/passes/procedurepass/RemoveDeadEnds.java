@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
+import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -15,6 +17,8 @@ public class RemoveDeadEnds extends ProcedurePass{
 	// TODO: thread start and procedure call should not be dead-end! Use-case: while(1) pthread_create(..);
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		if(FrontendMetadata.lookupMetadata("shouldInline", false).size() > 0) return builder;
+		if(ArchitectureConfig.multiThreading) return builder; // Currently remove dead-ends does not work for multithreaded or recursive programs
 		Set<XcfaEdge> nonDeadEndEdges = new LinkedHashSet<>();
 		Set<XcfaEdge> reachableEdges = new LinkedHashSet<>();
 		XcfaLocation errorLoc = builder.getErrorLoc();

@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -43,6 +44,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		boolean foundAny = false;
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure().startsWith("pthread_")).findAny();
 			if(e.isPresent()) {
@@ -59,6 +61,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 								Expr<?> param = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartParam + 1);
 								XcfaLabel.StartThreadXcfaLabel startThreadStmt = StartThread((VarDecl<?>) ((RefExpr<?>) handle).getDecl(), ((RefExpr<?>) funcptr).getDecl().getName(), param);
 								collect.add(startThreadStmt);
+								foundAny = true;
 								break;
 							case threadJoin:
 								handle = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadJoinHandle + 1);
@@ -66,6 +69,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								XcfaLabel.JoinThreadXcfaLabel joinThreadStmt = JoinThread((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
 								collect.add(joinThreadStmt);
+								foundAny = true;
 								break;
 							default:
 								throw new UnsupportedOperationException("Not yet supported: " + ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
@@ -81,6 +85,9 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 					FrontendMetadata.create(xcfaEdge, s, o);
 				});
 			}
+		}
+		if(foundAny) {
+			ArchitectureConfig.multiThreading = true;
 		}
 		return builder;
 	}

@@ -364,7 +364,7 @@ public class XcfaConfigBuilder {
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
 			final Analysis<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> analysis = XcfaDeclarativeAnalysis
-					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), PredAnalysis.create(refinementSolverFactory.createSolver(), predAbstractor, True()));
+					.create(xcfa.getMainProcess().getMainProcedure().getInitLoc(), PredAnalysis.create(abstractionSolverFactory.createSolver(), predAbstractor, True()));
 			final ArgBuilder<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, XcfaDeclarativeState::isError, true);
 			final Abstractor<XcfaDeclarativeState<PredState>, XcfaDeclarativeAction, XcfaDeclarativePrec<PredPrec>> abstractor = BasicAbstractor
