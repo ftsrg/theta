@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
@@ -50,8 +51,11 @@ public class CallsToHavocs extends ProcedurePass {
 							Expr<?> expr = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getParams().get(0);
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
 							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-							if(!(CComplexType.getType(var.getRef()) instanceof CVoid))
-								collect.add(Stmt(Havoc(var)));
+							if(!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
+								final HavocStmt<?> havoc = Havoc(var);
+								FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+								collect.add(Stmt(havoc));
+							}
 						} else collect.add(stmt);
 					}
 					XcfaEdge xcfaEdge;

@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.PopStmt;
 import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -206,6 +207,7 @@ public class AssignmentChainRemoval extends ProcedurePass {
 				for (VarDecl<?> removableVar : removableVars) {
 					Expr<?> newExpr = null;
 					boolean isHavoc = false;
+					Stmt havocStmt = null;
 					Map<XcfaEdge, XcfaEdge> newEdgeMap = new LinkedHashMap<>();
 
 					for (Tuple2<XcfaEdge, XcfaLabel> lhsEdge : filteredRhsUsages.get(removableVar)) {
@@ -215,7 +217,10 @@ public class AssignmentChainRemoval extends ProcedurePass {
 							if(stmt != lhsEdge.get2()) newStmts.add(stmt);
 							else {
 								checkState(newExpr == null && !isHavoc, "New expression should not be overwritten!");
-								if(stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof HavocStmt) isHavoc = true;
+								if(stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof HavocStmt) {
+									isHavoc = true;
+									havocStmt = stmt.getStmt();
+								}
 								else if(stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof AssignStmt) {
 									newExpr = ((AssignStmt<?>) stmt.getStmt()).getExpr();
 									FrontendMetadata.create(newExpr, "cType", CComplexType.getType(((AssignStmt<?>) stmt.getStmt()).getVarDecl().getRef()));
@@ -243,10 +248,12 @@ public class AssignmentChainRemoval extends ProcedurePass {
 									break rhsLoop;
 								}
 								else if(isHavoc) {
-									newStmts.add(Stmt(Havoc(((AssignStmt<?>) stmt.getStmt()).getVarDecl())));
+									final HavocStmt<?> havoc = Havoc(((AssignStmt<?>) stmt.getStmt()).getVarDecl());
+									FrontendMetadata.lookupMetadata(havocStmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+									newStmts.add(Stmt(havoc));
 								}
 								else {
-									Optional<XcfaLabel> newStmt = XcfaStmtUtils.replaceExprsInStmt(stmt, expr -> {
+									Optional<? extends XcfaLabel> newStmt = XcfaStmtUtils.replaceExprsInStmt(stmt, expr -> {
 										if (expr instanceof RefExpr && ((RefExpr<Type>) expr).getDecl().equals(removableVar)) {
 											CComplexType type = CComplexType.getType(removableVar.getRef());
 											return Optional.of(cast(type.castTo(finalNewExpr), removableVar.getType()));

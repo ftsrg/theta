@@ -13,6 +13,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.NoReadVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
@@ -61,6 +62,7 @@ public class XcfaPassManager {
 				new EmptyEdgeRemovalPass(),
 				new SimpleLbePass(),
 				new HavocPromotion(),
+				new NoReadVarRemovalPass(),
 				new GlobalVarsToStoreLoad(),
 				new UnusedVarRemovalPass()
 				));

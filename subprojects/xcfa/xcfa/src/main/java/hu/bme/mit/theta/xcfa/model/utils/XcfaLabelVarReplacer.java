@@ -95,7 +95,9 @@ public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, Va
 
     @Override
     public <DeclType extends Type> XcfaLabel visit(HavocStmt<DeclType> stmt, Map<VarDecl<?>, VarDecl<?>> param) {
-        return Stmt(Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl())));
+        final HavocStmt<?> havoc = Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()));
+        FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+        return Stmt(havoc);
     }
 
     @Override

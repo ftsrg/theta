@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -35,7 +36,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
@@ -46,45 +49,52 @@ public class HavocPromotion extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		forwardLut = new LinkedHashMap<>();
 		reverseLut = new LinkedHashMap<>();
-		Map<VarDecl<?>, Set<Tuple2<XcfaEdge, XcfaLabel>>> varUsage = new LinkedHashMap<>();
-		for (XcfaEdge edge : builder.getEdges()) {
-			for (XcfaLabel stmt : edge.getLabels()) {
-				Tuple2<XcfaEdge, XcfaLabel> tup = Tuple2.of(edge, stmt);
-				Set<VarDecl<?>> vars = getVars(stmt);
-				for (VarDecl<?> var : vars) {
-					varUsage.putIfAbsent(var, new LinkedHashSet<>());
-					varUsage.get(var).add(tup);
-				}
-			}
-		}
-
+		Set<HavocStmt<?>> alreadyHandled = new LinkedHashSet<>();
 		boolean found = true;
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new LinkedHashSet<>(builder.getEdges())) {
+				Map<VarDecl<?>, Set<Tuple2<XcfaEdge, XcfaLabel>>> varUsage = new LinkedHashMap<>();
+				for (XcfaLabel stmt : edge.getLabels()) {
+					Tuple2<XcfaEdge, XcfaLabel> tup = Tuple2.of(edge, stmt);
+					Set<VarDecl<?>> vars = getVars(stmt);
+					for (VarDecl<?> var : vars) {
+						varUsage.putIfAbsent(var, new LinkedHashSet<>());
+						varUsage.get(var).add(tup);
+					}
+				}
 				for (XcfaLabel label : edge.getLabels()) {
 					if(label instanceof XcfaLabel.StmtXcfaLabel) {
 						Stmt stmt = label.getStmt();
 						if (stmt instanceof HavocStmt) {
 							VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
-							if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
-								Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
-								Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2().getStmt()).findAny();
-								if (assign.isPresent() && assume.isPresent()) {
-									if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assume.get()), Stmt(assign.get())), List.of(Stmt(Havoc(assign.get().getVarDecl())), Stmt(assume.get()).accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl()))))) {
-										found = true;
-										break;
+							if(!alreadyHandled.contains(stmt)) {
+								if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
+									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
+									Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2().getStmt()).findAny();
+									if (assign.isPresent() && assume.isPresent()) {
+										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
+										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assume.get()), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(assume.get()).accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl())), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), ((HavocStmt<?>) stmt).getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), ((HavocStmt<?>) stmt).getVarDecl().getType())))))) {
+											found = true;
+											alreadyHandled.add((HavocStmt<?>) stmt);
+											alreadyHandled.add(havoc);
+											break;
+										}
 									}
 								}
-							}
-							if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
-								Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
-								if (assign.isPresent()) {
-									if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(Havoc(assign.get().getVarDecl()))))) {
-										found = true;
-										break;
-									}
-								}
+//								if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
+//									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
+//									if (assign.isPresent()) {
+//										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
+//										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+//										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), havoc.getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), havoc.getVarDecl().getType())))))) {
+//											found = true;
+//											alreadyHandled.add((HavocStmt<?>) stmt);
+//											break;
+//										}
+//									}
+//								}
 							}
 						}
 					}

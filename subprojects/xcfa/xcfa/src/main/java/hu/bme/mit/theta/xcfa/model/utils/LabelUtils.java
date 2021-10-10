@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.model.utils;
 
 import com.google.common.collect.Streams;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -21,6 +22,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -133,5 +135,17 @@ public class LabelUtils {
 				return StmtUtils.getVars(stmt);
 			}
 		}, null);
+	}
+
+	public static void getAssortedVars(XcfaLabel label, Set<VarDecl<?>> assignedToVars, Set<VarDecl<?>> usedUpVars) {
+		final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> ret = Tuple2.of(assignedToVars, usedUpVars);
+		label.accept(new XcfaLabelVarCollector(), Tuple2.of(assignedToVars, usedUpVars));
+	}
+
+	public static Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> getAssortedVars(XcfaLabel label) {
+		Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
+		Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
+		getAssortedVars(label, assignedToVars, usedUpVars);
+		return Tuple2.of(assignedToVars, usedUpVars);
 	}
 }
