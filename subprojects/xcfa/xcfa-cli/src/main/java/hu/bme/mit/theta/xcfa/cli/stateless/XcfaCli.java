@@ -408,7 +408,7 @@ public class XcfaCli {
 	}
 
 	private void writeDummyCorrectnessWitness() {
-		String taskHash = WitnessWriter.createTaskHash(model.getName());
+		String taskHash = WitnessWriter.createTaskHash(model.getAbsolutePath());
 		StringBuilder dummyWitness = new StringBuilder();
 		dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
 				"<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
