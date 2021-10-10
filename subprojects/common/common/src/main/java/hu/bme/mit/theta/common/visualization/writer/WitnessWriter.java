@@ -16,7 +16,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -36,7 +35,6 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	private final String toolName = "theta"; // TODO maybe we should add the version number to this field as well
 	private final String sourceCodeLang = "C";
 	private final String architecture; // TODO add 64bit option later
-	private final LocalDateTime creationTime;
 	private final String specification;
 	private final String programFile;
 
@@ -52,7 +50,6 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		programHash = createTaskHash(programFile);
 		this.isViolationWitness = isViolationWitness;
 		this.specification = specification;
-		this.creationTime = LocalDateTime.now();
 		this.programFile = programFile;
 		if(is64bit) {
 			this.architecture = "64bit";
@@ -187,7 +184,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		}
 	}
 
-	private static String createTaskHash(String programFile) {
+	public static String createTaskHash(String programFile) {
 		MessageDigest md = null;
 		try {
 			md = MessageDigest.getInstance("SHA-256");

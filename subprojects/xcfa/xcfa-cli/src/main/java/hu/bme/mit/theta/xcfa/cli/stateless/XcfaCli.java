@@ -74,13 +74,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -389,6 +393,8 @@ public class XcfaCli {
 				writeCex(status.asUnsafe());
 				writeWitness(status.asUnsafe());
 				// writeXcfaWithCex(xcfa, status.asUnsafe());
+			} else if(status!=null && status.isSafe() && outputResults) {
+				writeDummyCorrectnessWitness();
 			}
 
 			long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -399,6 +405,52 @@ public class XcfaCli {
 		} catch (final Throwable ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private void writeDummyCorrectnessWitness() {
+		String taskHash = WitnessWriter.createTaskHash(model.getName());
+		StringBuilder dummyWitness = new StringBuilder();
+		dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
+				"<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
+				"<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>").append(System.lineSeparator()).append(
+				"<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator()).append(
+				"<default>false</default>").append(System.lineSeparator()).append(
+				"</key>").append(System.lineSeparator()).append(
+				"<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">").append(System.lineSeparator()).append(
+				"<default>false</default>").append(System.lineSeparator()).append(
+				"</key>").append(System.lineSeparator()).append(
+				"<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>").append(System.lineSeparator()).append(
+				"<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>").append(System.lineSeparator()).append(
+				"<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>").append(System.lineSeparator()).append(
+				"<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>").append(System.lineSeparator()).append(
+				"<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>").append(System.lineSeparator()).append(
+				"<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>").append(System.lineSeparator()).append(
+				"<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
+				"<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator()).append(
+				"<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
+				"<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>").append(System.lineSeparator()).append(
+				"<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
+				"<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
+				"<data key=\"programhash\">");
+				dummyWitness.append(taskHash);
+				dummyWitness.append("</data>").append(System.lineSeparator()).append(
+				"<data key=\"creationtime\">");
+
+				TimeZone tz = TimeZone.getTimeZone("UTC");
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+				df.setTimeZone(tz);
+				String ISOdate = df.format(new Date());
+
+				dummyWitness.append(ISOdate);
+				dummyWitness.append("</data>").append(System.lineSeparator()).append(
+				"<data key=\"programfile\">");
+				dummyWitness.append(model.getName());
+				dummyWitness.append("</data>").append(System.lineSeparator()).append(
+				"<node id=\"N0\">").append(System.lineSeparator()).append(
+				"<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
+				"</node>").append(System.lineSeparator()).append(
+				"</graph>").append(System.lineSeparator()).append(
+				"</graphml>");
 	}
 
 	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa) throws Exception {
