@@ -95,11 +95,20 @@ public final class XcfaTraceToWitness {
 			}
 
 			// not an official witness data key, so no validator will use it, but it helps readability
-			edgeLabel.append("<data key=\"stmt\">").append(actionStmt.toString()).append("</data>");
+			edgeLabel.append("<data key=\"stmt\">").append(escapeXml(actionStmt.toString())).append("</data>");
 
 			// label is done, add the edge to the witness graph
 			addWitnessEdge(i, edgeLabel.toString());
 		}
+	}
+
+	private static String escapeXml(String toEscape) {
+		toEscape = toEscape.replace("\"", "&quot;");
+		toEscape = toEscape.replace("'", "&apos;");
+		toEscape = toEscape.replace("<", "&lt;");
+		toEscape = toEscape.replace(">", "&gt;");
+		toEscape = toEscape.replace("&", "&amp;");
+		return toEscape;
 	}
 
 	private static int getLocMetadata(XcfaLocation loc, String key) {
