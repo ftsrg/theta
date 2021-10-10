@@ -112,8 +112,7 @@ public final class XcfaTraceToWitness {
 		if (stmt instanceof HavocStmt) {
 			Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) stmt).getVarDecl());
 			Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
-//			if(value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
-			if(value.isPresent()) {
+			if(value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
 				edgeLabel.append("<data key=\"assumption\">");
 				edgeLabel.append(varName).append(" == ").append(value.get()).append(";");
 				edgeLabel.append("</data>").append(System.lineSeparator());

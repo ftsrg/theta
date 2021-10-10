@@ -83,18 +83,19 @@ public class HavocPromotion extends ProcedurePass {
 										}
 									}
 								}
-//								if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
-//									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
-//									if (assign.isPresent()) {
-//										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
-//										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
-//										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), havoc.getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), havoc.getVarDecl().getType())))))) {
-//											found = true;
-//											alreadyHandled.add((HavocStmt<?>) stmt);
-//											break;
-//										}
-//									}
-//								}
+								if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
+									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
+									if (assign.isPresent()) {
+										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
+										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), havoc.getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), havoc.getVarDecl().getType())))))) {
+											found = true;
+											alreadyHandled.add((HavocStmt<?>) stmt);
+											alreadyHandled.add(havoc);
+											break;
+										}
+									}
+								}
 							}
 						}
 					}
