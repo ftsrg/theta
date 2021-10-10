@@ -42,12 +42,10 @@ public class SingleCexStorage<S extends State, A extends Action> extends CexStor
 		int cexHashCode = cex.hashCode();
 		if (counterexamples.containsKey(currentArgHash)) {
 			if (counterexamples.get(currentArgHash).contains(cexHashCode)) {
-				System.err.println("Counterexample WAS present before");
 				return false;
 			}
 		}
 
-		System.err.println("Counterexample was NOT present before");
 		return true;
 	}
 
