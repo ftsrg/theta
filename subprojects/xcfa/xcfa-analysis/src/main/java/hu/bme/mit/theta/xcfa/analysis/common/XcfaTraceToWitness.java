@@ -5,27 +5,27 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static javax.swing.UIManager.get;
+import java.util.Optional;
 
 public final class XcfaTraceToWitness {
 	private static Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concreteTrace;
 	private static Graph witnessGraph;
-	private static final boolean addExplicitStates = true;
+	private static Integer nodeCounter = 0;
 
 	private XcfaTraceToWitness() {}
 
@@ -34,84 +34,100 @@ public final class XcfaTraceToWitness {
 		concreteTrace = trace;
 		witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
-		addNodes();
-		Map<Integer, String> explicitStates = collectExplicitStatesByStep();
-
 		// add edges
-		addEdges(explicitStates);
+		addEdges();
 		return witnessGraph;
 	}
 
 	/**
 	 * Adds edges to the witness graph based on the concrete trace and the explicit states
 	 */
-	private static void addEdges(Map<Integer, String> explicitStates) {
+	private static void addEdges() {
+		addEntryNode();
+
 		for(int i = 0; i < concreteTrace.getActions().size(); i++) {
-
 			List<Stmt> stmtList = concreteTrace.getAction(i).getStmts();
-			Stmt actionStmt;
-			if(stmtList.size()>0) {
-				actionStmt = stmtList.get(0);
-			} else {
-				actionStmt = SkipStmt.getInstance();
+			List<String> edgesFromAction = new ArrayList<>();
+			for (Stmt stmt : stmtList) {
+				Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i+1).getGlobalState().getVal());
+				optionalLabel.ifPresent(edgesFromAction::add);
 			}
-			StringBuilder edgeLabel = new StringBuilder();
 
-			// add startline if there is a line number
-			Integer startLineNumber = getLocMetadata(concreteTrace.getAction(i).getSource(), "lineNumberStart");
+			if(concreteTrace.getAction(i).getTarget().isErrorLoc() && edgesFromAction.size() == 0) {
+				addViolationNode();
+				addWitnessEdge("");
+			}
+			// otherwise:
+			for (int j = 0; j < edgesFromAction.size(); j++) {
+				// if it is the last edge before reaching the violation node
+				if (concreteTrace.getAction(i).getTarget().isErrorLoc() && j + 1 == edgesFromAction.size()) {
+					addViolationNode();
+				} else { // else the next node should be a normal one
+					addNextWitnessNode("");
+				}
+				// label is done, add the edge to the witness graph
+				addWitnessEdge(edgesFromAction.get(j));
+			}
+		}
+
+	}
+
+	private static Optional<String> makeEdgeLabelFromStatement(Stmt stmt, Valuation nextVal) {
+		if(!(stmt instanceof HavocStmt || stmt instanceof AssumeStmt)) {
+			return Optional.empty();
+		}
+
+		final Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(stmt, "sourceStatement");
+		if(sourceStatement.isEmpty()) {
+			return Optional.empty();
+		}
+
+		Map<String, ?> metadata = FrontendMetadata.lookupMetadata(sourceStatement.get());
+		StringBuilder edgeLabel = new StringBuilder();
+
+		Object lineNumberStartO = metadata.get("lineNumberStart");
+		if(lineNumberStartO instanceof Integer) {
+			Integer startLineNumber = (Integer)lineNumberStartO;
 			if (startLineNumber != -1) {
 				edgeLabel.append("<data key=\"startline\">").append(startLineNumber).append("</data>").append(System.lineSeparator());
 			}
+		}
 
-			// add endline if there is a line number
-			// TODO endlines at conditions (assumeStmts) should not include the whole control expression (whole scope of if/for/etc.)
-			Integer endLineNumber = getLocMetadata(concreteTrace.getAction(i).getTarget(), "lineNumberStop");
+		Object lineNumberStopO = metadata.get("lineNumberStop");
+		if(lineNumberStartO instanceof Integer) {
+			Integer endLineNumber = (Integer)lineNumberStopO;
 			if (endLineNumber != -1) {
 				edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
 			}
-
-			// add offset if there is an offset start
-			Integer offsetStartNumber = getLocMetadata(concreteTrace.getAction(i).getSource(), "offsetStart");
-			if (offsetStartNumber != -1) {
-				edgeLabel.append("<data key=\"offset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
-			}
-
-
-			if (actionStmt instanceof HavocStmt) {
-				// we'll need the explicit states here
-				// if we havoc a variable, but add it with a concrete value to the explicit state - that's an assumption
-				String explicitState = explicitStates.get(i);
-				String varName = ((HavocStmt<?>) concreteTrace.getAction(i).getStmts().get(0)).getVarDecl().getName(); // TODO lehet ures
-				if (explicitState.contains(varName)) {
-					// TODO this isn't the nicest way to handle a variable-value pair in an explicit state, but I couldn't find any better
-					String varValue	= extractValueFromExplicitState(explicitState, varName);
-					edgeLabel.append("<data key=\"assumption\">");
-					edgeLabel.append(varName).append(" == ").append(varValue).append(";");
-					edgeLabel.append("</data>").append(System.lineSeparator());
-				}
-			} else if (actionStmt instanceof AssumeStmt) {
-				// TODO simplified expressions might make this unusable
-				// when we need assumptions (by controlflow branches), the outer = means a cond true a /= means a cond false
-				boolean conditionTrue;
-				if(((AssumeStmt) actionStmt).getCond() instanceof EqExpr) {
-					conditionTrue = false;
-					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
-				} else if (((AssumeStmt) actionStmt).getCond() instanceof NeqExpr) {
-					conditionTrue = true;
-					edgeLabel.append("<data key=\"control\">condition-").append(conditionTrue?"true":"false").append("</data>").append(System.lineSeparator());
-				} else {
-					// it is a leq or a geq - this isn't a control statement
-					// TODO maybe this case should be added as an assumption as well
-				}
-
-			}
-
-			// not an official witness data key, so no validator will use it, but it helps readability
-			edgeLabel.append("<data key=\"stmt\">").append(escapeXml(actionStmt.toString())).append("</data>");
-
-			// label is done, add the edge to the witness graph
-			addWitnessEdge(i, edgeLabel.toString());
 		}
+
+		Object offsetStartO = metadata.get("offsetStart");
+		if(offsetStartO instanceof Integer) {
+			Integer offsetStartNumber = (Integer)offsetStartO;
+			if (offsetStartNumber != -1) {
+				edgeLabel.append("<data key=\"startoffset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
+			}
+		}
+
+		if (stmt instanceof HavocStmt) {
+			Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) stmt).getVarDecl());
+			Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
+//			if(value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
+			if(value.isPresent()) {
+				edgeLabel.append("<data key=\"assumption\">");
+				edgeLabel.append(varName).append(" == ").append(value.get()).append(";");
+				edgeLabel.append("</data>").append(System.lineSeparator());
+			}
+		} else if (stmt instanceof AssumeStmt) {
+			if(((AssumeStmt) stmt).getCond() instanceof EqExpr) {
+				edgeLabel.append("<data key=\"control\">condition-").append("false").append("</data>").append(System.lineSeparator());
+			} else if (((AssumeStmt) stmt).getCond() instanceof NeqExpr) {
+				edgeLabel.append("<data key=\"control\">condition-").append("true").append("</data>").append(System.lineSeparator());
+			}
+		}
+		// not an official witness data key, so no validator will use it, but it helps readability
+		edgeLabel.append("<data key=\"stmt\">").append(escapeXml(stmt.toString())).append("</data>");
+		return Optional.of(edgeLabel.toString());
 	}
 
 	private static String escapeXml(String toEscape) {
@@ -123,112 +139,41 @@ public final class XcfaTraceToWitness {
 		return toEscape;
 	}
 
-	private static int getLocMetadata(XcfaLocation loc, String key) {
-		Object sourceStatement = FrontendMetadata.lookupMetadata(loc).get("sourceStatement");
-		if(sourceStatement != null) {
-			Object metadataNumber = FrontendMetadata.lookupMetadata(sourceStatement).get(key);
-			if(metadataNumber instanceof Integer) {
-				return (int) metadataNumber;
-			}
-		}
-		return -1;
-	}
-
 	/**
-	 * Adds a single node to the witness
+	 * Adds the next witness edge (edge between the last two added nodes)
 	 *
-	 * @param index index of state in trace
-	 * @param label graphml label, e.g. <data key="entry">true</data>
+	 * @param label graphml label, e.g. <data key="startline">12</data>...
 	 */
-	private static void addWitnessEdge(int index, String label) {
-		witnessGraph.addEdge(concreteTrace.getState(index).getCurrentLoc().getName()+"_c"+index,
-				concreteTrace.getState(index+1).getCurrentLoc().getName()+"_c"+(index+1),
+	private static void addWitnessEdge(String label) {
+		witnessGraph.addEdge("N"+(nodeCounter - 2),
+				"N"+(nodeCounter-1),
 				new EdgeAttributes.Builder().label(label).build()
 		);
 	}
 
-
 	/**
-	 * Adds a single node to the witness
+	 * Adds the next node to the witness
 	 *
-	 * @param index index of state in trace
-	 * @param label graphml label, e.g. <data key="entry">true</data>
+	 * @param label graphml label, e.g. <data key="entry">true</data>, might be empty
 	 */
-	private static void addWitnessNode(int index, String label) {
-		witnessGraph.addNode( concreteTrace.getState(index).getCurrentLoc().getName()+"_c"+index,
+	private static void addNextWitnessNode(String label) {
+		witnessGraph.addNode( "N"+nodeCounter.toString(),
 				new NodeAttributes.Builder().label(label).build()
 		);
+		nodeCounter++;
 	}
 
-	/**
-	 * Adds nodes to the witness graph based on the concrete trace
-	 */
-	private static void addNodes() {
+	private static void addEntryNode() {
 		StringBuilder entryLabel = new StringBuilder();
-		if(addExplicitStates) {
-			entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
-			entryLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(0)
-					.toString()).append("</data>").append(System.lineSeparator());
-		}
+		entryLabel.append("<data key=\"entry\">true</data>").append(System.lineSeparator());
 		// add entry state as a node
-		addWitnessNode(0, entryLabel.toString());
+		addNextWitnessNode(entryLabel.toString());
+	}
 
-		// we'll use here, that the cex is a state-action-state-action... chain (that's why we can use an index as key)
-		// (and that's the only way I could connect states and actions, as otherwise they are connected to locs/edges only)
-
-		// add the other states as nodes (except the last one)
-		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
-			StringBuilder nodeLabel = new StringBuilder();
-			if(addExplicitStates) {
-				nodeLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(i)
-						.toString()).append("</data>").append(System.lineSeparator());
-			}
-			addWitnessNode(i, nodeLabel.toString());
-		}
-
+	private static void addViolationNode() {
 		StringBuilder endLabel = new StringBuilder();
-		if(addExplicitStates) {
-			endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
-			endLabel.append("<data key=\"expl-state\">").append(concreteTrace.getState(concreteTrace.getStates().size() - 1)
-					.toString()).append("</data>").append(System.lineSeparator());
-		}
+		endLabel.append("<data key=\"violation\">true</data>").append(System.lineSeparator());
 		// add violation (end) state/node
-		addWitnessNode(concreteTrace.getStates().size()-1, endLabel.toString());
+		addNextWitnessNode(endLabel.toString());
 	}
-
-	/**
-	 * Iterate through the states in the trace and put the explicit states of the states into a hashmap
-	 * using the index of the state - 1 in the trace as a key (to associate it with the incoming edge/action)
-	 *
-	 * @return the resulting hashmap
-	 */
-	private static Map<Integer, String> collectExplicitStatesByStep() {
-		Map<Integer, String> explStates = new LinkedHashMap<>();
-		for(int i = 1; i < concreteTrace.getStates().size()-1; i++) {
-			explStates.put(i - 1, concreteTrace.getState(i).toString());
-		}
-		return explStates;
-	}
-
-	/**
-	 * When finding an assumption, we need to extract the value of the variable from the explicit state
-	 * @param explicitState the current explicit state in a string format
-	 * @param varName the variable name we need the value of
-	 * @return the value of varName in the explicit state
-	 */
-	private static String extractValueFromExplicitState(String explicitState, String varName) {
-		explicitState = explicitState.replaceFirst("\\(ExplState ", "");
-		explicitState = explicitState.substring(0, explicitState.length() - 1);
-		String[] pairs = explicitState.split("\n");
-		String value = null;
-		for (String pair : pairs) {
-			if(pair.contains("("+varName)) {
-				value = pair.replaceFirst("\\s*\\(", "(");
-				value = value.replaceFirst("\\("+varName+" ", "");
-				value = value.substring(0, value.length()-1);
-			}
-		}
-		return value;
-	}
-
 }

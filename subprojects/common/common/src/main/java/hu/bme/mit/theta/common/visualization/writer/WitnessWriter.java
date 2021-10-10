@@ -14,7 +14,11 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Class for writing graphs in the SV-Comp witness format.
@@ -80,18 +84,19 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	// TODO should this be a bit more flexible or should we add keys we don't use for now, but we might use in the future?
 	private void printKeys(StringBuilder sb) {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>").append(System.lineSeparator());
-		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns/graphml\"").append(System.lineSeparator());
-		sb.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"").append(System.lineSeparator());
-		sb.append("xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/graphml\">").append(System.lineSeparator());
+		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator());
 
 		appendKeyLine(sb, "sourcecodelang", "string", "graph","sourcecodelang");
-		appendKeyLine(sb, "creationTime", "string", "graph", "creationTime");
+		appendKeyLine(sb, "creationtime", "string", "graph", "creationtime");
 		appendKeyLine(sb, "witness-type", "string", "graph","witness-type");
 		appendKeyLine(sb, "producer", "string","graph","producer");
 		appendKeyLine(sb, "architecture", "string","graph","architecture");
 		appendKeyLine(sb, "programHash", "string", "graph", "programhash");
+		appendKeyLine(sb, "programfile", "string", "graph","programfile");
 		appendKeyLine(sb, "specification", "string", "graph", "specification");
 		appendKeyLine(sb, "startline", "string", "edge","startline");
+		appendKeyLine(sb, "endline", "string", "edge","endline");
+		appendKeyLine(sb, "startoffset", "string", "edge","startoffset");
 		appendKeyLine(sb, "assumption", "string", "edge","assumption");
 		appendKeyLine(sb, "control", "string", "edge","control");
 		// these two are for us, they aren't sv-comp witness keys
@@ -119,6 +124,12 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		appendDataNode(sb,"programfile",programFile);
 		appendDataNode(sb,"programhash",programHash);
 		appendDataNode(sb,"architecture",architecture);
+
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+		df.setTimeZone(tz);
+		String ISOdate = df.format(new Date());
+		appendDataNode(sb, "creationtime", ISOdate);
 	}
 
 	private void appendDataNode(StringBuilder sb, String key, String value) {

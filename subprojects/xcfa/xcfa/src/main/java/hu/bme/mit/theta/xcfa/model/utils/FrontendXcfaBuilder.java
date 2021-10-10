@@ -588,9 +588,9 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(guard, assume);
 		xcfaEdge = XcfaEdge.of(endGuard, mainBranch, List.of(Stmt(assume)));
 		builder.addEdge(xcfaEdge);
-		propagateMetadata(guard, xcfaEdge);
+		propagateMetadata(statement, xcfaEdge);
 		final AssumeStmt assume1 = Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
-		propagateMetadata(statement, assume1);
+		propagateMetadata(guard, assume1);
 		xcfaEdge = XcfaEdge.of(endGuard, elseBranch, List.of(Stmt(assume1)));
 		builder.addEdge(xcfaEdge);
 		propagateMetadata(statement, xcfaEdge);

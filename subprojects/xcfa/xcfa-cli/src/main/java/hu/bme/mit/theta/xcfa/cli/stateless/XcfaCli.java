@@ -392,7 +392,7 @@ public class XcfaCli {
 			if (status!=null && status.isUnsafe() && outputResults) {
 				writeCex(status.asUnsafe());
 				writeWitness(status.asUnsafe());
-				writeXcfaWithCex(xcfa, status.asUnsafe());
+				// writeXcfaWithCex(xcfa, status.asUnsafe());
 			}
 
 			long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -495,6 +495,7 @@ public class XcfaCli {
 		}
 	}
 
+	// TODO use XCFA instead of CFA
 	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
