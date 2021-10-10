@@ -40,8 +40,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -63,7 +61,6 @@ import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -83,7 +80,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -444,21 +440,6 @@ public class XcfaCli {
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
 		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
-
-		for (XcfaDeclarativeAction action : concrTrace.getActions()) {
-			for (XcfaLabel label : action.getLabels()) {
-				if(label instanceof XcfaLabel.StmtXcfaLabel) {
-					if(label.getStmt() instanceof HavocStmt || label.getStmt() instanceof AssumeStmt) {
-						final Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(label.getStmt(), "sourceStatement");
-						if(sourceStatement.isPresent()) {
-							System.err.println(label.getStmt() + " -> " + FrontendMetadata.lookupMetadata(sourceStatement.get()));
-						} else {
-							System.err.println(label.getStmt() + " - > MissingMetadata");
-						}
-					}
-				}
-			}
-		}
 
 		if(cexfile!=null) {
 			final File file = cexfile;
