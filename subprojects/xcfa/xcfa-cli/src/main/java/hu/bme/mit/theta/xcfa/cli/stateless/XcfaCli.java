@@ -451,6 +451,12 @@ public class XcfaCli {
 				"</node>").append(System.lineSeparator()).append(
 				"</graph>").append(System.lineSeparator()).append(
 				"</graphml>");
+
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter(witnessfile))) {
+			bw.write(dummyWitness.toString());
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
 	}
 
 	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa) throws Exception {
