@@ -7,6 +7,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
@@ -16,7 +17,10 @@ import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import static javax.swing.UIManager.get;
 
 public final class XcfaTraceToWitness {
 	private static Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concreteTrace;
@@ -27,7 +31,7 @@ public final class XcfaTraceToWitness {
 
 	public static Graph buildWitness(
 			final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> trace) {
-		concreteTrace = null; // TODO
+		concreteTrace = trace;
 		witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
 		addNodes();
@@ -43,7 +47,14 @@ public final class XcfaTraceToWitness {
 	 */
 	private static void addEdges(Map<Integer, String> explicitStates) {
 		for(int i = 0; i < concreteTrace.getActions().size(); i++) {
-			Stmt actionStmt = concreteTrace.getAction(i).getStmts().get(0);
+
+			List<Stmt> stmtList = concreteTrace.getAction(i).getStmts();
+			Stmt actionStmt;
+			if(stmtList.size()>0) {
+				actionStmt = stmtList.get(0);
+			} else {
+				actionStmt = SkipStmt.getInstance();
+			}
 			StringBuilder edgeLabel = new StringBuilder();
 
 			// add startline if there is a line number
@@ -79,6 +90,7 @@ public final class XcfaTraceToWitness {
 					edgeLabel.append("</data>").append(System.lineSeparator());
 				}
 			} else if (actionStmt instanceof AssumeStmt) {
+				// TODO simplified expressions might make this unusable
 				// when we need assumptions (by controlflow branches), the outer = means a cond true a /= means a cond false
 				boolean conditionTrue;
 				if(((AssumeStmt) actionStmt).getCond() instanceof EqExpr) {
