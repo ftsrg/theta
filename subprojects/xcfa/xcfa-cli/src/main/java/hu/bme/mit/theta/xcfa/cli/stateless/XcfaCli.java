@@ -34,6 +34,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.cli.CfaCli;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -44,6 +45,8 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
@@ -63,12 +66,15 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import javax.imageio.IIOException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -187,8 +193,14 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.DECL;
 
+	//////////// SMTLib options ////////////
+
+	@Parameter(names = "--smt-home", description = "The path of the solver registry")
+	String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
 	//////////// CONFIGURATION OPTIONS END ////////////
+
+	private Logger logger;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -213,6 +225,19 @@ public class XcfaCli {
 		/// version
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
+			return;
+		}
+
+		try {
+			// register solver managers
+			SolverManager.registerSolverManager(Z3SolverManager.create());
+			if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+				final var homePath = Path.of(home);
+				final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+				SolverManager.registerSolverManager(smtLibSolverManager);
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
 			return;
 		}
 
