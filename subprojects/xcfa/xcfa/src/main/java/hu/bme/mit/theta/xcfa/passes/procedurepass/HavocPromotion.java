@@ -49,8 +49,9 @@ public class HavocPromotion extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		forwardLut = new LinkedHashMap<>();
 		reverseLut = new LinkedHashMap<>();
-		Set<HavocStmt<?>> alreadyHandled = new LinkedHashSet<>();
+		Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 		boolean found = true;
+		outerLoop:
 		while(found) {
 			found = false;
 			for (XcfaEdge edge : new LinkedHashSet<>(builder.getEdges())) {
@@ -67,9 +68,9 @@ public class HavocPromotion extends ProcedurePass {
 					if(label instanceof XcfaLabel.StmtXcfaLabel) {
 						Stmt stmt = label.getStmt();
 						if (stmt instanceof HavocStmt) {
-							VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
 							if(!alreadyHandled.contains(stmt)) {
-								if (varUsage.get(toRemove).size() == 3 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assume, assign
+								VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
+								if (varUsage.get(toRemove).size() == 3) { // havoc, assume, assign
 									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
 									Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2().getStmt()).findAny();
 									if (assign.isPresent() && assume.isPresent()) {
@@ -77,22 +78,20 @@ public class HavocPromotion extends ProcedurePass {
 										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
 										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assume.get()), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(assume.get()).accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl())), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), ((HavocStmt<?>) stmt).getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), ((HavocStmt<?>) stmt).getVarDecl().getType())))))) {
 											found = true;
-											alreadyHandled.add((HavocStmt<?>) stmt);
 											alreadyHandled.add(havoc);
-											break;
+											continue outerLoop;
 										}
 									}
 								}
-								if (varUsage.get(toRemove).size() == 2 && varUsage.get(toRemove).stream().allMatch(objects -> getEdge(objects.get1()).equals(edge))) { // havoc, assign
+								if (varUsage.get(toRemove).size() == 2) { // havoc, assign
 									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
 									if (assign.isPresent()) {
 										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
 										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
 										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), havoc.getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), havoc.getVarDecl().getType())))))) {
 											found = true;
-											alreadyHandled.add((HavocStmt<?>) stmt);
 											alreadyHandled.add(havoc);
-											break;
+											continue outerLoop;
 										}
 									}
 								}
