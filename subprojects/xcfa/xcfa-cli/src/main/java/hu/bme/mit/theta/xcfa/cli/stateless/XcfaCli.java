@@ -111,6 +111,9 @@ public class XcfaCli {
 	@Parameter(names = "--output-results", description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", help = true)
 	boolean outputResults = false;
 
+	@Parameter(names = "--witness-only", description = "Does not output any other files, just a violation/correctness witness only")
+	boolean witnessOnly = false;
+
 	@Parameter(names = "--no-analysis", description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
 	boolean noAnalysis = false;
 
@@ -254,7 +257,9 @@ public class XcfaCli {
 
 		/// output results file creation
 		// create filenames, if needed
-		if(outputResults) {
+		if(witnessOnly) {
+			witnessfile = new File(basicFileName + ".witness.graphml");
+		} else if(outputResults) {
 			xcfafile = new File(basicFileName + ".xcfa");
 			cfafile = new File(basicFileName + ".cfa");
 			cexfile = new File(basicFileName + ".cex");
@@ -318,7 +323,7 @@ public class XcfaCli {
 					args.add("--prunestrategy"); args.add(pruneStrategy.name());
 					args.add("--loglevel"); args.add(logLevel.name());
 					if(benchmarkMode) args.add("--benchmark");
-					if(outputResults) {
+					if(cexfile!=null && cfafile!=null) {
 						args.add("--cex"); args.add(cexfile.getAbsolutePath());
 						args.add("--visualize"); args.add(cfafile.getAbsolutePath());
 					}
@@ -332,7 +337,7 @@ public class XcfaCli {
 			}
 
 			// write cfa into file and output statistics about (X)CFA and C input file
-			if(outputResults) {
+			if(xcfafile!=null && statisticscsvfile!=null && statisticstxtfile!=null) {
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
 					if(xcfa == null) xcfa = xcfaBuilder.build();
 					bw.write(xcfa.toDot());
@@ -389,11 +394,11 @@ public class XcfaCli {
 					throw new IllegalStateException("Unexpected value: " + portfolio);
 			}
 
-			if (status!=null && status.isUnsafe() && outputResults) {
+			if (status!=null && status.isUnsafe() && witnessfile!=null) {
 				writeCex(status.asUnsafe());
 				writeWitness(status.asUnsafe());
 				// writeXcfaWithCex(xcfa, status.asUnsafe());
-			} else if(status!=null && status.isSafe() && outputResults) {
+			} else if(status!=null && status.isSafe() && witnessfile!=null) {
 				writeDummyCorrectnessWitness();
 			}
 
