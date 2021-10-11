@@ -45,9 +45,9 @@ public abstract class AbstractPortfolio {
 	 * @return
 	 */
 	protected Tuple2<Result, Optional<SafetyResult<?,?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
-		logger.write(Logger.Level.MAINSTEP, "Executing ");
-		logger.write(Logger.Level.MAINSTEP, configuration.toString());
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, "Executing ");
+		logger.write(Logger.Level.RESULT, configuration.toString());
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, "Timeout is set to " + timeout/1000.0 + " sec (cputime)...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -114,14 +114,14 @@ public abstract class AbstractPortfolio {
 		long timeTaken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 		long cpuTimeTaken = CpuTimeKeeper.getCurrentCpuTime() - startCpuTime;
 
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		logger.write(Logger.Level.MAINSTEP, "Execution done, result: ");
-		logger.write(Logger.Level.MAINSTEP, result.toString());
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		logger.write(Logger.Level.MAINSTEP, "Time taken in this configuration: ");
-		logger.write(Logger.Level.MAINSTEP,  cpuTimeTaken + " sec (cputime)");
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, "Execution done, result: ");
+		logger.write(Logger.Level.RESULT, result.toString());
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, "Time taken in this configuration: ");
+		logger.write(Logger.Level.RESULT,  cpuTimeTaken + " sec (cputime)");
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
 
 		writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
 		writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
