@@ -14,13 +14,17 @@ public class SemVer implements Comparable<SemVer> {
 
     private SemVer(final String version) {
         checkNotNull(version);
-        checkArgument(version.matches("[0-9]+(\\.[0-9]+)*"));
+        checkArgument(valid(version));
 
         this.version = Arrays.stream(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
     }
 
     public static SemVer of(final String version) {
         return new SemVer(version);
+    }
+
+    public static boolean valid(final String version) {
+        return version.matches("[0-9]+(\\.[0-9]+)*");
     }
 
     public boolean hasMajor() {
