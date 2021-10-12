@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cat.solver;
 
-import hu.bme.mit.theta.cat.models.CoherenceMemory;
-import hu.bme.mit.theta.cat.models.NoassertMemory;
 import hu.bme.mit.theta.cat.solver.BoolSmtMemoryModelBuilder;
 import hu.bme.mit.theta.cat.solver.MemoryModel;
 import hu.bme.mit.theta.cat.solver.MemoryModelBuilder;
@@ -25,8 +23,6 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.cat.solver.programs.Program;
-import hu.bme.mit.theta.xcfa.cat.solver.programs.W2R2;
-import hu.bme.mit.theta.xcfa.cat.solver.programs.W2R2WR;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,10 +47,10 @@ public class BoolSmtTest {
 	@Parameterized.Parameters
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-				{new NoassertMemory(), new W2R2(), false},
-				{new CoherenceMemory(), new W2R2(), true},
-				{new NoassertMemory(), new W2R2WR(), false},
-				{new CoherenceMemory(), new W2R2WR(), true},
+//				{new NoassertMemory(), new W2R2(), false},
+//				{new CoherenceMemory(), new W2R2(), true},
+//				{new NoassertMemory(), new W2R2WR(), false},
+//				{new CoherenceMemory(), new W2R2WR(), true},
 		});
 	}
 
