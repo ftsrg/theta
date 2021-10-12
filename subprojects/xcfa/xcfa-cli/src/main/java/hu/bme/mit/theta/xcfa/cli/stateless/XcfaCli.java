@@ -45,6 +45,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
@@ -204,6 +205,12 @@ public class XcfaCli {
 	@Parameter(names = "--smt-home", description = "The path of the solver registry")
 	String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
+	@Parameter(names = "--abstraction-solver", description = "Sets the underlying SMT solver to use for the abstraction process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+	String abstractionSolver = "Z3";
+
+	@Parameter(names = "--refinement-solver", description = "Sets the underlying SMT solver to use for the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+	String refinementSolver = "Z3";
+
 	//////////// CONFIGURATION OPTIONS END ////////////
 
 	private Logger logger;
@@ -234,6 +241,8 @@ public class XcfaCli {
 			return;
 		}
 
+		final SolverFactory abstractionSolverFactory;
+		final SolverFactory refinementSolverFactory;
 		try {
 			// register solver managers
 			SolverManager.registerSolverManager(Z3SolverManager.create());
@@ -242,8 +251,11 @@ public class XcfaCli {
 				final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 				SolverManager.registerSolverManager(smtLibSolverManager);
 			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+
+			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+			refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+		} catch (Exception e) {
+			e.printStackTrace();
 			return;
 		}
 
@@ -361,7 +373,7 @@ public class XcfaCli {
 
 			switch (portfolio) {
 				case NONE:
-					final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa);
+					final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
 					status = check(configuration);
 					break;
 				case SEQUENTIAL:
@@ -395,8 +407,8 @@ public class XcfaCli {
 			}
 
 			if (status!=null && status.isUnsafe() && witnessfile!=null) {
-				writeCex(status.asUnsafe());
-				writeWitness(status.asUnsafe());
+				writeCex(status.asUnsafe(), refinementSolverFactory);
+				writeWitness(status.asUnsafe(), refinementSolverFactory);
 				// writeXcfaWithCex(xcfa, status.asUnsafe());
 			} else if(status!=null && status.isSafe() && witnessfile!=null) {
 				writeDummyCorrectnessWitness();
@@ -464,7 +476,7 @@ public class XcfaCli {
 		}
 	}
 
-	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa) throws Exception {
+	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa, SolverFactory abstractionSolverFactory, SolverFactory refinementSolverFactory) throws Exception {
 		// set up Arg-Cex check
 		if(noArgCexCheck) {
 			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
@@ -478,7 +490,7 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, Z3SolverManager.resolveSolverFactory("Z3"), Z3SolverManager.resolveSolverFactory("Z3"), algorithm)
+			return new XcfaConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory, algorithm)
 					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
 
@@ -500,9 +512,9 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws Exception {
+	private void writeCex(final SafetyResult.Unsafe<?, ?> status, SolverFactory concretizer) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
+		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, concretizer);
 
 		if(cexfile!=null) {
 			final File file = cexfile;
@@ -518,9 +530,9 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeWitness(final SafetyResult.Unsafe<?, ?> status) throws Exception {
+	private void writeWitness(final SafetyResult.Unsafe<?, ?> status, SolverFactory concretizer) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
+		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, concretizer);
 
 		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
 		if(witnessfile!=null) {
