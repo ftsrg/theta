@@ -119,6 +119,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -199,6 +200,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(RatLeqExpr.class, this::transformRatLeq)
 
                 .addCase(RatLtExpr.class, this::transformRatLt)
+
+                .addCase(RatToIntExpr.class, this::transformRatToInt)
 
                 // Integers
 
@@ -587,6 +590,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformRatLt(final RatLtExpr expr) {
         return String.format("(< %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformRatToInt(final RatToIntExpr expr) {
+        return String.format("(to_int %s)", toTerm(expr.getOp()));
     }
 
     /*
