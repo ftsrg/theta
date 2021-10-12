@@ -176,13 +176,7 @@ parenExpr
 
 ////
 
-IF	:	'if'
-	;
-
 THEN:	'then'
-	;
-
-ELSE:	'else'
 	;
 
 IFF	:	'iff'
@@ -261,6 +255,7 @@ stmt:	localVarDeclStmt
 	|	havocStmt
 	|	assumeStmt
 	|   nonDetStmt
+	|   ifStmt
 	|   blockStmt
 	|   loopStmt
 	;
@@ -273,6 +268,10 @@ blockStmt
     :   LCURLY (stmts+=stmt)* RCURLY
     ;
 
+ifStmt
+    :   IF LPAREN cond=expr RPAREN then=stmt (ELSE elze=stmt)?
+    ;
+
 loopStmt
     :   FOR loopVar=ID FROM from=expr TO to=expr DO subStmt=stmt
     ;
@@ -280,10 +279,6 @@ loopStmt
 localVarDeclStmt
     :   LOCAL VAR name=ID DP ttype=type (EQUALS initValue=expr)? SEMICOLON
     ;
-
-//seqStmt
-//    :
-//    ;
 
 assignArrayWriteSugar
     :   array=ID LBRACK index=expr RBRACK ASSIGN value=expr SEMICOLON
@@ -302,6 +297,12 @@ assumeStmt
 	;
 
 //
+
+IF	:	'if'
+	;
+
+ELSE:	'else'
+	;
 
 ASSIGN
 	:	':='

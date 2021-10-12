@@ -4,6 +4,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 
+import java.util.Arrays;
+
 public final class FpExprs {
 	private FpExprs() {
 	}
@@ -14,6 +16,51 @@ public final class FpExprs {
 
 	public static FpLitExpr Fp(boolean hidden, BvLitExpr exponent, BvLitExpr significand) {
 		return FpLitExpr.of(hidden, exponent, significand);
+	}
+
+	public static FpLitExpr NaN(final FpType fpType) {
+		final var exponent = new boolean[fpType.getExponent()];
+		Arrays.fill(exponent, true);
+		final var significand = new boolean[fpType.getSignificand() - 1];
+		Arrays.fill(significand, true);
+
+		return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+	}
+
+	public static FpLitExpr PositiveInfinity(final FpType fpType) {
+		final var exponent = new boolean[fpType.getExponent()];
+		Arrays.fill(exponent, true);
+		final var significand = new boolean[fpType.getSignificand() - 1];
+		Arrays.fill(significand, false);
+
+		return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+	}
+
+	public static FpLitExpr NegativeInfinity(final FpType fpType) {
+		final var exponent = new boolean[fpType.getExponent()];
+		Arrays.fill(exponent, true);
+		final var significand = new boolean[fpType.getSignificand() - 1];
+		Arrays.fill(significand, false);
+
+		return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+	}
+
+	public static FpLitExpr PositiveZero(final FpType fpType) {
+		final var exponent = new boolean[fpType.getExponent()];
+		Arrays.fill(exponent, false);
+		final var significand = new boolean[fpType.getSignificand() - 1];
+		Arrays.fill(significand, false);
+
+		return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+	}
+
+	public static FpLitExpr NegativeZero(final FpType fpType) {
+		final var exponent = new boolean[fpType.getExponent()];
+		Arrays.fill(exponent, false);
+		final var significand = new boolean[fpType.getSignificand() - 1];
+		Arrays.fill(significand, false);
+
+		return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
 	}
 
 	public static FpAddExpr Add(final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
@@ -40,8 +87,8 @@ public final class FpExprs {
 		return FpDivExpr.of(roundingMode, leftOp, rightOp);
 	}
 
-	public static FpRemExpr Rem(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return FpRemExpr.of(roundingMode, leftOp, rightOp);
+	public static FpRemExpr Rem(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return FpRemExpr.of(leftOp, rightOp);
 	}
 
 	public static FpAbsExpr Abs(final Expr<FpType> op) {
@@ -88,12 +135,12 @@ public final class FpExprs {
 		return FpSqrtExpr.of(roundingMode, op);
 	}
 
-	public static FpMaxExpr Max(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return FpMaxExpr.of(roundingMode, leftOp, rightOp);
+	public static FpMaxExpr Max(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return FpMaxExpr.of(leftOp, rightOp);
 	}
 
-	public static FpMinExpr Min(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return FpMinExpr.of(roundingMode, leftOp, rightOp);
+	public static FpMinExpr Min(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return FpMinExpr.of(leftOp, rightOp);
 	}
 
 	public static FpToBvExpr ToBv(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size, final boolean sgn) {

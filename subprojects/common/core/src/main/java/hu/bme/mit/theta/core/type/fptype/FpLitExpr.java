@@ -7,8 +7,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 
-import java.util.Arrays;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr;
@@ -33,33 +31,6 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
 	public static FpLitExpr of(final boolean hidden, final BvLitExpr exponent, final BvLitExpr significand) {
 		return new FpLitExpr(hidden, exponent, significand);
-	}
-
-	public static FpLitExpr NaN(final FpType fpType) {
-		final var exponent = new boolean[fpType.getExponent()];
-		Arrays.fill(exponent, true);
-		final var significand = new boolean[fpType.getSignificand() - 1];
-		Arrays.fill(significand, true);
-
-		return new FpLitExpr(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
-	}
-
-	public static FpLitExpr PositiveInfinity(final FpType fpType) {
-		final var exponent = new boolean[fpType.getExponent()];
-		Arrays.fill(exponent, true);
-		final var significand = new boolean[fpType.getSignificand() - 1];
-		Arrays.fill(significand, false);
-
-		return new FpLitExpr(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
-	}
-
-	public static FpLitExpr NegativeInfinity(final FpType fpType) {
-		final var exponent = new boolean[fpType.getExponent()];
-		Arrays.fill(exponent, true);
-		final var significand = new boolean[fpType.getSignificand() - 1];
-		Arrays.fill(significand, false);
-
-		return new FpLitExpr(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
 	}
 
 	public boolean getHidden() {

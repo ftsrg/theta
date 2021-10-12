@@ -154,5 +154,10 @@ public class SpState {
         public SpState visit(LoopStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public SpState visit(IfStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

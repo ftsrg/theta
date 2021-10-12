@@ -128,6 +128,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static java.util.stream.Collectors.toList;
 
 final class CfaExpression {
@@ -392,9 +393,9 @@ final class CfaExpression {
 
 				switch (ctx.oper.getType()) {
 					case FPMAX:
-						return Max(getRoundingMode(ctx.oper.getText()), leftOp, rightOp);
+						return Max(leftOp, rightOp);
 					case FPMIN:
-						return Min(getRoundingMode(ctx.oper.getText()), leftOp, rightOp);
+						return Min(leftOp, rightOp);
 					default:
 						throw new ParseException(ctx, "Unknown operator");
 				}
@@ -538,6 +539,12 @@ final class CfaExpression {
 				case BV_SUB:
 					return createBvSubExpr(castBv(leftOp), castBv(rightOp));
 
+				case FPADD:
+					return FpExprs.Add(getRoundingMode(oper.getText()), List.of(castFp(leftOp), castFp(rightOp)));
+
+				case FPSUB:
+					return FpExprs.Sub(getRoundingMode(oper.getText()), castFp(leftOp), castFp(rightOp));
+
 				default:
 					throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
 			}
@@ -646,7 +653,7 @@ final class CfaExpression {
 					return createBvSRemExpr(castBv(leftOp), castBv(rightOp));
 
 				case FPREM:
-					return FpExprs.Rem(getRoundingMode(oper.getText()), (Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
+					return FpExprs.Rem((Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
 
 				case FPMUL:
 					return FpExprs.Mul(getRoundingMode(oper.getText()), List.of((Expr<FpType>) leftOp, (Expr<FpType>) rightOp));
