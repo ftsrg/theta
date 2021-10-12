@@ -135,8 +135,10 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName());
-        return MathSATSmtLibSolverFactory.create(solverFilePath, solverArgs, true);
-//        return MathSATSmtLibSolverFactory.create(solverFilePath, solverArgs, SemVer.of(version).compareTo(SemVer.of("5.4.0")) >= 0);
+        return MathSATSmtLibSolverFactory.create(
+            solverFilePath, solverArgs,
+            !SemVer.valid(version) || SemVer.of(version).compareTo(SemVer.of("5.4.0")) >= 0
+        );
     }
 
     @Override

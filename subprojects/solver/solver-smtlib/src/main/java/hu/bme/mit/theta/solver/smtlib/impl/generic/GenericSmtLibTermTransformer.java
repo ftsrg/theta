@@ -87,7 +87,10 @@ import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
@@ -160,8 +163,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             put("+", exprMultiaryOperator(AddExpr::create2));
             put("-", exprMinusOperator());
             put("*", exprMultiaryOperator(MulExpr::create2));
-            put("div", exprBinaryOperator(DivExpr::create2));
-            put("/", exprBinaryOperator(DivExpr::create2));
+            put("div", exprBinaryOperator(IntDivExpr::create));
+            put("/", exprBinaryOperator(RatDivExpr::create));
             put("mod", exprBinaryOperator(ModExpr::create2));
             put("rem", exprBinaryOperator(RemExpr::create2));
 
@@ -177,6 +180,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             put("to_real", exprUnaryOperator(IntToRatExpr::create));
 
             // Rational
+            put("to_int", exprUnaryOperator(RatToIntExpr::create));
 
             // Bitvector
             put("concat", exprMultiaryOperator(BvConcatExpr::create));

@@ -1,11 +1,14 @@
 package hu.bme.mit.theta.solver.smtlib.impl.mathsat;
 
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 
 import java.nio.file.Path;
 
@@ -22,10 +25,30 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
     }
 
     @Override
+    public Solver createSolver() {
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
+
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
+    }
+
+    @Override
+    public UCSolver createUCSolver() {
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
+
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
+    }
+
+    @Override
     public ItpSolver createItpSolver() {
         if(itpSupported) {
             final var symbolTable = new GenericSmtLibSymbolTable();
-            final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+            final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
             final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
             final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 

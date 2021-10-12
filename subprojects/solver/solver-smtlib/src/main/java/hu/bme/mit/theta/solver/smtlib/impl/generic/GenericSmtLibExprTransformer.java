@@ -119,6 +119,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -199,6 +200,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(RatLeqExpr.class, this::transformRatLeq)
 
                 .addCase(RatLtExpr.class, this::transformRatLt)
+
+                .addCase(RatToIntExpr.class, this::transformRatToInt)
 
                 // Integers
 
@@ -304,53 +307,53 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
                 .addCase(BvSLtExpr.class, this::transformBvSLt)
 
-            // Floating points
+                // Floating points
 
-            .addCase(FpLitExpr.class, this::transformFpLit)
+                .addCase(FpLitExpr.class, this::transformFpLit)
 
-            .addCase(FpAddExpr.class, this::transformFpAdd)
+                .addCase(FpAddExpr.class, this::transformFpAdd)
 
-            .addCase(FpSubExpr.class, this::transformFpSub)
+                .addCase(FpSubExpr.class, this::transformFpSub)
 
-            .addCase(FpPosExpr.class, this::transformFpPos)
+                .addCase(FpPosExpr.class, this::transformFpPos)
 
-            .addCase(FpNegExpr.class, this::transformFpNeg)
+                .addCase(FpNegExpr.class, this::transformFpNeg)
 
-            .addCase(FpMulExpr.class, this::transformFpMul)
+                .addCase(FpMulExpr.class, this::transformFpMul)
 
-            .addCase(FpDivExpr.class, this::transformFpDiv)
+                .addCase(FpDivExpr.class, this::transformFpDiv)
 
-            .addCase(FpEqExpr.class, this::transformFpEq)
+                .addCase(FpEqExpr.class, this::transformFpEq)
 
-            .addCase(FpGeqExpr.class, this::transformFpGeq)
+                .addCase(FpGeqExpr.class, this::transformFpGeq)
 
-            .addCase(FpLeqExpr.class, this::transformFpLeq)
+                .addCase(FpLeqExpr.class, this::transformFpLeq)
 
-            .addCase(FpGtExpr.class, this::transformFpGt)
+                .addCase(FpGtExpr.class, this::transformFpGt)
 
-            .addCase(FpLtExpr.class, this::transformFpLt)
+                .addCase(FpLtExpr.class, this::transformFpLt)
 
-            .addCase(FpNeqExpr.class, this::transformFpNeq)
+                .addCase(FpNeqExpr.class, this::transformFpNeq)
 
-            .addCase(FpAbsExpr.class, this::transformFpAbs)
+                .addCase(FpAbsExpr.class, this::transformFpAbs)
 
-            .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
+                .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
 
-            .addCase(FpMaxExpr.class, this::transformFpMax)
+                .addCase(FpMaxExpr.class, this::transformFpMax)
 
-            .addCase(FpMinExpr.class, this::transformFpMin)
+                .addCase(FpMinExpr.class, this::transformFpMin)
 
-            .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                .addCase(FpSqrtExpr.class, this::transformFpSqrt)
 
-            .addCase(FpRemExpr.class, this::transformFpRem)
+                .addCase(FpRemExpr.class, this::transformFpRem)
 
-            .addCase(FpIsNanExpr.class, this::transformFpIsNaN)
+                .addCase(FpIsNanExpr.class, this::transformFpIsNaN)
 
-            .addCase(FpFromBvExpr.class, this::transformFpFromBv)
+                .addCase(FpFromBvExpr.class, this::transformFpFromBv)
 
-            .addCase(FpToBvExpr.class, this::transformFpToBv)
+                .addCase(FpToBvExpr.class, this::transformFpToBv)
 
-            .addCase(FpToFpExpr.class, this::transformFpToFp)
+                .addCase(FpToFpExpr.class, this::transformFpToFp)
                 
                 // Functions
 
@@ -442,11 +445,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "true";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(and %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(and %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(and %s %s)", op1, op2)
+                );
         }
     }
 
@@ -458,11 +462,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "false";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(or %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(or %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(or %s %s)", op1, op2)
+                );
         }
     }
 
@@ -521,11 +526,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "0.0";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(+ %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(+ %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(+ %s %s)", op1, op2)
+                );
         }
     }
 
@@ -549,11 +555,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "1.0";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(* %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(* %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(* %s %s)", op1, op2)
+                );
         }
     }
 
@@ -585,6 +592,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         return String.format("(< %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
+    protected String transformRatToInt(final RatToIntExpr expr) {
+        return String.format("(to_int %s)", toTerm(expr.getOp()));
+    }
+
     /*
      * Integers
      */
@@ -606,11 +617,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "0";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(+ %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(+ %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(+ %s %s)", op1, op2)
+                );
         }
     }
 
@@ -634,11 +646,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return "1";
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(* %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(* %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(* %s %s)", op1, op2)
+                );
         }
     }
 
@@ -729,11 +742,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(bvadd %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(bvadd %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(bvadd %s %s)", op1, op2)
+                );
         }
     }
 
@@ -757,11 +771,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, expr.getType().getSize()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(bvmul %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(bvmul %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(bvmul %s %s)", op1, op2)
+                );
         }
     }
 
@@ -793,11 +808,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.TWO.pow(expr.getType().getSize()).subtract(BigInteger.ONE), expr.getType().getSize()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(bvand %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(bvand %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(bvand %s %s)", op1, op2)
+                );
         }
     }
 
@@ -809,11 +825,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(bvor %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(bvor %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(bvor %s %s)", op1, op2)
+                );
         }
     }
 
@@ -825,11 +842,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(bvxor %s)", String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(bvxor %s %s)", acc, toTerm(op)),
+                    (op1, op2) -> String.format("(bvxor %s %s)", op1, op2)
+                );
         }
     }
 
@@ -923,11 +941,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return String.format("(_ +zero %d %d)", expr.getType().getExponent(), expr.getType().getSignificand());
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(fp.add %s %s)", transformFpRoundingMode(expr.getRoundingMode()), String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(fp.add %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()), acc, toTerm(op)),
+                    (op1, op2) -> String.format("(fp.add %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()), op1, op2)
+                );
         }
     }
 
@@ -951,11 +970,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return String.format("(fp #b0 #b0%s #b%s)", "1".repeat(expr.getType().getExponent()-1), "0".repeat(expr.getType().getSignificand()));
         }
         else {
-            final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
-
-            return String.format("(fp.mul %s %s)", transformFpRoundingMode(expr.getRoundingMode()), String.join(" ", opTerms));
+            return expr.getOps().stream().skip(1)
+                .reduce(
+                    toTerm(expr.getOps().get(0)),
+                    (acc, op) -> String.format("(fp.mul %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()), acc, toTerm(op)),
+                    (op1, op2) -> String.format("(fp.mul %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()), op1, op2)
+                );
         }
     }
 
