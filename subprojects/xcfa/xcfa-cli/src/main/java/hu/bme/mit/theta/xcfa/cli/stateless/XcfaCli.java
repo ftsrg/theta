@@ -490,7 +490,7 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory, algorithm)
+			return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
 					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
 
