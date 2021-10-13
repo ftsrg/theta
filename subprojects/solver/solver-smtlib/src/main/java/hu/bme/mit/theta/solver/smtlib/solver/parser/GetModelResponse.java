@@ -7,6 +7,7 @@ import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_math
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,7 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_respon
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_fun_recContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funs_recContext;
 
-public class GetModelResponse implements SpecificResponse {
+public class GetModelResponse extends SpecificResponse {
     private final SmtLibModel model;
 
     private GetModelResponse(final Map<String, String> values) {
@@ -49,6 +50,10 @@ public class GetModelResponse implements SpecificResponse {
                 throw new UnsupportedOperationException();
             }
         })).collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2)));
+    }
+
+    public static GetModelResponse empty() {
+        return new GetModelResponse(Collections.emptyMap());
     }
 
     public SmtLibModel getModel() {

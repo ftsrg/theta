@@ -4,9 +4,10 @@ import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Get_unsat_core_resp
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
-public class GetUnsatCoreResponse implements SpecificResponse {
+public class GetUnsatCoreResponse extends SpecificResponse {
     private final Collection<String> labels;
 
     private GetUnsatCoreResponse(Collection<String> labels) {
@@ -17,6 +18,10 @@ public class GetUnsatCoreResponse implements SpecificResponse {
         return new GetUnsatCoreResponse(
             ctx.symbol().stream().map(RuleContext::getText).collect(Collectors.toUnmodifiableSet())
         );
+    }
+
+    public static GetUnsatCoreResponse empty() {
+        return new GetUnsatCoreResponse(Collections.emptyList());
     }
 
     public Collection<String> getLabels() {

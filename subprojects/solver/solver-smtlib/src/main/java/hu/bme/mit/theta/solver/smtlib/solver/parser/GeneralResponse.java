@@ -7,6 +7,8 @@ import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.General_response_un
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.ResponseContext;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Specific_success_responseContext;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class GeneralResponse {
     private final boolean successful;
     private final String reason;
@@ -51,6 +53,7 @@ public class GeneralResponse {
     }
 
     public String getReason() {
+        checkState(isError());
         return reason;
     }
 
@@ -58,8 +61,8 @@ public class GeneralResponse {
         return successful && specificResponse != null;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends SpecificResponse> T asSpecific() {
-        return (T) specificResponse;
+    public SpecificResponse asSpecific() {
+        checkState(isSpecific());
+        return specificResponse;
     }
 }

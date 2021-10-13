@@ -110,7 +110,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
-            final CheckSatResponse checkSatResponse = res.asSpecific();
+            final CheckSatResponse checkSatResponse = res.asSpecific().asCheckSatResponse();
             if(checkSatResponse.isSat()) {
                 status = SolverStatus.SAT;
             }
@@ -185,7 +185,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
-            final GetModelResponse getModelResponse = res.asSpecific();
+            final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
             return new SmtLibValuation(symbolTable, transformationManager, termTransformer, getModelResponse.getModel());
         }
         else {

@@ -17,4 +17,8 @@ public class SmtLibModel {
     public String getTerm(final String symbol) {
         return values.get(symbol);
     }
+
+    public int size() {
+        return values.size();
+    }
 }

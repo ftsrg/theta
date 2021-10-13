@@ -7,7 +7,7 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Sat;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Unknown;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Unsat;
 
-public class CheckSatResponse implements SpecificResponse {
+public class CheckSatResponse extends SpecificResponse {
     private enum Status {
         SAT, UNSAT, UNKNOWN
     }

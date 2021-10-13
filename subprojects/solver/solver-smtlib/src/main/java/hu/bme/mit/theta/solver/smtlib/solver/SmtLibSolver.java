@@ -120,7 +120,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
-            final CheckSatResponse checkSatResponse = res.asSpecific();
+            final CheckSatResponse checkSatResponse = res.asSpecific().asCheckSatResponse();
             if(checkSatResponse.isSat()) {
                 status = SolverStatus.SAT;
             }
@@ -187,7 +187,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
-            final GetModelResponse getModelResponse = res.asSpecific();
+            final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
             return new SmtLibValuation(symbolTable, transformationManager, termTransformer, getModelResponse.getModel());
         }
         else {
@@ -219,7 +219,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             throw new SmtLibSolverException(res.getReason());
         }
         else if(res.isSpecific()) {
-            final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific();
+            final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific().asGetUnsatCoreResponse();
             unsatCoreLabels = getUnsatCoreResponse.getLabels();
         }
         else {
