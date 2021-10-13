@@ -13,7 +13,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
@@ -801,7 +800,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             checkArgument(params.size() == 0, "No parameters expected");
             checkArgument(ops.size() == 3, "Three operators expected");
 
-            final var hidden = (BvLitExpr) transformTerm(ops.get(1), model, vars);
+            final var hidden = (BvLitExpr) transformTerm(ops.get(0), model, vars);
             final var exponent = (BvLitExpr) transformTerm(ops.get(1), model, vars);
             final var significand = (BvLitExpr) transformTerm(ops.get(2), model, vars);
 
