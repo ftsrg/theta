@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.cat.solver;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
@@ -35,20 +34,29 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 
 public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
-	private List<Expr<BoolType>> solver;
+	private final List<Expr<BoolType>> constraints;
 	private final List<Object> primitives;
-	private final Map<Tuple2<String, Integer>, Supplier<Map<TupleN<Integer>, Expr<BoolType>>>> rules;
+	private final Map<Tuple2<String, Integer>, RuleDerivation> rules;
 	private final Map<String, Relation> relations;
 	private final List<String> emptyAssertions;
 
 	private BoolSmtMemoryModelBuilder(final MemoryModel memoryModel) {
 		super(memoryModel);
-		this.solver = new ArrayList<>();
+		this.constraints = new ArrayList<>();
 		primitives = new ArrayList<>();
 		relations = new LinkedHashMap<>();
 		rules = new LinkedHashMap<>();
 		emptyAssertions = new ArrayList<>();
 		memoryModel.applyRules(this);
+	}
+
+	public BoolSmtMemoryModelBuilder(final List<Expr<BoolType>> newConstraints, final List<Object> newPrimitives, final Map<Tuple2<String, Integer>, RuleDerivation> newRules, final Map<String, Relation> newRelations, final List<String> newEmptyAssertions) {
+		super(null);
+		this.constraints = newConstraints;
+		this.primitives = newPrimitives;
+		this.rules = newRules;
+		this.relations = newRelations;
+		this.emptyAssertions = newEmptyAssertions;
 	}
 
 	@Override
@@ -106,7 +114,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 	public void addRule(final RuleDerivation ruleDerivation) {
 		String name = ruleDerivation.getRule();
 		relations.putIfAbsent(name, new Relation(ruleDerivation.getArity(), name));
-		rules.put(Tuple2.of(name, ruleDerivation.getArity()), () -> ruleDerivation.accept(BoolSmtRuleDerivationVisitor.instance, BoolSmtMemoryModelBuilder.this));
+		rules.put(Tuple2.of(name, ruleDerivation.getArity()), ruleDerivation);
 	}
 
 	@Override
@@ -134,19 +142,19 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 				id.addFact(TupleN.of(i, i));
 			}
 		}
-		relations.forEach((s, relation) -> relation.createElements(maxid, solver));
+		relations.forEach((s, relation) -> relation.createElements(maxid, constraints));
 
-		for (Map.Entry<Tuple2<String, Integer>, Supplier<Map<TupleN<Integer>, Expr<BoolType>>>> rule : rules.entrySet()) {
+		for (Map.Entry<Tuple2<String, Integer>, RuleDerivation> rule : rules.entrySet()) {
 			relations.putIfAbsent(rule.getKey().get1(), new Relation(rule.getKey().get2(), rule.getKey().get1()));
-			relations.get(rule.getKey().get1()).createElements(maxid, solver);
-			final Map<TupleN<Integer>, Expr<BoolType>> exprs = rule.getValue().get();
+			relations.get(rule.getKey().get1()).createElements(maxid, constraints);
+			final Map<TupleN<Integer>, Expr<BoolType>> exprs = rule.getValue().accept(BoolSmtRuleDerivationVisitor.instance, this);
 			final Relation relation = relations.get(rule.getKey().get1());
 			final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relation.getElements();
 			elements.forEach((objects, boolTypeConstDecl) -> {
 				final EqExpr<?> constraint = Eq(boolTypeConstDecl.getRef(), exprs.get(objects));
 				if(!constraint.getLeftOp().equals(constraint.getRightOp())) {
 //					System.err.println("Adding constraint " + constraint);
-					solver.add(constraint);
+					constraints.add(constraint);
 				}
 			});
 		}
@@ -165,7 +173,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 				final ConstDecl<BoolType> rfAB1 = rf.get(TupleN.of(constDeclTuple1.get1(), objects.get1()));
 				final Expr<BoolType> constraint = Imply(Not(loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef()), Not(rfAB1.getRef()));
 //				System.err.println("Adding constraint " + constraint);
-				solver.add(constraint);
+				constraints.add(constraint);
 				for (int j = i + 1, writeConstSize = writeConst.size(); j < writeConstSize; j++) {
 					Tuple2<Integer, ConstDecl<?>> constDeclTuple2 = writeConst.get(j);
 					final ConstDecl<BoolType> rfAB2 = rf.get(TupleN.of(constDeclTuple2.get1(), objects.get1()));
@@ -175,13 +183,13 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 									loc.get(TupleN.of(constDeclTuple2.get1(), objects.get1())).getRef()), Not(And(rfAB1.getRef(), rfAB2.getRef())));
 //					System.err.println("Adding constraint " + implConstraint);
 
-					solver.add(implConstraint);
+					constraints.add(implConstraint);
 				}
 				operands.add(And(loc.get(TupleN.of(constDeclTuple1.get1(), objects.get1())).getRef(), rfAB1.getRef()));
 			}
 			final Expr<BoolType> constraint = Or(operands);
 //			System.err.println("Adding constraint " + constraint);
-			solver.add(constraint);
+			constraints.add(constraint);
 		}
 
 //		System.err.println("------------------");
@@ -193,7 +201,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			final Integer key2 = key.get(1);
 			final Expr<BoolType> constraint = Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), reads.get(TupleN.of(key2)).getRef())), Not(entry.getValue().getRef()));
 //			System.err.println("Adding constraint " + constraint);
-			solver.add(constraint);
+			constraints.add(constraint);
 		}
 
 //		System.err.println("------------------");
@@ -211,13 +219,13 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 				final Expr<BoolType> constraint1 = Imply(Not(And(writes.get(TupleN.of(key1)).getRef(), writes.get(TupleN.of(key2)).getRef())), Not(one.getRef()));
 //				System.err.println("Adding constraint " + constraint0);
 //				System.err.println("Adding constraint " + constraint1);
-				solver.add(constraint0);
-				solver.add(constraint1);
+				constraints.add(constraint0);
+				constraints.add(constraint1);
 			}
 			else {
 				final Expr<BoolType> constraint = Not(entry.getValue().getRef());
 //				System.err.println("Adding constraint " + constraint);
-				solver.add(constraint);
+				constraints.add(constraint);
 			}
 		}
 
@@ -227,7 +235,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			for (Tuple2<Integer, ConstDecl<?>> objects1 : readConst) {
 				final Expr<BoolType> constraint = Imply(rf.get(TupleN.of(objects.get1(), objects1.get1())).getRef(), Eq(objects.get2().getRef(), objects1.get2().getRef()));
 //				System.err.println("Adding constraint " + constraint);
-				solver.add(constraint);
+				constraints.add(constraint);
 			}
 		}
 
@@ -237,15 +245,20 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relations.get(emptyAssertion).getElements();
 			final Expr<BoolType> constraint = Not(Or(elements.values().stream().map(Decl::getRef).collect(Collectors.toList())));
 //			System.err.println("Adding constraint " + constraint);
-			solver.add(constraint);
+			constraints.add(constraint);
 		}
 
-		return And(solver);
+		return And(constraints);
 	}
 
 	@Override
 	public MemoryModelBuilder duplicate() {
-		return this;
+		final List<Expr<BoolType>> newConstraints = new ArrayList<>(constraints);
+		final List<Object> newPrimitives = new ArrayList<>(primitives);
+		final Map<Tuple2<String, Integer>, RuleDerivation> newRules = new LinkedHashMap<>(rules);
+		final Map<String, Relation> newRelations = new LinkedHashMap<>(relations);
+		final List<String> newEmptyAssertions = new ArrayList<>(emptyAssertions);
+		return new BoolSmtMemoryModelBuilder(newConstraints, newPrimitives, newRules, newRelations, newEmptyAssertions);
 	}
 
 	private static class BoolSmtRuleDerivationVisitor implements RuleDerivationVisitor<BoolSmtMemoryModelBuilder, Map<TupleN<Integer>, Expr<BoolType>>> {
