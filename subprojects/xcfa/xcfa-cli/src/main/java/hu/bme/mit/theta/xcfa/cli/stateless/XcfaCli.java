@@ -74,6 +74,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -270,7 +271,8 @@ public class XcfaCli {
 		/// output results file creation
 		// create filenames, if needed
 		if(witnessOnly) {
-			witnessfile = new File(basicFileName + ".witness.graphml");
+			Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
+			witnessfile = new File(workdir + File.separator + "witness.graphml");
 		} else if(outputResults) {
 			xcfafile = new File(basicFileName + ".xcfa");
 			cfafile = new File(basicFileName + ".cfa");
