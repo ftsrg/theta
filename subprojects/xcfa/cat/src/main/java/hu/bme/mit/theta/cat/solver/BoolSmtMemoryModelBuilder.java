@@ -47,11 +47,12 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		relations = new LinkedHashMap<>();
 		rules = new LinkedHashMap<>();
 		emptyAssertions = new ArrayList<>();
-		memoryModel.applyRules(this);
+		if(memoryModel != null)
+			memoryModel.applyRules(this);
 	}
 
-	public BoolSmtMemoryModelBuilder(final List<Expr<BoolType>> newConstraints, final List<Object> newPrimitives, final Map<Tuple2<String, Integer>, RuleDerivation> newRules, final Map<String, Relation> newRelations, final List<String> newEmptyAssertions) {
-		super(null);
+	public BoolSmtMemoryModelBuilder(BoolSmtMemoryModelBuilder boolSmtMemoryModelBuilder, final List<Expr<BoolType>> newConstraints, final List<Object> newPrimitives, final Map<Tuple2<String, Integer>, RuleDerivation> newRules, final Map<String, Relation> newRelations, final List<String> newEmptyAssertions) {
+		super(boolSmtMemoryModelBuilder);
 		this.constraints = newConstraints;
 		this.primitives = newPrimitives;
 		this.rules = newRules;
@@ -256,9 +257,10 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		final List<Expr<BoolType>> newConstraints = new ArrayList<>(constraints);
 		final List<Object> newPrimitives = new ArrayList<>(primitives);
 		final Map<Tuple2<String, Integer>, RuleDerivation> newRules = new LinkedHashMap<>(rules);
-		final Map<String, Relation> newRelations = new LinkedHashMap<>(relations);
+		final Map<String, Relation> newRelations = new LinkedHashMap<>();
+		relations.forEach((s, relation) -> newRelations.put(s, relation.duplicate()));
 		final List<String> newEmptyAssertions = new ArrayList<>(emptyAssertions);
-		return new BoolSmtMemoryModelBuilder(newConstraints, newPrimitives, newRules, newRelations, newEmptyAssertions);
+		return new BoolSmtMemoryModelBuilder(this, newConstraints, newPrimitives, newRules, newRelations, newEmptyAssertions);
 	}
 
 	private static class BoolSmtRuleDerivationVisitor implements RuleDerivationVisitor<BoolSmtMemoryModelBuilder, Map<TupleN<Integer>, Expr<BoolType>>> {
@@ -358,13 +360,21 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		}
 	}
 
+	public Map<String, Relation> getRelations() {
+		return relations;
+	}
+
+	public List<Object> getPrimitives() {
+		return primitives;
+	}
+
 	private static class Relation {
 		private static final Set<String> groundRelations = Set.of("poRaw", "locRaw", "intRaw", "amoRaw", "id", "W", "R", "F", "meta");
 		private final int arity;
 		private final String name;
 		private int counter = 0;
 		private final Map<TupleN<Integer>, ConstDecl<BoolType>> elements;
-		private final Optional<Set<TupleN<Integer>>> knownTruths;
+		private Optional<Set<TupleN<Integer>>> knownTruths;
 
 		private Relation(int arity, String name) {
 			this.arity = arity;
@@ -373,8 +383,18 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			knownTruths = groundRelations.contains(name) ? Optional.of(new LinkedHashSet<>()) : Optional.empty();
 		}
 
+		public Relation(int arity, String name, int counter, LinkedHashMap<TupleN<Integer>, ConstDecl<BoolType>> elements, Optional<Set<TupleN<Integer>>> knownTruths) {
+			this.arity = arity;
+			this.name = name;
+			this.counter = counter;
+			this.elements = elements;
+			this.knownTruths = knownTruths;
+		}
+
 		private void addFact(TupleN<Integer> fact) {
-			checkState(knownTruths.isPresent(), "Only ground relations shall have associated facts!");
+			if(knownTruths.isEmpty()) {
+				knownTruths = Optional.of(new LinkedHashSet<>());
+			}
 			knownTruths.get().add(fact);
 		}
 
@@ -415,6 +435,10 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 				}
 			}
 			return lists;
+		}
+
+		public Relation duplicate() {
+			return new Relation(arity, name, counter, new LinkedHashMap<>(elements), knownTruths.map(LinkedHashSet::new));
 		}
 	}
 }

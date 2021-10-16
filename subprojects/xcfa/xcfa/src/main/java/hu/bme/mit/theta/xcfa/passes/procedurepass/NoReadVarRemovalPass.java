@@ -39,7 +39,7 @@ public class NoReadVarRemovalPass extends ProcedurePass {
 				LabelUtils.getAssortedVars(label, assignedToVars, usedUpVars);
 			}
 		}
-		final Set<VarDecl<?>> toRemove = Sets.difference(assignedToVars, usedUpVars);
+		final Set<VarDecl<?>> toRemove = Sets.intersection(Sets.difference(assignedToVars, usedUpVars), builder.getLocalVars().keySet());
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<XcfaLabel> newLabels = new ArrayList<>();
 			for (XcfaLabel label : edge.getLabels()) {

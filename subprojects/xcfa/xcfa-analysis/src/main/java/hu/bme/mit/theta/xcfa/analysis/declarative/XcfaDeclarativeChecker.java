@@ -7,7 +7,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.cat.models.NoassertMemory;
-import hu.bme.mit.theta.cat.solver.BoolSmtMemoryModelBuilder;
+import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -63,7 +63,7 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			else return traceChecker.check(trace);
 		}
 
-		BoolSmtMemoryModelBuilder programBuilder = BoolSmtMemoryModelBuilder.create(new NoassertMemory());
+		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new NoassertMemory());
 
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowW = new ArrayList<>();
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowR = new ArrayList<>();
@@ -153,6 +153,7 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			final List<TupleN<?>> co = programBuilder.get("co", model);
 			final List<TupleN<?>> po = programBuilder.get("po", model);
 			final List<TupleN<?>> loc = programBuilder.get("loc", model);
+			final List<TupleN<?>> locRaw = programBuilder.get("locRaw", model);
 			final List<TupleN<?>> r = programBuilder.get("R", model);
 			final List<TupleN<?>> w = programBuilder.get("W", model);
 
@@ -188,6 +189,12 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 
 			System.err.println("loc: ");
 			for (TupleN<?> objects : loc) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("locRaw: ");
+			for (TupleN<?> objects : locRaw) {
 				System.err.println(objects.get(0) + " -> " + objects.get(1));
 			}
 		}

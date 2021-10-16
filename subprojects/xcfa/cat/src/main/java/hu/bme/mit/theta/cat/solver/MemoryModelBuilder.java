@@ -9,16 +9,21 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public abstract class MemoryModelBuilder {
 	private final MemoryModel memoryModel;
+	private final EqualityLinkedHashMap<Object, Integer> indexMap;
 
 	protected MemoryModelBuilder(MemoryModel memoryModel) {
 		this.memoryModel = memoryModel;
+		indexMap = new EqualityLinkedHashMap<>();
 	}
 
-	private final Map<Object, Integer> indexMap = new EqualityLinkedHashMap<>();
+	protected MemoryModelBuilder(MemoryModelBuilder from) {
+		this.memoryModel = from.memoryModel;
+		this.indexMap = new EqualityLinkedHashMap<>(from.indexMap);
+	}
+
 	public void addProgramLoc(Object object) {
 		if(!indexMap.containsKey(object)) {
 			indexMap.put(object, addPrimitive("meta", object));
@@ -39,7 +44,9 @@ public abstract class MemoryModelBuilder {
 		final Integer idxB = indexMap.get(thread);
 		final Integer idxC = indexMap.get(var);
 		addFact("intRaw", TupleN.of(idxA, idxB));
+		addFact("intRaw", TupleN.of(idxB, idxA));
 		addFact("locRaw", TupleN.of(idxA, idxC));
+		addFact("locRaw", TupleN.of(idxC, idxA));
 	}
 
 	public void addWriteProgramLoc(Object write, Object thread, Object var) {
@@ -50,7 +57,9 @@ public abstract class MemoryModelBuilder {
 		final Integer idxB = indexMap.get(thread);
 		final Integer idxC = indexMap.get(var);
 		addFact("intRaw", TupleN.of(idxA, idxB));
+		addFact("intRaw", TupleN.of(idxB, idxA));
 		addFact("locRaw", TupleN.of(idxA, idxC));
+		addFact("locRaw", TupleN.of(idxC, idxA));
 	}
 	public void addFenceLoc(Object write, Object thread) {
 		if(!indexMap.containsKey(write)) {
@@ -59,6 +68,7 @@ public abstract class MemoryModelBuilder {
 		final Integer idxA = indexMap.get(write);
 		final Integer idxB = indexMap.get(thread);
 		addFact("intRaw", TupleN.of(idxA, idxB));
+		addFact("intRaw", TupleN.of(idxB, idxA));
 	}
 	public Expr<BoolType> addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst) {
 		final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();

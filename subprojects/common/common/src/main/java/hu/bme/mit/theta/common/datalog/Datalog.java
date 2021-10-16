@@ -140,6 +140,24 @@ public class Datalog {
 		return ret;
 	}
 
+	public Relation createInverse(String name, Relation simple) {
+		checkState(simple.arity == 2, "Only binary relations should have inverses!");
+		Relation inv = createRelation(name, 2);
+		Datalog.Variable var1, var2;
+		inv.addRule(
+				TupleN.of(
+						var1 = getVariable(),
+						var2 = getVariable()
+				),
+				Set.of(
+						Tuple2.of(
+								simple,
+								TupleN.of(var2, var1)
+						)
+				));
+		return inv;
+	}
+
 	public Relation createTransitive(String name, Relation simple) {
 		checkState(simple.arity == 2, "Only binary relations should have transitive closures!");
 		Relation path = createRelation(name, 2);
