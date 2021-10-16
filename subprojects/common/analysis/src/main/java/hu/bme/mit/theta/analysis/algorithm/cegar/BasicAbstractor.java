@@ -118,8 +118,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 
-		logger.write(Level.RESULT, "ArgStat: "+startNodes+","+startIncompleteNodes+","+arg.getNodes().count()+","+arg.getIncompleteNodes().count()+System.lineSeparator());
-
 		waitlist.clear(); // Optimization
 
 		if (arg.isSafe()) {
