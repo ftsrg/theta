@@ -116,6 +116,7 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
 			// FROM HERE
+//			System.err.println(model.toMap());
 			final List<Valuation> valuations = new ArrayList<>(builder.build().reverse());
 			valuations.add(ImmutableValuation.copyOf(model));
 			final List<ExprAction> exprActions = new ArrayList<>(trace.getActions());

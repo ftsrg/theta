@@ -11,6 +11,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaDeclarativeState<S>, XcfaDeclarativeAction, XcfaDeclarativePrec<P>> {
 
@@ -46,7 +47,7 @@ public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> imple
 				atomicBegin = false;
 			} else if (label instanceof XcfaLabel.LoadXcfaLabel) {
 				memoryList.add(label);
-				stmts.add(XcfaLabel.Stmt(Havoc(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal())));
+				stmts.add(Stmt(Havoc(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal())));
 			} else if (label instanceof XcfaLabel.StoreXcfaLabel) {
 				memoryList.add(label);
 			} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
@@ -55,10 +56,9 @@ public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> imple
 				throw new UnsupportedOperationException("Could not handle label " + label);
 			}
 		}
-
 		Collection<XcfaDeclarativeState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), prec.getGlobalPrec())) {
-			final XcfaDeclarativeState<S> newState = state.atomicbegin(atomicBegin).startthreads(startThreadList).jointhreads(joinThreadList).memory(memoryList).advance(succState, action);
+			final XcfaDeclarativeState<S> newState = state.atomicbegin(atomicBegin).startthreads(startThreadList).jointhreads(joinThreadList).advance(succState, action).memory(memoryList);
 			newStates.add(newState);
 		}
 		return newStates;

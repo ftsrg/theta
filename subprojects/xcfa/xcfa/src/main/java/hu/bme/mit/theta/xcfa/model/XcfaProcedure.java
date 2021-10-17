@@ -86,7 +86,7 @@ public final class XcfaProcedure {
         initLoc = locLut.get(from.initLoc);
         errorLoc = locLut.get(from.errorLoc);
         finalLoc = locLut.get(from.finalLoc);
-        edges = ImmutableList.copyOf(from.edges.stream().map(xcfaEdge -> xcfaEdge.withSource(locLut.get(xcfaEdge.getSource())).withTarget(xcfaEdge.getTarget()).mapLabels(label -> XcfaStmtUtils.replacesVarsInStmt(label, varDecl -> Optional.ofNullable(varLut.get(varDecl)).map(varDecl1 -> cast(varDecl1, varDecl.getType()))).orElse(label))).collect(Collectors.toList()));
+        edges = ImmutableList.copyOf(from.edges.stream().map(xcfaEdge -> xcfaEdge.withSource(locLut.get(xcfaEdge.getSource())).withTarget(locLut.get(xcfaEdge.getTarget())).mapLabels(label -> XcfaStmtUtils.replacesVarsInStmt(label, varDecl -> Optional.ofNullable(varLut.get(varDecl)).map(varDecl1 -> cast(varDecl1, varDecl.getType()))).orElse(label))).collect(Collectors.toList()));
         for (XcfaEdge edge : edges) {
             edge.getTarget().addIncomingEdge(edge);
             edge.getSource().addOutgoingEdge(edge);

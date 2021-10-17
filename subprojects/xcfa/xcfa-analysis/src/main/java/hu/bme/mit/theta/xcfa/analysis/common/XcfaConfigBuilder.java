@@ -333,13 +333,13 @@ public class XcfaConfigBuilder {
 
 			switch (initPrec){
 				case EMPTY:
-					prec = XcfaDeclarativePrec.create(ExplPrec.empty());
+					prec = XcfaDeclarativePrec.create(ExplPrec.empty(), XcfaDeclarativePrec.getGlobalToLocal(xcfa));
 					break;
 				case ALLVARS:
-					prec = XcfaDeclarativePrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)));
+					prec = XcfaDeclarativePrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)), XcfaDeclarativePrec.getGlobalToLocal(xcfa));
 					break;
 				case ALLGLOBALS:
-					prec = XcfaDeclarativePrec.create(ExplPrec.of(xcfa.getGlobalVars()));
+					prec = XcfaDeclarativePrec.create(ExplPrec.of(xcfa.getGlobalVars()), XcfaDeclarativePrec.getGlobalToLocal(xcfa));
 					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
@@ -438,7 +438,7 @@ public class XcfaConfigBuilder {
 
 			switch (initPrec){
 				case EMPTY:
-					prec = XcfaDeclarativePrec.create(PredPrec.of());
+					prec = XcfaDeclarativePrec.create(PredPrec.of(), XcfaDeclarativePrec.getGlobalToLocal(xcfa));
 					break;
 				case ALLASSUMES:
 					prec = XcfaDeclarativePrec.collectAssumes(xcfa);
@@ -564,7 +564,7 @@ public class XcfaConfigBuilder {
 			}
 
 
-			return XcfaConfig.create(checker, XcfaDeclarativePrec.create(Prod2Prec.of(explPrec, predPrec)));
+			return XcfaConfig.create(checker, XcfaDeclarativePrec.create(Prod2Prec.of(explPrec, predPrec), XcfaDeclarativePrec.getGlobalToLocal(xcfa)));
 		} else {
 			throw new UnsupportedOperationException(domain + " domain is not supported.");
 		}

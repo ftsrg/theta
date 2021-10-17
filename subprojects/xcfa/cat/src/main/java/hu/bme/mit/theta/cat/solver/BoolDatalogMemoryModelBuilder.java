@@ -11,7 +11,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,14 +19,24 @@ import java.util.stream.Collectors;
 public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 	private final BoolSmtMemoryModelBuilder memoryModelBuilder;
 	private final Datalog datalog;
-	private final Collection<String> toKeep;
+	private final Set<String> toKeep;
+	private final Set<String> nonMonotone;
 
 	private BoolDatalogMemoryModelBuilder(MemoryModel memoryModel) {
 		super(memoryModel);
 		this.memoryModelBuilder = BoolSmtMemoryModelBuilder.create(null);
 		this.datalog = Datalog.createProgram();
-		toKeep = new LinkedHashSet<>(Set.of("rf", "id", "loc", "co", "po", "amo", "int", "ext"));
+		toKeep = new LinkedHashSet<>(Set.of("rf", "co", "id", "loc", "R", "W"));
+		nonMonotone = new LinkedHashSet<>(Set.of("rf", "co"));
 		memoryModel.applyRules(this);
+	}
+
+	public BoolDatalogMemoryModelBuilder(final BoolDatalogMemoryModelBuilder from) {
+		super(from);
+		this.memoryModelBuilder = (BoolSmtMemoryModelBuilder) from.memoryModelBuilder.duplicate();
+		this.datalog = from.datalog.duplicate();
+		this.toKeep = new LinkedHashSet<>(from.toKeep);
+		this.nonMonotone = new LinkedHashSet<>(from.nonMonotone);
 	}
 
 	public static BoolDatalogMemoryModelBuilder create(MemoryModel memoryModel) {
@@ -36,7 +45,15 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 
 	@Override
 	public List<TupleN<?>> get(String rule, Valuation valuation) {
-		return memoryModelBuilder.get(rule, valuation);
+		if(datalog.getRelations().containsKey(rule)) {
+			final List<TupleN<?>> collect = datalog.getRelations().get(rule).getElements().stream().map(t -> TupleN.of(t.toList().stream().map(e -> ((GenericDatalogArgument<?>) e).getContent()).collect(Collectors.toList()))).collect(Collectors.toList());
+			if(collect.size() > 0) return collect;
+		}
+		try {
+			return memoryModelBuilder.get(rule, valuation);
+		} catch (Exception e) {
+			return List.of();
+		}
 	}
 
 	@Override
@@ -67,9 +84,10 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 		if(!datalog.getRelations().containsKey(ruleDerivation.getRule()))
 			datalog.createRelation(ruleDerivation.getRule(), ruleDerivation.getArity());
 		List<String> toKeep = new ArrayList<>();
-		if(ruleDerivation.accept(IsNotMonotoneVisitor.instance, toKeep)) {
+		if(ruleDerivation.accept(new IsNotMonotoneVisitor(), toKeep)) {
 			this.toKeep.addAll(toKeep);
 			this.toKeep.add(ruleDerivation.getRule());
+			this.nonMonotone.add(ruleDerivation.getRule());
 			memoryModelBuilder.addRule(ruleDerivation);
 		}
 		else {
@@ -82,7 +100,7 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 		if(!datalog.getRelations().containsKey(name))
 			datalog.createRelation(name, fact.arity());
 		datalog.getRelations().get(name).addFact(TupleN.of(fact.toList().stream().map(GenericDatalogArgument::createArgument).collect(Collectors.toList())));
-		if(toKeep.contains(name) || memoryModelBuilder.getRelations().containsKey(name)) {
+		if(memoryModelBuilder.getRelations().containsKey(name)) {
 			memoryModelBuilder.addFact(name, fact);
 		}
 	}
@@ -96,7 +114,8 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 	public Expr<BoolType> getRfConstraints(List<Tuple2<Integer, ConstDecl<?>>> writeConst, List<Tuple2<Integer, ConstDecl<?>>> readConst) {
 		for (String s : toKeep) {
 			final Datalog.Relation relation = datalog.getRelations().get(s);
-			memoryModelBuilder.addRule(new RuleDerivation.Element(s, relation.getArity()));
+			if(!memoryModelBuilder.getRelations().containsKey(s))
+				memoryModelBuilder.addRule(new RuleDerivation.Element(s, relation.getArity()));
 			for (TupleN<DatalogArgument> element : relation.getElements()) {
 				final TupleN<Integer> tup = TupleN.of(element.toList().stream().map(o -> ((GenericDatalogArgument<Integer>) o).getContent()).collect(Collectors.toList()));
 				memoryModelBuilder.addFact(s, tup);
@@ -107,16 +126,19 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 
 	@Override
 	public MemoryModelBuilder duplicate() {
-		return null;
+		return new BoolDatalogMemoryModelBuilder(this);
 	}
 
-	private static class IsNotMonotoneVisitor implements RuleDerivationVisitor<List<String>, Boolean> {
-		private static final IsNotMonotoneVisitor instance = new IsNotMonotoneVisitor();
+	public List<?> getPrimitives() {
+		return memoryModelBuilder.getPrimitives();
+	}
 
+	private class IsNotMonotoneVisitor implements RuleDerivationVisitor<List<String>, Boolean> {
 		@Override
 		public Boolean visit(RuleDerivation.Element derivation, List<String> param) {
+			final boolean contains = nonMonotone.contains(derivation.getRule());
 			param.add(derivation.getRule());
-			return false;
+			return contains;
 		}
 
 		@Override

@@ -1,30 +1,39 @@
 package hu.bme.mit.theta.xcfa.analysis.declarative;
 
+import com.google.common.collect.Sets;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
-import hu.bme.mit.theta.cat.models.NoassertMemory;
+import hu.bme.mit.theta.cat.models.CoherenceMemory;
 import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.utils.ExpressionReplacer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -34,6 +43,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer.replaceVars;
 
 public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceChecker<R> {
 	private final ExprTraceChecker<R> traceChecker;
@@ -63,10 +73,11 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			else return traceChecker.check(trace);
 		}
 
-		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new NoassertMemory());
+		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new CoherenceMemory());
 
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowW = new ArrayList<>();
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowR = new ArrayList<>();
+		final Map<ConstDecl<?>, Set<Tuple2<XcfaProcess, Decl<?>>>> dataflowLut = new LinkedHashMap<>();
 		final List<XcfaDeclarativeAction> newActions = new ArrayList<>();
 		checkState(trace.getState(0) instanceof XcfaDeclarativeState, "Wrong type for XcfaDeclarativeState");
 		Object lastPo = getSingleton(Tuple2.of(((XcfaDeclarativeState<?>) trace.getState(0)).getCurrentLoc().getParent().getParent(), ProcessLabel.START));
@@ -92,16 +103,20 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 						programBuilder.addWriteProgramLoc(label, process, ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
 						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
-						final ConstDecl<?> var = Const("dataflow" + dataFlowW.size(), ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getType());
+						final ConstDecl<?> var = Const("dataflow" + dataFlowW.size() + dataFlowR.size(), ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getType());
 						dataFlowW.add(Tuple2.of((XcfaLabel.StoreXcfaLabel<?>) label, var));
+						dataflowLut.putIfAbsent(var, new LinkedHashSet<>());
+						dataflowLut.get(var).add(Tuple2.of(process, ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal()));
 						newLabels.add(Stmt(Assume(Eq(cast(var.getRef(), var.getType()), cast(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal().getRef(), var.getType())))));
 					} else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
 						programBuilder.addProgramLoc(((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
 						programBuilder.addReadProgramLoc(label, process, ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
 						programBuilder.addPoEdge(lastPo, label);
 						lastPo = label;
-						final ConstDecl<?> var = Const("dataflow" + dataFlowR.size(), ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal().getType());
+						final ConstDecl<?> var = Const("dataflow" + dataFlowW.size() + dataFlowR.size(), ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal().getType());
 						dataFlowR.add(Tuple2.of((XcfaLabel.LoadXcfaLabel<?>) label, var));
+						dataflowLut.putIfAbsent(var, new LinkedHashSet<>());
+						dataflowLut.get(var).add(Tuple2.of(process, ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal()));
 						newLabels.add(Stmt(Assign(cast(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), var.getType()), cast(var.getRef(), var.getType()))));
 					} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
 						programBuilder.addFenceLoc(label, process);
@@ -142,6 +157,11 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			}
 		}
 		final Expr<BoolType> memoryModel = programBuilder.addConstraints(dataFlowW, dataFlowR);
+		List<ExprState> newStates = new ArrayList<>();
+		for (ExprState state : trace.getStates()) {
+			if(newStates.isEmpty() || newStates.size() == trace.getStates().size() - 1) newStates.add(((XcfaDeclarativeState<?>) state).addInvariant(memoryModel));
+			else newStates.add(state);
+		}
 
 		final ExprTraceStatus<R> check = traceChecker.check(Trace.of(trace.getStates().stream().map(exprState -> {
 			checkState(exprState instanceof XcfaDeclarativeState, "Wrong type of state!");
@@ -150,12 +170,22 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 		if(check.isFeasible()) {
 			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
 			final List<TupleN<?>> rf = programBuilder.get("rf", model);
+			final List<TupleN<Integer>> rfNum = programBuilder.getNumbered("rf", model);
+			final List<TupleN<Integer>> coNum = programBuilder.getNumbered("co", model);
 			final List<TupleN<?>> co = programBuilder.get("co", model);
 			final List<TupleN<?>> po = programBuilder.get("po", model);
 			final List<TupleN<?>> loc = programBuilder.get("loc", model);
-			final List<TupleN<?>> locRaw = programBuilder.get("locRaw", model);
+			final List<TupleN<?>> poRaw = programBuilder.get("poRaw", model);
 			final List<TupleN<?>> r = programBuilder.get("R", model);
 			final List<TupleN<?>> w = programBuilder.get("W", model);
+
+			System.err.println("Dataflow:");
+			for (Tuple2<?, ConstDecl<?>> tup : dataFlowR) {
+				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+			}
+			for (Tuple2<?, ConstDecl<?>> tup : dataFlowW) {
+				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+			}
 
 			System.err.println("R: ");
 			for (TupleN<?> objects : r) {
@@ -193,10 +223,56 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			}
 			System.err.println("==============");
 
-			System.err.println("locRaw: ");
-			for (TupleN<?> objects : locRaw) {
+			System.err.println("rfNum: ");
+			for (TupleN<?> objects : rfNum) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
+			}
+			System.err.println("==============");
+
+			System.err.println("coNum: ");
+			for (TupleN<?> objects : rfNum) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
+			}
+			System.err.println("==============");
+
+			System.err.println("poRaw: ");
+			for (TupleN<?> objects : poRaw) {
 				System.err.println(objects.get(0) + " -> " + objects.get(1));
 			}
+
+			List<?> primitives = programBuilder.getPrimitives();
+			for (int i = 0; i < primitives.size(); i++) {
+				Object primitive = primitives.get(i);
+				System.err.println(i + "[label=\"" + primitive + "\"]");
+			}
+		} else {
+			final ExprTraceStatus.Infeasible<R> ref = check.asInfeasible();
+			R refutation = ref.asInfeasible().getRefutation();
+			if(refutation instanceof ItpRefutation) {
+				final List<Expr<BoolType>> exprs = new ArrayList<>();
+				for (Expr<BoolType> boolTypeExpr : ((ItpRefutation) refutation).toList()) {
+					final Set<Decl<?>> vars = new LinkedHashSet<>();
+					ExpressionReplacer.replace(boolTypeExpr, expr -> {
+						if(expr instanceof RefExpr) {
+							vars.add(((RefExpr<?>) expr).getDecl());
+						}
+						return Optional.empty();
+					});
+					final List<Map.Entry<ConstDecl<?>, Set<Tuple2<XcfaProcess, Decl<?>>>>> entries = dataflowLut.entrySet().stream().filter(e -> vars.contains(e.getKey())).collect(Collectors.toList());
+					final Set<List<Tuple2<XcfaProcess, Decl<?>>>> lists = Sets.cartesianProduct(entries.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
+					for (List<Tuple2<XcfaProcess, Decl<?>>> list : lists) {
+						Map<ConstDecl<?>, Decl<?>> lut = new LinkedHashMap<>();
+						for (int i = 0; i < list.size(); i++) {
+							Decl<?> decl = list.get(i).get2();
+							lut.put(entries.get(i).getKey(), decl);
+						}
+						exprs.add(replaceVars(boolTypeExpr, lut));
+					}
+				}
+
+				refutation = (R) ItpRefutation.sequence(exprs);
+			}  else throw new UnsupportedOperationException("Unsupported refutation: " + refutation);
+			return ExprTraceStatus.infeasible(refutation);
 		}
 		return check;
 	}

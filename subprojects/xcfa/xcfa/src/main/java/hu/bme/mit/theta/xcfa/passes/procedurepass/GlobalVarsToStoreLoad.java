@@ -42,7 +42,7 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class GlobalVarsToStoreLoad extends ProcedurePass {
-
+	private static int counter = 0;
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		if(!ArchitectureConfig.multiThreading) return builder;
@@ -56,7 +56,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 						varDecl -> !varLut.containsKey(varDecl) && !builder.getLocalVars().containsKey(varDecl) && !builder.getParams().containsKey(varDecl)
 				).collect(Collectors.toSet());
 				for (VarDecl<?> var : vars) {
-					VarDecl<?> newVar = Var(var.getName() + "_local", var.getType());
+					VarDecl<?> newVar = Var(var.getName() + "_local" + counter++, var.getType());
 					varLut.put(var, newVar);
 					if(FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent())FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(var.getRef()));
 					builder.createVar(newVar, null);
@@ -85,13 +85,13 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 			if (edgeStmt instanceof XcfaLabel.StmtXcfaLabel && edgeStmt.getStmt() instanceof AssignStmt &&
 					newEdgeStmt instanceof XcfaLabel.StmtXcfaLabel && newEdgeStmt.getStmt() instanceof AssignStmt) {
 				if (varLut.containsKey(((AssignStmt<?>) edgeStmt.getStmt()).getVarDecl())) {
-					stores.add(Store(((AssignStmt<?>) newEdgeStmt.getStmt()).getVarDecl(), ((AssignStmt<?>) edgeStmt.getStmt()).getVarDecl(), false, ""));
+					stores.add(Store(((AssignStmt<?>) edgeStmt.getStmt()).getVarDecl(), ((AssignStmt<?>) newEdgeStmt.getStmt()).getVarDecl(), false, ""));
 				}
 				ExprUtils.getVars(((AssignStmt<?>) edgeStmt.getStmt()).getExpr()).stream().filter(varLut::containsKey).forEach(varDecl ->
 						loads.add(Load(varDecl, varLut.get(varDecl), false, "")));
 			}
 			else if(edgeStmt instanceof XcfaLabel.StmtXcfaLabel && edgeStmt.getStmt() instanceof HavocStmt && varLut.containsKey(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl())) {
-				stores.add(Store(varLut.get(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl()), ((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl(), false, ""));
+				stores.add(Store(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl(), varLut.get(((HavocStmt<?>) edgeStmt.getStmt()).getVarDecl()),  false, ""));
 			}
 			else {
 				getVars(edgeStmt).stream().filter(varLut::containsKey).forEach(varDecl ->

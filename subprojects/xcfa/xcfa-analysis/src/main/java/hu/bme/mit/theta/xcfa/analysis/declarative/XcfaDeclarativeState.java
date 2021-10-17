@@ -20,9 +20,10 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.cat.models.CoherenceMemory;
-import hu.bme.mit.theta.cat.solver.BoolSmtMemoryModelBuilder;
+import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.cat.solver.MemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -32,6 +33,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
@@ -86,7 +89,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 	}
 
 	public static <S extends ExprState> XcfaDeclarativeState<S> create(final XcfaLocation currentLoc, final S globalState) {
-		return fromParams(currentLoc.isErrorLoc(), -1, currentLoc, Map.of(), Map.of(), globalState, True(), Map.of(), Map.of(), BoolSmtMemoryModelBuilder.create(new CoherenceMemory()), null);
+		return fromParams(currentLoc.isErrorLoc(), -1, currentLoc, Map.of(), Map.of(), globalState, True(), Map.of(), Map.of(), BoolDatalogMemoryModelBuilder.create(new CoherenceMemory()), null);
 	}
 
 	@Override
@@ -101,33 +104,42 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 
 	public boolean isError() {
 		if(unsafe && backlog.size() == 0) {
-			return true;
-//			List<Tuple2<?, ConstDecl<?>>> writes = new ArrayList<>();
-//			List<Tuple2<?, ConstDecl<?>>> reads = new ArrayList<>();
-//			Solver solver = Z3SolverFactory.getInstance().createSolver();
-//
-//			loads.forEach((varDecl, tuple2s) -> {
-//				for (Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>> loadTuple : tuple2s) {
-//					Expr<BoolType> expr = False();
-//					for (Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>> storeTuple : stores.get(varDecl)) {
-//						expr = Or(expr, Eq(loadTuple.get2().get2().getRef(), storeTuple.get2().get2().getRef()));
-//					}
-//					solver.add(expr);
-//					solver.add(loadTuple.get2().get1().toExpr());
-//				}
-//			});
-//			stores.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> solver.add(objects.get2().get1().toExpr())));
+			List<Tuple2<?, ConstDecl<?>>> writes = new ArrayList<>();
+			List<Tuple2<?, ConstDecl<?>>> reads = new ArrayList<>();
+			Solver solver = Z3SolverFactory.getInstance().createSolver();
 
-//			stores.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
-//				writes.add(Tuple2.of(objects.get1(), objects.get2().get2()));
-//				solver.add(objects.get2().get1().toExpr());
-//			}));
-//			loads.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
-//				reads.add(Tuple2.of(objects.get1(), objects.get2().get2()));
-//				solver.add(objects.get2().get1().toExpr());
-//			}));
-//			solver.add(memoryModelBuilder.addConstraints(writes, reads));
-//			return solver.check().isSat();
+			stores.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
+				writes.add(Tuple2.of(objects.get1(), objects.get2().get2()));
+				solver.add(objects.get2().get1().toExpr());
+			}));
+			loads.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
+				reads.add(Tuple2.of(objects.get1(), objects.get2().get2()));
+				solver.add(objects.get2().get1().toExpr());
+			}));
+			solver.add(memoryModelBuilder.addConstraints(writes, reads));
+			final boolean sat = solver.check().isSat();
+			if(!sat) {
+				System.err.println("Not viable error location.");
+			} else {
+				final Valuation model = solver.getModel();
+				System.err.println("digraph G{");
+				List<?> primitives = ((BoolDatalogMemoryModelBuilder)memoryModelBuilder).getPrimitives();
+				for (int i = 0; i < primitives.size(); i++) {
+					Object primitive = primitives.get(i);
+					System.err.println(i + "[label=\"" + primitive + "\"]");
+				}
+				for (TupleN<?> objects : memoryModelBuilder.getNumbered("rf", model)) {
+					System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
+				}
+				for (TupleN<?> objects : memoryModelBuilder.getNumbered("co", model)) {
+					System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
+				}
+				for (TupleN<?> objects : memoryModelBuilder.get("poRaw", model)) {
+					System.err.println(objects.get(0) + " -> " + objects.get(1) + "");
+				}
+				System.err.println("}");
+			}
+			return sat;
 		}
 		return false;
 	}
@@ -259,7 +271,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 			if(ret != null) {
 				return Tuple2.of((S) ExplState.of(newVal), ret);
 			} else {
-				return Tuple2.of((S) ExplState.top(), ret);
+				return Tuple2.of((S) ExplState.top(), Const(local.getName(), local.getType()));
 			}
 		} else if (globalState instanceof PredState) {
 			Map<VarDecl<?>, ConstDecl<?>> varLut = new LinkedHashMap<>();
@@ -273,7 +285,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 			if(varLut.containsKey(local)) {
 				return Tuple2.of((S)PredState.of(newPreds), varLut.get(local));
 			} else {
-				return Tuple2.of((S)PredState.of(True()), Const(local.getName(), local.getType()));
+				return Tuple2.of((S)PredState.of(True()), Const(local.getName() + counter++, local.getType()));
 			}
 
 		}
@@ -289,12 +301,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		return "XcfaDeclarativeState{" +
 				"unsafe=" + unsafe +
 				", currentLoc=" + currentLoc +
-				", backlog=" + backlog +
-				", threadLookup=" + threadLookup +
 				", globalState=" + globalState +
-				", invariant=" + invariant +
-				", loads=" + loads +
-				", stores=" + stores +
 				'}';
 	}
 

@@ -35,6 +35,14 @@ public class Datalog {
 		relations = new LinkedHashMap<>();
 	}
 
+	private Datalog(Datalog from) {
+		this.relations = new LinkedHashMap<>();
+		final Map<Relation, Relation> collect = new LinkedHashMap<>();
+		from.relations.forEach((s, relation) -> this.relations.put(s, relation.duplicate(collect, this)));
+		this.debug = from.debug;
+		this.stackDepth = from.stackDepth;
+	}
+
 	public static Datalog createProgram() {
 		return new Datalog();
 	}
@@ -135,7 +143,7 @@ public class Datalog {
 	public Relation createRelation(String name, int n) {
 		checkState(stackDepth == 0, "Cannot create a relation when the program is in temporary (pushed) state");
 		checkState(n > 0, "Relation must have positive arity");
-		Relation ret = new Relation(n);
+		Relation ret = new Relation(this, n);
 		relations.put(name, ret);
 		return ret;
 	}
@@ -266,7 +274,12 @@ public class Datalog {
 	public static class Variable {
 	}
 
-	public class Relation {
+	public Datalog duplicate() {
+		return new Datalog(this);
+	}
+
+	public static class Relation {
+		private final Datalog parent;
 		private String name;
 		private final Set<TupleN<DatalogArgument>> elements;
 		private final Set<TupleN<DatalogArgument>> newElements;
@@ -275,15 +288,39 @@ public class Datalog {
 		private final int arity;
 		private final Stack<Tuple3<Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>>> stack;
 
-		private Relation(int n) {
-			this("", n);
+		private Relation(Datalog parent, int n) {
+			this(parent, "", n);
+		}
+
+		private Relation(Relation from, Map<Relation, Relation> newRelationLut, Datalog newParent) {
+			newRelationLut.put(from, this);
+			this.parent = newParent;
+			this.name = from.name;
+			this.elements = new LinkedHashSet<>(from.elements);
+			this.newElements = new LinkedHashSet<>(from.newElements);
+			this.toAdd = new LinkedHashSet<>(from.toAdd);
+			this.rules = new LinkedHashSet<>();
+			for (Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule : from.rules) {
+				Set<Tuple2<Relation, TupleN<Variable>>> set = new LinkedHashSet<>();
+				for (Tuple2<Relation, TupleN<Variable>> objects : rule.get2()) {
+					if(!newRelationLut.containsKey(objects.get1())) objects.get1().duplicate(newRelationLut, newParent);
+					set.add(Tuple2.of(newRelationLut.get(objects.get1()), objects.get2()));
+				}
+				this.rules.add(Tuple2.of(rule.get1(), set));
+			}
+			this.arity = from.arity;
+			this.stack = new Stack<>();
+			for (Tuple3<Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>, Set<TupleN<DatalogArgument>>> objects : from.stack) {
+				this.stack.push(Tuple3.of(new LinkedHashSet<>(objects.get1()), new LinkedHashSet<>(objects.get2()), new LinkedHashSet<>(objects.get3())));
+			}
 		}
 
 		public void setName(String name) {
 			this.name = name;
 		}
 
-		private Relation(String name, int n) {
+		private Relation(Datalog parent, String name, int n) {
+			this.parent = parent;
 			this.name = name;
 			this.arity = n;
 			elements = new LinkedHashSet<>();
@@ -296,21 +333,21 @@ public class Datalog {
 		public void addFact(TupleN<DatalogArgument> fact) {
 			checkState(fact.arity() == arity);
 			newElements.add(fact);
-			if (debug) {
+			if (parent.debug) {
 				System.out.println();
 				System.out.println("New fact (" + name + "): " + fact);
 			}
-			refresh();
+			parent.refresh();
 		}
 
 		public void addRule(TupleN<Variable> args, Set<Tuple2<Relation, TupleN<Variable>>> dependencies) {
-			checkState(stackDepth == 0, "Cannot create new rule when the program is in temporary (pushed) state");
+			checkState(parent.stackDepth == 0, "Cannot create new rule when the program is in temporary (pushed) state");
 			checkState(args.arity() == arity);
 			for (Tuple2<Relation, TupleN<Variable>> dependency : dependencies) {
 				checkState(dependency.get1().arity == dependency.get2().arity());
 			}
 			rules.add(Tuple2.of(args, new LinkedHashSet<>(dependencies)));
-			refresh();
+			parent.refresh();
 		}
 
 		public Collection<TupleN<DatalogArgument>> getElements() {
@@ -380,7 +417,7 @@ public class Datalog {
 			Map<Variable, DatalogArgument> assignments = new LinkedHashMap<>();
 			if (putAssignments(assignments, clause, newElement))
 				return cnt;
-			if (debug) {
+			if (parent.debug) {
 				 System.out.println("\t(" + name + ")Checking " + newElement);
 			}
 			ArrayList<Tuple2<Relation, TupleN<Variable>>> validators = new ArrayList<>(rule.get2());
@@ -397,7 +434,7 @@ public class Datalog {
 					TupleN<DatalogArgument> item = TupleN.of(arguments);
 					if (!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(item)) {
 						toAdd.add(item);
-						if (debug) {
+						if (parent.debug) {
 							 System.out.println("(" + name + ")Adding " + item);
 						}
 						++cnt;
@@ -420,7 +457,7 @@ public class Datalog {
 		}
 
 		private void flush() {
-			if (debug) {
+			if (parent.debug) {
 				StringBuilder stringBuilder = new StringBuilder("[");
 				newElements.forEach(objects -> stringBuilder.append(objects.toString()).append(", "));
 				
@@ -429,7 +466,7 @@ public class Datalog {
 			elements.addAll(newElements);
 			newElements.clear();
 
-			if (debug) {
+			if (parent.debug) {
 				StringBuilder stringBuilder1 = new StringBuilder("[");
 				toAdd.forEach(objects -> stringBuilder1.append(objects.toString()).append(", "));
 				
@@ -453,6 +490,11 @@ public class Datalog {
 			toAdd.clear();
 			toAdd.addAll(popped.get3());
 
+		}
+
+		public Relation duplicate(Map<Relation, Relation> newRelationLut, Datalog newParent) {
+			if(newRelationLut.containsKey(this)) return newRelationLut.get(this);
+			return new Relation(this, newRelationLut, newParent);
 		}
 	}
 }

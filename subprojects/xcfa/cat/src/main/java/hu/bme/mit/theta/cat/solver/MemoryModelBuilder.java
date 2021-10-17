@@ -86,6 +86,10 @@ public abstract class MemoryModelBuilder {
 		return getRfConstraints(stores, loads);
 	}
 
+	public Integer getIndexOf(Object o) {
+		return indexMap.get(o);
+	}
+
 	public abstract List<TupleN<?>> get(final String rule, final Valuation valuation);
 	public abstract List<TupleN<Integer>> getNumbered(final String rule, final Valuation valuation);
 	public abstract void assertAcyclic(final String ruleDerivation);

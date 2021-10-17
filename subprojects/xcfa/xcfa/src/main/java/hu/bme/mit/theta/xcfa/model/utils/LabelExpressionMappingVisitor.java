@@ -28,9 +28,11 @@ import java.util.function.Function;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Load;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.ProcedureCall;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.StartThread;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
 
 public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelVisitor<LabelExpressionMappingVisitor.Mapper<T>, Optional<XcfaLabel>> {
 	@Override
@@ -120,11 +122,21 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 
 	@Override
 	public <S extends Type> Optional<XcfaLabel>visit(XcfaLabel.StoreXcfaLabel<S> label, Mapper<T> param) {
+		final Optional<VarDecl<T>> newGlobal = param.getVarMapper().apply(label.getGlobal());
+		final Optional<VarDecl<T>> newLocal = param.getVarMapper().apply(label.getLocal());
+		if(newGlobal.isPresent() || newLocal.isPresent()) {
+			return Optional.of(Store(newGlobal.orElse((VarDecl<T>) label.getGlobal()), newLocal.orElse((VarDecl<T>) label.getLocal()), label.isAtomic(), label.getOrdering()));
+		}
 		return Optional.empty();
 	}
 
 	@Override
 	public <S extends Type> Optional<XcfaLabel>visit(XcfaLabel.LoadXcfaLabel<S> label, Mapper<T> param) {
+		final Optional<VarDecl<T>> newGlobal = param.getVarMapper().apply(label.getGlobal());
+		final Optional<VarDecl<T>> newLocal = param.getVarMapper().apply(label.getLocal());
+		if(newGlobal.isPresent() || newLocal.isPresent()) {
+			return Optional.of(Load(newGlobal.orElse((VarDecl<T>) label.getGlobal()), newLocal.orElse((VarDecl<T>) label.getLocal()), label.isAtomic(), label.getOrdering()));
+		}
 		return Optional.empty();
 	}
 

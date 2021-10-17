@@ -88,6 +88,14 @@ public class BoolSmtTest {
 			System.err.println("===================");
 			System.err.println("ext: ");
 			printBinaryRelation(builder.get("ext", model));
+			System.err.println("===================");
+			System.err.println("fr: ");
+			printBinaryRelation(builder.get("fr", model));
+			if(memoryModel instanceof CoherenceMemory) {
+				System.err.println("===================");
+				System.err.println("coherence: ");
+				printBinaryRelation(builder.get("coherence", model));
+			}
 		}
 		Assert.assertEquals(forbidden, solver.getStatus().isUnsat());
 	}
