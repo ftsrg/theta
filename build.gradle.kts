@@ -1,6 +1,7 @@
 plugins {
     base
     id("jacoco-common")
+    id("io.freefair.aggregate-javadoc") version "5.2"
 }
 
 buildscript {
