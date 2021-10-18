@@ -16,6 +16,6 @@ jobs:
       - name: Deploy Javadoc
         uses: JamesIves/github-pages-deploy-action@3.5.9
         with:
-          branch: gh-pages
+          branch: javadoc
           folder: build/docs/aggregateJavadoc
           target_folder: javadoc
