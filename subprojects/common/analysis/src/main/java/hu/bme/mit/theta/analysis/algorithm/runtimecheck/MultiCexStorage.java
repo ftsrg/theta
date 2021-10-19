@@ -9,13 +9,12 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * CexStorage to be used in configurations, where refinement only starts after every counterexample has been discovered
  * (and the ARG has an empty waitlist)
  * e.g. MULTI_SEQ refinement
  * This class only stores ARG hashes, it does not store counterexample hashes
+ * THIS IMPLEMENTATION IS CURRENTLY BUGGY (shoots down the first ARG)
  */
 public class MultiCexStorage<S extends State, A extends Action> extends CexStorage<S,A> {
 	private final Set<Integer> argHashes = new LinkedHashSet<>();

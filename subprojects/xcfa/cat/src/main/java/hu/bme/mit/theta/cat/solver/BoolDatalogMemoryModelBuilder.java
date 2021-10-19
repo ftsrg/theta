@@ -7,8 +7,7 @@ import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import hu.bme.mit.theta.common.datalog.GenericDatalogArgument;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -22,9 +21,9 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 	private final Set<String> toKeep;
 	private final Set<String> nonMonotone;
 
-	private BoolDatalogMemoryModelBuilder(MemoryModel memoryModel) {
+	private BoolDatalogMemoryModelBuilder(MemoryModel memoryModel, final Solver solver) {
 		super(memoryModel);
-		this.memoryModelBuilder = BoolSmtMemoryModelBuilder.create(null);
+		this.memoryModelBuilder = BoolSmtMemoryModelBuilder.create(null, solver);
 		this.datalog = Datalog.createProgram();
 		toKeep = new LinkedHashSet<>(Set.of("rf", "co", "id", "loc", "R", "W"));
 		nonMonotone = new LinkedHashSet<>(Set.of("rf", "co"));
@@ -39,8 +38,8 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 		this.nonMonotone = new LinkedHashSet<>(from.nonMonotone);
 	}
 
-	public static BoolDatalogMemoryModelBuilder create(MemoryModel memoryModel) {
-		return new BoolDatalogMemoryModelBuilder(memoryModel);
+	public static BoolDatalogMemoryModelBuilder create(MemoryModel memoryModel, final Solver solver) {
+		return new BoolDatalogMemoryModelBuilder(memoryModel, solver);
 	}
 
 	@Override
@@ -88,10 +87,23 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 			this.toKeep.addAll(toKeep);
 			this.toKeep.add(ruleDerivation.getRule());
 			this.nonMonotone.add(ruleDerivation.getRule());
-			memoryModelBuilder.addRule(ruleDerivation);
 		}
 		else {
 			ruleDerivation.accept(RuleAdditionVisitor.instance, datalog);
+		}
+
+		if(this.toKeep.contains(ruleDerivation.getRule())) {
+			memoryModelBuilder.addRule(ruleDerivation);
+		}
+
+		for (String s : toKeep) {
+			final Datalog.Relation relation = datalog.getRelations().get(s);
+			if(!memoryModelBuilder.getRelations().containsKey(s))
+				memoryModelBuilder.addRule(new RuleDerivation.Element(s, relation.getArity()));
+			for (TupleN<DatalogArgument> element : relation.getElements()) {
+				final TupleN<Integer> tup = TupleN.of(element.toList().stream().map(o -> ((GenericDatalogArgument<Integer>) o).getContent()).collect(Collectors.toList()));
+				memoryModelBuilder.addFact(s, tup);
+			}
 		}
 	}
 
@@ -103,15 +115,6 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 		if(memoryModelBuilder.getRelations().containsKey(name)) {
 			memoryModelBuilder.addFact(name, fact);
 		}
-	}
-
-	@Override
-	public int addPrimitive(String name, Object primitive) {
-		return memoryModelBuilder.addPrimitive(name, primitive);
-	}
-
-	@Override
-	public Expr<BoolType> getRfConstraints(List<Tuple2<Integer, ConstDecl<?>>> writeConst, List<Tuple2<Integer, ConstDecl<?>>> readConst) {
 		for (String s : toKeep) {
 			final Datalog.Relation relation = datalog.getRelations().get(s);
 			if(!memoryModelBuilder.getRelations().containsKey(s))
@@ -121,12 +124,26 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 				memoryModelBuilder.addFact(s, tup);
 			}
 		}
-		return memoryModelBuilder.getRfConstraints(writeConst, readConst);
+	}
+
+	@Override
+	public int addPrimitive(String name, Object primitive) {
+		return memoryModelBuilder.addPrimitive(name, primitive);
+	}
+
+	@Override
+	public void rfConstraints(List<Tuple2<Integer, ConstDecl<?>>> writeConst, List<Tuple2<Integer, ConstDecl<?>>> readConst) {
+		memoryModelBuilder.rfConstraints(writeConst, readConst);
 	}
 
 	@Override
 	public MemoryModelBuilder duplicate() {
 		return new BoolDatalogMemoryModelBuilder(this);
+	}
+
+	@Override
+	public boolean check() {
+		return memoryModelBuilder.check();
 	}
 
 	public List<?> getPrimitives() {

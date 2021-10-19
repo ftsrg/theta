@@ -15,6 +15,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.NoReadVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.OneStmtPerEdgePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
@@ -66,7 +67,8 @@ public class XcfaPassManager {
 				new AssignmentChainRemoval(),
 				new NoReadVarRemovalPass(),
 				new GlobalVarsToStoreLoad(),
-				new UnusedVarRemovalPass()
+				new UnusedVarRemovalPass(),
+				new OneStmtPerEdgePass()
 				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),

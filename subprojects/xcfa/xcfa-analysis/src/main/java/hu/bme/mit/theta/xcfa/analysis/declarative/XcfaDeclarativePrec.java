@@ -106,9 +106,9 @@ public final class XcfaDeclarativePrec<P extends Prec> implements Prec {
 	}
 
 	public XcfaDeclarativePrec<P> refine(P runningPrec) {
-		if(runningPrec.getUsedVars().stream().anyMatch(globalToLocal::containsKey)) {
-			runningPrec = expandPrec(runningPrec);
-		}
+//		if(runningPrec.getUsedVars().stream().anyMatch(globalToLocal::containsKey)) {
+//			runningPrec = expandPrec(runningPrec);
+//		}
 		if (this.globalPrec.equals(runningPrec)) {
 			return this;
 		} else {

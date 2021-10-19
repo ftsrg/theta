@@ -3,14 +3,22 @@ package hu.bme.mit.theta.xcfa.analysis.declarative;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaDeclarativeState<S>, XcfaDeclarativeAction, XcfaDeclarativePrec<P>> {
@@ -56,10 +64,28 @@ public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> imple
 				throw new UnsupportedOperationException("Could not handle label " + label);
 			}
 		}
+		if(stmts.size() == 0) {
+			stmts.add(Stmt(Skip()));
+		}
 		Collection<XcfaDeclarativeState<S>> newStates = new ArrayList<>();
-		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), prec.getGlobalPrec())) {
-			final XcfaDeclarativeState<S> newState = state.atomicbegin(atomicBegin).startthreads(startThreadList).jointhreads(joinThreadList).advance(succState, action).memory(memoryList);
-			newStates.add(newState);
+		P globalPrec = prec.getGlobalPrec();
+		if(globalPrec instanceof PredPrec) {
+			final Set<Expr<BoolType>> preds = new LinkedHashSet<>(((PredPrec) globalPrec).getPreds());
+			((PredState)state.getGlobalState()).getPreds().forEach(boolTypeExpr -> preds.add(ExprUtils.ponate(boolTypeExpr)));
+			preds.addAll(state.getEqPrec());
+			globalPrec = (P) PredPrec.of(preds);
+		}
+		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), globalPrec)) {
+			XcfaDeclarativeState<S> st = state.atomicbegin(atomicBegin).startthreads(startThreadList).jointhreads(joinThreadList).advance(succState, action);
+			Collection<XcfaDeclarativeState<S>> sts = List.of(st);
+			for (XcfaLabel xcfaLabel : memoryList) {
+				Collection<XcfaDeclarativeState<S>> newSts = new ArrayList<>();
+				for (XcfaDeclarativeState<S> s : sts) {
+					newSts.addAll(s.memory(xcfaLabel));
+				}
+				sts = newSts;
+			}
+			newStates.addAll(sts);
 		}
 		return newStates;
 	}

@@ -16,39 +16,35 @@
 package hu.bme.mit.theta.xcfa.analysis.declarative;
 
 import com.google.common.collect.ImmutableMap;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.cat.models.CoherenceMemory;
 import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.cat.solver.MemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -60,12 +56,19 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 	private final Map<VarDecl<?>, Integer> threadLookup;
 	private final S globalState;
 	private final Expr<BoolType> invariant;
-	private final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> loads;
-	private final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> stores;
+	private final List<Expr<BoolType>> eqPrec;
+	private final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> revisitableLoads;
+	private final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>>> stores;
 	private final MemoryModelBuilder memoryModelBuilder;
+	private Integer counter;
 	private final Object lastPo;
 
-	private XcfaDeclarativeState(final boolean unsafe, final Integer currentProcess, final XcfaLocation currentLoc, final Map<Integer, XcfaProcess> backlog, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, Expr<BoolType> invariant, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> loads, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> stores, final MemoryModelBuilder memoryModelBuilder, final Object lastPo) {
+	private XcfaDeclarativeState(
+			final boolean unsafe, final Integer currentProcess, final XcfaLocation currentLoc, final Map<Integer, XcfaProcess> backlog,
+			final Map<VarDecl<?>, Integer> threadLookup, final S globalState, Expr<BoolType> invariant,
+			final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> revisitableLoads,
+			final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>>> stores,
+			List<Expr<BoolType>> eqPrec, final MemoryModelBuilder memoryModelBuilder, Integer counter, final Object lastPo) {
 		this.unsafe = unsafe;
 		this.currentProcess = currentProcess;
 		this.currentLoc = checkNotNull(currentLoc);
@@ -73,23 +76,28 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		this.threadLookup = ImmutableMap.copyOf(checkNotNull(threadLookup));
 		this.globalState = checkNotNull(globalState);
 		this.invariant = invariant;
-		this.loads = ImmutableMap.copyOf(checkNotNull(loads));
-		this.stores = ImmutableMap.copyOf(checkNotNull(stores));
-		this.memoryModelBuilder = memoryModelBuilder;
+		this.eqPrec = eqPrec;
+		this.counter = counter;
+		this.revisitableLoads = new LinkedHashMap<>();
+		revisitableLoads.forEach((varDecl, tuple2s) -> this.revisitableLoads.put(varDecl, new ArrayList<>(tuple2s)));
+		this.stores = new LinkedHashMap<>();
+		stores.forEach((varDecl, tuple2s) -> this.stores.put(varDecl, new ArrayList<>(tuple2s)));
+		this.memoryModelBuilder = memoryModelBuilder.duplicate();
 		if(lastPo == null) {
 			this.lastPo = new Object();
-			memoryModelBuilder.addProgramLoc(this.lastPo);
+			this.memoryModelBuilder.addProgramLoc(this.lastPo);
 		} else {
 			this.lastPo = lastPo;
 		}
+		checkState(this.memoryModelBuilder.getIndexOf(this.lastPo) != null, "lastPo should be added as a program loc!");
 	}
 
-	public static <S extends ExprState> XcfaDeclarativeState<S> fromParams(final boolean unsafe, final Integer currentProcess, final XcfaLocation currentLoc, final Map<Integer, XcfaProcess> backlog, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Expr<BoolType> invariant, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> loads, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> stores, final MemoryModelBuilder memoryModelBuilder, final Object lastPo) {
-		return new XcfaDeclarativeState<S>(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, loads, stores, memoryModelBuilder, lastPo);
+	public static <S extends ExprState> XcfaDeclarativeState<S> fromParams(final boolean unsafe, final Integer currentProcess, final XcfaLocation currentLoc, final Map<Integer, XcfaProcess> backlog, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Expr<BoolType> invariant, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> loads, final Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>>> stores,  final List<Expr<BoolType>> eqPrec, final MemoryModelBuilder memoryModelBuilder, final Integer counter, final Object lastPo) {
+		return new XcfaDeclarativeState<S>(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, loads, stores, eqPrec, memoryModelBuilder, counter, lastPo);
 	}
 
 	public static <S extends ExprState> XcfaDeclarativeState<S> create(final XcfaLocation currentLoc, final S globalState) {
-		return fromParams(currentLoc.isErrorLoc(), -1, currentLoc, Map.of(), Map.of(), globalState, True(), Map.of(), Map.of(), BoolDatalogMemoryModelBuilder.create(new CoherenceMemory()), null);
+		return fromParams(currentLoc.isErrorLoc(), -1, currentLoc, Map.of(), Map.of(), globalState, True(), Map.of(), Map.of(), List.of(), BoolDatalogMemoryModelBuilder.create(new CoherenceMemory(), Z3SolverFactory.getInstance().createSolver()), 0, null);
 	}
 
 	@Override
@@ -103,45 +111,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 	}
 
 	public boolean isError() {
-		if(unsafe && backlog.size() == 0) {
-			List<Tuple2<?, ConstDecl<?>>> writes = new ArrayList<>();
-			List<Tuple2<?, ConstDecl<?>>> reads = new ArrayList<>();
-			Solver solver = Z3SolverFactory.getInstance().createSolver();
-
-			stores.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
-				writes.add(Tuple2.of(objects.get1(), objects.get2().get2()));
-				solver.add(objects.get2().get1().toExpr());
-			}));
-			loads.forEach((varDecl, tuple2s) -> tuple2s.forEach(objects -> {
-				reads.add(Tuple2.of(objects.get1(), objects.get2().get2()));
-				solver.add(objects.get2().get1().toExpr());
-			}));
-			solver.add(memoryModelBuilder.addConstraints(writes, reads));
-			final boolean sat = solver.check().isSat();
-			if(!sat) {
-				System.err.println("Not viable error location.");
-			} else {
-				final Valuation model = solver.getModel();
-				System.err.println("digraph G{");
-				List<?> primitives = ((BoolDatalogMemoryModelBuilder)memoryModelBuilder).getPrimitives();
-				for (int i = 0; i < primitives.size(); i++) {
-					Object primitive = primitives.get(i);
-					System.err.println(i + "[label=\"" + primitive + "\"]");
-				}
-				for (TupleN<?> objects : memoryModelBuilder.getNumbered("rf", model)) {
-					System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
-				}
-				for (TupleN<?> objects : memoryModelBuilder.getNumbered("co", model)) {
-					System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
-				}
-				for (TupleN<?> objects : memoryModelBuilder.get("poRaw", model)) {
-					System.err.println(objects.get(0) + " -> " + objects.get(1) + "");
-				}
-				System.err.println("}");
-			}
-			return sat;
-		}
-		return false;
+		return unsafe && backlog.size() == 0 && revisitableLoads.values().stream().allMatch(v -> v.size() == 0);
 	}
 
 	public XcfaLocation getCurrentLoc() {
@@ -160,16 +130,16 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		return backlog;
 	}
 
-	public Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> getLoads() {
-		return loads;
+	public Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> getRevisitableLoads() {
+		return revisitableLoads;
 	}
 
-	public Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> getStores() {
+	public Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>>> getStores() {
 		return stores;
 	}
 
 	public XcfaDeclarativeState<S> atomicbegin(final Boolean atomicBegin) {
-		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, loads, stores, memoryModelBuilder.duplicate(), lastPo);
+		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, revisitableLoads, stores, eqPrec, memoryModelBuilder.duplicate(), counter, lastPo);
 	}
 
 	public XcfaDeclarativeState<S> startthreads(final List<XcfaLabel.StartThreadXcfaLabel> startThreadList) {
@@ -183,7 +153,7 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 			newMemoryModelBuilder.addProgramLoc(getSingleton(Tuple2.of(newThreadLookup.size(), ProcessLabel.START)));
 			newMemoryModelBuilder.addPoEdge(lastPo, getSingleton(Tuple2.of(newThreadLookup.size(), ProcessLabel.START)));
 		}
-		return fromParams(unsafe, currentProcess, currentLoc, newBacklog, newThreadLookup, globalState, invariant, loads, stores, newMemoryModelBuilder, lastPo);
+		return fromParams(unsafe, currentProcess, currentLoc, newBacklog, newThreadLookup, globalState, invariant, revisitableLoads, stores, eqPrec, newMemoryModelBuilder, counter, lastPo);
 	}
 
 	public XcfaDeclarativeState<S> jointhreads(final List<XcfaLabel.JoinThreadXcfaLabel> joinThreadList) {
@@ -196,9 +166,9 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 				newMemoryModelBuilder.addProgramLoc(getSingleton(Tuple2.of(threadLookup.get(joinThreadXcfaLabel.getKey()), ProcessLabel.END)));
 				newMemoryModelBuilder.addPoEdge(getSingleton((Tuple2.of(threadLookup.get(joinThreadXcfaLabel.getKey()), ProcessLabel.END))), newLastPo);
 			}
-			return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant,  loads, stores, newMemoryModelBuilder, newLastPo);
+			return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, revisitableLoads, stores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
 		}
-		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant,  loads, stores, newMemoryModelBuilder, lastPo);
+		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, revisitableLoads, stores, eqPrec, newMemoryModelBuilder, counter, lastPo);
 	}
 
 	public XcfaDeclarativeState<S> advance(final S succState, final XcfaDeclarativeAction action) {
@@ -221,79 +191,110 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 			process = currentProcess;
 			newMemoryModelBuilder.addPoEdge(lastPo, newLastPo);
 		}
-		return fromParams(unsafe || action.getTarget().isErrorLoc(), process, action.getTarget(), newBackLog, threadLookup, succState, invariant,  loads, stores, newMemoryModelBuilder, newLastPo);
+		return fromParams(unsafe || action.getTarget().isErrorLoc(), process, action.getTarget(), newBackLog, threadLookup, succState, True(), revisitableLoads, stores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
 	}
 
-	public XcfaDeclarativeState<S> memory(final List<XcfaLabel> memory) {
-		Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> newStores = new LinkedHashMap<>();
-		stores.forEach((varDecl, tuple2s) -> newStores.put(varDecl, new ArrayList<>(tuple2s)));
-		Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, Tuple2<S, ConstDecl<?>>>>> newLoads = new LinkedHashMap<>();
-		loads.forEach((varDecl, tuple2s) -> newLoads.put(varDecl, new ArrayList<>(tuple2s)));
+	public Collection<XcfaDeclarativeState<S>> memory(final XcfaLabel xcfaLabel) {
 		final MemoryModelBuilder newMemoryModelBuilder = memoryModelBuilder.duplicate();
 		Object newLastPo = lastPo;
-		for (XcfaLabel xcfaLabel : memory) {
-			newMemoryModelBuilder.addProgramLoc(currentProcess);
-			if(xcfaLabel instanceof XcfaLabel.LoadXcfaLabel) {
-				newMemoryModelBuilder.addProgramLoc(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal());
-				newMemoryModelBuilder.addReadProgramLoc(xcfaLabel, currentProcess, ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal());
-				newLoads.putIfAbsent(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal(), new ArrayList<>());
-				newLoads.get(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal()).add(Tuple2.of((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel, getUniqeState(globalState, ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getLocal())));
-			} else if (xcfaLabel instanceof XcfaLabel.StoreXcfaLabel) {
-				newMemoryModelBuilder.addProgramLoc(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal());
-				newMemoryModelBuilder.addWriteProgramLoc(xcfaLabel, currentProcess, ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal());
-				newStores.putIfAbsent(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal(), new ArrayList<>());
-				newStores.get(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal()).add(Tuple2.of((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel, getUniqeState(globalState, ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getLocal())));
-			} else if (xcfaLabel instanceof XcfaLabel.FenceXcfaLabel) {
-				newMemoryModelBuilder.addFenceLoc(xcfaLabel, currentProcess);
-			} else {
-				throw new UnsupportedOperationException("Label type not recognized: " + xcfaLabel);
-			}
+		newMemoryModelBuilder.addProgramLoc(currentProcess);
+		if(xcfaLabel instanceof XcfaLabel.LoadXcfaLabel) {
+
+			newMemoryModelBuilder.addProgramLoc(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal());
+			newMemoryModelBuilder.addReadProgramLoc(xcfaLabel, currentProcess, ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal());
+			final ConstDecl<?> dataflow = Const("ARGdataflowR" + counter++, ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getLocal().getType());
+			Expr<BoolType> invariant = And(this.invariant, Eq(dataflow.getRef(), ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getLocal().getRef()));
+			List<Expr<BoolType>> eqPrec = new ArrayList<>(this.eqPrec);
+			eqPrec.add(Eq(dataflow.getRef(), ((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getLocal().getRef()));
 			newMemoryModelBuilder.addPoEdge(newLastPo, xcfaLabel);
 			newLastPo = xcfaLabel;
-		}
-		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant,  newLoads, newStores, newMemoryModelBuilder, newLastPo);
-	}
 
-	private static int counter = 0;
-	private Tuple2<S, ConstDecl<?>> getUniqeState(S globalState, VarDecl<?> local) {
-		if(globalState.isBottom()) return Tuple2.of(globalState, Const(local.getName(), local.getType()));
-		if(globalState instanceof ExplState) {
-			final Valuation val = ((ExplState) globalState).getVal();
-			final MutableValuation newVal = new MutableValuation();
-			ConstDecl<?> ret=null;
-			for (Map.Entry<Decl<?>, LitExpr<?>> entry : val.toMap().entrySet()) {
-				Decl<?> decl = entry.getKey();
-				LitExpr<?> litExpr = entry.getValue();
-				final ConstDecl<?> var = Const(decl.getName() + counter++, decl.getType());
-				if (decl == local) ret = var;
-				newVal.put(var, litExpr);
-			}
-			if(ret != null) {
-				return Tuple2.of((S) ExplState.of(newVal), ret);
-			} else {
-				return Tuple2.of((S) ExplState.top(), Const(local.getName(), local.getType()));
-			}
-		} else if (globalState instanceof PredState) {
-			Map<VarDecl<?>, ConstDecl<?>> varLut = new LinkedHashMap<>();
-			Collection<Expr<BoolType>> newPreds = new ArrayList<>();
-			for (Expr<BoolType> pred : ((PredState) globalState).getPreds()) {
-				for (VarDecl<?> var : ExprUtils.getVars(pred)) {
-					varLut.putIfAbsent(var, Const(var.getName() + counter++, var.getType()));
+			final List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>> stores = this.stores.get(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal());
+			List<XcfaDeclarativeState<S>> newStates = new ArrayList<>();
+			for (Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>> store : stores) {
+				final XcfaDeclarativeState<S> newState;
+				final MemoryModelBuilder duplicate = newMemoryModelBuilder.duplicate();
+				duplicate.addRfEdge(store.get1(), xcfaLabel);
+				if(globalState instanceof PredState) {
+					final Set<Expr<BoolType>> preds = new LinkedHashSet<>(((PredState) globalState).getPreds());
+					preds.add(Eq(dataflow.getRef(), store.get2().getRef()));
+					newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, (S)PredState.of(preds), And(invariant, Eq(dataflow.getRef(), store.get2().getRef())), this.revisitableLoads, this.stores, eqPrec, duplicate, counter, newLastPo);
+				} else {
+					newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, And(invariant, Eq(dataflow.getRef(), store.get2().getRef())), this.revisitableLoads, this.stores, eqPrec, duplicate, counter, newLastPo);
 				}
-				newPreds.add(XcfaLabelVarReplacer.replaceVars(pred, varLut));
-			}
-			if(varLut.containsKey(local)) {
-				return Tuple2.of((S)PredState.of(newPreds), varLut.get(local));
-			} else {
-				return Tuple2.of((S)PredState.of(True()), Const(local.getName() + counter++, local.getType()));
+				newStates.add(newState);
 			}
 
+			Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> newLoads = new LinkedHashMap<>();
+			revisitableLoads.forEach((varDecl, tuple2s) -> newLoads.put(varDecl, new ArrayList<>(tuple2s)));
+			newLoads.putIfAbsent(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal(), new ArrayList<>());
+			newLoads.get(((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel).getGlobal()).add(Tuple2.of((XcfaLabel.LoadXcfaLabel<?>) xcfaLabel, dataflow));
+			final XcfaDeclarativeState<S> newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, newLoads, this.stores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
+			newStates.add(newState);
+			return newStates;
+		} else if (xcfaLabel instanceof XcfaLabel.StoreXcfaLabel) {
+			Map<VarDecl<?>, List<Tuple2<XcfaLabel.StoreXcfaLabel<?>, ConstDecl<?>>>> newStores = new LinkedHashMap<>();
+			stores.forEach((varDecl, tuple2s) -> newStores.put(varDecl, new ArrayList<>(tuple2s)));
+
+			newMemoryModelBuilder.addProgramLoc(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal());
+			newMemoryModelBuilder.addWriteProgramLoc(xcfaLabel, currentProcess, ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal());
+			final ConstDecl<?> dataflow = Const("ARGdataflowW" + counter++, ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getLocal().getType());
+			Expr<BoolType> invariant = And(this.invariant, Eq(dataflow.getRef(), ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getLocal().getRef()));
+
+			List<Expr<BoolType>> eqPrec = new ArrayList<>(this.eqPrec);
+			eqPrec.add(Eq(dataflow.getRef(), ((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getLocal().getRef()));
+			newMemoryModelBuilder.addPoEdge(newLastPo, xcfaLabel);
+			newLastPo = xcfaLabel;
+
+			newStores.putIfAbsent(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal(), new ArrayList<>());
+			newStores.get(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal()).add(Tuple2.of((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel, dataflow));
+
+			final List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>> revisitableLoads = this.revisitableLoads.get(((XcfaLabel.StoreXcfaLabel<?>) xcfaLabel).getGlobal());
+			List<XcfaDeclarativeState<S>> newStates = new ArrayList<>();
+			if (revisitableLoads != null && revisitableLoads.size() > 0) {
+				for (long i = 0; i < (1L << revisitableLoads.size()); i++) { // every subset (binary counting, bit match means choosing the element)
+					Collection<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>> chosenLoads = new LinkedHashSet<>();
+					List<Expr<BoolType>> newInvariant = new ArrayList<>();
+					final MemoryModelBuilder duplicate = newMemoryModelBuilder.duplicate();
+
+					for (int i1 = 0; i1 < revisitableLoads.size(); i1++) {
+						if ((i & (1L << i1)) > 0) {
+							chosenLoads.add(revisitableLoads.get(i1));
+							newInvariant.add(Eq(dataflow.getRef(), revisitableLoads.get(i1).get2().getRef()));
+							duplicate.addRfEdge(xcfaLabel, revisitableLoads.get(i1).get1());
+						}
+					}
+					Map<VarDecl<?>, List<Tuple2<XcfaLabel.LoadXcfaLabel<?>, ConstDecl<?>>>> newLoads = new LinkedHashMap<>();
+					this.revisitableLoads.forEach((varDecl, tuple2s) -> newLoads.put(varDecl, new ArrayList<>(tuple2s.stream().filter(objects -> !chosenLoads.contains(objects)).collect(Collectors.toList()))));
+					final XcfaDeclarativeState<S> newState;
+					if(globalState instanceof PredState) {
+						final Set<Expr<BoolType>> preds = new LinkedHashSet<>(((PredState) globalState).getPreds());
+						preds.add(And(newInvariant));
+						newInvariant.add(invariant);
+						newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, (S)PredState.of(preds), And(newInvariant), newLoads, newStores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
+					} else {
+						newInvariant.add(invariant);
+						newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, And(newInvariant), newLoads, newStores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
+					}
+					newStates.add(newState);
+				}
+			} else {
+				final XcfaDeclarativeState<S> newState = fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, this.revisitableLoads, newStores, eqPrec, newMemoryModelBuilder, counter, newLastPo);
+				newStates.add(newState);
+			}
+			return newStates;
+
+		} else {
+			throw new UnsupportedOperationException("Label type not recognized: " + xcfaLabel);
 		}
-		throw new UnsupportedOperationException("State not supported!");
 	}
 
 	public XcfaDeclarativeState<S> addInvariant(final Expr<BoolType> invariant) {
-		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant,  loads, stores, memoryModelBuilder.duplicate(), lastPo);
+		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, And(this.invariant, invariant), revisitableLoads, stores, eqPrec, memoryModelBuilder.duplicate(), counter, lastPo);
+	}
+
+	public XcfaDeclarativeState<S> setInvariant(final Expr<BoolType> invariant) {
+		return fromParams(unsafe, currentProcess, currentLoc, backlog, threadLookup, globalState, invariant, revisitableLoads, stores, eqPrec, memoryModelBuilder.duplicate(), counter, lastPo);
 	}
 
 	@Override
@@ -301,7 +302,11 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		return "XcfaDeclarativeState{" +
 				"unsafe=" + unsafe +
 				", currentLoc=" + currentLoc +
+				", invariant=" + invariant +
 				", globalState=" + globalState +
+				", revisitableLoads=" + revisitableLoads.values().stream().map(v -> v.size()).collect(Collectors.toList()) +
+				", backlog=" + backlog.size() +
+//				", isBottom=" +isBottom() +
 				'}';
 	}
 
@@ -313,17 +318,21 @@ public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
 		return currentProcess;
 	}
 
+	public List<Expr<BoolType>> getEqPrec() {
+		return eqPrec;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		XcfaDeclarativeState<?> that = (XcfaDeclarativeState<?>) o;
-		return currentProcess.equals(that.currentProcess) && Objects.equals(currentLoc, that.currentLoc) && backlog.size() == that.backlog.size() && globalState.equals(that.globalState) && loads.equals(that.loads) && stores.equals(that.stores) && Objects.equals(invariant, that.invariant);
+		return currentProcess.equals(that.currentProcess) && Objects.equals(currentLoc, that.currentLoc) && backlog.size() == that.backlog.size() && globalState.equals(that.globalState) && revisitableLoads.equals(that.revisitableLoads) && stores.equals(that.stores) && Objects.equals(invariant, that.invariant);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(currentProcess, currentLoc, backlog.size(), globalState, invariant, loads, stores);
+		return Objects.hash(currentProcess, currentLoc, backlog.size(), globalState, invariant, revisitableLoads, stores);
 	}
 
 	private enum ProcessLabel {

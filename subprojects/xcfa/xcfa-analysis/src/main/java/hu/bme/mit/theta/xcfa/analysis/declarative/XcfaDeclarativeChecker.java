@@ -11,17 +11,16 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.cat.models.CoherenceMemory;
 import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
@@ -41,6 +40,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer.replaceVars;
@@ -61,6 +61,8 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 
 	@Override
 	public ExprTraceStatus<R> check(Trace<? extends ExprState, ? extends ExprAction> trace) {
+		if(true) return traceChecker.check(trace);
+
 		ExprTraceStatus<R> result = null;
 		if(preCheck) {
 			result = traceChecker.check(trace);
@@ -73,7 +75,8 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			else return traceChecker.check(trace);
 		}
 
-		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new CoherenceMemory());
+		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new CoherenceMemory(), solver);
 
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowW = new ArrayList<>();
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowR = new ArrayList<>();
@@ -156,95 +159,91 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 				newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(xcfaAction.getSource(), xcfaAction.getTarget(), newLabels)));
 			}
 		}
-		final Expr<BoolType> memoryModel = programBuilder.addConstraints(dataFlowW, dataFlowR);
-		List<ExprState> newStates = new ArrayList<>();
-		for (ExprState state : trace.getStates()) {
-			if(newStates.isEmpty() || newStates.size() == trace.getStates().size() - 1) newStates.add(((XcfaDeclarativeState<?>) state).addInvariant(memoryModel));
-			else newStates.add(state);
-		}
+		programBuilder.addConstraints(dataFlowW, dataFlowR, solver);
+		final AndExpr memoryModel = And(solver.getAssertions());
 
 		final ExprTraceStatus<R> check = traceChecker.check(Trace.of(trace.getStates().stream().map(exprState -> {
 			checkState(exprState instanceof XcfaDeclarativeState, "Wrong type of state!");
-			return ((XcfaDeclarativeState<?>) exprState).addInvariant(memoryModel);
+			return ((XcfaDeclarativeState<?>) exprState).setInvariant(memoryModel);
 		}).collect(Collectors.toList()), newActions));
 		if(check.isFeasible()) {
-			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
-			final List<TupleN<?>> rf = programBuilder.get("rf", model);
-			final List<TupleN<Integer>> rfNum = programBuilder.getNumbered("rf", model);
-			final List<TupleN<Integer>> coNum = programBuilder.getNumbered("co", model);
-			final List<TupleN<?>> co = programBuilder.get("co", model);
-			final List<TupleN<?>> po = programBuilder.get("po", model);
-			final List<TupleN<?>> loc = programBuilder.get("loc", model);
-			final List<TupleN<?>> poRaw = programBuilder.get("poRaw", model);
-			final List<TupleN<?>> r = programBuilder.get("R", model);
-			final List<TupleN<?>> w = programBuilder.get("W", model);
-
-			System.err.println("Dataflow:");
-			for (Tuple2<?, ConstDecl<?>> tup : dataFlowR) {
-				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
-			}
-			for (Tuple2<?, ConstDecl<?>> tup : dataFlowW) {
-				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
-			}
-
-			System.err.println("R: ");
-			for (TupleN<?> objects : r) {
-				System.err.println(objects.get(0));
-			}
-			System.err.println("==============");
-
-			System.err.println("W: ");
-			for (TupleN<?> objects : w) {
-				System.err.println(objects.get(0));
-			}
-			System.err.println("==============");
-
-			System.err.println("rf: ");
-			for (TupleN<?> objects : rf) {
-				System.err.println(objects.get(0) + "(" + model.eval(((XcfaLabel.StoreXcfaLabel<?>)objects.get(0)).getLocal()) +  ") -> " + objects.get(1));
-			}
-			System.err.println("==============");
-
-			System.err.println("co: ");
-			for (TupleN<?> objects : co) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1));
-			}
-			System.err.println("==============");
-
-			System.err.println("po: ");
-			for (TupleN<?> objects : po) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1));
-			}
-			System.err.println("==============");
-
-			System.err.println("loc: ");
-			for (TupleN<?> objects : loc) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1));
-			}
-			System.err.println("==============");
-
-			System.err.println("rfNum: ");
-			for (TupleN<?> objects : rfNum) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
-			}
-			System.err.println("==============");
-
-			System.err.println("coNum: ");
-			for (TupleN<?> objects : rfNum) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
-			}
-			System.err.println("==============");
-
-			System.err.println("poRaw: ");
-			for (TupleN<?> objects : poRaw) {
-				System.err.println(objects.get(0) + " -> " + objects.get(1));
-			}
-
-			List<?> primitives = programBuilder.getPrimitives();
-			for (int i = 0; i < primitives.size(); i++) {
-				Object primitive = primitives.get(i);
-				System.err.println(i + "[label=\"" + primitive + "\"]");
-			}
+//			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
+//			final List<TupleN<?>> rf = programBuilder.get("rf", model);
+//			final List<TupleN<Integer>> rfNum = programBuilder.getNumbered("rf", model);
+//			final List<TupleN<Integer>> coNum = programBuilder.getNumbered("co", model);
+//			final List<TupleN<?>> co = programBuilder.get("co", model);
+//			final List<TupleN<?>> po = programBuilder.get("po", model);
+//			final List<TupleN<?>> loc = programBuilder.get("loc", model);
+//			final List<TupleN<?>> poRaw = programBuilder.get("poRaw", model);
+//			final List<TupleN<?>> r = programBuilder.get("R", model);
+//			final List<TupleN<?>> w = programBuilder.get("W", model);
+//
+//			System.err.println("Dataflow:");
+//			for (Tuple2<?, ConstDecl<?>> tup : dataFlowR) {
+//				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+//			}
+//			for (Tuple2<?, ConstDecl<?>> tup : dataFlowW) {
+//				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+//			}
+//
+//			System.err.println("R: ");
+//			for (TupleN<?> objects : r) {
+//				System.err.println(objects.get(0));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("W: ");
+//			for (TupleN<?> objects : w) {
+//				System.err.println(objects.get(0));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("rf: ");
+//			for (TupleN<?> objects : rf) {
+//				System.err.println(objects.get(0) + "(" + model.eval(((XcfaLabel.StoreXcfaLabel<?>)objects.get(0)).getLocal()) +  ") -> " + objects.get(1));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("co: ");
+//			for (TupleN<?> objects : co) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("po: ");
+//			for (TupleN<?> objects : po) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("loc: ");
+//			for (TupleN<?> objects : loc) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1));
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("rfNum: ");
+//			for (TupleN<?> objects : rfNum) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("coNum: ");
+//			for (TupleN<?> objects : rfNum) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
+//			}
+//			System.err.println("==============");
+//
+//			System.err.println("poRaw: ");
+//			for (TupleN<?> objects : poRaw) {
+//				System.err.println(objects.get(0) + " -> " + objects.get(1));
+//			}
+//
+//			List<?> primitives = programBuilder.getPrimitives();
+//			for (int i = 0; i < primitives.size(); i++) {
+//				Object primitive = primitives.get(i);
+//				System.err.println(i + "[label=\"" + primitive + "\"]");
+//			}
 		} else {
 			final ExprTraceStatus.Infeasible<R> ref = check.asInfeasible();
 			R refutation = ref.asInfeasible().getRefutation();

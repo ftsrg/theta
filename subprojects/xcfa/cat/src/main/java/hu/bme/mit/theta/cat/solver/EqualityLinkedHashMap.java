@@ -21,7 +21,8 @@ public class EqualityLinkedHashMap<K, V> implements Map<K, V> {
 	}
 
 	public EqualityLinkedHashMap(final EqualityLinkedHashMap<K, V> map) {
-		buckets = new LinkedHashMap<>(map.buckets);
+		this.buckets = new LinkedHashMap<>();
+		map.buckets.forEach((k, tuple2s) -> this.buckets.put(k, new ArrayList<>(tuple2s)));
 		heap = new LinkedList<>(map.heap);
 	}
 

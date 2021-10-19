@@ -4,8 +4,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +33,12 @@ public abstract class MemoryModelBuilder {
 		final Integer idxA = indexMap.get(a);
 		final Integer idxB = indexMap.get(b);
 		addFact("poRaw", TupleN.of(idxA, idxB));
+	}
+
+	public void addRfEdge(Object a, Object b) {
+		final Integer idxA = indexMap.get(a);
+		final Integer idxB = indexMap.get(b);
+		addFact("rf", TupleN.of(idxA, idxB));
 	}
 
 	public void addReadProgramLoc(Object read, Object thread, Object var) {
@@ -70,7 +75,7 @@ public abstract class MemoryModelBuilder {
 		addFact("intRaw", TupleN.of(idxA, idxB));
 		addFact("intRaw", TupleN.of(idxB, idxA));
 	}
-	public Expr<BoolType> addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst) {
+	public void addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst, final Solver solver) {
 		final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();
 		for (Tuple2<?, ConstDecl<?>> objects : writeConst) {
 			final Object object = objects.get1();
@@ -83,7 +88,7 @@ public abstract class MemoryModelBuilder {
 			final Integer idxR = indexMap.get(object);
 			loads.add(Tuple2.of(idxR, objects.get2()));
 		}
-		return getRfConstraints(stores, loads);
+		rfConstraints(stores, loads);
 	}
 
 	public Integer getIndexOf(Object o) {
@@ -98,7 +103,10 @@ public abstract class MemoryModelBuilder {
 	public abstract void addRule(final RuleDerivation ruleDerivation);
 	public abstract void addFact(final String name, final TupleN<Integer> fact);
 	public abstract int addPrimitive(final String name, final Object primitive);
-	public abstract Expr<BoolType> getRfConstraints(final List<Tuple2<Integer, ConstDecl<?>>> writeConst, final List<Tuple2<Integer, ConstDecl<?>>> readConst);
+	public abstract List<?> getPrimitives();
+	public abstract void rfConstraints(final List<Tuple2<Integer, ConstDecl<?>>> writeConst, final List<Tuple2<Integer, ConstDecl<?>>> readConst);
 
 	public abstract MemoryModelBuilder duplicate();
+
+	public abstract boolean check();
 }

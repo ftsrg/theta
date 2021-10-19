@@ -60,8 +60,8 @@ public class BoolSmtTest {
 
 	@Test
 	public void test()  {
-		final MemoryModelBuilder builder = BoolDatalogMemoryModelBuilder.create(memoryModel);
 		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		final MemoryModelBuilder builder = BoolDatalogMemoryModelBuilder.create(memoryModel, solver);
 
 		program.generateProgram(builder, solver);
 

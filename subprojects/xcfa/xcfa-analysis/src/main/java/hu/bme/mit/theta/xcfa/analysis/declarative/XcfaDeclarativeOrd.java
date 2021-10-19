@@ -24,6 +24,6 @@ public class XcfaDeclarativeOrd<S extends ExprState> implements PartialOrd<XcfaD
 				state1.getBacklog().keySet().equals(state2.getBacklog().keySet()) &&
 				partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState()) &&
 				state1.getStores().equals(state2.getStores()) &&
-				state1.getLoads().equals(state2.getLoads());
+				state1.getRevisitableLoads().equals(state2.getRevisitableLoads());
 	}
 }
