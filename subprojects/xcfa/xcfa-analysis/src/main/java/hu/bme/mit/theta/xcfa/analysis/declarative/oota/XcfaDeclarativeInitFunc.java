@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
@@ -27,7 +27,7 @@ public class XcfaDeclarativeInitFunc<S extends ExprState, P extends Prec> implem
 	public Collection<XcfaDeclarativeState<S>> getInitStates(final XcfaDeclarativePrec<P> prec) {
 		final Collection<XcfaDeclarativeState<S>> set = new ArrayList<>();
 		for (S s : initFunc.getInitStates(prec.getGlobalPrec())) {
-			final XcfaDeclarativeState<S> xcfaState = XcfaDeclarativeState.create(initLoc, s);
+			final XcfaDeclarativeState<S> xcfaState = XcfaDeclarativeState.fromParams(initLoc, s);
 			set.add(xcfaState);
 		}
 		return set;

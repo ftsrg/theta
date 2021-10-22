@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.analysis.Trace;
@@ -11,22 +11,26 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.cat.models.CoherenceMemory;
 import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.ExpressionReplacer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,8 +65,6 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 
 	@Override
 	public ExprTraceStatus<R> check(Trace<? extends ExprState, ? extends ExprAction> trace) {
-		if(true) return traceChecker.check(trace);
-
 		ExprTraceStatus<R> result = null;
 		if(preCheck) {
 			result = traceChecker.check(trace);
@@ -75,7 +77,7 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 			else return traceChecker.check(trace);
 		}
 
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+		final Solver solver = new CollectorSolver();
 		BoolDatalogMemoryModelBuilder programBuilder = BoolDatalogMemoryModelBuilder.create(new CoherenceMemory(), solver);
 
 		final List<Tuple2<?, ConstDecl<?>>> dataFlowW = new ArrayList<>();
@@ -159,91 +161,91 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 				newActions.add(XcfaDeclarativeAction.create(XcfaEdge.of(xcfaAction.getSource(), xcfaAction.getTarget(), newLabels)));
 			}
 		}
-		programBuilder.addConstraints(dataFlowW, dataFlowR, solver);
+		programBuilder.addConstraints(dataFlowW, dataFlowR);
 		final AndExpr memoryModel = And(solver.getAssertions());
 
 		final ExprTraceStatus<R> check = traceChecker.check(Trace.of(trace.getStates().stream().map(exprState -> {
 			checkState(exprState instanceof XcfaDeclarativeState, "Wrong type of state!");
-			return ((XcfaDeclarativeState<?>) exprState).setInvariant(memoryModel);
+			return ((XcfaDeclarativeState<?>) exprState).addInvariant(memoryModel);
 		}).collect(Collectors.toList()), newActions));
 		if(check.isFeasible()) {
-//			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
-//			final List<TupleN<?>> rf = programBuilder.get("rf", model);
-//			final List<TupleN<Integer>> rfNum = programBuilder.getNumbered("rf", model);
-//			final List<TupleN<Integer>> coNum = programBuilder.getNumbered("co", model);
-//			final List<TupleN<?>> co = programBuilder.get("co", model);
-//			final List<TupleN<?>> po = programBuilder.get("po", model);
-//			final List<TupleN<?>> loc = programBuilder.get("loc", model);
-//			final List<TupleN<?>> poRaw = programBuilder.get("poRaw", model);
-//			final List<TupleN<?>> r = programBuilder.get("R", model);
-//			final List<TupleN<?>> w = programBuilder.get("W", model);
-//
-//			System.err.println("Dataflow:");
-//			for (Tuple2<?, ConstDecl<?>> tup : dataFlowR) {
-//				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
-//			}
-//			for (Tuple2<?, ConstDecl<?>> tup : dataFlowW) {
-//				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
-//			}
-//
-//			System.err.println("R: ");
-//			for (TupleN<?> objects : r) {
-//				System.err.println(objects.get(0));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("W: ");
-//			for (TupleN<?> objects : w) {
-//				System.err.println(objects.get(0));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("rf: ");
-//			for (TupleN<?> objects : rf) {
-//				System.err.println(objects.get(0) + "(" + model.eval(((XcfaLabel.StoreXcfaLabel<?>)objects.get(0)).getLocal()) +  ") -> " + objects.get(1));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("co: ");
-//			for (TupleN<?> objects : co) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("po: ");
-//			for (TupleN<?> objects : po) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("loc: ");
-//			for (TupleN<?> objects : loc) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1));
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("rfNum: ");
-//			for (TupleN<?> objects : rfNum) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("coNum: ");
-//			for (TupleN<?> objects : rfNum) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
-//			}
-//			System.err.println("==============");
-//
-//			System.err.println("poRaw: ");
-//			for (TupleN<?> objects : poRaw) {
-//				System.err.println(objects.get(0) + " -> " + objects.get(1));
-//			}
-//
-//			List<?> primitives = programBuilder.getPrimitives();
-//			for (int i = 0; i < primitives.size(); i++) {
-//				Object primitive = primitives.get(i);
-//				System.err.println(i + "[label=\"" + primitive + "\"]");
-//			}
+			final Valuation model = check.asFeasible().getValuations().getState(check.asFeasible().getValuations().length());
+			final List<TupleN<?>> rf = programBuilder.get("rf", model);
+			final List<TupleN<Integer>> rfNum = programBuilder.getNumbered("rf", model);
+			final List<TupleN<Integer>> coNum = programBuilder.getNumbered("co", model);
+			final List<TupleN<?>> co = programBuilder.get("co", model);
+			final List<TupleN<?>> po = programBuilder.get("po", model);
+			final List<TupleN<?>> loc = programBuilder.get("loc", model);
+			final List<TupleN<?>> poRaw = programBuilder.get("poRaw", model);
+			final List<TupleN<?>> r = programBuilder.get("R", model);
+			final List<TupleN<?>> w = programBuilder.get("W", model);
+
+			System.err.println("Dataflow:");
+			for (Tuple2<?, ConstDecl<?>> tup : dataFlowR) {
+				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+			}
+			for (Tuple2<?, ConstDecl<?>> tup : dataFlowW) {
+				System.err.println(tup.get2().getName() + " ( " + programBuilder.getIndexOf(tup.get1()) + " ) := " + ((IntLitExpr)model.eval(tup.get2()).get()).getValue().longValue());
+			}
+
+			System.err.println("R: ");
+			for (TupleN<?> objects : r) {
+				System.err.println(objects.get(0));
+			}
+			System.err.println("==============");
+
+			System.err.println("W: ");
+			for (TupleN<?> objects : w) {
+				System.err.println(objects.get(0));
+			}
+			System.err.println("==============");
+
+			System.err.println("rf: ");
+			for (TupleN<?> objects : rf) {
+				System.err.println(objects.get(0) + "(" + model.eval(((XcfaLabel.StoreXcfaLabel<?>)objects.get(0)).getLocal()) +  ") -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("co: ");
+			for (TupleN<?> objects : co) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("po: ");
+			for (TupleN<?> objects : po) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("loc: ");
+			for (TupleN<?> objects : loc) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+			System.err.println("==============");
+
+			System.err.println("rfNum: ");
+			for (TupleN<?> objects : rfNum) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=red]");
+			}
+			System.err.println("==============");
+
+			System.err.println("coNum: ");
+			for (TupleN<?> objects : rfNum) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1) + " [constraint=false,color=orange]");
+			}
+			System.err.println("==============");
+
+			System.err.println("poRaw: ");
+			for (TupleN<?> objects : poRaw) {
+				System.err.println(objects.get(0) + " -> " + objects.get(1));
+			}
+
+			List<?> primitives = programBuilder.getPrimitives();
+			for (int i = 0; i < primitives.size(); i++) {
+				Object primitive = primitives.get(i);
+				System.err.println(i + "[label=\"" + primitive + "\"]");
+			}
 		} else {
 			final ExprTraceStatus.Infeasible<R> ref = check.asInfeasible();
 			R refutation = ref.asInfeasible().getRefutation();
@@ -286,5 +288,62 @@ public class XcfaDeclarativeChecker<R extends Refutation> implements ExprTraceCh
 	private enum ProcessLabel {
 		START,
 		END
+	}
+
+	private class CollectorSolver implements Solver {
+		private final List<Expr<BoolType>> list;
+
+		private CollectorSolver() {
+			list = new ArrayList<>();
+		}
+
+		@Override
+		public void add(Expr<BoolType> assertion) {
+			list.add(assertion);
+		}
+
+		@Override
+		public SolverStatus check() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void push() {
+			throw new UnsupportedOperationException();
+
+		}
+
+		@Override
+		public void pop(int n) {
+			throw new UnsupportedOperationException();
+
+		}
+
+		@Override
+		public void reset() {
+			throw new UnsupportedOperationException();
+
+		}
+
+		@Override
+		public SolverStatus getStatus() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Valuation getModel() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Collection<Expr<BoolType>> getAssertions() {
+			return list;
+		}
+
+		@Override
+		public void close() throws Exception {
+			throw new UnsupportedOperationException();
+
+		}
 	}
 }

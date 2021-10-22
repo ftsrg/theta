@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;

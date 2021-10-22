@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -22,7 +22,7 @@ public class XcfaDeclarativeOrd<S extends ExprState> implements PartialOrd<XcfaD
 		return 	state1.getCurrentLoc().equals(state2.getCurrentLoc()) &&
 				state1.getBacklog().size() == state2.getBacklog().size() &&
 				state1.getBacklog().keySet().equals(state2.getBacklog().keySet()) &&
-				partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState()) &&
+				partialOrd.isLeq(state1.getState(), state2.getState()) &&
 				state1.getStores().equals(state2.getStores()) &&
 				state1.getRevisitableLoads().equals(state2.getRevisitableLoads());
 	}

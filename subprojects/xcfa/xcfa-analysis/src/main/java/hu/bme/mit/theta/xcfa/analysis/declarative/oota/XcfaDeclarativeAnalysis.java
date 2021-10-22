@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.InitFunc;

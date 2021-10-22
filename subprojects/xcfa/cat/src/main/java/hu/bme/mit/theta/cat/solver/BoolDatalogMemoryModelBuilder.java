@@ -7,9 +7,12 @@ import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import hu.bme.mit.theta.common.datalog.GenericDatalogArgument;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +43,11 @@ public class BoolDatalogMemoryModelBuilder extends MemoryModelBuilder{
 
 	public static BoolDatalogMemoryModelBuilder create(MemoryModel memoryModel, final Solver solver) {
 		return new BoolDatalogMemoryModelBuilder(memoryModel, solver);
+	}
+
+	@Override
+	public Collection<Expr<BoolType>> getAssertions() {
+		return memoryModelBuilder.getAssertions();
 	}
 
 	@Override

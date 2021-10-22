@@ -57,6 +57,7 @@ public class GlobalVarsToStoreLoad extends ProcedurePass {
 				).collect(Collectors.toSet());
 				for (VarDecl<?> var : vars) {
 					VarDecl<?> newVar = Var(var.getName() + "_local" + counter++, var.getType());
+					FrontendMetadata.create(newVar, "sourceGlobal", var);
 					varLut.put(var, newVar);
 					if(FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent())FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(var.getRef()));
 					builder.createVar(newVar, null);

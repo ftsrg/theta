@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cat.solver;
 
 import hu.bme.mit.theta.cat.models.CoherenceMemory;
-import hu.bme.mit.theta.cat.models.NoassertMemory;
 import hu.bme.mit.theta.cat.solver.BoolDatalogMemoryModelBuilder;
 import hu.bme.mit.theta.cat.solver.MemoryModel;
 import hu.bme.mit.theta.cat.solver.MemoryModelBuilder;
@@ -51,9 +50,9 @@ public class BoolSmtTest {
 	@Parameterized.Parameters
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-				{new NoassertMemory(), new W2R2(), false},
+//				{new NoassertMemory(), new W2R2(), false},
 				{new CoherenceMemory(), new W2R2(), true},
-				{new NoassertMemory(), new W2R2WR(), false},
+//				{new NoassertMemory(), new W2R2WR(), false},
 				{new CoherenceMemory(), new W2R2WR(), true},
 		});
 	}

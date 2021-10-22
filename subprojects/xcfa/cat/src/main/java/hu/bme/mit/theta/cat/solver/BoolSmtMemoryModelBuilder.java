@@ -14,6 +14,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,6 +61,11 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		this.rules = newRules;
 		this.relations = newRelations;
 		this.emptyAssertions = newEmptyAssertions;
+	}
+
+	@Override
+	public Collection<Expr<BoolType>> getAssertions() {
+		return solver.getAssertions();
 	}
 
 	@Override

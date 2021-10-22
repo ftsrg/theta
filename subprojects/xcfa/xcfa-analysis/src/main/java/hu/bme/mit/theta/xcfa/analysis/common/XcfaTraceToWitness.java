@@ -8,14 +8,13 @@ import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
+import hu.bme.mit.theta.xcfa.analysis.declarative.oota.XcfaDeclarativeAction;
+import hu.bme.mit.theta.xcfa.analysis.declarative.oota.XcfaDeclarativeState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,7 @@ public final class XcfaTraceToWitness {
 			List<Stmt> stmtList = concreteTrace.getAction(i).getStmts();
 			List<String> edgesFromAction = new ArrayList<>();
 			for (Stmt stmt : stmtList) {
-				Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i+1).getGlobalState().getVal());
+				Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i+1).getState().getVal());
 				optionalLabel.ifPresent(edgesFromAction::add);
 			}
 

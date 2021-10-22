@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.oota;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -22,6 +22,10 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,14 +33,17 @@ public final class XcfaDeclarativePrecRefiner<S extends ExprState, A extends Act
 		implements PrecRefiner<XcfaDeclarativeState<S>, A, XcfaDeclarativePrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
+	private final Set<VarDecl<?>> globalVars;
 
-	private XcfaDeclarativePrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private XcfaDeclarativePrecRefiner(final RefutationToPrec<P, R> refToPrec, final Set<VarDecl<?>> globalVars) {
 		this.refToPrec = checkNotNull(refToPrec);
+		this.globalVars = globalVars;
 	}
 
 	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaDeclarativePrecRefiner<S, A, P, R> create(
+			final Set<VarDecl<?>> globalVars,
 			final RefutationToPrec<P, R> refToPrec) {
-		return new XcfaDeclarativePrecRefiner<>(refToPrec);
+		return new XcfaDeclarativePrecRefiner<>(refToPrec, globalVars);
 	}
 
 	@Override
@@ -49,7 +56,8 @@ public final class XcfaDeclarativePrecRefiner<S extends ExprState, A extends Act
 			final P precFromRef = refToPrec.toPrec(refutation, i);
 			runningPrec = refToPrec.join(runningPrec, precFromRef);
 		}
-		return prec.refine(runningPrec);
+		final Set<VarDecl<?>> usedGlobalVars = runningPrec.getUsedVars().stream().filter(this.globalVars::contains).collect(Collectors.toSet());
+		return prec.refine(runningPrec, usedGlobalVars);
 	}
 
 	@Override

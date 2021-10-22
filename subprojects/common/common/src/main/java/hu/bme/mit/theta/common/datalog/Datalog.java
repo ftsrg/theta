@@ -478,7 +478,7 @@ public class Datalog {
 
 
 		public void push() {
-			stack.push(Tuple3.of(elements, newElements, toAdd));
+			stack.push(Tuple3.of(new LinkedHashSet<>(elements), new LinkedHashSet<>(newElements), new LinkedHashSet<>(toAdd)));
 		}
 
 		public void pop() {

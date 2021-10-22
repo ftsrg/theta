@@ -4,9 +4,11 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class MemoryModelBuilder {
@@ -75,7 +77,15 @@ public abstract class MemoryModelBuilder {
 		addFact("intRaw", TupleN.of(idxA, idxB));
 		addFact("intRaw", TupleN.of(idxB, idxA));
 	}
-	public void addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst, final Solver solver) {
+
+	public void addAmo(Object o, Object amo) {
+		final Integer idxA = indexMap.get(o);
+		final Integer idxB = indexMap.get(amo);
+		addFact("amoRaw", TupleN.of(idxA, idxB));
+		addFact("amoRaw", TupleN.of(idxB, idxA));
+	}
+
+	public void addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst) {
 		final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();
 		for (Tuple2<?, ConstDecl<?>> objects : writeConst) {
 			final Object object = objects.get1();
@@ -90,6 +100,8 @@ public abstract class MemoryModelBuilder {
 		}
 		rfConstraints(stores, loads);
 	}
+
+	public abstract Collection<Expr<BoolType>> getAssertions();
 
 	public Integer getIndexOf(Object o) {
 		return indexMap.get(o);
@@ -109,4 +121,8 @@ public abstract class MemoryModelBuilder {
 	public abstract MemoryModelBuilder duplicate();
 
 	public abstract boolean check();
+
+	public void printGraph() {
+		throw new UnsupportedOperationException();
+	}
 }

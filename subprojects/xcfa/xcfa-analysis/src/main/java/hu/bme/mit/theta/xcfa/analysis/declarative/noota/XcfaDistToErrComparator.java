@@ -13,13 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.declarative.noota;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.xcfa.analysis.declarative.oota.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
