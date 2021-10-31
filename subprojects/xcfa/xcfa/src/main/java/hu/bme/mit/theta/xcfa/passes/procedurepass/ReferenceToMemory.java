@@ -21,6 +21,7 @@ import hu.bme.mit.theta.xcfa.model.utils.ExpressionReplacer;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,13 +100,16 @@ public class ReferenceToMemory extends ProcedurePass{
 
 	private void addDereferencedToPointers(RefExpr<?> refExpr) {
 		Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(refExpr, "pointsTo");
-		if(pointsTo.isPresent()) {
-			Optional<Object> pointsTo2 = FrontendMetadata.getMetadataValue(pointsTo.get(), "dereferenced");
-			if(pointsTo2.isEmpty()) {
-				FrontendMetadata.create(pointsTo.get(), "dereferenced", true);;
-				FrontendMetadata.create(pointsTo.get(), "refSubstitute", FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());;
-				addDereferencedToPointers((RefExpr<?>) pointsTo.get());
-			}
+		if(pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
+			((Collection<?>) pointsTo.get()).forEach(o -> {
+				Optional<Object> pointsTo2 = FrontendMetadata.getMetadataValue(o, "dereferenced");
+				if(pointsTo2.isEmpty()) {
+					FrontendMetadata.create(o, "dereferenced", true);;
+					FrontendMetadata.create(o, "refSubstitute", FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());;
+					addDereferencedToPointers((RefExpr<?>) o);
+				}
+			});
+
 		}
 	}
 

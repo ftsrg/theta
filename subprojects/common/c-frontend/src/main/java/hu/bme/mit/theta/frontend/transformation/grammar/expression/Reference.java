@@ -6,12 +6,15 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
 	private static final int HASH_SEED = 6987;
 	private static final String label = "&";
-	private static int COUNTER = 0;
 	private final int id;
 	private final R ptrType;
+	private static final Map<Expr<?>, Integer> counters = new HashMap<>();
 
 	private Reference(Expr<T> op, R ptrType, int id) {
 		super(op);
@@ -20,7 +23,10 @@ public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
 	}
 
 	public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType) {
-		return new Reference<>(op, ptrType, COUNTER++);
+		if(!counters.containsKey(op)) {
+			counters.put(op, counters.size());
+		}
+		return new Reference<>(op, ptrType, counters.get(op));
 	}
 
 	public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType, int id) {

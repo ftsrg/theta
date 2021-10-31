@@ -50,11 +50,14 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -211,7 +214,9 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			Type type = op.getType();
 			Type ptrType = CComplexType.getUnsignedLong().getSmtType();
 			if(!memoryMaps.containsKey(type)) {
-				memoryMaps.put(type, Var("memory_" + type.toString(),  ArrayType.of(ptrType, type)));
+				VarDecl<ArrayType<?,?>> var = Var("memory_" + type.toString(), ArrayType.of(ptrType, type));
+				memoryMaps.put(type, var);
+				FrontendMetadata.create(var, "defaultElement", CComplexType.getType(op).getNullValue());
 			}
 			VarDecl<ArrayType<?, ?>> memoryMap = memoryMaps.get(type);
 			FrontendMetadata.create(op, "dereferenced", true);
@@ -228,8 +233,25 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 			xcfaEdge = XcfaEdge.of(initLoc, location, List.of(Stmt(Assign(cast((VarDecl<?>) ((RefExpr<?>) lValue).getDecl(), ((VarDecl<?>) ((RefExpr<?>) lValue).getDecl()).getType()), cast(rExpression, rExpression.getType())))));
 			if(CComplexType.getType(lValue) instanceof CPointer && CComplexType.getType(rExpression) instanceof CPointer) {
 				checkState(rExpression instanceof RefExpr || rExpression instanceof Reference);
-				if(rExpression instanceof RefExpr) FrontendMetadata.create(lValue, "pointsTo", rExpression);
-				else FrontendMetadata.create(lValue, "pointsTo", ((Reference<?, ?>) rExpression).getOp());
+
+				if(rExpression instanceof RefExpr) {
+					Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(lValue, "pointsTo");
+					if(pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
+						((Collection<Expr<?>>) pointsTo.get()).add(rExpression);
+					} else {
+						pointsTo = Optional.of(new LinkedHashSet<Expr<?>>(Set.of(rExpression)));
+					}
+					FrontendMetadata.create(lValue, "pointsTo", pointsTo.get());
+				}
+				else {
+					Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(lValue, "pointsTo");
+					if(pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
+						((Collection<Expr<?>>) pointsTo.get()).add(((Reference<?, ?>) rExpression).getOp());
+					} else {
+						pointsTo = Optional.of(new LinkedHashSet<Expr<?>>(Set.of(((Reference<?, ?>) rExpression).getOp())));
+					}
+					FrontendMetadata.create(lValue, "pointsTo", pointsTo.get());
+				}
 			}
 			builder.addEdge(xcfaEdge);
 			propagateMetadata(statement, xcfaEdge);

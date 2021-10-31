@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -18,6 +19,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -199,6 +201,15 @@ public class FunctionInlining extends ProcessPass {
 
 					AssignStmt<?> assignStmt = Assign(cast(varDecl, varDecl.getType()), cast(truncatedParam, varDecl.getType()));
 					initStmts.add(Stmt(assignStmt));
+					if (truncatedParam instanceof Reference) {
+						Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(varDecl.getRef(), "pointsTo");
+						if(pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
+							((Collection<Expr<?>>) pointsTo.get()).add(((Reference<?, ?>) truncatedParam).getOp());
+						} else {
+							pointsTo = Optional.of(new LinkedHashSet<Expr<?>>(Set.of(((Reference<?, ?>) truncatedParam).getOp())));
+						}
+						FrontendMetadata.create(varDecl.getRef(), "pointsTo", pointsTo.get());
+					}
 				}
 				if (direction != XcfaProcedure.Direction.IN) {
 					Expr<?> expr = xcfaCallStmt.getParams().get(paramCnt);
