@@ -79,6 +79,7 @@ public class SmtLibSolver implements UCSolver, Solver {
 
         final var term = transformationManager.toTerm(assertion);
 
+        assertions.add(assertion);
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(String.format("(assert %s)", term));
 
@@ -90,6 +91,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
+        assertions.add(assertion);
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(String.format("(assert %s)", term));
 

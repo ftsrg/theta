@@ -95,6 +95,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         final var term = transformationManager.toTerm(assertion);
         itpMarker.add(assertion, term);
 
+        assertions.add(assertion);
         add(itpMarker, assertion, consts, term);
 
         clearState();
