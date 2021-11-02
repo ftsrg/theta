@@ -9,6 +9,7 @@ import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -94,6 +95,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Let_termContext;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
@@ -104,6 +106,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -306,7 +309,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
         final var funcDef = parser.function_def();
-        final var paramDecls = funcDef.sorted_var().stream()
+        final List<ParamDecl<? extends Type>> paramDecls = funcDef.sorted_var().stream()
             .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
 
@@ -366,7 +369,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var paramDecls = ctx.sorted_var().stream()
+        final List<ParamDecl<? extends Type>> paramDecls = ctx.sorted_var().stream()
             .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
         checkArgument(paramDecls.size() == 1, "Only unary functions are supported");
@@ -392,7 +395,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             return transformGenericTerm(ctx.generic_term(), model, vars);
         }
         else if(ctx.let_term() != null) {
-            throw new UnsupportedOperationException();
+            return transformLetTerm(ctx.let_term(), model, vars);
         }
         else if(ctx.forall_term() != null) {
             return transformForallTerm(ctx.forall_term(), model, vars);
@@ -494,11 +497,37 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         return FuncExprs.App(cast(funcExpr, funType), cast(paramExpr, funType.getParamType()));
     }
 
+    protected Expr<?> transformLetTerm(final Let_termContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
+        assert model != null;
+        assert vars != null;
+
+        final var paramDecls = new ArrayList<ParamDecl<? extends Type>>();
+        final var paramDefs = new ArrayList<Expr<? extends Type>>();
+        for(final var bnd : ctx.var_binding()) {
+            final var def = transformTerm(bnd.term(), model, vars);
+            final var decl = Param(bnd.symbol().getText(), def.getType());
+
+            paramDecls.add(decl);
+            paramDefs.add(def);
+        }
+
+        pushParams(paramDecls, vars);
+        final var term = transformTerm(ctx.term(), model, vars);
+        popParams(paramDecls, vars);
+
+        final var substitutionBuilder = BasicSubstitution.builder();
+        for(var i = 0; i < paramDecls.size(); i++) {
+            substitutionBuilder.put(paramDecls.get(i), paramDefs.get(i));
+        }
+
+        return substitutionBuilder.build().apply(term);
+    }
+
     protected Expr<?> transformForallTerm(final Forall_termContext ctx, final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
         assert model != null;
         assert vars != null;
 
-        final var paramDecls = ctx.sorted_var().stream()
+        final List<ParamDecl<? extends Type>> paramDecls = ctx.sorted_var().stream()
             .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
 
@@ -514,7 +543,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var paramDecls = ctx.sorted_var().stream()
+        final List<ParamDecl<? extends Type>> paramDecls = ctx.sorted_var().stream()
             .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
             .collect(toList());
 
@@ -651,11 +680,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     /* Variable scope handling */
 
-    protected <T extends Type> void pushParams(final List<ParamDecl<T>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
+    protected void pushParams(final List<ParamDecl<? extends Type>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
         vars.putAll(paramDecls.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), Decl::getName)));
     }
 
-    protected <T extends Type> void popParams(final List<ParamDecl<T>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
+    protected void popParams(final List<ParamDecl<? extends Type>> paramDecls, BiMap<ParamDecl<?>, String> vars) {
         for (final var paramDecl : paramDecls) {
             vars.remove(paramDecl, paramDecl.getName());
         }
