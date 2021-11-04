@@ -1,71 +1,119 @@
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import com.zaxxer.nuprocess.NuAbstractProcessHandler;
+import com.zaxxer.nuprocess.NuProcess;
+import com.zaxxer.nuprocess.NuProcessBuilder;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
-    private final Process solverProcess;
-    private final PrintWriter solverInput;
-    private final Reader solverOutput;
+    private final NuProcess solverProcess;
+    private final ProcessHandler processHandler;
 
     public GenericSmtLibSolverBinary(final Path solverPath, final String[] args) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
+
+        final var solverProcessBuilder = new NuProcessBuilder(processCmd);
+
+        processHandler = new ProcessHandler();
+        solverProcessBuilder.setProcessListener(processHandler);
+
+        solverProcess = solverProcessBuilder.start();
+        checkState(solverProcess.isRunning());
+    }
+
+    @Override
+    public void issueCommand(final String command) {
+        checkState(solverProcess.isRunning());
+        processHandler.write(command);
+        solverProcess.wantWrite();
+    }
+
+    @Override
+    public String readResponse() {
+        checkState(solverProcess.isRunning());
         try {
-            solverProcess = new ProcessBuilder(processCmd)
-                    .redirectError(ProcessBuilder.Redirect.INHERIT)
-                    .start();
-            solverInput = new PrintWriter(solverProcess.getOutputStream(), true, StandardCharsets.US_ASCII);
-            solverOutput = new InputStreamReader(solverProcess.getInputStream(), StandardCharsets.US_ASCII);
-            checkState(solverProcess.isAlive());
-        } catch (IOException e) {
+            return processHandler.read().trim();
+        } catch (InterruptedException e) {
             throw new SmtLibSolverBinaryException(e);
         }
     }
 
     @Override
-    public void issueCommand(final String command) {
-        checkState(solverProcess.isAlive());
-        solverInput.println(command);
+    public void close() {
+        solverProcess.destroy(true);
     }
 
-    @Override
-    public String readResponse() {
-        checkState(solverProcess.isAlive());
-        final var sb = new StringBuilder(256);
-        final var readProcessor = new ReadProcessor();
-        while (sb.length() == 0 || !readProcessor.isReady()) {
-            Thread.yield();
-            if (!solverProcess.isAlive()) {
-                throw new SmtLibSolverBinaryException("Solver process terminated early");
+    private static final class ProcessHandler extends NuAbstractProcessHandler {
+        private final Queue<String> inputQueue = new LinkedList<>();
+
+        private final Queue<String> outputQueue = new LinkedList<>();
+        private ReadProcessor readProcessor = null;
+
+        public synchronized void write(final String input) {
+            inputQueue.add(input);
+        }
+
+        public synchronized String read() throws InterruptedException {
+            while(outputQueue.isEmpty()) {
+                wait();
             }
-            try {
-                while (solverOutput.ready() && !readProcessor.isReady()) {
-                    readProcessor.step(sb, (char) solverOutput.read());
+
+            return outputQueue.remove();
+        }
+
+        @Override
+        public synchronized boolean onStdinReady(final ByteBuffer buffer) {
+            while(!inputQueue.isEmpty()) {
+                buffer.put(inputQueue.remove().getBytes(StandardCharsets.US_ASCII));
+                buffer.put("\n".getBytes(StandardCharsets.US_ASCII));
+            }
+            buffer.flip();
+            return false;
+        }
+
+        @Override
+        public synchronized void onStdout(final ByteBuffer buffer, final boolean closed) {
+            onInput(buffer);
+        }
+
+        @Override
+        public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
+            onInput(buffer);
+        }
+
+        private synchronized void onInput(final ByteBuffer buffer) {
+            final var buf = new byte[buffer.remaining()];
+            buffer.get(buf);
+            final var input = new String(buf, StandardCharsets.US_ASCII);
+
+            for(var c : input.toCharArray()) {
+                if(readProcessor == null) {
+                    readProcessor = new ReadProcessor();
                 }
-            } catch (IOException e) {
-                throw new SmtLibSolverBinaryException(e);
+
+                readProcessor.step(c);
+
+                if(readProcessor.isReady()) {
+                    outputQueue.add(readProcessor.getResult());
+                    notifyAll();
+                    readProcessor = null;
+                }
             }
         }
-        return sb.toString().trim();
-    }
-
-    @Override
-    public void close() {
-        solverProcess.destroyForcibly();
     }
 
     private static final class ReadProcessor {
@@ -76,7 +124,9 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         private ReadProcessor.ReadStatus status = ReadProcessor.ReadStatus.INIT;
         private int level = 0;
 
-        public void step(final StringBuilder sb, final char c) {
+        private final StringBuilder sb = new StringBuilder(1024);
+
+        public void step(final char c) {
             switch (status) {
                 case INIT:
                     if (c == '(') {
@@ -125,6 +175,10 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                 default:
                     throw new AssertionError();
             }
+        }
+
+        public String getResult() {
+            return sb.toString();
         }
 
         public boolean isReady() {
