@@ -107,6 +107,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         final var term = transformationManager.toTerm(assertion);
         final var label = String.format(ASSUMPTION_LABEL, labelNum++);
         assumptions.put(label, assertion);
+        assertions.add(assertion);
 
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(String.format("(assert (! %s :named %s))", term, label));

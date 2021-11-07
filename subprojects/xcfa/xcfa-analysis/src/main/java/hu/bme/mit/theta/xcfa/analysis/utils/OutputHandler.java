@@ -202,6 +202,7 @@ public final class OutputHandler {
 	}
 
 	public void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
+		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
 		File configurationTxt = new File(basicFileName + ".portfolio.txt");
 
 		StringBuilder stringBuilder = new StringBuilder();
@@ -220,6 +221,7 @@ public final class OutputHandler {
 	}
 
 	public void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
+		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
 		File configurationCsv = new File(basicFileName + ".portfolio.csv");
 
 		StringBuilder stringBuilder = new StringBuilder();

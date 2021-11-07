@@ -1,9 +1,7 @@
 package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
