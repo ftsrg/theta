@@ -4,6 +4,7 @@ import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
@@ -19,8 +20,8 @@ class CegarConfiguration {
 	public final XcfaConfigBuilder.InitPrec initPrec;
 	public final PruneStrategy pruneStrategy;
 	public boolean argCexCheck;
-	public final SolverFactory abstractionSolver;
-	public final SolverFactory refinementSolver;
+	public final String abstractionSolver;
+	public final String refinementSolver;
 
 	CegarConfiguration(XcfaConfigBuilder.Domain domain,
 					   XcfaConfigBuilder.Refinement refinement,
@@ -31,8 +32,8 @@ class CegarConfiguration {
 					   XcfaConfigBuilder.InitPrec initPrec,
 					   PruneStrategy pruneStrategy,
 					   boolean argCexCheck,
-					   SolverFactory abstractionSolver,
-					   SolverFactory refinementSolver) {
+					   String abstractionSolver,
+					   String refinementSolver) {
 		this.domain = domain;
 		this.refinement = refinement;
 		this.search = search;
@@ -56,7 +57,7 @@ class CegarConfiguration {
 		}
 
 		try {
-			return new XcfaConfigBuilder(domain, refinement, refinementSolver, abstractionSolver, algorithm)
+			return new XcfaConfigBuilder(domain, refinement, SolverManager.resolveSolverFactory(refinementSolver), SolverManager.resolveSolverFactory(abstractionSolver), algorithm)
 					.search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xcfa);

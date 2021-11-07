@@ -8,6 +8,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.solververifying.VerifyingSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -185,5 +186,6 @@ public abstract class AbstractPortfolio {
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);
 		}
+		SolverManager.registerSolverManager(VerifyingSolverManager.create("mathsat:fp"));
 	}
 }

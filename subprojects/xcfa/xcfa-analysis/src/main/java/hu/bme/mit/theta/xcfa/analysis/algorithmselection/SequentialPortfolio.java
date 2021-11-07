@@ -21,7 +21,6 @@ public class SequentialPortfolio extends AbstractPortfolio {
 
 	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibhome) throws Exception {
 		super(logLevel, basicFileName, modelName, smtlibhome); // registers solver factories
-		SolverFactory solverFactory = SolverManager.resolveSolverFactory("Z3");
 
 		configurations[0] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
@@ -33,7 +32,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				false,
-				solverFactory, solverFactory
+				"Z3", "Z3"
 		);
 		configurations[1] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
@@ -45,7 +44,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				false,
-				solverFactory, solverFactory
+				"Z3", "Z3"
 		);
 		configurations[2] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
@@ -57,7 +56,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				false,
-				solverFactory, solverFactory
+				"Z3", "Z3"
 		);
 	}
 

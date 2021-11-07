@@ -47,6 +47,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.solververifying.VerifyingSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
@@ -366,7 +367,7 @@ public class XcfaCli {
 			switch (portfolio) {
 				case NONE:
 					try {
-						status = executeSingleConfiguration(xcfa);
+						executeSingleConfiguration(xcfa);
 					} catch (Exception e) {
 						e.printStackTrace();
 						return;
@@ -375,7 +376,7 @@ public class XcfaCli {
 				case SEQUENTIAL:
 					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, basicFileName, model.getName(), home);
 					try {
-						status = sequentialPortfolio.executeAnalysis(xcfa, initTime); // check(configuration);
+						sequentialPortfolio.executeAnalysis(xcfa, initTime); // check(configuration);
 					} catch (PortfolioTimeoutException pte) {
 						System.err.println(pte.getMessage());
 						long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -388,7 +389,7 @@ public class XcfaCli {
 				case COMPLEX:
 					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, basicFileName, model.getName(), home);
 					try {
-						status = complexPortfolio.executeAnalysis(xcfa, initTime);
+						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
 						System.err.println(pte.getMessage());
 						long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -400,16 +401,6 @@ public class XcfaCli {
 					break;
 				default:
 					throw new IllegalStateException("Unexpected value: " + portfolio);
-			}
-
-			if (status!=null && status.isUnsafe()) {
-				// TODO move this into portfolio/single execution, so the solver here is the successful configuration's solver
-				// registerAllSolverManagers(home, logger);
-				SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory("Z3");
-				writeCex(status.asUnsafe(), cexSolverFactory);
-				writeWitness(status.asUnsafe(), cexSolverFactory);
-			} else if(status!=null && status.isSafe() && witnessfile!=null) {
-				writeDummyCorrectnessWitness();
 			}
 
 			long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -431,16 +422,24 @@ public class XcfaCli {
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);
 		}
+		SolverManager.registerSolverManager(VerifyingSolverManager.create("mathsat:fp"));
 	}
 
-	private SafetyResult<?, ?> executeSingleConfiguration(XCFA xcfa) throws Exception {
+	private void executeSingleConfiguration(XCFA xcfa) throws Exception {
 		final SolverFactory abstractionSolverFactory;
 		final SolverFactory refinementSolverFactory;
 		abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
 		refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 
 		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
-		return check(configuration);
+		SafetyResult<?, ?> status = check(configuration);
+		if (status!=null && status.isUnsafe()) {
+			SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+			writeCex(status.asUnsafe(), cexSolverFactory);
+			writeWitness(status.asUnsafe(), cexSolverFactory);
+		} else if(status!=null && status.isSafe() && witnessfile!=null) {
+			writeDummyCorrectnessWitness();
+		}
 	}
 
 	private void writeDummyCorrectnessWitness() {

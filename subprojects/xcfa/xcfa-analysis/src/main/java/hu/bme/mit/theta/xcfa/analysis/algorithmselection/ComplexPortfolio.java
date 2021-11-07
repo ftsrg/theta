@@ -98,8 +98,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -121,8 +121,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -145,8 +145,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (5.0 / 9.0 * calculateRemainingTime()));
@@ -169,8 +169,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.ALLVARS,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (400.0 / 900.0 * calculateRemainingTime()));
@@ -194,8 +194,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (30.0 / 900.0 * calculateRemainingTime()));
@@ -218,8 +218,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				SolverManager.resolveSolverFactory("Z3"),
-				SolverManager.resolveSolverFactory("Z3")
+				"verify",
+				"verify"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(bitvecConf1, xcfa, calculateRemainingTime());
@@ -239,8 +239,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 					XcfaConfigBuilder.InitPrec.EMPTY,
 					PruneStrategy.FULL,
 					true,
-					SolverManager.resolveSolverFactory("Z3"),
-					SolverManager.resolveSolverFactory("Z3")
+					"verify",
+					"verify"
 			);
 
 			result = executeConfiguration(bitvecConf2, xcfa, calculateRemainingTime());
