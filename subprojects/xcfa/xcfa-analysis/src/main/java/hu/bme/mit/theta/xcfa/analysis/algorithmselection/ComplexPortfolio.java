@@ -5,6 +5,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -18,12 +20,12 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private long analysisTime; // in ms, init time subtracted from sumTime
 	private long startCpuTime;
 
-	public ComplexPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
-		super(logLevel, basicFileName, modelName);
+	public ComplexPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibhome) throws Exception {
+		super(logLevel, basicFileName, modelName, smtlibhome); // registers solver factories
 	}
 
 	@Override
-	public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) {
+	public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception {
 		logger.write(Logger.Level.MAINSTEP, "Executing complex portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
@@ -41,7 +43,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		}
 	}
 
-	private SafetyResult<?, ?> integerPath(XCFA xcfa) {
+	private SafetyResult<?, ?> integerPath(XCFA xcfa) throws Exception {
 		ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, modelName);
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = null;
 
@@ -85,7 +87,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		return remainingTime;
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runPredBool(XCFA xcfa) {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runPredBool(XCFA xcfa) throws Exception {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_BOOL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
@@ -95,7 +97,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -106,7 +110,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		}return result;
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runLongPred(XCFA xcfa) {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runLongPred(XCFA xcfa) throws Exception {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
@@ -116,7 +120,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -128,7 +134,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		return result;
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runEmptyExpl(XCFA xcfa) {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runEmptyExpl(XCFA xcfa) throws Exception {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
@@ -138,7 +144,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (5.0 / 9.0 * calculateRemainingTime()));
@@ -150,7 +158,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		return result;
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runAllvarsExpl(XCFA xcfa) {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runAllvarsExpl(XCFA xcfa) throws Exception {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
@@ -160,7 +168,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.ALLVARS,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (400.0 / 900.0 * calculateRemainingTime()));
@@ -173,7 +183,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	}
 
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runShortPred(XCFA xcfa) {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runShortPred(XCFA xcfa) throws Exception {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
@@ -183,7 +193,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (30.0 / 900.0 * calculateRemainingTime()));
@@ -195,7 +207,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		return result;
 	}
 
-	private SafetyResult<?, ?> bitvectorPath(XCFA xcfa) {
+	private SafetyResult<?, ?> bitvectorPath(XCFA xcfa) throws Exception {
 		CegarConfiguration bitvecConf1 = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.NWT_IT_WP,
@@ -205,7 +217,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				true
+				true,
+				SolverManager.resolveSolverFactory("Z3"),
+				SolverManager.resolveSolverFactory("Z3")
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(bitvecConf1, xcfa, calculateRemainingTime());
@@ -224,7 +238,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 					1,
 					XcfaConfigBuilder.InitPrec.EMPTY,
 					PruneStrategy.FULL,
-					true
+					true,
+					SolverManager.resolveSolverFactory("Z3"),
+					SolverManager.resolveSolverFactory("Z3")
 			);
 
 			result = executeConfiguration(bitvecConf2, xcfa, calculateRemainingTime());

@@ -4,6 +4,8 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -17,8 +19,10 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	private final long sumTime = 900*1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
 
-	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
-		super(logLevel, basicFileName, modelName);
+	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibhome) throws Exception {
+		super(logLevel, basicFileName, modelName, smtlibhome); // registers solver factories
+		SolverFactory solverFactory = SolverManager.resolveSolverFactory("Z3");
+
 		configurations[0] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
@@ -28,7 +32,8 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				false
+				false,
+				solverFactory, solverFactory
 		);
 		configurations[1] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
@@ -39,7 +44,8 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				false
+				false,
+				solverFactory, solverFactory
 		);
 		configurations[2] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
@@ -50,7 +56,8 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
-				false
+				false,
+				solverFactory, solverFactory
 		);
 	}
 

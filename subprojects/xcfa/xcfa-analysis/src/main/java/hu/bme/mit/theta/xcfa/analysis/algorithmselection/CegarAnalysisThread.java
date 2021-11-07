@@ -3,21 +3,24 @@ package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 class CegarAnalysisThread extends Thread {
 	private final XCFA xcfa;
 	private final CegarConfiguration configuration;
 	private final ConsoleLogger logger;
+	private final XcfaConfig<?, ?, ?> xcfaConfig;
 
 	private volatile Result result = Result.UNKNOWN;
 	private volatile SafetyResult<?, ?> safetyResult;
 
-	CegarAnalysisThread(XCFA xcfa, ConsoleLogger logger, CegarConfiguration configuration) {
+	CegarAnalysisThread(XCFA xcfa, ConsoleLogger logger, CegarConfiguration configuration) throws Exception {
 		this.xcfa = xcfa;
 		this.logger = logger;
 		this.configuration = configuration;
 		this.safetyResult = null;
+		xcfaConfig = configuration.buildConfiguration(xcfa, logger);
 	}
 
 	public Result getResult() {
@@ -32,7 +35,7 @@ class CegarAnalysisThread extends Thread {
 	public void run() {
 		try {
 			try {
-				safetyResult = configuration.buildConfiguration(xcfa, logger).check();
+				safetyResult = xcfaConfig.check();
 
 				if(safetyResult.isUnsafe() || safetyResult.isSafe()) {
 					result = Result.SUCCESS;

@@ -2,16 +2,20 @@ package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -27,15 +31,18 @@ public abstract class AbstractPortfolio {
 	private final File configurationTxt;
 	private final File configurationCsv;
 	protected final String modelName;
+	protected final String smtlibHome;
 
-	public AbstractPortfolio(Logger.Level logLevel, String basicFileName, String modelName) {
+	public AbstractPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibHome) throws Exception {
 		logger = new ConsoleLogger(logLevel);
+		closeAndRegisterAllSolverManagers(smtlibHome, logger);
 		configurationTxt = new File(basicFileName + ".portfolio.txt");
 		configurationCsv = new File(basicFileName + ".portfolio.csv");
 		this.modelName = modelName;
+		this.smtlibHome = smtlibHome;
 	}
 
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime);
+	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
 
 	/**
 	 *
@@ -56,7 +63,13 @@ public abstract class AbstractPortfolio {
 
 		com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
 
-		CegarAnalysisThread cegarAnalysisThread = new CegarAnalysisThread(xcfa, logger, configuration);
+		CegarAnalysisThread cegarAnalysisThread;
+		try {
+			cegarAnalysisThread = new CegarAnalysisThread(xcfa, logger, configuration);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Tuple2.of(Result.UNKNOWN, Optional.empty());
+		}
 
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		cegarAnalysisThread.start();
@@ -86,7 +99,7 @@ public abstract class AbstractPortfolio {
 			Stopwatch dieTimer = Stopwatch.createStarted();
 
 			try {
-				SolverManager.closeAll();
+				closeAndRegisterAllSolverManagers(smtlibHome, logger);
 			} catch (Exception e) {
 				System.err.println("Could not close solver; possible resource leak");
 				e.printStackTrace();
@@ -129,6 +142,7 @@ public abstract class AbstractPortfolio {
 	}
 
 	private void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
+		if(configurationTxt==null) return;
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(configuration);
 		stringBuilder.append(", timeout (ms, cputime): ").append(timeout);
@@ -145,6 +159,7 @@ public abstract class AbstractPortfolio {
 	}
 
 	private void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
+		if(configurationCsv==null) return;
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(modelName).append("\t");
 		stringBuilder.append(configuration).append("\t");
@@ -158,6 +173,17 @@ public abstract class AbstractPortfolio {
 			bw.write(stringBuilder.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
+		SolverManager.closeAll();
+		// register solver managers
+		SolverManager.registerSolverManager(Z3SolverManager.create());
+		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+			final var homePath = Path.of(home);
+			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+			SolverManager.registerSolverManager(smtLibSolverManager);
 		}
 	}
 }

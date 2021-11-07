@@ -40,7 +40,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
@@ -61,7 +60,6 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -214,7 +212,7 @@ public class XcfaCli {
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
-	private Logger logger;
+	private Logger logger = new ConsoleLogger(logLevel);;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -242,29 +240,14 @@ public class XcfaCli {
 			return;
 		}
 
-		final SolverFactory abstractionSolverFactory;
-		final SolverFactory refinementSolverFactory;
-		try {
-			// register solver managers
-			SolverManager.registerSolverManager(Z3SolverManager.create());
-			if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-				final var homePath = Path.of(home);
-				final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
-				SolverManager.registerSolverManager(smtLibSolverManager);
-			}
-
-			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
-			refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-
-		// portfolios and output-results uses these
+		// portfolio and output-results needs a results directory
 		File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-		boolean bool = resultsDir.mkdir();
-		if(!bool){
-			throw new RuntimeException("Couldn't create results directory");
+		// create the directory only, if needed
+		if(portfolio!=Portfolio.NONE || outputResults) {
+			boolean bool = resultsDir.mkdir();
+			if(!bool){
+				throw new RuntimeException("Couldn't create results directory");
+			}
 		}
 		String basicFileName = resultsDir + "/" + model.getName();
 
@@ -284,7 +267,7 @@ public class XcfaCli {
 			statisticscsvfile = new File(basicFileName + ".csv");
 		}
 
-		/// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
+		// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
 		ArchitectureConfig.arithmetic = arithmeticType;
 
 		/// Starting frontend
@@ -364,22 +347,33 @@ public class XcfaCli {
 
 			if(noAnalysis) return;
 
-			/// starting analysis
+			/// Checks, preparation and info output before analysis
 			checkState(xcfaBuilder != null, "XCFA cannot be null");
-			System.err.println("Arithmetic: " + ArchitectureConfig.arithmetic);
 			SafetyResult<?, ?> status = null;
 
 			Duration initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS);
-			System.err.println("Time of model transformation: " + initTime.toMillis() + "ms");
+			logger.write(Logger.Level.RESULT, "Time of model transformation: " + initTime.toMillis() + "ms" + System.lineSeparator());
 			if(xcfa == null) xcfa = xcfaBuilder.build();
 
+			try {
+				registerAllSolverManagers(home, logger);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
+
+			/// starting analysis
 			switch (portfolio) {
 				case NONE:
-					final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
-					status = check(configuration);
+					try {
+						status = executeSingleConfiguration(xcfa);
+					} catch (Exception e) {
+						e.printStackTrace();
+						return;
+					}
 					break;
 				case SEQUENTIAL:
-					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, basicFileName, model.getName());
+					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, basicFileName, model.getName(), home);
 					try {
 						status = sequentialPortfolio.executeAnalysis(xcfa, initTime); // check(configuration);
 					} catch (PortfolioTimeoutException pte) {
@@ -392,7 +386,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, basicFileName, model.getName());
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, basicFileName, model.getName(), home);
 					try {
 						status = complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
@@ -408,10 +402,12 @@ public class XcfaCli {
 					throw new IllegalStateException("Unexpected value: " + portfolio);
 			}
 
-			if (status!=null && status.isUnsafe() && witnessfile!=null) {
-				writeCex(status.asUnsafe(), refinementSolverFactory);
-				writeWitness(status.asUnsafe(), refinementSolverFactory);
-				// writeXcfaWithCex(xcfa, status.asUnsafe());
+			if (status!=null && status.isUnsafe()) {
+				// TODO move this into portfolio/single execution, so the solver here is the successful configuration's solver
+				// registerAllSolverManagers(home, logger);
+				SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory("Z3");
+				writeCex(status.asUnsafe(), cexSolverFactory);
+				writeWitness(status.asUnsafe(), cexSolverFactory);
 			} else if(status!=null && status.isSafe() && witnessfile!=null) {
 				writeDummyCorrectnessWitness();
 			}
@@ -424,6 +420,27 @@ public class XcfaCli {
 		} catch (final Throwable ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public static void registerAllSolverManagers(String home, Logger logger) throws Exception {
+		SolverManager.closeAll();
+		// register solver managers
+		SolverManager.registerSolverManager(Z3SolverManager.create());
+		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+			final var homePath = Path.of(home);
+			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+			SolverManager.registerSolverManager(smtLibSolverManager);
+		}
+	}
+
+	private SafetyResult<?, ?> executeSingleConfiguration(XCFA xcfa) throws Exception {
+		final SolverFactory abstractionSolverFactory;
+		final SolverFactory refinementSolverFactory;
+		abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+		refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+
+		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
+		return check(configuration);
 	}
 
 	private void writeDummyCorrectnessWitness() {
@@ -539,7 +556,6 @@ public class XcfaCli {
 		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
 		if(witnessfile!=null) {
 			final File file = witnessfile;
-			// TODO handle more input flags to get the witness' xml parameters instead of hardcoding them
 			// TODO make WitnessWriter singleton
 			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
 			try {
@@ -554,6 +570,7 @@ public class XcfaCli {
 	}
 
 	// TODO use XCFA instead of CFA
+	/*
 	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
@@ -576,4 +593,5 @@ public class XcfaCli {
 			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
 		}
 	}
+	*/
 }

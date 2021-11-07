@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
@@ -18,16 +19,20 @@ class CegarConfiguration {
 	public final XcfaConfigBuilder.InitPrec initPrec;
 	public final PruneStrategy pruneStrategy;
 	public boolean argCexCheck;
+	public final SolverFactory abstractionSolver;
+	public final SolverFactory refinementSolver;
 
 	CegarConfiguration(XcfaConfigBuilder.Domain domain,
-				  XcfaConfigBuilder.Refinement refinement,
-				  XcfaConfigBuilder.Search search,
-				  XcfaConfigBuilder.PredSplit predSplit,
-				  XcfaConfigBuilder.Algorithm algorithm,
-				  int maxEnum,
-				  XcfaConfigBuilder.InitPrec initPrec,
-				  PruneStrategy pruneStrategy,
-				  boolean argCexCheck) {
+					   XcfaConfigBuilder.Refinement refinement,
+					   XcfaConfigBuilder.Search search,
+					   XcfaConfigBuilder.PredSplit predSplit,
+					   XcfaConfigBuilder.Algorithm algorithm,
+					   int maxEnum,
+					   XcfaConfigBuilder.InitPrec initPrec,
+					   PruneStrategy pruneStrategy,
+					   boolean argCexCheck,
+					   SolverFactory abstractionSolver,
+					   SolverFactory refinementSolver) {
 		this.domain = domain;
 		this.refinement = refinement;
 		this.search = search;
@@ -37,6 +42,8 @@ class CegarConfiguration {
 		this.initPrec = initPrec;
 		this.pruneStrategy = pruneStrategy;
 		this.argCexCheck = argCexCheck;
+		this.abstractionSolver = abstractionSolver;
+		this.refinementSolver = refinementSolver;
 	}
 
 	/** sets up arg cex check and builds configuration */
@@ -49,7 +56,7 @@ class CegarConfiguration {
 		}
 
 		try {
-			return new XcfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance(), algorithm)
+			return new XcfaConfigBuilder(domain, refinement, refinementSolver, abstractionSolver, algorithm)
 					.search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xcfa);
@@ -71,6 +78,8 @@ class CegarConfiguration {
 				", initPrec=" + initPrec +
 				", pruneStrategy=" + pruneStrategy +
 				", argCexCheck=" + argCexCheck +
+				", abstraction solver=" + abstractionSolver +
+				", refinement solver=" + refinementSolver +
 				'}';
 	}
 
