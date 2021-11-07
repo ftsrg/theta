@@ -30,7 +30,9 @@ public class VerifyingUcSolver implements UCSolver {
 		if(check.isSat()) {
 			final Valuation model = solver.getModel();
 			for (Expr<BoolType> assertion : solver.getAssertions()) {
-				checkState(assertion.eval(model).equals(True()), "Solver problem: " + assertion);
+				if(!assertion.eval(model).equals(True())) {
+					throw new RuntimeException("Solver problem: " + assertion);
+				}
 			}
 		}
 		return check;
