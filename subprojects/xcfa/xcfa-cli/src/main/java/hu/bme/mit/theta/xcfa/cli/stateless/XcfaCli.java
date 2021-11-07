@@ -19,11 +19,9 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -41,7 +39,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.solververifying.VerifyingSolverManager;
+import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
@@ -183,6 +181,9 @@ public class XcfaCli {
 
 	@Parameter(names = "--refinement-solver", description = "Sets the underlying SMT solver to use for the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
 	String refinementSolver = "Z3";
+
+	@Parameter(names = "--validate-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+	boolean validateSolver = false;
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
@@ -370,14 +371,18 @@ public class XcfaCli {
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);
 		}
-		SolverManager.registerSolverManager(VerifyingSolverManager.create("mathsat:fp"));
 	}
 
 	private void executeSingleConfiguration(XCFA xcfa) throws Exception {
 		final SolverFactory abstractionSolverFactory;
 		final SolverFactory refinementSolverFactory;
-		abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
-		refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+		if(validateSolver) {
+			abstractionSolverFactory = SolverValidatorWrapperFactory.create(abstractionSolver);
+			refinementSolverFactory = SolverValidatorWrapperFactory.create(refinementSolver);
+		} else {
+			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+			refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+		}
 
 		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
 		SafetyResult<?, ?> status = check(configuration);

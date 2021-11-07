@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
@@ -22,6 +23,33 @@ public class CegarConfiguration {
 	public boolean argCexCheck;
 	public final String abstractionSolver;
 	public final String refinementSolver;
+	public final boolean validateSolver;
+
+	CegarConfiguration(XcfaConfigBuilder.Domain domain,
+					   XcfaConfigBuilder.Refinement refinement,
+					   XcfaConfigBuilder.Search search,
+					   XcfaConfigBuilder.PredSplit predSplit,
+					   XcfaConfigBuilder.Algorithm algorithm,
+					   int maxEnum,
+					   XcfaConfigBuilder.InitPrec initPrec,
+					   PruneStrategy pruneStrategy,
+					   boolean argCexCheck,
+					   String abstractionSolver,
+					   String refinementSolver,
+					   boolean validateSolver) {
+		this.domain = domain;
+		this.refinement = refinement;
+		this.search = search;
+		this.predSplit = predSplit;
+		this.algorithm = algorithm;
+		this.maxEnum = maxEnum;
+		this.initPrec = initPrec;
+		this.pruneStrategy = pruneStrategy;
+		this.argCexCheck = argCexCheck;
+		this.abstractionSolver = abstractionSolver;
+		this.refinementSolver = refinementSolver;
+		this.validateSolver = validateSolver;
+	}
 
 	CegarConfiguration(XcfaConfigBuilder.Domain domain,
 					   XcfaConfigBuilder.Refinement refinement,
@@ -45,6 +73,7 @@ public class CegarConfiguration {
 		this.argCexCheck = argCexCheck;
 		this.abstractionSolver = abstractionSolver;
 		this.refinementSolver = refinementSolver;
+		this.validateSolver = false;
 	}
 
 	/** sets up arg cex check and builds configuration */
@@ -57,7 +86,16 @@ public class CegarConfiguration {
 		}
 
 		try {
-			return new XcfaConfigBuilder(domain, refinement, SolverManager.resolveSolverFactory(refinementSolver), SolverManager.resolveSolverFactory(abstractionSolver), algorithm)
+			SolverFactory refinementSolverFactory;
+			SolverFactory abstractionSolverFactory;
+			if(validateSolver) {
+				refinementSolverFactory = SolverValidatorWrapperFactory.create(refinementSolver);
+				abstractionSolverFactory = SolverValidatorWrapperFactory.create(abstractionSolver);
+			} else {
+				refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+				abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+			}
+			return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
 					.search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xcfa);

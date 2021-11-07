@@ -43,7 +43,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			safetyResult = integerPath(xcfa);
 		}
 		// TODO this will change if we start to use more solvers
-		outputResultFiles(safetyResult, "verify");
+		outputResultFiles(safetyResult, "mathsat:fp");
 		return safetyResult;
 	}
 
@@ -102,8 +102,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"Z3",
+				"Z3"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -125,8 +125,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"Z3",
+				"Z3"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
@@ -149,8 +149,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"Z3",
+				"Z3"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (5.0 / 9.0 * calculateRemainingTime()));
@@ -173,8 +173,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.ALLVARS,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"Z3",
+				"Z3"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (400.0 / 900.0 * calculateRemainingTime()));
@@ -198,8 +198,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"Z3",
+				"Z3"
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (30.0 / 900.0 * calculateRemainingTime()));
@@ -222,8 +222,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
 				true,
-				"verify",
-				"verify"
+				"mathsat:fp",
+				"mathsat:fp",
+				true
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(bitvecConf1, xcfa, calculateRemainingTime());
@@ -243,8 +244,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 					XcfaConfigBuilder.InitPrec.EMPTY,
 					PruneStrategy.FULL,
 					true,
-					"verify",
-					"verify"
+					"mathsat:fp",
+					"mathsat:fp",
+					true
 			);
 
 			result = executeConfiguration(bitvecConf2, xcfa, calculateRemainingTime());

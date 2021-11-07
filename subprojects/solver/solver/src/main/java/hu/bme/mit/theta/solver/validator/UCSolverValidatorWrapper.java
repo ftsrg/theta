@@ -1,14 +1,8 @@
-package hu.bme.mit.theta.solver.solververifying;
+package hu.bme.mit.theta.solver.validator;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpMarkerTree;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
@@ -18,9 +12,9 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-public class VerifyingUcSolver implements UCSolver {
+public class UCSolverValidatorWrapper implements UCSolver {
 	private final UCSolver solver;
-	VerifyingUcSolver(String solver) throws Exception {
+	UCSolverValidatorWrapper(String solver) throws Exception {
 		this.solver = SolverManager.resolveSolverFactory(solver).createUCSolver();
 	}
 
