@@ -228,7 +228,7 @@ final class Z3Solver implements UCSolver, Solver {
 
 	@Override
 	public void close() {
-		z3Context.close();
+		z3Context.interrupt();
 	}
 
 	////
