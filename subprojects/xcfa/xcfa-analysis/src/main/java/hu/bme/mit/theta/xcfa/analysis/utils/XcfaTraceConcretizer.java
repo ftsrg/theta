@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.cli.stateless;
+package hu.bme.mit.theta.xcfa.analysis.utils;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;

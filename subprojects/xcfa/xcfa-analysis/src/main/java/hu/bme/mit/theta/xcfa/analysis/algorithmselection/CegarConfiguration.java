@@ -10,7 +10,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-class CegarConfiguration {
+public class CegarConfiguration {
 	public final XcfaConfigBuilder.Domain domain;
 	public final XcfaConfigBuilder.Refinement refinement;
 	public final XcfaConfigBuilder.Search search;

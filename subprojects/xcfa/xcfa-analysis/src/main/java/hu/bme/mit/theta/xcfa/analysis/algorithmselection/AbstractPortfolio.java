@@ -1,21 +1,28 @@
 package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.solververifying.VerifyingSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
+import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
+import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
@@ -29,21 +36,25 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractPortfolio {
 	protected final ConsoleLogger logger;
-	private final File configurationTxt;
-	private final File configurationCsv;
 	protected final String modelName;
 	protected final String smtlibHome;
 
-	public AbstractPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibHome) throws Exception {
+	public AbstractPortfolio(Logger.Level logLevel, String modelName, String smtlibHome) throws Exception {
 		logger = new ConsoleLogger(logLevel);
 		closeAndRegisterAllSolverManagers(smtlibHome, logger);
-		configurationTxt = new File(basicFileName + ".portfolio.txt");
-		configurationCsv = new File(basicFileName + ".portfolio.csv");
 		this.modelName = modelName;
 		this.smtlibHome = smtlibHome;
 	}
 
 	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
+
+	public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
+		if (status!=null && status.isUnsafe()) {
+			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
+		} else if(status!=null && status.isSafe()) {
+			OutputHandler.getInstance().writeDummyCorrectnessWitness();
+		}
+	}
 
 	/**
 	 *
@@ -137,44 +148,9 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 
-		writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
-		writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+		OutputHandler.getInstance().writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+		OutputHandler.getInstance().writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
 		return Tuple2.of(result, Optional.ofNullable(safetyResult));
-	}
-
-	private void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if(configurationTxt==null) return;
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(configuration);
-		stringBuilder.append(", timeout (ms, cputime): ").append(timeout);
-		stringBuilder.append(", walltime taken (ms): ").append(timeTaken);
-		stringBuilder.append(", cputime taken (s): ").append(cpuTimeTaken);
-		stringBuilder.append(", result: ").append(result);
-		stringBuilder.append(System.lineSeparator());
-
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationTxt, true))) {
-			bw.write(stringBuilder.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if(configurationCsv==null) return;
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(modelName).append("\t");
-		stringBuilder.append(configuration).append("\t");
-		stringBuilder.append(timeout).append("\t");
-		stringBuilder.append(timeTaken).append("\t");
-		stringBuilder.append(cpuTimeTaken).append("\t");
-		stringBuilder.append(result).append("\t");
-		stringBuilder.append(System.lineSeparator());
-
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationCsv, true))) {
-			bw.write(stringBuilder.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {

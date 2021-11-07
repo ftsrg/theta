@@ -19,8 +19,8 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	private final long sumTime = 900*1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
 
-	public SequentialPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibhome) throws Exception {
-		super(logLevel, basicFileName, modelName, smtlibhome); // registers solver factories
+	public SequentialPortfolio(Logger.Level logLevel, String modelName, String smtlibhome) throws Exception {
+		super(logLevel, modelName, smtlibhome); // registers solver factories
 
 		configurations[0] = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
@@ -61,7 +61,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 	}
 
 	@Override
-	public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) {
+	public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception {
 		logger.write(Logger.Level.MAINSTEP, "Executing sequential portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
@@ -87,7 +87,9 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				logger.write(Logger.Level.MAINSTEP, "Sequential portfolio successful, solver: " + configuration);
 				logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
-				return result.get2().get();
+				SafetyResult<?, ?> safetyResult = result.get2().get();
+				outputResultFiles(safetyResult, "Z3");
+				return safetyResult;
 			}
 		}
 		logger.write(Logger.Level.MAINSTEP, "Sequential portfolio was unsuccessful");

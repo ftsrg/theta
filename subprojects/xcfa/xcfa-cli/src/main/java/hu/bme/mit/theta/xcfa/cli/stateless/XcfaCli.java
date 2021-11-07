@@ -28,18 +28,12 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.cli.CfaCli;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
-import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
@@ -51,41 +45,29 @@ import hu.bme.mit.theta.solver.solververifying.VerifyingSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
-import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ModelStatistics;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.Portfolio;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.PortfolioTimeoutException;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
 import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
+import hu.bme.mit.theta.xcfa.analysis.utils.XcfaTraceConcretizer;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
+import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
+import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -122,8 +104,6 @@ public class XcfaCli {
 	File witnessfile = null;
 	File dotwitnessfile = null;
 	File highlightedxcfafile = null;
-	File statisticstxtfile = null;
-	File statisticscsvfile = null;
 	File cfafile = null;
 	File xcfafile = null;
 
@@ -243,13 +223,13 @@ public class XcfaCli {
 
 		// TODO later we might want to merge these two flags
 		if(witnessOnly) {
-			OutputHandler.create(OutputHandler.OutputOptions.WITNESS_ONLY);
+			OutputHandler.create(OutputOptions.WITNESS_ONLY, model);
 		} else if(outputResults) {
-			OutputHandler.create(OutputHandler.OutputOptions.OUTPUT_RESULTS);
+			OutputHandler.create(OutputOptions.OUTPUT_RESULTS, model);
 		} else {
-			OutputHandler.create(OutputHandler.OutputOptions.NONE);
+			OutputHandler.create(OutputOptions.NONE, model);
 		}
-		OutputHandler.getInstance().createResultsDirectory(model);
+		OutputHandler.getInstance().createResultsDirectory();
 
 		// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
 		ArchitectureConfig.arithmetic = arithmeticType;
@@ -318,16 +298,9 @@ public class XcfaCli {
 			}
 
 			// write cfa into file and output statistics about (X)CFA and C input file
-			if(xcfafile!=null && statisticscsvfile!=null && statisticstxtfile!=null) {
-				try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
-					if(xcfa == null) xcfa = xcfaBuilder.build();
-					bw.write(xcfa.toDot());
-				}
-				if(xcfa == null) xcfa = xcfaBuilder.build();
-				ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, model.getName());
-				statistics.writeToCsv(statisticscsvfile);
-				statistics.writeToTxt(statisticstxtfile);
-			}
+			if(xcfa == null) xcfa = xcfaBuilder.build();
+			OutputHandler.getInstance().writeXcfa(xcfa);
+			OutputHandler.getInstance().writeInputStatistics(xcfa);
 
 			if(noAnalysis) return;
 
@@ -337,7 +310,6 @@ public class XcfaCli {
 
 			Duration initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS);
 			logger.write(Logger.Level.RESULT, "Time of model transformation: " + initTime.toMillis() + "ms" + System.lineSeparator());
-			if(xcfa == null) xcfa = xcfaBuilder.build();
 
 			try {
 				registerAllSolverManagers(home, logger);
@@ -357,7 +329,7 @@ public class XcfaCli {
 					}
 					break;
 				case SEQUENTIAL:
-					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, basicFileName, model.getName(), home);
+					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, model.getName(), home);
 					try {
 						sequentialPortfolio.executeAnalysis(xcfa, initTime); // check(configuration);
 					} catch (PortfolioTimeoutException pte) {
@@ -370,7 +342,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, basicFileName, model.getName(), home);
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, model.getName(), home);
 					try {
 						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
@@ -417,63 +389,9 @@ public class XcfaCli {
 		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
 		SafetyResult<?, ?> status = check(configuration);
 		if (status!=null && status.isUnsafe()) {
-			SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
-			writeCex(status.asUnsafe(), cexSolverFactory);
-			writeWitness(status.asUnsafe(), cexSolverFactory);
+			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
 		} else if(status!=null && status.isSafe() && witnessfile!=null) {
-			writeDummyCorrectnessWitness();
-		}
-	}
-
-	private void writeDummyCorrectnessWitness() {
-		String taskHash = WitnessWriter.createTaskHash(model.getAbsolutePath());
-		StringBuilder dummyWitness = new StringBuilder();
-		dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
-				"<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
-				"<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>").append(System.lineSeparator()).append(
-				"<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator()).append(
-				"<default>false</default>").append(System.lineSeparator()).append(
-				"</key>").append(System.lineSeparator()).append(
-				"<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">").append(System.lineSeparator()).append(
-				"<default>false</default>").append(System.lineSeparator()).append(
-				"</key>").append(System.lineSeparator()).append(
-				"<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>").append(System.lineSeparator()).append(
-				"<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
-				"<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator()).append(
-				"<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
-				"<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>").append(System.lineSeparator()).append(
-				"<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
-				"<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
-				"<data key=\"programhash\">");
-				dummyWitness.append(taskHash);
-				dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<data key=\"creationtime\">");
-
-				TimeZone tz = TimeZone.getTimeZone("UTC");
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
-				df.setTimeZone(tz);
-				String ISOdate = df.format(new Date());
-
-				dummyWitness.append(ISOdate);
-				dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<data key=\"programfile\">");
-				dummyWitness.append(model.getName());
-				dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<node id=\"N0\">").append(System.lineSeparator()).append(
-				"<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
-				"</node>").append(System.lineSeparator()).append(
-				"</graph>").append(System.lineSeparator()).append(
-				"</graphml>");
-
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(witnessfile))) {
-			bw.write(dummyWitness.toString());
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+			OutputHandler.getInstance().writeDummyCorrectnessWitness();
 		}
 	}
 

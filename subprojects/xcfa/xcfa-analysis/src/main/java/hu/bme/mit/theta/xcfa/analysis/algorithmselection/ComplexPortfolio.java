@@ -20,8 +20,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private long analysisTime; // in ms, init time subtracted from sumTime
 	private long startCpuTime;
 
-	public ComplexPortfolio(Logger.Level logLevel, String basicFileName, String modelName, String smtlibhome) throws Exception {
-		super(logLevel, basicFileName, modelName, smtlibhome); // registers solver factories
+	public ComplexPortfolio(Logger.Level logLevel, String modelName, String smtlibhome) throws Exception {
+		super(logLevel, modelName, smtlibhome); // registers solver factories
 	}
 
 	@Override
@@ -32,15 +32,19 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
 		analysisTime = sumTime - initializationTime.toMillis();
 
+		SafetyResult<?, ?> safetyResult;
 		if(ArchitectureConfig.arithmetic.equals(ArchitectureConfig.ArithmeticType.bitvector)) {
 			logger.write(Logger.Level.SUBSTEP, "Choosing bitvector arithmetic");
 			logger.write(Logger.Level.SUBSTEP, System.lineSeparator());
-			return bitvectorPath(xcfa);
+			safetyResult = bitvectorPath(xcfa);
 		} else {
 			logger.write(Logger.Level.SUBSTEP, "Choosing integer arithmetic");
 			logger.write(Logger.Level.SUBSTEP, System.lineSeparator());
-			return integerPath(xcfa);
+			safetyResult = integerPath(xcfa);
 		}
+		// TODO this will change if we start to use more solvers
+		outputResultFiles(safetyResult, "verify");
+		return safetyResult;
 	}
 
 	private SafetyResult<?, ?> integerPath(XCFA xcfa) throws Exception {
