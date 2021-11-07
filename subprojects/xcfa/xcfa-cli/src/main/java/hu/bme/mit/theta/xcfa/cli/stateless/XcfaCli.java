@@ -241,32 +241,15 @@ public class XcfaCli {
 			return;
 		}
 
-		// portfolio and output-results needs a results directory
-		File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
-		// create the directory only, if needed
-		if(portfolio!=Portfolio.NONE || outputResults) {
-			boolean bool = resultsDir.mkdir();
-			if(!bool){
-				throw new RuntimeException("Couldn't create results directory");
-			}
-		}
-		String basicFileName = resultsDir + "/" + model.getName();
-
-		/// output results file creation
-		// create filenames, if needed
+		// TODO later we might want to merge these two flags
 		if(witnessOnly) {
-			Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
-			witnessfile = new File(workdir + File.separator + "witness.graphml");
+			OutputHandler.create(OutputHandler.OutputOptions.WITNESS_ONLY);
 		} else if(outputResults) {
-			xcfafile = new File(basicFileName + ".xcfa");
-			cfafile = new File(basicFileName + ".cfa");
-			cexfile = new File(basicFileName + ".cex");
-			witnessfile = new File(basicFileName + ".witness.graphml");
-			dotwitnessfile = new File(basicFileName + ".witness.dot");
-			highlightedxcfafile = new File(basicFileName + ".highlighted.xcfa");
-			statisticstxtfile = new File(basicFileName + ".statistics.txt");
-			statisticscsvfile = new File(basicFileName + ".csv");
+			OutputHandler.create(OutputHandler.OutputOptions.OUTPUT_RESULTS);
+		} else {
+			OutputHandler.create(OutputHandler.OutputOptions.NONE);
 		}
+		OutputHandler.getInstance().createResultsDirectory(model);
 
 		// set arithmetic - if it is on efficient, the parsing will change it to either integer or bitvector
 		ArchitectureConfig.arithmetic = arithmeticType;
@@ -530,67 +513,5 @@ public class XcfaCli {
 		}
 	}
 
-	private void writeCex(final SafetyResult.Unsafe<?, ?> status, SolverFactory concretizer) throws Exception {
-		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, concretizer);
 
-		if(cexfile!=null) {
-			final File file = cexfile;
-			PrintWriter printWriter = null;
-			try {
-				printWriter = new PrintWriter(file);
-				printWriter.write(concrTrace.toString());
-			} finally {
-				if (printWriter != null) {
-					printWriter.close();
-				}
-			}
-		}
-	}
-
-	private void writeWitness(final SafetyResult.Unsafe<?, ?> status, SolverFactory concretizer) throws Exception {
-		@SuppressWarnings("unchecked") final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, concretizer);
-
-		Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
-		if(witnessfile!=null) {
-			final File file = witnessfile;
-			// TODO make WitnessWriter singleton
-			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
-			try {
-				ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
-		if(dotwitnessfile!=null) {
-			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
-		}
-	}
-
-	// TODO use XCFA instead of CFA
-	/*
-	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws Exception {
-		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
-		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, Z3SolverManager.resolveSolverFactory("Z3"));
-		Set<String> cexLocations = new LinkedHashSet<>();
-		Set<XcfaEdge> cexEdges = new LinkedHashSet<>();
-		for (CfaState<ExplState> state : concrTrace.getStates()) {
-			cexLocations.add(state.getLoc().getName());
-		}
-		for (CfaAction action : concrTrace.getActions()) {
-			for (CFA.Edge edge : action.getEdges()) {
-				Set<Object> xcfaEdges = FrontendMetadata.lookupMetadata("cfaEdge", edge);
-				for (Object xcfaEdge : xcfaEdges) {
-					XcfaEdge e = (XcfaEdge) xcfaEdge;
-					cexEdges.add(e);
-				}
-			}
-		}
-		final File file = highlightedxcfafile;
-		try (PrintWriter printWriter = new PrintWriter(file)) {
-			printWriter.write(xcfa.toDot(cexLocations, cexEdges));
-		}
-	}
-	*/
 }
