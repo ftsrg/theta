@@ -18,7 +18,6 @@ include(
         "xcfa/xcfa-analysis",
         "xcfa/xcfa-cli",
         "xcfa/cat",
-        "xcfa/xcfa-utils",
 
         "xta/xta",
         "xta/xta-analysis",

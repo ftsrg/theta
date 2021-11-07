@@ -50,9 +50,6 @@ import hu.bme.mit.theta.xcfa.analysis.algorithmselection.PortfolioTimeoutExcepti
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
-import hu.bme.mit.theta.xcfa.analysis.utils.XcfaTraceConcretizer;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
@@ -100,12 +97,8 @@ public class XcfaCli {
 	@Parameter(names = "--no-analysis", description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
 	boolean noAnalysis = false;
 
-	File cexfile = null;
-	File witnessfile = null;
-	File dotwitnessfile = null;
-	File highlightedxcfafile = null;
-	File cfafile = null;
-	File xcfafile = null;
+	File cexfile = null; // for legacy cfa only
+	File cfafile = null; // for legacy cfa only
 
 	//////////// arithmetic types allowed ////////////
 
@@ -390,7 +383,7 @@ public class XcfaCli {
 		SafetyResult<?, ?> status = check(configuration);
 		if (status!=null && status.isUnsafe()) {
 			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
-		} else if(status!=null && status.isSafe() && witnessfile!=null) {
+		} else if(status!=null && status.isSafe()) {
 			OutputHandler.getInstance().writeDummyCorrectnessWitness();
 		}
 	}
