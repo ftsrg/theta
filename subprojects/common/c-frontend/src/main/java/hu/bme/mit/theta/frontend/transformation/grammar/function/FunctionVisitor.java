@@ -9,9 +9,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
@@ -112,7 +114,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 		List<CParser.ExternalDeclarationContext> globalUsages = GlobalDeclUsageVisitor.instance.getGlobalUsages(ctx);
 
-		BitwiseChecker.instance.checkIfBitwise(globalUsages);
+		// if arithemetic is set on efficient, we change it to either bv or int arithmetic here
+		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
+			BitwiseOption bitwiseOption = BitwiseChecker.instance.checkIfBitwise(globalUsages);
+			ArchitectureConfig.arithmetic = bitwiseOption == BitwiseOption.INTEGER ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector;
+		}
+
 		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
 			CStatement accept = externalDeclarationContext.accept(this);

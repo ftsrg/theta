@@ -6,30 +6,36 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class BitwiseChecker extends CBaseVisitor<Void> {
 	public static final BitwiseChecker instance = new BitwiseChecker();
-	private static boolean isBitwise = false;
+	private static BitwiseOption bitwiseOption = null;
 
-	public boolean checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
-		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
-			isBitwise = false;
+	// checks only once, returns the result of the first check after
+	public BitwiseOption checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
+		if(bitwiseOption == null) {
+			bitwiseOption = BitwiseOption.INTEGER;
 			for (CParser.ExternalDeclarationContext ctx : contexts) {
 				ctx.accept(instance);
 			}
-			ArchitectureConfig.arithmetic = isBitwise ? ArchitectureConfig.ArithmeticType.bitvector : ArchitectureConfig.ArithmeticType.integer;
-			return isBitwise;
-		} else return ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.bitvector;
+			checkState(bitwiseOption!=null);
+			return bitwiseOption;
+		} else return bitwiseOption;
 	}
+
+	// will return null, if not checked with checkIfBitwise() first!
+	public static BitwiseOption getBitwiseOption() { return bitwiseOption; }
 
 	@Override
 	public Void visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
-		isBitwise = true;
+		bitwiseOption = BitwiseOption.BITWISE_FLOAT;
 		return null;
 	}
 
 	@Override
 	public Void visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
-		isBitwise = true;
+		bitwiseOption = BitwiseOption.BITWISE_FLOAT;
 		return null;
 	}
 
@@ -37,7 +43,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 	public Void visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
 		String text = ctx.getText();
 		if(text.contains(".")) {
-			isBitwise = true;
+			bitwiseOption = BitwiseOption.BITWISE_FLOAT;
 			return null;
 		}
 		return super.visitPrimaryExpressionConstant(ctx);
@@ -48,7 +54,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 		ctx.exclusiveOrExpression(0).accept(this);
 		Boolean b = ctx.exclusiveOrExpression().size() > 1;
 		if(b) {
-			isBitwise = true;
+			if(bitwiseOption==BitwiseOption.INTEGER) bitwiseOption = BitwiseOption.BITWISE;
 		}
 		return null;
 	}
@@ -58,7 +64,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 		ctx.andExpression(0).accept(this);
 		Boolean b = ctx.andExpression().size() > 1;
 		if(b) {
-			isBitwise = true;
+			if(bitwiseOption==BitwiseOption.INTEGER) bitwiseOption = BitwiseOption.BITWISE;
 		}
 		return null;
 	}
@@ -68,7 +74,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 		ctx.equalityExpression(0).accept(this);
 		Boolean b = ctx.equalityExpression().size() > 1;
 		if(b) {
-			isBitwise = true;
+			if(bitwiseOption==BitwiseOption.INTEGER) bitwiseOption = BitwiseOption.BITWISE;
 		}
 		return null;
 	}
@@ -78,7 +84,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 		ctx.additiveExpression(0).accept(this);
 		Boolean b = ctx.additiveExpression().size() > 1;
 		if(b) {
-			isBitwise = true;
+			if(bitwiseOption==BitwiseOption.INTEGER) bitwiseOption = BitwiseOption.BITWISE;
 		}
 		return null;
 	}

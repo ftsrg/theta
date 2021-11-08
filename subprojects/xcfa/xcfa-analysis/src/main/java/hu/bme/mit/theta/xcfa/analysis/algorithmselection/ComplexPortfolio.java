@@ -5,6 +5,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
@@ -33,7 +35,10 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		analysisTime = sumTime - initializationTime.toMillis();
 
 		SafetyResult<?, ?> safetyResult;
-		if(ArchitectureConfig.arithmetic.equals(ArchitectureConfig.ArithmeticType.bitvector)) {
+
+		BitwiseOption bitwiseOption = BitwiseChecker.getBitwiseOption();
+		checkState(bitwiseOption!=null);
+		if(bitwiseOption == BitwiseOption.BITWISE || bitwiseOption == BitwiseOption.BITWISE_FLOAT) {
 			logger.write(Logger.Level.SUBSTEP, "Choosing bitvector arithmetic");
 			logger.write(Logger.Level.SUBSTEP, System.lineSeparator());
 			safetyResult = bitvectorPath(xcfa);

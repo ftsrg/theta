@@ -3,6 +3,8 @@ package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -45,6 +47,10 @@ class CegarAnalysisThread extends Thread {
 			} catch (NotSolvableException nse) {
 				safetyResult = null;
 				result = Result.STUCK;
+			} catch (UnknownSolverStatusException | SmtLibSolverException s) {
+				safetyResult = null;
+				result = Result.SOLVERISSUE;
+				s.printStackTrace();
 			} catch (Exception e) {
 				safetyResult = null;
 				result = Result.UNKNOWN;
