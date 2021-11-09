@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.declarative;
 
-import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class XcfaDeclarativeAction extends StmtAction {
+public class XcfaDeclarativeAction extends XcfaAction {
 	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;
 	private final XcfaLocation target;

@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
@@ -41,7 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-public class XcfaDeclarativeState<S extends ExprState> implements ExprState {
+public class XcfaDeclarativeState<S extends ExprState> extends XcfaState<S> {
 	private final boolean unsafe;
 	private final Integer currentProcess;
 	private final XcfaLocation currentLoc;

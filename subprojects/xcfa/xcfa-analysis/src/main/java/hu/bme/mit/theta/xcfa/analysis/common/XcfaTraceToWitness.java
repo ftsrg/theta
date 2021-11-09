@@ -8,14 +8,11 @@ import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +20,14 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class XcfaTraceToWitness {
-	private static Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concreteTrace;
+	private static Trace<XcfaState<ExplState>, XcfaAction> concreteTrace;
 	private static Graph witnessGraph;
 	private static Integer nodeCounter = 0;
 
 	private XcfaTraceToWitness() {}
 
 	public static Graph buildWitness(
-			final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> trace) {
+			final Trace<XcfaState<ExplState>, XcfaAction> trace) {
 		concreteTrace = trace;
 		witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
