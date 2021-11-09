@@ -117,7 +117,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		// if arithemetic is set on efficient, we change it to either bv or int arithmetic here
 		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
 			BitwiseOption bitwiseOption = BitwiseChecker.instance.checkIfBitwise(globalUsages);
-			ArchitectureConfig.arithmetic = bitwiseOption == BitwiseOption.INTEGER ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector;
+			ArchitectureConfig.arithmetic = (bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector;
 		}
 
 		CProgram program = new CProgram();

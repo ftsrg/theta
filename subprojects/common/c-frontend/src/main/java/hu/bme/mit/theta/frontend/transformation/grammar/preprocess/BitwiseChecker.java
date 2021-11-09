@@ -14,14 +14,12 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
 
 	// checks only once, returns the result of the first check after
 	public BitwiseOption checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
-		if(bitwiseOption == null) {
-			bitwiseOption = BitwiseOption.INTEGER;
-			for (CParser.ExternalDeclarationContext ctx : contexts) {
-				ctx.accept(instance);
-			}
-			checkState(bitwiseOption!=null);
-			return bitwiseOption;
-		} else return bitwiseOption;
+		bitwiseOption = BitwiseOption.INTEGER;
+		for (CParser.ExternalDeclarationContext ctx : contexts) {
+			ctx.accept(instance);
+		}
+		checkState(bitwiseOption!=null);
+		return bitwiseOption;
 	}
 
 	// will return null, if not checked with checkIfBitwise() first!
