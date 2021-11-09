@@ -65,9 +65,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplNwtBitvectorConfig("Z3", true, xcfa);
+			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredNwtBitvectorConfig("Z3", true, xcfa);
+				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
 			}
 		} else {
 			result = executePredNwtBitvectorConfig("mathsat:fp", true, xcfa);
@@ -83,16 +83,16 @@ public class ComplexPortfolio extends AbstractPortfolio {
 
 	private SafetyResult<?, ?> bvOnlyPath(XCFA xcfa) throws Exception {
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result;
-		result = executeExplSeqBitvectorConfig("mathsat:5.6.6", true, xcfa);
+		result = executeExplSeqBitvectorConfig("mathsat:5.6.6", false, xcfa);
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplNwtBitvectorConfig("Z3", true, xcfa);
+			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredNwtBitvectorConfig("Z3", true, xcfa);
+				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
 			}
 		} else {
-			result = executePredBwBitvectorConfig("mathsat:5.6.6", true, xcfa);
+			result = executePredBwBitvectorConfig("mathsat:5.6.6", false, xcfa);
 		}
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
