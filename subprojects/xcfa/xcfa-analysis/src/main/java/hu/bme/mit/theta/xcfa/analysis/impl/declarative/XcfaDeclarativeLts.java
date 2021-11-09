@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.impl.declarative;
 
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;

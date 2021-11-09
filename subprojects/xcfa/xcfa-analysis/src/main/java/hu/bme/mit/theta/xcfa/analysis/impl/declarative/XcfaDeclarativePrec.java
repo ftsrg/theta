@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.interleavings;
+package hu.bme.mit.theta.xcfa.analysis.impl.declarative;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -33,18 +33,18 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
-public final class XcfaPrec<P extends Prec> implements Prec {
+public final class XcfaDeclarativePrec<P extends Prec> implements Prec {
 	private final P globalPrec;
 
-	private XcfaPrec(final P globalPrec) {
+	private XcfaDeclarativePrec(final P globalPrec) {
 		this.globalPrec = globalPrec;
 	}
 
-	public static <P extends Prec> XcfaPrec<P> create(final P globalPrec) {
-		return new XcfaPrec<P>(globalPrec);
+	public static <P extends Prec> XcfaDeclarativePrec<P> create(final P globalPrec) {
+		return new XcfaDeclarativePrec<P>(globalPrec);
 	}
 
-	public static XcfaPrec<PredPrec> collectAssumes(XCFA xcfa) {
+	public static XcfaDeclarativePrec<PredPrec> collectAssumes(XCFA xcfa) {
 		Set<Expr<BoolType>> assumes = Containers.createSet();
 		for (XcfaProcess process : xcfa.getProcesses()) {
 			for (XcfaProcedure procedure : process.getProcedures()) {
@@ -58,14 +58,14 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 				}
 			}
 		}
-		return XcfaPrec.create(PredPrec.of(assumes));
+		return XcfaDeclarativePrec.create(PredPrec.of(assumes));
 	}
 
 	public P getGlobalPrec() {
 		return globalPrec;
 	}
 
-	public XcfaPrec<P> refine(P runningPrec) {
+	public XcfaDeclarativePrec<P> refine(P runningPrec) {
 		if (this.globalPrec.equals(runningPrec)) {
 			return this;
 		} else {
@@ -77,7 +77,7 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		XcfaPrec<?> xcfaPrec = (XcfaPrec<?>) o;
+		XcfaDeclarativePrec<?> xcfaPrec = (XcfaDeclarativePrec<?>) o;
 		return Objects.equals(globalPrec, xcfaPrec.globalPrec);
 	}
 
@@ -89,5 +89,10 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() {
 		return globalPrec.getUsedVars();
+	}
+
+	@Override
+	public String toString() {
+		return globalPrec.toString();
 	}
 }

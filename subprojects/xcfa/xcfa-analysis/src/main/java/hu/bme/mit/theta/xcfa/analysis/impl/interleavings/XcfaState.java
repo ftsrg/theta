@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.interleavings;
+package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.analysis.PartialOrd;
