@@ -13,6 +13,9 @@ public abstract class XcfaState<S extends ExprState> implements ExprState {
 
 	public abstract S getGlobalState();
 	public abstract XcfaLocation getCurrentLoc();
+	public boolean isError() {
+		return getCurrentLoc().isErrorLoc();
+	}
 
 	private static class SimpleXcfaState<S extends ExprState> extends XcfaState<S> {
 		private final XcfaLocation currentLoc;;

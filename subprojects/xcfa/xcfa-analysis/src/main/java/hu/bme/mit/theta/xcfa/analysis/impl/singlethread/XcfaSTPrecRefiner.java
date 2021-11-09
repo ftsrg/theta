@@ -22,11 +22,13 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaSTPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<XcfaSTState<S>, A, XcfaSTPrec<P>, R> {
+		implements PrecRefiner<XcfaState<S>, A, XcfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
@@ -40,7 +42,7 @@ public final class XcfaSTPrecRefiner<S extends ExprState, A extends Action, P ex
 	}
 
 	@Override
-	public XcfaSTPrec<P> refine(final XcfaSTPrec<P> prec, final Trace<XcfaSTState<S>, A> trace, final R refutation) {
+	public XcfaPrec<P> refine(final XcfaPrec<P> prec, final Trace<XcfaState<S>, A> trace, final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
