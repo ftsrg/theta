@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.ArrayList;
@@ -10,27 +11,25 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
-public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaDeclarativeState<S>, XcfaDeclarativeAction, XcfaDeclarativePrec<P>> {
+public class XcfaTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
 
-	private final TransFunc<S, ? super XcfaDeclarativeAction, ? super P> transFunc;
+	private final TransFunc<S, ? super XcfaAction, ? super P> transFunc;
 
-	private XcfaDeclarativeTransFunc(final TransFunc<S, ? super XcfaDeclarativeAction, ? super P> transFunc) {
+	private XcfaTransFunc(final TransFunc<S, ? super XcfaAction, ? super P> transFunc) {
 		this.transFunc = checkNotNull(transFunc);
 	}
 
-	public static <S extends ExprState, P extends Prec> XcfaDeclarativeTransFunc<S, P> create(final TransFunc<S, ? super XcfaDeclarativeAction, ? super P> transFunc) {
-		return new XcfaDeclarativeTransFunc<>(transFunc);
+	public static <S extends ExprState, P extends Prec> XcfaTransFunc<S, P> create(final TransFunc<S, ? super XcfaAction, ? super P> transFunc) {
+		return new XcfaTransFunc<>(transFunc);
 	}
 
 	@Override
-	public Collection<? extends XcfaDeclarativeState<S>> getSuccStates(final XcfaDeclarativeState<S> state, final XcfaDeclarativeAction action, final XcfaDeclarativePrec<P> prec) {
+	public Collection<? extends XcfaState<S>> getSuccStates(final XcfaState<S> state, final XcfaAction action, final XcfaPrec<P> prec) {
 		final List<XcfaLabel> stmts = new ArrayList<>();
 
 		final List<XcfaLabel.StartThreadXcfaLabel> startThreadList = new ArrayList<>();
 		final List<XcfaLabel.JoinThreadXcfaLabel> joinThreadList = new ArrayList<>();
-		final List<XcfaLabel> memoryList = new ArrayList<>();
 		Boolean atomicBegin = null;
 
 		for (XcfaLabel label : action.getLabels()) {
@@ -45,20 +44,22 @@ public class XcfaDeclarativeTransFunc<S extends ExprState, P extends Prec> imple
 			} else if (label instanceof XcfaLabel.AtomicEndXcfaLabel) {
 				atomicBegin = false;
 			} else if (label instanceof XcfaLabel.LoadXcfaLabel) {
-				memoryList.add(label);
-				stmts.add(XcfaLabel.Stmt(Havoc(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal())));
+				throw new UnsupportedOperationException("Could not handle label " + label);
+
 			} else if (label instanceof XcfaLabel.StoreXcfaLabel) {
-				memoryList.add(label);
+				throw new UnsupportedOperationException("Could not handle label " + label);
+
 			} else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-				memoryList.add(label);
+				throw new UnsupportedOperationException("Could not handle label " + label);
+
 			} else {
 				throw new UnsupportedOperationException("Could not handle label " + label);
 			}
 		}
 
-		Collection<XcfaDeclarativeState<S>> newStates = new ArrayList<>();
+		Collection<XcfaState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), action.withLabels(stmts), prec.getGlobalPrec())) {
-			final XcfaDeclarativeState<S> newState = state.atomicbegin(atomicBegin).startthreads(startThreadList).jointhreads(joinThreadList).memory(memoryList).advance(succState, action);
+			final XcfaState<S> newState = state.atomicbegin(action.getProcess(), atomicBegin).startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList).advance(succState, action);
 			newStates.add(newState);
 		}
 		return newStates;

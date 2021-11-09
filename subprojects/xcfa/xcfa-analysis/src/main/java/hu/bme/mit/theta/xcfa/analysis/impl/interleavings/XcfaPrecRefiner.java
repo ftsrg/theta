@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -22,25 +22,26 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class XcfaDeclarativePrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<XcfaDeclarativeState<S>, A, XcfaDeclarativePrec<P>, R> {
+public final class XcfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+		implements PrecRefiner<XcfaState<S>, A, XcfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
-	private XcfaDeclarativePrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private XcfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaDeclarativePrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
-		return new XcfaDeclarativePrecRefiner<>(refToPrec);
+		return new XcfaPrecRefiner<>(refToPrec);
 	}
 
 	@Override
-	public XcfaDeclarativePrec<P> refine(final XcfaDeclarativePrec<P> prec, final Trace<XcfaDeclarativeState<S>, A> trace, final R refutation) {
+	public XcfaPrec<P> refine(final XcfaPrec<P> prec, final Trace<XcfaState<S>, A> trace, final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);

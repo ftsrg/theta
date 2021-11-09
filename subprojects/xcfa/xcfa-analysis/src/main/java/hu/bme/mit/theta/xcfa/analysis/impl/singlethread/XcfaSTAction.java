@@ -13,9 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
-import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -28,23 +27,19 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class XcfaDeclarativeAction extends StmtAction {
+public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
 	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	protected XcfaDeclarativeAction(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+	protected XcfaSTAction(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.labels = checkNotNull(labels);
 	}
 
-	public static XcfaDeclarativeAction create(final XcfaEdge edge) {
-		return new XcfaDeclarativeAction(edge.getSource(), edge.getTarget(), edge.getLabels());
-	}
-
-	public static XcfaDeclarativeAction createThreadChange(final Integer process, final XcfaEdge edge) {
-		return new XcfaDeclarativeThreadChangeAction(process, edge.getSource(), edge.getTarget(), edge.getLabels());
+	public static XcfaSTAction create(final XcfaEdge edge) {
+		return new XcfaSTAction(edge.getSource(), edge.getTarget(), edge.getLabels());
 	}
 
 	public XcfaLocation getSource() {
@@ -69,28 +64,15 @@ public class XcfaDeclarativeAction extends StmtAction {
 		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
 	}
 
-	public XcfaDeclarativeAction withLabels(final List<XcfaLabel> stmts) {
-		return new XcfaDeclarativeAction(source, target, stmts);
-	}
-
-	public static class XcfaDeclarativeThreadChangeAction extends XcfaDeclarativeAction {
-		private final Integer process;
-
-		private XcfaDeclarativeThreadChangeAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
-			super(source, target, labels);
-			this.process = process;
-		}
-
-		public Integer getProcess() {
-			return process;
-		}
+	public XcfaSTAction withLabels(final List<XcfaLabel> stmts) {
+		return new XcfaSTAction(source, target, stmts);
 	}
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		XcfaDeclarativeAction that = (XcfaDeclarativeAction) o;
+		XcfaSTAction that = (XcfaSTAction) o;
 		return labels.equals(that.labels) && source.equals(that.source) && target.equals(that.target);
 	}
 

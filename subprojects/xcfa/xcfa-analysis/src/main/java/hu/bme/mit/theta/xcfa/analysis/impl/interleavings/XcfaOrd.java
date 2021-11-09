@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.interleavings;
+package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;

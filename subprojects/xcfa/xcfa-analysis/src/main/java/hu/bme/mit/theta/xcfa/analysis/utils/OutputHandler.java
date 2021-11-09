@@ -11,9 +11,9 @@ import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CegarConfiguration;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ModelStatistics;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.Result;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeAction;
-import hu.bme.mit.theta.xcfa.analysis.declarative.XcfaDeclarativeState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
@@ -91,8 +91,8 @@ public final class OutputHandler {
 	public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
 		if(outputConfiguration==OutputOptions.NONE) return;
 		SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
-		final Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction> trace = (Trace<XcfaDeclarativeState<?>, XcfaDeclarativeAction>) status.asUnsafe().getTrace();
-		final Trace<XcfaDeclarativeState<ExplState>, XcfaDeclarativeAction> concrTrace = XcfaTraceConcretizer.concretize(trace, cexSolverFactory);
+		final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe().getTrace();
+		final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(trace, cexSolverFactory);
 
 		if(outputConfiguration==OutputOptions.WITNESS_ONLY) {
 			Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();

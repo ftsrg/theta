@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.interleavings;
+package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -22,21 +22,23 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class XcfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+public final class XcfaSTPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<XcfaState<S>, A, XcfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
-	private XcfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private XcfaSTPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaPrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaSTPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
-		return new XcfaPrecRefiner<>(refToPrec);
+		return new XcfaSTPrecRefiner<>(refToPrec);
 	}
 
 	@Override

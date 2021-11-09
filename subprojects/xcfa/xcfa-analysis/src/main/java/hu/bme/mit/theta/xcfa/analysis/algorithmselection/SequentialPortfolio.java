@@ -4,8 +4,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -27,7 +25,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
 				XcfaConfigBuilder.Search.ERR,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.DECL,
+				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -39,7 +37,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
 				XcfaConfigBuilder.Search.ERR,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.DECL,
+				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -51,7 +49,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
 				XcfaConfigBuilder.Refinement.NWT_IT_WP,
 				XcfaConfigBuilder.Search.ERR,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.DECL,
+				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.declarative;
+package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
@@ -63,8 +63,8 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 	}
 
 	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-		checkArgument(node.getState() instanceof XcfaDeclarativeState, "XcfaDeclarativeState expected.");
-		final XcfaDeclarativeState<?> state = (XcfaDeclarativeState<?>) node.getState();
+		checkArgument(node.getState() instanceof XcfaSTState, "XcfaSTState expected.");
+		final XcfaSTState<?> state = (XcfaSTState<?>) node.getState();
 		final int distanceToError = getDistanceToError(state.getCurrentLoc());
 		if (distanceToError == Integer.MAX_VALUE) {
 			return distanceToError;

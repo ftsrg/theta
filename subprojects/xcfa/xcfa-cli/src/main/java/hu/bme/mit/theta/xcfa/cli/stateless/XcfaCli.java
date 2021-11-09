@@ -169,7 +169,7 @@ public class XcfaCli {
 	boolean preCheck = true;
 
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
-	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.DECL;
+	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
 	//////////// SMTLib options ////////////
 
