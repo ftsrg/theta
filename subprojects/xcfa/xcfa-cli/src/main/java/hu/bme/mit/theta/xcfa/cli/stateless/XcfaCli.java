@@ -182,8 +182,11 @@ public class XcfaCli {
 	@Parameter(names = "--refinement-solver", description = "Sets the underlying SMT solver to use for the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
 	String refinementSolver = "Z3";
 
-	@Parameter(names = "--validate-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-	boolean validateSolver = false;
+	@Parameter(names = "--validate-refinement-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+	boolean validateRefinementSolver = false;
+
+	@Parameter(names = "--validate-abstraction-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+	boolean validateAbstractionSolver = false;
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
@@ -376,12 +379,15 @@ public class XcfaCli {
 	private void executeSingleConfiguration(XCFA xcfa) throws Exception {
 		final SolverFactory abstractionSolverFactory;
 		final SolverFactory refinementSolverFactory;
-		if(validateSolver) {
-			abstractionSolverFactory = SolverValidatorWrapperFactory.create(abstractionSolver);
+		if(validateRefinementSolver) {
 			refinementSolverFactory = SolverValidatorWrapperFactory.create(refinementSolver);
 		} else {
-			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
 			refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+		}
+		if(validateAbstractionSolver) {
+			abstractionSolverFactory = SolverValidatorWrapperFactory.create(abstractionSolver);
+		} else {
+			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
 		}
 
 		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
