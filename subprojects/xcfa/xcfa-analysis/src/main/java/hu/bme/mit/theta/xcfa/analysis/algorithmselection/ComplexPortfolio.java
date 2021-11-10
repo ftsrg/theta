@@ -61,16 +61,16 @@ public class ComplexPortfolio extends AbstractPortfolio {
 
 	private SafetyResult<?, ?> fpbvPath(XCFA xcfa) throws Exception {
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result;
-		result = executeExplBitvectorConfig("mathsat:fp", true, xcfa);
+		result = executeExplNwtBitvectorConfig("mathsat:fp", true, xcfa);
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplBitvectorConfig("Z3", true, xcfa);
+			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredBitvectorConfig("Z3", true, xcfa);
+				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
 			}
 		} else {
-			result = executePredBitvectorConfig("mathsat:fp", true, xcfa);
+			result = executePredNwtBitvectorConfig("mathsat:fp", true, xcfa);
 		}
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
@@ -83,16 +83,16 @@ public class ComplexPortfolio extends AbstractPortfolio {
 
 	private SafetyResult<?, ?> bvOnlyPath(XCFA xcfa) throws Exception {
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result;
-		result = executeExplBitvectorConfig("mathsat:5.6.6", true, xcfa);
+		result = executeExplSeqBitvectorConfig("mathsat:5.6.6", false, xcfa);
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplBitvectorConfig("Z3", true, xcfa);
+			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredBitvectorConfig("Z3", true, xcfa);
+				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
 			}
 		} else {
-			result = executePredBitvectorConfig("mathsat:5.6.6", true, xcfa);
+			result = executePredBwBitvectorConfig("mathsat:5.6.6", false, xcfa);
 		}
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
@@ -103,10 +103,10 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		}
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executeExplBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executeExplSeqBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
-				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
+				XcfaConfigBuilder.Refinement.SEQ_ITP, // TODO refinement
 				XcfaConfigBuilder.Search.ERR,
 				XcfaConfigBuilder.PredSplit.WHOLE,
 				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
@@ -119,7 +119,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime()); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime())); // TODO time
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
@@ -128,7 +128,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		return result;
 	}
 
-	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executePredBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executeExplNwtBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
@@ -144,7 +144,57 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime()); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime())); // TODO time
+		if(result.get1().equals(Result.SUCCESS)) {
+			checkState(result.get2().isPresent());
+			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
+			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		}
+		return result;
+	}
+
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executePredBwBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
+		CegarConfiguration explConfiguration = new CegarConfiguration(
+				XcfaConfigBuilder.Domain.EXPL,
+				XcfaConfigBuilder.Refinement.BW_BIN_ITP, // TODO refinement
+				XcfaConfigBuilder.Search.ERR,
+				XcfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				1,
+				XcfaConfigBuilder.InitPrec.EMPTY,
+				PruneStrategy.LAZY,
+				true,
+				solver,
+				solver,
+				verify
+		);
+
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (2.0/3.0*calculateRemainingTime())); // TODO time
+		if(result.get1().equals(Result.SUCCESS)) {
+			checkState(result.get2().isPresent());
+			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
+			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		}
+		return result;
+	}
+
+	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executePredNwtBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
+		CegarConfiguration explConfiguration = new CegarConfiguration(
+				XcfaConfigBuilder.Domain.EXPL,
+				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
+				XcfaConfigBuilder.Search.ERR,
+				XcfaConfigBuilder.PredSplit.WHOLE,
+				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				1,
+				XcfaConfigBuilder.InitPrec.EMPTY,
+				PruneStrategy.LAZY,
+				true,
+				solver,
+				solver,
+				verify
+		);
+
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (2.0/3.0*calculateRemainingTime())); // TODO time
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
