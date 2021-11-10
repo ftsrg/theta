@@ -7,7 +7,6 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 
 import java.nio.file.Path;

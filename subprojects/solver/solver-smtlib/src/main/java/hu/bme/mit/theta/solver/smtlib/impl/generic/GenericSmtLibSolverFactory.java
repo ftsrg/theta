@@ -11,10 +11,16 @@ import java.nio.file.Path;
 public class GenericSmtLibSolverFactory implements SolverFactory {
     protected final Path solverPath;
     protected final String[] args;
+    private final boolean isCvc4;
 
     protected GenericSmtLibSolverFactory(Path solverPath, String[] args) {
+        this(solverPath, args, false);
+    }
+
+    protected GenericSmtLibSolverFactory(Path solverPath, String[] args, boolean isCvc4) {
         this.solverPath = solverPath;
         this.args = args;
+        this.isCvc4 = isCvc4;
     }
 
     public static GenericSmtLibSolverFactory create(Path solverPath, String[] args) {
@@ -26,7 +32,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, isCvc4);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
     }
@@ -36,7 +42,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, isCvc4);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
     }

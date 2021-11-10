@@ -22,13 +22,17 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     private final ProcessHandler processHandler;
 
     public GenericSmtLibSolverBinary(final Path solverPath, final String[] args) {
+        this(solverPath, args, false);
+    }
+
+    public GenericSmtLibSolverBinary(final Path solverPath, final String[] args, final boolean isCvc4) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
 
         final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 
-        processHandler = new ProcessHandler();
+        processHandler = new ProcessHandler(isCvc4);
         solverProcessBuilder.setProcessListener(processHandler);
 
         solverProcess = solverProcessBuilder.start();
@@ -62,6 +66,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
         private final Queue<String> outputQueue = new LinkedList<>();
         private ReadProcessor readProcessor = null;
+        private final boolean isCvc4;
+
+        public ProcessHandler(final boolean isCvc4) {
+            this.isCvc4 = isCvc4;
+        }
 
         public synchronized void write(final String input) {
             inputQueue.add(input);
@@ -94,11 +103,12 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
             onInput(buffer);
         }
-
+        private int isFp = 0;
         private synchronized void onInput(final ByteBuffer buffer) {
             final var buf = new byte[buffer.remaining()];
             buffer.get(buf);
             final var input = new String(buf, StandardCharsets.US_ASCII);
+
 
             for(var c : input.toCharArray()) {
                 if(readProcessor == null) {
@@ -106,8 +116,20 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                 }
 
                 readProcessor.step(c);
+                if(isCvc4) {
+                    if (c == 'f') {
+                        isFp = 1;
+                    } else if (isFp == 1 && c == 'p') {
+                        isFp = 2;
+                    } else if (isFp == 2 && c == ')') {
+                        isFp = 0;
+                        readProcessor.step(c);
+                    }
+                }
+
 
                 if(readProcessor.isReady()) {
+                    isFp = 0;
                     outputQueue.add(readProcessor.getResult());
                     notifyAll();
                     readProcessor = null;

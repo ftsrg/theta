@@ -7,7 +7,7 @@ import java.nio.file.Path;
 
 public class CVC4SmtLibSolverFactory extends GenericSmtLibSolverFactory {
     private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {
-        super(solverPath, args);
+        super(solverPath, args, true);
     }
 
     public static CVC4SmtLibSolverFactory create(Path solverPath, String[] args) {
