@@ -59,11 +59,22 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 		this.edges = Collections.unmodifiableList(edgeList);
 	}
 
+	private ArgTrace(List<ArgNode<S, A>> nodes, List<ArgEdge<S, A>> edges){
+		this.nodes = nodes;
+		this.edges = edges;
+	}
+
 	////
 
 	public static <S extends State, A extends Action> ArgTrace<S, A> to(final ArgNode<S, A> node) {
 		checkNotNull(node);
 		return new ArgTrace<>(node);
+	}
+
+	public static <S extends State, A extends Action> ArgTrace<S, A> to(final List<ArgNode<S, A>> nodes, final List<ArgEdge<S, A>> edges) {
+		checkNotNull(nodes);
+		checkNotNull(edges);
+		return new ArgTrace<>(nodes, edges);
 	}
 
 	////

@@ -4,8 +4,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -33,7 +35,12 @@ import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class XstsCli {
@@ -99,6 +106,9 @@ public class XstsCli {
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
 
+	@Parameter(names = "--allpaths", description = "generate all paths leading to the target state")
+	boolean generateAllPaths = false;
+
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
@@ -148,8 +158,14 @@ public class XstsCli {
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(status.asUnsafe(), xsts);
+			if(generateAllPaths){
+				if (status.isUnsafe() && cexfile != null) {
+					writeAllPathsToTargetStateCex(status.asUnsafe(), xsts);
+				}
+			} else {
+				if (status.isUnsafe() && cexfile != null) {
+					writeCex(status.asUnsafe(), xsts);
+				}
 			}
 			if (dotfile != null) {
 				writeVisualStatus(status, dotfile);
@@ -250,10 +266,25 @@ public class XstsCli {
 	private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 
 		@SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-		final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
+		final XstsStateSequence concrateTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
 		final File file = new File(cexfile);
 		try (PrintWriter printWriter = new PrintWriter(file)) {
-			printWriter.write(concrTrace.toString());
+			printWriter.write(concrateTrace.toString());
+		}
+	}
+
+	private void writeAllPathsToTargetStateCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
+		final List<ArgTrace<XstsState<?>, XstsAction>> traces= getTraces(status.getArg());
+		final File file = new File(cexfile);
+		StringBuilder fileContent = new StringBuilder();
+		for(ArgTrace<XstsState<?>, XstsAction> trace: traces)
+		{
+			final XstsStateSequence concrateTrace = XstsTraceConcretizerUtil.concretize(trace.toTrace(), Z3SolverFactory.getInstance(), xsts);
+			fileContent.append(concrateTrace.toString());
+			fileContent.append(System.lineSeparator());
+		}
+		try (PrintWriter printWriter = new PrintWriter(file)){
+			printWriter.write(fileContent.toString());
 		}
 	}
 
@@ -262,6 +293,37 @@ public class XstsCli {
 		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
 				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
+	}
+
+	private List<ArgTrace<XstsState<?>, XstsAction>> getTraces(ARG arg){
+		List<ArgTrace<XstsState<?>, XstsAction>>  traces = new ArrayList<>();
+		List<ArgNode<XstsState<?>, XstsAction>> inits = (List<ArgNode<XstsState<?>, XstsAction>>) arg.getInitNodes().collect(Collectors.toList());
+		for(ArgNode<XstsState<?>, XstsAction> init : inits){
+			traces.addAll(getPathsToTarget(init, new ArrayList<>(), new ArrayList<>()));
+		}
+		return traces;
+	}
+
+	private Collection<? extends ArgTrace<XstsState<?>, XstsAction>> getPathsToTarget(ArgNode<XstsState<?>, XstsAction> node, List<ArgNode<XstsState<?>, XstsAction>> prevNodes, List<ArgEdge<XstsState<?>, XstsAction>> prevEdges) {
+		List<ArgTrace<XstsState<?>, XstsAction>> traces = new ArrayList<>();
+		if(node.isTarget()){
+			final List<ArgNode<XstsState<?>, XstsAction>> nodeList =  new ArrayList<>(prevNodes);
+			nodeList.add(node);
+			return Collections.singleton( ArgTrace.to(nodeList,prevEdges));
+		}
+		for(ArgEdge<XstsState<?>, XstsAction> out: node.getOutEdges().collect(Collectors.toList())){
+			final List<ArgNode<XstsState<?>, XstsAction>> nodeList =  new ArrayList<>(prevNodes);
+			final List<ArgEdge<XstsState<?>, XstsAction>> edgeList =  new ArrayList<>(prevEdges);
+			nodeList.add(node);
+			edgeList.add(out);
+			traces.addAll(getPathsToTarget(out.getTarget(),nodeList,edgeList));
+		}
+		if(node.getCoveringNode().isPresent() && !prevNodes.contains(node.getCoveringNode().get())){
+			final List<ArgNode<XstsState<?>, XstsAction>> nodeList =  new ArrayList<>(prevNodes);
+			final List<ArgEdge<XstsState<?>, XstsAction>> edgeList =  new ArrayList<>(prevEdges);
+			traces.addAll(getPathsToTarget(node.getCoveringNode().get(),nodeList,edgeList));
+		}
+		return traces;
 	}
 
 }
