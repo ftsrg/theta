@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -49,6 +50,7 @@ public class ReferenceToMemory extends ProcedurePass{
 		VarDecl<?> placeholderVariable = Var("placeholder", ptr.getSmtType());
 
 		Set<RefExpr<?>> dereferenced = FrontendMetadata.lookupMetadata("dereferenced", true).stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
+		if(dereferenced.size() > 0 && ArchitectureConfig.multiThreading) throw new UnsupportedOperationException("Pointers and multithreading do not yet mix!");
 		for (RefExpr<?> refExpr : dereferenced) {
 			addDereferencedToPointers(refExpr);
 		}

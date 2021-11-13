@@ -1,6 +1,6 @@
 void reach_error(){}
-int nondetint();
+int __VERIFIER_nondet();
 int main() {
-    int a = nondetint();
+    int a = __VERIFIER_nondet();
     if((char)a) reach_error();
 }
