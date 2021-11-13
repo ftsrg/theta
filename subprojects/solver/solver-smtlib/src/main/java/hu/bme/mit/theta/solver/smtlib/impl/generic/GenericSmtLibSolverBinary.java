@@ -124,6 +124,8 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                     } else if (isFp == 2 && c == ')') {
                         isFp = 0;
                         readProcessor.step(c);
+                    } else {
+                        isFp = 0;
                     }
                 }
 
