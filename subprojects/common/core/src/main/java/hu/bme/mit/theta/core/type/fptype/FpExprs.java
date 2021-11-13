@@ -127,6 +127,10 @@ public final class FpExprs {
 		return FpIsNanExpr.of(op);
 	}
 
+	public static FpIsInfiniteExpr IsInfinite(final Expr<FpType> op) {
+		return FpIsInfiniteExpr.of(op);
+	}
+
 	public static FpRoundToIntegralExpr RoundToIntegral(final FpRoundingMode roundingMode, final Expr<FpType> op) {
 		return FpRoundToIntegralExpr.of(roundingMode, op);
 	}

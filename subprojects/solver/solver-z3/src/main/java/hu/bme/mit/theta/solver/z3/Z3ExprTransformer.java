@@ -91,6 +91,7 @@ import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
@@ -369,6 +370,8 @@ final class Z3ExprTransformer {
 				.addCase(FpRemExpr.class, this::transformFpRem)
 
 				.addCase(FpIsNanExpr.class, this::transformFpIsNan)
+
+				.addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
 
 				.addCase(FpFromBvExpr.class, this::transformFpFromBv)
 
@@ -994,6 +997,11 @@ final class Z3ExprTransformer {
 	private com.microsoft.z3.Expr transformFpIsNan(final FpIsNanExpr expr) {
 		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
 		return context.mkFPIsNaN(opTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPIsInfinite(opTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
