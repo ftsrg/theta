@@ -103,6 +103,10 @@ public final class FpExprs {
 		return FpEqExpr.of(leftOp, rightOp);
 	}
 
+	public static FpAssignExpr FpAssign(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return FpAssignExpr.of(leftOp, rightOp);
+	}
+
 	public static FpNeqExpr Neq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		return FpNeqExpr.of(leftOp, rightOp);
 	}

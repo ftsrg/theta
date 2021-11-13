@@ -71,6 +71,9 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		addHandler(new String[]{"isnormal"}, FpFunctionsToExprs::handleIsnormal);
 		addHandler(new String[]{"isinf"}, FpFunctionsToExprs::handleIsinf);
 		addHandler(new String[]{"isfinite"}, FpFunctionsToExprs::handleIsfinite);
+		addHandler(new String[]{"__fpclassify"}, FpFunctionsToExprs::handleFpclassify);
+		addHandler(new String[]{"__fpclassifyf"}, FpFunctionsToExprs::handleFpclassify);
+		addHandler(new String[]{"__fpclassifyl"}, FpFunctionsToExprs::handleFpclassify);
 	}
 
 	private static XcfaLabel handleTrunc(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
@@ -122,6 +125,11 @@ public class FpFunctionsToExprs extends ProcedurePass {
 	}
 
 	private static XcfaLabel handleIsnormal(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		throw new UnsupportedOperationException();
+	}
+
+
+	private static XcfaLabel handleFpclassify(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.PushPopVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
@@ -50,6 +51,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -110,7 +112,12 @@ final class StmtToExprTransformer {
             final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
             final Expr<DeclType> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
 
-            final Expr<BoolType> expr = Eq(lhs, rhs);
+            final Expr<BoolType> expr;
+            if(varDecl.getType() instanceof FpType) {
+                expr = FpAssign(TypeUtils.cast(lhs, (FpType)varDecl.getType()), TypeUtils.cast(rhs, (FpType)varDecl.getType()));
+            } else {
+                expr = Eq(lhs, rhs);
+            }
             return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
         }
 
