@@ -86,6 +86,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
@@ -346,6 +347,8 @@ final class Z3ExprTransformer {
 				.addCase(FpDivExpr.class, this::transformFpDiv)
 
 				.addCase(FpEqExpr.class, this::transformFpEq)
+
+				.addCase(FpAssignExpr.class, this::transformFpAssign)
 
 				.addCase(FpGeqExpr.class, this::transformFpGeq)
 
@@ -1039,6 +1042,12 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 		return context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpAssign(final FpAssignExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkEq(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpNeq(final FpNeqExpr expr) {

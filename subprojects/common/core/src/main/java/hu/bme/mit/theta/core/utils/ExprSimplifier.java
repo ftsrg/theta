@@ -75,6 +75,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
@@ -311,6 +312,8 @@ public final class ExprSimplifier {
 			.addCase(FpDivExpr.class, ExprSimplifier::simplifyFpDiv)
 
 			.addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
+
+			.addCase(FpAssignExpr.class, ExprSimplifier::simplifyFpAssign)
 
 			.addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq)
 
@@ -1980,6 +1983,17 @@ public final class ExprSimplifier {
 	}
 
 	private static Expr<BoolType> simplifyFpEq(final FpEqExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return Bool(leftOp.equals(rightOp));
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
 		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
 		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 

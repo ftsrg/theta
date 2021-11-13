@@ -66,6 +66,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
@@ -325,6 +326,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(FpDivExpr.class, this::transformFpDiv)
 
                 .addCase(FpEqExpr.class, this::transformFpEq)
+
+                .addCase(FpAssignExpr.class, this::transformFpAssign)
 
                 .addCase(FpGeqExpr.class, this::transformFpGeq)
 
@@ -988,6 +991,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformFpEq(final FpEqExpr expr) {
         return String.format("(fp.eq %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformFpAssign(final FpAssignExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformFpNeq(final FpNeqExpr expr) {
