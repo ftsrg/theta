@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.analysis.common;
 
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -15,6 +16,11 @@ public abstract class XcfaState<S extends ExprState> implements ExprState {
 	public abstract XcfaLocation getCurrentLoc();
 	public boolean isError() {
 		return getCurrentLoc().isErrorLoc();
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder("XcfaState").add(getCurrentLoc()).add(getGlobalState()).toString();
 	}
 
 	private static class SimpleXcfaState<S extends ExprState> extends XcfaState<S> {
