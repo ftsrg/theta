@@ -54,6 +54,29 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 			}
 		}
 
+		boolean found = true;
+		while(found) {
+			found = false;
+			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+				if (edge.getLabels().size() == 0 && edge.getSource().getOutgoingEdges().size() == 1 && edge.getTarget().getIncomingEdges().size() == 1 &&
+					!edge.getTarget().isErrorLoc() && !edge.getTarget().isEndLoc()) {
+					builder.removeEdge(edge);
+					for (XcfaEdge outgoingEdge : new ArrayList<>(edge.getTarget().getOutgoingEdges())) {
+						builder.removeEdge(outgoingEdge);
+						builder.addEdge(outgoingEdge.withSource(edge.getSource()));
+					}
+					found = true;
+					break;
+				}
+			}
+		}
+
+		for (XcfaLocation loc : new ArrayList<>(builder.getLocs())) {
+			if(loc.getOutgoingEdges().size() == 0 && loc.getIncomingEdges().size() == 0 && !loc.isErrorLoc() && !loc.isEndLoc()) {
+				builder.removeLoc(loc);
+			}
+		}
+
 		return removeEmptySequences(builder);
 	}
 

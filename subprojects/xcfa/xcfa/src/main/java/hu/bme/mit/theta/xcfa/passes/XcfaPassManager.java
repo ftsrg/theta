@@ -11,11 +11,11 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.GlobalVarsToStoreLoad;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.InitMemory;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.NoReadVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.PorPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
 import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
@@ -46,6 +47,7 @@ public class XcfaPassManager {
 		procedurePasses.addAll(List.of(
 				new EliminateSelfLoops(),
 				new PthreadCallsToThreadStmts(),
+				new VerifierFunctionsToLabels(),
 				new ReferenceToMemory(),
 				new InitMemory(),
 				new FpFunctionsToExprs(),
@@ -64,11 +66,14 @@ public class XcfaPassManager {
 				new SimplifyExprs(),
 				new EmptyEdgeRemovalPass(),
 				new SimpleLbePass(),
+				new PorPass(),
 				new HavocPromotion(),
 				new AssignmentChainRemoval(),
 				new NoReadVarRemovalPass(),
-				new GlobalVarsToStoreLoad(),
-				new UnusedVarRemovalPass()
+//				new GlobalVarsToStoreLoad(),
+				new UnusedVarRemovalPass(),
+				new EmptyEdgeRemovalPass(),
+				new RemoveDeadEnds()
 				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
