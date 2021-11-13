@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -12,6 +13,7 @@ import java.util.List;
 public class PorPass extends ProcedurePass{
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		if(!ArchitectureConfig.multiThreading) return builder;
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<XcfaLabel> newLabels = new ArrayList<>();
 			boolean removed = false;
