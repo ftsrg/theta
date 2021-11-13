@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class XcfaState<S extends ExprState> implements ExprState {
+public class XcfaState<S extends ExprState> extends hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> {
 	private final Map<Integer, XcfaLocation> processLocs;
 	private final Collection<Integer> enabledProcesses;
 	private final Collection<Integer> oldEnabledProcesses;
@@ -108,6 +108,11 @@ public class XcfaState<S extends ExprState> implements ExprState {
 
 	public S getGlobalState() {
 		return globalState;
+	}
+
+	@Override
+	public XcfaLocation getCurrentLoc() {
+		return lastAction == null ? processLocs.get(enabledProcesses.stream().findAny().get()) : lastAction.getTarget();
 	}
 
 	public Map<VarDecl<?>, Integer> getThreadLookup() {

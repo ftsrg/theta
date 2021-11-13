@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.stmt.PopStmt;
 import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -23,6 +24,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -147,5 +150,9 @@ public class LabelUtils {
 		Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
 		getAssortedVars(label, assignedToVars, usedUpVars);
 		return Tuple2.of(assignedToVars, usedUpVars);
+	}
+
+	public static boolean isNotLocal(XcfaLabel label, Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
+		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> !localVars.containsKey(varDecl));
 	}
 }
