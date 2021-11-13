@@ -161,7 +161,7 @@ public class XcfaCli {
 	boolean legacy = false;
 
 	//////////// XCFA options (experimental) ////////////
-//
+
 //	@Parameter(names = "--load-store", description = "Map global memory accesses to loads and stores")
 //	boolean loadStore = false;
 

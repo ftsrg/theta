@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
@@ -43,6 +44,7 @@ import java.util.function.BiFunction;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
@@ -64,6 +66,63 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		addHandler(new String[]{"sqrt", "sqrtf", "sqrtl"}, FpFunctionsToExprs::handleSqrt);
 		addHandler(new String[]{"round", "roundf", "roundl"}, FpFunctionsToExprs::handleRound);
 		addHandler(new String[]{"isnan"}, FpFunctionsToExprs::handleIsnan);
+		addHandler(new String[]{"trunc"}, FpFunctionsToExprs::handleTrunc);
+		addHandler(new String[]{"ceil"}, FpFunctionsToExprs::handleCeil);
+		addHandler(new String[]{"isnormal"}, FpFunctionsToExprs::handleIsnormal);
+		addHandler(new String[]{"isinf"}, FpFunctionsToExprs::handleIsinf);
+		addHandler(new String[]{"isfinite"}, FpFunctionsToExprs::handleIsfinite);
+	}
+
+	private static XcfaLabel handleTrunc(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		checkState(callStmt.getParams().size() == 2, "Function is presumed to be unary!");
+		Expr<?> expr = callStmt.getParams().get(0);
+		checkState(expr instanceof RefExpr);
+		//noinspection unchecked
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(),
+				FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, (Expr<FpType>) callStmt.getParams().get(1)));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		return Stmt(assign);
+	}
+
+	private static XcfaLabel handleCeil(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		checkState(callStmt.getParams().size() == 2, "Function is presumed to be unary!");
+		Expr<?> expr = callStmt.getParams().get(0);
+		checkState(expr instanceof RefExpr);
+		//noinspection unchecked
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(),
+				FpRoundToIntegralExpr.of(FpRoundingMode.RTP, (Expr<FpType>) callStmt.getParams().get(1)));
+		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
+		return Stmt(assign);
+	}
+
+	private static XcfaLabel handleIsinf(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		checkState(callStmt.getParams().size() == 2, "Function is presumed to be unary!");
+		Expr<?> expr = callStmt.getParams().get(0);
+		checkState(expr instanceof RefExpr);
+		CComplexType type = CComplexType.getType(expr);
+		//noinspection unchecked
+		AssignStmt<?> assign = Assign(
+				cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), type.getSmtType()),
+				cast(Ite(FpIsInfiniteExpr.of((Expr<FpType>) callStmt.getParams().get(1)), type.getUnitValue(), type.getNullValue()), type.getSmtType()));
+		FrontendMetadata.create(assign.getExpr(), "cType", type);
+		return Stmt(assign);
+	}
+
+	private static XcfaLabel handleIsfinite(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		checkState(callStmt.getParams().size() == 2, "Function is presumed to be unary!");
+		Expr<?> expr = callStmt.getParams().get(0);
+		checkState(expr instanceof RefExpr);
+		CComplexType type = CComplexType.getType(expr);
+		//noinspection unchecked
+		AssignStmt<?> assign = Assign(
+				cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), type.getSmtType()),
+				cast(Ite(Not(FpIsInfiniteExpr.of((Expr<FpType>) callStmt.getParams().get(1))), type.getUnitValue(), type.getNullValue()), type.getSmtType()));
+		FrontendMetadata.create(assign.getExpr(), "cType", type);
+		return Stmt(assign);
+	}
+
+	private static XcfaLabel handleIsnormal(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+		throw new UnsupportedOperationException();
 	}
 
 	private static XcfaLabel handleIsnan(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
@@ -84,7 +143,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		Expr<?> expr = callStmt.getParams().get(0);
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
-		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RNE, (Expr<FpType>) callStmt.getParams().get(1)));
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RNA, (Expr<FpType>) callStmt.getParams().get(1)));
 		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return Stmt(assign);
 	}
@@ -128,7 +187,7 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		Expr<?> expr = callStmt.getParams().get(0);
 		checkState(expr instanceof RefExpr);
 		//noinspection unchecked
-		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, (Expr<FpType>) callStmt.getParams().get(1)));
+		AssignStmt<FpType> assign = Assign((VarDecl<FpType>) ((RefExpr<?>) expr).getDecl(), FpRoundToIntegralExpr.of(FpRoundingMode.RTN, (Expr<FpType>) callStmt.getParams().get(1)));
 		FrontendMetadata.create(assign.getExpr(), "cType", CComplexType.getType(expr));
 		return Stmt(assign);
 	}
