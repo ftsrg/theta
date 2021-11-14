@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
@@ -31,6 +32,8 @@ import java.util.Set;
 public class NoReadVarRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		if(ArchitectureConfig.multiThreading) return builder;
+
 		Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
 		Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
 
