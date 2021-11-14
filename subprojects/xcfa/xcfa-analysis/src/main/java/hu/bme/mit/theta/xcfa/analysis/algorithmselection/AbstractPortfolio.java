@@ -149,6 +149,7 @@ public abstract class AbstractPortfolio {
 	}
 
 	public static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
+		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
 		// register solver managers
 		SolverManager.registerSolverManager(Z3SolverManager.create());

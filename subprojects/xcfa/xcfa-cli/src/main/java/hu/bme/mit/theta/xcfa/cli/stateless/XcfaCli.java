@@ -366,6 +366,7 @@ public class XcfaCli {
 	}
 
 	public static void registerAllSolverManagers(String home, Logger logger) throws Exception {
+		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
 		// register solver managers
 		SolverManager.registerSolverManager(Z3SolverManager.create());

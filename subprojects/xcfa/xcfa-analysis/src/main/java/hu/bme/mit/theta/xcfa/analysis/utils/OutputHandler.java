@@ -9,6 +9,7 @@ import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CegarConfiguration;
+import hu.bme.mit.theta.xcfa.analysis.algorithmselection.CpuTimeKeeper;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.ModelStatistics;
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.Result;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
@@ -131,6 +132,7 @@ public final class OutputHandler {
 			}
 			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
 		}
+		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
 	}
 
