@@ -54,21 +54,21 @@ public class XcfaPassManager {
 				new CallsToFinalLocs(),
 				new CallsToHavocs(),
 				new HavocAssignments(),
-				new UnusedVarRemovalPass(),
+				//new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new ConditionalFinalsToAssumes(),
-				new UnusedVarRemovalPass(),
+				//new UnusedVarRemovalPass(),
 				new AddHavocRange(),
 				new RemoveDeadEnds(),
-				new UnusedVarRemovalPass(),
+				//new UnusedVarRemovalPass(),
 				new SimplifyExprs(),
 				new EmptyEdgeRemovalPass(),
 				new SimpleLbePass(),
-				new HavocPromotion(),
-				new AssignmentChainRemoval(),
-				new NoReadVarRemovalPass(),
-				new GlobalVarsToStoreLoad(),
-				new UnusedVarRemovalPass()
+				//new HavocPromotion(),
+				//new AssignmentChainRemoval(),
+				// new NoReadVarRemovalPass(),
+				new GlobalVarsToStoreLoad()
+				//new UnusedVarRemovalPass()
 				));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),

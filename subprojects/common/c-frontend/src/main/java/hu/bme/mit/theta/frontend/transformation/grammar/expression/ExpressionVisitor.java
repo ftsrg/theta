@@ -27,6 +27,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -91,6 +92,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
 		if(ctx.expression() != null) {
 			CStatement ifTrue = ctx.expression().accept(FunctionVisitor.instance);
+			addPreStatements(ifTrue);
 			if(ifTrue instanceof CAssignment) {
 				preStatements.add(ifTrue);
 			}
@@ -107,6 +109,16 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			return ite;
 		}
 		else return ctx.logicalOrExpression().accept(this);
+	}
+
+	private void addPreStatements(CStatement ifTrue) {
+		if(ifTrue instanceof CCompound) {
+			if(ifTrue.getPreStatements() != null) preStatements.add(ifTrue.getPreStatements());
+			if(ifTrue.getPostStatements() != null) postStatements.add(ifTrue.getPostStatements());
+			for (CStatement cStatement : ((CCompound) ifTrue).getcStatementList()) {
+				addPreStatements(cStatement);
+			}
+		}
 	}
 
 	@Override

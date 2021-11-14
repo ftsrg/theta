@@ -69,11 +69,9 @@ public class FpFunctionsToExprs extends ProcedurePass {
 		addHandler(new String[]{"trunc"}, FpFunctionsToExprs::handleTrunc);
 		addHandler(new String[]{"ceil"}, FpFunctionsToExprs::handleCeil);
 		addHandler(new String[]{"isnormal"}, FpFunctionsToExprs::handleIsnormal);
-		addHandler(new String[]{"isinf"}, FpFunctionsToExprs::handleIsinf);
+		addHandler(new String[]{"isinf", "__isinf", "__isinff", "__isinfl"}, FpFunctionsToExprs::handleIsinf);
 		addHandler(new String[]{"isfinite"}, FpFunctionsToExprs::handleIsfinite);
-		addHandler(new String[]{"__fpclassify"}, FpFunctionsToExprs::handleFpclassify);
-		addHandler(new String[]{"__fpclassifyf"}, FpFunctionsToExprs::handleFpclassify);
-		addHandler(new String[]{"__fpclassifyl"}, FpFunctionsToExprs::handleFpclassify);
+		addHandler(new String[]{"__fpclassify", "__fpclassifyf", "__fpclassifyl"}, FpFunctionsToExprs::handleFpclassify);
 	}
 
 	private static XcfaLabel handleTrunc(XcfaProcedure.Builder builder, XcfaLabel.ProcedureCallXcfaLabel callStmt) {
