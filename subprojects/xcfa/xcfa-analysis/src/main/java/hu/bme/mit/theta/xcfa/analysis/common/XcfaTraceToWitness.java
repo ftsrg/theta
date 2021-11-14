@@ -12,8 +12,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +114,7 @@ public final class XcfaTraceToWitness {
 			Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
 			if(value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
 				edgeLabel.append("<data key=\"assumption\">");
-				edgeLabel.append(varName).append(" == ").append(value.get()).append(";");
+				edgeLabel.append(varName).append(" == ").append(printLit(value.get())).append(";");
 				edgeLabel.append("</data>").append(System.lineSeparator());
 			}
 		} else if (stmt instanceof AssumeStmt) {
@@ -124,6 +127,24 @@ public final class XcfaTraceToWitness {
 		// not an official witness data key, so no validator will use it, but it helps readability
 		edgeLabel.append("<data key=\"stmt\">").append(escapeXml(stmt.toString())).append("</data>");
 		return Optional.of(edgeLabel.toString());
+	}
+
+	private static String printLit(final LitExpr<?> litExpr) {
+		if(litExpr instanceof BvLitExpr) {
+			final boolean[] value = ((BvLitExpr) litExpr).getValue();
+			BigInteger intValue = BigInteger.ZERO;
+			for (int i = 0; i < value.length; i++) {
+				boolean b = value[i];
+				if(b) {
+					intValue = intValue.add(BigInteger.ONE.shiftLeft(value.length - 1 - i));
+				}
+			}
+			return intValue.toString();
+		} else if (litExpr instanceof FpLitExpr) {
+			return litExpr.toString();
+		} else {
+			return litExpr.toString();
+		}
 	}
 
 	private static String escapeXml(String toEscape) {

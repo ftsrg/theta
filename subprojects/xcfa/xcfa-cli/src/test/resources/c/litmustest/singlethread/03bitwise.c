@@ -1,8 +1,7 @@
 void reach_error(){}
+int __VERIFIER_nondet_int();
 int main() {
-    int a = 12;
-    unsigned int b = a;
-    long c = b;
-    unsigned long long d = c;
-    if(d > 15) reach_error();
+    int a = __VERIFIER_nondet_int();
+    a = a << 2;
+    if(a > 15) reach_error();
 }

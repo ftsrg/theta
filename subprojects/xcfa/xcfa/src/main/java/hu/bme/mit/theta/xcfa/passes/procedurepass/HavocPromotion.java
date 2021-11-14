@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -73,7 +74,7 @@ public class HavocPromotion extends ProcedurePass {
 								if (varUsage.get(toRemove).size() == 3) { // havoc, assume, assign
 									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
 									Optional<AssumeStmt> assume = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssumeStmt).map(objects -> (AssumeStmt) objects.get2().getStmt()).findAny();
-									if (assign.isPresent() && assume.isPresent() && assign.get().getVarDecl().equals(((HavocStmt<?>) stmt).getVarDecl())) {
+									if (assign.isPresent() && assume.isPresent() && assign.get().getExpr() instanceof RefExpr && ((RefExpr<?>) assign.get().getExpr()).getDecl().equals(((HavocStmt<?>) stmt).getVarDecl())) {
 										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
 										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
 										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assume.get()), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(assume.get()).accept(new XcfaLabelVarReplacer(), Map.of(((HavocStmt<?>) stmt).getVarDecl(), assign.get().getVarDecl())), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), ((HavocStmt<?>) stmt).getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), ((HavocStmt<?>) stmt).getVarDecl().getType())))))) {
@@ -85,7 +86,7 @@ public class HavocPromotion extends ProcedurePass {
 								}
 								if (varUsage.get(toRemove).size() == 2) { // havoc, assign
 									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
-									if (assign.isPresent() && assign.get().getVarDecl().equals(((HavocStmt<?>) stmt).getVarDecl())) {
+									if (assign.isPresent() && assign.get().getExpr() instanceof RefExpr && ((RefExpr<?>) assign.get().getExpr()).getDecl().equals(((HavocStmt<?>) stmt).getVarDecl())) {
 										final HavocStmt<?> havoc = Havoc(assign.get().getVarDecl());
 										FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
 										if (replaceStmt(builder, edge, List.of(Stmt(stmt), Stmt(assign.get())), List.of(Stmt(havoc), Stmt(Assign(cast(((HavocStmt<?>) stmt).getVarDecl(), havoc.getVarDecl().getType()), cast(havoc.getVarDecl().getRef(), havoc.getVarDecl().getType())))))) {
