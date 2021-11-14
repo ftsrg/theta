@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.analysis.common;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
@@ -136,12 +137,41 @@ public final class XcfaTraceToWitness {
 			for (int i = 0; i < value.length; i++) {
 				boolean b = value[i];
 				if(b) {
-					intValue = intValue.add(BigInteger.ONE.shiftLeft(i));
+					intValue = intValue.add(BigInteger.ONE.shiftLeft(value.length - 1 - i));
 				}
 			}
-			return intValue.toString();
+			return "0x" + intValue.toString(16);
 		} else if (litExpr instanceof FpLitExpr) {
-			return litExpr.toString();
+			List<Boolean> boolList = new ArrayList<>();
+			List<Boolean> tmpList = new ArrayList<>();
+			for (boolean b : ((FpLitExpr) litExpr).getSignificand().getValue()) {
+				tmpList.add(b);
+			}
+			boolList.addAll(Lists.reverse(tmpList));
+			tmpList.clear();
+			for (boolean b : ((FpLitExpr) litExpr).getExponent().getValue()) {
+				tmpList.add(b);
+			}
+			boolList.addAll(Lists.reverse(tmpList));
+			boolList.add(((FpLitExpr) litExpr).getHidden());
+			int aggregate = 0;
+			List<Character> hexDigits = new ArrayList<>();
+			for (int i = 0; i < boolList.size(); i++) {
+				if(i % 4 == 0 && i > 0) {
+					if(aggregate < 10) hexDigits.add((char) ('0' + aggregate));
+					else hexDigits.add((char) ('A' - 10 + aggregate));
+					aggregate = 0;
+				}
+				if(boolList.get(i)) aggregate+=1 << (i % 4);
+			}
+			if (aggregate < 10) hexDigits.add((char) ('0' + aggregate));
+			else hexDigits.add((char) ('A' - 10 + aggregate));
+
+			StringBuilder stringBuilder = new StringBuilder("0x");
+			for (Character character : Lists.reverse(hexDigits)) {
+				stringBuilder.append(character);
+			}
+			return stringBuilder.toString();
 		} else {
 			return litExpr.toString();
 		}
