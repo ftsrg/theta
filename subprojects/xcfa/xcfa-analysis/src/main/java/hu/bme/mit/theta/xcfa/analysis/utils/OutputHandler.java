@@ -131,6 +131,7 @@ public final class OutputHandler {
 			}
 			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
 		}
+		SolverManager.closeAll();
 	}
 
 	public void writeDummyCorrectnessWitness() {
