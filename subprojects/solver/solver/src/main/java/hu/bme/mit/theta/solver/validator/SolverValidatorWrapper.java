@@ -9,7 +9,6 @@ import hu.bme.mit.theta.solver.SolverStatus;
 
 import java.util.Collection;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class SolverValidatorWrapper implements Solver {
@@ -31,7 +30,7 @@ public class SolverValidatorWrapper implements Solver {
 			final Valuation model = solver.getModel();
 			for (Expr<BoolType> assertion : solver.getAssertions()) {
 				if(!assertion.eval(model).equals(True())) {
-					throw new RuntimeException("Solver problem: " + assertion);
+					throw new RuntimeException("Solver problem: " + assertion + " not True over {" + model + "}");
 				}
 			}
 		}
