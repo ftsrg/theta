@@ -14,7 +14,6 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocAssignments;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.HavocPromotion;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.InitMemory;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.NoReadVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PorPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
@@ -28,7 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
-import hu.bme.mit.theta.xcfa.passes.xcfapass.AddAtomicBeginEndsToFunctions;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.AddAtomicBeginEndsToFunctions;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.DemoteThreadLocalGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.RemoveUnusedGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
@@ -48,6 +47,7 @@ public class XcfaPassManager {
 				new EliminateSelfLoops(),
 				new PthreadCallsToThreadStmts(),
 				new VerifierFunctionsToLabels(),
+				new AddAtomicBeginEndsToFunctions(),
 				new ReferenceToMemory(),
 				new InitMemory(),
 				new FpFunctionsToExprs(),
@@ -69,7 +69,7 @@ public class XcfaPassManager {
 				new PorPass(),
 				new HavocPromotion(),
 				new AssignmentChainRemoval(),
-				new NoReadVarRemovalPass(),
+//				new NoReadVarRemovalPass(),
 //				new GlobalVarsToStoreLoad(),
 				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
@@ -80,7 +80,6 @@ public class XcfaPassManager {
 				new FunctionInlining(),
 				new FunctionCallsToPushPops()));
 		xcfaPasses.addAll((List.of(
-				new AddAtomicBeginEndsToFunctions(),
 				new RemoveUnusedGlobals(),
 				new DemoteThreadLocalGlobals())));
 	}

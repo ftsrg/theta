@@ -690,14 +690,22 @@ int x = 0;
 int ERR = 0;
 
 void *thr1(void *_) {
+    __VERIFIER_atomic_begin();
     x = 1;
+    __VERIFIER_atomic_end();
+    __VERIFIER_atomic_begin();
     x = 2;
+    __VERIFIER_atomic_end();
 }
 
 void *thr2(void *_) {
+    __VERIFIER_atomic_begin();
     int i = x;
+    __VERIFIER_atomic_end();
+    __VERIFIER_atomic_begin();
     int j = x;
-    if(i == 2 && j == 1) ERR = 1;
+    __VERIFIER_atomic_end();
+    if(i != j) ERR = 1;
 }
 
 int main() {
