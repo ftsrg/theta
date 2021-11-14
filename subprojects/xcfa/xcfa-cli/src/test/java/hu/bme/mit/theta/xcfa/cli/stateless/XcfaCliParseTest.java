@@ -68,6 +68,7 @@ public class XcfaCliParseTest {
 	@Test
 	public void test() throws IOException {
 		ArchitectureConfig.arithmetic = ArchitectureConfig.ArithmeticType.efficient;
+		ArchitectureConfig.multiThreading = false;
 		FrontendMetadata.clear();
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		assert inputStream != null;

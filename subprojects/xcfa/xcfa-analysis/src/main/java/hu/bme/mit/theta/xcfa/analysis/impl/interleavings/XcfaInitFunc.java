@@ -4,6 +4,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class XcfaInitFunc<S extends ExprState, P extends Prec> implements InitFu
 	public Collection<XcfaState<S>> getInitStates(final XcfaPrec<P> prec) {
 		final Collection<XcfaState<S>> set = new ArrayList<>();
 		for (S s : initFunc.getInitStates(prec.getGlobalPrec())) {
-			final XcfaState<S> xcfaState = XcfaState.create(initLocs.stream().map(xcfaLocation -> Map.entry(xcfaLocation, true)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)), s);
+			final XcfaState<S> xcfaState = hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState.create(initLocs.stream().map(xcfaLocation -> Map.entry(xcfaLocation, true)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)), s);
 			set.add(xcfaState);
 		}
 		return set;

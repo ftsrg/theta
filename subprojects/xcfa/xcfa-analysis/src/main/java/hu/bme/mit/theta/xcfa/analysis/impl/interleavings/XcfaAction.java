@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
-import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class XcfaAction extends StmtAction {
+public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
 	private final Integer process;
 	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;

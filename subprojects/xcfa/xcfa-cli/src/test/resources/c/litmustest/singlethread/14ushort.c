@@ -1,10 +1,10 @@
 void reach_error(){}
 
-extern unsigned short nondet_ushort();
+extern unsigned short __VERIFIER_nondet_ushort();
 
 int main() {
     short ush;
     long c;
-    ush = nondet_ushort();
+    ush = __VERIFIER_nondet_ushort();
     if(ush) reach_error();
  }

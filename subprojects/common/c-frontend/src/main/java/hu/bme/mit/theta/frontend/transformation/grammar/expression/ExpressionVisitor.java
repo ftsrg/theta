@@ -340,7 +340,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				switch(ctx.signs.get(i).getText()) {
 					case "*": expr = AbstractExprs.Mul(leftExpr, rightExpr); break;
 					case "/": expr = AbstractExprs.Div(leftExpr, rightExpr); break;
-					case "%": expr = AbstractExprs.Rem(leftExpr, rightExpr); break;
+					case "%": expr = AbstractExprs.Mod(leftExpr, rightExpr); break;
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}

@@ -70,6 +70,11 @@ import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewAtomsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewOperandsAutoExpl;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaInitFunc;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaOrd;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaPrecRefiner;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaTransFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTInitFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTLts;
@@ -123,6 +128,38 @@ public class XcfaConfigBuilder {
 			@Override
 			public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(final PartialOrd<S> partialOrd) {
 				return XcfaSTOrd.create(partialOrd);
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<XcfaState<S>, A, XcfaPrec<P>> getAnalysis(final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
+				return XcfaAnalysis.create(initLocs, getPartialOrder(analysis.getPartialOrd()), getInitFunc(initLocs, analysis.getInitFunc()), getTransFunc(analysis.getTransFunc()));
+			}
+		},
+
+		INTERLEAVINGS{
+			@Override
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
+				return new XcfaLts();
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc) {
+				return XcfaInitFunc.create(initLocs, initFunc);
+			}
+
+			@Override
+			public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(final TransFunc<S, A, P> transFunc) {
+				return XcfaTransFunc.create(transFunc);
+			}
+
+			@Override
+			public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+				return XcfaPrecRefiner.create(refToPrec);
+			}
+
+			@Override
+			public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(final PartialOrd<S> partialOrd) {
+				return XcfaOrd.create(partialOrd);
 			}
 
 			@Override

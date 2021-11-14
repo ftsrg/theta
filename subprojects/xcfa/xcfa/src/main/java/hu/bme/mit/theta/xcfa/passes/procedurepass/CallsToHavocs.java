@@ -48,6 +48,9 @@ public class CallsToHavocs extends ProcedurePass {
 					List<XcfaLabel> collect = new ArrayList<>();
 					for (XcfaLabel stmt : edge.getLabels()) {
 						if (stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
+							if(!((XcfaLabel.ProcedureCallXcfaLabel)e.get()).getProcedure().startsWith("__VERIFIER_nondet")) {
+								throw new UnsupportedOperationException("Non-nondet function call used as nondet!");
+							}
 							Expr<?> expr = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getParams().get(0);
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
 							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();

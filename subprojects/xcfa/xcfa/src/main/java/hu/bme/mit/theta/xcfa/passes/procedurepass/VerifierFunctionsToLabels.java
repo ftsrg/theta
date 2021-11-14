@@ -68,4 +68,9 @@ public class VerifierFunctionsToLabels extends ProcedurePass {
 		}
 		return builder;
 	}
+
+	public boolean isPostInlining() {
+		return true;
+	}
+
 }
