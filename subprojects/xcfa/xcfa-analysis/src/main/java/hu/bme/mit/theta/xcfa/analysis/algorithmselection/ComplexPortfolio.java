@@ -7,8 +7,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
