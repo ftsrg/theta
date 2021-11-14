@@ -22,8 +22,19 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private long analysisTime; // in ms, init time subtracted from sumTime
 	private long startCpuTime;
 
+	// multithreaded parameters
+	private XcfaConfigBuilder.Search search = null;
+	private XcfaConfigBuilder.Algorithm algorithm = null;
+
 	public ComplexPortfolio(Logger.Level logLevel, String modelName, String smtlibhome) throws Exception {
 		super(logLevel, modelName, smtlibhome); // registers solver factories
+		if(ArchitectureConfig.multiThreading) {
+			algorithm = XcfaConfigBuilder.Algorithm.INTERLEAVINGS;
+			search = XcfaConfigBuilder.Search.BFS;
+		} else {
+			algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
+			search = XcfaConfigBuilder.Search.ERR;
+		}
 	}
 
 	@Override
@@ -107,9 +118,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP, // TODO refinement
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -132,9 +143,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -157,9 +168,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP, // TODO refinement
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -182,9 +193,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -249,9 +260,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_BOOL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -272,9 +283,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -296,9 +307,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
@@ -320,9 +331,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
 				XcfaConfigBuilder.Refinement.SEQ_ITP,
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.ALLVARS,
 				PruneStrategy.LAZY,
@@ -344,9 +355,9 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		CegarConfiguration configuration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.PRED_CART,
 				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
-				XcfaConfigBuilder.Search.ERR,
+				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
-				XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+				algorithm,
 				1,
 				XcfaConfigBuilder.InitPrec.EMPTY,
 				PruneStrategy.LAZY,
