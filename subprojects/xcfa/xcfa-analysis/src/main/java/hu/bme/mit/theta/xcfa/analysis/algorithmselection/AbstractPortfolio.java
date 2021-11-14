@@ -56,9 +56,9 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.RESULT, "Executing ");
 		logger.write(Logger.Level.RESULT, configuration.toString());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.MAINSTEP, "Timeout is set to " + timeout/1000.0 + " sec (cputime)...");
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, "Timeout is set to " + timeout/1000.0 + " sec (cputime)...");
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
+		logger.write(Logger.Level.RESULT, System.lineSeparator());
 
 		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime();
 
@@ -139,6 +139,12 @@ public abstract class AbstractPortfolio {
 
 		OutputHandler.getInstance().writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
 		OutputHandler.getInstance().writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+		try {
+			closeAndRegisterAllSolverManagers(smtlibHome, logger);
+		} catch (Exception e) {
+			System.err.println("Could not close solver; possible resource leak");
+			e.printStackTrace();
+		}
 		return Tuple2.of(result, Optional.ofNullable(safetyResult));
 	}
 

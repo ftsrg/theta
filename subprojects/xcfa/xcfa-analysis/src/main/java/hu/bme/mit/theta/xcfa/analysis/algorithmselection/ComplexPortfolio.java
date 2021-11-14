@@ -140,7 +140,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executeExplNwtBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
-				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
+				XcfaConfigBuilder.Refinement.NWT_IT_WP,
 				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
 				algorithm,
@@ -153,7 +153,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime())); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime()));
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
@@ -165,7 +165,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executePredBwBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
-				XcfaConfigBuilder.Refinement.BW_BIN_ITP, // TODO refinement
+				XcfaConfigBuilder.Refinement.BW_BIN_ITP,
 				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
 				algorithm,
@@ -178,7 +178,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (2.0/3.0*calculateRemainingTime())); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime());
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
@@ -190,7 +190,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executePredNwtBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
-				XcfaConfigBuilder.Refinement.NWT_IT_WP, // TODO refinement
+				XcfaConfigBuilder.Refinement.NWT_IT_WP,
 				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
 				algorithm,
@@ -203,7 +203,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (2.0/3.0*calculateRemainingTime())); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime());
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
