@@ -136,7 +136,7 @@ public final class XcfaTraceToWitness {
 			for (int i = 0; i < value.length; i++) {
 				boolean b = value[i];
 				if(b) {
-					intValue = intValue.add(BigInteger.ONE.shiftLeft(value.length - 1 - i));
+					intValue = intValue.add(BigInteger.ONE.shiftLeft(i));
 				}
 			}
 			return intValue.toString();
