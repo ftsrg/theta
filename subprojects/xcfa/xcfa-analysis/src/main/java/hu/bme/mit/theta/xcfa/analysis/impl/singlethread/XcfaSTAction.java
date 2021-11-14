@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
 	private final List<XcfaLabel> labels;
@@ -36,6 +37,7 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.labels = checkNotNull(labels);
+		checkState(labels.stream().noneMatch(label -> label instanceof XcfaLabel.StartThreadXcfaLabel), "Cannot use single-threaded analysis for multi-threaded programs!");
 	}
 
 	public static XcfaSTAction create(final XcfaEdge edge) {
