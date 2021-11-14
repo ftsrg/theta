@@ -2,6 +2,10 @@ package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,8 +26,14 @@ public class XcfaOrd<S extends ExprState> implements PartialOrd<hu.bme.mit.theta
 		XcfaState<S> state1 = (XcfaState<S>) cState1;
 		XcfaState<S> state2 = (XcfaState<S>) cState2;
 		if(state1.getEnabledProcesses().size() != state2.getEnabledProcesses().size()) return false;
-		return  state1.getProcessLocs().values().containsAll(state2.getProcessLocs().values()) &&
-				state2.getProcessLocs().values().containsAll(state1.getProcessLocs().values()) &&
+		Map<XcfaLocation, Integer> occurrences = new LinkedHashMap<>();
+		for (XcfaLocation value : state1.getProcessLocs().values()) {
+			occurrences.put(value, occurrences.getOrDefault(value, 0) + 1);
+		}
+		for (XcfaLocation value : state2.getProcessLocs().values()) {
+			occurrences.put(value, occurrences.getOrDefault(value, 0) - 1);
+		}
+		return  occurrences.values().stream().allMatch(integer -> integer == 0) &&
 				state1.isLeq(partialOrd, state2);
 	}
 }
