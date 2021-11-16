@@ -84,6 +84,16 @@ public class LabelUtils {
 			}
 
 			@Override
+			public Collection<VarDecl<?>> visit(XcfaLabel.SequenceLabel sequenceLabel, Void param) {
+				return sequenceLabel.getLabels().stream().map(LabelUtils::getVars).reduce((a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet())).orElse(Set.of());
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(XcfaLabel.NondetLabel nondetLabel, Void param) {
+				return nondetLabel.getLabels().stream().map(LabelUtils::getVars).reduce((a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet())).orElse(Set.of());
+			}
+
+			@Override
 			public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
 				return Set.of();
 			}

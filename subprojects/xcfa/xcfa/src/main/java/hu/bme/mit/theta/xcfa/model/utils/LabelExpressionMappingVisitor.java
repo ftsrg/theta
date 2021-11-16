@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
@@ -157,6 +158,20 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 	@Override
 	public Optional<XcfaLabel>visit(XcfaLabel.StmtXcfaLabel label, Mapper<T> param) {
 		return label.getStmt().accept(this, param);
+	}
+
+	@Override
+	public Optional<XcfaLabel> visit(XcfaLabel.SequenceLabel sequenceLabel, Mapper<T> param) {
+		final List<XcfaLabel> collect = sequenceLabel.getLabels().stream().map(label -> label.accept(this, param).orElse(label)).collect(Collectors.toList());
+		if(sequenceLabel.getLabels().equals(collect)) return Optional.empty();
+		else return Optional.of(XcfaLabel.SequenceLabel.of(collect));
+	}
+
+	@Override
+	public Optional<XcfaLabel> visit(XcfaLabel.NondetLabel nondetLabel, Mapper<T> param) {
+		final List<XcfaLabel> collect = nondetLabel.getLabels().stream().map(label -> label.accept(this, param).orElse(label)).collect(Collectors.toList());
+		if(nondetLabel.getLabels().equals(collect)) return Optional.empty();
+		else return Optional.of(XcfaLabel.NondetLabel.of(collect));
 	}
 
 

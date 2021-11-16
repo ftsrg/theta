@@ -148,4 +148,20 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 	public Void visit(XcfaLabel.StmtXcfaLabel label, Collection<Expr<BoolType>> param) {
 		return label.getStmt().accept(this, param);
 	}
+
+	@Override
+	public Void visit(XcfaLabel.SequenceLabel sequenceLabel, Collection<Expr<BoolType>> param) {
+		for (XcfaLabel label : sequenceLabel.getLabels()) {
+			label.accept(this, param);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(XcfaLabel.NondetLabel nondetLabel, Collection<Expr<BoolType>> param) {
+		for (XcfaLabel label : nondetLabel.getLabels()) {
+			label.accept(this, param);
+		}
+		return null;
+	}
 }

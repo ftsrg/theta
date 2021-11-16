@@ -13,4 +13,7 @@ public interface XcfaLabelVisitor<P, R> extends StmtVisitor<P, R> {
 	<T extends Type> R visit(XcfaLabel.StoreXcfaLabel<T> label, P param);
 	R visit(XcfaLabel.FenceXcfaLabel label, P param);
 	R visit(XcfaLabel.StmtXcfaLabel label, P param);
+	R visit(XcfaLabel.SequenceLabel sequenceLabel, P param);
+	R visit(XcfaLabel.NondetLabel nondetLabel, P param);
+
 }

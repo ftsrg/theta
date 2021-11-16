@@ -162,6 +162,16 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 	}
 
 	@Override
+	public List<XcfaLabel> visit(XcfaLabel.SequenceLabel sequenceLabel, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public List<XcfaLabel> visit(XcfaLabel.NondetLabel nondetLabel, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
 	public List<XcfaLabel> visit(XcfaLabel.AtomicBeginXcfaLabel atomicBeginStmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		return List.of(atomicBeginStmt);
 	}

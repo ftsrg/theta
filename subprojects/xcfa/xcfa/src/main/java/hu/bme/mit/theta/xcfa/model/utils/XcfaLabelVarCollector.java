@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.stmt.PopStmt;
 import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -68,17 +69,26 @@ public class XcfaLabelVarCollector implements XcfaLabelVisitor<Tuple2<Set<VarDec
 
     @Override
     public Void visit(SequenceStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        for (Stmt stmtStmt : stmt.getStmts()) {
+            stmtStmt.accept(this, param);
+        }
+        return null;
     }
 
     @Override
     public Void visit(NonDetStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        for (Stmt stmtStmt : stmt.getStmts()) {
+            stmtStmt.accept(this, param);
+        }
+        return null;
     }
 
     @Override
     public Void visit(OrtStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        for (Stmt stmtStmt : stmt.getStmts()) {
+            stmtStmt.accept(this, param);
+        }
+        return null;
     }
 
     @Override
@@ -154,5 +164,21 @@ public class XcfaLabelVarCollector implements XcfaLabelVisitor<Tuple2<Set<VarDec
     @Override
     public Void visit(XcfaLabel.StmtXcfaLabel label, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return label.getStmt().accept(this, param);
+    }
+
+    @Override
+    public Void visit(XcfaLabel.SequenceLabel sequenceLabel, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+        for (XcfaLabel label : sequenceLabel.getLabels()) {
+            label.accept(this, param);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(XcfaLabel.NondetLabel nondetLabel, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+        for (XcfaLabel label : nondetLabel.getLabels()) {
+            label.accept(this, param);
+        }
+        return null;
     }
 }

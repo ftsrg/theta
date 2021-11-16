@@ -2,6 +2,8 @@ package hu.bme.mit.theta.xcfa.model;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -10,6 +12,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
@@ -399,6 +402,92 @@ public abstract class XcfaLabel {
 		}
 	}
 
+	public static class SequenceLabel extends XcfaLabel {
+		private final List<XcfaLabel> labels;
+
+		private SequenceLabel(List<XcfaLabel> labels) {
+			this.labels = List.copyOf(labels);
+		}
+
+		public static SequenceLabel of(List<XcfaLabel> labels) {
+			return new SequenceLabel(labels);
+		}
+
+		@Override
+		public Stmt getStmt() {
+			return SequenceStmt.of(labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
+		}
+
+		public List<XcfaLabel> getLabels() {
+			return labels;
+		}
+
+		@Override
+		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
+			return visitor.visit(this, param);
+		}
+
+		public String toString() {
+			return Utils.lispStringBuilder("Sequence").addAll(labels).toString();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			SequenceLabel that = (SequenceLabel) o;
+			return labels.equals(that.labels);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(labels);
+		}
+	}
+
+	public static class NondetLabel extends XcfaLabel {
+		private final List<XcfaLabel> labels;
+
+		private NondetLabel(List<XcfaLabel> labels) {
+			this.labels = List.copyOf(labels);
+		}
+
+		public static NondetLabel of(List<XcfaLabel> labels) {
+			return new NondetLabel(labels);
+		}
+
+		@Override
+		public Stmt getStmt() {
+			return NonDetStmt.of(labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
+		}
+
+		@Override
+		public <P, R> R accept(XcfaLabelVisitor<P, R> visitor, P param) {
+			return visitor.visit(this, param);
+		}
+
+		public String toString() {
+			return Utils.lispStringBuilder("Sequence").addAll(labels).toString();
+		}
+
+		public List<XcfaLabel> getLabels() {
+			return labels;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			NondetLabel that = (NondetLabel) o;
+			return labels.equals(that.labels);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(labels);
+		}
+	}
+
 	public static class StmtXcfaLabel extends XcfaLabel {
 		private final Stmt stmt;
 
@@ -470,6 +559,10 @@ public abstract class XcfaLabel {
 		final VarDecl<T> localT = cast(local, global.getType());
 		return StoreXcfaLabel.of(global, localT, atomic, ordering);
 	}
+
+	public static SequenceLabel Sequence(final List<XcfaLabel> labels) { return XcfaLabel.SequenceLabel.of(labels); }
+
+	public static NondetLabel Nondet(final List<XcfaLabel> labels) { return XcfaLabel.NondetLabel.of(labels); }
 
 	public static FenceXcfaLabel Fence(final String type) {
 		return FenceXcfaLabel.of(type);

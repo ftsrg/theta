@@ -42,6 +42,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabelVisitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
@@ -50,6 +51,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.NonDetStmt;
 import static hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Load;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Sequence;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.StartThread;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
@@ -188,6 +190,16 @@ public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, Va
     @Override
     public XcfaLabel visit(XcfaLabel.StmtXcfaLabel label, Map<VarDecl<?>, VarDecl<?>> param) {
         return label.getStmt().accept(this, param);
+    }
+
+    @Override
+    public XcfaLabel visit(XcfaLabel.SequenceLabel sequenceLabel, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Sequence(sequenceLabel.getLabels().stream().map(label -> label.accept(this, param)).collect(Collectors.toList()));
+    }
+
+    @Override
+    public XcfaLabel visit(XcfaLabel.NondetLabel nondetLabel, Map<VarDecl<?>, VarDecl<?>> param) {
+        return Sequence(nondetLabel.getLabels().stream().map(label -> label.accept(this, param)).collect(Collectors.toList()));
     }
 
     @Override
