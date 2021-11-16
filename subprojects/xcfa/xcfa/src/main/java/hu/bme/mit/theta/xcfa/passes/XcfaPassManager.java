@@ -5,7 +5,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AddAtomicBeginEndsToFunctions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.AssignmentChainRemoval;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
@@ -68,7 +67,7 @@ public class XcfaPassManager {
 				new SimpleLbePass(),
 				new PorPass(),
 				new HavocPromotion(),
-				new AssignmentChainRemoval(),
+//				new AssignmentChainRemoval(),
 				new NoReadVarRemovalPass(),
 //				new GlobalVarsToStoreLoad(),
 				new UnusedVarRemovalPass(),

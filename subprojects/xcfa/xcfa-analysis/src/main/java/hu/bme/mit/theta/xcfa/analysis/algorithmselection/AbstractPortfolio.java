@@ -105,6 +105,7 @@ public abstract class AbstractPortfolio {
 				System.err.println("Could not close solver; possible resource leak");
 				e.printStackTrace();
 			}
+			cegarAnalysisThread.interrupt();
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {
