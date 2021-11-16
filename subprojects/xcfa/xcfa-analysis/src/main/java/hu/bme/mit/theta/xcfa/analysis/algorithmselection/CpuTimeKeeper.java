@@ -5,14 +5,20 @@ import hu.bme.mit.theta.common.Tuple2;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public final class CpuTimeKeeper {
-	static long closedSolverTimes = 0;
-	static Set<Long> closedSolverPids = new HashSet<>();
+	static Map<Long, Long> closedSolverTimes = new HashMap<>();
+
+	private static long calculateClosedSolverTimes() {
+		AtomicLong solverTime = new AtomicLong();
+		closedSolverTimes.forEach((aLong, aLong2) -> solverTime.addAndGet(aLong2));
+		return solverTime.get();
+	}
 
 	/**
 	 * Temporary solution:
@@ -23,21 +29,20 @@ public final class CpuTimeKeeper {
 	 */
 	public static void saveSolverTimes() {
 		long pid = ProcessHandle.current().pid();
-		long solvertimes = 0;
 		try {
 			Process process = Runtime.getRuntime().exec("ps --ppid " + pid + " -o %p%x");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line = "";
 			String cputimeString = reader.readLine(); // skip the TIME header
+			System.err.println("Closing solver times");
 			while((cputimeString = reader.readLine())!=null) {
 				Tuple2<Long, Long> psOutput = parsePsOutputLine(cputimeString);
-				closedSolverPids.add(psOutput.get1());
-				solvertimes += psOutput.get2();
+				closedSolverTimes.put(psOutput.get1(), psOutput.get2());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		closedSolverTimes+=solvertimes;
+		System.err.println("New closed solver time: " + calculateClosedSolverTimes());
 	}
 
 	/**
@@ -51,16 +56,18 @@ public final class CpuTimeKeeper {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line = "";
 			String cputimeString = reader.readLine(); // skip the TIME header
+			System.err.println("Get current time");
 			while((cputimeString = reader.readLine())!=null) {
 				Tuple2<Long, Long> psOutput = parsePsOutputLine(cputimeString);
-				if(!closedSolverPids.contains(psOutput.get1())) {
+				if(!closedSolverTimes.containsKey(psOutput.get1())) {
 					cputime+=psOutput.get2();
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		cputime+=closedSolverTimes;
+		cputime+= calculateClosedSolverTimes();
+		System.err.println("Returned cpu time: " + cputime);
 		return cputime;
 	}
 
@@ -71,6 +78,7 @@ public final class CpuTimeKeeper {
 		String[] timeSplit = split[1].split(":");
 		long time = Long.parseLong(timeSplit[0])*3600+Long.parseLong(timeSplit[1])*60+Long.parseLong(timeSplit[2]);
 
+		System.err.println("pid: " + pid + ", time: " + time);
 		return Tuple2.of(pid, time);
 	}
 }
