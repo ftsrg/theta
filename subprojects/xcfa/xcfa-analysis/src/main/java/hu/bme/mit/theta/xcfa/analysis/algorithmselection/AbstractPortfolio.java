@@ -73,6 +73,7 @@ public abstract class AbstractPortfolio {
 		}
 
 		Stopwatch stopwatch = Stopwatch.createStarted();
+		cegarAnalysisThread.setName("analysis-worker");
 		cegarAnalysisThread.start();
 
 		try {
@@ -106,6 +107,11 @@ public abstract class AbstractPortfolio {
 				e.printStackTrace();
 			}
 			cegarAnalysisThread.interrupt();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {

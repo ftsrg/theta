@@ -74,17 +74,23 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
+			result = executeExplNwtBitvectorConfig("CVC4:exp", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
+				result = executePredNwtBitvectorConfig("CVC4:exp", false, xcfa);
 			}
 		} else {
 			result = executePredNwtBitvectorConfig("mathsat:fp", true, xcfa);
+			if(!result.get1().equals(Result.SUCCESS)) {
+				result = executeExplNwtBitvectorConfig("CVC4:exp", false, xcfa);
+				if(!result.get1().equals(Result.SUCCESS)) {
+					result = executePredNwtBitvectorConfig("CVC4:exp", false, xcfa);
+				}
+			}
 		}
+
 		if(result.get1().equals(Result.SUCCESS)) {
+			checkState(result.get2().isPresent());
 			return result.get2().get();
-		} else if(result.get1().equals(Result.TIMEOUT)) {
-			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		} else {
 			return null;
 		}
@@ -102,11 +108,17 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			}
 		} else {
 			result = executePredBwBitvectorConfig("mathsat:5.6.6", false, xcfa);
+			if(!result.get1().equals(Result.SUCCESS)) {
+				result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
+				if (!result.get1().equals(Result.SUCCESS)) {
+					result = executePredNwtBitvectorConfig("Z3", false, xcfa);
+				}
+			}
 		}
+
 		if(result.get1().equals(Result.SUCCESS)) {
+			checkState(result.get2().isPresent());
 			return result.get2().get();
-		} else if(result.get1().equals(Result.TIMEOUT)) {
-			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		} else {
 			return null;
 		}
@@ -115,7 +127,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private Tuple2<Result, Optional<SafetyResult<?, ?>>> executeExplSeqBitvectorConfig(String solver, boolean verify, XCFA xcfa) throws Exception {
 		CegarConfiguration explConfiguration = new CegarConfiguration(
 				XcfaConfigBuilder.Domain.EXPL,
-				XcfaConfigBuilder.Refinement.SEQ_ITP, // TODO refinement
+				XcfaConfigBuilder.Refinement.SEQ_ITP,
 				search,
 				XcfaConfigBuilder.PredSplit.WHOLE,
 				algorithm,
@@ -128,11 +140,13 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime())); // TODO time
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime()));
 		if(result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		} else if(result.get1().equals(Result.TIMEOUT)) {
+			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
 	}
@@ -158,6 +172,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		} else if(result.get1().equals(Result.TIMEOUT)) {
+			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
 	}
@@ -183,6 +199,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		} else if(result.get1().equals(Result.TIMEOUT)) {
+			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
 	}
@@ -208,6 +226,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
+		} else if(result.get1().equals(Result.TIMEOUT)) {
+			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
 	}
