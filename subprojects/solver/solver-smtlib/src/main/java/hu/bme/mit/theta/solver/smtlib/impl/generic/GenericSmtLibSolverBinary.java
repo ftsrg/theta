@@ -101,6 +101,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
         @Override
         public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
+//            final var buf = new byte[buffer.remaining()];
+//            buffer.get(buf);
+//            final var input = new String(buf, StandardCharsets.US_ASCII);
+//            System.err.println(input);
+////            buffer.clear();
             onInput(buffer);
         }
         private int isFp = 0;
