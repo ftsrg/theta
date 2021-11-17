@@ -101,11 +101,6 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
         @Override
         public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
-//            final var buf = new byte[buffer.remaining()];
-//            buffer.get(buf);
-//            final var input = new String(buf, StandardCharsets.US_ASCII);
-//            System.err.println(input);
-////            buffer.clear();
             onInput(buffer);
         }
         private int isFp = 0;
@@ -126,10 +121,12 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                         isFp = 1;
                     } else if (isFp == 1 && c == 'p') {
                         isFp = 2;
-                    } else if (isFp == 2 && c == ')') {
+                    } else if (isFp == 2 && c == ' ') {
+                        isFp = 3;
+                    } else if (isFp == 3 && c == ')') {
                         isFp = 0;
                         readProcessor.step(c);
-                    } else {
+                    } else if (isFp < 3){
                         isFp = 0;
                     }
                 }
