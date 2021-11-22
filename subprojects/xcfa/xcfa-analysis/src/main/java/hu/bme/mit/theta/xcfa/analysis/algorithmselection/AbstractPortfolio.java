@@ -99,9 +99,16 @@ public abstract class AbstractPortfolio {
 
 		if(cegarAnalysisThread.isAlive()) {
 			Stopwatch dieTimer = Stopwatch.createStarted();
+			cegarAnalysisThread.interrupt();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			try {
-				closeAndRegisterAllSolverManagers(smtlibHome, logger);
+				closeAllSolverManagers();
 			} catch (Exception e) {
 				System.err.println("Could not close solver; possible resource leak");
 				e.printStackTrace();
@@ -115,16 +122,23 @@ public abstract class AbstractPortfolio {
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {
-				try {
-					cegarAnalysisThread.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				while(cegarAnalysisThread.isAlive()) {
+					try {
+						cegarAnalysisThread.wait(1000, 0);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 			System.err.println("Timeouting thread dead after " + dieTimer.elapsed(TimeUnit.MILLISECONDS) + "ms");
 
 			cegarAnalysisThread.timeout(); // set the result to TIMEOUT and null
 			dieTimer.stop();
+			try {
+				registerAllSolverManagers(smtlibHome, logger);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		stopwatch.stop();
@@ -155,10 +169,25 @@ public abstract class AbstractPortfolio {
 		return Tuple2.of(result, Optional.ofNullable(safetyResult));
 	}
 
-	public static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
+	private static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
 		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
 		// register solver managers
+		SolverManager.registerSolverManager(Z3SolverManager.create());
+		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+			final var homePath = Path.of(home);
+			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+			SolverManager.registerSolverManager(smtLibSolverManager);
+		}
+	}
+
+	private static void closeAllSolverManagers() throws Exception {
+		CpuTimeKeeper.saveSolverTimes();
+		SolverManager.closeAll();
+	}
+
+
+	private static void registerAllSolverManagers(String home, Logger logger) throws Exception {
 		SolverManager.registerSolverManager(Z3SolverManager.create());
 		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
 			final var homePath = Path.of(home);
