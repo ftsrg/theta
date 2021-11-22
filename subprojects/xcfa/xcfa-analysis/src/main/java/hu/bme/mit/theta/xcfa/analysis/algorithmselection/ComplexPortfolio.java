@@ -74,16 +74,16 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		if(result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
 		} else if(result.get1().equals(Result.SOLVERISSUE)) {
-			result = executeExplNwtBitvectorConfig("CVC4:exp", false, xcfa);
+			result = executeExplNwtBitvectorConfig("cvc4:exp", false, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executePredNwtBitvectorConfig("CVC4:exp", false, xcfa);
+				result = executePredNwtBitvectorConfig("cvc4:exp", false, xcfa);
 			}
 		} else {
 			result = executePredNwtBitvectorConfig("mathsat:fp", true, xcfa);
 			if(!result.get1().equals(Result.SUCCESS)) {
-				result = executeExplNwtBitvectorConfig("CVC4:exp", false, xcfa);
+				result = executeExplNwtBitvectorConfig("cvc4:exp", false, xcfa);
 				if(!result.get1().equals(Result.SUCCESS)) {
-					result = executePredNwtBitvectorConfig("CVC4:exp", false, xcfa);
+					result = executePredNwtBitvectorConfig("cvc4:exp", false, xcfa);
 				}
 			}
 		}
