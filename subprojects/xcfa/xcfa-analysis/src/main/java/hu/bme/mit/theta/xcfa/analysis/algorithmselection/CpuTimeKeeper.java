@@ -34,7 +34,6 @@ public final class CpuTimeKeeper {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line = "";
 			String cputimeString = reader.readLine(); // skip the TIME header
-			System.err.println("Closing solver times");
 			while((cputimeString = reader.readLine())!=null) {
 				Tuple2<Long, Long> psOutput = parsePsOutputLine(cputimeString);
 				closedSolverTimes.put(psOutput.get1(), psOutput.get2());
@@ -42,7 +41,6 @@ public final class CpuTimeKeeper {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.err.println("New closed solver time: " + calculateClosedSolverTimes());
 	}
 
 	/**
@@ -56,7 +54,6 @@ public final class CpuTimeKeeper {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line = "";
 			String cputimeString = reader.readLine(); // skip the TIME header
-			System.err.println("Get current time");
 			while((cputimeString = reader.readLine())!=null) {
 				Tuple2<Long, Long> psOutput = parsePsOutputLine(cputimeString);
 				if(!closedSolverTimes.containsKey(psOutput.get1())) {
@@ -67,7 +64,6 @@ public final class CpuTimeKeeper {
 			e.printStackTrace();
 		}
 		cputime+= calculateClosedSolverTimes();
-		System.err.println("Returned cpu time: " + cputime);
 		return cputime;
 	}
 
@@ -78,7 +74,6 @@ public final class CpuTimeKeeper {
 		String[] timeSplit = split[1].split(":");
 		long time = Long.parseLong(timeSplit[0])*3600+Long.parseLong(timeSplit[1])*60+Long.parseLong(timeSplit[2]);
 
-		System.err.println("pid: " + pid + ", time: " + time);
 		return Tuple2.of(pid, time);
 	}
 }
