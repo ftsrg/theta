@@ -75,7 +75,12 @@ public class SimpleLbePass extends ProcedurePass {
 				}
 			}
 			builder.addEdge(XcfaEdge.of(source, edge.getTarget(), newLabelList));
-		}
+		}*/
+
+		// Print Procedure in DOT format
+		s = builder.toDot(Set.of(), Set.of());
+		System.out.println(s);
+
 		return builder;
 	}
 
