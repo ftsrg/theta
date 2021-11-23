@@ -25,6 +25,7 @@ public class SimpleLbePass extends ProcedurePass {
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		// Print Procedure in DOT format
 		String s = builder.toDot(Set.of(), Set.of());
+		System.out.println("--- BEFORE TRANSFORMATION ---");
 		System.out.println(s);
 
 		this.builder = builder;
@@ -45,7 +46,9 @@ public class SimpleLbePass extends ProcedurePass {
 				XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
 				removeMiddleLocation(visiting);
 
-				List<XcfaLocation> locationsToRemove = joinParallelsAndRemoveSnakes(Arrays.asList(previousLocation));
+				List<XcfaLocation> start = new ArrayList<>();
+				start.add(previousLocation);
+				List<XcfaLocation> locationsToRemove = joinParallelsAndRemoveSnakes(start);
 				locationsToRemove.forEach(locationsToVisit::remove);
 			}
 
@@ -79,6 +82,7 @@ public class SimpleLbePass extends ProcedurePass {
 
 		// Print Procedure in DOT format
 		s = builder.toDot(Set.of(), Set.of());
+		System.out.println("--- AFTER TRANSFORMATION ---");
 		System.out.println(s);
 
 		return builder;
@@ -97,7 +101,7 @@ public class SimpleLbePass extends ProcedurePass {
 			// Join parallel edges starting from "visiting" location
 			HashMap<XcfaLocation, List<XcfaEdge>> edgesByTarget = new HashMap<>();
 			for (XcfaEdge edge : visiting.getOutgoingEdges()) {
-				List<XcfaEdge> edgesToTarget = edgesByTarget.get(edge.getTarget());
+				List<XcfaEdge> edgesToTarget = edgesByTarget.getOrDefault(edge.getTarget(), new ArrayList<>());
 				edgesToTarget.add(edge);
 				edgesByTarget.put(edge.getTarget(), edgesToTarget);
 			}
@@ -146,7 +150,8 @@ public class SimpleLbePass extends ProcedurePass {
 		builder.removeEdge(inEdge);
 		builder.removeLoc(location);
 
-		for (XcfaEdge outEdge : location.getOutgoingEdges()) {
+		List<XcfaEdge> edgesToRemove = List.copyOf(location.getOutgoingEdges());
+		for (XcfaEdge outEdge : edgesToRemove) {
 			builder.removeEdge(outEdge);
 			List<XcfaLabel> stmts = new ArrayList<>(inEdge.getLabels());
 			stmts.addAll(outEdge.getLabels());
