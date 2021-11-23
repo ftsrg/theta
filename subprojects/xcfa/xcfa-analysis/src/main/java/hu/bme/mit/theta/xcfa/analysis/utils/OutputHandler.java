@@ -24,6 +24,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -74,7 +75,7 @@ public final class OutputHandler {
 		// portfolio and output-results needs a results directory
 		// create the directory only, if needed
 		if(outputConfiguration==OutputOptions.OUTPUT_RESULTS) {
-			File resultsDir = new File(model + "-" + LocalDateTime.now().toString() + "-results");
+			File resultsDir = new File(model + "-" + LocalDateTime.now().toString().replace(":","-") + "-results");
 			boolean bool = resultsDir.mkdir();
 			if(!bool){
 				throw new RuntimeException("Couldn't create results directory");
