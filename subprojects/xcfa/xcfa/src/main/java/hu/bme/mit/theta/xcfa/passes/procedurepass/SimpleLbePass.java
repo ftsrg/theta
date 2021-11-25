@@ -6,15 +6,21 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SimpleLbePass extends ProcedurePass {
 
+	private final boolean ENABLE_PARALLEL_EDGE_COLLAPSING = true;
+	private final boolean ENABLE_SEQUENCE_COLLAPSING = true;
+
 	XcfaProcedure.Builder builder;
+
+	// TODO
+	//  * CNF or DNF
+	//  * switches for Nondet and Sequences
 
 	/**
 	 * Steps of graph transformation:
-	 *
+	 * <p>
 	 * 1. Remove outgoing edges of the error location
 	 * 2. Join parallel edges to a single edge.
 	 * 3. Collapse "snakes" (graph components with vertices that have degrees of one or two).
@@ -23,6 +29,7 @@ public class SimpleLbePass extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		//if(true) return builder;
 		// Print Procedure in DOT format
 		String s = builder.toDot(Set.of(), Set.of());
 		System.out.println("--- BEFORE TRANSFORMATION ---");
@@ -38,47 +45,15 @@ public class SimpleLbePass extends ProcedurePass {
 		joinParallelsAndRemoveSnakes(new ArrayList<>(builder.getLocs()));
 
 		// 4.
-		List<XcfaLocation> locationsToVisit = new ArrayList<>(builder.getLocs());
-		while (!locationsToVisit.isEmpty()) {
-			XcfaLocation visiting = locationsToVisit.get(0);
+		removeMiddleMen();
 
-			if (visiting.getIncomingEdges().size() == 1 && visiting.getOutgoingEdges().size() > 1) {
-				XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
-				removeMiddleLocation(visiting);
+		s = builder.toDot(Set.of(), Set.of());
+		System.out.println("--- DURING TRANSFORMATION ---");
+		System.out.println(s);
 
-				List<XcfaLocation> start = new ArrayList<>();
-				start.add(previousLocation);
-				List<XcfaLocation> locationsToRemove = joinParallelsAndRemoveSnakes(start);
-				locationsToRemove.forEach(locationsToVisit::remove);
-			}
-
-			locationsToVisit.remove(visiting);
+		for(XcfaLocation location : builder.getLocs()){
+			collapseParallelEdges(location, new ArrayList<>());
 		}
-
-		/*final List<XcfaEdge> edgesToHandle = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().stream().anyMatch(label -> !(label instanceof XcfaLabel.StmtXcfaLabel))).collect(Collectors.toList());
-		for (XcfaEdge edge : edgesToHandle) {
-			builder.removeEdge(edge);
-			List<XcfaLabel> newLabelList = new ArrayList<>();
-			XcfaLocation source = edge.getSource();
-			for (XcfaLabel label : edge.getLabels()) {
-				if (!(label instanceof XcfaLabel.StmtXcfaLabel)) {
-					if (newLabelList.size() > 0) {
-						XcfaLocation tmpLoc = XcfaLocation.create("_tmp" + XcfaLocation.uniqeCounter());
-						builder.addLoc(tmpLoc);
-						builder.addEdge(XcfaEdge.of(source, tmpLoc, newLabelList));
-						source = tmpLoc;
-					}
-					newLabelList.clear();
-					XcfaLocation tmpLoc = XcfaLocation.create("_tmp" + XcfaLocation.uniqeCounter());
-					builder.addLoc(tmpLoc);
-					builder.addEdge(XcfaEdge.of(source, tmpLoc, List.of(label)));
-					source = tmpLoc;
-				} else {
-					newLabelList.add(label);
-				}
-			}
-			builder.addEdge(XcfaEdge.of(source, edge.getTarget(), newLabelList));
-		}*/
 
 		// Print Procedure in DOT format
 		s = builder.toDot(Set.of(), Set.of());
@@ -99,53 +74,91 @@ public class SimpleLbePass extends ProcedurePass {
 			XcfaLocation visiting = locationsToVisit.get(0);
 
 			// Join parallel edges starting from "visiting" location
-			HashMap<XcfaLocation, List<XcfaEdge>> edgesByTarget = new HashMap<>();
-			for (XcfaEdge edge : visiting.getOutgoingEdges()) {
-				List<XcfaEdge> edgesToTarget = edgesByTarget.getOrDefault(edge.getTarget(), new ArrayList<>());
-				edgesToTarget.add(edge);
-				edgesByTarget.put(edge.getTarget(), edgesToTarget);
-			}
-			for (XcfaLocation key : edgesByTarget.keySet()) {
-				List<XcfaEdge> edgesToTarget = edgesByTarget.get(key);
-				XcfaEdge firstEdge = edgesToTarget.get(0);
-				for (XcfaEdge edge : edgesToTarget) {
-					if (edge != firstEdge) {
-						joinParallelEdges(firstEdge, edge);
-					}
-				}
-				if (edgesToTarget.size() >= 2 && !locationsToVisit.contains(key)) {
-					locationsToVisit.add(key);
-				}
-			}
+			//collapseParallelEdges(visiting, locationsToVisit);
 
 			// Collapse "visiting" location if it is part of a snake
-			if (visiting.getIncomingEdges().size() == 1 && visiting.getOutgoingEdges().size() == 1) {
-				XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
-				removeMiddleLocation(visiting);
-				removedLocations.add(visiting);
-				if (!locationsToVisit.contains(previousLocation)) {
-					locationsToVisit.add(previousLocation);
-				}
-			}
+			collapsePartOfSnake(visiting, locationsToVisit, removedLocations);
 
 			locationsToVisit.remove(visiting);
 		}
 		return removedLocations;
 	}
 
+	private void removeMiddleMen() {
+		if (!ENABLE_SEQUENCE_COLLAPSING) return;
+
+		List<XcfaLocation> locationsToVisit = new ArrayList<>(builder.getLocs());
+		while (!locationsToVisit.isEmpty()) {
+			XcfaLocation visiting = locationsToVisit.get(0);
+
+			if (visiting.getIncomingEdges().size() == 1 && visiting.getOutgoingEdges().size() > 1) {
+				XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
+				removeMiddleLocation(visiting);
+
+				List<XcfaLocation> start = new ArrayList<>();
+				start.add(previousLocation);
+				List<XcfaLocation> locationsToRemove = joinParallelsAndRemoveSnakes(start);
+				locationsToRemove.forEach(locationsToVisit::remove);
+			}
+
+			locationsToVisit.remove(visiting);
+		}
+	}
+
+	private void collapseParallelEdges(XcfaLocation location, List<XcfaLocation> locationsToVisit) {
+		if (!ENABLE_PARALLEL_EDGE_COLLAPSING) return;
+
+		HashMap<XcfaLocation, List<XcfaEdge>> edgesByTarget = new HashMap<>();
+		for (XcfaEdge edge : location.getOutgoingEdges()) {
+			List<XcfaEdge> edgesToTarget = edgesByTarget.getOrDefault(edge.getTarget(), new ArrayList<>());
+			edgesToTarget.add(edge);
+			edgesByTarget.put(edge.getTarget(), edgesToTarget);
+		}
+		for (XcfaLocation key : edgesByTarget.keySet()) {
+			List<XcfaEdge> edgesToTarget = edgesByTarget.get(key);
+			XcfaEdge firstEdge = edgesToTarget.get(0);
+			for (XcfaEdge edge : edgesToTarget) {
+				if (edge != firstEdge) {
+					joinParallelEdges(firstEdge, edge);
+				}
+			}
+			if (edgesToTarget.size() >= 2 && !locationsToVisit.contains(key)) {
+				locationsToVisit.add(key);
+			}
+		}
+	}
+
+	private void collapsePartOfSnake(XcfaLocation location, List<XcfaLocation> locationsToVisit, List<XcfaLocation> removedLocations) {
+		if (!ENABLE_SEQUENCE_COLLAPSING) return;
+
+		if (location.getIncomingEdges().size() == 1 && location.getOutgoingEdges().size() == 1) {
+			XcfaLocation previousLocation = location.getIncomingEdges().get(0).getSource();
+			removeMiddleLocation(location);
+			removedLocations.add(location);
+			if (!locationsToVisit.contains(previousLocation)) {
+				locationsToVisit.add(previousLocation);
+			}
+		}
+	}
+
+	private XcfaLabel getWrappedLabels(XcfaEdge edge) {
+		List<XcfaLabel> edgeLabels = edge.getLabels();
+		return edgeLabels.size() == 1 ? edgeLabels.get(0) : XcfaLabel.Sequence(edgeLabels);
+	}
+
 	private void joinParallelEdges(XcfaEdge edge1, XcfaEdge edge2) {
-		// TODO check whether edge1 and edge2 are parallel if necessary
+		if (edge1.getSource() != edge2.getSource() || edge1.getTarget() != edge2.getTarget()) return;
 		builder.removeEdge(edge1);
 		builder.removeEdge(edge2);
 		XcfaLabel jointLabel = XcfaLabel.Nondet(List.of(
-				XcfaLabel.Sequence(edge1.getLabels()),
-				XcfaLabel.Sequence(edge2.getLabels())
+				getWrappedLabels(edge1),
+				getWrappedLabels(edge2)
 		));
 		builder.addEdge(XcfaEdge.of(edge1.getSource(), edge2.getTarget(), List.of(jointLabel)));
 	}
 
 	private void removeMiddleLocation(XcfaLocation location) {
-		// TODO check whether location.getIncomingEdges().size()==1 if necessary
+		if (location.getIncomingEdges().size() != 1) return;
 		XcfaEdge inEdge = location.getIncomingEdges().get(0);
 		builder.removeEdge(inEdge);
 		builder.removeLoc(location);
