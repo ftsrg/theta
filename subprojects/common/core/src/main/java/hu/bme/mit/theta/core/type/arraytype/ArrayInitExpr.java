@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.MultiaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 /**
  * ArrayInitExpr is a way to specify arbitrary array 'literals' that may contain non-literal elements as well.
@@ -100,6 +102,11 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 			newOps.add(Tuple2.of(indices.get(i), elems.get(i)));
 		}
 		return ArrayInitExpr.of(newOps, elseElem, type);
+	}
+
+	@Override
+	public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> withOps(List<? extends Expr<?>> ops) {
+		return with(ops.stream().map(op -> (Expr<Type>) op).collect(Collectors.toList()));
 	}
 
 	@Override
