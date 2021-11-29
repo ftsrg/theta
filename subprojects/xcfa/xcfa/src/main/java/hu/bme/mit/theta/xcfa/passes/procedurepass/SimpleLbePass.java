@@ -20,10 +20,15 @@ import java.util.*;
 public class SimpleLbePass extends ProcedurePass {
 
 	/**
+	 * If false, the pass returns the builder without applying any changes.
+	 */
+	private final boolean ENABLE_SIMPLE_LBE_PASS = true;
+
+	/**
 	 * Enables collapsing of parallel edges to single edges during the graph transformation process every time when a
 	 * parallel edge can appear (by applying other transformation rules).
 	 */
-	private final boolean ENABLE_PARALLEL_EDGE_COLLAPSING = true;
+	private final boolean ENABLE_PARALLEL_EDGE_COLLAPSING = false;
 
 	/**
 	 * Enables collapsing of sequential edges of a location where the number of incoming edges to the location is
@@ -33,10 +38,10 @@ public class SimpleLbePass extends ProcedurePass {
 	private final boolean ENABLE_SEQUENCE_COLLAPSING = true;
 
 	/**
-	 * Enables collapsing of parallel edges to single edges at the and of the graph transformation process (that is
+	 * Enables collapsing of parallel edges to single edges at the end of the graph transformation process (that is
 	 * iterating through the locations once at the end).
 	 */
-	private final boolean ENABLE_REMOVE_PARALLEL_EDGES_AT_THE_END = true;
+	private final boolean ENABLE_REMOVE_PARALLEL_EDGES_AT_THE_END = false;
 
 	/**
 	 * Enables printing of the XCFA before and after the transformation process. For debugging...
@@ -58,6 +63,8 @@ public class SimpleLbePass extends ProcedurePass {
 	 */
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		if (!ENABLE_SIMPLE_LBE_PASS) return builder;
+
 		if (ENABLE_PRINT_TO_DOT) {
 			System.out.println("--- BEFORE TRANSFORMATION ---");
 			System.out.println(builder.toDot(Set.of(), Set.of()));
@@ -83,6 +90,8 @@ public class SimpleLbePass extends ProcedurePass {
 				collapseParallelEdges(location, new ArrayList<>());
 			}
 		}
+
+		//builder = EliminateSelfLoops.instance.run(builder);
 
 		if (ENABLE_PRINT_TO_DOT) {
 			System.out.println("--- AFTER TRANSFORMATION ---");
@@ -152,7 +161,7 @@ public class SimpleLbePass extends ProcedurePass {
 	 * Collapses all parallel edges starting from a location.
 	 *
 	 * @param location         the location from where the parallel edges start that we want to remove
-	 * @param locationsToVisit Adds the targets of parallel edges to this list (new parallel parallel edges and snakes
+	 * @param locationsToVisit Adds the targets of parallel edges to this list (new parallel edges and snakes
 	 *                         can appear in these locations)
 	 */
 	private void collapseParallelEdges(XcfaLocation location, List<XcfaLocation> locationsToVisit) {
@@ -164,12 +173,18 @@ public class SimpleLbePass extends ProcedurePass {
 		}
 		for (XcfaLocation key : edgesByTarget.keySet()) {
 			List<XcfaEdge> edgesToTarget = edgesByTarget.get(key);
-			XcfaEdge firstEdge = edgesToTarget.get(0);
+			if (edgesToTarget.size() <= 1) continue;
+			XcfaLocation source = edgesToTarget.get(0).getSource();
+			XcfaLocation target = edgesToTarget.get(0).getTarget();
+			XcfaLabel.NondetLabel nondetLabel = XcfaLabel.Nondet(new ArrayList<>());
 			for (XcfaEdge edge : edgesToTarget) {
-				if (edge != firstEdge) {
-					joinParallelEdges(firstEdge, edge);
-				}
+				List<XcfaLabel> oldLabels = new ArrayList<>(nondetLabel.getLabels());
+				oldLabels.addAll(getNonDetBranch(edge.getLabels()));
+				nondetLabel = XcfaLabel.Nondet(oldLabels);
+				builder.removeEdge(edge);
 			}
+			builder.addEdge(XcfaEdge.of(source, target, List.of(nondetLabel)));
+
 			if (edgesToTarget.size() >= 2 && !locationsToVisit.contains(key)) {
 				locationsToVisit.add(key);
 			}
@@ -196,39 +211,23 @@ public class SimpleLbePass extends ProcedurePass {
 	}
 
 	/**
-	 * Wraps an edge to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have exactly
-	 * one label. If the edge has one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel} its labels are returned
+	 * Wraps edge labels to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have exactly
+	 * one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's labels are returned
 	 * in a list to achieve DNF.
 	 *
-	 * @param edge the edge whose labels we would like to add to the NonDetLabel
+	 * @param edgeLabels the edge labels we would like to add to the NonDetLabel
 	 * @return the list of labels to add to the NonDetLabel
 	 */
-	private List<XcfaLabel> getNonDetBranch(XcfaEdge edge) {
-		List<XcfaLabel> edgeLabels = edge.getLabels();
+	private List<XcfaLabel> getNonDetBranch(List<XcfaLabel> edgeLabels) {
 		if (edgeLabels.size() == 1) {
 			if (edgeLabels.get(0) instanceof XcfaLabel.NondetLabel) {
 				return ((XcfaLabel.NondetLabel) edgeLabels.get(0)).getLabels();
 			}
 			return edgeLabels;
 		}
-		return List.of(XcfaLabel.Sequence(edgeLabels));
-	}
-
-	/**
-	 * Joins two parallel edges to a single edge by creating a new {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}.
-	 *
-	 * @param edge1 Edge 1
-	 * @param edge2 Edge 2
-	 */
-	private void joinParallelEdges(XcfaEdge edge1, XcfaEdge edge2) {
-		if (edge1.getSource() != edge2.getSource() || edge1.getTarget() != edge2.getTarget()) return;
-		builder.removeEdge(edge1);
-		builder.removeEdge(edge2);
-		List<XcfaLabel> nonDetLabels = new ArrayList<>();
-		nonDetLabels.addAll(getNonDetBranch(edge1));
-		nonDetLabels.addAll(getNonDetBranch(edge2));
-		XcfaLabel jointLabel = XcfaLabel.Nondet(nonDetLabels);
-		builder.addEdge(XcfaEdge.of(edge1.getSource(), edge2.getTarget(), List.of(jointLabel)));
+		List<XcfaLabel> labels = new ArrayList<>();
+		labels.add(XcfaLabel.Sequence(edgeLabels));
+		return labels;
 	}
 
 	/**
