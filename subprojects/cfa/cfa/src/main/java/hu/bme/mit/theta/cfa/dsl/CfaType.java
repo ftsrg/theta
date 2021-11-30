@@ -95,7 +95,7 @@ final class CfaType {
 		}
 
 		private int getExp(String text) {
-			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
 			Matcher matcher = pattern.matcher(text);
 			if (matcher.find())
 			{
@@ -104,7 +104,7 @@ final class CfaType {
 		}
 
 		private int getSignificand(String text) {
-			Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)]");
+			Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
 			Matcher matcher = pattern.matcher(text);
 			if (matcher.find())
 			{
