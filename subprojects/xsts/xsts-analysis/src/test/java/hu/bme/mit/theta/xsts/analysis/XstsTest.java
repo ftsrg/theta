@@ -80,9 +80,9 @@ public class XstsTest {
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+// TODO				{ "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+// TODO				{ "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -174,7 +174,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//TODO				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 //				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
 
@@ -224,16 +224,17 @@ public class XstsTest {
 
 				{ "src/test/resources/model/arraywrite_sugar.xsts", "src/test/resources/property/arraywrite_sugar.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/if1.xsts", "src/test/resources/property/if1.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//TODO				{ "src/test/resources/model/if1.xsts", "src/test/resources/property/if1.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
+//TODO				{ "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
 		});
 	}
 
 	@Test
 	public void test() throws IOException {
 
-		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+//		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+		final Logger logger = new ConsoleLogger(Level.DETAIL);
 
 		XSTS xsts;
 		try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {

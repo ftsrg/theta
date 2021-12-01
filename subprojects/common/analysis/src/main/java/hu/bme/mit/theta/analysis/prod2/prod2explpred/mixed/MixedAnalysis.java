@@ -14,29 +14,31 @@ import hu.bme.mit.theta.analysis.prod2.*;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAnalysis;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc;
+import hu.bme.mit.theta.solver.Solver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MixedAnalysis<A extends StmtAction>
-        implements Analysis<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>>{
+        implements Analysis<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
 
     private final PartialOrd<Prod2State<ExplState, PredState>> partialOrd;
     private final InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> initFunc;
-    private final MixedTransFunc transFunc = null;
+    private final MixedTransFunc transFunc;
 
-    private MixedAnalysis(final Analysis<ExplState, ? super A, ExplPrec> analysis1, final Analysis<PredState, ? super A, PredPrec> analysis2,
-                                  final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator) {
+    private MixedAnalysis(final Solver solver, final Analysis<ExplState, ? super A, ExplPrec> analysis1, final Analysis<PredState, ? super A, PredPrec> analysis2,
+                          final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
         partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
         initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
-//        transFunc = MixedTransFunc.create();
+        transFunc = MixedTransFunc.create(solver);
     }
 
     public static <A extends StmtAction> MixedAnalysis<A> create(
+            final Solver solver,
             final Analysis<ExplState, ? super A, ExplPrec> analysis1, final Analysis<PredState, ? super A, PredPrec> analysis2,
             final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator) {
-        return new MixedAnalysis<A>(analysis1, analysis2, strenghteningOperator);
+        return new MixedAnalysis<A>(solver, analysis1, analysis2, strenghteningOperator);
     }
 
     @Override
