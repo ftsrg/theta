@@ -49,7 +49,7 @@ public class SimpleLbePass extends ProcedurePass {
 	/**
 	 * Enables printing of the XCFA before and after the transformation process. For debugging...
 	 */
-	private final boolean ENABLE_PRINT_TO_DOT = true;
+	private final boolean ENABLE_PRINT_TO_DOT = false;
 
 	XcfaProcedure.Builder builder;
 
