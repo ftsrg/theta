@@ -18,30 +18,33 @@ import java.util.*;
  * </ul>
  */
 public class SimpleLbePass extends ProcedurePass {
+	/**
+	 * The level of LBE that specifies which type of graph transformations to apply.
+	 */
+	public static LBELevel level = LBELevel.NO_LBE;
 
 	/**
-	 * If false, the pass returns the builder without applying any changes.
+	 * LBE modes.
 	 */
-	private final boolean ENABLE_SIMPLE_LBE_PASS = true;
+	public enum LBELevel {
+		/**
+		 * The pass returns the builder without applying any changes.
+		 */
+		NO_LBE,
 
-	/**
-	 * Enables collapsing of parallel edges to single edges during the graph transformation process every time when a
-	 * parallel edge can appear (by applying other transformation rules).
-	 */
-	private final boolean ENABLE_PARALLEL_EDGE_COLLAPSING = false;
+		/**
+		 * Enables collapsing of sequential edges of a location where the number of incoming edges to the location is
+		 * exactly 1. A new edge is created for every outgoing edge of the location combined with the labels of the
+		 * incoming
+		 * edge. Parallel edges are not collapsed.
+		 */
+		LBE_SEQ,
 
-	/**
-	 * Enables collapsing of sequential edges of a location where the number of incoming edges to the location is
-	 * exactly 1. A new edge is created for every outgoing edge of the location combined with the labels of the incoming
-	 * edge.
-	 */
-	private final boolean ENABLE_SEQUENCE_COLLAPSING = true;
-
-	/**
-	 * Enables collapsing of parallel edges to single edges at the end of the graph transformation process (that is
-	 * iterating through the locations once at the end).
-	 */
-	private final boolean ENABLE_REMOVE_PARALLEL_EDGES_AT_THE_END = false;
+		/**
+		 * Enables collapsing of sequential and parallel edges too.
+		 */
+		LBE_FULL
+	}
 
 	/**
 	 * Enables printing of the XCFA before and after the transformation process. For debugging...
@@ -58,12 +61,11 @@ public class SimpleLbePass extends ProcedurePass {
 	 * 		<li>Join parallel edges to single edges and collapse snakes (see Definitions at {@link SimpleLbePass})</li>
 	 * 	 	<li>Collapse sequential edges of locations whose incoming degree is 1, join possibly created parallel edges and
 	 * 	 	edge-pairs described in step 2</li>
-	 * 	 	<li>Remove parallel edges at the end</li>
 	 * </ol>
 	 */
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		if (!ENABLE_SIMPLE_LBE_PASS) return builder;
+		if (level == LBELevel.NO_LBE) return builder;
 
 		if (ENABLE_PRINT_TO_DOT) {
 			System.out.println("--- BEFORE TRANSFORMATION ---");
@@ -80,16 +82,7 @@ public class SimpleLbePass extends ProcedurePass {
 		collapseParallelsAndSnakes(new ArrayList<>(builder.getLocs()));
 
 		// Step 3
-		if (ENABLE_SEQUENCE_COLLAPSING) {
-			removeAllMiddleLocations();
-		}
-
-		// Step 4
-		if (ENABLE_REMOVE_PARALLEL_EDGES_AT_THE_END) {
-			for (XcfaLocation location : builder.getLocs()) {
-				collapseParallelEdges(location, new ArrayList<>());
-			}
-		}
+		removeAllMiddleLocations();
 
 		//builder = EliminateSelfLoops.instance.run(builder);
 
@@ -119,14 +112,12 @@ public class SimpleLbePass extends ProcedurePass {
 			XcfaLocation visiting = locationsToVisit.get(0);
 
 			// Join parallel edges starting from "visiting" location
-			if (ENABLE_PARALLEL_EDGE_COLLAPSING) {
+			if (level == LBELevel.LBE_FULL) {
 				collapseParallelEdges(visiting, locationsToVisit);
 			}
 
 			// Collapse "visiting" location if it is part of a snake
-			if (ENABLE_SEQUENCE_COLLAPSING) {
-				collapsePartOfSnake(visiting, locationsToVisit, removedLocations);
-			}
+			collapsePartOfSnake(visiting, locationsToVisit, removedLocations);
 
 			locationsToVisit.remove(visiting);
 		}
@@ -211,8 +202,10 @@ public class SimpleLbePass extends ProcedurePass {
 	}
 
 	/**
-	 * Wraps edge labels to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have exactly
-	 * one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's labels are returned
+	 * Wraps edge labels to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have
+	 * exactly
+	 * one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's
+	 * labels are returned
 	 * in a list to achieve DNF.
 	 *
 	 * @param edgeLabels the edge labels we would like to add to the NonDetLabel
