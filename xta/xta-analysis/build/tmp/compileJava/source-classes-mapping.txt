@@ -1,0 +1,111 @@
+hu/bme/mit/theta/xta/analysis/lazy/Lens.java
+ hu.bme.mit.theta.xta.analysis.lazy.Lens
+hu/bme/mit/theta/xta/analysis/lazy/AlgorithmStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy
+hu/bme/mit/theta/xta/analysis/lazy/BwItpZoneStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.BwItpZoneStrategy
+hu/bme/mit/theta/xta/analysis/XtaOrd.java
+ hu.bme.mit.theta.xta.analysis.XtaOrd
+hu/bme/mit/theta/xta/analysis/zone/lu/LuZoneState.java
+ hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState
+hu/bme/mit/theta/xta/analysis/zone/itp/ItpZoneTransFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneTransFunc
+hu/bme/mit/theta/xta/analysis/lazy/LuZoneStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.LuZoneStrategy
+hu/bme/mit/theta/xta/analysis/zone/itp/ItpZoneInitFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneInitFunc
+hu/bme/mit/theta/xta/analysis/zone/itp/ItpZoneAnalysis.java
+ hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneAnalysis
+hu/bme/mit/theta/xta/analysis/lazy/ClockStrategies.java
+ hu.bme.mit.theta.xta.analysis.lazy.ClockStrategies
+ hu.bme.mit.theta.xta.analysis.lazy.ClockStrategies$1
+hu/bme/mit/theta/xta/analysis/lazy/CombinedStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.CombinedStrategy
+hu/bme/mit/theta/xta/analysis/lazy/ItpZoneStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.ItpZoneStrategy
+hu/bme/mit/theta/xta/analysis/lazy/ClockStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy
+hu/bme/mit/theta/xta/analysis/lazy/FwItpExplStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.FwItpExplStrategy
+hu/bme/mit/theta/xta/analysis/XtaLts.java
+ hu.bme.mit.theta.xta.analysis.XtaLts
+hu/bme/mit/theta/xta/analysis/expl/itp/ItpExplState.java
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState
+hu/bme/mit/theta/xta/analysis/zone/itp/ItpZoneState.java
+ hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState
+hu/bme/mit/theta/xta/analysis/zone/XtaZoneUtils.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaZoneUtils
+hu/bme/mit/theta/xta/analysis/zone/XtaZoneAnalysis.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis
+hu/bme/mit/theta/xta/analysis/XtaInitFunc.java
+ hu.bme.mit.theta.xta.analysis.XtaInitFunc
+hu/bme/mit/theta/xta/analysis/XtaTransFunc.java
+ hu.bme.mit.theta.xta.analysis.XtaTransFunc
+hu/bme/mit/theta/xta/analysis/zone/lu/LuZoneTransFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneTransFunc
+hu/bme/mit/theta/xta/analysis/zone/XtaZoneTransFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc
+hu/bme/mit/theta/xta/analysis/lazy/ExplStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.ExplStrategy
+hu/bme/mit/theta/xta/analysis/expl/itp/ItpExplInitFunc.java
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplInitFunc
+hu/bme/mit/theta/xta/analysis/zone/lu/LuZoneInitFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneInitFunc
+hu/bme/mit/theta/xta/analysis/expl/itp/ItpExplTransFunc.java
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplTransFunc
+hu/bme/mit/theta/xta/analysis/expl/itp/ItpExplOrd.java
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplOrd
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplOrd$LazyHolder
+hu/bme/mit/theta/xta/analysis/zone/XtaActZoneUtils.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaActZoneUtils
+hu/bme/mit/theta/xta/analysis/expl/XtaExplTransFunc.java
+ hu.bme.mit.theta.xta.analysis.expl.XtaExplTransFunc
+hu/bme/mit/theta/xta/analysis/expl/XtaExplUtils.java
+ hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils
+hu/bme/mit/theta/xta/analysis/XtaAction.java
+ hu.bme.mit.theta.xta.analysis.XtaAction
+ hu.bme.mit.theta.xta.analysis.XtaAction$BasicXtaAction
+ hu.bme.mit.theta.xta.analysis.XtaAction$BinaryXtaAction
+ hu.bme.mit.theta.xta.analysis.XtaAction$BroadcastXtaAction
+hu/bme/mit/theta/xta/analysis/zone/XtaLuZoneUtils.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils
+hu/bme/mit/theta/xta/analysis/zone/lu/LuZoneOrd.java
+ hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneOrd
+hu/bme/mit/theta/xta/analysis/expl/XtaExplInitFunc.java
+ hu.bme.mit.theta.xta.analysis.expl.XtaExplInitFunc
+hu/bme/mit/theta/xta/analysis/expl/XtaExplAnalysis.java
+ hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis
+hu/bme/mit/theta/xta/analysis/zone/itp/ItpZoneOrd.java
+ hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneOrd
+hu/bme/mit/theta/xta/analysis/XtaState.java
+ hu.bme.mit.theta.xta.analysis.XtaState
+ hu.bme.mit.theta.xta.analysis.XtaState$1
+hu/bme/mit/theta/xta/analysis/lazy/DataStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.DataStrategy
+hu/bme/mit/theta/xta/analysis/zone/XtaZoneInitFunc.java
+ hu.bme.mit.theta.xta.analysis.zone.XtaZoneInitFunc
+hu/bme/mit/theta/xta/analysis/lazy/DataStrategies.java
+ hu.bme.mit.theta.xta.analysis.lazy.DataStrategies
+ hu.bme.mit.theta.xta.analysis.lazy.DataStrategies$1
+hu/bme/mit/theta/xta/analysis/XtaAnalysis.java
+ hu.bme.mit.theta.xta.analysis.XtaAnalysis
+hu/bme/mit/theta/xta/analysis/lazy/BwItpExplStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.BwItpExplStrategy
+hu/bme/mit/theta/xta/analysis/lazy/FwItpZoneStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.FwItpZoneStrategy
+hu/bme/mit/theta/xta/analysis/expl/itp/ItpExplAnalysis.java
+ hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplAnalysis
+hu/bme/mit/theta/xta/analysis/lazy/LazyXtaStatistics.java
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics$Builder
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics$Builder$State
+hu/bme/mit/theta/xta/analysis/zone/lu/LuZoneAnalysis.java
+ hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneAnalysis
+hu/bme/mit/theta/xta/analysis/lazy/ItpExplStrategy.java
+ hu.bme.mit.theta.xta.analysis.lazy.ItpExplStrategy
+hu/bme/mit/theta/xta/analysis/lazy/LazyXtaChecker.java
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker$CheckMethod
+hu/bme/mit/theta/xta/analysis/lazy/LazyXtaCheckerFactory.java
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory
+ hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory$1

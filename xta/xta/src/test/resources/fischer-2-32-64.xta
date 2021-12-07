@@ -1,0 +1,27 @@
+const int N = 2;
+
+typedef int[1, N] id_t;
+int id;
+
+process P(const id_t pid) {
+	clock x;
+	const int a = 32;
+	const int b = 64;
+	
+	state
+    	wait,
+    	req { x <= a },
+    	A,
+		cs;
+
+	init A;
+	
+	trans
+		A -> req { guard id == 0; assign x = 0; },
+		req -> wait { assign x = 0, id = pid; },
+		wait -> req { guard id == 0; assign x = 0; },
+		wait -> cs { guard x >= b && id == pid; },
+		cs -> A { assign id = 0; };
+}
+
+system P;

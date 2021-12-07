@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" tests="45" skipped="0" failures="0" errors="0" timestamp="2021-09-01T12:13:20" hostname="LAPTOP-B724VL6M" time="9.898">
+  <properties/>
+  <testcase name="test[model: /csma-2.xta, discrete: NONE, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="1.937"/>
+  <testcase name="test[model: /csma-2.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.093"/>
+  <testcase name="test[model: /csma-2.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.063"/>
+  <testcase name="test[model: /csma-2.xta, discrete: FWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.172"/>
+  <testcase name="test[model: /csma-2.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.059"/>
+  <testcase name="test[model: /csma-2.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.053"/>
+  <testcase name="test[model: /csma-2.xta, discrete: BWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.138"/>
+  <testcase name="test[model: /csma-2.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.046"/>
+  <testcase name="test[model: /csma-2.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.05"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.169"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.123"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.139"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.122"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.138"/>
+  <testcase name="test[model: /fddi-2.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.117"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: NONE, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.061"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.019"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.02"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: FWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.063"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.019"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.023"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: BWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.057"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.027"/>
+  <testcase name="test[model: /fischer-2-32-64.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.019"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: NONE, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.126"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.038"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.039"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: FWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.097"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.036"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.036"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: BWITP, clock: LU]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.102"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.035"/>
+  <testcase name="test[model: /lynch-2-16.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.034"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="1.155"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="1.086"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.849"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.836"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.821"/>
+  <testcase name="test[model: /engine-classic.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.805"/>
+  <testcase name="test[model: /broadcast.xta, discrete: NONE, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.034"/>
+  <testcase name="test[model: /broadcast.xta, discrete: NONE, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.005"/>
+  <testcase name="test[model: /broadcast.xta, discrete: FWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.005"/>
+  <testcase name="test[model: /broadcast.xta, discrete: FWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.004"/>
+  <testcase name="test[model: /broadcast.xta, discrete: BWITP, clock: FWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.007"/>
+  <testcase name="test[model: /broadcast.xta, discrete: BWITP, clock: BWITP]" classname="hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

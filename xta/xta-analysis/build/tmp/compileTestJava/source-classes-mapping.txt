@@ -1,0 +1,6 @@
+hu/bme/mit/theta/xta/analysis/LazyXtaCheckerTest.java
+ hu.bme.mit.theta.xta.analysis.LazyXtaCheckerTest
+hu/bme/mit/theta/xta/analysis/XtaAnalysisTest.java
+ hu.bme.mit.theta.xta.analysis.XtaAnalysisTest
+hu/bme/mit/theta/xta/analysis/XtaZoneAnalysisTest.java
+ hu.bme.mit.theta.xta.analysis.XtaZoneAnalysisTest
