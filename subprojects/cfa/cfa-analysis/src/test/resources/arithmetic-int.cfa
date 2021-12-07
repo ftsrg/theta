@@ -1,0 +1,47 @@
+main process cfa {
+    var x : int
+    var y : int
+    var z : int
+    
+    init loc L0
+    loc L1
+    loc L2
+    loc L3
+    loc L4
+    loc L5
+    loc L6
+    loc L7
+    loc L8
+    loc L9
+    loc L10
+    loc L11
+    final loc LF
+    error loc LE
+    
+    L0 -> L1 {
+        x := 11
+        y := 5
+    }
+
+    L1 -> L2 { z := x + y }
+    L2 -> LF { assume not z = 16 }
+    L2 -> L3 { assume z = 16 }
+
+    L3 -> L4 { z := x * y }
+    L4 -> LF { assume not z = 55 }
+    L4 -> L5 { assume z = 55 }
+
+    L5 -> L6 { z := y - x }
+    L6 -> LF { assume not z = -6 }
+    L6 -> L7 { assume z = -6 }
+
+    L7 -> L8 { z := x / y }
+    L8 -> LF { assume not z = 2 }
+    L8 -> L9 { assume z = 2 }
+
+    L9 -> L10 { z := x mod y }
+    L10 -> LF { assume not z = 1 }
+    L10 -> L11 { assume z = 1 }
+
+    L11 -> LE { assume true }
+}

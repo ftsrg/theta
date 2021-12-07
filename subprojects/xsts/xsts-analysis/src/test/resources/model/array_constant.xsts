@@ -1,0 +1,11 @@
+var arr: [integer] -> boolean = [0 <- true, 1 <- true, 2 <- true, default <- false]
+var n: integer = 0
+
+trans {
+    assume arr[n]==true;
+    n:=n+1;
+}
+
+init {}
+
+env {}

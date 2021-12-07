@@ -1,0 +1,1468 @@
+broadcast chan finalize;
+
+bool isStable = true;
+bool toRaise_Control_toggleOfprior;
+bool isRaised_Control_toggleOfprior;
+bool toRaise_PoliceInterrupt_policeOfcontroller;
+bool isRaised_PoliceInterrupt_policeOfcontroller;
+bool toRaise_PoliceInterrupt_policeOfsecondary;
+bool isRaised_PoliceInterrupt_policeOfsecondary;
+bool toRaise_Control_toggleOfsecondary;
+bool isRaised_Control_toggleOfsecondary;
+bool toRaise_PoliceInterrupt_policeOfprior;
+bool isRaised_PoliceInterrupt_policeOfprior;
+bool LightCommands_displayYellowOfprior;
+bool LightCommands_displayNoneOfprior;
+bool LightCommands_displayYellowOfsecondary;
+bool LightCommands_displayNoneOfsecondary;
+bool LightCommands_displayRedOfsecondary;
+bool LightCommands_displayGreenOfprior;
+bool LightCommands_displayGreenOfsecondary;
+bool LightCommands_displayRedOfprior;
+
+broadcast chan runCycleInterruptedOfInterruptedOfsecondary;
+
+bool isScheduledinterruptedOfInterruptedOfsecondary;
+
+broadcast chan runCycleMain_regionOfStatechartOfprior;
+
+bool isScheduledmain_regionOfStatechartOfprior;
+
+broadcast chan runCycleNormalOfNormalOfprior;
+
+bool isSchedulednormalOfNormalOfprior;
+
+broadcast chan runCycleMain_regionOfStatechartOfsecondary;
+
+bool isScheduledmain_regionOfStatechartOfsecondary;
+
+broadcast chan runCycleOperatingOfOperatingOfcontroller;
+
+bool isScheduledoperatingOfOperatingOfcontroller;
+
+broadcast chan runCycleInterruptedOfInterruptedOfprior;
+
+bool isScheduledinterruptedOfInterruptedOfprior;
+
+broadcast chan runCycleMain_regionOfStatechartOfcontroller;
+
+bool isScheduledmain_regionOfStatechartOfcontroller;
+
+broadcast chan runCycleNormalOfNormalOfsecondary;
+
+bool isSchedulednormalOfNormalOfsecondary;
+
+broadcast chan entryChanOfNormal31;
+broadcast chan entryChanOfInterrupted32;
+broadcast chan entryChanOfNormal33;
+broadcast chan entryChanOfOperating34;
+broadcast chan entryChanOfInterrupted35;
+broadcast chan exitChanOfInterrupted36;
+broadcast chan exitChanOfNormal38;
+broadcast chan exitChanOfOperating40;
+broadcast chan exitChanOfInterrupted42;
+broadcast chan exitChanOfNormal44;
+
+process  interruptedOfInterruptedOfsecondary () {
+    bool isActive;
+    clock timer17;
+    clock timer23;
+
+state
+    EntryLocation11,
+    GenInitLocation12,
+    BlinkingYellow { timer23 <= 500 },
+    entryOfBlinkingYellow,
+    Black { timer17 <= 500 },
+    entryOfBlack,
+    timer18,
+    timer24;
+
+commit
+    EntryLocation11,
+    entryOfBlinkingYellow,
+    entryOfBlack;
+
+init GenInitLocation12;
+
+trans
+
+    entryOfBlinkingYellow -> BlinkingYellow {
+        assign LightCommands_displayYellowOfsecondary = true, timer23 = 0;
+    },
+
+    entryOfBlack -> Black {
+        assign LightCommands_displayNoneOfsecondary = true, timer17 = 0;
+    },
+    
+timer24
+ -> 
+entryOfBlack
+ { guard isActive; sync runCycleInterruptedOfInterruptedOfsecondary?; assign isScheduledinterruptedOfInterruptedOfsecondary = true;  },
+    
+timer18
+ -> 
+entryOfBlinkingYellow
+ { guard isActive; sync runCycleInterruptedOfInterruptedOfsecondary?; assign isScheduledinterruptedOfInterruptedOfsecondary = true;  },
+    
+EntryLocation11
+ -> 
+entryOfBlinkingYellow
+ { guard isActive; assign isScheduledinterruptedOfInterruptedOfsecondary = true;  },
+    
+Black
+ -> 
+timer18
+ { guard (isStable && timer17 >= 500);  },
+    
+BlinkingYellow
+ -> 
+timer24
+ { guard (isStable && timer23 >= 500);  },
+    
+timer24
+ -> 
+EntryLocation11
+ { sync entryChanOfInterrupted35?; assign isActive = true;  },
+    
+GenInitLocation12
+ -> 
+EntryLocation11
+ { sync entryChanOfInterrupted35?; assign isActive = true;  },
+    
+BlinkingYellow
+ -> 
+EntryLocation11
+ { sync entryChanOfInterrupted35?; assign isActive = true;  },
+    
+timer18
+ -> 
+EntryLocation11
+ { sync entryChanOfInterrupted35?; assign isActive = true;  },
+    
+Black
+ -> 
+EntryLocation11
+ { sync entryChanOfInterrupted35?; assign isActive = true;  },
+    
+timer24
+ -> 
+GenInitLocation12
+ { sync exitChanOfInterrupted36?; assign isActive = false;  },
+    
+GenInitLocation12
+ -> 
+GenInitLocation12
+ { sync exitChanOfInterrupted36?; assign isActive = false;  },
+    
+BlinkingYellow
+ -> 
+GenInitLocation12
+ { sync exitChanOfInterrupted36?; assign isActive = false;  },
+    
+timer18
+ -> 
+GenInitLocation12
+ { sync exitChanOfInterrupted36?; assign isActive = false;  },
+    
+Black
+ -> 
+GenInitLocation12
+ { sync exitChanOfInterrupted36?; assign isActive = false;  };
+}
+
+process  main_regionOfStatechartOfprior () {
+
+state
+    /** Entry Location */
+    
+EntryLocation8
+,
+    
+Interrupted
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfInterrupted
+,
+    
+Normal
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfNormal
+,
+    /** Synchronization location. */
+    
+exitOfInterrupted43
+,
+    /** Synchronization location. */
+    
+exitOfNormal45
+,
+    
+FinalizeBeforeInterrupted47
+,
+    
+FinalizeBeforeNormal49
+;
+commit
+    
+EntryLocation8
+,
+    
+entryOfInterrupted
+,
+    
+entryOfNormal
+,
+    
+exitOfInterrupted43
+,
+    
+exitOfNormal45
+;
+urgent
+    
+FinalizeBeforeInterrupted47
+,
+    
+FinalizeBeforeNormal49
+;
+init 
+EntryLocation8
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfInterrupted
+ -> 
+Interrupted
+ { sync entryChanOfInterrupted32!;  },
+    /** Edge for subregion synchronization */
+    
+entryOfNormal
+ -> 
+Normal
+ { sync entryChanOfNormal33!;  },
+    
+Normal
+ -> 
+exitOfNormal45
+ { guard isRaised_PoliceInterrupt_policeOfprior; sync runCycleMain_regionOfStatechartOfprior?; assign isScheduledmain_regionOfStatechartOfprior = true;  },
+    
+EntryLocation8
+ -> 
+entryOfNormal
+ { assign isScheduledmain_regionOfStatechartOfprior = true;  },
+    
+Interrupted
+ -> 
+exitOfInterrupted43
+ { guard isRaised_PoliceInterrupt_policeOfprior; sync runCycleMain_regionOfStatechartOfprior?; assign isScheduledmain_regionOfStatechartOfprior = true;  },
+    /** Synchronization edge. */
+    
+exitOfInterrupted43
+ -> 
+FinalizeBeforeNormal49
+ { sync exitChanOfInterrupted42!;  },
+    /** Synchronization edge. */
+    
+exitOfNormal45
+ -> 
+FinalizeBeforeInterrupted47
+ { sync exitChanOfNormal44!;  },
+    
+FinalizeBeforeInterrupted47
+ -> 
+entryOfInterrupted
+ { sync finalize?;  },
+    
+FinalizeBeforeNormal49
+ -> 
+entryOfNormal
+ { sync finalize?;  };
+}
+
+process 
+normalOfNormalOfprior
+() {
+
+bool isActive;
+
+state
+    /** Entry Location */
+    
+EntryLocation9
+,
+    /** Generated for the synchronization of subregions. */
+    
+GenInitLocation10
+,
+    
+Yellow
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfYellow
+,
+    
+Red
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfRed
+,
+    
+Green
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfGreen
+;
+commit
+    
+EntryLocation9
+,
+    
+entryOfYellow
+,
+    
+entryOfRed
+,
+    
+entryOfGreen
+;
+init 
+GenInitLocation10
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfYellow
+ -> 
+Yellow
+ { assign LightCommands_displayYellowOfprior = true;  },
+    /** Edge for subregion synchronization */
+    
+entryOfRed
+ -> 
+Red
+ { assign LightCommands_displayRedOfprior = true;  },
+    /** Edge for subregion synchronization */
+    
+entryOfGreen
+ -> 
+Green
+ { assign LightCommands_displayGreenOfprior = true;  },
+    
+Red
+ -> 
+entryOfGreen
+ { guard (isActive && isRaised_Control_toggleOfprior); sync runCycleNormalOfNormalOfprior?; assign isSchedulednormalOfNormalOfprior = true;  },
+    
+Green
+ -> 
+entryOfYellow
+ { guard (isActive && isRaised_Control_toggleOfprior); sync runCycleNormalOfNormalOfprior?; assign isSchedulednormalOfNormalOfprior = true;  },
+    
+Yellow
+ -> 
+entryOfRed
+ { guard (isActive && isRaised_Control_toggleOfprior); sync runCycleNormalOfNormalOfprior?; assign isSchedulednormalOfNormalOfprior = true;  },
+    
+EntryLocation9
+ -> 
+entryOfRed
+ { guard isActive; assign isSchedulednormalOfNormalOfprior = true;  },
+    
+Yellow
+ -> 
+entryOfYellow
+ { sync entryChanOfNormal33?; assign isActive = true;  },
+    
+Green
+ -> 
+entryOfGreen
+ { sync entryChanOfNormal33?; assign isActive = true;  },
+    
+GenInitLocation10
+ -> 
+EntryLocation9
+ { sync entryChanOfNormal33?; assign isActive = true;  },
+    
+Red
+ -> 
+entryOfRed
+ { sync entryChanOfNormal33?; assign isActive = true;  },
+    
+Yellow
+ -> 
+Yellow
+ { sync exitChanOfNormal44?; assign isActive = false;  },
+    
+Green
+ -> 
+Green
+ { sync exitChanOfNormal44?; assign isActive = false;  },
+    
+GenInitLocation10
+ -> 
+GenInitLocation10
+ { sync exitChanOfNormal44?; assign isActive = false;  },
+    
+Red
+ -> 
+Red
+ { sync exitChanOfNormal44?; assign isActive = false;  };
+}
+
+process  main_regionOfStatechartOfsecondary () {
+
+state
+    /** Entry Location */
+    
+EntryLocation2
+,
+    
+Normal
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfNormal
+,
+    
+Interrupted
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfInterrupted
+,
+    /** Synchronization location. */
+    
+exitOfInterrupted37
+,
+    /** Synchronization location. */
+    
+exitOfNormal39
+,
+    
+FinalizeBeforeInterrupted46
+,
+    
+FinalizeBeforeNormal50
+;
+commit
+    
+EntryLocation2
+,
+    
+entryOfNormal
+,
+    
+entryOfInterrupted
+,
+    
+exitOfInterrupted37
+,
+    
+exitOfNormal39
+;
+urgent
+    
+FinalizeBeforeInterrupted46
+,
+    
+FinalizeBeforeNormal50
+;
+init 
+EntryLocation2
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfNormal
+ -> 
+Normal
+ { sync entryChanOfNormal31!;  },
+    /** Edge for subregion synchronization */
+    
+entryOfInterrupted
+ -> 
+Interrupted
+ { sync entryChanOfInterrupted35!;  },
+    
+Normal
+ -> 
+exitOfNormal39
+ { guard isRaised_PoliceInterrupt_policeOfsecondary; sync runCycleMain_regionOfStatechartOfsecondary?; assign isScheduledmain_regionOfStatechartOfsecondary = true;  },
+    
+EntryLocation2
+ -> 
+entryOfNormal
+ { assign isScheduledmain_regionOfStatechartOfsecondary = true;  },
+    
+Interrupted
+ -> 
+exitOfInterrupted37
+ { guard isRaised_PoliceInterrupt_policeOfsecondary; sync runCycleMain_regionOfStatechartOfsecondary?; assign isScheduledmain_regionOfStatechartOfsecondary = true;  },
+    /** Synchronization edge. */
+    
+exitOfInterrupted37
+ -> 
+FinalizeBeforeNormal50
+ { sync exitChanOfInterrupted36!;  },
+    /** Synchronization edge. */
+    
+exitOfNormal39
+ -> 
+FinalizeBeforeInterrupted46
+ { sync exitChanOfNormal38!;  },
+    
+FinalizeBeforeInterrupted46
+ -> 
+entryOfInterrupted
+ { sync finalize?;  },
+    
+FinalizeBeforeNormal50
+ -> 
+entryOfNormal
+ { sync finalize?;  };
+}
+
+process  operatingOfOperatingOfcontroller () {
+
+bool isActive;
+
+clock timer13;
+
+clock timer19;
+
+clock timer21;
+
+clock timer25;
+
+clock timer27;
+
+state
+    /** Entry Location */
+    
+EntryLocation0
+,
+    /** Generated for the synchronization of subregions. */
+    
+GenInitLocation1
+,
+    
+Init
+ {
+timer27 <= 2 * 1000
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfInit
+,
+    
+PriorityPrepares
+ {
+timer13 <= 1 * 1000
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfPriorityPrepares
+,
+    
+Secondary
+ {
+timer19 <= 2 * 1000
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfSecondary
+,
+    
+Priority
+ {
+timer25 <= 2 * 1000
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfPriority
+,
+    
+SecondaryPrepares
+ {
+timer21 <= 1 * 1000
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfSecondaryPrepares
+,
+    
+timer14
+,
+    
+timer20
+,
+    
+timer22
+,
+    
+timer26
+,
+    
+timer28
+;
+commit
+    
+EntryLocation0
+,
+    
+entryOfInit
+,
+    
+entryOfPriorityPrepares
+,
+    
+entryOfSecondary
+,
+    
+entryOfPriority
+,
+    
+entryOfSecondaryPrepares
+;
+init 
+GenInitLocation1
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfInit
+ -> 
+Init
+ { assign toRaise_Control_toggleOfprior = true,
+timer27 = 0;  },
+    /** Edge for subregion synchronization */
+    
+entryOfPriorityPrepares
+ -> 
+PriorityPrepares
+ { assign toRaise_Control_toggleOfprior = true,
+timer13 = 0;  },
+    /** Edge for subregion synchronization */
+    
+entryOfSecondary
+ -> 
+Secondary
+ { assign toRaise_Control_toggleOfsecondary = true,
+toRaise_Control_toggleOfprior = true,
+timer19 = 0;  },
+    /** Edge for subregion synchronization */
+    
+entryOfPriority
+ -> 
+Priority
+ { assign toRaise_Control_toggleOfprior = true,
+toRaise_Control_toggleOfsecondary = true,
+timer25 = 0;  },
+    /** Edge for subregion synchronization */
+    
+entryOfSecondaryPrepares
+ -> 
+SecondaryPrepares
+ { assign toRaise_Control_toggleOfsecondary = true,
+timer21 = 0;  },
+    
+timer28
+ -> 
+entryOfPriorityPrepares
+ { guard isActive; sync runCycleOperatingOfOperatingOfcontroller?; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+timer22
+ -> 
+entryOfPriority
+ { guard isActive; sync runCycleOperatingOfOperatingOfcontroller?; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+timer14
+ -> 
+entryOfSecondary
+ { guard isActive; sync runCycleOperatingOfOperatingOfcontroller?; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+timer26
+ -> 
+entryOfPriorityPrepares
+ { guard isActive; sync runCycleOperatingOfOperatingOfcontroller?; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+EntryLocation0
+ -> 
+entryOfInit
+ { guard isActive; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+timer20
+ -> 
+entryOfSecondaryPrepares
+ { guard isActive; sync runCycleOperatingOfOperatingOfcontroller?; assign isScheduledoperatingOfOperatingOfcontroller = true;  },
+    
+PriorityPrepares
+ -> 
+timer14
+ { guard (isStable && timer13 >= 1 * 1000);  },
+    
+Secondary
+ -> 
+timer20
+ { guard (isStable && timer19 >= 2 * 1000);  },
+    
+SecondaryPrepares
+ -> 
+timer22
+ { guard (isStable && timer21 >= 1 * 1000);  },
+    
+Priority
+ -> 
+timer26
+ { guard (isStable && timer25 >= 2 * 1000);  },
+    
+Init
+ -> 
+timer28
+ { guard (isStable && timer27 >= 2 * 1000);  },
+    
+Priority
+ -> 
+entryOfPriority
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+timer28
+ -> 
+entryOfInit
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+GenInitLocation1
+ -> 
+EntryLocation0
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+timer14
+ -> 
+entryOfPriorityPrepares
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+timer26
+ -> 
+entryOfPriority
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+PriorityPrepares
+ -> 
+entryOfPriorityPrepares
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+Secondary
+ -> 
+entryOfSecondary
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+Init
+ -> 
+entryOfInit
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+timer22
+ -> 
+entryOfSecondaryPrepares
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+timer20
+ -> 
+entryOfSecondary
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+SecondaryPrepares
+ -> 
+entryOfSecondaryPrepares
+ { sync entryChanOfOperating34?; assign isActive = true;  },
+    
+Priority
+ -> 
+Priority
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+timer28
+ -> 
+timer28
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+GenInitLocation1
+ -> 
+GenInitLocation1
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+timer14
+ -> 
+timer14
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+timer26
+ -> 
+timer26
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+PriorityPrepares
+ -> 
+PriorityPrepares
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+Secondary
+ -> 
+Secondary
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+Init
+ -> 
+Init
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+timer22
+ -> 
+timer22
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+timer20
+ -> 
+timer20
+ { sync exitChanOfOperating40?; assign isActive = false;  },
+    
+SecondaryPrepares
+ -> 
+SecondaryPrepares
+ { sync exitChanOfOperating40?; assign isActive = false;  };
+}
+
+process 
+interruptedOfInterruptedOfprior
+() {
+
+bool isActive;
+
+clock timer15;
+
+clock timer29;
+
+state
+    /** Entry Location */
+    
+EntryLocation3
+,
+    /** Generated for the synchronization of subregions. */
+    
+GenInitLocation4
+,
+    
+Black
+ {
+timer15 <= 500
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfBlack
+,
+    
+BlinkingYellow
+ {
+timer29 <= 500
+},
+    /** Pseudo state for subregion synchronization */
+    
+entryOfBlinkingYellow
+,
+    
+timer16
+,
+    
+timer30
+;
+commit
+    
+EntryLocation3
+,
+    
+entryOfBlack
+,
+    
+entryOfBlinkingYellow
+;
+init 
+GenInitLocation4
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfBlack
+ -> 
+Black
+ { assign LightCommands_displayNoneOfprior = true,
+timer15 = 0;  },
+    /** Edge for subregion synchronization */
+    
+entryOfBlinkingYellow
+ -> 
+BlinkingYellow
+ { assign LightCommands_displayYellowOfprior = true,
+timer29 = 0;  },
+    
+timer16
+ -> 
+entryOfBlinkingYellow
+ { guard isActive; sync runCycleInterruptedOfInterruptedOfprior?; assign isScheduledinterruptedOfInterruptedOfprior = true;  },
+    
+timer30
+ -> 
+entryOfBlack
+ { guard isActive; sync runCycleInterruptedOfInterruptedOfprior?; assign isScheduledinterruptedOfInterruptedOfprior = true;  },
+    
+EntryLocation3
+ -> 
+entryOfBlinkingYellow
+ { guard isActive; assign isScheduledinterruptedOfInterruptedOfprior = true;  },
+    
+Black
+ -> 
+timer16
+ { guard (isStable && timer15 >= 500);  },
+    
+BlinkingYellow
+ -> 
+timer30
+ { guard (isStable && timer29 >= 500);  },
+    
+BlinkingYellow
+ -> 
+EntryLocation3
+ { sync entryChanOfInterrupted32?; assign isActive = true;  },
+    
+GenInitLocation4
+ -> 
+EntryLocation3
+ { sync entryChanOfInterrupted32?; assign isActive = true;  },
+    
+Black
+ -> 
+EntryLocation3
+ { sync entryChanOfInterrupted32?; assign isActive = true;  },
+    
+timer16
+ -> 
+EntryLocation3
+ { sync entryChanOfInterrupted32?; assign isActive = true;  },
+    
+timer30
+ -> 
+EntryLocation3
+ { sync entryChanOfInterrupted32?; assign isActive = true;  },
+    
+BlinkingYellow
+ -> 
+GenInitLocation4
+ { sync exitChanOfInterrupted42?; assign isActive = false;  },
+    
+GenInitLocation4
+ -> 
+GenInitLocation4
+ { sync exitChanOfInterrupted42?; assign isActive = false;  },
+    
+Black
+ -> 
+GenInitLocation4
+ { sync exitChanOfInterrupted42?; assign isActive = false;  },
+    
+timer16
+ -> 
+GenInitLocation4
+ { sync exitChanOfInterrupted42?; assign isActive = false;  },
+    
+timer30
+ -> 
+GenInitLocation4
+ { sync exitChanOfInterrupted42?; assign isActive = false;  };
+}
+
+process  main_regionOfStatechartOfcontroller () {
+
+state
+    /** Entry Location */
+    
+EntryLocation5
+,
+    
+Operating
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfOperating
+,
+    /** Synchronization location. */
+    
+exitOfOperating41
+,
+    
+FinalizeBeforeOperating48
+;
+commit
+    
+EntryLocation5
+,
+    
+entryOfOperating
+,
+    
+exitOfOperating41
+;
+urgent
+    
+FinalizeBeforeOperating48
+;
+init 
+EntryLocation5
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfOperating
+ -> 
+Operating
+ { sync entryChanOfOperating34!;  },
+    
+EntryLocation5
+ -> 
+entryOfOperating
+ { assign isScheduledmain_regionOfStatechartOfcontroller = true;  },
+    
+Operating
+ -> 
+exitOfOperating41
+ { guard isRaised_PoliceInterrupt_policeOfcontroller; sync runCycleMain_regionOfStatechartOfcontroller?; assign isScheduledmain_regionOfStatechartOfcontroller = true,
+toRaise_PoliceInterrupt_policeOfsecondary = true,
+toRaise_PoliceInterrupt_policeOfprior = true;  },
+    /** Synchronization edge. */
+    
+exitOfOperating41
+ -> 
+FinalizeBeforeOperating48
+ { sync exitChanOfOperating40!;  },
+    
+FinalizeBeforeOperating48
+ -> 
+entryOfOperating
+ { sync finalize?;  };
+}
+
+process  normalOfNormalOfsecondary () {
+
+bool isActive;
+
+state
+    /** Entry Location */
+    
+EntryLocation6
+,
+    /** Generated for the synchronization of subregions. */
+    
+GenInitLocation7
+,
+    
+Red
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfRed
+,
+    
+Yellow
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfYellow
+,
+    
+Green
+,
+    /** Pseudo state for subregion synchronization */
+    
+entryOfGreen
+;
+commit
+    
+EntryLocation6
+,
+    
+entryOfRed
+,
+    
+entryOfYellow
+,
+    
+entryOfGreen
+;
+init 
+GenInitLocation7
+;
+trans
+    /** Edge for subregion synchronization */
+    
+entryOfRed
+ -> 
+Red
+ { assign LightCommands_displayRedOfsecondary = true;  },
+    /** Edge for subregion synchronization */
+    
+entryOfYellow
+ -> 
+Yellow
+ { assign LightCommands_displayYellowOfsecondary = true;  },
+    /** Edge for subregion synchronization */
+    
+entryOfGreen
+ -> 
+Green
+ { assign LightCommands_displayGreenOfsecondary = true;  },
+    
+Yellow
+ -> 
+entryOfRed
+ { guard (isActive && isRaised_Control_toggleOfsecondary); sync runCycleNormalOfNormalOfsecondary?; assign isSchedulednormalOfNormalOfsecondary = true;  },
+    
+EntryLocation6
+ -> 
+entryOfRed
+ { guard isActive; assign isSchedulednormalOfNormalOfsecondary = true;  },
+    
+Green
+ -> 
+entryOfYellow
+ { guard (isActive && isRaised_Control_toggleOfsecondary); sync runCycleNormalOfNormalOfsecondary?; assign isSchedulednormalOfNormalOfsecondary = true;  },
+    
+Red
+ -> 
+entryOfGreen
+ { guard (isActive && isRaised_Control_toggleOfsecondary); sync runCycleNormalOfNormalOfsecondary?; assign isSchedulednormalOfNormalOfsecondary = true;  },
+    
+Green
+ -> 
+entryOfGreen
+ { sync entryChanOfNormal31?; assign isActive = true;  },
+    
+Red
+ -> 
+entryOfRed
+ { sync entryChanOfNormal31?; assign isActive = true;  },
+    
+Yellow
+ -> 
+entryOfYellow
+ { sync entryChanOfNormal31?; assign isActive = true;  },
+    
+GenInitLocation7
+ -> 
+EntryLocation6
+ { sync entryChanOfNormal31?; assign isActive = true;  },
+    
+Green
+ -> 
+Green
+ { sync exitChanOfNormal38?; assign isActive = false;  },
+    
+Red
+ -> 
+Red
+ { sync exitChanOfNormal38?; assign isActive = false;  },
+    
+Yellow
+ -> 
+Yellow
+ { sync exitChanOfNormal38?; assign isActive = false;  },
+    
+GenInitLocation7
+ -> 
+GenInitLocation7
+ { sync exitChanOfNormal38?; assign isActive = false;  };
+}
+
+process  CrossroadOrchestrator51 () {
+
+clock orchestratorTimer65;
+
+state
+    
+InitLoc
+ {
+orchestratorTimer65 <= 2000
+},
+    
+swapLocation52
+,
+    /** Synchronization location. */
+    
+RunMain_regionOfStatechartOfcontroller53
+,
+    /** Synchronization location. */
+    
+RunOperatingOfOperatingOfcontroller54
+,
+    /** Synchronization location. */
+    
+finalizecontroller55
+,
+    /** Synchronization location. */
+    
+RunMain_regionOfStatechartOfprior56
+,
+    /** Synchronization location. */
+    
+RunInterruptedOfInterruptedOfprior57
+,
+    /** Synchronization location. */
+    
+RunNormalOfNormalOfprior58
+,
+    /** Synchronization location. */
+    
+finalizeprior59
+,
+    /** Synchronization location. */
+    
+RunMain_regionOfStatechartOfsecondary60
+,
+    /** Synchronization location. */
+    
+RunInterruptedOfInterruptedOfsecondary61
+,
+    /** Synchronization location. */
+    
+RunNormalOfNormalOfsecondary62
+,
+    /** Synchronization location. */
+    
+finalizesecondary63
+,
+    /** To ensure all synchronizations to take place before an isStable state. */
+    
+final
+;
+urgent
+    
+swapLocation52
+,
+    
+RunMain_regionOfStatechartOfcontroller53
+,
+    
+RunOperatingOfOperatingOfcontroller54
+,
+    
+finalizecontroller55
+,
+    
+RunMain_regionOfStatechartOfprior56
+,
+    
+RunInterruptedOfInterruptedOfprior57
+,
+    
+RunNormalOfNormalOfprior58
+,
+    
+finalizeprior59
+,
+    
+RunMain_regionOfStatechartOfsecondary60
+,
+    
+RunInterruptedOfInterruptedOfsecondary61
+,
+    
+RunNormalOfNormalOfsecondary62
+,
+    
+finalizesecondary63
+,
+    
+final
+;
+init 
+InitLoc
+;
+trans
+    
+InitLoc
+ -> 
+swapLocation52
+ { assign
+LightCommands_displayNoneOfprior = false,
+LightCommands_displayYellowOfprior = false,
+LightCommands_displayRedOfsecondary = false,
+LightCommands_displayNoneOfsecondary = false,
+LightCommands_displayGreenOfprior = false,
+LightCommands_displayYellowOfsecondary = false,
+LightCommands_displayGreenOfsecondary = false,
+LightCommands_displayRedOfprior = false,
+isStable = false,
+isScheduledmain_regionOfStatechartOfcontroller = false,
+isScheduledoperatingOfOperatingOfcontroller = false,
+isScheduledinterruptedOfInterruptedOfsecondary = false,
+isScheduledmain_regionOfStatechartOfsecondary = false,
+isScheduledmain_regionOfStatechartOfprior = false,
+isScheduledinterruptedOfInterruptedOfprior = false,
+isSchedulednormalOfNormalOfsecondary = false,
+isSchedulednormalOfNormalOfprior = false;  },
+    
+swapLocation52
+ -> 
+RunMain_regionOfStatechartOfcontroller53
+ { assign isRaised_PoliceInterrupt_policeOfcontroller = toRaise_PoliceInterrupt_policeOfcontroller,
+toRaise_PoliceInterrupt_policeOfcontroller = false,
+isRaised_Control_toggleOfprior = toRaise_Control_toggleOfprior,
+toRaise_Control_toggleOfprior = false,
+isRaised_PoliceInterrupt_policeOfprior = toRaise_PoliceInterrupt_policeOfprior,
+toRaise_PoliceInterrupt_policeOfprior = false,
+isRaised_Control_toggleOfsecondary = toRaise_Control_toggleOfsecondary,
+toRaise_Control_toggleOfsecondary = false,
+isRaised_PoliceInterrupt_policeOfsecondary = toRaise_PoliceInterrupt_policeOfsecondary,
+toRaise_PoliceInterrupt_policeOfsecondary = false;  },
+    /** Synchronization edge. */
+    
+RunMain_regionOfStatechartOfcontroller53
+ -> 
+RunOperatingOfOperatingOfcontroller54
+ { sync runCycleMain_regionOfStatechartOfcontroller!;  },
+    /** Synchronization edge. */
+    
+RunOperatingOfOperatingOfcontroller54
+ -> 
+finalizecontroller55
+ { guard !(isScheduledmain_regionOfStatechartOfcontroller); sync runCycleOperatingOfOperatingOfcontroller!;  },
+    
+RunOperatingOfOperatingOfcontroller54
+ -> 
+finalizecontroller55
+ { guard isScheduledmain_regionOfStatechartOfcontroller;  },
+    /** Synchronization edge. */
+    
+finalizecontroller55
+ -> 
+RunMain_regionOfStatechartOfprior56
+ { sync finalize!;  },
+    /** Synchronization edge. */
+    
+RunMain_regionOfStatechartOfprior56
+ -> 
+RunInterruptedOfInterruptedOfprior57
+ { sync runCycleMain_regionOfStatechartOfprior!;  },
+    /** Synchronization edge. */
+    
+RunInterruptedOfInterruptedOfprior57
+ -> 
+RunNormalOfNormalOfprior58
+ { guard !(isScheduledmain_regionOfStatechartOfprior); sync runCycleInterruptedOfInterruptedOfprior!;  },
+    
+RunInterruptedOfInterruptedOfprior57
+ -> 
+RunNormalOfNormalOfprior58
+ { guard isScheduledmain_regionOfStatechartOfprior;  },
+    /** Synchronization edge. */
+    
+RunNormalOfNormalOfprior58
+ -> 
+finalizeprior59
+ { guard !(isScheduledmain_regionOfStatechartOfprior); sync runCycleNormalOfNormalOfprior!;  },
+    
+RunNormalOfNormalOfprior58
+ -> 
+finalizeprior59
+ { guard isScheduledmain_regionOfStatechartOfprior;  },
+    /** Synchronization edge. */
+    
+finalizeprior59
+ -> 
+RunMain_regionOfStatechartOfsecondary60
+ { sync finalize!;  },
+    /** Synchronization edge. */
+    
+RunMain_regionOfStatechartOfsecondary60
+ -> 
+RunInterruptedOfInterruptedOfsecondary61
+ { sync runCycleMain_regionOfStatechartOfsecondary!;  },
+    /** Synchronization edge. */
+    
+RunInterruptedOfInterruptedOfsecondary61
+ -> 
+RunNormalOfNormalOfsecondary62
+ { guard !(isScheduledmain_regionOfStatechartOfsecondary); sync runCycleInterruptedOfInterruptedOfsecondary!;  },
+    
+RunInterruptedOfInterruptedOfsecondary61
+ -> 
+RunNormalOfNormalOfsecondary62
+ { guard isScheduledmain_regionOfStatechartOfsecondary;  },
+    /** Synchronization edge. */
+    
+RunNormalOfNormalOfsecondary62
+ -> 
+finalizesecondary63
+ { guard !(isScheduledmain_regionOfStatechartOfsecondary); sync runCycleNormalOfNormalOfsecondary!;  },
+    
+RunNormalOfNormalOfsecondary62
+ -> 
+finalizesecondary63
+ { guard isScheduledmain_regionOfStatechartOfsecondary;  },
+    /** Synchronization edge. */
+    
+finalizesecondary63
+ -> 
+final
+ { sync finalize!;  },
+    
+final
+ -> 
+InitLoc
+ { assign isStable = true,
+orchestratorTimer65 = 0;  };
+}
+
+process  Environment () {
+
+state
+    
+InitLoc
+;
+init 
+InitLoc
+;
+trans
+    
+InitLoc
+ -> 
+InitLoc
+ { guard (isStable && !(toRaise_PoliceInterrupt_policeOfcontroller)); assign toRaise_PoliceInterrupt_policeOfcontroller = true;  };
+}
+
+	P_interruptedOfInterruptedOfsecondary = interruptedOfInterruptedOfsecondary();
+	
+	P_main_regionOfStatechartOfprior = main_regionOfStatechartOfprior();
+	
+	P_normalOfNormalOfprior = normalOfNormalOfprior();
+	
+	P_main_regionOfStatechartOfsecondary = main_regionOfStatechartOfsecondary();
+	
+	P_operatingOfOperatingOfcontroller = operatingOfOperatingOfcontroller();
+	
+	P_interruptedOfInterruptedOfprior = interruptedOfInterruptedOfprior();
+	
+	P_main_regionOfStatechartOfcontroller = main_regionOfStatechartOfcontroller();
+	
+	P_normalOfNormalOfsecondary = normalOfNormalOfsecondary();
+	
+	P_CrossroadOrchestrator51 = CrossroadOrchestrator51();
+	
+	P_Environment = Environment();
+	system P_interruptedOfInterruptedOfsecondary, P_main_regionOfStatechartOfprior, P_normalOfNormalOfprior, P_main_regionOfStatechartOfsecondary, P_operatingOfOperatingOfcontroller, P_interruptedOfInterruptedOfprior, P_main_regionOfStatechartOfcontroller, P_normalOfNormalOfsecondary, P_CrossroadOrchestrator51, P_Environment;
