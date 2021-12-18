@@ -157,10 +157,6 @@ public final class LazyXtaAbstractor<SConcr extends State, SAbstr extends State,
                         algorithmStrategy.block(node, action, succState, uncoveredNodes);
                         waiting.addAll(uncoveredNodes);
                     } else {
-                        //*
-                        final ArgNode<ItpState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction>
-                                succNode = arg.createSuccNode(node, action, succState, false);
-                        /*/
                         final boolean target = succState.getConcrState().isError();
                         final ArgNode<ItpState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction>
                                 succNode = arg.createSuccNode(node, action, succState, target);
@@ -168,7 +164,6 @@ public final class LazyXtaAbstractor<SConcr extends State, SAbstr extends State,
                             stats.stopExpanding();
                             return AbstractorResult.unsafe();
                         }
-                        //*/
                         waiting.add(succNode);
                     }
                 }
