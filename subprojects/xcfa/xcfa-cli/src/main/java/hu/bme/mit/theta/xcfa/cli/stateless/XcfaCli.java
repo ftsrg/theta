@@ -19,9 +19,17 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bmc.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -36,6 +44,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -48,6 +57,8 @@ import hu.bme.mit.theta.xcfa.analysis.algorithmselection.PortfolioTimeoutExcepti
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
@@ -64,8 +75,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
@@ -145,6 +158,14 @@ public class XcfaCli {
 
 	@Parameter(names = "--autoexpl", description = "AutoExpl method to use when Product Abstraction is used")
 	XcfaConfigBuilder.AutoExpl autoExpl = XcfaConfigBuilder.AutoExpl.STATIC;
+
+	//////////// Experimentall BMC options ////////////
+
+	@Parameter(names = "--bmc", description = "Use experimental BMC algorithm")
+	boolean bmc = false;
+
+	@Parameter(names = "--bmc-only-feasible", description = "Use experimental BMC algorithm")
+	boolean onlyFeasible = false;
 
 	//////////// Legacy (CFA-only) options ////////////
 
@@ -414,9 +435,21 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
-					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
+			if(bmc) {
+				final Solver solver = abstractionSolverFactory.createSolver();
+				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver, True(), maxEnum);
+				final LTS lts = algorithm.getLts();
+				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
+						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
+				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
+						algorithm.getTransFunc(domainAnalysis.getTransFunc());
+				final BmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = BmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver, logger, onlyFeasible);
+				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
+			} else {
+				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
+						.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
+						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
+			}
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
