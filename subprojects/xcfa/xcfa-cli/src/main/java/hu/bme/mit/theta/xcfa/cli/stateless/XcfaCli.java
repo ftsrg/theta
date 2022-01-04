@@ -23,7 +23,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bmc.BmcChecker;
+import hu.bme.mit.theta.analysis.algorithm.bmc.NewBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -59,10 +59,10 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -443,7 +443,7 @@ public class XcfaCli {
 						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
 						algorithm.getTransFunc(domainAnalysis.getTransFunc());
-				final BmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = BmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver, logger, onlyFeasible);
+				final NewBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = NewBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver, logger, -1, 25);
 				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
 			} else {
 				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
