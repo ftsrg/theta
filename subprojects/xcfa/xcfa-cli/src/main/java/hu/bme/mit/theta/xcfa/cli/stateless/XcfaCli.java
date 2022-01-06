@@ -436,14 +436,15 @@ public class XcfaCli {
 		// Build configuration
 		try {
 			if(bmc) {
-				final Solver solver = abstractionSolverFactory.createSolver();
-				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver, True(), maxEnum);
+				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
+				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
+				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
 				final LTS lts = algorithm.getLts();
 				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
 						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
 						algorithm.getTransFunc(domainAnalysis.getTransFunc());
-				final NewBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = NewBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver, logger, -1, 25);
+				final NewBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = NewBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
 				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
 			} else {
 				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
