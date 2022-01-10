@@ -70,6 +70,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -297,13 +298,18 @@ public class XcfaCli {
 			}
 		} else {
 			try(FileInputStream fis = new FileInputStream(model)) {
+				XcfaPassManager.clearXCFAPasses();
+				XcfaPassManager.clearProcessPasses();
+				XcfaPassManager.clearProcedurePasses();
 				final CFA cfa = CfaDslManager.createCfa(fis);
 				xcfaBuilder = XCFA.builder();
 				final XcfaProcess.Builder processBuilder = XcfaProcess.builder();
 				xcfaBuilder.addProcess(processBuilder);
+				xcfaBuilder.setMainProcess(processBuilder);
 				processBuilder.setName(model.getName());
 				final XcfaProcedure.Builder procedureBuilder = XcfaProcedure.builder();
 				processBuilder.addProcedure(procedureBuilder);
+				processBuilder.setMainProcedure(procedureBuilder);
 				procedureBuilder.setName(model.getName());
 
 				for (final VarDecl<?> var : cfa.getVars()) {
