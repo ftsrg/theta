@@ -211,7 +211,7 @@ public class XcfaCli {
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
-	private Logger logger = new ConsoleLogger(logLevel);;
+	private Logger logger;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -232,6 +232,8 @@ public class XcfaCli {
 			ex.usage();
 			return;
 		}
+
+		logger = new ConsoleLogger(logLevel);;
 
 		/// version
 		if (versionInfo) {

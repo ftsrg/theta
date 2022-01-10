@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,36 +74,47 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 	@Override
 	public SafetyResult<S, A> check(P prec) {
 		logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
-		for (int bound = 0; upperBound < 0 || bound < upperBound; bound+=stepSize) {
-			logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
-			boolean isSafe = true;
-			for (S initState : initFunc.getInitStates(prec)) {
-				for (A a : lts.getEnabledActionsFor(initState)) {
-					solver.push();
-					solver.add(PathUtils.unfold(a.toExpr(), indexing(0)));
-					if (solver.check().isSat()) {
-						for (final S succState : transFunc.getSuccStates(initState, a, prec)) {
-							if(!succState.isBottom()) {
-								final SafetyResult<S, A> result = check(Trace.of(List.of(initState), List.of()), a.nextIndexing(), succState, a, prec, bound, 1);
-								if (result != null && result.isUnsafe()) {
-									solver.pop();
-									logger.write(Logger.Level.RESULT, "%s%n", result);
-									return result;
-								} else if (result == null) {
-									isSafe = false;
-								}
-							}
-						}
-					}
-					solver.pop();
-				}
-			}
-			if(isSafe){
-				final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
+
+		boolean isSafe = true;
+		for (S initState : initFunc.getInitStates(prec)) {
+			logger.write(Logger.Level.INFO, "Checking from state %s with a bound of %d%n", initState, stepSize);
+			final SafetyResult<S, A> result = check(null, indexing(0), initState, null, prec, stepSize, 0);
+			if(result == null) {
+				isSafe = false;
+			} else if(result.isUnsafe()) {
 				logger.write(Logger.Level.RESULT, "%s%n", result);
 				return result;
 			}
 		}
+		if(isSafe){
+			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
+			logger.write(Logger.Level.RESULT, "%s%n", result);
+			return result;
+		}
+
+		// From here on, proving safety is only possible if all paths are enumareted
+		for(int bound = stepSize; (upperBound < 0 || bound <= upperBound) && resumeSet.size() > 0; bound+=stepSize) {
+			final Collection<Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>>> localResumeSet = new LinkedHashSet<>(resumeSet);
+			resumeSet.clear();
+			for (Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>> resumePoint : localResumeSet) {
+				logger.write(Logger.Level.INFO, "Resuming from state %s with a bound of %d (current depth: %d)%n", resumePoint.get1().getState(resumePoint.get1().getStates().size() - 1), stepSize + bound, bound);
+				solver.push();
+				solver.add(resumePoint.get5());
+				final SafetyResult<S, A> result = check(resumePoint.get1(), resumePoint.get2(), resumePoint.get3(), resumePoint.get4(), prec, bound + stepSize, bound);
+				solver.pop();
+				if(result != null && result.isUnsafe()) {
+					logger.write(Logger.Level.RESULT, "%s%n", result);
+					return result;
+				}
+			}
+		}
+
+		if(resumeSet.size() == 0) {
+			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
+			logger.write(Logger.Level.RESULT, "%s%n", result);
+			return result;
+		}
+
 		SafetyResult<S, A> bmcresult = SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		logger.write(Logger.Level.RESULT, "BmcOutOfBounds: %s%n", bmcresult);
 		return bmcresult;
@@ -110,15 +122,20 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 
 
 	private SafetyResult<S, A> check(final Trace<S, A> trace, final VarIndexing varIndexing, final S state, final A action, final P prec, final int bound, final int currentStep) {
-		final Trace<S, A> nextTrace = Trace.of(
-				Streams.concat(trace.getStates().stream(), Stream.of(state)).collect(Collectors.toList()),
-				Streams.concat(trace.getActions().stream(), Stream.of(action)).collect(Collectors.toList()));
+		final Trace<S, A> nextTrace;
+		if(trace == null) {
+			nextTrace = Trace.of(List.of(state), List.<A>of());
+		} else {
+			nextTrace = Trace.of(
+					Streams.concat(trace.getStates().stream(), Stream.of(state)).collect(Collectors.toList()),
+					Streams.concat(trace.getActions().stream(), Stream.of(action)).collect(Collectors.toList()));
+		}
 		if(unsafePredicate.test(state)) {
 			return SafetyResult.unsafe(trace, ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		}
 
 		if(currentStep >= bound) {
-			final Collection<Expr<BoolType>> assertions = solver.getAssertions();
+			final Collection<Expr<BoolType>> assertions = new ArrayList<>(solver.getAssertions());
 			resumeSet.add(Tuple5.of(trace, varIndexing, state, action, assertions));
 			return null;
 		}
