@@ -66,13 +66,10 @@ public class SimpleLbePass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		if (level == LBELevel.NO_LBE) return builder;
-
-		if (ENABLE_PRINT_TO_DOT) {
-			System.out.println("--- BEFORE TRANSFORMATION ---");
-			System.out.println(builder.toDot(Set.of(), Set.of()));
-		}
-
 		this.builder = builder;
+
+		printToDot("--- BEFORE TRANSFORMATION ---");
+
 		builder = EliminateSelfLoops.instance.run(builder);
 
 		// Step 1
@@ -84,12 +81,7 @@ public class SimpleLbePass extends ProcedurePass {
 		// Step 3
 		removeAllMiddleLocations();
 
-		//builder = EliminateSelfLoops.instance.run(builder);
-
-		if (ENABLE_PRINT_TO_DOT) {
-			System.out.println("--- AFTER TRANSFORMATION ---");
-			System.out.println(builder.toDot(Set.of(), Set.of()));
-		}
+		printToDot("--- AFTER TRANSFORMATION ---");
 
 		return builder;
 	}
@@ -203,10 +195,8 @@ public class SimpleLbePass extends ProcedurePass {
 
 	/**
 	 * Wraps edge labels to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have
-	 * exactly
-	 * one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's
-	 * labels are returned
-	 * in a list to achieve DNF.
+	 * exactly one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's
+	 * labels are returned to simplify the formula.
 	 *
 	 * @param edgeLabels the edge labels we would like to add to the NonDetLabel
 	 * @return the list of labels to add to the NonDetLabel
@@ -239,9 +229,26 @@ public class SimpleLbePass extends ProcedurePass {
 		List<XcfaEdge> edgesToRemove = List.copyOf(location.getOutgoingEdges());
 		for (XcfaEdge outEdge : edgesToRemove) {
 			builder.removeEdge(outEdge);
-			List<XcfaLabel> stmts = new ArrayList<>(inEdge.getLabels());
-			stmts.addAll(outEdge.getLabels());
-			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), stmts));
+			List<XcfaLabel> newLabel = new ArrayList<>();
+
+			newLabel.addAll(inEdge.getLabels());
+			newLabel.addAll(outEdge.getLabels());
+
+			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), newLabel));
+		}
+	}
+
+	/**
+	 * Prints the XCFA in dot format to standard output.
+	 *
+	 * @param title the printed XCFA will be marked with this label
+	 */
+	private void printToDot(String title) {
+		if (ENABLE_PRINT_TO_DOT) {
+			System.out.println(title);
+			System.out.println("digraph G {");
+			System.out.println(builder.toDot(Set.of(), Set.of()));
+			System.out.println("}");
 		}
 	}
 }
