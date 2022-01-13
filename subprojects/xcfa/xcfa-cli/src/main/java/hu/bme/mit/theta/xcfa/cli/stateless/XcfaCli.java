@@ -19,23 +19,34 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bmc.NewBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.cli.CfaCli;
+import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -48,25 +59,38 @@ import hu.bme.mit.theta.xcfa.analysis.algorithmselection.PortfolioTimeoutExcepti
 import hu.bme.mit.theta.xcfa.analysis.algorithmselection.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
@@ -76,7 +100,10 @@ public class XcfaCli {
 
 	//////////// input task ////////////
 
-	@Parameter(names = "--input", description = "Path of the input C program", required = true)
+	@Parameter(names = "--input", description = "Path of the input C program", required = false)
+	File input;
+
+	@Parameter(names = "--model", description = "Path of the input model (currently only CFAs are supported)", required = false)
 	File model;
 
 	//////////// output data and statistics ////////////
@@ -147,6 +174,14 @@ public class XcfaCli {
 	@Parameter(names = "--autoexpl", description = "AutoExpl method to use when Product Abstraction is used")
 	XcfaConfigBuilder.AutoExpl autoExpl = XcfaConfigBuilder.AutoExpl.STATIC;
 
+	//////////// Experimentall BMC options ////////////
+
+	@Parameter(names = "--bmc", description = "Use experimental BMC algorithm")
+	boolean bmc = false;
+
+	@Parameter(names = "--bmc-only-feasible", description = "Use experimental BMC algorithm")
+	boolean onlyFeasible = false;
+
 	//////////// Legacy (CFA-only) options ////////////
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity (only valid together with the -legacy switch)")
@@ -194,7 +229,7 @@ public class XcfaCli {
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
-	private Logger logger = new ConsoleLogger(logLevel);;
+	private Logger logger;
 
 	public XcfaCli(final String[] args) {
 		this.args = args;
@@ -216,6 +251,12 @@ public class XcfaCli {
 			return;
 		}
 
+		checkState((input != null) != (model != null), "Exactly one input OR model is expected.");
+
+		File inputOrModel = input == null ? model : input;
+
+		logger = new ConsoleLogger(logLevel);;
+
 		/// version
 		if (versionInfo) {
 			CliUtils.printVersion(System.out);
@@ -226,11 +267,11 @@ public class XcfaCli {
 
 		// TODO later we might want to merge these two flags
 		if(witnessOnly) {
-			OutputHandler.create(OutputOptions.WITNESS_ONLY, model);
+			OutputHandler.create(OutputOptions.WITNESS_ONLY, inputOrModel);
 		} else if(outputResults) {
-			OutputHandler.create(OutputOptions.OUTPUT_RESULTS, model);
+			OutputHandler.create(OutputOptions.OUTPUT_RESULTS, inputOrModel);
 		} else {
-			OutputHandler.create(OutputOptions.NONE, model);
+			OutputHandler.create(OutputOptions.NONE, inputOrModel);
 		}
 		OutputHandler.getInstance().createResultsDirectory();
 
@@ -240,26 +281,71 @@ public class XcfaCli {
 		/// Starting frontend
 		final Stopwatch sw = Stopwatch.createStarted();
 
-		final CharStream input;
 		XCFA.Builder xcfaBuilder = null;
 		XCFA xcfa = null;
-		try {
-			input = CharStreams.fromStream(new FileInputStream(model));
-			final CLexer lexer = new CLexer(input);
-			final CommonTokenStream tokens = new CommonTokenStream(lexer);
-			final CParser parser = new CParser(tokens);
-			final CParser.CompilationUnitContext context = parser.compilationUnit();
+		if(input != null) {
+			try {
+				final CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
+				final CLexer lexer = new CLexer(input);
+				final CommonTokenStream tokens = new CommonTokenStream(lexer);
+				final CParser parser = new CParser(tokens);
+				final CParser.CompilationUnitContext context = parser.compilationUnit();
 
-			CStatement program = context.accept(FunctionVisitor.instance);
-			checkState(program instanceof CProgram, "Parsing did not return a program!");
+				CStatement program = context.accept(FunctionVisitor.instance);
+				checkState(program instanceof CProgram, "Parsing did not return a program!");
 
-			FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
+				FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 
-			xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Frontend failed!");
-			System.exit(-80);
+				xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.err.println("Frontend failed!");
+				System.exit(-80);
+			}
+		} else {
+			try(FileInputStream fis = new FileInputStream(model)) {
+				XcfaPassManager.clearXCFAPasses();
+				XcfaPassManager.clearProcessPasses();
+				XcfaPassManager.clearProcedurePasses();
+				final CFA cfa = CfaDslManager.createCfa(fis);
+				xcfaBuilder = XCFA.builder();
+				final XcfaProcess.Builder processBuilder = XcfaProcess.builder();
+				xcfaBuilder.addProcess(processBuilder);
+				xcfaBuilder.setMainProcess(processBuilder);
+				processBuilder.setName(model.getName());
+				final XcfaProcedure.Builder procedureBuilder = XcfaProcedure.builder();
+				processBuilder.addProcedure(procedureBuilder);
+				processBuilder.setMainProcedure(procedureBuilder);
+				procedureBuilder.setName(model.getName());
+
+				for (final VarDecl<?> var : cfa.getVars()) {
+					procedureBuilder.createVar(var, null);
+				}
+
+				final Map<CFA.Loc, XcfaLocation> locLut = new LinkedHashMap<>();
+				for (final CFA.Loc loc : cfa.getLocs()) {
+					XcfaLocation xcfaLoc = XcfaLocation.create(loc.getName());
+					procedureBuilder.addLoc(xcfaLoc);
+					locLut.put(loc, xcfaLoc);
+				}
+
+				if(cfa.getFinalLoc().isPresent()) procedureBuilder.setFinalLoc(locLut.get(cfa.getFinalLoc().get()));
+				if(cfa.getErrorLoc().isPresent()) procedureBuilder.setErrorLoc(locLut.get(cfa.getErrorLoc().get()));
+				procedureBuilder.setInitLoc(locLut.get(cfa.getInitLoc()));
+
+
+				for (final CFA.Edge edge : cfa.getEdges()) {
+					procedureBuilder.addEdge(XcfaEdge.of(
+							locLut.get(edge.getSource()),
+							locLut.get(edge.getTarget()),
+							List.of(XcfaLabel.StmtXcfaLabel.of(edge.getStmt()))
+					));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.err.println("Frontend failed!");
+				System.exit(-80);
+			}
 		}
 
 		try {
@@ -278,7 +364,7 @@ public class XcfaCli {
 					args.add("--refinement"); args.add(refinement.name());
 					args.add("--search"); args.add(search.name());
 					args.add("--predsplit"); args.add(predSplit.name());
-					args.add("--model"); args.add(model.getAbsolutePath());
+					args.add("--model"); args.add(this.input.getAbsolutePath());
 					// args.add("--errorloc"); args.add(cfa.getErrorLoc().get().getName());
 					args.add("--precgranularity"); args.add(precGranularity.name());
 					args.add("--encoding"); args.add(encoding.name());
@@ -332,7 +418,7 @@ public class XcfaCli {
 					}
 					break;
 				case SEQUENTIAL:
-					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, model.getName(), home);
+					SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel, this.input.getName(), home);
 					try {
 						sequentialPortfolio.executeAnalysis(xcfa, initTime); // check(configuration);
 					} catch (PortfolioTimeoutException pte) {
@@ -345,7 +431,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, model.getName(), home);
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home);
 					try {
 						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
@@ -420,9 +506,22 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
-					.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
-					.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
+			if(bmc) {
+				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
+				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
+				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
+				final LTS lts = algorithm.getLts();
+				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
+						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
+				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
+						algorithm.getTransFunc(domainAnalysis.getTransFunc());
+				final NewBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = NewBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
+				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
+			} else {
+				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
+						.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
+						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
+			}
 
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
