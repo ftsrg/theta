@@ -61,10 +61,10 @@ public class XcfaUtils {
 
         if (!model.exists()) throw new FileNotFoundException();
 
-       if (model.getName().endsWith(".ll") || model.getName().endsWith(".bc")) {
+       if (model.getName().endsWith("ll") || model.getName().endsWith("bc")) {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath()), arithmeticType);
 
-        } else if (model.getName().endsWith(".c") || model.getName().endsWith(".i")) {
+        } else if (model.getName().endsWith("c") || model.getName().endsWith("i")) {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath(), true, true, true, true), arithmeticType);
 
         } else {
@@ -106,6 +106,7 @@ public class XcfaUtils {
         GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
+            if(function.get1().equals("reach_error")) continue;
             FunctionState functionState = new FunctionState(globalState, function);
 
             for (String block : ssa.getBlocks(function.get1())) {
@@ -135,6 +136,13 @@ public class XcfaUtils {
             System.err.println("Inlining failed.");
             System.exit(-80);
         }
+
+        builtState.getProcedures().forEach((s, builder) -> {
+            if(builder.getErrorLoc() == null) {
+                System.err.println("Frontend failed");
+                System.exit(-80);
+            }
+        });
 
         final XCFA.Builder builder = globalState.getBuilder();
 
