@@ -109,6 +109,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 					reachedSet.addAll(newNodes);
 					waitlist.addAll(newNodes);
 				}
+
 				ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S,A,P>(arg, prec));
 				if (stopCriterion.canStop(arg, newNodes)) break;
 			}

@@ -21,8 +21,7 @@ public class MultiCexStorage<S extends State, A extends Action> extends CexStora
 	private final Set<Integer> argHashes = new LinkedHashSet<>();
 
 	<P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
-		int hash = arg.hashCode();
-		argHashes.add(hash);
+		// do nothing - args are only added after they are checked at the end of the iteration
 	}
 
 	void addCounterexample(ArgTrace<S,A> cex) {
@@ -30,7 +29,13 @@ public class MultiCexStorage<S extends State, A extends Action> extends CexStora
 	}
 
 	private <P extends Prec> boolean checkIfArgNew(AbstractArg<S,A,P> arg) {
-		return argHashes.contains(arg.hashCode());
+		// this marks the end of the abstraction in the iteration - arg is checked and then added, if it is new
+		if(argHashes.contains(arg.hashCode())) {
+			return true;
+		} else {
+			argHashes.add(arg.hashCode());
+			return false;
+		}
 	}
 
 	@Override
