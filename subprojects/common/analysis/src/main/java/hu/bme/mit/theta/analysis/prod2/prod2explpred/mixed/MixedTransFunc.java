@@ -83,7 +83,7 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
                     .collect(Collectors.toList());
 
             if (remainingVarsOrdered.isEmpty()) {
-                return singleton(Prod2State.of(ExplState.of(val), PredState.of()));
+                return singleton(Prod2State.of(ExplState.of(projectValuation(val, prec.getPrec1())), PredState.of()));
             }
 
             // Build assignment graph for remaining vars
@@ -133,7 +133,7 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
 
             for (var tuple : branches) {
                 if(tuple.get2().isEmpty()){
-                    mixedStates.add(Prod2State.of(ExplState.of(tuple.get1()), PredState.of(True())));
+                    mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())), PredState.of(True())));
                 } else {
                     final Set<Expr<BoolType>> remainingPredicates = prec.getPrec2().getPreds().stream()
                             .filter(pred -> !Collections.disjoint(ExprUtils.getVars(pred), tuple.get2()))
@@ -144,7 +144,7 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
                     final var abstractor = PredAbstractors.cartesianAbstractor(solver);
                     final var succStates = abstractor.createStatesForExpr(
                             expr, VarIndexing.all(0), temporaryPrec, action.nextIndexing());
-                    succStates.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(tuple.get1()),predState)));
+                    succStates.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())),predState)));
                 }
             }
 
@@ -191,6 +191,14 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
         public Set<VarDecl<?>> getPredicateTracked() {
             return predicateTracked;
         }
+    }
+
+    private static Valuation projectValuation(Valuation val, ExplPrec prec) {
+        final MutableValuation newVal = new MutableValuation();
+        for (var decl : prec.getVars()){
+            newVal.put(decl, val.toMap().get(decl));
+        }
+        return newVal;
     }
 
 }
