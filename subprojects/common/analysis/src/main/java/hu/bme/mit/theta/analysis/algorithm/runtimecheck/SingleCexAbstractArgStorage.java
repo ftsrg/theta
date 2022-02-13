@@ -6,9 +6,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -17,7 +15,7 @@ import static com.google.common.base.Preconditions.checkState;
  * CexStorage to be used in configurations, where refinement starts after each counterexample discovered coutnerexample
  * e.g. not MULTI_SEQ refinement, but SEQ_ITP, UNSAT_CORE, etc.
  */
-public class SingleCexStorage<S extends State, A extends Action> extends CexStorage<S,A> {
+public class SingleCexAbstractArgStorage<S extends State, A extends Action> extends AbstractArgStorage<S,A> {
 	private final Set<Integer> counterexamples = new LinkedHashSet<>();
 	private final Set<Integer> argprecs = new LinkedHashSet<>();
 	private Integer currentArgHash = null;

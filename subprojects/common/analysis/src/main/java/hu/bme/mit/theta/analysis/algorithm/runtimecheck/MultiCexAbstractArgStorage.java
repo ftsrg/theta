@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
  * e.g. MULTI_SEQ refinement
  * This class only stores ARG hashes, it does not store counterexample hashes
  */
-public class MultiCexStorage<S extends State, A extends Action> extends CexStorage<S,A> {
+public class MultiCexAbstractArgStorage<S extends State, A extends Action> extends AbstractArgStorage<S,A> {
 	private final Set<Integer> argHashes = new LinkedHashSet<>();
 
 	<P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
@@ -25,9 +25,17 @@ public class MultiCexStorage<S extends State, A extends Action> extends CexStora
 	}
 
 	void addCounterexample(ArgTrace<S,A> cex) {
-		// do nothing
+		// do nothing, as there is full exploration of cexs, so we only need to check the ARGs
 	}
 
+	/**
+	 * Checks, if the given arg is new
+	 * if yes, adds it to the list (and returns true), so the analysis can continue
+	 * if no, returns false (which means that the analysis is stuck and should be stopped)
+	 * @param arg the new arg, which should be checked for recurrence
+	 * @param <P> precision the current precision, which should be checked for recurrence
+	 * @return checks true, if the arg did not occur before
+	 */
 	private <P extends Prec> boolean checkIfArgNew(AbstractArg<S,A,P> arg) {
 		// this marks the end of the abstraction in the iteration - arg is checked and then added, if it is new
 		if(argHashes.contains(arg.hashCode())) {

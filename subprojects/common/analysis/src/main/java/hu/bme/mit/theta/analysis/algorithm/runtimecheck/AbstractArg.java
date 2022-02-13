@@ -13,6 +13,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * An abstract ARG is a normal ARG combined with its precision.
+ * It is used to check is the analysis makes any refinement progress or not by the {@link ArgCexCheckHandler}
+ */
 public class AbstractArg<S extends State, A extends Action, P extends Prec> {
 	private final Collection<State> states;
 	private final List<Optional<ArgEdge<S, A>>> inEdges;

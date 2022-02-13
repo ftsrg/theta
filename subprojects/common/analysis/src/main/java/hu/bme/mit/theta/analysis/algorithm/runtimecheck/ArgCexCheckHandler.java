@@ -5,46 +5,44 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 
 public class ArgCexCheckHandler<S extends State, A extends Action> {
 	public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
-	private CexStorage<S,A> cexStorage;
+	private AbstractArgStorage<S,A> abstractArgStorage;
 
 	public void setArgCexCheck(boolean shouldCheck, boolean multiseq) {
 		if(shouldCheck) {
 			if(multiseq) {
-				cexStorage = new MultiCexStorage<S,A>();
+				abstractArgStorage = new MultiCexAbstractArgStorage<S,A>();
 			} else {
-				cexStorage = new SingleCexStorage<S,A>();
+				abstractArgStorage = new SingleCexAbstractArgStorage<S,A>();
 			}
 		} else {
-			cexStorage = null;
+			abstractArgStorage = null;
 		}
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S,A> cex) {
-		if(cexStorage!=null) {
-			return cexStorage.checkIfCounterexampleNew(cex);
+		if(abstractArgStorage !=null) {
+			return abstractArgStorage.checkIfCounterexampleNew(cex);
 		} else return true;
 	}
 
 	public <P extends Prec> void setCurrentArg(AbstractArg<S,A,P> arg) {
-		if(cexStorage != null) {
-			cexStorage.setCurrentArg(arg);
+		if(abstractArgStorage != null) {
+			abstractArgStorage.setCurrentArg(arg);
 		}
 	}
 
 	public <P extends Prec> void checkAndStop(ARG<S,A> arg, P prec) {
-		if(cexStorage!=null && cexStorage.check(arg,prec)) {
+		if(abstractArgStorage !=null && abstractArgStorage.check(arg,prec)) {
 			throw new NotSolvableException();
 		}
 	}
 
 	public void addCounterexample(ArgTrace<S,A> cexToConcretize) {
-		if(cexStorage!=null) {
-			cexStorage.addCounterexample(cexToConcretize);
+		if(abstractArgStorage !=null) {
+			abstractArgStorage.addCounterexample(cexToConcretize);
 		}
 	}
 }
