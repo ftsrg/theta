@@ -5,13 +5,16 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.itp.ItpState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.*;
+import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaAbstractorFactory;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -50,7 +53,7 @@ public final class LazyXtaAbstractorTest {
     @Parameter(2)
     public ClockStrategy clockStrategy;
 
-    private Abstractor<? extends ItpState<?, ?>, XtaAction, UnitPrec> abstractor;
+    private Abstractor<? extends LazyState<?, ?>, XtaAction, UnitPrec> abstractor;
 
     @Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
     public static Collection<Object[]> data() {
@@ -79,7 +82,7 @@ public final class LazyXtaAbstractorTest {
         test(abstractor);
     }
 
-    private <S extends ItpState<?, ?>> void test(Abstractor<S, XtaAction, UnitPrec> abstractor) {
+    private <S extends LazyState<?, ?>> void test(Abstractor<S, XtaAction, UnitPrec> abstractor) {
         // Act
         final ARG<S, XtaAction> arg = abstractor.createArg();
         abstractor.check(arg, UnitPrec.getInstance());

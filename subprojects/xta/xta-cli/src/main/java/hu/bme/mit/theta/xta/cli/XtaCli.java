@@ -21,24 +21,23 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.*;
+import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 public final class XtaCli {
@@ -105,27 +104,17 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem system = loadModel();
-			/*
-			final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, searchStrategy);
+			final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy,
+					clockStrategy, searchStrategy);
 			final SafetyResult<?, ?> result = check(checker);
 			printResult(result);
 			if (dotfile != null) {
 				writeVisualStatus(result, dotfile);
 			}
-			*/
-			final Abstractor<?, ?, UnitPrec> abstractor = LazyXtaAbstractorFactory.create(system, dataStrategy, clockStrategy, searchStrategy);
-			final AbstractorResult result = run(abstractor);
-			System.out.println(result.toString());
 		} catch (final Throwable ex) {
 			printError(ex);
 			System.exit(1);
 		}
-	}
-
-	private <S extends State, A extends Action> AbstractorResult run(final Abstractor<S, A, UnitPrec> abstractor) {
-		final ARG<S, A> arg = abstractor.createArg();
-		final AbstractorResult result = abstractor.check(arg, UnitPrec.getInstance());
-		return result;
 	}
 
 	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {

@@ -63,7 +63,7 @@ final class CfaEdgeDefinition {
 		final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
 		locs.add(sourceLoc);
 		for (int i = 0; i < stmts.size() - 1; ++i) {
-			locs.add(cfa.createLoc(""));
+			locs.add(cfa.createLoc());
 		}
 		locs.add(targetLoc);
 

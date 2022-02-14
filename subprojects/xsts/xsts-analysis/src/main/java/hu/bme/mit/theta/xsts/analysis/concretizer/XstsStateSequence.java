@@ -6,10 +6,8 @@ import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
-import hu.bme.mit.theta.xsts.dsl.XstsTypeDeclSymbol;
 
 import java.util.List;
 import java.util.Optional;
@@ -76,19 +74,9 @@ public final class XstsStateSequence {
 	public String stateToString(ExplState state) {
 		final LispStringBuilder sb = Utils.lispStringBuilder(ExplState.class.getSimpleName()).body();
 		for (VarDecl decl : xsts.getVars()) {
-			Optional<LitExpr<?>> val = state.eval(decl);
-			if (val.isPresent()) {
-				if (xsts.getVarToType().containsKey(decl)) {
-					XstsTypeDeclSymbol type = xsts.getVarToType().get(decl);
-					IntLitExpr intValue = (IntLitExpr) val.get();
-					var optSymbol = type.getLiterals().stream()
-							.filter(symbol -> symbol.getIntValue().equals(intValue.getValue()))
-							.findFirst();
-					assert optSymbol.isPresent();
-					sb.add(String.format("(%s %s)", decl.getName(), optSymbol.get().getName()));
-				} else {
-					sb.add(String.format("(%s %s)", decl.getName(), val.get()));
-				}
+			Optional<LitExpr> val = state.eval(decl);
+			if (val.isPresent() && xsts.getVarToType().containsKey(decl)) {
+				sb.add(String.format("(%s %s)", decl.getName(), xsts.getVarToType().get(decl).serializeLiteral(val.get())));
 			}
 		}
 		return sb.toString();

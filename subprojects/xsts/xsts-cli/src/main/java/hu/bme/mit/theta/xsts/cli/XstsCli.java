@@ -66,8 +66,8 @@ public class XstsCli {
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
 
-	@Parameter(names = "--maxpredcount", description = "Maximal number of times a variable can appear in predicates before switching to explicit tracking (0: unlimited)")
-	Integer maxPredCount = 0;
+	@Parameter(names = "--autoexpl", description = "Predicate to explicit switching strategy")
+ 	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -201,7 +201,7 @@ public class XstsCli {
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.maxEnum(maxEnum).maxPredCount(maxPredCount).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
 					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);

@@ -61,4 +61,7 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	@Override
 	public String visit(LoopStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
+	@Override
+	public String visit(IfStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+
 }

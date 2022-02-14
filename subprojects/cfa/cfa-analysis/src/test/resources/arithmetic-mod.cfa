@@ -1,0 +1,15 @@
+main process cfa {
+	var x : int
+
+	init loc L0
+    loc L1
+    loc L2
+    loc L3
+    error loc ERR
+
+	L0 -> L1 { x := 0 }
+    L1 -> L2 { x := x + 1 }
+    L2 -> L3 { x := x mod 10 }
+    L3 -> ERR { assume x > 10 }
+    L3 -> L1 { assume x <= 10 }
+}

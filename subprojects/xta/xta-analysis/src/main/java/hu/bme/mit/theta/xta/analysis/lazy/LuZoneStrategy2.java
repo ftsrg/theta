@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
-import hu.bme.mit.theta.analysis.Lens;
+import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.lazy.AlgorithmStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStrategy;
 import hu.bme.mit.theta.analysis.algorithm.lazy.InitAbstractor;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
 import static java.util.stream.Collectors.toList;
 
-public class LuZoneStrategy2<S extends State> implements AlgorithmStrategy<ZoneState, LuZoneState, S, XtaAction> {
+public class LuZoneStrategy2<S extends State> implements LazyStrategy<ZoneState, LuZoneState, S, XtaAction> {
 
     private final Lens<S, LuZoneState> lens;
     private final Function<S, ?> projection;
@@ -65,7 +65,7 @@ public class LuZoneStrategy2<S extends State> implements AlgorithmStrategy<ZoneS
     }
 
     @Override
-    public void block(ArgNode<S, XtaAction> node, XtaAction action, S succState, Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+    public void disable(ArgNode<S, XtaAction> node, XtaAction action, S succState, Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
         assert succState.isBottom();
         final BoundFunc preImage = XtaLuZoneUtils.pre(BoundFunc.top(), action);
         propagateBounds(node, preImage, uncoveredNodes);

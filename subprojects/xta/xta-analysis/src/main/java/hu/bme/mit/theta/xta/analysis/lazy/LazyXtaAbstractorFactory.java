@@ -1,48 +1,25 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.InvTransFunc;
-import hu.bme.mit.theta.analysis.Lattice;
-import hu.bme.mit.theta.analysis.Lens;
-import hu.bme.mit.theta.analysis.PartialOrd;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.core.utils.Lens;
+import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.lazy.AlgorithmStrategy;
-import hu.bme.mit.theta.analysis.algorithm.lazy.BasicAlgorithmStrategy;
-import hu.bme.mit.theta.analysis.algorithm.lazy.BasicConcretizer;
-import hu.bme.mit.theta.analysis.algorithm.lazy.Concretizer;
-import hu.bme.mit.theta.analysis.algorithm.lazy.InitAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.lazy.Prod2Strategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.expl.ExplExprInterpolator;
 import hu.bme.mit.theta.analysis.expl.ExplLattice;
 import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.BasicExprState;
-import hu.bme.mit.theta.analysis.itp.BwItpStrategy;
-import hu.bme.mit.theta.analysis.itp.FwItpStrategy;
-import hu.bme.mit.theta.analysis.itp.Interpolator;
-import hu.bme.mit.theta.analysis.itp.ItpAnalysis;
-import hu.bme.mit.theta.analysis.itp.ItpState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.zone.ZoneInterpolator;
-import hu.bme.mit.theta.analysis.zone.ZoneLattice;
-import hu.bme.mit.theta.analysis.zone.ZoneOrd;
-import hu.bme.mit.theta.analysis.zone.ZonePrec;
-import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
-import hu.bme.mit.theta.xta.analysis.XtaInitAbstractor;
-import hu.bme.mit.theta.xta.analysis.XtaOrd;
-import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplTransFunc;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprInvTransFunc;
@@ -57,12 +34,12 @@ import java.util.function.Function;
 public final class LazyXtaAbstractorFactory {
 
     public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
-    Abstractor<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+    Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
     create(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
 
         final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec>
                 factory = new Factory<>(system, dataStrategy, clockStrategy, searchStrategy);
-        final Abstractor<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+        final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
                 abstractor = factory.create();
         return abstractor;
     }
@@ -81,20 +58,20 @@ public final class LazyXtaAbstractorFactory {
             this.searchStrategy = searchStrategy;
         }
 
-        public final Abstractor<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+        public final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
         create() {
-            final AlgorithmStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>,
-                    ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-                    algorithmStrategy = createAlgorithmStrategy(system, dataStrategy, clockStrategy);
+            final LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>,
+                    LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+                    lazyStrategy = createAlgorithmStrategy(system, dataStrategy, clockStrategy);
 
-            final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd = algorithmStrategy.getPartialOrd();
-            final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor = algorithmStrategy.getInitAbstractor();
-            final ItpAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                    itpAnalysis = createItpAnalysis(abstrPartialOrd, initAbstractor);
+            final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd = lazyStrategy.getPartialOrd();
+            final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor = lazyStrategy.getInitAbstractor();
+            final LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
+                    lazyAnalysis = createItpAnalysis(abstrPartialOrd, initAbstractor);
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
-            final Abstractor<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
-                    abstractor = new LazyXtaAbstractor<>(system, searchStrategy, algorithmStrategy, itpAnalysis, prec);
+            final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+                    abstractor = new LazyXtaAbstractor<>(system, searchStrategy, lazyStrategy, lazyAnalysis, prec);
             return abstractor;
         }
 
@@ -127,7 +104,7 @@ public final class LazyXtaAbstractorFactory {
             }
         }
 
-        private ItpAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
+        private LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
         createItpAnalysis(final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd,
                           final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor) {
 
@@ -144,9 +121,9 @@ public final class LazyXtaAbstractorFactory {
             final XtaInitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> xtaInitAbstractor
                     = XtaInitAbstractor.create(initAbstractor);
 
-            final ItpAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                    itpAnalysis = ItpAnalysis.create(xtaAbstrPartialOrd, xtaConcrInitFunc, xtaConcrTransFunc, xtaInitAbstractor);
-            return itpAnalysis;
+            final LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
+                    lazyAnalysis = LazyAnalysis.create(xtaAbstrPartialOrd, xtaConcrInitFunc, xtaConcrTransFunc, xtaInitAbstractor);
+            return lazyAnalysis;
         }
 
         private Prod2Analysis<DConcr, CConcr, XtaAction, DPrec, CPrec> createConcrAnalysis() {
@@ -179,27 +156,27 @@ public final class LazyXtaAbstractorFactory {
             }
         }
 
-        private AlgorithmStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+        private LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
         createAlgorithmStrategy(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy){
-            final AlgorithmStrategy<DConcr, DAbstr, ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-                    dataAlgorithmStrategy = createDataStrategy(system, dataStrategy);
-            final AlgorithmStrategy<CConcr, CAbstr, ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-                    clockAlgorithmStrategy = createClockStrategy(system, clockStrategy);
-            final Function<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, ?> projection = s -> Tuple3.of(
+            final LazyStrategy<DConcr, DAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+                    dataLazyStrategy = createDataStrategy(system, dataStrategy);
+            final LazyStrategy<CConcr, CAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
+                    clockLazyStrategy = createClockStrategy(system, clockStrategy);
+            final Function<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, ?> projection = s -> Tuple3.of(
                     s.getConcrState().getLocs(),
-                    dataAlgorithmStrategy.getProjection().apply(s),
-                    clockAlgorithmStrategy.getProjection().apply(s));
-            final Lens<ItpState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, Prod2State<DConcr, CConcr>>
+                    dataLazyStrategy.getProjection().apply(s),
+                    clockLazyStrategy.getProjection().apply(s));
+            final Lens<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, Prod2State<DConcr, CConcr>>
                     lens = LazyXtaLensUtils.createConcrProd2Lens();
-            return new Prod2Strategy<>(lens, dataAlgorithmStrategy, clockAlgorithmStrategy, projection);
+            return new Prod2LazyStrategy<>(lens, dataLazyStrategy, clockLazyStrategy, projection);
         }
 
-        private AlgorithmStrategy createDataStrategy(final XtaSystem system, final DataStrategy dataStrategy){
+        private LazyStrategy createDataStrategy(final XtaSystem system, final DataStrategy dataStrategy){
             switch (dataStrategy) {
                 case NONE:
-                    final Lens<ItpState<XtaState<Prod2State<ExplState, ?>>, XtaState<Prod2State<ExplState, ?>>>, ExplState>
+                    final Lens<LazyState<XtaState<Prod2State<ExplState, ?>>, XtaState<Prod2State<ExplState, ?>>>, ExplState>
                             lens = LazyXtaLensUtils.createConcrDataLens();
-                    return new BasicAlgorithmStrategy<>(lens);
+                    return new BasicLazyStrategy<>(lens);
                 case BWITP:
                 case FWITP:
                     return createItpExplStrategy(system, dataStrategy);
@@ -208,7 +185,7 @@ public final class LazyXtaAbstractorFactory {
             }
         }
 
-        private AlgorithmStrategy<ExplState, ExplState, ItpState<XtaState<Prod2State<ExplState, ?>>, XtaState<Prod2State<ExplState, ?>>>, XtaAction>
+        private LazyStrategy<ExplState, ExplState, LazyState<XtaState<Prod2State<ExplState, ?>>, XtaState<Prod2State<ExplState, ?>>>, XtaAction>
         createItpExplStrategy(final XtaSystem system, final DataStrategy dataStrategy){
 
             final Lattice<ExplState> lattice = ExplLattice.getInstance();
@@ -228,13 +205,13 @@ public final class LazyXtaAbstractorFactory {
             }
         }
 
-        private AlgorithmStrategy createClockStrategy(final XtaSystem system, final ClockStrategy clockStrategy){
+        private LazyStrategy createClockStrategy(final XtaSystem system, final ClockStrategy clockStrategy){
             switch (clockStrategy) {
                 case BWITP:
                 case FWITP:
                     return createItpZoneStrategy(system, clockStrategy);
                 case LU:
-                    final Lens<ItpState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
+                    final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                             lens = LazyXtaLensUtils.createAbstrClockLens();
                     return new LuZoneStrategy2<>(lens);
                 default:
@@ -242,10 +219,10 @@ public final class LazyXtaAbstractorFactory {
             }
         }
 
-        private AlgorithmStrategy<ZoneState, ZoneState, ItpState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
+        private LazyStrategy<ZoneState, ZoneState, LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
         createItpZoneStrategy(final XtaSystem system, final ClockStrategy clockStrategy){
 
-            final Lens<ItpState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, ItpState<ZoneState, ZoneState>>
+            final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, LazyState<ZoneState, ZoneState>>
                     lens = LazyXtaLensUtils.createItpClockLens();
             final Lattice<ZoneState> lattice = ZoneLattice.getInstance();
             final Interpolator<ZoneState, ZoneState> interpolator = ZoneInterpolator.getInstance();

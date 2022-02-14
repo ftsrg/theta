@@ -28,9 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.utils.ExprSimplifier;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.SimplifierLevel;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Guard.DataGuard;
@@ -57,8 +55,6 @@ import static java.util.stream.Collectors.toList;
 
 
 public final class XtaExplUtils {
-	
-	private static final ExprSimplifier exprSimplifier = ExprSimplifier.create();
 
 	private XtaExplUtils() {
 	}
@@ -72,11 +68,11 @@ public final class XtaExplUtils {
 			valI.put(var, val);
 		}
 
-		assert exprSimplifier.simplify(exprB, valI).equals(False());
+		assert ExprUtils.simplify(exprB, valI).equals(False());
 
 		for (final VarDecl<?> var : vars) {
 			valI.remove(var);
-			final Expr<BoolType> simplifiedExprB = exprSimplifier.simplify(exprB, valI);
+			final Expr<BoolType> simplifiedExprB = ExprUtils.simplify(exprB, valI);
 			if (simplifiedExprB.equals(False())) {
 				continue;
 			} else {
@@ -192,7 +188,7 @@ public final class XtaExplUtils {
 		for (final Guard guard : nonRecvEdge.getGuards()) {
 			if (guard.isDataGuard()) {
 				final DataGuard dataGuard = guard.asDataGuard();
-				final Expr<BoolType> expr = exprSimplifier.simplify(dataGuard.toExpr(), val);
+				final Expr<BoolType> expr = ExprUtils.simplify(dataGuard.toExpr(), val);
 				if (!(expr instanceof TrueExpr)) {
 					return false;
 				}
@@ -227,7 +223,7 @@ public final class XtaExplUtils {
 	}
 
 	private static boolean checkDataGuard(final DataGuard guard, final Valuation val) {
-		final Expr<BoolType> expr = exprSimplifier.simplify(guard.asDataGuard().toExpr(), val);
+		final Expr<BoolType> expr = ExprUtils.simplify(guard.asDataGuard().toExpr(), val);
 		return !(expr instanceof FalseExpr);
 	}
 
@@ -236,7 +232,7 @@ public final class XtaExplUtils {
 			final Collection<Guard> invars = loc.getInvars();
 			for (final Guard invar : invars) {
 				if (invar.isDataGuard()) {
-					final Expr<BoolType> expr = exprSimplifier.simplify(invar.asDataGuard().toExpr(), val);
+					final Expr<BoolType> expr = ExprUtils.simplify(invar.asDataGuard().toExpr(), val);
 					if (expr instanceof FalseExpr) {
 						return false;
 					}
@@ -252,7 +248,7 @@ public final class XtaExplUtils {
 			if (update.isDataUpdate()) {
 				final AssignStmt<?> stmt = (AssignStmt<?>) update.toStmt();
 				final VarDecl<?> varDecl = stmt.getVarDecl();
-				final Expr<?> expr = exprSimplifier.simplify(stmt.getExpr(), val);
+				final Expr<?> expr = ExprUtils.simplify(stmt.getExpr(), val);
 				if (expr instanceof LitExpr) {
 					final LitExpr<?> value = (LitExpr<?>) expr;
 					val.put(varDecl, value);

@@ -21,11 +21,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import hu.bme.mit.theta.common.container.Containers;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -163,6 +166,59 @@ public final class ExprUtils {
 	}
 
 	/**
+	 * Collect constants of an expression into a given collection.
+	 *
+	 * @param expr      Expression
+	 * @param collectTo Collection where the constants should be put
+	 */
+	public static void collectConstants(final Expr<?> expr, final Collection<ConstDecl<?>> collectTo) {
+		if (expr instanceof RefExpr) {
+			final RefExpr<?> refExpr = (RefExpr<?>) expr;
+			final Decl<?> decl = refExpr.getDecl();
+			if (decl instanceof ConstDecl) {
+				final ConstDecl<?> constDecl = (ConstDecl<?>) decl;
+				collectTo.add(constDecl);
+				return;
+			}
+		}
+		expr.getOps().forEach(op -> collectConstants(op, collectTo));
+	}
+
+	/**
+	 * Collect constants from expressions into a given collection.
+	 *
+	 * @param exprs     Expressions
+	 * @param collectTo Collection where the constants should be put
+	 */
+	public static void collectConstants(final Iterable<? extends Expr<?>> exprs, final Collection<ConstDecl<?>> collectTo) {
+		exprs.forEach(e -> collectConstants(e, collectTo));
+	}
+
+	/**
+	 * Get constants of an expression.
+	 *
+	 * @param expr Expression
+	 * @return Set of constants appearing in the expression
+	 */
+	public static Set<ConstDecl<?>> getConstants(final Expr<?> expr) {
+		final Set<ConstDecl<?>> consts = new HashSet<>();
+		collectConstants(expr, consts);
+		return consts;
+	}
+
+	/**
+	 * Get constants of expressions.
+	 *
+	 * @param exprs Expressions
+	 * @return Set of constants appearing in the expressions
+	 */
+	public static Set<ConstDecl<?>> getConstants(final Iterable<? extends Expr<?>> exprs) {
+		final Set<ConstDecl<?>> consts = new HashSet<>();
+		collectConstants(exprs, consts);
+		return consts;
+	}
+
+	/**
 	 * Get indexed variables of an expression.
 	 *
 	 * @param expr Expression
@@ -231,6 +287,31 @@ public final class ExprUtils {
 			simplifiedArgs.add(simplifiedArg);
 		}
 		return simplifiedArgs;
+	}
+
+	/**
+	 * Return the canonical form of an expression.
+	 *
+	 * @param expr Original expression
+	 * @return Canonical form
+	 */
+	public static <ExprType extends Type> Expr<ExprType> canonize(final Expr<ExprType> expr) {
+		return ExprCanonizer.canonize(expr);
+	}
+
+	/**
+	 * Return the canonical form of a list of expressions.
+	 *
+	 * @param exprs Original expressions
+	 * @return Canonical forms
+	 */
+	public static List<Expr<?>> canonizeAll(final List<? extends Expr<?>> exprs) {
+		final List<Expr<?>> canonizedArgs = new ArrayList<>();
+		for (final Expr<?> expr : exprs) {
+			final Expr<?> canonizedArg = canonize(expr);
+			canonizedArgs.add(canonizedArg);
+		}
+		return canonizedArgs;
 	}
 
 	/**

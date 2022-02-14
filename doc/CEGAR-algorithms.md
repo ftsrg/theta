@@ -36,7 +36,7 @@ The domain controls the abstract information that is being tracked about the sys
 * `PRED_BOOL`: [Boolean predicate abstraction](https://link.springer.com/article/10.1007/s10009-002-0095-0) keeps track of arbitrary Boolean combination of predicates.
 * `PRED_SPLIT`: Boolean predicate abstraction, but states are [split]((https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf)) into sub-states along disjunctions.
 * `EXPL`: [Explicit-value abstraction]((https://link.springer.com/chapter/10.1007/978-3-642-37057-1_11)) keeps track of concrete values, but only for a (continuously expanded) set of variables.
-* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT` and `EXPL_PRED_BOOL`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Other variables are also tracked explicitly if they appear in a given number of predicates (defined with the `--maxpredcount` option).
+* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT`, `EXPL_PRED_BOOL` and `EXPL_PRED_COMBINED`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Variables can automatically be switched from predicate tracking to explicit tracking depending on the `--autoexpl` option (see below).
 
 Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
 Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
@@ -89,10 +89,12 @@ If the limit is exceeded, unknown values are propagated.
 As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain (or that variable is deterministically assigned).
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 
-### `--maxpredcount`
+### `--autoexpl`
 
-Available for XSTS.
-The number of predicates a variable has to appear in before it is tracked explicitly when `--domain` is `EXPL_PRED_*`. Default is `0` (unlimited).
+Automatic predicate-to-explicit switching strategy. Available for XSTS, when used an `EXPL_PRED_*` domain. The goal of these options is to automatically detect when many values of a variable are enumerated in order to unroll a loop.
+* `STATIC`: No automatic switching
+* `NEWATOMS`: A variable is switched to explicit tracking when it appears in an atom that isn't present in the model.
+* `NEWOPERANDS`: A variable is switched to explicit tracking when it appears in an expression with an operand that it doesn't appear with in the model.
 
 ### `--refinement`
 
@@ -110,6 +112,11 @@ Strategy for refining the precision of the abstraction, i.e., inferring new pred
 	* `NWT_IT_WP` is usually the most effective.
 
 `BW_BIN_ITP` and `SEQ_ITP` has the best performance usually. However, they usually do not work if bitvector types are involved (due to the limitation of the underlying SMT solver). For bitvectors, `NWT_IT_WP` is recommended.
+
+Floating point support *(known experimental problems)*:
+ * As `FpType` uses bitvectors, interpolation is not supported by Z3. Therefore most refinement strategies produce an exception.
+ * The working `NWT_IT_*` strategies keep refining seemingly indefinitely, with no real progress
+ * The refinement strategies that do work can only handle the simplest of tasks (`NWT_WP`, `NWT_SP`, `NWT_WP_LV`), up to around 10 expressions - any more and they usually time out
 
 ### `--predsplit`
 
@@ -134,3 +141,12 @@ The pruning strategy controls which portion of the abstract state space is disca
 * `LAZY`: The ARG is only pruned back to the first point where refinement was applied. (See [Lazy abstraction](https://dl.acm.org/doi/10.1145/565816.503279).)
 
 It is recommended to first try `LAZY` and fall back to `FULL` if there is no refinement progress (seemingly infinite iterations with the same counterexample).
+
+### `--solver`, `--abstraction-solver`, `--refinement-solver`
+
+Available for CFA. The SMT-solver to use during verification. The `--abstraction-solver` specifies the solver to use during the abstraction phase, while `--refinement-solver` specifies the solver to use during the refinement phase. The option `--solver` sets both the abstraction and the refinement solver to be the same. Possible values:
+
+* `Z3`: The native integration of Microsoft's Z3 solver. (See subproject [solver-z3](../subprojects/solver/solver-z3) for more details.)
+* `<solver_name>:<solver_version>`: An installed SMT-LIB solver. (See subprojects [solver-smtlib](../subprojects/solver/solver-smtlib) and [solver-smtlib-cli](../subprojects/solver/solver-smtlib-cli) for more details.)
+
+It is recommended to stick with the default `Z3` option at first, and only use the SMT-LIB based solvers, if some required features are not supported by `Z3` (e.g. interpolating with bitvectors, floating points).

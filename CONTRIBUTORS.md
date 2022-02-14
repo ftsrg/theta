@@ -10,3 +10,5 @@ Contributors:
 * [Milán Mondok](https://github.com/mondokm)
 * [Dániel Szekeres](https://github.com/szdan97)
 * [László Radnai](https://github.com/radl97)
+* [Zsófia Ádam](https://github.com/AdamZsofi)
+* [Vince Molnár](https://github.com/vincemolnar)

@@ -47,7 +47,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	}
 
 	@Override
-	public final MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
+	public MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		if (ops.isEmpty()) {
 			return with(ImmutableList.of());

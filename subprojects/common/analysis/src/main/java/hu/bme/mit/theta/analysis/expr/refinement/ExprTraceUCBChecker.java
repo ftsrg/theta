@@ -20,13 +20,13 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.SpState;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
-import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import hu.bme.mit.theta.common.container.Containers;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -40,17 +40,17 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * An ExprTraceChecker that generates new predicates based on the UCB algorithm by
- * Leucker, Martin & Markin, Grigory & Neuhäußer, Martin. (2015). A New Refinement
+ * Leucker, Martin &amp; Markin, Grigory &amp; Neuhäußer, Martin. (2015). A New Refinement
  * Strategy for CEGAR-Based Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
 
-    private final Solver solver;
+    private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
     private final ExprSimplifier exprSimplifier;
 
-    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver) {
+    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
@@ -58,7 +58,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
     }
 
     public static ExprTraceUCBChecker create(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
     ) {
         return new ExprTraceUCBChecker(init, target, solver);
     }
@@ -75,7 +75,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
         }
     }
 
-private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var ftrace = flattenTrace(trace);
         final int stateCount = trace.getStates().size();
 
@@ -182,7 +182,7 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
                 /* Add the negated of the above expression as the new predicate */
                 predicates.add(
                     exprSimplifier.simplify(
-                        Not(And(Containers.createSet(predicate))),
+                        Not(And(new HashSet<>(predicate))),
                         ImmutableValuation.empty()
                     )
                 );
@@ -226,8 +226,8 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
         for(var i = 1; i < stateCount; i++) {
             var initStream =
                 (i == 1)
-                ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
-                : Stream.<AssumeStmt>empty();
+                    ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
+                    : Stream.<AssumeStmt>empty();
 
             var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
 
@@ -235,11 +235,11 @@ private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ?
 
             var targetStream =
                 (i == stateCount - 1)
-                ? Stream.concat(
+                    ? Stream.concat(
                     ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream().map(AssumeStmt::of),
                     ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of)
                 )
-                : Stream.<AssumeStmt>empty();
+                    : Stream.<AssumeStmt>empty();
 
             flattenedActions.add(
                 UCBAction.of(
