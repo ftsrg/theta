@@ -10,12 +10,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
-public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> implements ExprState {
+public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> implements ExprState {
 
-    private ItpState(){
+    private LazyState(){
     }
 
-    public static <SConcr extends State, SAbstr extends ExprState> ItpState<SConcr, SAbstr> of(final SConcr concrState, final SAbstr abstrState) {
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr concrState, final SAbstr abstrState) {
         if (concrState.isBottom()) {
             return new Bottom<>(concrState);
         } else {
@@ -23,7 +23,7 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
         }
     }
 
-    public static <SConcr extends State, SAbstr extends ExprState> ItpState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
         if (state.isBottom()) {
             return new Bottom<>(state);
         } else {
@@ -35,11 +35,11 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
 
     public abstract SAbstr getAbstrState();
 
-    public abstract ItpState<SConcr, SAbstr> withConcrState(final SConcr concrState);
+    public abstract LazyState<SConcr, SAbstr> withConcrState(final SConcr concrState);
 
-    public abstract ItpState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState);
+    public abstract LazyState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState);
 
-    private static final class NonBottom<SConcr extends State, SAbstr extends ExprState> extends ItpState<SConcr, SAbstr> {
+    private static final class NonBottom<SConcr extends State, SAbstr extends ExprState> extends LazyState<SConcr, SAbstr> {
 
         private final SConcr concrState;
         private final SAbstr abstrState;
@@ -60,13 +60,13 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
         }
 
         @Override
-        public ItpState<SConcr, SAbstr> withConcrState(final SConcr concrState) {
-            return ItpState.of(concrState, abstrState);
+        public LazyState<SConcr, SAbstr> withConcrState(final SConcr concrState) {
+            return LazyState.of(concrState, abstrState);
         }
 
         @Override
-        public ItpState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState) {
-            return ItpState.of(concrState, abstrState);
+        public LazyState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState) {
+            return LazyState.of(concrState, abstrState);
         }
 
         @Override
@@ -81,14 +81,14 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(ItpState.class.getSimpleName()).aligned()
+            return Utils.lispStringBuilder(LazyState.class.getSimpleName()).aligned()
                     .add(concrState.toString())
                     .add(abstrState.toString())
                     .toString();
         }
     }
 
-    private static final class Bottom<SConcr extends State, SAbstr extends ExprState> extends ItpState<SConcr, SAbstr> {
+    private static final class Bottom<SConcr extends State, SAbstr extends ExprState> extends LazyState<SConcr, SAbstr> {
 
         private final SConcr state;
 
@@ -107,13 +107,13 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
         }
 
         @Override
-        public ItpState<SConcr, SAbstr> withConcrState(final SConcr concrState) {
+        public LazyState<SConcr, SAbstr> withConcrState(final SConcr concrState) {
             checkArgument(concrState.isBottom());
             return this;
         }
 
         @Override
-        public ItpState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState) {
+        public LazyState<SConcr, SAbstr> withAbstrState(final SAbstr abstrState) {
             return this;
         }
 
@@ -129,7 +129,7 @@ public abstract class ItpState<SConcr extends State, SAbstr extends ExprState> i
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(ItpState.class.getSimpleName()).aligned()
+            return Utils.lispStringBuilder(LazyState.class.getSimpleName()).aligned()
                     .add(state.toString())
                     .toString();
         }
