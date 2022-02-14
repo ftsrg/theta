@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -6,7 +6,6 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;

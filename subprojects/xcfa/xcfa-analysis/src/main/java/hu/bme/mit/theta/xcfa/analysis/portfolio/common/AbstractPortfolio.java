@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;

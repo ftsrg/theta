@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.portfolio;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -8,6 +8,8 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.*;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.statistics.ModelStatistics;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.time.Duration;

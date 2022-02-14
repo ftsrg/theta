@@ -1,10 +1,11 @@
-package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.portfolio;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.*;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.time.Duration;

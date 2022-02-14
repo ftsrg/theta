@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.algorithmselection;
+package hu.bme.mit.theta.xcfa.analysis.portfolio.statistics;
 
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
