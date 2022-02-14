@@ -24,7 +24,7 @@ public class CegarConfiguration {
 	public final String refinementSolver;
 	public final boolean validateSolver;
 
-	CegarConfiguration(XcfaConfigBuilder.Domain domain,
+	public CegarConfiguration(XcfaConfigBuilder.Domain domain,
 					   XcfaConfigBuilder.Refinement refinement,
 					   XcfaConfigBuilder.Search search,
 					   XcfaConfigBuilder.PredSplit predSplit,
@@ -50,7 +50,7 @@ public class CegarConfiguration {
 		this.validateSolver = validateSolver;
 	}
 
-	CegarConfiguration(XcfaConfigBuilder.Domain domain,
+	public CegarConfiguration(XcfaConfigBuilder.Domain domain,
 					   XcfaConfigBuilder.Refinement refinement,
 					   XcfaConfigBuilder.Search search,
 					   XcfaConfigBuilder.PredSplit predSplit,
