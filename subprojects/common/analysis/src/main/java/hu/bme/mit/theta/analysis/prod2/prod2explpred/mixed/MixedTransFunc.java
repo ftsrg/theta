@@ -36,8 +36,9 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static java.util.Collections.singleton;
 
 public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
@@ -113,10 +114,17 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
                     final Set<VariableAssignmentNode> children = Containers.createSet();
                     for (var assignment : succStates) {
                         final var valueOpt = assignment.eval(decl);
-                        final var valuation = MutableValuation.copyOf(node.getValuation());
-                        Preconditions.checkArgument(valueOpt.isPresent(), "No value assigned to variable!");
-                        valuation.put(decl, valueOpt.get());
-                        children.add(VariableAssignmentNode.of(valuation, remaining, node.getPredicateTracked()));
+                        if(valueOpt.isPresent()){
+                            final var valuation = MutableValuation.copyOf(node.getValuation());
+                            valuation.put(decl, valueOpt.get());
+                            children.add(VariableAssignmentNode.of(valuation, remaining, node.getPredicateTracked()));
+                        }else{
+                            var predicateTracked = Containers.createSet(node.getPredicateTracked());
+                            predicateTracked.add(decl);
+                            var newNode = VariableAssignmentNode.of(node.getValuation(), remaining, predicateTracked);
+                            waitlist.add(newNode);
+                            node.expand(singleton(newNode));
+                        }
                     }
                     waitlist.addAll(children);
                     node.expand(children);
@@ -194,9 +202,10 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
     }
 
     private static Valuation projectValuation(Valuation val, ExplPrec prec) {
+        final var valAsMap = val.toMap();
         final MutableValuation newVal = new MutableValuation();
         for (var decl : prec.getVars()){
-            newVal.put(decl, val.toMap().get(decl));
+            if(valAsMap.containsKey(decl)) newVal.put(decl, valAsMap.get(decl));
         }
         return newVal;
     }

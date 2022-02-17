@@ -69,6 +69,7 @@ public final class ExprStates {
 																		  final Expr<BoolType> expr, final int exprIndex,
 																		  final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing,
 																		  final int limit) {
+
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			solver.add(PathUtils.unfold(expr, exprIndex));
 
