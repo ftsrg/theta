@@ -35,6 +35,7 @@ import static java.lang.Math.max;
 /**
  * Represents an immutable mapping, where each variable is associated with a stackable
  * index. The inner builder class can also be used to create a new instance.
+ * NOTE: THIS CLASS IS CURRENTLY UNSTABLE.
  */
 public class PushPopVarIndexing implements VarIndexing {
 	private static final PushPopVarIndexing ALL_ZERO = new PushPopVarIndexing.PushPopVarIndexingBuilder(0).build();
