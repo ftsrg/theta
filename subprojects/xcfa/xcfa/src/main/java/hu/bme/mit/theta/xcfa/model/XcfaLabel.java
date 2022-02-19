@@ -467,7 +467,7 @@ public abstract class XcfaLabel {
 		}
 
 		public String toString() {
-			return Utils.lispStringBuilder("Sequence").addAll(labels).toString();
+			return Utils.lispStringBuilder("Nondet").addAll(labels).toString();
 		}
 
 		public List<XcfaLabel> getLabels() {

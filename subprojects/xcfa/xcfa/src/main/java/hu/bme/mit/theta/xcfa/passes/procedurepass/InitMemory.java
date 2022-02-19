@@ -28,7 +28,7 @@ public class InitMemory extends ProcedurePass{
 		for (Object memoryO : memories) {
 			addInit(stms, (VarDecl<ArrayType<Type, Type>>) memoryO);
 		}
-		for (XcfaEdge outgoingEdge : builder.getInitLoc().getOutgoingEdges()) {
+		for (XcfaEdge outgoingEdge : new ArrayList<>(builder.getInitLoc().getOutgoingEdges())) {
 			final List<XcfaLabel> newStmts = new ArrayList<>(stms);
 			newStmts.addAll(outgoingEdge.getLabels());
 			builder.removeEdge(outgoingEdge);

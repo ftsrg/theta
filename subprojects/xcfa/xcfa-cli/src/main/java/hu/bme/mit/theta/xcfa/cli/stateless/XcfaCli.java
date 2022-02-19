@@ -63,6 +63,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -223,6 +224,9 @@ public class XcfaCli {
 	@Parameter(names = "--validate-abstraction-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
 	boolean validateAbstractionSolver = false;
 
+	@Parameter(names = "--lbe", description = "Large-block encoding level")
+	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
+
 	//////////// CONFIGURATION OPTIONS END ////////////
 
 	private Logger logger;
@@ -258,6 +262,8 @@ public class XcfaCli {
 			CliUtils.printVersion(System.out);
 			return;
 		}
+
+		SimpleLbePass.level = lbeLevel;
 
 		// TODO later we might want to merge these two flags
 		if(witnessOnly) {

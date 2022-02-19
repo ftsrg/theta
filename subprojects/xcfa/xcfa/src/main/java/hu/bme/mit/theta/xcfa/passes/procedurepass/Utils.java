@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -146,6 +147,8 @@ public class Utils {
 		}
 		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal(), ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
 		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
 		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
@@ -165,6 +168,8 @@ public class Utils {
 		}
 		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
 		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal());
+		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
 		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
@@ -184,6 +189,8 @@ public class Utils {
 		}
 		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal());
 		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
 		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
