@@ -26,7 +26,6 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// TODO object clashes when hashcode is the same
 public class FrontendMetadata {
 	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new LinkedHashMap<>();
 	private static final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new LinkedHashMap<>();
@@ -45,7 +44,6 @@ public class FrontendMetadata {
 	}
 
 	public static <T, X> void create(X owner, String key, T value) {
-		//checkState(!lookupKeyValue.containsKey(owner) || !lookupKeyValue.get(owner).containsKey(key));
 		checkNotNull(value);
 		Tuple2<String, T> tup = Tuple2.of(key, value);
 		Set<Object> set = lookupOwner.getOrDefault(tup, new LinkedHashSet<>());
