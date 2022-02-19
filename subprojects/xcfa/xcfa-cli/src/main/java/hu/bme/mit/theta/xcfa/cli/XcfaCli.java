@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.stateless;
+package hu.bme.mit.theta.xcfa.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
