@@ -4,7 +4,8 @@ include(
         "common/analysis",
         "common/common",
         "common/core",
-        "common/c-frontend",
+
+        "frontends/c-frontend",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
