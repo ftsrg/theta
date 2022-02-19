@@ -41,21 +41,6 @@ public final class ARG<S extends State, A extends Action> {
 	private int nextId = 0;
 	final PartialOrd<S> partialOrd;
 
-	/* TODO delete this
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ARG<?, ?> arg = (ARG<?, ?>) o;
-		return initialized == arg.initialized && nextId == arg.nextId && initNodes.equals(arg.initNodes) && partialOrd.equals(arg.partialOrd);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(initNodes.stream().map(ArgNode::getState), initialized, nextId, partialOrd);
-	}
-
-	 */
 	private ARG(final PartialOrd<S> partialOrd) {
 		initNodes = Containers.createSet();
 		this.partialOrd = partialOrd;
