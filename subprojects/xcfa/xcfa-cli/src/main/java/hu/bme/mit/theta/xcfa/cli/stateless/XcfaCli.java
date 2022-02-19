@@ -23,7 +23,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bmc.NewBmcChecker;
+import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -178,9 +178,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--bmc", description = "Use experimental BMC algorithm")
 	boolean bmc = false;
-
-	@Parameter(names = "--bmc-only-feasible", description = "Use experimental BMC algorithm")
-	boolean onlyFeasible = false;
 
 	//////////// Legacy (CFA-only) options ////////////
 
@@ -529,7 +526,7 @@ public class XcfaCli {
 						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
 						algorithm.getTransFunc(domainAnalysis.getTransFunc());
-				final NewBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = NewBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
+				final IterativeBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = IterativeBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
 				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
 			} else {
 				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)

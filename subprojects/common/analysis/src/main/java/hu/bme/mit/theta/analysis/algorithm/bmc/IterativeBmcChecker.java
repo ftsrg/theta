@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
-public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
+public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
 	private final LTS<S, A> lts;
 	private final InitFunc<S, P> initFunc;
 	private final TransFunc<S, A, P> transFunc;
@@ -56,14 +56,14 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 	private final int stepSize;
 	private final Logger logger;
 
-	private NewBmcChecker(final LTS<S, A> lts,
-						  final InitFunc<S, P> initFunc,
-						  final TransFunc<S, A, P> transFunc,
-						  final Predicate<S> unsafePredicate,
-						  final Solver solver,
-						  final Logger logger,
-						  final int upperBound,
-						  final int stepSize) {
+	private IterativeBmcChecker(final LTS<S, A> lts,
+								final InitFunc<S, P> initFunc,
+								final TransFunc<S, A, P> transFunc,
+								final Predicate<S> unsafePredicate,
+								final Solver solver,
+								final Logger logger,
+								final int upperBound,
+								final int stepSize) {
 		this.lts = lts;
 		this.initFunc = initFunc;
 		this.transFunc = transFunc;
@@ -74,15 +74,15 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 		this.stepSize = stepSize;
 	}
 
-	public static <S extends ExprState, A extends StmtAction, P extends Prec> NewBmcChecker<S, A, P> create(final LTS<S, A> lts,
-																											final InitFunc<S, P> initFunc,
-																											final TransFunc<S, A, P> transFunc,
-																											final Predicate<S> unsafePredicate,
-																											final Solver solver,
-																											final Logger logger,
-																											final int upperBound,
-																											final int stepSize) {
-		return new NewBmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver, logger, upperBound, stepSize);
+	public static <S extends ExprState, A extends StmtAction, P extends Prec> IterativeBmcChecker<S, A, P> create(final LTS<S, A> lts,
+																												  final InitFunc<S, P> initFunc,
+																												  final TransFunc<S, A, P> transFunc,
+																												  final Predicate<S> unsafePredicate,
+																												  final Solver solver,
+																												  final Logger logger,
+																												  final int upperBound,
+																												  final int stepSize) {
+		return new IterativeBmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver, logger, upperBound, stepSize);
 	}
 
 	private final Collection<Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>>> resumeSet = new LinkedHashSet<>();
