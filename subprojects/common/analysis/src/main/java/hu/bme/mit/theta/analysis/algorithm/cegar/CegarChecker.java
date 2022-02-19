@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -99,10 +99,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 					prec = refinerResult.asSpurious().getRefinedPrec();
 				}
 
-				if(lastPrec.equals(prec)) {
-					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration"+System.lineSeparator());
+				if (lastPrec.equals(prec)) {
+					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration" + System.lineSeparator());
 				} else {
-					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration"+System.lineSeparator());
+					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration" + System.lineSeparator());
 				}
 
 			}

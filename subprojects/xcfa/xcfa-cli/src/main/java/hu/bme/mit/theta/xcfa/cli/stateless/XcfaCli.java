@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package hu.bme.mit.theta.xcfa.cli.stateless;
 
@@ -52,18 +52,17 @@ import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.ComplexPortfolio;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.PortfolioTimeoutException;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.SequentialPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.ComplexPortfolio;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.SequentialPortfolio;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.PortfolioTimeoutException;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -72,6 +71,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -255,7 +255,8 @@ public class XcfaCli {
 
 		File inputOrModel = input == null ? model : input;
 
-		logger = new ConsoleLogger(logLevel);;
+		logger = new ConsoleLogger(logLevel);
+		;
 
 		/// version
 		if (versionInfo) {
@@ -266,9 +267,9 @@ public class XcfaCli {
 		SimpleLbePass.level = lbeLevel;
 
 		// TODO later we might want to merge these two flags
-		if(witnessOnly) {
+		if (witnessOnly) {
 			OutputHandler.create(OutputOptions.WITNESS_ONLY, inputOrModel);
-		} else if(outputResults) {
+		} else if (outputResults) {
 			OutputHandler.create(OutputOptions.OUTPUT_RESULTS, inputOrModel);
 		} else {
 			OutputHandler.create(OutputOptions.NONE, inputOrModel);
@@ -283,7 +284,7 @@ public class XcfaCli {
 
 		XCFA.Builder xcfaBuilder = null;
 		XCFA xcfa = null;
-		if(input != null) {
+		if (input != null) {
 			try {
 				final CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
 				final CLexer lexer = new CLexer(input);
@@ -303,7 +304,7 @@ public class XcfaCli {
 				System.exit(-80);
 			}
 		} else {
-			try(FileInputStream fis = new FileInputStream(model)) {
+			try (FileInputStream fis = new FileInputStream(model)) {
 				XcfaPassManager.clearXCFAPasses();
 				XcfaPassManager.clearProcessPasses();
 				XcfaPassManager.clearProcedurePasses();
@@ -329,8 +330,8 @@ public class XcfaCli {
 					locLut.put(loc, xcfaLoc);
 				}
 
-				if(cfa.getFinalLoc().isPresent()) procedureBuilder.setFinalLoc(locLut.get(cfa.getFinalLoc().get()));
-				if(cfa.getErrorLoc().isPresent()) procedureBuilder.setErrorLoc(locLut.get(cfa.getErrorLoc().get()));
+				if (cfa.getFinalLoc().isPresent()) procedureBuilder.setFinalLoc(locLut.get(cfa.getFinalLoc().get()));
+				if (cfa.getErrorLoc().isPresent()) procedureBuilder.setErrorLoc(locLut.get(cfa.getErrorLoc().get()));
 				procedureBuilder.setInitLoc(locLut.get(cfa.getInitLoc()));
 
 
@@ -349,37 +350,50 @@ public class XcfaCli {
 		}
 
 		try {
-			if(legacy) {
+			if (legacy) {
 				CFA cfa;
 				try {
-					if(xcfa == null) xcfa = xcfaBuilder.build();
+					if (xcfa == null) xcfa = xcfaBuilder.build();
 					cfa = xcfa.createCFA();
-				} catch(IllegalStateException e) {
+				} catch (IllegalStateException e) {
 					System.out.println("XCFA not compatible with CFA, using multithreaded analyses.");
 					cfa = null;
 				}
-				if(cfa != null) {
+				if (cfa != null) {
 					List<String> args = new ArrayList<>();
-					args.add("--domain"); args.add(domain.name());
-					args.add("--refinement"); args.add(refinement.name());
-					args.add("--search"); args.add(search.name());
-					args.add("--predsplit"); args.add(predSplit.name());
-					args.add("--model"); args.add(this.input.getAbsolutePath());
+					args.add("--domain");
+					args.add(domain.name());
+					args.add("--refinement");
+					args.add(refinement.name());
+					args.add("--search");
+					args.add(search.name());
+					args.add("--predsplit");
+					args.add(predSplit.name());
+					args.add("--model");
+					args.add(this.input.getAbsolutePath());
 					// args.add("--errorloc"); args.add(cfa.getErrorLoc().get().getName());
-					args.add("--precgranularity"); args.add(precGranularity.name());
-					args.add("--encoding"); args.add(encoding.name());
-					args.add("--maxenum"); args.add(maxEnum.toString());
-					args.add("--initprec"); args.add(initPrec.name());
-					args.add("--prunestrategy"); args.add(pruneStrategy.name());
-					args.add("--loglevel"); args.add(logLevel.name());
-					if(benchmarkMode) args.add("--benchmark");
-					if(cexfile!=null && cfafile!=null) {
-						args.add("--cex"); args.add(cexfile.getAbsolutePath());
-						args.add("--visualize"); args.add(cfafile.getAbsolutePath());
+					args.add("--precgranularity");
+					args.add(precGranularity.name());
+					args.add("--encoding");
+					args.add(encoding.name());
+					args.add("--maxenum");
+					args.add(maxEnum.toString());
+					args.add("--initprec");
+					args.add(initPrec.name());
+					args.add("--prunestrategy");
+					args.add(pruneStrategy.name());
+					args.add("--loglevel");
+					args.add(logLevel.name());
+					if (benchmarkMode) args.add("--benchmark");
+					if (cexfile != null && cfafile != null) {
+						args.add("--cex");
+						args.add(cexfile.getAbsolutePath());
+						args.add("--visualize");
+						args.add(cfafile.getAbsolutePath());
 					}
-					if(headerOnly) args.add("--header");
-					if(metrics) args.add("--metrics");
-					if(stacktrace) args.add("--stacktrace");
+					if (headerOnly) args.add("--header");
+					if (metrics) args.add("--metrics");
+					if (stacktrace) args.add("--stacktrace");
 
 					CfaCli.main((String[]) args.toArray());
 					return;
@@ -387,11 +401,11 @@ public class XcfaCli {
 			}
 
 			// write cfa into file and output statistics about (X)CFA and C input file
-			if(xcfa == null) xcfa = xcfaBuilder.build();
+			if (xcfa == null) xcfa = xcfaBuilder.build();
 			OutputHandler.getInstance().writeXcfa(xcfa);
 			OutputHandler.getInstance().writeInputStatistics(xcfa);
 
-			if(noAnalysis) return;
+			if (noAnalysis) return;
 
 			/// Checks, preparation and info output before analysis
 			checkState(xcfaBuilder != null, "XCFA cannot be null");
@@ -462,7 +476,7 @@ public class XcfaCli {
 		SolverManager.closeAll();
 		// register solver managers
 		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
 			final var homePath = Path.of(home);
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);
@@ -472,12 +486,12 @@ public class XcfaCli {
 	private void executeSingleConfiguration(XCFA xcfa) throws Exception {
 		final SolverFactory abstractionSolverFactory;
 		final SolverFactory refinementSolverFactory;
-		if(validateRefinementSolver) {
+		if (validateRefinementSolver) {
 			refinementSolverFactory = SolverValidatorWrapperFactory.create(refinementSolver);
 		} else {
 			refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 		}
-		if(validateAbstractionSolver) {
+		if (validateAbstractionSolver) {
 			abstractionSolverFactory = SolverValidatorWrapperFactory.create(abstractionSolver);
 		} else {
 			abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
@@ -485,19 +499,19 @@ public class XcfaCli {
 
 		final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory, refinementSolverFactory);
 		SafetyResult<?, ?> status = check(configuration);
-		if (status!=null && status.isUnsafe()) {
+		if (status != null && status.isUnsafe()) {
 			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
-		} else if(status!=null && status.isSafe()) {
+		} else if (status != null && status.isSafe()) {
 			OutputHandler.getInstance().writeDummyCorrectnessWitness();
 		}
 	}
 
 	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa, SolverFactory abstractionSolverFactory, SolverFactory refinementSolverFactory) throws Exception {
 		// set up Arg-Cex check
-		if(noArgCexCheck) {
+		if (noArgCexCheck) {
 			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
 		} else {
-			if(refinement.equals(XcfaConfigBuilder.Refinement.MULTI_SEQ)) {
+			if (refinement.equals(XcfaConfigBuilder.Refinement.MULTI_SEQ)) {
 				ArgCexCheckHandler.instance.setArgCexCheck(true, true);
 			} else {
 				ArgCexCheckHandler.instance.setArgCexCheck(true, false);
@@ -506,7 +520,7 @@ public class XcfaCli {
 
 		// Build configuration
 		try {
-			if(bmc) {
+			if (bmc) {
 				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);

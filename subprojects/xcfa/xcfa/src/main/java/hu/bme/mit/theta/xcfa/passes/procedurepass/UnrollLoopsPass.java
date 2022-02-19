@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import com.google.common.collect.Streams;
@@ -15,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.collectReverseEdges;
 
-public class UnrollLoopsPass extends ProcedurePass{
+public class UnrollLoopsPass extends ProcedurePass {
 
 	private final Set<XcfaEdge> forwardEdges = new LinkedHashSet<>();
 	private final Set<XcfaLocation> originalLocs = new LinkedHashSet<>();
@@ -25,11 +41,11 @@ public class UnrollLoopsPass extends ProcedurePass{
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder input) {
 		XcfaProcedure.Builder builder = EliminateSelfLoops.instance.run(input);
-		if(originalLocs.isEmpty()) {
+		if (originalLocs.isEmpty()) {
 			Set<XcfaEdge> reverseEdges = collectReverseEdges(builder.getInitLoc());
 			Set<XcfaLocation> toDuplicate = new LinkedHashSet<>();
 			reverseEdges.stream().filter(xcfaEdge -> reverseEdges.stream().anyMatch(xcfaEdge1 -> xcfaEdge.getTarget() == xcfaEdge1.getSource())).forEach(xcfaEdge -> toDuplicate.add(xcfaEdge.getTarget()));
-			if(!toDuplicate.isEmpty()) {
+			if (!toDuplicate.isEmpty()) {
 				for (XcfaLocation location : toDuplicate) {
 					XcfaLocation copy = XcfaLocation.uniqeCopyOf(location);
 					builder.addLoc(copy);
@@ -71,9 +87,9 @@ public class UnrollLoopsPass extends ProcedurePass{
 
 			for (XcfaEdge outgoingEdge : reverseEdge.getSource().getOutgoingEdges()) {
 				source = locationLut.get(reverseEdge.getSource());
-				if(forwardEdges.contains(outgoingEdge)) {
+				if (forwardEdges.contains(outgoingEdge)) {
 					for (XcfaLocation forwardTarget : locationCopies.get(reverseEdge.getSource())) {
-						if(source != forwardTarget)
+						if (source != forwardTarget)
 							builder.addEdge(XcfaEdge.of(source, forwardTarget, outgoingEdge.getLabels()));
 					}
 				}

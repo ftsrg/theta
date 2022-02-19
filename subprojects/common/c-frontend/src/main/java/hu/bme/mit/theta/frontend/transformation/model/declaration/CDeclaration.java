@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.model.declaration;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -25,6 +41,7 @@ public class CDeclaration {
 		this.derefCounter = cSimpleType.getPointerLevel();
 		this.varDecls = new ArrayList<>();
 	}
+
 	public CDeclaration(String name) {
 		this.name = name;
 		this.varDecls = new ArrayList<>();
@@ -39,7 +56,7 @@ public class CDeclaration {
 	}
 
 	public void incDerefCounter(int amount) {
-		derefCounter+=amount;
+		derefCounter += amount;
 	}
 
 	public void addArrayDimension(CStatement expr) {
@@ -91,12 +108,12 @@ public class CDeclaration {
 		for (CStatement arrayDimension : arrayDimensions) {
 			stringBuilder.append("[]");
 		}
-		if(isFunc) stringBuilder.append("(");
+		if (isFunc) stringBuilder.append("(");
 		for (CDeclaration functionParam : functionParams) {
 			stringBuilder.append(functionParam).append(", ");
 		}
-		if(isFunc) stringBuilder.append(")");
-		if(initExpr != null) {
+		if (isFunc) stringBuilder.append(")");
+		if (initExpr != null) {
 			stringBuilder.append(" = ").append(initExpr);
 		}
 		return stringBuilder.toString();

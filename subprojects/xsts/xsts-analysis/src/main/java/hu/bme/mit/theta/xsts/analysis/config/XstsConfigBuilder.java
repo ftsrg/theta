@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xsts.analysis.config;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -13,7 +29,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
-import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStatePredicate;
@@ -44,7 +59,12 @@ import hu.bme.mit.theta.analysis.pred.PredStmtOptimizer;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtAnalysis;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtOptimizer;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -139,7 +159,9 @@ public class XstsConfigBuilder {
 
 		public final XstsAutoExpl builder;
 
-		private AutoExpl(final XstsAutoExpl builder) { this.builder = builder; }
+		private AutoExpl(final XstsAutoExpl builder) {
+			this.builder = builder;
+		}
 	}
 
 	public enum OptimizeStmts {
@@ -210,7 +232,7 @@ public class XstsConfigBuilder {
 
 		if (domain == Domain.EXPL) {
 			final LTS<XstsState<ExplState>, XstsAction> lts;
-			if(optimizeStmts == OptimizeStmts.ON){
+			if (optimizeStmts == OptimizeStmts.ON) {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
 			} else {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
@@ -219,42 +241,42 @@ public class XstsConfigBuilder {
 			final Predicate<XstsState<ExplState>> target = new XstsStatePredicate<ExplStatePredicate, ExplState>(new ExplStatePredicate(negProp, abstractionSolver));
 			final Analysis<XstsState<ExplState>, XstsAction, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula(), maxEnum));
 			final ArgBuilder<XstsState<ExplState>, XstsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
-				true);
+					true);
 			final Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.waitlist(PriorityWaitlist.create(search.comparator))
-				.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-					: StopCriterions.firstCex())
-				.logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.comparator))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			Refiner<XstsState<ExplState>, XstsAction, ExplPrec> refiner = null;
 
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
 					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp, solverFactory.createUCSolver()),
-						JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
+							JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
 					throw new UnsupportedOperationException(domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<XstsState<ExplState>, XstsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
-				logger);
+					logger);
 			final ExplPrec prec = initPrec.builder.createExpl(xsts);
 			return XstsConfig.create(checker, prec);
 
@@ -275,22 +297,22 @@ public class XstsConfigBuilder {
 			}
 
 			final LTS<XstsState<PredState>, XstsAction> lts;
-			if(optimizeStmts == OptimizeStmts.ON){
-				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
+			if (optimizeStmts == OptimizeStmts.ON) {
+				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
 			} else {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
 			}
 
 			final Predicate<XstsState<PredState>> target = new XstsStatePredicate<ExprStatePredicate, PredState>(new ExprStatePredicate(negProp, abstractionSolver));
 			final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis.create(PredAnalysis.create(abstractionSolver, predAbstractor,
-				xsts.getInitFormula()));
+					xsts.getInitFormula()));
 			final ArgBuilder<XstsState<PredState>, XstsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
-				true);
+					true);
 			final Abstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.waitlist(PriorityWaitlist.create(search.comparator))
-				.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-					: StopCriterions.firstCex())
-				.logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.comparator))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
@@ -308,36 +330,36 @@ public class XstsConfigBuilder {
 					break;
 				default:
 					throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 			Refiner<XstsState<PredState>, XstsAction, PredPrec> refiner;
 			if (refinement == Refinement.MULTI_SEQ) {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-					JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-					JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			}
 
 			final SafetyChecker<XstsState<PredState>, XstsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
-				logger);
+					logger);
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
 		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED_COMBINED) {
-			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts;
-			if(optimizeStmts == OptimizeStmts.ON){
-				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
-					Prod2ExplPredStmtOptimizer.create(
-						ExplStmtOptimizer.getInstance()
-					)));
+			final LTS<XstsState<Prod2State<ExplState, PredState>>, XstsAction> lts;
+			if (optimizeStmts == OptimizeStmts.ON) {
+				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(
+						Prod2ExplPredStmtOptimizer.create(
+								ExplStmtOptimizer.getInstance()
+						)));
 			} else {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
 			}
 
-			final Analysis<Prod2State<ExplState,PredState>, StmtAction,Prod2Prec<ExplPrec,PredPrec>> prod2Analysis;
+			final Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> prod2Analysis;
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, abstractionSolver));
-			if(domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT){
+			if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT) {
 				final PredAbstractors.PredAbstractor predAbstractor;
 				switch (domain) {
 					case EXPL_PRED_BOOL:
@@ -353,10 +375,10 @@ public class XstsConfigBuilder {
 						throw new UnsupportedOperationException(domain + " domain is not supported.");
 				}
 				prod2Analysis = Prod2Analysis.create(
-					ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula(), maxEnum),
-					PredAnalysis.create(abstractionSolver, predAbstractor, xsts.getInitFormula()),
-					Prod2ExplPredPreStrengtheningOperator.create(),
-					Prod2ExplPredStrengtheningOperator.create(abstractionSolver));
+						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula(), maxEnum),
+						PredAnalysis.create(abstractionSolver, predAbstractor, xsts.getInitFormula()),
+						Prod2ExplPredPreStrengtheningOperator.create(),
+						Prod2ExplPredStrengtheningOperator.create(abstractionSolver));
 			} else {
 //				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
 //				prod2Analysis = Prod2ExplPredAnalysis.create(
@@ -366,20 +388,20 @@ public class XstsConfigBuilder {
 //						prodAbstractor);
 				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
 				prod2Analysis = Prod2ExplPredStmtAnalysis.create(
-					ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
-					PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
-					Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-					prodAbstractor, abstractionSolver, maxEnum);
+						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
+						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
+						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
+						prodAbstractor, abstractionSolver, maxEnum);
 			}
 			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis = XstsAnalysis.create(prod2Analysis);
 
 			final ArgBuilder<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> argBuilder = ArgBuilder.create(lts, analysis, target,
-				true);
+					true);
 			final Abstractor<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> abstractor = BasicAbstractor.builder(argBuilder)
-				.waitlist(PriorityWaitlist.create(search.comparator))
-				.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-					: StopCriterions.firstCex())
-				.logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.comparator))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
@@ -389,27 +411,27 @@ public class XstsConfigBuilder {
 			switch (refinement) {
 				case FW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
 					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
 					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
-						JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
+							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				default:
 					throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> checker = CegarChecker.create(abstractor, refiner,
-				logger);
+					logger);
 			final Prod2Prec<ExplPrec, PredPrec> prec = initPrec.builder.createProd2ExplPred(xsts);
 			return XstsConfig.create(checker, prec);
 		} else {

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.portfolio.statistics;
 
 import hu.bme.mit.theta.cfa.CFA;
@@ -33,7 +49,8 @@ public class ModelStatistics {
 	private int whileLoops;
 	private int branches;
 
-	private ModelStatistics() {}
+	private ModelStatistics() {
+	}
 
 	// currently not used, but could be useful later
 	public static ModelStatistics createCfaStatistics(CFA cfa, String modelName) {
@@ -64,7 +81,7 @@ public class ModelStatistics {
 		ret.havocCount = xcfa.getProcesses().stream().map(
 				proc -> proc.getProcedures().stream().map(
 						p -> p.getEdges().stream().map(
-								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof HavocStmt).count()
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel && edge.getStmt() instanceof HavocStmt).count()
 						).reduce(Long::sum).orElse(0L)
 				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
 		ret.locCount = xcfa.getProcesses().stream().map(proc -> proc.getProcedures().stream().map(p -> p.getLocs().size()).reduce(Integer::sum).orElse(0)).reduce(Integer::sum).orElse(0);
@@ -72,19 +89,19 @@ public class ModelStatistics {
 		ret.skipEdgeCount = xcfa.getProcesses().stream().map(
 				proc -> proc.getProcedures().stream().map(
 						p -> p.getEdges().stream().map(
-								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof SkipStmt).count()
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel && edge.getStmt() instanceof SkipStmt).count()
 						).reduce(Long::sum).orElse(0L)
 				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
 		ret.assumeCount = xcfa.getProcesses().stream().map(
 				proc -> proc.getProcedures().stream().map(
 						p -> p.getEdges().stream().map(
-								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof AssumeStmt).count()
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel && edge.getStmt() instanceof AssumeStmt).count()
 						).reduce(Long::sum).orElse(0L)
 				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
 		ret.assignCount = xcfa.getProcesses().stream().map(
 				proc -> proc.getProcedures().stream().map(
 						p -> p.getEdges().stream().map(
-								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel &&  edge.getStmt() instanceof AssignStmt).count()
+								e -> e.getLabels().stream().filter(edge -> edge instanceof XcfaLabel.StmtXcfaLabel && edge.getStmt() instanceof AssignStmt).count()
 						).reduce(Long::sum).orElse(0L)
 				).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
 

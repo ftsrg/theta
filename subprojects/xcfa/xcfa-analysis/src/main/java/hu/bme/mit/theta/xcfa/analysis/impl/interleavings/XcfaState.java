@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class XcfaState<S extends ExprState> extends hu.bme.mit.theta.xcfa.analys
 		this.enabledProcesses = new ArrayList<>();
 		processLocs.forEach((xcfaLocation, aBoolean) -> {
 			this.processLocs.put(this.processLocs.size(), xcfaLocation);
-			if(aBoolean) this.enabledProcesses.add(this.processLocs.size() - 1);
+			if (aBoolean) this.enabledProcesses.add(this.processLocs.size() - 1);
 		});
 		this.globalState = checkNotNull(globalState);
 		waitForEnd = new LinkedHashMap<>();
@@ -69,7 +69,9 @@ public class XcfaState<S extends ExprState> extends hu.bme.mit.theta.xcfa.analys
 		this.lastAction = lastAction;
 
 		final Collection<Integer> endOrError = new ArrayList<>();
-		this.processLocs.forEach((integer, xcfaLocation) -> {if(xcfaLocation.isEndLoc() || xcfaLocation.isErrorLoc()) endOrError.add(integer);});
+		this.processLocs.forEach((integer, xcfaLocation) -> {
+			if (xcfaLocation.isEndLoc() || xcfaLocation.isErrorLoc()) endOrError.add(integer);
+		});
 		this.waitForEnd.forEach((integer, integers) -> {
 			integers.removeIf(endOrError::contains);
 		});
@@ -179,12 +181,12 @@ public class XcfaState<S extends ExprState> extends hu.bme.mit.theta.xcfa.analys
 	public boolean isLeq(final PartialOrd<S> partialOrd, final XcfaState<S> state2) {
 		return /*threadLookup.size() <= state2.threadLookup.size() &&
 		threadLookup.entrySet().stream().noneMatch(e -> enabledProcesses.contains(e.getValue()) ^ (state2.threadLookup.containsKey(e.getKey()) && state2.enabledProcesses.contains(state2.threadLookup.get(e.getKey())))) && */
-		partialOrd.isLeq(globalState, state2.globalState);
+				partialOrd.isLeq(globalState, state2.globalState);
 	}
 
 	public XcfaState<S> atomicbegin(final Integer process, final Boolean atomicBegin) {
-		if(atomicBegin == null || (!atomicBegin && oldEnabledProcesses == null)) return this;
-		else if(atomicBegin) {
+		if (atomicBegin == null || (!atomicBegin && oldEnabledProcesses == null)) return this;
+		else if (atomicBegin) {
 			final ArrayList<Integer> newEnabledProcesses = new ArrayList<>();
 			checkState(enabledProcesses.contains(process), "Not active process cannot become atomic!");
 			newEnabledProcesses.add(process);

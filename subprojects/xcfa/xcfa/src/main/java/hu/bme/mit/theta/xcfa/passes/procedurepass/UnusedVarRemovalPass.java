@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
@@ -39,10 +39,10 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 
 	public static void removeUnusedVars(XcfaProcedure.Builder builder, Set<VarDecl<?>> usedVars) {
 		boolean atLeastOne = true;
-		while(atLeastOne) {
+		while (atLeastOne) {
 			atLeastOne = false;
 			Set<VarDecl<?>> vars;
-			if(usedVars == null) {
+			if (usedVars == null) {
 				vars = new LinkedHashSet<>();
 				for (XcfaEdge edge : builder.getEdges()) {
 					for (XcfaLabel label : edge.getLabels()) {
@@ -50,8 +50,8 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 						Set<VarDecl<?>> modifiedVars = getModifiedVars(label);
 						vars1.removeIf(varDecl ->
 								modifiedVars.contains(varDecl) &&
-								!builder.getParams().containsKey(varDecl) &&
-								builder.getLocalVars().containsKey(varDecl)
+										!builder.getParams().containsKey(varDecl) &&
+										builder.getLocalVars().containsKey(varDecl)
 						);
 						vars.addAll(vars1);
 					}

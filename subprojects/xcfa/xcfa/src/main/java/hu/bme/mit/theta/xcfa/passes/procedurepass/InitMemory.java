@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -19,7 +35,7 @@ import java.util.stream.Collectors;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
-public class InitMemory extends ProcedurePass{
+public class InitMemory extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		final Set<Object> dereferencedVars = FrontendMetadata.lookupMetadata("dereferenced", true);
@@ -39,8 +55,8 @@ public class InitMemory extends ProcedurePass{
 
 	private <E extends Type, T extends Type> void addInit(final List<XcfaLabel> stms, final VarDecl<ArrayType<E, T>> memory) {
 		final Optional<Object> defaultElement = FrontendMetadata.getMetadataValue(memory, "defaultElement");
-		if(defaultElement.isPresent() && defaultElement.get() instanceof LitExpr) {
-			stms.add(Stmt(Assign(memory, ArrayLitExpr.of(List.of(), (LitExpr<T>)defaultElement.get(), memory.getType()))));
+		if (defaultElement.isPresent() && defaultElement.get() instanceof LitExpr) {
+			stms.add(Stmt(Assign(memory, ArrayLitExpr.of(List.of(), (LitExpr<T>) defaultElement.get(), memory.getType()))));
 		}
 	}
 

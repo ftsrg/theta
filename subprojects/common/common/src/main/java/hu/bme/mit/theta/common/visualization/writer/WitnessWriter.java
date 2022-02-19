@@ -1,11 +1,24 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.common.visualization.writer;
 
-import hu.bme.mit.theta.common.visualization.Alignment;
-import hu.bme.mit.theta.common.visualization.CompositeNode;
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.Node;
-import jdk.jshell.spi.ExecutionControl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +64,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		this.isViolationWitness = isViolationWitness;
 		this.specification = specification;
 		this.programFile = programFile;
-		if(is64bit) {
+		if (is64bit) {
 			this.architecture = "64bit";
 		} else {
 			this.architecture = "32bit";
@@ -83,24 +96,24 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>").append(System.lineSeparator());
 		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator());
 
-		appendKeyLine(sb, "sourcecodelang", "string", "graph","sourcecodelang");
+		appendKeyLine(sb, "sourcecodelang", "string", "graph", "sourcecodelang");
 		appendKeyLine(sb, "creationtime", "string", "graph", "creationtime");
-		appendKeyLine(sb, "witness-type", "string", "graph","witness-type");
-		appendKeyLine(sb, "producer", "string","graph","producer");
-		appendKeyLine(sb, "architecture", "string","graph","architecture");
+		appendKeyLine(sb, "witness-type", "string", "graph", "witness-type");
+		appendKeyLine(sb, "producer", "string", "graph", "producer");
+		appendKeyLine(sb, "architecture", "string", "graph", "architecture");
 		appendKeyLine(sb, "programHash", "string", "graph", "programhash");
-		appendKeyLine(sb, "programfile", "string", "graph","programfile");
+		appendKeyLine(sb, "programfile", "string", "graph", "programfile");
 		appendKeyLine(sb, "specification", "string", "graph", "specification");
-		appendKeyLine(sb, "startline", "string", "edge","startline");
-		appendKeyLine(sb, "endline", "string", "edge","endline");
-		appendKeyLine(sb, "startoffset", "string", "edge","startoffset");
-		appendKeyLine(sb, "assumption", "string", "edge","assumption");
-		appendKeyLine(sb, "control", "string", "edge","control");
+		appendKeyLine(sb, "startline", "string", "edge", "startline");
+		appendKeyLine(sb, "endline", "string", "edge", "endline");
+		appendKeyLine(sb, "startoffset", "string", "edge", "startoffset");
+		appendKeyLine(sb, "assumption", "string", "edge", "assumption");
+		appendKeyLine(sb, "control", "string", "edge", "control");
 		// these two are for us, they aren't sv-comp witness keys
-		appendKeyLine(sb, "stmt", "string", "edge","stmt");
-		appendKeyLine(sb,"expl-state","string","node","expl-state");
+		appendKeyLine(sb, "stmt", "string", "edge", "stmt");
+		appendKeyLine(sb, "expl-state", "string", "node", "expl-state");
 
-		if(isViolationWitness) {
+		if (isViolationWitness) {
 			appendKeyWithDefaultValue(sb, "entry", "string", "node", "entry", "false");
 			appendKeyWithDefaultValue(sb, "violation", "string", "node", "violation", "false");
 		} else {
@@ -110,17 +123,17 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	}
 
 	private void printGraphKeyValues(StringBuilder sb) {
-		if(isViolationWitness) {
-			appendDataNode(sb,"witness-type","violation_witness");
+		if (isViolationWitness) {
+			appendDataNode(sb, "witness-type", "violation_witness");
 		} else {
-			appendDataNode(sb,"witness-type","correctness_witness");
+			appendDataNode(sb, "witness-type", "correctness_witness");
 		}
-		appendDataNode(sb,"producer", toolName);
-		appendDataNode(sb,"sourcecodelang",sourceCodeLang);
-		appendDataNode(sb,"specification", specification);
-		appendDataNode(sb,"programfile",programFile);
-		appendDataNode(sb,"programhash",programHash);
-		appendDataNode(sb,"architecture",architecture);
+		appendDataNode(sb, "producer", toolName);
+		appendDataNode(sb, "sourcecodelang", sourceCodeLang);
+		appendDataNode(sb, "specification", specification);
+		appendDataNode(sb, "programfile", programFile);
+		appendDataNode(sb, "programhash", programHash);
+		appendDataNode(sb, "architecture", architecture);
 
 		TimeZone tz = TimeZone.getTimeZone("UTC");
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
@@ -166,7 +179,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 	}
 
 	private void printNode(final Node node, final StringBuilder sb) {
-		if(node.getAttributes().getLabel().equals("")) {
+		if (node.getAttributes().getLabel().equals("")) {
 			sb.append("<node id=\"").append(node.getId()).append("\"/>").append(System.lineSeparator());
 		} else {
 			sb.append("<node id=\"").append(node.getId()).append("\">").append(System.lineSeparator());
@@ -192,9 +205,9 @@ public final class WitnessWriter extends AbstractGraphWriter {
 			e.printStackTrace();
 		}
 		try (InputStream is = Files.newInputStream(Paths.get(programFile));
-			 DigestInputStream dis = new DigestInputStream(is, md))
-		{
-			while (dis.read() != -1) {}
+			 DigestInputStream dis = new DigestInputStream(is, md)) {
+			while (dis.read() != -1) {
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -208,7 +221,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 		StringBuilder hexString = new StringBuilder(2 * hash.length);
 		for (int i = 0; i < hash.length; i++) {
 			String hex = Integer.toHexString(0xff & hash[i]);
-			if(hex.length() == 1) {
+			if (hex.length() == 1) {
 				hexString.append('0');
 			}
 			hexString.append(hex);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 				for (XcfaEdge edge : procedure.getEdges()) {
 					for (XcfaLabel label : edge.getLabels()) {
 						if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssumeStmt) {
-							AssumeStmt assumeStmt = (AssumeStmt)label.getStmt();
+							AssumeStmt assumeStmt = (AssumeStmt) label.getStmt();
 							assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
 						}
 					}

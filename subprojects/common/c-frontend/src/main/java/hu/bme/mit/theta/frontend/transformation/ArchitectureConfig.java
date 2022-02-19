@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -27,8 +43,8 @@ public class ArchitectureConfig {
 	 * (e.g. conversion rules would get more complex, if an int isn't at least twice as big as a short)
 	 */
 	public enum ArchitectureType {
-		ILP32(1, 8,16,32,32,64, 24, 8, 53, 11, 113, 15, 65),
-		LP64(1, 8,16,32,64,64, 24, 8, 53, 11, 113, 15, 65);
+		ILP32(1, 8, 16, 32, 32, 64, 24, 8, 53, 11, 113, 15, 65),
+		LP64(1, 8, 16, 32, 64, 64, 24, 8, 53, 11, 113, 15, 65);
 
 		public final Map<String, Integer> standardTypeSizes = new LinkedHashMap<>();
 
@@ -58,10 +74,10 @@ public class ArchitectureConfig {
 
 	/**
 	 * Which arithmetic type to use:
-	 * 	- integer: bitvectors are not supported (e.g. floats, bitwise ops). This is the most performant.
-	 * 	- bitvector: every operation is handled through BV primitives. This can handle virtually anything (in scope).
-	 * 				 This is not as performant as integer arithmetic.
-	 * 	- efficient: Integer when possible, bitvector when necessary - this is the default (and performance-wise best) option
+	 * - integer: bitvectors are not supported (e.g. floats, bitwise ops). This is the most performant.
+	 * - bitvector: every operation is handled through BV primitives. This can handle virtually anything (in scope).
+	 * This is not as performant as integer arithmetic.
+	 * - efficient: Integer when possible, bitvector when necessary - this is the default (and performance-wise best) option
 	 */
 	public enum ArithmeticType {
 		integer,
@@ -70,27 +86,34 @@ public class ArchitectureConfig {
 	}
 
 	public static CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> getCastVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return CastVisitor.instance;
+		if (arithmetic == ArithmeticType.bitvector) return CastVisitor.instance;
 		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.CastVisitor.instance;
 	}
+
 	public static CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> getLimitVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return LimitVisitor.instance;
+		if (arithmetic == ArithmeticType.bitvector) return LimitVisitor.instance;
 		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.LimitVisitor.instance;
 	}
-	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>>  getNullValueVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return NullValueVisitor.instance;
-		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.NullValueVisitor.instance;
+
+	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getNullValueVisitor() {
+		if (arithmetic == ArithmeticType.bitvector) return NullValueVisitor.instance;
+		else
+			return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.NullValueVisitor.instance;
 	}
-	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>>  getUnitValueVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return UnitValueVisitor.instance;
-		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.UnitValueVisitor.instance;
+
+	public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getUnitValueVisitor() {
+		if (arithmetic == ArithmeticType.bitvector) return UnitValueVisitor.instance;
+		else
+			return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.UnitValueVisitor.instance;
 	}
+
 	public static CComplexType.CComplexTypeVisitor<Void, Type> getTypeVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return TypeVisitor.instance;
+		if (arithmetic == ArithmeticType.bitvector) return TypeVisitor.instance;
 		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.TypeVisitor.instance;
 	}
+
 	public static CComplexType.CComplexTypeVisitor<String, LitExpr<?>> getValueVisitor() {
-		if(arithmetic == ArithmeticType.bitvector) return ValueVisitor.instance;
+		if (arithmetic == ArithmeticType.bitvector) return ValueVisitor.instance;
 		else return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.ValueVisitor.instance;
 	}
 }

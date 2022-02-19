@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -31,7 +47,7 @@ public abstract class CSimpleType {
 		return pointerLevel;
 	}
 
-	public void incrementPointer(){
+	public void incrementPointer() {
 		++pointerLevel;
 	}
 
@@ -49,7 +65,7 @@ public abstract class CSimpleType {
 	}
 
 	public void setBool(boolean bool) {
-		if(bool) setSigned(false); // _Bool isn't signed, but signed might be the default value in some cases
+		if (bool) setSigned(false); // _Bool isn't signed, but signed might be the default value in some cases
 		this.bool = bool;
 	}
 
@@ -97,6 +113,7 @@ public abstract class CSimpleType {
 	 * Returns the base type of the C type e.g. `int* a` will result in a CType of int pointer
 	 * but the semantic meaning is that it is an int and the declared variable is of pointer type
 	 * (this is a shortcoming of the grammar)
+	 *
 	 * @return base type
 	 */
 	public CSimpleType getBaseType() {

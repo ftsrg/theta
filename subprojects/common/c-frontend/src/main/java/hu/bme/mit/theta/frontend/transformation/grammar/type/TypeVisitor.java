@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
@@ -26,14 +42,16 @@ import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpl
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Extern;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Signed;
+import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.ThreadLocal;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Typedef;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Unsigned;
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Volatile;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.ThreadLocal;
 
 public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	public static final TypeVisitor instance = new TypeVisitor();
-	private TypeVisitor(){}
+
+	private TypeVisitor() {
+	}
 
 	private static final List<String> standardTypes =
 			List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
@@ -54,13 +72,13 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	private CSimpleType mergeCTypes(List<CSimpleType> cSimpleTypes) {
 		List<CSimpleType> enums = cSimpleTypes.stream().filter(cType -> cType instanceof Enum).collect(Collectors.toList());
-		if(enums.size() > 0) {
+		if (enums.size() > 0) {
 			System.err.println("WARNING: enums are not yet supported! Using int instead.");
 			cSimpleTypes.add(NamedType("int"));
 			cSimpleTypes.removeAll(enums);
 		}
 		List<CSimpleType> namedElements = cSimpleTypes.stream().filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
-		if(namedElements.size() == 0) namedElements.add(NamedType("int"));
+		if (namedElements.size() == 0) namedElements.add(NamedType("int"));
 		NamedType mainType = (NamedType) namedElements.get(namedElements.size() - 1);
 		if (shorthandTypes.contains(mainType.getNamedType())) {
 			mainType = NamedType("int");
@@ -86,20 +104,19 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	private CSimpleType createCType(CParser.SpecifierQualifierListContext specifierQualifierListContext) {
 		List<CSimpleType> cSimpleTypes = new ArrayList<>();
-		if(specifierQualifierListContext != null) {
+		if (specifierQualifierListContext != null) {
 			for (CParser.TypeSpecifierOrQualifierContext typeSpecifierOrQualifierContext : specifierQualifierListContext.typeSpecifierOrQualifier()) {
 				CSimpleType qualifierSpecifier = null;
-				if(typeSpecifierOrQualifierContext.typeSpecifier() != null) {
+				if (typeSpecifierOrQualifierContext.typeSpecifier() != null) {
 					qualifierSpecifier = typeSpecifierOrQualifierContext.typeSpecifier().accept(this);
-				}
-				else if(typeSpecifierOrQualifierContext.typeQualifier() != null) {
+				} else if (typeSpecifierOrQualifierContext.typeQualifier() != null) {
 					qualifierSpecifier = typeSpecifierOrQualifierContext.typeQualifier().accept(this);
 				}
-				if(qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
+				if (qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
 			}
-			if(specifierQualifierListContext.typeSpecifierPointer() != null) {
+			if (specifierQualifierListContext.typeSpecifierPointer() != null) {
 				CSimpleType qualifierSpecifier = specifierQualifierListContext.typeSpecifierPointer().accept(this);
-				if(qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
+				if (qualifierSpecifier != null) cSimpleTypes.add(qualifierSpecifier);
 			}
 		}
 
@@ -110,7 +127,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 		List<CSimpleType> cSimpleTypes = new ArrayList<>();
 		for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
 			CSimpleType ctype = declarationSpecifierContext.accept(this);
-			if(ctype != null) cSimpleTypes.add(ctype);
+			if (ctype != null) cSimpleTypes.add(ctype);
 		}
 
 		return mergeCTypes(cSimpleTypes);
@@ -118,13 +135,17 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	@Override
 	public CSimpleType visitStorageClassSpecifier(CParser.StorageClassSpecifierContext ctx) {
-		switch(ctx.getText()) {
-			case "typedef": return Typedef();
-			case "extern": return Extern();
-			case "static": return null;
+		switch (ctx.getText()) {
+			case "typedef":
+				return Typedef();
+			case "extern":
+				return Extern();
+			case "static":
+				return null;
 			case "auto":
 			case "register":
-			case "_Thread_local": throw new UnsupportedOperationException("Not yet implemented");
+			case "_Thread_local":
+				throw new UnsupportedOperationException("Not yet implemented");
 		}
 		throw new UnsupportedOperationException("Storage class specifier not expected: " + ctx.getText());
 	}
@@ -141,9 +162,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	@Override
 	public CSimpleType visitCompoundDefinition(CParser.CompoundDefinitionContext ctx) {
-		if(ctx.structOrUnion().Struct() != null) {
+		if (ctx.structOrUnion().Struct() != null) {
 			String name = null;
-			if(ctx.Identifier()!=null) name = ctx.Identifier().getText();
+			if (ctx.Identifier() != null) name = ctx.Identifier().getText();
 			Struct struct = CSimpleTypeFactory.Struct(name);
 			for (CParser.StructDeclarationContext structDeclarationContext : ctx.structDeclarationList().structDeclaration()) {
 				CParser.SpecifierQualifierListContext specifierQualifierListContext = structDeclarationContext.specifierQualifierList();
@@ -202,7 +223,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	@Override
 	public CSimpleType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
 		CSimpleType subtype = ctx.typeSpecifier().accept(this);
-		if(subtype == null) return null;
+		if (subtype == null) return null;
 		for (Token star : ctx.pointer().stars) {
 			subtype.incrementPointer();
 		}
@@ -241,12 +262,12 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 	@Override
 	public CSimpleType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
 		Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.getText());
-		if(type.isPresent()) {
+		if (type.isPresent()) {
 			CSimpleType origin = type.get().getOrigin().copyOf();
 			origin.setTypedef(false);
 			return origin;
 		} else {
-			if(standardTypes.contains(ctx.getText())) {
+			if (standardTypes.contains(ctx.getText())) {
 				return NamedType(ctx.getText());
 			} else {
 				return DeclaredName(ctx.getText());
@@ -261,11 +282,15 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
 	@Override
 	public CSimpleType visitTypeQualifier(CParser.TypeQualifierContext ctx) {
-		switch(ctx.getText()) {
-			case "const": return null;
-			case "restrict": throw new UnsupportedOperationException("Not yet implemented!");
-			case "volatile": return Volatile();
-			case "_Atomic": return Atomic();
+		switch (ctx.getText()) {
+			case "const":
+				return null;
+			case "restrict":
+				throw new UnsupportedOperationException("Not yet implemented!");
+			case "volatile":
+				return Volatile();
+			case "_Atomic":
+				return Atomic();
 		}
 		throw new UnsupportedOperationException("Type qualifier " + ctx.getText() + " not expected!");
 	}

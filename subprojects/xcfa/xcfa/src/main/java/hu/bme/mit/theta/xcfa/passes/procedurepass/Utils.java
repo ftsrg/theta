@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import com.google.common.collect.Sets;
@@ -24,7 +40,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -41,7 +56,7 @@ public class Utils {
 	private static Set<XcfaEdge> collectReverseEdges(XcfaLocation location, Set<XcfaLocation> visited) {
 		Set<XcfaEdge> ret = new LinkedHashSet<>();
 		List<XcfaEdge> outgoingEdges = new ArrayList<>(location.getOutgoingEdges());
-		while(outgoingEdges.size() > 0) {
+		while (outgoingEdges.size() > 0) {
 			ArrayList<XcfaEdge> copy = new ArrayList<>(outgoingEdges);
 			outgoingEdges.clear();
 			for (XcfaEdge outgoingEdge : copy) {
@@ -59,7 +74,7 @@ public class Utils {
 	/**
 	 * This class can be used as a stack while using a Set for fast contains() performance
 	 */
-	private static class SetStack<T>{
+	private static class SetStack<T> {
 		private final Stack<T> stack = new Stack<>();
 		private final Set<T> set = new LinkedHashSet<>();
 
@@ -68,21 +83,25 @@ public class Utils {
 			set.addAll(from.set);
 		}
 
-		public SetStack(){}
+		public SetStack() {
+		}
 
 		public void push(T t) {
 			checkArgument(!set.contains(t), "SetStack can only hold unique elements!");
 			stack.push(t);
 			set.add(t);
 		}
+
 		public T pop() {
 			T pop = stack.pop();
 			set.remove(pop);
 			return pop;
 		}
+
 		public T peek() {
 			return stack.peek();
 		}
+
 		public boolean contains(T t) {
 			return set.contains(t);
 		}
@@ -102,6 +121,7 @@ public class Utils {
 	}
 
 	private static int counter = 0;
+
 	private static XcfaProcedure.Builder getBuilder(String name, Type retType, List<XcfaLocation> locs, XcfaLocation finalLoc, XcfaLocation initLoc, XcfaLocation errorLoc, List<XcfaEdge> edges, Map<VarDecl<?>, XcfaProcedure.Direction> params, Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
 		XcfaProcedure.Builder ret = XcfaProcedure.builder();
 		ret.setName(name);
@@ -109,14 +129,14 @@ public class Utils {
 		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
 		params.forEach((varDecl, direction) -> {
 			final VarDecl<?> newVar = Var(varDecl.getName() + "_" + counter++, varDecl.getType());
-			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
+			if (FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
 				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
 			ret.createParam(direction, newVar);
 		});
 		localVars.forEach((varDecl, litExpr) -> {
 			final VarDecl<?> newVar = Var(varDecl.getName() + "_" + counter++, varDecl.getType());
-			if(FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
+			if (FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent())
 				FrontendMetadata.create(newVar.getRef(), "cType", CComplexType.getType(varDecl.getRef()));
 			varLut.put(varDecl, newVar);
 			ret.createVar(newVar, litExpr.orElse(null));
@@ -129,7 +149,7 @@ public class Utils {
 		}
 		ret.setFinalLoc(locationLut.get(finalLoc));
 		ret.setInitLoc(locationLut.get(initLoc));
-		if(errorLoc != null) ret.setErrorLoc(locationLut.get(errorLoc));
+		if (errorLoc != null) ret.setErrorLoc(locationLut.get(errorLoc));
 		for (XcfaEdge edge : edges) {
 			ret.addEdge(XcfaEdge.of(locationLut.get(edge.getSource()), locationLut.get(edge.getTarget()), edge.getLabels().stream().map(label -> replacesVarsInStmt(label, v -> Optional.ofNullable(varLut.get(v)).map(varDecl -> cast(varDecl, v.getType()))).orElse(label)).collect(Collectors.toList())));
 		}
@@ -137,61 +157,77 @@ public class Utils {
 	}
 
 	public static Set<VarDecl<?>> getVars(XcfaLabel label) {
-		if(label instanceof XcfaLabel.StmtXcfaLabel) return StmtUtils.getVars(label.getStmt());
-		else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) return Set.of(((XcfaLabel.JoinThreadXcfaLabel) label).getKey());
-		else if (label instanceof XcfaLabel.StartThreadXcfaLabel) return Sets.union(Set.of(((XcfaLabel.StartThreadXcfaLabel) label).getKey()), ExprUtils.getVars(((XcfaLabel.StartThreadXcfaLabel) label).getParam()));
+		if (label instanceof XcfaLabel.StmtXcfaLabel) return StmtUtils.getVars(label.getStmt());
+		else if (label instanceof XcfaLabel.JoinThreadXcfaLabel)
+			return Set.of(((XcfaLabel.JoinThreadXcfaLabel) label).getKey());
+		else if (label instanceof XcfaLabel.StartThreadXcfaLabel)
+			return Sets.union(Set.of(((XcfaLabel.StartThreadXcfaLabel) label).getKey()), ExprUtils.getVars(((XcfaLabel.StartThreadXcfaLabel) label).getParam()));
 		else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
 			Optional<Set<VarDecl<?>>> reduced = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map(ExprUtils::getVars).reduce(Sets::union);
 			checkState(reduced.isPresent());
 			return reduced.get();
-		}
-		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal(), ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
-		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
-		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
+		} else if (label instanceof XcfaLabel.StoreXcfaLabel)
+			return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal(), ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.LoadXcfaLabel)
+			return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal(), ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.SequenceLabel)
+			return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel)
+			return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel)
+			return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
 
 	public static Set<VarDecl<?>> getModifiedVars(XcfaLabel label) {
-		if(label instanceof XcfaLabel.StmtXcfaLabel) {
-			if(label.getStmt() instanceof HavocStmt) return Set.of(((HavocStmt<?>) label.getStmt()).getVarDecl());
-			else if (label.getStmt() instanceof AssignStmt) return Set.of(((AssignStmt<?>) label.getStmt()).getVarDecl());
+		if (label instanceof XcfaLabel.StmtXcfaLabel) {
+			if (label.getStmt() instanceof HavocStmt) return Set.of(((HavocStmt<?>) label.getStmt()).getVarDecl());
+			else if (label.getStmt() instanceof AssignStmt)
+				return Set.of(((AssignStmt<?>) label.getStmt()).getVarDecl());
 			else return Set.of();
-		}
-		else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) return Set.of();
-		else if (label instanceof XcfaLabel.StartThreadXcfaLabel) return Set.of(((XcfaLabel.StartThreadXcfaLabel) label).getKey());
+		} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) return Set.of();
+		else if (label instanceof XcfaLabel.StartThreadXcfaLabel)
+			return Set.of(((XcfaLabel.StartThreadXcfaLabel) label).getKey());
 		else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) { // Possibly modified vars included
 			Optional<Set<VarDecl<?>>> reduced = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().filter(expr -> expr instanceof RefExpr).map(ExprUtils::getVars).reduce(Sets::union);
 			checkState(reduced.isPresent());
 			return reduced.get();
-		}
-		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
-		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal());
-		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
+		} else if (label instanceof XcfaLabel.StoreXcfaLabel)
+			return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.LoadXcfaLabel)
+			return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getLocal());
+		else if (label instanceof XcfaLabel.SequenceLabel)
+			return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel)
+			return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel)
+			return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
 
 	public static Set<VarDecl<?>> getNonModifiedVars(XcfaLabel label) {
-		if(label instanceof XcfaLabel.StmtXcfaLabel) {
-			if(label.getStmt() instanceof HavocStmt) return Set.of();
-			else if (label.getStmt() instanceof AssignStmt) return ExprUtils.getVars(((AssignStmt<?>) label.getStmt()).getExpr());
+		if (label instanceof XcfaLabel.StmtXcfaLabel) {
+			if (label.getStmt() instanceof HavocStmt) return Set.of();
+			else if (label.getStmt() instanceof AssignStmt)
+				return ExprUtils.getVars(((AssignStmt<?>) label.getStmt()).getExpr());
 			else return StmtUtils.getVars(label.getStmt());
-		}
-		else if (label instanceof XcfaLabel.JoinThreadXcfaLabel) return Set.of(((XcfaLabel.JoinThreadXcfaLabel) label).getKey());
+		} else if (label instanceof XcfaLabel.JoinThreadXcfaLabel)
+			return Set.of(((XcfaLabel.JoinThreadXcfaLabel) label).getKey());
 		else if (label instanceof XcfaLabel.StartThreadXcfaLabel) return Set.of();
 		else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) { // Possibly modified vars included
 			Optional<Set<VarDecl<?>>> reduced = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map(ExprUtils::getVars).reduce(Sets::union);
 			checkState(reduced.isPresent());
 			return reduced.get();
-		}
-		else if (label instanceof XcfaLabel.StoreXcfaLabel) return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal());
-		else if (label instanceof XcfaLabel.LoadXcfaLabel) return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
-		else if (label instanceof XcfaLabel.SequenceLabel) return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.NondetLabel) return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
-		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel) return Set.of();
+		} else if (label instanceof XcfaLabel.StoreXcfaLabel)
+			return Set.of(((XcfaLabel.StoreXcfaLabel<?>) label).getLocal());
+		else if (label instanceof XcfaLabel.LoadXcfaLabel)
+			return Set.of(((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal());
+		else if (label instanceof XcfaLabel.SequenceLabel)
+			return ((XcfaLabel.SequenceLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.NondetLabel)
+			return ((XcfaLabel.NondetLabel) label).getLabels().stream().map(Utils::getNonModifiedVars).reduce(Sets::union).orElseGet(Set::of);
+		else if (label instanceof XcfaLabel.FenceXcfaLabel || label instanceof XcfaLabel.AtomicBeginXcfaLabel || label instanceof XcfaLabel.AtomicEndXcfaLabel)
+			return Set.of();
 		throw new UnsupportedOperationException("Unknown XcfaLabel type!");
 	}
 }

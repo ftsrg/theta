@@ -10,59 +10,59 @@ import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Specific_success_re
 import static com.google.common.base.Preconditions.checkState;
 
 public class GeneralResponse {
-    private final boolean successful;
-    private final String reason;
-    private final SpecificResponse specificResponse;
+	private final boolean successful;
+	private final String reason;
+	private final SpecificResponse specificResponse;
 
-    private GeneralResponse(boolean successful, String reason, SpecificResponse specificResponse) {
-        this.successful = successful;
-        this.reason = reason;
-        this.specificResponse = specificResponse;
-    }
+	private GeneralResponse(boolean successful, String reason, SpecificResponse specificResponse) {
+		this.successful = successful;
+		this.reason = reason;
+		this.specificResponse = specificResponse;
+	}
 
-    public static GeneralResponse fromContext(final ResponseContext ctx) {
-        return ctx.accept(new SMTLIBv2BaseVisitor<>() {
-            @Override
-            public GeneralResponse visitGeneral_response_success(General_response_successContext ctx) {
-                return new GeneralResponse(true, null, null);
-            }
+	public static GeneralResponse fromContext(final ResponseContext ctx) {
+		return ctx.accept(new SMTLIBv2BaseVisitor<>() {
+			@Override
+			public GeneralResponse visitGeneral_response_success(General_response_successContext ctx) {
+				return new GeneralResponse(true, null, null);
+			}
 
-            @Override
-            public GeneralResponse visitGeneral_response_unsupported(General_response_unsupportedContext ctx) {
-                return new GeneralResponse(false, "Unsupported", null);
-            }
+			@Override
+			public GeneralResponse visitGeneral_response_unsupported(General_response_unsupportedContext ctx) {
+				return new GeneralResponse(false, "Unsupported", null);
+			}
 
-            @Override
-            public GeneralResponse visitSpecific_success_response(Specific_success_responseContext ctx) {
-                return new GeneralResponse(true, null, SpecificResponse.fromContext(ctx));
-            }
+			@Override
+			public GeneralResponse visitSpecific_success_response(Specific_success_responseContext ctx) {
+				return new GeneralResponse(true, null, SpecificResponse.fromContext(ctx));
+			}
 
-            @Override
-            public GeneralResponse visitGeneral_response_error(General_response_errorContext ctx) {
-                return new GeneralResponse(false, ctx.reason.getText(), null);
-            }
-        });
-    }
+			@Override
+			public GeneralResponse visitGeneral_response_error(General_response_errorContext ctx) {
+				return new GeneralResponse(false, ctx.reason.getText(), null);
+			}
+		});
+	}
 
-    public boolean isSuccessful() {
-        return successful && specificResponse == null;
-    }
+	public boolean isSuccessful() {
+		return successful && specificResponse == null;
+	}
 
-    public boolean isError() {
-        return !successful;
-    }
+	public boolean isError() {
+		return !successful;
+	}
 
-    public String getReason() {
-        checkState(isError());
-        return reason;
-    }
+	public String getReason() {
+		checkState(isError());
+		return reason;
+	}
 
-    public boolean isSpecific() {
-        return successful && specificResponse != null;
-    }
+	public boolean isSpecific() {
+		return successful && specificResponse != null;
+	}
 
-    public SpecificResponse asSpecific() {
-        checkState(isSpecific());
-        return specificResponse;
-    }
+	public SpecificResponse asSpecific() {
+		checkState(isSpecific());
+		return specificResponse;
+	}
 }

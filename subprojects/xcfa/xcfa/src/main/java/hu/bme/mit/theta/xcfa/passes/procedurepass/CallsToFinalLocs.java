@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
@@ -32,6 +32,7 @@ public class CallsToFinalLocs extends ProcedurePass {
 	public boolean postInlining = false;
 
 	private int nameCounter = 0;
+
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		XcfaLocation errorLoc = XcfaLocation.create(builder.getName() + "_error" + nameCounter++);
@@ -41,7 +42,7 @@ public class CallsToFinalLocs extends ProcedurePass {
 		XcfaLocation oldFinalLoc = builder.getFinalLoc();
 		XcfaLocation oldErrorLoc = builder.getErrorLoc();
 		builder.setFinalLoc(finalLoc);
-		if(oldErrorLoc != null) {
+		if (oldErrorLoc != null) {
 			XcfaEdge toError = XcfaEdge.of(oldErrorLoc, errorLoc, List.of());
 			builder.addEdge(toError);
 		}
@@ -51,7 +52,7 @@ public class CallsToFinalLocs extends ProcedurePass {
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
-			if(e.isPresent()) {
+			if (e.isPresent()) {
 				XcfaEdge xcfaEdge;
 				String procedure = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure();
 				if (errorFunc.contains(procedure)) {

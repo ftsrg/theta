@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
 	}
 
 	private BmcTrace(final List<? extends S> states, final List<? extends A> actions) {
-		this(	states,
+		this(states,
 				actions,
 				actions.stream().map(a -> a.getStmts().stream()).reduce(Streams::concat).map(s -> s.collect(Collectors.toList())).orElse(List.of()));
 	}
@@ -179,7 +179,7 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
 			}
 		};
 		solver.add(PathUtils.unfold(stmtAction.toExpr(), indexing(0)));
-		if(solver.check().isUnsat()) {
+		if (solver.check().isUnsat()) {
 			solver.pop();
 			return false;
 		}

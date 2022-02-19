@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.common;
 
 import com.google.common.collect.Lists;
@@ -28,7 +44,8 @@ public final class XcfaTraceToWitness {
 	private static Graph witnessGraph;
 	private static Integer nodeCounter = 0;
 
-	private XcfaTraceToWitness() {}
+	private XcfaTraceToWitness() {
+	}
 
 	public static Graph buildWitness(
 			final Trace<XcfaState<ExplState>, XcfaAction> trace) {
@@ -46,15 +63,15 @@ public final class XcfaTraceToWitness {
 	private static void addEdges() {
 		addEntryNode();
 
-		for(int i = 0; i < concreteTrace.getActions().size(); i++) {
+		for (int i = 0; i < concreteTrace.getActions().size(); i++) {
 			List<Stmt> stmtList = concreteTrace.getAction(i).getStmts();
 			List<String> edgesFromAction = new ArrayList<>();
 			for (Stmt stmt : stmtList) {
-				Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i+1).getGlobalState().getVal());
+				Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i + 1).getGlobalState().getVal());
 				optionalLabel.ifPresent(edgesFromAction::add);
 			}
 
-			if(concreteTrace.getAction(i).getTarget().isErrorLoc() && edgesFromAction.size() == 0) {
+			if (concreteTrace.getAction(i).getTarget().isErrorLoc() && edgesFromAction.size() == 0) {
 				addViolationNode();
 				addWitnessEdge("");
 			}
@@ -74,12 +91,12 @@ public final class XcfaTraceToWitness {
 	}
 
 	private static Optional<String> makeEdgeLabelFromStatement(Stmt stmt, Valuation nextVal) {
-		if(!(stmt instanceof HavocStmt || stmt instanceof AssumeStmt)) {
+		if (!(stmt instanceof HavocStmt || stmt instanceof AssumeStmt)) {
 			return Optional.empty();
 		}
 
 		final Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(stmt, "sourceStatement");
-		if(sourceStatement.isEmpty()) {
+		if (sourceStatement.isEmpty()) {
 			return Optional.empty();
 		}
 
@@ -87,24 +104,24 @@ public final class XcfaTraceToWitness {
 		StringBuilder edgeLabel = new StringBuilder();
 
 		Object lineNumberStartO = metadata.get("lineNumberStart");
-		if(lineNumberStartO instanceof Integer) {
-			Integer startLineNumber = (Integer)lineNumberStartO;
+		if (lineNumberStartO instanceof Integer) {
+			Integer startLineNumber = (Integer) lineNumberStartO;
 			if (startLineNumber != -1) {
 				edgeLabel.append("<data key=\"startline\">").append(startLineNumber).append("</data>").append(System.lineSeparator());
 			}
 		}
 
 		Object lineNumberStopO = metadata.get("lineNumberStop");
-		if(lineNumberStartO instanceof Integer) {
-			Integer endLineNumber = (Integer)lineNumberStopO;
+		if (lineNumberStartO instanceof Integer) {
+			Integer endLineNumber = (Integer) lineNumberStopO;
 			if (endLineNumber != -1) {
 				edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
 			}
 		}
 
 		Object offsetStartO = metadata.get("offsetStart");
-		if(offsetStartO instanceof Integer) {
-			Integer offsetStartNumber = (Integer)offsetStartO;
+		if (offsetStartO instanceof Integer) {
+			Integer offsetStartNumber = (Integer) offsetStartO;
 			if (offsetStartNumber != -1) {
 				edgeLabel.append("<data key=\"startoffset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
 			}
@@ -113,13 +130,13 @@ public final class XcfaTraceToWitness {
 		if (stmt instanceof HavocStmt) {
 			Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) stmt).getVarDecl());
 			Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
-			if(value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
+			if (value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
 				edgeLabel.append("<data key=\"assumption\">");
 				edgeLabel.append(varName).append(" == ").append(printLit(value.get())).append(";");
 				edgeLabel.append("</data>").append(System.lineSeparator());
 			}
 		} else if (stmt instanceof AssumeStmt) {
-			if(((AssumeStmt) stmt).getCond() instanceof EqExpr) {
+			if (((AssumeStmt) stmt).getCond() instanceof EqExpr) {
 				edgeLabel.append("<data key=\"control\">condition-").append("false").append("</data>").append(System.lineSeparator());
 			} else if (((AssumeStmt) stmt).getCond() instanceof NeqExpr) {
 				edgeLabel.append("<data key=\"control\">condition-").append("true").append("</data>").append(System.lineSeparator());
@@ -131,12 +148,12 @@ public final class XcfaTraceToWitness {
 	}
 
 	private static String printLit(final LitExpr<?> litExpr) {
-		if(litExpr instanceof BvLitExpr) {
+		if (litExpr instanceof BvLitExpr) {
 			final boolean[] value = ((BvLitExpr) litExpr).getValue();
 			BigInteger intValue = BigInteger.ZERO;
 			for (int i = 0; i < value.length; i++) {
 				boolean b = value[i];
-				if(b) {
+				if (b) {
 					intValue = intValue.add(BigInteger.ONE.shiftLeft(value.length - 1 - i));
 				}
 			}
@@ -157,12 +174,12 @@ public final class XcfaTraceToWitness {
 			int aggregate = 0;
 			List<Character> hexDigits = new ArrayList<>();
 			for (int i = 0; i < boolList.size(); i++) {
-				if(i % 4 == 0 && i > 0) {
-					if(aggregate < 10) hexDigits.add((char) ('0' + aggregate));
+				if (i % 4 == 0 && i > 0) {
+					if (aggregate < 10) hexDigits.add((char) ('0' + aggregate));
 					else hexDigits.add((char) ('A' - 10 + aggregate));
 					aggregate = 0;
 				}
-				if(boolList.get(i)) aggregate+=1 << (i % 4);
+				if (boolList.get(i)) aggregate += 1 << (i % 4);
 			}
 			if (aggregate < 10) hexDigits.add((char) ('0' + aggregate));
 			else hexDigits.add((char) ('A' - 10 + aggregate));
@@ -192,8 +209,8 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="startline">12</data>...
 	 */
 	private static void addWitnessEdge(String label) {
-		witnessGraph.addEdge("N"+(nodeCounter - 2),
-				"N"+(nodeCounter-1),
+		witnessGraph.addEdge("N" + (nodeCounter - 2),
+				"N" + (nodeCounter - 1),
 				new EdgeAttributes.Builder().label(label).build()
 		);
 	}
@@ -204,7 +221,7 @@ public final class XcfaTraceToWitness {
 	 * @param label graphml label, e.g. <data key="entry">true</data>, might be empty
 	 */
 	private static void addNextWitnessNode(String label) {
-		witnessGraph.addNode( "N"+nodeCounter.toString(),
+		witnessGraph.addNode("N" + nodeCounter.toString(),
 				new NodeAttributes.Builder().label(label).build()
 		);
 		nodeCounter++;

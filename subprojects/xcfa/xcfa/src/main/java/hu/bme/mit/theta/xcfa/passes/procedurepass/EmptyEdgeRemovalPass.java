@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
@@ -41,7 +41,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 			List<XcfaEdge> emptyEdges = loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
 			List<XcfaEdge> toRemove = new ArrayList<>();
 
-			while(!emptyEdges.isEmpty()) {
+			while (!emptyEdges.isEmpty()) {
 				XcfaEdge emptyEdge = emptyEdges.get(0);
 				List<XcfaEdge> paralells = loc.getOutgoingEdges().stream().filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget()).collect(Collectors.toList());
 				emptyEdges.remove(emptyEdge);
@@ -55,11 +55,11 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 		}
 
 		boolean found = true;
-		while(found) {
+		while (found) {
 			found = false;
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 				if (edge.getLabels().size() == 0 && edge.getSource().getOutgoingEdges().size() == 1 && edge.getTarget().getIncomingEdges().size() == 1 &&
-					!edge.getTarget().isErrorLoc() && !edge.getTarget().isEndLoc()) {
+						!edge.getTarget().isErrorLoc() && !edge.getTarget().isEndLoc()) {
 					builder.removeEdge(edge);
 					for (XcfaEdge outgoingEdge : new ArrayList<>(edge.getTarget().getOutgoingEdges())) {
 						builder.removeEdge(outgoingEdge);
@@ -72,7 +72,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 		}
 
 		for (XcfaLocation loc : new ArrayList<>(builder.getLocs())) {
-			if(loc.getOutgoingEdges().size() == 0 && loc.getIncomingEdges().size() == 0 && !loc.isErrorLoc() && !loc.isEndLoc()) {
+			if (loc.getOutgoingEdges().size() == 0 && loc.getIncomingEdges().size() == 0 && !loc.isErrorLoc() && !loc.isEndLoc()) {
 				builder.removeLoc(loc);
 			}
 		}
@@ -87,7 +87,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 	// but this way, if the starting location can start more than one sequence, we can easily merge them all
 	private XcfaProcedure.Builder removeEmptySequences(XcfaProcedure.Builder builder) {
 		List<XcfaEdge> edgesToStartSequenceOn = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
-		while(edgesToStartSequenceOn.size() != 0) {
+		while (edgesToStartSequenceOn.size() != 0) {
 			XcfaEdge startEdge = edgesToStartSequenceOn.get(0);
 			Set<XcfaLocation> sequence = new LinkedHashSet<>();
 			XcfaLocation startingLocation = startEdge.getSource();

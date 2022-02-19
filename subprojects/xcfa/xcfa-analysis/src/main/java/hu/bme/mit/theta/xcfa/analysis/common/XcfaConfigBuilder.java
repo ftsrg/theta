@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public enum Algorithm {
-		SINGLETHREAD{
+		SINGLETHREAD {
 			@Override
 			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
 				return new XcfaSTLts();
@@ -136,7 +136,7 @@ public class XcfaConfigBuilder {
 			}
 		},
 
-		INTERLEAVINGS{
+		INTERLEAVINGS {
 			@Override
 			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
 				return new XcfaLts();
@@ -169,12 +169,17 @@ public class XcfaConfigBuilder {
 		};
 
 		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts();
+
 		public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
-		public abstract <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>>  getTransFunc(final TransFunc<S, A, P> transFunc);
-		public abstract  <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(final RefutationToPrec<P, R> refToPrec);
+
+		public abstract <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(final TransFunc<S, A, P> transFunc);
+
+		public abstract <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(final RefutationToPrec<P, R> refToPrec);
+
 		public abstract <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(final PartialOrd<S> partialOrd);
-		public abstract  <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>,  ? extends A, ? extends XcfaPrec<P>> getAnalysis(final List<XcfaLocation> initLoc, final Analysis<S, A, P> analysis);
-		}
+
+		public abstract <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>, ? extends A, ? extends XcfaPrec<P>> getAnalysis(final List<XcfaLocation> initLoc, final Analysis<S, A, P> analysis);
+	}
 
 	public enum Search {
 		BFS {
@@ -229,7 +234,9 @@ public class XcfaConfigBuilder {
 
 		public final XcfaAutoExpl builder;
 
-		private AutoExpl(final XcfaAutoExpl builder) { this.builder = builder; }
+		private AutoExpl(final XcfaAutoExpl builder) {
+			this.builder = builder;
+		}
 	}
 
 	private Logger logger = NullLogger.getInstance();
@@ -305,7 +312,7 @@ public class XcfaConfigBuilder {
 		final ItpRefToPredPrec predRefToPrec = new ItpRefToPredPrec(predSplit.splitter);
 		final ItpRefToExplPrec explRefToPrec = new ItpRefToExplPrec();
 
-		switch(domain){
+		switch (domain) {
 			case EXPL:
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), True(), maxEnum);
 				abstractor = getAbstractor(lts, domainAnalysis, xcfa);
@@ -413,7 +420,7 @@ public class XcfaConfigBuilder {
 		ExplPrec explPrec = ExplPrec.empty();
 		PredPrec predPrec = PredPrec.of();
 
-		switch (initPrec){
+		switch (initPrec) {
 			case EMPTY:
 				break;
 			case ALLASSUMES:
@@ -437,7 +444,7 @@ public class XcfaConfigBuilder {
 	}
 
 	private XcfaPrec getExplPrec(InitPrec initPrec, XCFA xcfa) {
-		switch (initPrec){
+		switch (initPrec) {
 			case EMPTY:
 				return XcfaPrec.create(ExplPrec.empty());
 			case ALLVARS:
@@ -449,8 +456,9 @@ public class XcfaConfigBuilder {
 						domain + " domain");
 		}
 	}
+
 	private XcfaPrec getPredPrec(InitPrec initPrec, XCFA xcfa) {
-		switch (initPrec){
+		switch (initPrec) {
 			case EMPTY:
 				return XcfaPrec.create(PredPrec.of());
 			case ALLASSUMES:
@@ -461,12 +469,12 @@ public class XcfaConfigBuilder {
 		}
 	}
 
-	private	Abstractor getAbstractor(LTS lts, Analysis domainAnalysis, XCFA xcfa) {
+	private Abstractor getAbstractor(LTS lts, Analysis domainAnalysis, XCFA xcfa) {
 		final Analysis analysis = algorithm.getAnalysis(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis);
 
-		final ArgBuilder argBuilder = ArgBuilder.create(lts, analysis, state -> ((XcfaState)state).isError(), true);
+		final ArgBuilder argBuilder = ArgBuilder.create(lts, analysis, state -> ((XcfaState) state).isError(), true);
 		return BasicAbstractor
-				.builder(argBuilder).projection(state -> ((XcfaState)state).getCurrentLoc())
+				.builder(argBuilder).projection(state -> ((XcfaState) state).getCurrentLoc())
 				.waitlist(PriorityWaitlist.create(search.getComp(xcfa, xcfa.getMainProcess().getMainProcedure().getErrorLoc())))
 				.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
 						: StopCriterions.firstCex()).logger(logger).build();

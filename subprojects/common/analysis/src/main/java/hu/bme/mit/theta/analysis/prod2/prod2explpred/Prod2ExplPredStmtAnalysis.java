@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,49 +25,53 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.prod2.*;
+import hu.bme.mit.theta.analysis.prod2.Prod2InitFunc;
+import hu.bme.mit.theta.analysis.prod2.Prod2Ord;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
+import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.prod2.StrengtheningOperator;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors.Prod2ExplPredAbstractor;
 import hu.bme.mit.theta.solver.Solver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod2ExplPredStmtAnalysis
-        implements Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> {
+		implements Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> {
 
-    private final PartialOrd<Prod2State<ExplState, PredState>> partialOrd;
-    private final InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> initFunc;
-    private final TransFunc<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> transFunc;
+	private final PartialOrd<Prod2State<ExplState, PredState>> partialOrd;
+	private final InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> initFunc;
+	private final TransFunc<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> transFunc;
 
-    private Prod2ExplPredStmtAnalysis(final Analysis<ExplState, StmtAction, ExplPrec> analysis1, final Analysis<PredState, StmtAction, PredPrec> analysis2,
-                                      final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
-                                      final Prod2ExplPredAbstractor prod2ExplPredAbstractor, final Solver solver, final int maxSuccToEnumerate) {
-        checkNotNull(analysis1);
-        checkNotNull(analysis2);
-        partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
-        initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
-        transFunc = Prod2ExplPredDedicatedStmtTransFunc.create(prod2ExplPredAbstractor, solver, maxSuccToEnumerate);
-    }
+	private Prod2ExplPredStmtAnalysis(final Analysis<ExplState, StmtAction, ExplPrec> analysis1, final Analysis<PredState, StmtAction, PredPrec> analysis2,
+									  final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
+									  final Prod2ExplPredAbstractor prod2ExplPredAbstractor, final Solver solver, final int maxSuccToEnumerate) {
+		checkNotNull(analysis1);
+		checkNotNull(analysis2);
+		partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
+		initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
+		transFunc = Prod2ExplPredDedicatedStmtTransFunc.create(prod2ExplPredAbstractor, solver, maxSuccToEnumerate);
+	}
 
-    public static<A extends ExprAction> Prod2ExplPredStmtAnalysis create(
-            final Analysis<ExplState, StmtAction, ExplPrec> analysis1, final Analysis<PredState, StmtAction, PredPrec> analysis2,
-            final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
-            final Prod2ExplPredAbstractor prod2ExplPredAbstractor, final Solver solver, final int maxSuccToEnumerate) {
-        return new Prod2ExplPredStmtAnalysis(analysis1, analysis2, strenghteningOperator, prod2ExplPredAbstractor, solver, maxSuccToEnumerate);
-    }
+	public static <A extends ExprAction> Prod2ExplPredStmtAnalysis create(
+			final Analysis<ExplState, StmtAction, ExplPrec> analysis1, final Analysis<PredState, StmtAction, PredPrec> analysis2,
+			final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
+			final Prod2ExplPredAbstractor prod2ExplPredAbstractor, final Solver solver, final int maxSuccToEnumerate) {
+		return new Prod2ExplPredStmtAnalysis(analysis1, analysis2, strenghteningOperator, prod2ExplPredAbstractor, solver, maxSuccToEnumerate);
+	}
 
-    @Override
-    public PartialOrd<Prod2State<ExplState, PredState>> getPartialOrd() {
-        return partialOrd;
-    }
+	@Override
+	public PartialOrd<Prod2State<ExplState, PredState>> getPartialOrd() {
+		return partialOrd;
+	}
 
-    @Override
-    public InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> getInitFunc() {
-        return initFunc;
-    }
+	@Override
+	public InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> getInitFunc() {
+		return initFunc;
+	}
 
-    @Override
-    public TransFunc<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> getTransFunc() {
-        return transFunc;
-    }
+	@Override
+	public TransFunc<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> getTransFunc() {
+		return transFunc;
+	}
 
 }

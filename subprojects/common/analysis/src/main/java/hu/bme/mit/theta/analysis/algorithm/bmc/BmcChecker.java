@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm.bmc;
 
 import com.google.common.collect.Lists;
@@ -79,7 +95,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 		int currentBound = 0;
 		SafetyResult<S, A> bmcresult = null;
 		outerloop:
-		while((upperBound < 0 || currentBound < upperBound) && traces.size() > 0) {
+		while ((upperBound < 0 || currentBound < upperBound) && traces.size() > 0) {
 			currentBound++;
 			logger.write(Logger.Level.MAINSTEP, "Iteration %d%n", currentBound);
 			logger.write(Logger.Level.MAINSTEP, "| Current traces: %d%n", traces.size());
@@ -110,7 +126,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 							idx = traces.size();
 							traces.add(trace);
 						}
-						if(onlyFeasible) {
+						if (onlyFeasible) {
 							final boolean feasible = trace.isFeasible(solver);
 							if (feasible) {
 								final boolean unsafe = unsafePredicate.test(succState);
@@ -126,8 +142,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 									i--;
 								}
 							}
-						}
-						else {
+						} else {
 							if (unsafePredicate.test(succState) && trace.isFeasible(solver)) {
 								bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 								break outerloop;
@@ -135,7 +150,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 						}
 					}
 				}
-				if(addCount == 0) {
+				if (addCount == 0) {
 					traces.remove(i);
 					size--;
 					i--;
@@ -145,7 +160,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 				traces.remove(idx);
 			}
 		}
-		if(bmcresult == null) {
+		if (bmcresult == null) {
 			bmcresult = SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		}
 		logger.write(Logger.Level.RESULT, "%s%n", bmcresult);

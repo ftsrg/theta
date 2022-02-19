@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
@@ -46,6 +46,7 @@ import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 public class HavocPromotion extends ProcedurePass {
 	private Map<XcfaEdge, XcfaEdge> forwardLut;
 	private Map<XcfaEdge, XcfaEdge> reverseLut;
+
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		forwardLut = new LinkedHashMap<>();
@@ -53,7 +54,7 @@ public class HavocPromotion extends ProcedurePass {
 		Set<Stmt> alreadyHandled = new LinkedHashSet<>();
 		boolean found = true;
 		outerLoop:
-		while(found) {
+		while (found) {
 			found = false;
 			for (XcfaEdge edge : new LinkedHashSet<>(builder.getEdges())) {
 				Map<VarDecl<?>, Set<Tuple2<XcfaEdge, XcfaLabel>>> varUsage = new LinkedHashMap<>();
@@ -66,10 +67,10 @@ public class HavocPromotion extends ProcedurePass {
 					}
 				}
 				for (XcfaLabel label : edge.getLabels()) {
-					if(label instanceof XcfaLabel.StmtXcfaLabel) {
+					if (label instanceof XcfaLabel.StmtXcfaLabel) {
 						Stmt stmt = label.getStmt();
 						if (stmt instanceof HavocStmt) {
-							if(!alreadyHandled.contains(stmt)) {
+							if (!alreadyHandled.contains(stmt)) {
 								VarDecl<?> toRemove = ((HavocStmt<?>) stmt).getVarDecl();
 								if (varUsage.get(toRemove).size() == 3) { // havoc, assume, assign
 									Optional<? extends AssignStmt<?>> assign = varUsage.get(toRemove).stream().filter(objects -> objects.get2() instanceof XcfaLabel.StmtXcfaLabel && objects.get2().getStmt() instanceof AssignStmt).map(objects -> (AssignStmt<?>) objects.get2().getStmt()).findAny();
@@ -114,13 +115,12 @@ public class HavocPromotion extends ProcedurePass {
 		List<XcfaLabel> stmts = new ArrayList<>();
 		int i = 0;
 		for (XcfaLabel stmt : edge.getLabels()) {
-			if(oldStmts.size() > i && stmt.equals(oldStmts.get(i))) {
-				if(newStmts.size() > i) stmts.add(newStmts.get(i));
+			if (oldStmts.size() > i && stmt.equals(oldStmts.get(i))) {
+				if (newStmts.size() > i) stmts.add(newStmts.get(i));
 				++i;
-			}
-			else stmts.add(stmt);
+			} else stmts.add(stmt);
 		}
-		if(i == oldStmts.size()) {
+		if (i == oldStmts.size()) {
 			builder.removeEdge(edge);
 			XcfaEdge newEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), stmts);
 			builder.addEdge(newEdge);
@@ -131,7 +131,6 @@ public class HavocPromotion extends ProcedurePass {
 		}
 		return false;
 	}
-
 
 
 	@Override

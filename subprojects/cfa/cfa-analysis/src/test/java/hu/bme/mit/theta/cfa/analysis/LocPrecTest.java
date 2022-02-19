@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Builder;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Set;

@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package hu.bme.mit.theta.xcfa.model;
 
@@ -113,7 +113,8 @@ public final class XCFA {
 
 		// Setting special locations (initial and final locations are mandatory, error location is not)
 		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
-		if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null) builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
+		if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null)
+			builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
 		else builder.setErrorLoc(builder.createLoc());
 		builder.setFinalLoc(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc()));
 
@@ -138,6 +139,7 @@ public final class XCFA {
 	public String toDot() {
 		return toDot(List.of(), List.of());
 	}
+
 	public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
 		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
@@ -224,7 +226,7 @@ public final class XCFA {
 		}
 
 		public XCFA build() {
-			if(built != null) return built;
+			if (built != null) return built;
 
 			checkState(mainProcess != null, "Main process must be set.");
 			Builder builder = XcfaPassManager.run(this);
@@ -238,7 +240,7 @@ public final class XCFA {
 			for (XcfaProcess.Builder process : processes) {
 				final XcfaProcess.Builder newProc = XcfaPassManager.run(process);
 				newProcesses.add(newProc);
-				if(mainProcess == process) mainProcess = newProc;
+				if (mainProcess == process) mainProcess = newProc;
 			}
 			this.processes.clear();
 			this.processes.addAll(newProcesses);

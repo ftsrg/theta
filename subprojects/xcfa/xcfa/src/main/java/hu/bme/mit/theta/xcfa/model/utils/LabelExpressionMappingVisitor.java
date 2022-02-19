@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.model.utils;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -35,25 +51,25 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelVisitor<LabelExpressionMappingVisitor.Mapper<T>, Optional<XcfaLabel>> {
 	@Override
-	public Optional<XcfaLabel>visit(SkipStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(SkipStmt stmt, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(AssumeStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(AssumeStmt stmt, Mapper<T> param) {
 		Optional<Expr<BoolType>> exprOpt = ExpressionReplacer.replace(stmt.getCond(), param.getExprMapper());
 		return Optional.ofNullable((exprOpt.map(cond -> Stmt(Stmts.Assume(cond))).orElse(null)));
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<XcfaLabel>visit(AssignStmt<DeclType> stmt, Mapper<T> param) {
+	public <DeclType extends Type> Optional<XcfaLabel> visit(AssignStmt<DeclType> stmt, Mapper<T> param) {
 		final Optional<VarDecl<T>> var = param.getVarMapper().apply(stmt.getVarDecl());
 		Optional<Expr<DeclType>> exprOpt = ExpressionReplacer.replace(stmt.getExpr(), param.getExprMapper());
 		return var.map(tVarDecl -> (XcfaLabel) Stmt(Assign(tVarDecl, cast(exprOpt.orElse(stmt.getExpr()), tVarDecl.getType())))).or(() -> exprOpt.map(declTypeExpr -> Stmt(Assign(stmt.getVarDecl(), declTypeExpr))));
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<XcfaLabel>visit(HavocStmt<DeclType> stmt, Mapper<T> param) {
+	public <DeclType extends Type> Optional<XcfaLabel> visit(HavocStmt<DeclType> stmt, Mapper<T> param) {
 		return param.getVarMapper().apply(stmt.getVarDecl()).map(tVarDecl -> {
 			final HavocStmt<T> havoc = Havoc(tVarDecl);
 			FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
@@ -62,40 +78,40 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(SequenceStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(SequenceStmt stmt, Mapper<T> param) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(NonDetStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(NonDetStmt stmt, Mapper<T> param) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(OrtStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(OrtStmt stmt, Mapper<T> param) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(LoopStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(LoopStmt stmt, Mapper<T> param) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<XcfaLabel>visit(PushStmt<DeclType> stmt, Mapper<T> param) {
+	public <DeclType extends Type> Optional<XcfaLabel> visit(PushStmt<DeclType> stmt, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<XcfaLabel>visit(PopStmt<DeclType> stmt, Mapper<T> param) {
+	public <DeclType extends Type> Optional<XcfaLabel> visit(PopStmt<DeclType> stmt, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(IfStmt stmt, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(IfStmt stmt, Mapper<T> param) {
 		Optional<Expr<BoolType>> condOpt = ExpressionReplacer.replace(stmt.getCond(), param.getExprMapper());
-		Optional<XcfaLabel>thenOpt = stmt.getThen().accept(this, param);
-		Optional<XcfaLabel>elzeOpt = stmt.getElze().accept(this, param);
+		Optional<XcfaLabel> thenOpt = stmt.getThen().accept(this, param);
+		Optional<XcfaLabel> elzeOpt = stmt.getElze().accept(this, param);
 		if (condOpt.isPresent() || thenOpt.isPresent() || elzeOpt.isPresent()) {
 			return Optional.of(Stmt(IfStmt.of(condOpt.orElse(stmt.getCond()), thenOpt.map(XcfaLabel::getStmt).orElse(stmt.getThen()), elzeOpt.map(XcfaLabel::getStmt).orElse(stmt.getElze()))));
 		}
@@ -103,74 +119,74 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.ProcedureCallXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.ProcedureCallXcfaLabel label, Mapper<T> param) {
 		boolean needsTransformation = false;
 		List<Expr<?>> exprs = new ArrayList<>();
 		for (Expr<?> stmtParam : label.getParams()) {
 			Optional<? extends Expr<?>> expr = ExpressionReplacer.replace(stmtParam, param.getExprMapper());
-			if(expr.isPresent()) {
+			if (expr.isPresent()) {
 				exprs.add(expr.get());
 				needsTransformation = true;
 			} else {
 				exprs.add(stmtParam);
 			}
 		}
-		if(needsTransformation) return Optional.of(ProcedureCall(exprs, label.getProcedure()));
+		if (needsTransformation) return Optional.of(ProcedureCall(exprs, label.getProcedure()));
 		return Optional.empty();
 	}
 
 	@Override
-	public <S extends Type> Optional<XcfaLabel>visit(XcfaLabel.StoreXcfaLabel<S> label, Mapper<T> param) {
+	public <S extends Type> Optional<XcfaLabel> visit(XcfaLabel.StoreXcfaLabel<S> label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public <S extends Type> Optional<XcfaLabel>visit(XcfaLabel.LoadXcfaLabel<S> label, Mapper<T> param) {
+	public <S extends Type> Optional<XcfaLabel> visit(XcfaLabel.LoadXcfaLabel<S> label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.FenceXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.FenceXcfaLabel label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.AtomicBeginXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.AtomicBeginXcfaLabel label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.AtomicEndXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.AtomicEndXcfaLabel label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.StartThreadXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.StartThreadXcfaLabel label, Mapper<T> param) {
 		Optional<? extends Expr<?>> exprOpt = ExpressionReplacer.replace(label.getParam(), param.getExprMapper());
 		return exprOpt.map(declTypeExpr -> StartThread(label.getKey(), label.getThreadName(), declTypeExpr));
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.JoinThreadXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.JoinThreadXcfaLabel label, Mapper<T> param) {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<XcfaLabel>visit(XcfaLabel.StmtXcfaLabel label, Mapper<T> param) {
+	public Optional<XcfaLabel> visit(XcfaLabel.StmtXcfaLabel label, Mapper<T> param) {
 		return label.getStmt().accept(this, param);
 	}
 
 	@Override
 	public Optional<XcfaLabel> visit(XcfaLabel.SequenceLabel sequenceLabel, Mapper<T> param) {
 		final List<XcfaLabel> collect = sequenceLabel.getLabels().stream().map(label -> label.accept(this, param).orElse(label)).collect(Collectors.toList());
-		if(sequenceLabel.getLabels().equals(collect)) return Optional.empty();
+		if (sequenceLabel.getLabels().equals(collect)) return Optional.empty();
 		else return Optional.of(XcfaLabel.SequenceLabel.of(collect));
 	}
 
 	@Override
 	public Optional<XcfaLabel> visit(XcfaLabel.NondetLabel nondetLabel, Mapper<T> param) {
 		final List<XcfaLabel> collect = nondetLabel.getLabels().stream().map(label -> label.accept(this, param).orElse(label)).collect(Collectors.toList());
-		if(nondetLabel.getLabels().equals(collect)) return Optional.empty();
+		if (nondetLabel.getLabels().equals(collect)) return Optional.empty();
 		else return Optional.of(XcfaLabel.NondetLabel.of(collect));
 	}
 

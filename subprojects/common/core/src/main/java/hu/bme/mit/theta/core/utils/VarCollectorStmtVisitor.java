@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -96,10 +96,10 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getFrom(),vars);
-		ExprUtils.collectVars(stmt.getTo(),vars);
+		ExprUtils.collectVars(stmt.getFrom(), vars);
+		ExprUtils.collectVars(stmt.getTo(), vars);
 		vars.add(stmt.getLoopVariable());
-		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(),vars);
+		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(), vars);
 	}
 
 	@Override

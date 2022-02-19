@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static java.util.stream.Collectors.toList;
-
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
 import com.google.common.collect.Iterables;
-
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
@@ -39,6 +26,18 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static java.util.stream.Collectors.toList;
 
 public final class ZoneState implements ExprState {
 

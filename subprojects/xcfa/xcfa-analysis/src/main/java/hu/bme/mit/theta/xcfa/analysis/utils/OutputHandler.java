@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.utils;
 
 import hu.bme.mit.theta.analysis.Trace;
@@ -8,13 +24,13 @@ import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CegarConfiguration;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.statistics.ModelStatistics;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.Result;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaTraceToWitness;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CegarConfiguration;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.Result;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.statistics.ModelStatistics;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.BufferedWriter;
@@ -24,7 +40,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -39,9 +54,9 @@ public final class OutputHandler {
 	private static File model;
 
 	public void writeXcfa(XCFA xcfa) {
-		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
+		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
 
-		checkState(xcfa!=null);
+		checkState(xcfa != null);
 		File xcfafile = new File(basicFileName + ".xcfa");
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
 			bw.write(xcfa.toDot());
@@ -55,13 +70,13 @@ public final class OutputHandler {
 	private OutputOptions outputConfiguration = OutputOptions.NONE;
 
 	public static void create(OutputOptions outputConfiguration, File model) {
-		if(INSTANCE == null) {
+		if (INSTANCE == null) {
 			INSTANCE = new OutputHandler(outputConfiguration, model);
 		}
 	}
 
 	public static OutputHandler getInstance() {
-		checkState(INSTANCE!=null);
+		checkState(INSTANCE != null);
 		return INSTANCE;
 	}
 
@@ -71,13 +86,13 @@ public final class OutputHandler {
 	}
 
 	public void createResultsDirectory() {
-		checkState(model!=null);
+		checkState(model != null);
 		// portfolio and output-results needs a results directory
 		// create the directory only, if needed
-		if(outputConfiguration==OutputOptions.OUTPUT_RESULTS) {
-			File resultsDir = new File(model + "-" + LocalDateTime.now().toString().replace(":","-") + "-results");
+		if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
+			File resultsDir = new File(model + "-" + LocalDateTime.now().toString().replace(":", "-") + "-results");
 			boolean bool = resultsDir.mkdir();
-			if(!bool){
+			if (!bool) {
 				throw new RuntimeException("Couldn't create results directory");
 			}
 			basicFileName = resultsDir + "/" + model.getName();
@@ -91,12 +106,12 @@ public final class OutputHandler {
 	}
 
 	public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
-		if(outputConfiguration==OutputOptions.NONE) return;
+		if (outputConfiguration == OutputOptions.NONE) return;
 		SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 		final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe().getTrace();
 		final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(trace, cexSolverFactory);
 
-		if(outputConfiguration==OutputOptions.WITNESS_ONLY) {
+		if (outputConfiguration == OutputOptions.WITNESS_ONLY) {
 			Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
 			File witnessfile = new File(workdir + File.separator + "witness.graphml");
 
@@ -108,7 +123,7 @@ public final class OutputHandler {
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
-		} else if(outputConfiguration==OutputOptions.OUTPUT_RESULTS) {
+		} else if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
 			File witnessfile = new File(basicFileName + ".witness.graphml");
 			File cexfile = new File(basicFileName + ".cex");
 			File dotwitnessfile = new File(basicFileName + ".witness.dot");
@@ -138,7 +153,7 @@ public final class OutputHandler {
 	}
 
 	public void writeDummyCorrectnessWitness() {
-		if(outputConfiguration!=OutputOptions.WITNESS_ONLY) return;
+		if (outputConfiguration != OutputOptions.WITNESS_ONLY) return;
 		Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
 		File witnessfile = new File(workdir + File.separator + "witness.graphml");
 
@@ -194,10 +209,10 @@ public final class OutputHandler {
 	}
 
 	public void writeInputStatistics(XCFA xcfa) {
-		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
+		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
 
-		checkState(xcfa!=null);
-		checkState(model!=null);
+		checkState(xcfa != null);
+		checkState(model != null);
 		ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, model.getName());
 		File statisticstxtfile = new File(basicFileName + ".statistics.txt");
 		File statisticscsvfile = new File(basicFileName + ".csv");
@@ -206,7 +221,7 @@ public final class OutputHandler {
 	}
 
 	public void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
+		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
 		File configurationTxt = new File(basicFileName + ".portfolio.txt");
 
 		StringBuilder stringBuilder = new StringBuilder();
@@ -225,7 +240,7 @@ public final class OutputHandler {
 	}
 
 	public void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if(outputConfiguration!=OutputOptions.OUTPUT_RESULTS) return;
+		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
 		File configurationCsv = new File(basicFileName + ".portfolio.csv");
 
 		StringBuilder stringBuilder = new StringBuilder();

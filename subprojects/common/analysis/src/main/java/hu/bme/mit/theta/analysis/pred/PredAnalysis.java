@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public final class PredAnalysis<A extends ExprAction> implements Analysis<PredSt
 	}
 
 	public static <A extends ExprAction> PredAnalysis<A> create(final Solver solver, final PredAbstractor predAbstractor,
-									  final Expr<BoolType> initExpr) {
+																final Expr<BoolType> initExpr) {
 		return new PredAnalysis<A>(solver, predAbstractor, initExpr);
 	}
 

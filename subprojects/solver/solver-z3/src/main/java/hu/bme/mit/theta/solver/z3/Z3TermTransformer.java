@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -158,8 +158,11 @@ final class Z3TermTransformer {
 
 	@SuppressWarnings("unchecked")
 	private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType, E elemType, List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
-		return Array(entryExprs.stream().map(entry -> {checkState(entry.get1().size() == 1); return Tuple2.of((Expr<I>)entry.get1().get(0), (Expr<E>) entry.get2());}).collect(Collectors.toUnmodifiableList()),
-				(Expr<E>)elseExpr,
+		return Array(entryExprs.stream().map(entry -> {
+					checkState(entry.get1().size() == 1);
+					return Tuple2.of((Expr<I>) entry.get1().get(0), (Expr<E>) entry.get2());
+				}).collect(Collectors.toUnmodifiableList()),
+				(Expr<E>) elseExpr,
 				ArrayType.of(indexType, elemType));
 	}
 
@@ -173,7 +176,7 @@ final class Z3TermTransformer {
 		} else if (term.isRatNum()) {
 			return transformRatLit(term);
 
-		// BitVecNum is not BVNumeral? Potential bug?
+			// BitVecNum is not BVNumeral? Potential bug?
 		} else if (/* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
 			return transformBvLit(term);
 
@@ -202,10 +205,10 @@ final class Z3TermTransformer {
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
-		try{
+		try {
 			final var value = intNum.getInt64();
 			return Int(BigInteger.valueOf(value));
-		} catch (Z3Exception ex){
+		} catch (Z3Exception ex) {
 			final var value = intNum.getBigInteger();
 			return Int(value);
 		}
@@ -237,12 +240,16 @@ final class Z3TermTransformer {
 		FPNum fpTerm = (FPNum) term;
 		FpType type = FpType.of((fpTerm).getEBits(), (fpTerm).getSBits());
 		String printed = term.toString();
-		if(printed.equals("+oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()), type);
-		else if(printed.equals("-oo")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()), type);
-		else if(printed.equals("NaN")) return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
-		else if(printed.equals("+zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
-		else if(printed.equals("-zero")) return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
-		BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2",FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat((fpTerm).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
+		if (printed.equals("+oo"))
+			return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()), type);
+		else if (printed.equals("-oo"))
+			return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()), type);
+		else if (printed.equals("NaN")) return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
+		else if (printed.equals("+zero"))
+			return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
+		else if (printed.equals("-zero"))
+			return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
+		BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(), FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(new BigFloat("2", FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(new BigFloat((fpTerm).getExponent(), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE)), FpUtils.getMathContext(type, FpRoundingMode.RNE));
 		return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
 	}
 
@@ -268,7 +275,7 @@ final class Z3TermTransformer {
 										final Model model, final List<Decl<?>> vars) {
 		checkArgument(funcInterp.getArity() >= 1);
 		final ParamDecl<?> paramDecl = (ParamDecl<?>) vars.get(vars.size() - 1);
-		final Expr<?> op = createFuncLitExprBody(vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream().map(decl -> (ParamDecl<?>)decl).collect(Collectors.toList()), funcInterp, model, vars);
+		final Expr<?> op = createFuncLitExprBody(vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream().map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList()), funcInterp, model, vars);
 		return Func(paramDecl, op);
 	}
 
@@ -301,7 +308,7 @@ final class Z3TermTransformer {
 	}
 
 	private List<Tuple2<List<Expr<?>>, Expr<?>>> createEntryExprs(final com.microsoft.z3.FuncInterp funcInterp,
-															final Model model, final List<Decl<?>> vars) {
+																  final Model model, final List<Decl<?>> vars) {
 		final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder = ImmutableList.builder();
 		for (final com.microsoft.z3.FuncInterp.Entry entry : funcInterp.getEntries()) {
 			checkArgument(entry.getArgs().length >= 1);
@@ -343,7 +350,7 @@ final class Z3TermTransformer {
 	}
 
 	private <P extends Type, R extends Type> Expr<?> toApp(Expr<FuncType<P, R>> expr, List<com.microsoft.z3.Expr> terms, Model model, List<Decl<?>> vars) {
-		if(terms.size() == 0) return expr;
+		if (terms.size() == 0) return expr;
 		final com.microsoft.z3.Expr term = terms.get(0);
 		terms.remove(0);
 		final Expr<P> transformed = (Expr<P>) transform(term, model, vars);

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.common.visualization.writer;
 
 import hu.bme.mit.theta.common.visualization.Edge;
@@ -30,7 +46,7 @@ public final class WitnessGraphvizWriter extends AbstractGraphWriter {
 		graph.getRootNodes().forEach(this::addModifiedNode);
 
 		for (final Node node : graph.getNodes()) {
-		 	addModifiedEdge(node);
+			addModifiedEdge(node);
 			// printEdges(node, sb);
 		}
 		return GraphvizWriter.getInstance().writeString(modifiedGraph);
@@ -43,19 +59,19 @@ public final class WitnessGraphvizWriter extends AbstractGraphWriter {
 			label = label.replace("\"", "\\\"");
 			// graphviz throws a syntax error is node names have . in them, so we change them to _dot_
 			String source = edge.getSource().getId();
-			source = source.replace(".","_dot_");
+			source = source.replace(".", "_dot_");
 			String target = edge.getTarget().getId();
-			target = target.replace(".","_dot_");
+			target = target.replace(".", "_dot_");
 			modifiedGraph.addEdge(source, target, EdgeAttributes.builder().label(label).build());
 		}
 	}
 
 	private void addModifiedNode(Node n) {
-		 NodeAttributes nodeAttributes = n.getAttributes();
-		 String label = nodeAttributes.getLabel();
-		 label = n.getId() + ": " +label;
-		 label = label.replace("\"", "\\\"");
-		 // graphviz throws a syntax error is node names have . in them, so we change them to _dot_
-		 modifiedGraph.addNode(n.getId().replace(".","_dot_"), NodeAttributes.builder().label(label).build());
+		NodeAttributes nodeAttributes = n.getAttributes();
+		String label = nodeAttributes.getLabel();
+		label = n.getId() + ": " + label;
+		label = label.replace("\"", "\\\"");
+		// graphviz throws a syntax error is node names have . in them, so we change them to _dot_
+		modifiedGraph.addNode(n.getId().replace(".", "_dot_"), NodeAttributes.builder().label(label).build());
 	}
 }

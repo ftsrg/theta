@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm.bmc;
 
 import com.google.common.collect.Streams;
@@ -59,13 +75,13 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 	}
 
 	public static <S extends ExprState, A extends StmtAction, P extends Prec> NewBmcChecker<S, A, P> create(final LTS<S, A> lts,
-																										 final InitFunc<S, P> initFunc,
-																										 final TransFunc<S, A, P> transFunc,
-																										 final Predicate<S> unsafePredicate,
-																										 final Solver solver,
-																										 final Logger logger,
-																										 final int upperBound,
-																										 final int stepSize) {
+																											final InitFunc<S, P> initFunc,
+																											final TransFunc<S, A, P> transFunc,
+																											final Predicate<S> unsafePredicate,
+																											final Solver solver,
+																											final Logger logger,
+																											final int upperBound,
+																											final int stepSize) {
 		return new NewBmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver, logger, upperBound, stepSize);
 	}
 
@@ -79,21 +95,21 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 		for (S initState : initFunc.getInitStates(prec)) {
 			logger.write(Logger.Level.INFO, "Checking from state %s with a bound of %d%n", initState, stepSize);
 			final SafetyResult<S, A> result = check(null, indexing(0), initState, null, prec, stepSize, 0);
-			if(result == null) {
+			if (result == null) {
 				isSafe = false;
-			} else if(result.isUnsafe()) {
+			} else if (result.isUnsafe()) {
 				logger.write(Logger.Level.RESULT, "%s%n", result);
 				return result;
 			}
 		}
-		if(isSafe){
+		if (isSafe) {
 			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
 			logger.write(Logger.Level.RESULT, "%s%n", result);
 			return result;
 		}
 
 		// From here on, proving safety is only possible if all paths are enumareted
-		for(int bound = stepSize; (upperBound < 0 || bound <= upperBound) && resumeSet.size() > 0; bound+=stepSize) {
+		for (int bound = stepSize; (upperBound < 0 || bound <= upperBound) && resumeSet.size() > 0; bound += stepSize) {
 			final Collection<Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>>> localResumeSet = new LinkedHashSet<>(resumeSet);
 			resumeSet.clear();
 			for (Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>> resumePoint : localResumeSet) {
@@ -102,14 +118,14 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 				solver.add(resumePoint.get5());
 				final SafetyResult<S, A> result = check(resumePoint.get1(), resumePoint.get2(), resumePoint.get3(), resumePoint.get4(), prec, bound + stepSize, bound);
 				solver.pop();
-				if(result != null && result.isUnsafe()) {
+				if (result != null && result.isUnsafe()) {
 					logger.write(Logger.Level.RESULT, "%s%n", result);
 					return result;
 				}
 			}
 		}
 
-		if(resumeSet.size() == 0) {
+		if (resumeSet.size() == 0) {
 			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
 			logger.write(Logger.Level.RESULT, "%s%n", result);
 			return result;
@@ -123,18 +139,18 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 
 	private SafetyResult<S, A> check(final Trace<S, A> trace, final VarIndexing varIndexing, final S state, final A action, final P prec, final int bound, final int currentStep) {
 		final Trace<S, A> nextTrace;
-		if(trace == null) {
+		if (trace == null) {
 			nextTrace = Trace.of(List.of(state), List.<A>of());
 		} else {
 			nextTrace = Trace.of(
 					Streams.concat(trace.getStates().stream(), Stream.of(state)).collect(Collectors.toList()),
 					Streams.concat(trace.getActions().stream(), Stream.of(action)).collect(Collectors.toList()));
 		}
-		if(unsafePredicate.test(state)) {
+		if (unsafePredicate.test(state)) {
 			return SafetyResult.unsafe(trace, ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		}
 
-		if(currentStep >= bound) {
+		if (currentStep >= bound) {
 			final Collection<Expr<BoolType>> assertions = new ArrayList<>(solver.getAssertions());
 			resumeSet.add(Tuple5.of(trace, varIndexing, state, action, assertions));
 			return null;
@@ -144,9 +160,9 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 		for (final A a : lts.getEnabledActionsFor(state)) {
 			solver.push();
 			solver.add(PathUtils.unfold(a.toExpr(), varIndexing));
-			if(solver.check().isSat()) {
+			if (solver.check().isSat()) {
 				for (final S succState : transFunc.getSuccStates(state, a, prec)) {
-					if(!succState.isBottom()) {
+					if (!succState.isBottom()) {
 						final SafetyResult<S, A> result = check(nextTrace, varIndexing.add(a.nextIndexing()), succState, a, prec, bound, currentStep + 1);
 						if (result != null && result.isUnsafe()) {
 							solver.pop();
@@ -159,7 +175,8 @@ public class NewBmcChecker<S extends ExprState, A extends StmtAction, P extends 
 			}
 			solver.pop();
 		}
-		if(isSafe) return SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG)
+		if (isSafe)
+			return SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG)
 		return null;
 	}
 

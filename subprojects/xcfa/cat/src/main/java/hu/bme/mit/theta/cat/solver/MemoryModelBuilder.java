@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.cat.solver;
 
 import hu.bme.mit.theta.common.Tuple2;
@@ -19,8 +35,9 @@ public abstract class MemoryModelBuilder {
 	}
 
 	private final Map<Object, Integer> indexMap = new EqualityLinkedHashMap<>();
+
 	public void addProgramLoc(Object object) {
-		if(!indexMap.containsKey(object)) {
+		if (!indexMap.containsKey(object)) {
 			indexMap.put(object, addPrimitive("meta", object));
 		}
 	}
@@ -32,7 +49,7 @@ public abstract class MemoryModelBuilder {
 	}
 
 	public void addReadProgramLoc(Object read, Object thread, Object var) {
-		if(!indexMap.containsKey(read)) {
+		if (!indexMap.containsKey(read)) {
 			indexMap.put(read, addPrimitive("R", read));
 		}
 		final Integer idxA = indexMap.get(read);
@@ -43,7 +60,7 @@ public abstract class MemoryModelBuilder {
 	}
 
 	public void addWriteProgramLoc(Object write, Object thread, Object var) {
-		if(!indexMap.containsKey(write)) {
+		if (!indexMap.containsKey(write)) {
 			indexMap.put(write, addPrimitive("W", write));
 		}
 		final Integer idxA = indexMap.get(write);
@@ -52,14 +69,16 @@ public abstract class MemoryModelBuilder {
 		addFact("intRaw", TupleN.of(idxA, idxB));
 		addFact("locRaw", TupleN.of(idxA, idxC));
 	}
+
 	public void addFenceLoc(Object write, Object thread) {
-		if(!indexMap.containsKey(write)) {
+		if (!indexMap.containsKey(write)) {
 			indexMap.put(write, addPrimitive("F", write));
 		}
 		final Integer idxA = indexMap.get(write);
 		final Integer idxB = indexMap.get(thread);
 		addFact("intRaw", TupleN.of(idxA, idxB));
 	}
+
 	public Expr<BoolType> addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst, final List<Tuple2<?, ConstDecl<?>>> readConst) {
 		final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();
 		for (Tuple2<?, ConstDecl<?>> objects : writeConst) {
@@ -77,13 +96,21 @@ public abstract class MemoryModelBuilder {
 	}
 
 	public abstract List<TupleN<?>> get(final String rule, final Valuation valuation);
+
 	public abstract List<TupleN<Integer>> getNumbered(final String rule, final Valuation valuation);
+
 	public abstract void assertAcyclic(final String ruleDerivation);
+
 	public abstract void assertIrreflexive(final String ruleDerivation);
+
 	public abstract void assertEmpty(final String ruleDerivation);
+
 	public abstract void addRule(final RuleDerivation ruleDerivation);
+
 	public abstract void addFact(final String name, final TupleN<Integer> fact);
+
 	public abstract int addPrimitive(final String name, final Object primitive);
+
 	public abstract Expr<BoolType> getRfConstraints(final List<Tuple2<Integer, ConstDecl<?>>> writeConst, final List<Tuple2<Integer, ConstDecl<?>>> readConst);
 
 	public abstract MemoryModelBuilder duplicate();

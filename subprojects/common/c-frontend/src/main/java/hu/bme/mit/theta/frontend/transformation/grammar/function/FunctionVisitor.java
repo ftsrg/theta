@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.grammar.function;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
@@ -79,14 +95,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	}
 
 	private void createVars(String name, CDeclaration declaration, CComplexType type, List<VarDecl<?>> vars) {
-		if(type instanceof CStruct) {
+		if (type instanceof CStruct) {
 			((CStruct) type).getFields().forEach((s, type1) -> {
 				createVars(name + "." + s, declaration, type1, vars);
 			});
 		}
 		VarDecl<?> varDecl = Var(name, type.getSmtType());
 		Map<String, VarDecl<?>> peek = variables.peek();
-		if(peek.containsKey(name)) {
+		if (peek.containsKey(name)) {
 			System.err.println("WARNING: Variable already exists: " + name);
 		}
 		peek.put(name, varDecl);
@@ -115,7 +131,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CParser.ExternalDeclarationContext> globalUsages = GlobalDeclUsageVisitor.instance.getGlobalUsages(ctx);
 
 		// if arithemetic is set on efficient, we change it to either bv or int arithmetic here
-		if(ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
+		if (ArchitectureConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
 			BitwiseOption bitwiseOption = BitwiseChecker.instance.checkIfBitwise(globalUsages);
 			ArchitectureConfig.arithmetic = (bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector;
 		}
@@ -123,10 +139,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		CProgram program = new CProgram();
 		for (CParser.ExternalDeclarationContext externalDeclarationContext : globalUsages) {
 			CStatement accept = externalDeclarationContext.accept(this);
-			if(accept instanceof CFunction) {
+			if (accept instanceof CFunction) {
 				program.getFunctions().add((CFunction) accept);
-			}
-			else if (accept instanceof CDecls) {
+			} else if (accept instanceof CDecls) {
 				program.getGlobalDeclarations().addAll(((CDecls) accept).getcDeclarations());
 			}
 		}
@@ -160,7 +175,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CDecls decls = new CDecls();
 		for (CDeclaration declaration : declarations) {
-			if(!declaration.getType().isTypedef()) {
+			if (!declaration.getType().isTypedef()) {
 				if (!declaration.isFunc()) { // functions should not be interpreted as global variables
 					createVars(declaration);
 					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
@@ -186,10 +201,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
 		CSimpleType returnType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
-		if(returnType.isTypedef()) return new CCompound();
+		if (returnType.isTypedef()) return new CCompound();
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setType(returnType);
-		if(!variables.peek().containsKey(funcDecl.getName())) {
+		if (!variables.peek().containsKey(funcDecl.getName())) {
 			FrontendMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			createVars(funcDecl);
 			for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
@@ -199,11 +214,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		variables.push(new LinkedHashMap<>());
 		flatVariables.clear();
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-			if(functionParam.getName() != null)
+			if (functionParam.getName() != null)
 				createVars(functionParam);
 		}
 		CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
-		if(blockItemListContext != null) {
+		if (blockItemListContext != null) {
 			CStatement accept = blockItemListContext.accept(this);
 			variables.pop();
 			CFunction cFunction = new CFunction(funcDecl, accept, new ArrayList<>(flatVariables));
@@ -261,7 +276,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitCompoundStatement(CParser.CompoundStatementContext ctx) {
-		if(ctx.blockItemList() != null) {
+		if (ctx.blockItemList() != null) {
 			return ctx.blockItemList().accept(this);
 		}
 		CCompound compound = new CCompound();
@@ -378,9 +393,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
 		CCompound compound = new CCompound();
 		for (CDeclaration declaration : declarations) {
-			if(declaration.getInitExpr() != null) {
+			if (declaration.getInitExpr() != null) {
 				createVars(declaration);
-				if(declaration.getType() instanceof Struct) {
+				if (declaration.getType() instanceof Struct) {
 					checkState(declaration.getInitExpr() instanceof CInitializerList, "Struct can only be initialized via an initializer list!");
 					List<VarDecl<?>> varDecls = declaration.getVarDecls();
 					for (int i = 0; i < varDecls.size(); i++) {
@@ -391,18 +406,16 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 						recordMetadata(ctx, cAssignment);
 						compound.getcStatementList().add(cAssignment);
 					}
-				}
-				else {
+				} else {
 					checkState(declaration.getVarDecls().size() == 1, "non-struct declarations shall only have one variable!");
 					CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
 					recordMetadata(ctx, cAssignment);
 					compound.getcStatementList().add(cAssignment);
 				}
-			}
-			else {
+			} else {
 				createVars(declaration);
 				// if there is no initializer, then we'll add an assumption regarding min and max values
-				if(declaration.getType() instanceof Struct) {
+				if (declaration.getType() instanceof Struct) {
 					for (VarDecl<?> varDecl : declaration.getVarDecls()) {
 						if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) { // BoolType is either well-defined true/false, or a struct in disguise
 							AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
@@ -410,8 +423,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 							compound.getcStatementList().add(cAssume);
 						}
 					}
-				}
-				else {
+				} else {
 					VarDecl<?> varDecl = declaration.getVarDecls().get(0);
 					if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) {
 						AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef()).limit(varDecl.getRef());
@@ -480,7 +492,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 			checkState(declaration.getVarDecls().size() == 1, "For loops cannot have struct declarations! (not yet implemented)");
 			CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
 			recordMetadata(ctx, cAssignment);
-			if(declaration.getInitExpr() != null) compound.getcStatementList().add(cAssignment);
+			if (declaration.getInitExpr() != null) compound.getcStatementList().add(cAssignment);
 		}
 		recordMetadata(ctx, compound);
 		return compound;

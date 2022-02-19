@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.model.types.complex;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -111,13 +127,12 @@ public abstract class CComplexType {
 	}
 
 	public static CComplexType getType(Expr<?> expr) {
-		Optional<Object> cTypeOptional = FrontendMetadata.getMetadataValue(expr,"cType");
-		if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
+		Optional<Object> cTypeOptional = FrontendMetadata.getMetadataValue(expr, "cType");
+		if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
 			return (CComplexType) cTypeOptional.get();
-		} else if(cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
+		} else if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
 			return ((CSimpleType) cTypeOptional.get()).getActualType();
-		}
-		else throw new RuntimeException("Type not known!");
+		} else throw new RuntimeException("Type not known!");
 	}
 
 
@@ -140,15 +155,42 @@ public abstract class CComplexType {
 	public static CComplexType getSignedInt() {
 		return new CSignedInt(null);
 	}
-	public static CComplexType getUnsignedLongLong() { return new CUnsignedLongLong(null); }
-	public static CComplexType getUnsignedLong() { return new CUnsignedLong(null); }
-	public static CComplexType getUnsignedInt() { return new CUnsignedInt(null); }
-	public static CComplexType getSignedLongLong() { return new CSignedLongLong(null); }
-	public static CComplexType getSignedLong() { return new CSignedLong(null); }
-	public static CComplexType getFloat() { return new CFloat(null); }
-	public static CComplexType getDouble() { return new CDouble(null); }
-	public static CComplexType getLongDouble() { return new CLongDouble(null); }
-	public static CComplexType getFitsall() { return new Fitsall(null); }
+
+	public static CComplexType getUnsignedLongLong() {
+		return new CUnsignedLongLong(null);
+	}
+
+	public static CComplexType getUnsignedLong() {
+		return new CUnsignedLong(null);
+	}
+
+	public static CComplexType getUnsignedInt() {
+		return new CUnsignedInt(null);
+	}
+
+	public static CComplexType getSignedLongLong() {
+		return new CSignedLongLong(null);
+	}
+
+	public static CComplexType getSignedLong() {
+		return new CSignedLong(null);
+	}
+
+	public static CComplexType getFloat() {
+		return new CFloat(null);
+	}
+
+	public static CComplexType getDouble() {
+		return new CDouble(null);
+	}
+
+	public static CComplexType getLongDouble() {
+		return new CLongDouble(null);
+	}
+
+	public static CComplexType getFitsall() {
+		return new Fitsall(null);
+	}
 
 	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
 		return visitor.visit(this, param);
@@ -158,63 +200,83 @@ public abstract class CComplexType {
 		public R visit(CComplexType type, T param) {
 			throw new UnsupportedOperationException("Not (yet) implemented");
 		}
+
 		public R visit(CVoid type, T param) {
 			return visit(((CComplexType) type), param);
 		}
+
 		public R visit(CReal type, T param) {
 			return visit(((CComplexType) type), param);
 		}
+
 		public R visit(CDouble type, T param) {
 			return visit(((CReal) type), param);
 		}
+
 		public R visit(CFloat type, T param) {
 			return visit(((CReal) type), param);
 		}
+
 		public R visit(CLongDouble type, T param) {
 			return visit(((CReal) type), param);
 		}
+
 		public R visit(CInteger type, T param) {
 			return visit(((CComplexType) type), param);
 		}
+
 		public R visit(CShort type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CSignedShort type, T param) {
 			return visit(((CShort) type), param);
 		}
+
 		public R visit(CUnsignedShort type, T param) {
 			return visit(((CShort) type), param);
 		}
+
 		public R visit(CLongLong type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CSignedLongLong type, T param) {
 			return visit(((CLongLong) type), param);
 		}
+
 		public R visit(Fitsall type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CUnsignedLongLong type, T param) {
 			return visit(((CLongLong) type), param);
 		}
+
 		public R visit(CLong type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CUnsignedLong type, T param) {
 			return visit(((CLong) type), param);
 		}
+
 		public R visit(CSignedLong type, T param) {
 			return visit(((CLong) type), param);
 		}
+
 		public R visit(CInt type, T param) {
 			return visit(((CInteger) type), param);
 		}
+
 		public R visit(CSignedInt type, T param) {
 			return visit(((CInt) type), param);
 		}
+
 		public R visit(CUnsignedInt type, T param) {
 			return visit(((CInt) type), param);
 		}
+
 		public R visit(CChar type, T param) {
 			return visit(((CInteger) type), param);
 		}

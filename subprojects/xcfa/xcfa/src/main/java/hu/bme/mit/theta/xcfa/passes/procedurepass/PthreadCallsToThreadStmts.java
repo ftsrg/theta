@@ -1,17 +1,17 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
@@ -47,14 +47,14 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 		boolean foundAny = false;
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure().startsWith("pthread_")).findAny();
-			if(e.isPresent()) {
+			if (e.isPresent()) {
 				List<XcfaLabel> collect = new ArrayList<>();
 				for (XcfaLabel label : edge.getLabels()) {
-					if(label == e.get()) {
-						switch(((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure()){
+					if (label == e.get()) {
+						switch (((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure()) {
 							case threadStart:
 								Expr<?> handle = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartHandle + 1);
-								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
+								while (handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								Expr<?> funcptr = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadStartFuncPtr + 1);
 								checkState(funcptr instanceof RefExpr && ((RefExpr<?>) funcptr).getDecl() instanceof VarDecl);
@@ -65,7 +65,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 								break;
 							case threadJoin:
 								handle = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().get(threadJoinHandle + 1);
-								while(handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
+								while (handle instanceof Reference) handle = ((Reference<?, ?>) handle).getOp();
 								checkState(handle instanceof RefExpr && ((RefExpr<?>) handle).getDecl() instanceof VarDecl);
 								XcfaLabel.JoinThreadXcfaLabel joinThreadStmt = JoinThread((VarDecl<?>) ((RefExpr<?>) handle).getDecl());
 								collect.add(joinThreadStmt);
@@ -74,8 +74,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 							default:
 								throw new UnsupportedOperationException("Not yet supported: " + ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
 						}
-					}
-					else collect.add(label);
+					} else collect.add(label);
 				}
 				XcfaEdge xcfaEdge;
 				xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
@@ -86,7 +85,7 @@ public class PthreadCallsToThreadStmts extends ProcedurePass {
 				});
 			}
 		}
-		if(foundAny) {
+		if (foundAny) {
 			ArchitectureConfig.multiThreading = true;
 		}
 		return builder;

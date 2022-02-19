@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -31,11 +47,12 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaProcedure.Direction.IN;
 import static hu.bme.mit.theta.xcfa.model.XcfaProcedure.Direction.OUT;
 
-public class FunctionCallsToPushPops extends ProcessPass{
+public class FunctionCallsToPushPops extends ProcessPass {
 	private static int counter = 0;
+
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
-		if(builder.getProcedures().size() <= 1) return builder;
+		if (builder.getProcedures().size() <= 1) return builder;
 		final XcfaProcedure.Builder mainProcedure = builder.getMainProcedure();
 
 		final VarDecl<Type> retVar = Var("ret", CComplexType.getUnsignedLong().getSmtType());
@@ -47,7 +64,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 
 		alreadyHandled.put(mainProcedure, mainProcedure.getLocs().stream().map(xcfaLocation -> Map.entry(xcfaLocation, xcfaLocation)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 		boolean found = true;
-		while(found) {
+		while (found) {
 			found = false;
 
 			for (XcfaEdge edge : new ArrayList<>(mainProcedure.getEdges())) {
@@ -67,7 +84,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 						if (labels.size() > i + 1) {
 							target = XcfaLocation.create("__tmp" + XcfaLocation.uniqeCounter());
 							mainProcedure.addLoc(target);
-							mainProcedure.addEdge(XcfaEdge.of(target, edge.getTarget(), labels.subList(i+1, labels.size())));
+							mainProcedure.addEdge(XcfaEdge.of(target, edge.getTarget(), labels.subList(i + 1, labels.size())));
 						}
 						final int index = callSites.size();
 						callSites.add(target);
@@ -76,7 +93,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 						final Optional<XcfaProcedure.Builder> procedureOpt = builder.getProcedures().stream().filter(builder1 -> builder1.getName().equals(procedureName)).findFirst();
 						checkState(procedureOpt.isPresent(), "No such procedure " + procedureName);
 						final XcfaProcedure.Builder procedure = procedureOpt.get();
-						if(!alreadyHandled.containsKey(procedure)) {
+						if (!alreadyHandled.containsKey(procedure)) {
 							final Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
 							alreadyHandled.put(procedure, locationLut);
 							procedure.getParams().forEach((varDecl, direction) -> mainProcedure.createVar(varDecl, null));
@@ -88,7 +105,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 							}
 							procedure.getEdges().forEach(xcfaEdge -> mainProcedure.addEdge(XcfaEdge.of(locationLut.get(xcfaEdge.getSource()), locationLut.get(xcfaEdge.getTarget()), xcfaEdge.getLabels())));
 							final XcfaLocation newErrorLoc = locationLut.get(procedure.getErrorLoc());
-							if(newErrorLoc != null) {
+							if (newErrorLoc != null) {
 								if (mainProcedure.getErrorLoc() == null) {
 									mainProcedure.setErrorLoc(newErrorLoc);
 								} else {
@@ -104,13 +121,14 @@ public class FunctionCallsToPushPops extends ProcessPass{
 						final List<XcfaLabel> outLabels = new ArrayList<>();
 						outLabels.add(XcfaLabel.Stmt(Assume(Eq(retVar.getRef(), cast(CComplexType.getUnsignedLong().getValue("" + index), retVar.getType())))));
 						for (VarDecl<?> varDecl : procedure.getLocalVars().keySet()) {
-							if(varDecl != retVar) outLabels.add(XcfaLabel.Stmt(PopStmt.of(varDecl)));
+							if (varDecl != retVar) outLabels.add(XcfaLabel.Stmt(PopStmt.of(varDecl)));
 						}
 						for (Expr<?> paramExpr : ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams()) {
 							final Map.Entry<VarDecl<?>, XcfaProcedure.Direction> paramVar = it.next();
 							inLabels.add(XcfaLabel.Stmt(PushStmt.of(paramVar.getKey())));
-							if(paramVar.getValue() != OUT) inLabels.add(XcfaLabel.Stmt(Assign(cast(paramVar.getKey(), paramVar.getKey().getType()), cast(paramExpr, paramVar.getKey().getType()))));
-							if(paramVar.getValue() != IN) {
+							if (paramVar.getValue() != OUT)
+								inLabels.add(XcfaLabel.Stmt(Assign(cast(paramVar.getKey(), paramVar.getKey().getType()), cast(paramExpr, paramVar.getKey().getType()))));
+							if (paramVar.getValue() != IN) {
 								checkState(paramExpr instanceof RefExpr<?>);
 								final VarDecl<?> outVar = (VarDecl<?>) ((RefExpr<?>) paramExpr).getDecl();
 								outLabels.add(XcfaLabel.Stmt(Assign(cast(outVar, outVar.getType()), cast(paramVar.getKey().getRef(), outVar.getType()))));
@@ -118,7 +136,7 @@ public class FunctionCallsToPushPops extends ProcessPass{
 							outLabels.add(XcfaLabel.Stmt(PopStmt.of(paramVar.getKey())));
 						}
 						for (VarDecl<?> varDecl : procedure.getLocalVars().keySet()) {
-							if(varDecl != retVar) inLabels.add(XcfaLabel.Stmt(PushStmt.of(varDecl)));
+							if (varDecl != retVar) inLabels.add(XcfaLabel.Stmt(PushStmt.of(varDecl)));
 						}
 						mainProcedure.addEdge(XcfaEdge.of(source, alreadyHandled.get(procedure).get(procedure.getInitLoc()), inLabels));
 						mainProcedure.addEdge(XcfaEdge.of(alreadyHandled.get(procedure).get(procedure.getFinalLoc()), target, outLabels));

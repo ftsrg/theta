@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -24,7 +40,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDo
 public class NamedType extends CSimpleType {
 	private final String namedType;
 
-	NamedType(final String namedType){
+	NamedType(final String namedType) {
 		this.namedType = namedType;
 	}
 
@@ -32,29 +48,41 @@ public class NamedType extends CSimpleType {
 	public CComplexType getActualType() {
 		CComplexType type;
 		switch (namedType) {
-			case "char": if(isSigned()) type = new CSignedChar(this); else type = new CUnsignedChar(this); break;
-			case "int": if(isBool()) type = new CBool(this);
-						else if(isSigned()) {
-							if(isLong()) type = new CSignedLong(this);
-							else if(isLongLong()) type = new CSignedLongLong(this);
-							else if(isShort()) type = new CSignedShort(this);
-							else type = new CSignedInt(this);
-						} else {
-							if(isLong()) type = new CUnsignedLong(this);
-							else if(isLongLong()) type = new CUnsignedLongLong(this);
-							else if(isShort()) type = new CUnsignedShort(this);
-							else type = new CUnsignedInt(this);
-						}
+			case "char":
+				if (isSigned()) type = new CSignedChar(this);
+				else type = new CUnsignedChar(this);
 				break;
-			case "double": if(isLong()) type = new CLongDouble(this); else type = new CDouble(this); break;
-			case "float": type = new CFloat(this); break;
-			case "void": type = new CVoid(this); break;
+			case "int":
+				if (isBool()) type = new CBool(this);
+				else if (isSigned()) {
+					if (isLong()) type = new CSignedLong(this);
+					else if (isLongLong()) type = new CSignedLongLong(this);
+					else if (isShort()) type = new CSignedShort(this);
+					else type = new CSignedInt(this);
+				} else {
+					if (isLong()) type = new CUnsignedLong(this);
+					else if (isLongLong()) type = new CUnsignedLongLong(this);
+					else if (isShort()) type = new CUnsignedShort(this);
+					else type = new CUnsignedInt(this);
+				}
+				break;
+			case "double":
+				if (isLong()) type = new CLongDouble(this);
+				else type = new CDouble(this);
+				break;
+			case "float":
+				type = new CFloat(this);
+				break;
+			case "void":
+				type = new CVoid(this);
+				break;
 			default: {
 				System.err.println("WARNING: Unknown simple type " + namedType);
-				type = new CVoid(this); break;
+				type = new CVoid(this);
+				break;
 			}
 		}
-		if(isThreadLocal()) type.setThreadLocal();
+		if (isThreadLocal()) type.setThreadLocal();
 
 		for (int i = 0; i < getPointerLevel(); i++) {
 			type = new CPointer(this, type);
@@ -86,9 +114,9 @@ public class NamedType extends CSimpleType {
 
 	@Override
 	protected void patch(CSimpleType cSimpleType) {
-		switch(namedType) {
+		switch (namedType) {
 			case "long":
-				if(cSimpleType.isLong()) {
+				if (cSimpleType.isLong()) {
 					cSimpleType.setLongLong(true);
 					cSimpleType.setLong(false);
 				} else {
@@ -102,7 +130,8 @@ public class NamedType extends CSimpleType {
 				cSimpleType.setBool(true);
 				break;
 			default:
-				if(!cSimpleType.isTypedef()) throw new RuntimeException("namedType should be short or long or type specifier, instead it is " + namedType);
+				if (!cSimpleType.isTypedef())
+					throw new RuntimeException("namedType should be short or long or type specifier, instead it is " + namedType);
 				break;
 		}
 	}
@@ -126,15 +155,15 @@ public class NamedType extends CSimpleType {
 	@Override
 	public String toString() {
 		StringBuilder stringBuilder = new StringBuilder();
-		if(isTypedef()) stringBuilder.append("typedef ");
-		if(isExtern()) stringBuilder.append("extern ");
-		if(isVolatile()) stringBuilder.append("volatile ");
-		if(isAtomic()) stringBuilder.append("_Atomic ");
-		if(!isSigned()) stringBuilder.append("unsigned ");
-		if(isShort()) stringBuilder.append("short ");
-		if(isLong()) stringBuilder.append("long ");
-		if(isBool()) stringBuilder.append("_Bool ");
-		if(isLongLong()) stringBuilder.append("long long ");
+		if (isTypedef()) stringBuilder.append("typedef ");
+		if (isExtern()) stringBuilder.append("extern ");
+		if (isVolatile()) stringBuilder.append("volatile ");
+		if (isAtomic()) stringBuilder.append("_Atomic ");
+		if (!isSigned()) stringBuilder.append("unsigned ");
+		if (isShort()) stringBuilder.append("short ");
+		if (isLong()) stringBuilder.append("long ");
+		if (isBool()) stringBuilder.append("_Bool ");
+		if (isLongLong()) stringBuilder.append("long long ");
 
 		stringBuilder.append(namedType);
 		return stringBuilder.toString();
@@ -157,7 +186,7 @@ public class NamedType extends CSimpleType {
 		namedType.setLong(this.isLong());
 		namedType.setBool(this.isBool());
 		namedType.setLongLong(this.isLongLong());
-		for(int i = 0; i < this.getPointerLevel(); i++) {
+		for (int i = 0; i < this.getPointerLevel(); i++) {
 			namedType.incrementPointer();
 		}
 

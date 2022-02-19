@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
 import com.google.common.base.Stopwatch;
@@ -38,23 +54,25 @@ public abstract class AbstractPortfolio {
 
 	/**
 	 * Not implemented by the base class, should be used as the main method for concrete portfolios
-	 * @param xcfa the model to execute the portfolio on
+	 *
+	 * @param xcfa               the model to execute the portfolio on
 	 * @param initializationTime how long the model transformation and optimization took (can be subtracted from the global time limit to get the time limit for the analysis)
 	 * @return the result of the analysis
 	 * @throws Exception
 	 */
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
+	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
 
 	/**
 	 * Creates and saves the counterexample into a file, also saves statistics into files (implemented by {@link OutputHandler} )
-	 * @param status result of the given configuration
+	 *
+	 * @param status           result of the given configuration
 	 * @param refinementSolver the solver to be used to generate a counterexample
 	 * @throws Exception most likely solver exception
 	 */
 	public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
-		if (status!=null && status.isUnsafe()) {
+		if (status != null && status.isUnsafe()) {
 			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
-		} else if(status!=null && status.isSafe()) {
+		} else if (status != null && status.isSafe()) {
 			OutputHandler.getInstance().writeDummyCorrectnessWitness();
 		}
 	}
@@ -66,15 +84,15 @@ public abstract class AbstractPortfolio {
 	 * Uses thread.stop() if analysis times out - use at your own risk
 	 *
 	 * @param configuration the configuration to execute
-	 * @param xcfa the model to execute the analysis on
-	 * @param timeout in ms
+	 * @param xcfa          the model to execute the analysis on
+	 * @param timeout       in ms
 	 * @return the result of the analysis
 	 */
-	protected Tuple2<Result, Optional<SafetyResult<?,?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
+	protected Tuple2<Result, Optional<SafetyResult<?, ?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
 		logger.write(Logger.Level.RESULT, "Executing ");
 		logger.write(Logger.Level.RESULT, configuration.toString());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, "Timeout is set to " + timeout/1000.0 + " sec (cputime)...");
+		logger.write(Logger.Level.RESULT, "Timeout is set to " + timeout / 1000.0 + " sec (cputime)...");
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 
@@ -95,19 +113,19 @@ public abstract class AbstractPortfolio {
 		cegarAnalysisThread.start();
 
 		try {
-			if(timeout==-1) {
+			if (timeout == -1) {
 				synchronized (cegarAnalysisThread) {
 					cegarAnalysisThread.wait();
 				}
 			} else {
 				long startTime;
-				long decreasingTimeout = timeout/1000; // in seconds!
-				while(decreasingTimeout > 0 && cegarAnalysisThread.isAlive()) {
+				long decreasingTimeout = timeout / 1000; // in seconds!
+				while (decreasingTimeout > 0 && cegarAnalysisThread.isAlive()) {
 					startTime = CpuTimeKeeper.getCurrentCpuTime();
 					synchronized (cegarAnalysisThread) {
-						cegarAnalysisThread.wait(decreasingTimeout*1000/2, 0);
+						cegarAnalysisThread.wait(decreasingTimeout * 1000 / 2, 0);
 					}
-					long elapsedCpuTime = CpuTimeKeeper.getCurrentCpuTime()-startTime;
+					long elapsedCpuTime = CpuTimeKeeper.getCurrentCpuTime() - startTime;
 					decreasingTimeout -= elapsedCpuTime;
 				}
 			}
@@ -115,7 +133,7 @@ public abstract class AbstractPortfolio {
 			e.printStackTrace();
 		}
 
-		if(cegarAnalysisThread.isAlive()) {
+		if (cegarAnalysisThread.isAlive()) {
 			Stopwatch dieTimer = Stopwatch.createStarted();
 			cegarAnalysisThread.interrupt();
 			try {
@@ -140,7 +158,7 @@ public abstract class AbstractPortfolio {
 			cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
 			synchronized (cegarAnalysisThread) {
-				while(cegarAnalysisThread.isAlive()) {
+				while (cegarAnalysisThread.isAlive()) {
 					try {
 						cegarAnalysisThread.wait(1000, 0);
 					} catch (InterruptedException e) {
@@ -172,7 +190,7 @@ public abstract class AbstractPortfolio {
 		logger.write(Logger.Level.RESULT, result.toString());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 		logger.write(Logger.Level.RESULT, "Time taken in this configuration: ");
-		logger.write(Logger.Level.RESULT,  cpuTimeTaken + " sec (cputime)");
+		logger.write(Logger.Level.RESULT, cpuTimeTaken + " sec (cputime)");
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 		logger.write(Logger.Level.RESULT, System.lineSeparator());
 
@@ -191,7 +209,8 @@ public abstract class AbstractPortfolio {
 	 * We can only keep track of cpu time by using {@link CpuTimeKeeper}, which this method calls properly
 	 * also, it is important to close all unused solvers,
 	 * so they don't take up time/leave behind partial data, that is outdated
-	 * @param home smt solver home
+	 *
+	 * @param home   smt solver home
 	 * @param logger logger passed on to the solvers
 	 * @throws Exception SMT solver exceptions
 	 */
@@ -200,7 +219,7 @@ public abstract class AbstractPortfolio {
 		SolverManager.closeAll();
 		// register solver managers
 		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
 			final var homePath = Path.of(home);
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);
@@ -214,7 +233,7 @@ public abstract class AbstractPortfolio {
 
 	private static void registerAllSolverManagers(String home, Logger logger) throws Exception {
 		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
 			final var homePath = Path.of(home);
 			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
 			SolverManager.registerSolverManager(smtLibSolverManager);

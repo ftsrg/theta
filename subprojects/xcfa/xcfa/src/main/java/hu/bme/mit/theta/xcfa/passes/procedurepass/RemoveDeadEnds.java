@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.frontend.FrontendMetadata;
@@ -13,22 +29,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class RemoveDeadEnds extends ProcedurePass{
+public class RemoveDeadEnds extends ProcedurePass {
 
 	// TODO: thread start and procedure call should not be dead-end! Use-case: while(1) pthread_create(..);
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		if(ArchitectureConfig.multiThreading) {
+		if (ArchitectureConfig.multiThreading) {
 			Set<XcfaEdge> reachableEdges = new LinkedHashSet<>();
 			filterReachableEdges(builder.getInitLoc(), reachableEdges);
 			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				if(!reachableEdges.contains(edge)) {
+				if (!reachableEdges.contains(edge)) {
 					builder.removeEdge(edge);
 				}
 			}
 			return builder;
 		} else {
-			if(FrontendMetadata.lookupMetadata("shouldInline", false).size() > 0) return builder;
+			if (FrontendMetadata.lookupMetadata("shouldInline", false).size() > 0) return builder;
 			Set<XcfaEdge> nonDeadEndEdges = new LinkedHashSet<>();
 			Set<XcfaEdge> reachableEdges = new LinkedHashSet<>();
 			XcfaLocation errorLoc = builder.getErrorLoc();
@@ -64,7 +80,7 @@ public class RemoveDeadEnds extends ProcedurePass{
 
 	private void filterReachableEdges(XcfaLocation loc, Set<XcfaEdge> reachableEdges) {
 		Set<XcfaEdge> outgoingEdges = new LinkedHashSet<>(loc.getOutgoingEdges());
-		while(!outgoingEdges.isEmpty()) {
+		while (!outgoingEdges.isEmpty()) {
 			Optional<XcfaEdge> any = outgoingEdges.stream().findAny();
 			XcfaEdge outgoingEdge = any.get();
 			outgoingEdges.remove(outgoingEdge);
@@ -77,7 +93,7 @@ public class RemoveDeadEnds extends ProcedurePass{
 
 	private void collectNonDeadEndEdges(XcfaLocation loc, Set<XcfaEdge> nonDeadEndEdges) {
 		Set<XcfaEdge> incomingEdges = new LinkedHashSet<>(loc.getIncomingEdges());
-		while(!incomingEdges.isEmpty()) {
+		while (!incomingEdges.isEmpty()) {
 			Optional<XcfaEdge> any = incomingEdges.stream().findAny();
 			XcfaEdge incomingEdge = any.get();
 			incomingEdges.remove(incomingEdge);

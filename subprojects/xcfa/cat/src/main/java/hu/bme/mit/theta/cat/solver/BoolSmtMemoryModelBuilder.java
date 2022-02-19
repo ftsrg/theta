@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.cat.solver;
 
 import com.google.common.base.Supplier;
@@ -34,7 +50,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 
-public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
+public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder {
 	private List<Expr<BoolType>> solver;
 	private final List<Object> primitives;
 	private final Map<Tuple2<String, Integer>, Supplier<Map<TupleN<Integer>, Expr<BoolType>>>> rules;
@@ -56,10 +72,10 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relations.get(rule).getElements();
 		final List<TupleN<?>> ret = new ArrayList<>();
 		elements.forEach((objects, boolTypeConstDecl) -> {
-			if(((BoolLitExpr)(valuation.eval(boolTypeConstDecl).orElse(False()))).getValue()) {
+			if (((BoolLitExpr) (valuation.eval(boolTypeConstDecl).orElse(False()))).getValue()) {
 				final List<Object> wp = new ArrayList<>();
 				for (Object object : objects) {
-					wp.add(primitives.get((Integer)object));
+					wp.add(primitives.get((Integer) object));
 				}
 				ret.add(TupleN.of(wp));
 			}
@@ -72,7 +88,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relations.get(rule).getElements();
 		final List<TupleN<Integer>> ret = new ArrayList<>();
 		elements.forEach((objects, boolTypeConstDecl) -> {
-			if(((BoolLitExpr)(valuation.eval(boolTypeConstDecl).orElse(False()))).getValue()) {
+			if (((BoolLitExpr) (valuation.eval(boolTypeConstDecl).orElse(False()))).getValue()) {
 				ret.add(objects);
 			}
 		});
@@ -128,7 +144,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 	public Expr<BoolType> getRfConstraints(List<Tuple2<Integer, ConstDecl<?>>> writeConst, List<Tuple2<Integer, ConstDecl<?>>> readConst) {
 		checkState(relations.containsKey("rf"), "Read-from not defined!");
 		final int maxid = primitives.size();
-		if(relations.containsKey("id")) {
+		if (relations.containsKey("id")) {
 			final Relation id = relations.get("id");
 			for (int i = 0; i < maxid; i++) {
 				id.addFact(TupleN.of(i, i));
@@ -144,7 +160,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			final Map<TupleN<Integer>, ConstDecl<BoolType>> elements = relation.getElements();
 			elements.forEach((objects, boolTypeConstDecl) -> {
 				final EqExpr<?> constraint = Eq(boolTypeConstDecl.getRef(), exprs.get(objects));
-				if(!constraint.getLeftOp().equals(constraint.getRightOp())) {
+				if (!constraint.getLeftOp().equals(constraint.getRightOp())) {
 //					System.err.println("Adding constraint " + constraint);
 					solver.add(constraint);
 				}
@@ -202,7 +218,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 			final TupleN<Integer> key = entry.getKey();
 			final Integer key1 = key.get(0);
 			final Integer key2 = key.get(1);
-			if(!key1.equals(key2)) {
+			if (!key1.equals(key2)) {
 				final TupleN<Integer> reverseKey = TupleN.of(key2, key1);
 				final ConstDecl<BoolType> one = entry.getValue();
 				final ConstDecl<BoolType> other = co.get(reverseKey);
@@ -213,8 +229,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 //				System.err.println("Adding constraint " + constraint1);
 				solver.add(constraint0);
 				solver.add(constraint1);
-			}
-			else {
+			} else {
 				final Expr<BoolType> constraint = Not(entry.getValue().getRef());
 //				System.err.println("Adding constraint " + constraint);
 				solver.add(constraint);
@@ -255,7 +270,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		@Override
 		public Map<TupleN<Integer>, Expr<BoolType>> visit(RuleDerivation.Element derivation, BoolSmtMemoryModelBuilder param) {
 			final String rule = derivation.getRule();
-			if(!param.relations.containsKey(rule)) {
+			if (!param.relations.containsKey(rule)) {
 				param.relations.put(rule, new Relation(derivation.getArity(), derivation.getRule()));
 				param.relations.get(rule).createElements(param.primitives.size(), null);
 			}
@@ -366,14 +381,14 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		}
 
 		private void createElements(final int maxId, List<Expr<BoolType>> solver) {
-			if(elements.size() != 0) return;
+			if (elements.size() != 0) return;
 			final List<TupleN<Integer>> lists = createLists(new ArrayList<>(), new Stack<>(), arity, maxId);
 			for (TupleN<Integer> list : lists) {
 				final StringJoiner stringJoiner = new StringJoiner(", ");
-				list.forEach(o -> stringJoiner.add(Integer.toString((Integer)o)));
+				list.forEach(o -> stringJoiner.add(Integer.toString((Integer) o)));
 				elements.put(list, Const(name + "(" + stringJoiner + ")", BoolType.getInstance()));
 			}
-			if(knownTruths.isPresent()) {
+			if (knownTruths.isPresent()) {
 				for (TupleN<Integer> objects : Sets.difference(elements.keySet(), knownTruths.get())) {
 					// false
 //					System.err.println("Adding fact Not(" + elements.get(objects).getRef() + ")");
@@ -392,7 +407,7 @@ public class BoolSmtMemoryModelBuilder extends MemoryModelBuilder{
 		}
 
 		private List<TupleN<Integer>> createLists(final List<TupleN<Integer>> lists, final Stack<Integer> current, final int toGo, final int maxId) {
-			if(toGo == 0) {
+			if (toGo == 0) {
 				lists.add(TupleN.of(current));
 			} else {
 				for (int i = 0; i < maxId; i++) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -37,8 +30,15 @@ import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.logging.NullLogger;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.function.Function;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Basic implementation for the abstractor, relying on an ArgBuilder.
@@ -87,7 +87,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		long startNodes = arg.getNodes().count();
 		long startIncompleteNodes = arg.getIncompleteNodes().count();
 
-		ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S,A,P>(arg, prec));
+		ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
 		logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 		logger.write(Level.SUBSTEP, "|  |  Building ARG...");
@@ -110,7 +110,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 					waitlist.addAll(newNodes);
 				}
 
-				ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S,A,P>(arg, prec));
+				ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
 				if (stopCriterion.canStop(arg, newNodes)) break;
 			}
 		}

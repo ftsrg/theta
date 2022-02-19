@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class BoolSmtTest {
 
 	@Parameterized.Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 //				{new NoassertMemory(), new W2R2(), false},
 //				{new CoherenceMemory(), new W2R2(), true},
 //				{new NoassertMemory(), new W2R2WR(), false},
@@ -55,14 +55,14 @@ public class BoolSmtTest {
 	}
 
 	@Test
-	public void test()  {
+	public void test() {
 		final MemoryModelBuilder builder = BoolSmtMemoryModelBuilder.create(memoryModel);
 		final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
 		program.generateProgram(builder, solver);
 
 		solver.check();
-		if(solver.getStatus().isSat()) {
+		if (solver.getStatus().isSat()) {
 			final Valuation model = solver.getModel();
 			System.err.println("po: ");
 			printBinaryRelation(builder.get("po", model));

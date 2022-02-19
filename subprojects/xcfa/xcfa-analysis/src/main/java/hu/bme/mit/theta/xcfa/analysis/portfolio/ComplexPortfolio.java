@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.portfolio;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -8,7 +24,11 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
-import hu.bme.mit.theta.xcfa.analysis.portfolio.common.*;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.AbstractPortfolio;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CegarConfiguration;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.PortfolioTimeoutException;
+import hu.bme.mit.theta.xcfa.analysis.portfolio.common.Result;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.statistics.ModelStatistics;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -18,7 +38,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ComplexPortfolio extends AbstractPortfolio {
-	private final long sumTime = 900*1000; // in ms, with initialization time
+	private final long sumTime = 900 * 1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
 	private long startCpuTime;
 
@@ -28,7 +48,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 
 	public ComplexPortfolio(Logger.Level logLevel, String modelName, String smtlibhome) throws Exception {
 		super(logLevel, modelName, smtlibhome); // registers solver factories
-		if(ArchitectureConfig.multiThreading) {
+		if (ArchitectureConfig.multiThreading) {
 			algorithm = XcfaConfigBuilder.Algorithm.INTERLEAVINGS;
 			search = XcfaConfigBuilder.Search.BFS;
 		} else {
@@ -42,19 +62,19 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		logger.write(Logger.Level.MAINSTEP, "Executing complex portfolio...");
 		logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
-		startCpuTime = CpuTimeKeeper.getCurrentCpuTime()*1000;
+		startCpuTime = CpuTimeKeeper.getCurrentCpuTime() * 1000;
 		analysisTime = sumTime - initializationTime.toMillis();
 
 		SafetyResult<?, ?> safetyResult;
 
 		BitwiseOption bitwiseOption = BitwiseChecker.getBitwiseOption();
-		checkState(bitwiseOption!=null);
-		if(bitwiseOption == BitwiseOption.BITWISE) {
+		checkState(bitwiseOption != null);
+		if (bitwiseOption == BitwiseOption.BITWISE) {
 			logger.write(Logger.Level.SUBSTEP, "Choosing bitvector arithmetic without floats");
 			logger.write(Logger.Level.SUBSTEP, System.lineSeparator());
 			safetyResult = bvOnlyPath(xcfa);
 			outputResultFiles(safetyResult, "mathsat:5.6.6");
-		} else if(bitwiseOption == BitwiseOption.BITWISE_FLOAT) {
+		} else if (bitwiseOption == BitwiseOption.BITWISE_FLOAT) {
 			logger.write(Logger.Level.SUBSTEP, "Choosing bitvector arithmetic with floats");
 			logger.write(Logger.Level.SUBSTEP, System.lineSeparator());
 			safetyResult = fpbvPath(xcfa);
@@ -73,24 +93,24 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private SafetyResult<?, ?> fpbvPath(XCFA xcfa) throws Exception {
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result;
 		result = executeExplNwtBitvectorConfig("mathsat:fp", true, xcfa);
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
-		} else if(result.get1().equals(Result.SOLVERISSUE)) {
+		} else if (result.get1().equals(Result.SOLVERISSUE)) {
 			result = executeExplNwtBitvectorConfig("cvc4:exp", false, xcfa);
-			if(!result.get1().equals(Result.SUCCESS)) {
+			if (!result.get1().equals(Result.SUCCESS)) {
 				result = executePredNwtBitvectorConfig("cvc4:exp", false, xcfa);
 			}
 		} else {
 			result = executePredNwtBitvectorConfig("mathsat:fp", true, xcfa);
-			if(!result.get1().equals(Result.SUCCESS)) {
+			if (!result.get1().equals(Result.SUCCESS)) {
 				result = executeExplNwtBitvectorConfig("cvc4:exp", false, xcfa);
-				if(!result.get1().equals(Result.SUCCESS)) {
+				if (!result.get1().equals(Result.SUCCESS)) {
 					result = executePredNwtBitvectorConfig("cvc4:exp", false, xcfa);
 				}
 			}
 		}
 
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
 		} else {
@@ -101,16 +121,16 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private SafetyResult<?, ?> bvOnlyPath(XCFA xcfa) throws Exception {
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result;
 		result = executeExplSeqBitvectorConfig("mathsat:5.6.6", false, xcfa);
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			return result.get2().get();
-		} else if(result.get1().equals(Result.SOLVERISSUE)) {
+		} else if (result.get1().equals(Result.SOLVERISSUE)) {
 			result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
-			if(!result.get1().equals(Result.SUCCESS)) {
+			if (!result.get1().equals(Result.SUCCESS)) {
 				result = executePredNwtBitvectorConfig("Z3", false, xcfa);
 			}
 		} else {
 			result = executePredBwBitvectorConfig("mathsat:5.6.6", false, xcfa);
-			if(!result.get1().equals(Result.SUCCESS)) {
+			if (!result.get1().equals(Result.SUCCESS)) {
 				result = executeExplNwtBitvectorConfig("Z3", false, xcfa);
 				if (!result.get1().equals(Result.SUCCESS)) {
 					result = executePredNwtBitvectorConfig("Z3", false, xcfa);
@@ -118,7 +138,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 			}
 		}
 
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
 		} else {
@@ -142,12 +162,12 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime()));
-		if(result.get1().equals(Result.SUCCESS)) {
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0 / 3.0 * calculateRemainingTime()));
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		} else if(result.get1().equals(Result.TIMEOUT)) {
+		} else if (result.get1().equals(Result.TIMEOUT)) {
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
@@ -169,12 +189,12 @@ public class ComplexPortfolio extends AbstractPortfolio {
 				verify
 		);
 
-		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0/3.0*calculateRemainingTime()));
-		if(result.get1().equals(Result.SUCCESS)) {
+		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, (long) (1.0 / 3.0 * calculateRemainingTime()));
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		} else if(result.get1().equals(Result.TIMEOUT)) {
+		} else if (result.get1().equals(Result.TIMEOUT)) {
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
@@ -197,11 +217,11 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime());
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		} else if(result.get1().equals(Result.TIMEOUT)) {
+		} else if (result.get1().equals(Result.TIMEOUT)) {
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
@@ -224,11 +244,11 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(explConfiguration, xcfa, calculateRemainingTime());
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + explConfiguration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		} else if(result.get1().equals(Result.TIMEOUT)) {
+		} else if (result.get1().equals(Result.TIMEOUT)) {
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return result;
@@ -240,31 +260,31 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, modelName);
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = null;
 
-		if(statistics.getWhileLoops()>0 && statistics.getCyclomaticComplexity() <= 30) {
+		if (statistics.getWhileLoops() > 0 && statistics.getCyclomaticComplexity() <= 30) {
 			result = runShortPred(xcfa);
-			if(result.get1().equals(Result.SUCCESS)) {
+			if (result.get1().equals(Result.SUCCESS)) {
 				checkState(result.get2().isPresent());
 				return result.get2().get();
 			}
 		}
 
-		if(statistics.getHavocCount()<=5 && statistics.getVarCount()>10) {
+		if (statistics.getHavocCount() <= 5 && statistics.getVarCount() > 10) {
 			result = runAllvarsExpl(xcfa);
 		} else {
 			result = runEmptyExpl(xcfa);
 		}
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
 		}
 
 		result = runLongPred(xcfa);
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			return result.get2().get();
-		} else if(!result.get1().equals(Result.TIMEOUT)) {
+		} else if (!result.get1().equals(Result.TIMEOUT)) {
 			result = runPredBool(xcfa);
-			if(result.get1().equals(Result.SUCCESS)) {
+			if (result.get1().equals(Result.SUCCESS)) {
 				checkState(result.get2().isPresent());
 				return result.get2().get();
 			} else {
@@ -292,11 +312,12 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + configuration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
-		}return result;
+		}
+		return result;
 	}
 
 	private Tuple2<Result, Optional<SafetyResult<?, ?>>> runLongPred(XCFA xcfa) throws Exception {
@@ -315,7 +336,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, calculateRemainingTime());
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + configuration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -339,7 +360,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (5.0 / 9.0 * calculateRemainingTime()));
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + configuration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -363,7 +384,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (400.0 / 900.0 * calculateRemainingTime()));
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + configuration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -387,7 +408,7 @@ public class ComplexPortfolio extends AbstractPortfolio {
 		);
 
 		Tuple2<Result, Optional<SafetyResult<?, ?>>> result = executeConfiguration(configuration, xcfa, (long) (30.0 / 900.0 * calculateRemainingTime()));
-		if(result.get1().equals(Result.SUCCESS)) {
+		if (result.get1().equals(Result.SUCCESS)) {
 			checkState(result.get2().isPresent());
 			logger.write(Logger.Level.MAINSTEP, "Complex portfolio successful, solver: " + configuration);
 			logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
@@ -398,8 +419,8 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	////////// HELPER METHODS //////////
 
 	private long calculateRemainingTime() {
-		long remainingTime = analysisTime-(CpuTimeKeeper.getCurrentCpuTime()*1000-startCpuTime);
-		if(remainingTime<=0) {
+		long remainingTime = analysisTime - (CpuTimeKeeper.getCurrentCpuTime() * 1000 - startCpuTime);
+		if (remainingTime <= 0) {
 			throw new PortfolioTimeoutException("Complex portfolio timed out");
 		}
 		return remainingTime;

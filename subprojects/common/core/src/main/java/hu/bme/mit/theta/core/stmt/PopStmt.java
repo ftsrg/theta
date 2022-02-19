@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Pop statement of the form pop VARIABLE, which pops the last form of the variable from stack
+ *
  * @param <DeclType>
  */
 public final class PopStmt<DeclType extends Type> implements Stmt {

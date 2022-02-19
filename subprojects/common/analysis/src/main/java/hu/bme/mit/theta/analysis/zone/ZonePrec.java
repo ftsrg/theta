@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,6 +68,6 @@ public final class ZonePrec implements Prec {
 
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() { // This could be way more elegant
-		return clocks.stream().map(ratTypeVarDecl -> (VarDecl<?>)ratTypeVarDecl).collect(Collectors.toSet());
+		return clocks.stream().map(ratTypeVarDecl -> (VarDecl<?>) ratTypeVarDecl).collect(Collectors.toSet());
 	}
 }

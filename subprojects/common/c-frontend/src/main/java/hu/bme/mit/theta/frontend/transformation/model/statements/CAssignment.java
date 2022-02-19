@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -13,7 +29,7 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class CAssignment extends CStatement{
+public class CAssignment extends CStatement {
 	private final Expr<?> lValue;
 	private final CStatement rValue;
 	private final String operator;
@@ -55,13 +71,25 @@ public class CAssignment extends CStatement{
 	public Expr<?> getrExpression() {
 		Expr<?> ret = null;
 		switch (operator) {
-			case "=": return rValue.getExpression();
-			case "*=": ret = AbstractExprs.Mul(lValue, rValue.getExpression()); break;
-			case "/=": ret = AbstractExprs.Div(lValue, rValue.getExpression()); break;
-			case "%=": ret = AbstractExprs.Mod(lValue, rValue.getExpression()); break;
-			case "+=": ret = AbstractExprs.Add(lValue, rValue.getExpression()); break;
-			case "-=": ret = AbstractExprs.Sub(lValue, rValue.getExpression()); break;
-			default: throw new RuntimeException("Bad operator!");
+			case "=":
+				return rValue.getExpression();
+			case "*=":
+				ret = AbstractExprs.Mul(lValue, rValue.getExpression());
+				break;
+			case "/=":
+				ret = AbstractExprs.Div(lValue, rValue.getExpression());
+				break;
+			case "%=":
+				ret = AbstractExprs.Mod(lValue, rValue.getExpression());
+				break;
+			case "+=":
+				ret = AbstractExprs.Add(lValue, rValue.getExpression());
+				break;
+			case "-=":
+				ret = AbstractExprs.Sub(lValue, rValue.getExpression());
+				break;
+			default:
+				throw new RuntimeException("Bad operator!");
 		}
 		FrontendMetadata.create(ret, "cType", CComplexType.getType(lValue));
 		ret = CComplexType.getType(lValue).castTo(ret);

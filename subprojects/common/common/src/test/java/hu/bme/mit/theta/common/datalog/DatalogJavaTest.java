@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public final class DatalogJavaTest {
 	public DatalogJavaTest() {
 		datalog = Datalog.createProgram();
 		//datalog.setDebug(true);
-		edge = datalog.createRelation("edge",2);
+		edge = datalog.createRelation("edge", 2);
 		successor = datalog.createRelation("successor", 2);
 		reflexive = datalog.createRelation("reflexive", 1);
 

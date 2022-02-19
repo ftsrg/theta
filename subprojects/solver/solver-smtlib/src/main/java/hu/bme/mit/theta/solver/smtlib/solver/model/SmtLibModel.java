@@ -4,21 +4,21 @@ import java.util.Collection;
 import java.util.Map;
 
 public class SmtLibModel {
-    protected final Map<String, String> values;
+	protected final Map<String, String> values;
 
-    public SmtLibModel(final Map<String, String> values) {
-        this.values = values;
-    }
+	public SmtLibModel(final Map<String, String> values) {
+		this.values = values;
+	}
 
-    public Collection<String> getDecls() {
-        return values.keySet();
-    }
+	public Collection<String> getDecls() {
+		return values.keySet();
+	}
 
-    public String getTerm(final String symbol) {
-        return values.get(symbol);
-    }
+	public String getTerm(final String symbol) {
+		return values.get(symbol);
+	}
 
-    public int size() {
-        return values.size();
-    }
+	public int size() {
+		return values.size();
+	}
 }

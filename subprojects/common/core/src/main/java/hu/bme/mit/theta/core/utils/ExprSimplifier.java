@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -138,7 +138,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -445,14 +448,14 @@ public final class ExprSimplifier {
 		boolean nonLiteralFound = false;
 		List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
 		Expr<ET> newElseElem = simplify(t.getElseElem(), val);
-		if(!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
+		if (!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
 		for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
 			Expr<IT> newIndex = simplify(element.get1(), val);
 			Expr<ET> newElement = simplify(element.get2(), val);
 			newElements.add(Tuple2.of(newIndex, newElement));
-			if(!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
+			if (!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
 		}
-		if(nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
+		if (nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
 		else return t.eval(val);
 	}
 
@@ -1016,8 +1019,7 @@ public final class ExprSimplifier {
 			final IntLitExpr leftLit = (IntLitExpr) leftOp;
 			final IntLitExpr rightLit = (IntLitExpr) rightOp;
 			return leftLit.mod(rightLit);
-		}
-		else if(leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
+		} else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
 			return leftOp;
 		}
 
@@ -1032,8 +1034,7 @@ public final class ExprSimplifier {
 			final IntLitExpr leftLit = (IntLitExpr) leftOp;
 			final IntLitExpr rightLit = (IntLitExpr) rightOp;
 			return leftLit.rem(rightLit);
-		}
-		else if(leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
+		} else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
 			return simplify(leftOp, val);
 		}
 
@@ -2120,8 +2121,7 @@ public final class ExprSimplifier {
 
 		if (op instanceof FpLitExpr) {
 			return expr.eval(val);
-		}
-		else if (op instanceof FpToFpExpr) {
+		} else if (op instanceof FpToFpExpr) {
 			return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
 		}
 

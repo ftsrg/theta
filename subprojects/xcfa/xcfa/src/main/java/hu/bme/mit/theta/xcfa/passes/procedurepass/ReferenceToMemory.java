@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
 import hu.bme.mit.theta.common.Tuple2;
@@ -36,7 +52,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class ReferenceToMemory extends ProcedurePass{
+public class ReferenceToMemory extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		return handleWithGenerics(builder);
@@ -50,7 +66,8 @@ public class ReferenceToMemory extends ProcedurePass{
 		VarDecl<?> placeholderVariable = Var("placeholder", ptr.getSmtType());
 
 		Set<RefExpr<?>> dereferenced = FrontendMetadata.lookupMetadata("dereferenced", true).stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
-		if(dereferenced.size() > 0 && ArchitectureConfig.multiThreading) throw new UnsupportedOperationException("Pointers and multithreading do not yet mix!");
+		if (dereferenced.size() > 0 && ArchitectureConfig.multiThreading)
+			throw new UnsupportedOperationException("Pointers and multithreading do not yet mix!");
 		for (RefExpr<?> refExpr : dereferenced) {
 			addDereferencedToPointers(refExpr);
 		}
@@ -67,24 +84,23 @@ public class ReferenceToMemory extends ProcedurePass{
 			Type type = CComplexType.getType(referencedVariable).getSmtType();
 
 			Optional<Object> dereferencedOpt = FrontendMetadata.getMetadataValue(referencedVariable, "refSubstitute");
-			if(dereferencedOpt.isPresent() && dereferencedOpt.get() instanceof VarDecl) {
+			if (dereferencedOpt.isPresent() && dereferencedOpt.get() instanceof VarDecl) {
 				//noinspection unchecked
 				VarDecl<ArrayType<P, ?>> memoryMap = (VarDecl<ArrayType<P, ?>>) dereferencedOpt.get();
 				expr = ArrayReadExpr.of(cast(memoryMap.getRef(), ArrayType.of(ptr.getSmtType(), type)), cast(ptrExpr, ptr.getSmtType()));
 				dereferencedLut.put(referencedVariable.getDecl(), Tuple2.of(memoryMap, ptrExpr));
-			}
-			else {
+			} else {
 				checkState(dereferencedOpt.isEmpty(), "Dereferenced variable not annotated with a variable!");
 				expr = referencedVariable;
 			}
 
-			if(unifiedMemoryMap != null) {
+			if (unifiedMemoryMap != null) {
 				unifiedMemoryMap = Ite(Eq(ptrExpr, placeholderVariable.getRef()), fitsall.castTo(expr), unifiedMemoryMap);
 			} else {
 				unifiedMemoryMap = fitsall.castTo(expr);
 			}
 		}
-		if(unifiedMemoryMap != null) FrontendMetadata.create(unifiedMemoryMap, "cType", fitsall);
+		if (unifiedMemoryMap != null) FrontendMetadata.create(unifiedMemoryMap, "cType", fitsall);
 
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			List<XcfaLabel> newStmts = new ArrayList<>();
@@ -92,7 +108,7 @@ public class ReferenceToMemory extends ProcedurePass{
 			for (XcfaLabel stmt : edge.getLabels()) {
 				found = handleStmt(unifiedMemoryMap, ptr, dereferencedLut, newStmts, found, stmt, placeholderVariable);
 			}
-			if(found) {
+			if (found) {
 				builder.removeEdge(edge);
 				builder.addEdge(XcfaEdge.of(edge.getSource(), edge.getTarget(), newStmts));
 			}
@@ -102,12 +118,14 @@ public class ReferenceToMemory extends ProcedurePass{
 
 	private void addDereferencedToPointers(RefExpr<?> refExpr) {
 		Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(refExpr, "pointsTo");
-		if(pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
+		if (pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
 			((Collection<?>) pointsTo.get()).forEach(o -> {
 				Optional<Object> pointsTo2 = FrontendMetadata.getMetadataValue(o, "dereferenced");
-				if(pointsTo2.isEmpty()) {
-					FrontendMetadata.create(o, "dereferenced", true);;
-					FrontendMetadata.create(o, "refSubstitute", FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());;
+				if (pointsTo2.isEmpty()) {
+					FrontendMetadata.create(o, "dereferenced", true);
+					;
+					FrontendMetadata.create(o, "refSubstitute", FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());
+					;
 					addDereferencedToPointers((RefExpr<?>) o);
 				}
 			});
@@ -121,12 +139,12 @@ public class ReferenceToMemory extends ProcedurePass{
 				Optional<? extends Expr<?>> replaced = ExpressionReplacer.replace(memoryMap, typeExpr -> {
 					if (typeExpr.equals(placeholderVariable.getRef())) {
 						//noinspection unchecked
-						return Optional.of((Expr<Type>)((Dereference<?, ?>) expr).getOp());
+						return Optional.of((Expr<Type>) ((Dereference<?, ?>) expr).getOp());
 					}
 					return Optional.empty();
 				});
 				Expr<?> newExpr;
-				if(replaced.isEmpty()) newExpr = memoryMap;
+				if (replaced.isEmpty()) newExpr = memoryMap;
 				else newExpr = replaced.get();
 				FrontendMetadata.create(newExpr, "cType", CComplexType.getType(memoryMap));
 				Expr<?> cast = CComplexType.getType(expr).castTo(newExpr);
@@ -139,14 +157,13 @@ public class ReferenceToMemory extends ProcedurePass{
 			}
 			return Optional.empty();
 		});
-		if(newStmt.isPresent()) {
+		if (newStmt.isPresent()) {
 			found = true;
 			newStmts.addAll(XcfaStmtUtils.replaceVarWithArrayItem(newStmt.get(), dereferencedLut));
-		}
-		else {
+		} else {
 			List<XcfaLabel> stmts = XcfaStmtUtils.replaceVarWithArrayItem(stmt, dereferencedLut);
 			newStmts.addAll(stmts);
-			if(stmts.size() != 1 || !stmts.get(0).equals(stmt)) found = true;
+			if (stmts.size() != 1 || !stmts.get(0).equals(stmt)) found = true;
 		}
 		return found;
 	}

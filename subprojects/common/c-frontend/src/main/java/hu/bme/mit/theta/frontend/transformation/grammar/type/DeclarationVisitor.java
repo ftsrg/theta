@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
@@ -18,6 +34,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
 	/**
 	 * From a single declaration context and initialization list this function produces the corresponding CDeclarations
+	 *
 	 * @param declSpecContext declaration context
 	 * @param initDeclContext initialization list context
 	 * @return the corresponding CDeclarations
@@ -25,18 +42,18 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext, CParser.InitDeclaratorListContext initDeclContext) {
 		List<CDeclaration> ret = new ArrayList<>();
 		CSimpleType cSimpleType = declSpecContext.accept(TypeVisitor.instance);
-		if(cSimpleType.getAssociatedName() != null) {
+		if (cSimpleType.getAssociatedName() != null) {
 			CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
 			cDeclaration.setType(cSimpleType);
 			cDeclaration.incDerefCounter(cSimpleType.getPointerLevel());
 			ret.add(cDeclaration);
 		}
-		if(initDeclContext != null) {
+		if (initDeclContext != null) {
 			for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
 				CDeclaration declaration = context.declarator().accept(this);
 				CStatement initializerExpression;
 				if (context.initializer() != null) {
-					if(context.initializer().initializerList() != null) {
+					if (context.initializer().initializerList() != null) {
 						checkState(context.initializer().initializerList().designation().size() == 0, "Initializer list designators not yet implemented!");
 						CInitializerList cInitializerList = new CInitializerList(cSimpleType.getActualType());
 						for (CParser.InitializerContext initializer : context.initializer().initializerList().initializers) {
@@ -53,7 +70,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 				ret.add(declaration);
 			}
 		}
-		if(cSimpleType.getAssociatedName() == null && initDeclContext != null && initDeclContext.initDeclarator().size() > 0) {
+		if (cSimpleType.getAssociatedName() == null && initDeclContext != null && initDeclContext.initDeclarator().size() > 0) {
 			ret.get(0).incDerefCounter(cSimpleType.getPointerLevel());
 		}
 		return ret;
@@ -90,7 +107,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 		//checkState(ctx.gccDeclaratorExtension().size() == 0, "Cannot do anything with gccDeclaratorExtensions!");
 		CDeclaration decl = ctx.directDeclarator().accept(this);
 
-		if(ctx.pointer() != null) {
+		if (ctx.pointer() != null) {
 			int size = ctx.pointer().stars.size();
 			decl.incDerefCounter(size);
 		}
@@ -112,10 +129,9 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 		checkState(ctx.typeQualifierList() == null, "Type qualifiers inside array declarations are not yet implemented.");
 
 		CDeclaration decl = ctx.directDeclarator().accept(this);
-		if(ctx.assignmentExpression() != null) {
+		if (ctx.assignmentExpression() != null) {
 			decl.addArrayDimension(ctx.assignmentExpression().accept(FunctionVisitor.instance));
-		}
-		else {
+		} else {
 			decl.addArrayDimension(null);
 		}
 		return decl;
@@ -139,12 +155,12 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 	@Override
 	public CDeclaration visitDirectDeclaratorFunctionDecl(CParser.DirectDeclaratorFunctionDeclContext ctx) {
 		CDeclaration decl = ctx.directDeclarator().accept(this);
-		if(!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
+		if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
 			System.err.println("WARNING: variable args are not supported!");
 			decl.setFunc(true);
 			return decl;
 		}
-		if(ctx.parameterTypeList() != null) {
+		if (ctx.parameterTypeList() != null) {
 			for (CParser.ParameterDeclarationContext parameterDeclarationContext : ctx.parameterTypeList().parameterList().parameterDeclaration()) {
 				decl.addFunctionParam(parameterDeclarationContext.accept(this));
 			}

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
@@ -69,9 +85,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	protected VarDecl<?> getVar(String name) {
 		for (Map<String, VarDecl<?>> variableList : variables) {
-			if(variableList.containsKey(name)) {
+			if (variableList.containsKey(name)) {
 				VarDecl<?> varDecl = variableList.get(name);
-				if(functions.containsKey(varDecl)) {
+				if (functions.containsKey(varDecl)) {
 					FrontendMetadata.create(name, "shouldInline", false);
 				}
 				return varDecl;
@@ -90,10 +106,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
-		if(ctx.expression() != null) {
+		if (ctx.expression() != null) {
 			CStatement ifTrue = ctx.expression().accept(FunctionVisitor.instance);
 			addPreStatements(ifTrue);
-			if(ifTrue instanceof CAssignment) {
+			if (ifTrue instanceof CAssignment) {
 				preStatements.add(ifTrue);
 			}
 			Expr<?> expr = ctx.logicalOrExpression().accept(this);
@@ -107,14 +123,13 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			);
 			FrontendMetadata.create(ite, "cType", smallestCommonType);
 			return ite;
-		}
-		else return ctx.logicalOrExpression().accept(this);
+		} else return ctx.logicalOrExpression().accept(this);
 	}
 
 	private void addPreStatements(CStatement ifTrue) {
-		if(ifTrue instanceof CCompound) {
-			if(ifTrue.getPreStatements() != null) preStatements.add(ifTrue.getPreStatements());
-			if(ifTrue.getPostStatements() != null) postStatements.add(ifTrue.getPostStatements());
+		if (ifTrue instanceof CCompound) {
+			if (ifTrue.getPreStatements() != null) preStatements.add(ifTrue.getPreStatements());
+			if (ifTrue.getPostStatements() != null) postStatements.add(ifTrue.getPostStatements());
 			for (CStatement cStatement : ((CCompound) ifTrue).getcStatementList()) {
 				addPreStatements(cStatement);
 			}
@@ -123,10 +138,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
-		if(ctx.logicalAndExpression().size() > 1) {
+		if (ctx.logicalAndExpression().size() > 1) {
 			List<Expr<BoolType>> collect = ctx.logicalAndExpression().stream().map(logicalAndExpressionContext -> {
-					Expr<?> expr = logicalAndExpressionContext.accept(this);
-					return AbstractExprs.Neq(CComplexType.getType(expr).getNullValue(), expr);
+				Expr<?> expr = logicalAndExpressionContext.accept(this);
+				return AbstractExprs.Neq(CComplexType.getType(expr).getNullValue(), expr);
 			}).collect(Collectors.toList());
 			CComplexType signedInt = CComplexType.getSignedInt();
 			IteExpr<?> ite = Ite(BoolExprs.Or(collect), signedInt.getUnitValue(), signedInt.getNullValue());
@@ -138,7 +153,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitLogicalAndExpression(CParser.LogicalAndExpressionContext ctx) {
-		if(ctx.inclusiveOrExpression().size() > 1) {
+		if (ctx.inclusiveOrExpression().size() > 1) {
 			List<Expr<BoolType>> collect = ctx.inclusiveOrExpression().stream().map(inclusiveOrExpression -> {
 				Expr<?> expr = inclusiveOrExpression.accept(this);
 				return AbstractExprs.Neq(CComplexType.getType(expr).getNullValue(), expr);
@@ -153,7 +168,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
-		if(ctx.exclusiveOrExpression().size() > 1) {
+		if (ctx.exclusiveOrExpression().size() > 1) {
 			List<Expr<?>> exprs = ctx.exclusiveOrExpression().stream().map(exclusiveOrExpression -> exclusiveOrExpression.accept(this)).collect(Collectors.toList());
 			List<CComplexType> types = exprs.stream().map(CComplexType::getType).collect(Collectors.toList());
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types);
@@ -161,7 +176,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				Expr<?> ret = smallestCommonType.castTo(expr);
 				checkState(ret.getType() instanceof BvType, "Non-bitvector type found!");
 				//noinspection unchecked
-				return (Expr<BvType>)ret;
+				return (Expr<BvType>) ret;
 			}).collect(Collectors.toList());
 			BvOrExpr or = BvExprs.Or(collect);
 			FrontendMetadata.create(or, "cType", smallestCommonType);
@@ -172,7 +187,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
-		if(ctx.andExpression().size() > 1) {
+		if (ctx.andExpression().size() > 1) {
 			List<Expr<?>> exprs = ctx.andExpression().stream().map(andExpression -> andExpression.accept(this)).collect(Collectors.toList());
 			List<CComplexType> types = exprs.stream().map(CComplexType::getType).collect(Collectors.toList());
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types);
@@ -180,7 +195,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				Expr<?> ret = smallestCommonType.castTo(expr);
 				checkState(ret.getType() instanceof BvType, "Non-bitvector type found!");
 				//noinspection unchecked
-				return (Expr<BvType>)ret;
+				return (Expr<BvType>) ret;
 			}).collect(Collectors.toList());
 			BvXorExpr xor = BvExprs.Xor(collect);
 			FrontendMetadata.create(xor, "cType", smallestCommonType);
@@ -191,7 +206,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitAndExpression(CParser.AndExpressionContext ctx) {
-		if(ctx.equalityExpression().size() > 1) {
+		if (ctx.equalityExpression().size() > 1) {
 			List<Expr<?>> exprs = ctx.equalityExpression().stream().map(equalityExpression -> equalityExpression.accept(this)).collect(Collectors.toList());
 			List<CComplexType> types = exprs.stream().map(CComplexType::getType).collect(Collectors.toList());
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types);
@@ -199,7 +214,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				Expr<?> ret = smallestCommonType.castTo(expr);
 				checkState(ret.getType() instanceof BvType, "Non-bitvector type found!");
 				//noinspection unchecked
-				return (Expr<BvType>)ret;
+				return (Expr<BvType>) ret;
 			}).collect(Collectors.toList());
 			BvAndExpr and = BvExprs.And(collect);
 			FrontendMetadata.create(and, "cType", smallestCommonType);
@@ -210,20 +225,20 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitEqualityExpression(CParser.EqualityExpressionContext ctx) {
-		if(ctx.relationalExpression().size() > 1) {
+		if (ctx.relationalExpression().size() > 1) {
 			Expr<?> expr = null;
-			for(int i = 0; i < ctx.relationalExpression().size() - 1; ++i) {
+			for (int i = 0; i < ctx.relationalExpression().size() - 1; ++i) {
 				Expr<?> leftOp, rightOp;
-				if(expr == null)
+				if (expr == null)
 					leftOp = ctx.relationalExpression(i).accept(this);
 				else
 					leftOp = expr;
-				rightOp = ctx.relationalExpression(i+1).accept(this);
+				rightOp = ctx.relationalExpression(i + 1).accept(this);
 				CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(leftOp), CComplexType.getType(rightOp)));
 				Expr<?> leftExpr = smallestCommonType.castTo(leftOp);
 				Expr<?> rightExpr = smallestCommonType.castTo(rightOp);
 				CComplexType signedInt = CComplexType.getSignedInt();
-				if(ctx.signs.get(i).getText().equals("=="))
+				if (ctx.signs.get(i).getText().equals("=="))
 					expr = Ite(AbstractExprs.Eq(leftExpr, rightExpr), signedInt.getUnitValue(), signedInt.getNullValue());
 				else
 					expr = Ite(AbstractExprs.Neq(leftExpr, rightExpr), signedInt.getUnitValue(), signedInt.getNullValue());
@@ -236,24 +251,32 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitRelationalExpression(CParser.RelationalExpressionContext ctx) {
-		if(ctx.shiftExpression().size() > 1) {
+		if (ctx.shiftExpression().size() > 1) {
 			Expr<?> expr = null;
-			for(int i = 0; i < ctx.shiftExpression().size() - 1; ++i) {
+			for (int i = 0; i < ctx.shiftExpression().size() - 1; ++i) {
 				Expr<?> leftOp, rightOp;
-				if(expr == null)
+				if (expr == null)
 					leftOp = ctx.shiftExpression(i).accept(this);
 				else
 					leftOp = expr;
-				rightOp = ctx.shiftExpression(i+1).accept(this);
+				rightOp = ctx.shiftExpression(i + 1).accept(this);
 				CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(leftOp), CComplexType.getType(rightOp)));
 				Expr<?> leftExpr = smallestCommonType.castTo(leftOp);
 				Expr<?> rightExpr = smallestCommonType.castTo(rightOp);
 				Expr<BoolType> guard;
-				switch(ctx.signs.get(i).getText()) {
-					case "<": guard = AbstractExprs.Lt(leftExpr, rightExpr); break;
-					case ">": guard = AbstractExprs.Gt(leftExpr, rightExpr); break;
-					case "<=": guard = AbstractExprs.Leq(leftExpr, rightExpr); break;
-					case ">=": guard = AbstractExprs.Geq(leftExpr, rightExpr); break;
+				switch (ctx.signs.get(i).getText()) {
+					case "<":
+						guard = AbstractExprs.Lt(leftExpr, rightExpr);
+						break;
+					case ">":
+						guard = AbstractExprs.Gt(leftExpr, rightExpr);
+						break;
+					case "<=":
+						guard = AbstractExprs.Leq(leftExpr, rightExpr);
+						break;
+					case ">=":
+						guard = AbstractExprs.Geq(leftExpr, rightExpr);
+						break;
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}
@@ -269,24 +292,24 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitShiftExpression(CParser.ShiftExpressionContext ctx) {
-		if(ctx.additiveExpression().size() > 1) {
+		if (ctx.additiveExpression().size() > 1) {
 			Expr<?> accept = ctx.additiveExpression(0).accept(this);
 			checkState(accept.getType() instanceof BvType);
 			//noinspection unchecked
 			Expr<BvType> expr = (Expr<BvType>) accept;
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(accept)));
 			checkState(smallestCommonType.getSmtType() instanceof BvType);
-			for(int i = 1; i < ctx.additiveExpression().size(); ++i) {
+			for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
 				Expr<BvType> rightOp;
 				accept = ctx.additiveExpression(i).accept(this);
 				checkState(accept.getType() instanceof BvType);
 				//noinspection unchecked
 				rightOp = (Expr<BvType>) accept;
-				Expr<BvType> leftExpr = cast(smallestCommonType.castTo(expr), (BvType)smallestCommonType.getSmtType());
-				Expr<BvType> rightExpr = cast(smallestCommonType.castTo(rightOp), (BvType)smallestCommonType.getSmtType());
-				if(ctx.signs.get(i-1).getText().equals(">>")) {
+				Expr<BvType> leftExpr = cast(smallestCommonType.castTo(expr), (BvType) smallestCommonType.getSmtType());
+				Expr<BvType> rightExpr = cast(smallestCommonType.castTo(rightOp), (BvType) smallestCommonType.getSmtType());
+				if (ctx.signs.get(i - 1).getText().equals(">>")) {
 					//TODO: is this sound?
-					if(leftExpr.getType().getSigned()) {
+					if (leftExpr.getType().getSigned()) {
 						expr = BvExprs.ArithShiftRight(leftExpr, rightExpr);
 					} else {
 						expr = BvExprs.LogicShiftRight(leftExpr, rightExpr);
@@ -303,13 +326,13 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitAdditiveExpression(CParser.AdditiveExpressionContext ctx) {
-		if(ctx.multiplicativeExpression().size() > 1) {
+		if (ctx.multiplicativeExpression().size() > 1) {
 			List<Expr<?>> exprs = ctx.multiplicativeExpression().stream().map(multiplicativeExpression -> multiplicativeExpression.accept(this)).collect(Collectors.toList());
 			List<CComplexType> types = exprs.stream().map(CComplexType::getType).collect(Collectors.toList());
 			CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types);
 			List<Expr<?>> collect = new ArrayList<>();
 			for (int i = 0; i < exprs.size(); i++) {
-				Expr<?> expr = (i == 0 || ctx.signs.get(i-1).getText().equals("+")) ? exprs.get(i) : AbstractExprs.Neg(exprs.get(i));
+				Expr<?> expr = (i == 0 || ctx.signs.get(i - 1).getText().equals("+")) ? exprs.get(i) : AbstractExprs.Neg(exprs.get(i));
 				FrontendMetadata.create(expr, "cType", CComplexType.getType(exprs.get(i)));
 				Expr<?> castTo = smallestCommonType.castTo(expr);
 				collect.add(castTo);
@@ -325,22 +348,28 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitMultiplicativeExpression(CParser.MultiplicativeExpressionContext ctx) {
-		if(ctx.castExpression().size() > 1) {
+		if (ctx.castExpression().size() > 1) {
 			Expr<?> expr = null;
-			for(int i = 0; i < ctx.castExpression().size() - 1; ++i) {
+			for (int i = 0; i < ctx.castExpression().size() - 1; ++i) {
 				Expr<?> leftOp, rightOp;
-				if(expr == null)
+				if (expr == null)
 					leftOp = ctx.castExpression(i).accept(this);
 				else
 					leftOp = expr;
-				rightOp = ctx.castExpression(i+1).accept(this);
+				rightOp = ctx.castExpression(i + 1).accept(this);
 				CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(leftOp), CComplexType.getType(rightOp)));
 				Expr<?> leftExpr = smallestCommonType.castTo(leftOp);
 				Expr<?> rightExpr = smallestCommonType.castTo(rightOp);
-				switch(ctx.signs.get(i).getText()) {
-					case "*": expr = AbstractExprs.Mul(leftExpr, rightExpr); break;
-					case "/": expr = AbstractExprs.Div(leftExpr, rightExpr); break;
-					case "%": expr = AbstractExprs.Mod(leftExpr, rightExpr); break;
+				switch (ctx.signs.get(i).getText()) {
+					case "*":
+						expr = AbstractExprs.Mul(leftExpr, rightExpr);
+						break;
+					case "/":
+						expr = AbstractExprs.Div(leftExpr, rightExpr);
+						break;
+					case "%":
+						expr = AbstractExprs.Mod(leftExpr, rightExpr);
+						break;
 					default:
 						throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
 				}
@@ -370,7 +399,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitUnaryExpression(CParser.UnaryExpressionContext ctx) {
-		if(ctx.unaryExpressionSizeOrAlignOf() != null) {
+		if (ctx.unaryExpressionSizeOrAlignOf() != null) {
 			System.err.println("WARNING: Sizeof and alignof are not yet implemented, using a literal 0 instead.");
 			CComplexType signedInt = CComplexType.getSignedInt();
 			LitExpr<?> zero = signedInt.getNullValue();
@@ -379,11 +408,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		}
 		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
-		if(increment != 0) {
+		if (increment != 0) {
 			Expr<?> expr = ret;
 			CComplexType type = CComplexType.getType(ret);
 			for (int i = 0; i < Math.abs(increment); i++) {
-				if(increment < 0)
+				if (increment < 0)
 					expr = AbstractExprs.Sub(expr, type.getUnitValue());
 				else
 					expr = AbstractExprs.Add(expr, type.getUnitValue());
@@ -404,7 +433,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
 		Expr<?> accept = ctx.castExpression().accept(this);
 		CComplexType type;
-		switch(ctx.unaryOperator().getText()) {
+		switch (ctx.unaryOperator().getText()) {
 			case "-": {
 				Expr<?> negExpr = AbstractExprs.Neg(accept);
 				type = CComplexType.getType(accept);
@@ -413,7 +442,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				FrontendMetadata.create(negExpr, "cType", type);
 				return negExpr;
 			}
-			case "+": return accept; // no need to update type, it remains the same
+			case "+":
+				return accept; // no need to update type, it remains the same
 			case "!":
 				CComplexType signedInt = CComplexType.getSignedInt();
 				accept = Ite(Eq(accept, CComplexType.getType(accept).getNullValue()), signedInt.getUnitValue(), signedInt.getNullValue());
@@ -461,7 +491,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
 		checkState(ctx.postfixExpressionMemberAccess().size() == 0 || ctx.postfixExpressionBrackets().size() == 0, "Structs of arrays are not yet supported!");
 		checkState(ctx.postfixExpressionPtrMemberAccess().size() == 0, "Struct pointers are not yet supported!");
-		if(ctx.postfixExpressionBraces().size() == 1) {
+		if (ctx.postfixExpressionBraces().size() == 1) {
 			checkState(ctx.postfixExpressionBrackets().size() == 0, "Arrays and functions are not yet supported together!");
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
@@ -469,10 +499,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			preStatements.add(cCall);
 			FunctionVisitor.instance.recordMetadata(ctx, cCall);
 			return cCall.getRet().getRef();
-		}
-		else {
+		} else {
 			Expr<?> primary = ctx.primaryExpression().accept(this);
-			if(primary == null) {
+			if (primary == null) {
 				return null;
 			} else {
 				int size = ctx.postfixExpressionBrackets().size();
@@ -490,7 +519,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 						varName.append(ctx.postfixExpressionMemberAccess().get(i).getText());
 					}
 					VarDecl<?> var = getVar(varName.toString());
-					if(var == null) return null;
+					if (var == null) return null;
 					primary = var.getRef();
 				}
 			}
@@ -610,8 +639,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitPrimaryExpressionBraceExpression(CParser.PrimaryExpressionBraceExpressionContext ctx) {
 		CStatement statement = ctx.expression().accept(FunctionVisitor.instance);
-	 	preStatements.add(statement);
-	    return statement.getExpression();
+		preStatements.add(statement);
+		return statement.getExpression();
 	}
 
 	@Override

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.common.datalog;
 
 /*
@@ -184,7 +200,7 @@ public class Datalog {
 	public Relation createDisjunction(String name, Iterable<Relation> relations) {
 		Integer arity = null;
 		for (Relation relation : relations) {
-			if(arity == null) arity = relation.getArity();
+			if (arity == null) arity = relation.getArity();
 			else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
 		}
 		checkState(arity != null, "At least one relation is necessary!");
@@ -207,20 +223,20 @@ public class Datalog {
 		}
 		return disjunction;
 	}
+
 	public Relation createConjuction(String name, Iterable<Relation> relations) {
 		Integer arity = null;
 		TupleN<Variable> varTuple = null;
 		Set<Tuple2<Relation, TupleN<Variable>>> deps = new LinkedHashSet<>();
 		for (Relation relation : relations) {
-			if(arity == null){
+			if (arity == null) {
 				arity = relation.getArity();
 				List<Variable> vars = new ArrayList<>();
 				for (int i = 0; i < arity; i++) {
 					vars.add(getVariable());
 				}
 				varTuple = TupleN.of(vars);
-			}
-			else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
+			} else checkState(relation.getArity() == arity, "Only same arity relations are supported!");
 
 			deps.add(Tuple2.of(relation, varTuple));
 		}
@@ -335,9 +351,9 @@ public class Datalog {
 				for (Tuple2<Relation, TupleN<Variable>> clause : rule.get2()) {
 					Set<TupleN<DatalogArgument>> alreadyAdded = new LinkedHashSet<>();
 					boolean atLeastOne = true;
-					while(atLeastOne) {
+					while (atLeastOne) {
 						atLeastOne = false;
-						for (TupleN<DatalogArgument> newElement : clause.get1().newElements.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection( LinkedHashSet::new ))) {
+						for (TupleN<DatalogArgument> newElement : clause.get1().newElements.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection(LinkedHashSet::new))) {
 							cnt = addElements(cnt, rule, clause, newElement);
 							alreadyAdded.add(newElement);
 							atLeastOne = true;
@@ -345,9 +361,9 @@ public class Datalog {
 					}
 					alreadyAdded.clear();
 					atLeastOne = true;
-					while(atLeastOne) {
+					while (atLeastOne) {
 						atLeastOne = false;
-						for (TupleN<DatalogArgument> newElement : clause.get1().toAdd.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection( LinkedHashSet::new ))) {
+						for (TupleN<DatalogArgument> newElement : clause.get1().toAdd.stream().filter(objects -> !alreadyAdded.contains(objects)).collect(Collectors.toCollection(LinkedHashSet::new))) {
 							cnt = addElements(cnt, rule, clause, newElement);
 							alreadyAdded.add(newElement);
 							atLeastOne = true;
@@ -363,7 +379,7 @@ public class Datalog {
 			if (putAssignments(assignments, clause, newElement))
 				return cnt;
 			if (debug) {
-				 System.out.println("\t(" + name + ")Checking " + newElement);
+				System.out.println("\t(" + name + ")Checking " + newElement);
 			}
 			ArrayList<Tuple2<Relation, TupleN<Variable>>> validators = new ArrayList<>(rule.get2());
 			validators.remove(clause);
@@ -380,7 +396,7 @@ public class Datalog {
 					if (!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(item)) {
 						toAdd.add(item);
 						if (debug) {
-							 System.out.println("(" + name + ")Adding " + item);
+							System.out.println("(" + name + ")Adding " + item);
 						}
 						++cnt;
 					}
@@ -405,8 +421,8 @@ public class Datalog {
 			if (debug) {
 				StringBuilder stringBuilder = new StringBuilder("[");
 				newElements.forEach(objects -> stringBuilder.append(objects.toString()).append(", "));
-				
-					System.out.println("(" + name + ") Promoting newElements to elements: " + stringBuilder.append("]").toString());
+
+				System.out.println("(" + name + ") Promoting newElements to elements: " + stringBuilder.append("]").toString());
 			}
 			elements.addAll(newElements);
 			newElements.clear();
@@ -414,8 +430,8 @@ public class Datalog {
 			if (debug) {
 				StringBuilder stringBuilder1 = new StringBuilder("[");
 				toAdd.forEach(objects -> stringBuilder1.append(objects.toString()).append(", "));
-				
-					System.out.println("(" + name + ") Promoting toAdd to newElements: " + stringBuilder1.append("]").toString());
+
+				System.out.println("(" + name + ") Promoting toAdd to newElements: " + stringBuilder1.append("]").toString());
 			}
 			newElements.addAll(toAdd);
 			toAdd.clear();

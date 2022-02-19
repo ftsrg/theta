@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,12 +119,12 @@ public class PushPopVarIndexing implements VarIndexing {
 		return transform().pop(varDecl).build();
 	}
 
-		/**
-		 * Add another indexing to the current instance
-		 *
-		 * @param indexing Other indexing
-		 * @return Sum of the two indexings
-		 */
+	/**
+	 * Add another indexing to the current instance
+	 *
+	 * @param indexing Other indexing
+	 * @return Sum of the two indexings
+	 */
 	@Override
 	public PushPopVarIndexing add(final VarIndexing indexing) {
 		checkNotNull(indexing);
@@ -331,7 +331,7 @@ public class PushPopVarIndexing implements VarIndexing {
 			final int newCurrentHeight = currentHeight + 1;
 			final int value = prevMax + 1;
 			final List<Integer> newIndices = new ArrayList<>(offsets);
-			if(newCurrentHeight > 0) {
+			if (newCurrentHeight > 0) {
 				newIndices.add(value);
 			} else {
 				newIndices.remove(negativeCount + newCurrentHeight);
@@ -346,8 +346,7 @@ public class PushPopVarIndexing implements VarIndexing {
 			int newNegativeCount = negativeCount;
 			if (newCurrentHeight >= 0) {
 				newIndices.remove(newIndices.size() - 1);
-			}
-			else if (newNegativeCount < -newCurrentHeight ) {
+			} else if (newNegativeCount < -newCurrentHeight) {
 				newIndices.add(0, 0);
 				++newNegativeCount;
 			}
@@ -376,7 +375,7 @@ public class PushPopVarIndexing implements VarIndexing {
 				newOffsets.add(currentHeight - (that.negativeCount - i), newOffset);
 				newPrevMax = Math.max(newPrevMax, newOffset);
 			}
-			if(that.currentHeight >= 0) {
+			if (that.currentHeight >= 0) {
 				final int newOffset = this.prevMax + that.offsets.get(i);
 				newOffsets.remove(currentHeight);
 				newOffsets.add(currentHeight, newOffset);
@@ -388,7 +387,7 @@ public class PushPopVarIndexing implements VarIndexing {
 					++newCurrentHeight;
 				}
 			} else {
-				newCurrentHeight+=that.currentHeight;
+				newCurrentHeight += that.currentHeight;
 				for (int i1 = 0; i1 > that.currentHeight; --i1) {
 					newOffsets.remove(newOffsets.size() - 1);
 				}
@@ -402,9 +401,9 @@ public class PushPopVarIndexing implements VarIndexing {
 			int newCurrentHeight = this.currentHeight;
 			int newPrevMin = this.prevMin;
 			int newNegativeCount = negativeCount;
-			if(this.currentHeight < that.currentHeight) {
+			if (this.currentHeight < that.currentHeight) {
 				int toAdd = that.currentHeight - this.currentHeight;
-				newNegativeCount+=toAdd;
+				newNegativeCount += toAdd;
 				for (int i1 = 0; i1 < toAdd; i1++) {
 					newOffsets.add(0, 0);
 				}
@@ -413,7 +412,7 @@ public class PushPopVarIndexing implements VarIndexing {
 			final int toPop = Math.max(that.currentHeight, 0);
 			for (i = 0; i < that.negativeCount; i++) {
 				final int newOffset = prevMin - that.offsets.get(i);
-				if(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i) >= 0) {
+				if (savedNegativeCount + currentHeight - toPop - (that.negativeCount - i) >= 0) {
 					newOffsets.remove(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i));
 					newOffsets.add(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i), newOffset);
 				} else {
@@ -422,7 +421,7 @@ public class PushPopVarIndexing implements VarIndexing {
 				}
 				newPrevMin = Math.min(newPrevMin, newOffset);
 			}
-			if(that.currentHeight >= 0) {
+			if (that.currentHeight >= 0) {
 				final int newOffset = prevMin - that.offsets.get(i);
 				newOffsets.remove(savedNegativeCount + currentHeight - toPop);
 				newOffsets.add(savedNegativeCount + currentHeight - toPop, newOffset);
@@ -431,7 +430,7 @@ public class PushPopVarIndexing implements VarIndexing {
 				for (int i1 = toPop; i1 > 0; --i1) {
 					newOffsets.remove(i1);
 				}
-				newCurrentHeight-=toPop;
+				newCurrentHeight -= toPop;
 			}
 			return OffsetStack.of(newCurrentHeight, newNegativeCount, newOffsets, prevMax, newPrevMin);
 		}
