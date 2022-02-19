@@ -193,7 +193,7 @@ public class CfaConfigBuilder {
 	}
 
 	public enum InitPrec {
-		EMPTY, ALLVARS, ANALYSE, ALLASSUMES
+		EMPTY, ALLVARS, ALLASSUMES
 	}
 
 	private Logger logger = NullLogger.getInstance();
@@ -385,9 +385,6 @@ public class CfaConfigBuilder {
 				case ALLVARS:
 					prec = precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
 					break;
-				case ANALYSE:
-					prec = precGranularity.createPrec(ExplPrec.of(countVariablesInAssumptions(cfa)));
-					break;
 				default:
 					throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
 							domain + " domain");
@@ -497,16 +494,6 @@ public class CfaConfigBuilder {
 						default:
 							throw new UnsupportedOperationException(precGranularity +
 									" precision granularity is not supported with " + domain + " domain");
-					}
-					break;
-				case ANALYSE:
-					switch (precGranularity) {
-						case GLOBAL:
-							prec = precGranularity.createPrec(PredPrec.of(collectErrorPathAssumes(cfa)));
-							break;
-						default:
-							throw new UnsupportedOperationException(precGranularity +
-									" precision granularity is not supported with " + initPrec + " initial precision");
 					}
 					break;
 				default:
