@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Base class of portfolio classes
- * executeAnalysis() is already implemented and can/should be used by subclasses
+ * {@link #executeConfiguration(CegarConfiguration, XCFA, long)} is already implemented and can/should be used by subclasses
+ * {@link #executeAnalysis} is not implemented and should be the "main" method in the subclasses (concrete portfolios)
  * Uses 2 threads when executing analysis
  * Uses thread.stop() if analysis times out - use at your own risk
  */
@@ -35,8 +36,21 @@ public abstract class AbstractPortfolio {
 		this.smtlibHome = smtlibHome;
 	}
 
+	/**
+	 * Not implemented by the base class, should be used as the main method for concrete portfolios
+	 * @param xcfa the model to execute the portfolio on
+	 * @param initializationTime how long the model transformation and optimization took (can be subtracted from the global time limit to get the time limit for the analysis)
+	 * @return the result of the analysis
+	 * @throws Exception
+	 */
 	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?,?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
 
+	/**
+	 * Creates and saves the counterexample into a file, also saves statistics into files (implemented by {@link OutputHandler} )
+	 * @param status result of the given configuration
+	 * @param refinementSolver the solver to be used to generate a counterexample
+	 * @throws Exception most likely solver exception
+	 */
 	public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
 		if (status!=null && status.isUnsafe()) {
 			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
@@ -46,11 +60,15 @@ public abstract class AbstractPortfolio {
 	}
 
 	/**
+	 * The main reason this class exists - all subclasses should use this method to execute their given configurations
+	 * Handles solver lifecycles, threads, etc.
+	 * Uses 2 threads when executing analysis
+	 * Uses thread.stop() if analysis times out - use at your own risk
 	 *
-	 * @param configuration
-	 * @param xcfa
+	 * @param configuration the configuration to execute
+	 * @param xcfa the model to execute the analysis on
 	 * @param timeout in ms
-	 * @return
+	 * @return the result of the analysis
 	 */
 	protected Tuple2<Result, Optional<SafetyResult<?,?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
 		logger.write(Logger.Level.RESULT, "Executing ");
@@ -169,6 +187,14 @@ public abstract class AbstractPortfolio {
 		return Tuple2.of(result, Optional.ofNullable(safetyResult));
 	}
 
+	/**
+	 * We can only keep track of cpu time by using {@link CpuTimeKeeper}, which this method calls properly
+	 * also, it is important to close all unused solvers,
+	 * so they don't take up time/leave behind partial data, that is outdated
+	 * @param home smt solver home
+	 * @param logger logger passed on to the solvers
+	 * @throws Exception SMT solver exceptions
+	 */
 	private static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
 		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
@@ -185,7 +211,6 @@ public abstract class AbstractPortfolio {
 		CpuTimeKeeper.saveSolverTimes();
 		SolverManager.closeAll();
 	}
-
 
 	private static void registerAllSolverManagers(String home, Logger logger) throws Exception {
 		SolverManager.registerSolverManager(Z3SolverManager.create());

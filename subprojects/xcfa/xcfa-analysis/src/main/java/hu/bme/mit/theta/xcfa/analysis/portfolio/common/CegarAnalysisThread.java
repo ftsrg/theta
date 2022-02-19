@@ -8,6 +8,11 @@ import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
+/**
+ * the "analysis thread" for portfolios - {@link AbstractPortfolio} uses this thread class
+ * to call and manage the analysis (the steps in the portfolio)
+ * (e.g. handling/issuing timeouts)
+ */
 class CegarAnalysisThread extends Thread {
 	private final XCFA xcfa;
 	private final CegarConfiguration configuration;
@@ -33,6 +38,11 @@ class CegarAnalysisThread extends Thread {
 		return safetyResult;
 	}
 
+	/**
+	 * Executes the given analysis on this thread and saves the result in volatile member variables
+	 * Catches and handles different exceptions regarding the result
+	 * (not solvable, solver exception, out of memory error, generic exceptions, i.e. unknown result)
+	 */
 	@Override
 	public void run() {
 		try {
@@ -66,6 +76,9 @@ class CegarAnalysisThread extends Thread {
 		}
 	}
 
+	/**
+	 * Has to be called explicitly to set the results to timeout after the thread itself is dead
+	 */
 	public void timeout() {
 		result = Result.TIMEOUT;
 		safetyResult = null;
