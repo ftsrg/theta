@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStatePredicate;
@@ -37,7 +38,6 @@ import hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
@@ -59,12 +59,7 @@ import hu.bme.mit.theta.analysis.pred.PredStmtOptimizer;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtAnalysis;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtOptimizer;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -159,9 +154,7 @@ public class XstsConfigBuilder {
 
 		public final XstsAutoExpl builder;
 
-		private AutoExpl(final XstsAutoExpl builder) {
-			this.builder = builder;
-		}
+		private AutoExpl(final XstsAutoExpl builder) { this.builder = builder; }
 	}
 
 	public enum OptimizeStmts {
@@ -232,7 +225,7 @@ public class XstsConfigBuilder {
 
 		if (domain == Domain.EXPL) {
 			final LTS<XstsState<ExplState>, XstsAction> lts;
-			if (optimizeStmts == OptimizeStmts.ON) {
+			if(optimizeStmts == OptimizeStmts.ON){
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
 			} else {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
@@ -297,8 +290,8 @@ public class XstsConfigBuilder {
 			}
 
 			final LTS<XstsState<PredState>, XstsAction> lts;
-			if (optimizeStmts == OptimizeStmts.ON) {
-				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
+			if(optimizeStmts == OptimizeStmts.ON){
+				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
 			} else {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
 			}
@@ -347,9 +340,9 @@ public class XstsConfigBuilder {
 			final PredPrec prec = initPrec.builder.createPred(xsts);
 			return XstsConfig.create(checker, prec);
 		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED_COMBINED) {
-			final LTS<XstsState<Prod2State<ExplState, PredState>>, XstsAction> lts;
-			if (optimizeStmts == OptimizeStmts.ON) {
-				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(
+			final LTS<XstsState<Prod2State<ExplState,PredState>>, XstsAction> lts;
+			if(optimizeStmts == OptimizeStmts.ON){
+				lts = XstsLts.create(xsts,XstsStmtOptimizer.create(
 						Prod2ExplPredStmtOptimizer.create(
 								ExplStmtOptimizer.getInstance()
 						)));
@@ -357,9 +350,9 @@ public class XstsConfigBuilder {
 				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
 			}
 
-			final Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> prod2Analysis;
+			final Analysis<Prod2State<ExplState,PredState>,XstsAction,Prod2Prec<ExplPrec,PredPrec>> prod2Analysis;
 			final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, abstractionSolver));
-			if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT) {
+			if(domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_SPLIT){
 				final PredAbstractors.PredAbstractor predAbstractor;
 				switch (domain) {
 					case EXPL_PRED_BOOL:
@@ -380,18 +373,12 @@ public class XstsConfigBuilder {
 						Prod2ExplPredPreStrengtheningOperator.create(),
 						Prod2ExplPredStrengtheningOperator.create(abstractionSolver));
 			} else {
-//				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-//				prod2Analysis = Prod2ExplPredAnalysis.create(
-//						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
-//						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
-//						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-//						prodAbstractor);
 				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-				prod2Analysis = Prod2ExplPredStmtAnalysis.create(
-						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula()),
+				prod2Analysis = Prod2ExplPredAnalysis.create(
+						ExplAnalysis.create(abstractionSolver, xsts.getInitFormula()),
 						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
 						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
-						prodAbstractor, abstractionSolver, maxEnum);
+						prodAbstractor);
 			}
 			final Analysis<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> analysis = XstsAnalysis.create(prod2Analysis);
 
