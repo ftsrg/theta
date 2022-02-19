@@ -286,16 +286,12 @@ public final class StmtApplier {
 
 
 	private static ApplyResult applyPush(final PushStmt<?> stmt, final MutableValuation val) {
-		final VarDecl<?> varDecl = stmt.getVarDecl();
-		val.remove(varDecl);
-		return ApplyResult.SUCCESS;
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 
 	private static ApplyResult applyPop(final PopStmt<?> stmt, final MutableValuation val) {
-		final VarDecl<?> varDecl = stmt.getVarDecl();
-		val.remove(varDecl);
-		return ApplyResult.SUCCESS;
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 }
