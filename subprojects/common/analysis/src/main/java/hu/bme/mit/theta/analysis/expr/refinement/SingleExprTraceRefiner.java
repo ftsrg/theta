@@ -71,7 +71,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
-		//logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
+		logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
 
 		logger.write(Level.SUBSTEP, "|  |  Checking trace...");
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
