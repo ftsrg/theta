@@ -58,10 +58,6 @@ import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtAnalysis;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -94,7 +90,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class XcfaConfigBuilder {
 	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_COMBINED;
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT;
 	}
 
 	public enum Refinement {
@@ -339,17 +335,6 @@ public class XcfaConfigBuilder {
 				abstractor = getAbstractor(lts, predAnalysis, xcfa);
 				prec = getPredPrec(initPrec, xcfa);
 				precRefiner = algorithm.getPrecRefiner(predRefToPrec);
-				break;
-			case EXPL_PRED_COMBINED:
-				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolverFactory.createSolver());
-				final Prod2ExplPredStmtAnalysis prodAnalysis = Prod2ExplPredStmtAnalysis.create(
-						ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), True()),
-						PredAnalysis.create(abstractionSolverFactory.createSolver(), PredAbstractors.booleanAbstractor(abstractionSolverFactory.createSolver()), True()),
-						Prod2ExplPredStrengtheningOperator.create(abstractionSolverFactory.createSolver()),
-						prodAbstractor, abstractionSolverFactory.createSolver(), maxEnum);
-				abstractor = getAbstractor(lts, prodAnalysis, xcfa);
-				prec = getProdPrec(initPrec, xcfa);
-				precRefiner = algorithm.getPrecRefiner(AutomaticItpRefToProd2ExplPredPrec.create(autoExpl.builder.create(xcfa), predSplit.splitter));
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + domain);
