@@ -35,14 +35,13 @@ public final class CfaWriter {
 	public static void write(final CFA cfa, final OutputStream outStream) throws IOException {
 		final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outStream));
 
-		bw.write("digraph cfa {");
-		// bw.write("main process cfa {");
+		bw.write("main process cfa {");
 		bw.newLine();
 
 		for (final Decl<?> var : cfa.getVars()) {
 			final String varName = var.getName();
 			final String varType = var.getType().toString().toLowerCase();
-			bw.write(String.format("\t\"var %s : %s\";", varName, varType));
+			bw.write(String.format("\tvar %s : %s", varName, varType));
 			bw.newLine();
 		}
 
@@ -60,7 +59,7 @@ public final class CfaWriter {
 			if (cfa.getFinalLoc().isPresent() && loc == cfa.getFinalLoc().get()) {
 				locPrefix += "final ";
 			}
-			bw.write(String.format("\t\"%s%s\"", locPrefix, locName));
+			bw.write(String.format("\t%sloc %s", locPrefix, locName));
 			bw.newLine();
 		}
 
@@ -69,9 +68,11 @@ public final class CfaWriter {
 		for (final Edge edge : cfa.getEdges()) {
 			final String sourceLoc = "L" + edge.getSource().getName();
 			final String targetLoc = "L" + edge.getTarget().getName();
-			bw.write(String.format("\t\"%s\" -> \"%s\" [ label=\"", sourceLoc, targetLoc));
+			bw.write(String.format("\t%s -> %s {", sourceLoc, targetLoc));
+			bw.newLine();
 			bw.write(String.format("\t\t%s", writeStmt(edge.getStmt())));
-			bw.write("\t\" ];");
+			bw.newLine();
+			bw.write("\t}");
 			bw.newLine();
 		}
 

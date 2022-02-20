@@ -14,11 +14,12 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.common.visualization.writer;
+package hu.bme.mit.theta.xcfa.analysis.utils;
 
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.Node;
+import hu.bme.mit.theta.common.visualization.writer.AbstractGraphWriter;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -20,8 +20,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.WitnessGraphvizWriter;
-import hu.bme.mit.theta.common.visualization.writer.WitnessWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;

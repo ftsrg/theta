@@ -14,13 +14,15 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.common.visualization.writer;
+package hu.bme.mit.theta.xcfa.analysis.utils;
 
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.common.visualization.writer.AbstractGraphWriter;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 /**
  * Uses a GraphvizWriter to output a graphviz graph with witness data, but introduces some changes
