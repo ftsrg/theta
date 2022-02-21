@@ -26,6 +26,11 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
+/**
+ * This is a wrapper and extension to the {@link XcfaConfig} class
+ * It stores and is capable of returning the information an {@link XcfaConfig} stores,
+ * but it also stores information on the solvers used, if arg-cex check is used and if the solver is validated
+ */
 public class CegarConfiguration {
 	public final XcfaConfigBuilder.Domain domain;
 	public final XcfaConfigBuilder.Refinement refinement;
@@ -92,7 +97,7 @@ public class CegarConfiguration {
 	}
 
 	/**
-	 * sets up arg cex check and builds configuration
+	 * Sets up arg-cex check (if it is enabled) and builds configuration
 	 */
 	public XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa, ConsoleLogger logger) throws Exception {
 		// set up Arg-Cex check
