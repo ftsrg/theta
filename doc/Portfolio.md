@@ -47,13 +47,21 @@ The precise parameters of these configurations:
 3. `–domain  EXPL  –initprec  EMPTY  –search  ERR  –encoding  LBE  –refinement  NWT_IT_WP  –maxenum1 –precgranularity GLOBAL –prunestrategy LAZY`
 
 ### Adding further portfolios
+To create a new concrete portfolio, create a subclass of the `hu.bme.mit.theta.xcfa.analysis.portfolio.common.AbstractPortfolio` class and implement its abstract method `executeAnalysis`. The `AbstractPortfolio` class serves as a utility, in which the execution of any given configuration with a time limit on a separate thread is already implemented in the method `executeConfiguration`.
+
+For further information, see the javadoc and/or the already implemented `ComplexPortfolio` and `SequentialPortfolio` classes.
+
+To enable your portfolio as a parameter, add a new value to `hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio` and extend `hu.bme.mit.theta.xcfa.cli.XcfaCli` with this value (the corresponding switch statement is around line 422).
 
 ## Limitations
 ### Limited to XCFA
 The current version of the portfolio was created specifically to verify C programs transformed to the XCFA formalism. In the future it will be available for further formalisms.
 
 ### Limitations/Errors due to Threads
+The portfolio executes the analysis on a separate thread as it needs to be able to interrupt in case a time limit is reached. On the other hand, Theta often spends a large amount of time executing and waiting for SMT solvers or on other longer tasks (e.g. building the ARG), which cannot be interrupted quickly. Thus the portfolio is required to use `Thread.stop()`, when an interrupt seems insufficient, while also handling several possible states of the tool (SMT solver process running/in background, etc.). There are possible corner cases, where this might not work properly (the thread or a solver is not stopped properly, gets stuck, etc.). Solving these issues requires a completely new, process-based solution, which is currently under progress - until then, some bugs remain.
 
+### Limited to Linux
+To set and handle time limits, the portfolio has to measure the uptime of different processes (as most solvers are executed as different processes). To achieve that, the utility `ps` is used, which is only available on linux. Thus the portfolio is currently not available on Windows.
 
 ## Further Details
 The portfolio was implemented as part of the bachelor's thesis work of Zsófia Ádám, available [here](https://zenodo.org/record/5907927).
@@ -61,6 +69,6 @@ The portfolio was implemented as part of the bachelor's thesis work of Zsófia �
 The complex portfolio was used on SV-COMP 2022, the resulting tool paper can be found [here](http://ftsrg.mit.bme.hu/paper-tacas2022-theta/paper.pdf).
 
 ## Future Plans
-* We are planning on refactoring portfolio to work with all formalisms and configuraitons of Theta
-* We also plan to introduce configuration files to make the creation of further portfolios easier (instead of having to develop a subclass for the AbstractPortfolio)
+* We are planning on refactoring the portfolio to work with all formalisms and configuraitons of Theta
+* We also plan to introduce configuration files to make the creation of further portfolios easier
 * Theta might go through an architectural refactoring process to create a more modular, portfolio-centric architecture
