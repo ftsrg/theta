@@ -16,5 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
+/**
+ * Possible results of executing a configuration
+ */
 public enum Result {UNKNOWN, TIMEOUT, STUCK, SUCCESS, OUTOFMEMORY, SOLVERISSUE}
 

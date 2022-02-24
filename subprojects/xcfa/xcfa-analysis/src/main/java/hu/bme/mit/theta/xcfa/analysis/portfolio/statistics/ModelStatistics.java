@@ -33,7 +33,9 @@ import java.io.IOException;
 
 /**
  * Class that extracts statistical information out of the input C program and the (X)CFA
- * and is capable of csv (one line, that can be merged with other similar csvs) and txt (human readable) output
+ * and is capable of outputting it in a csv
+ * (one line, that can be merged with other, similar csvs)
+ * and txt (human readable) output
  */
 public class ModelStatistics {
 	private String modelName;
@@ -74,6 +76,12 @@ public class ModelStatistics {
 		return ret;
 	}
 
+	/**
+	 * Get and store statistical data about the model and the input task
+	 * @param xcfa
+	 * @param modelName
+	 * @return
+	 */
 	public static ModelStatistics createXcfaStatistics(final XCFA xcfa, final String modelName) {
 		ModelStatistics ret = new ModelStatistics();
 		ret.modelName = modelName;
@@ -113,6 +121,10 @@ public class ModelStatistics {
 		return ret;
 	}
 
+	/**
+	 * Write info on the input task and the model into a one-liner csv
+	 * (so it can be merged into a dataframe with other such files)
+	 */
 	public void writeToCsv(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(modelName).append("\t");
@@ -135,6 +147,9 @@ public class ModelStatistics {
 		}
 	}
 
+	/**
+	 * Write info on the input task and the model into a human-readable format in a txt
+	 */
 	public void writeToTxt(File file) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("XCFA-data varCount ").append(locCount).append(System.lineSeparator());
