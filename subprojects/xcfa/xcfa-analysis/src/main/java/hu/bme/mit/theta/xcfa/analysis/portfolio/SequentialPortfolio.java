@@ -33,6 +33,10 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
+/**
+ * This is a fairly simple sequential portfolio implementation
+ * For more information, see doc/portfolio.md
+ */
 public class SequentialPortfolio extends AbstractPortfolio {
 	private CegarConfiguration[] configurations = new CegarConfiguration[3];
 	private final long sumTime = 900 * 1000; // in ms, with initialization time

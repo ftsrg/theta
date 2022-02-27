@@ -37,6 +37,10 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
+/**
+ * This is a concrete portfolio utilizing many different portfolio techniques
+ * For more information, see doc/portfolio.md
+ */
 public class ComplexPortfolio extends AbstractPortfolio {
 	private final long sumTime = 900 * 1000; // in ms, with initialization time
 	private long analysisTime; // in ms, init time subtracted from sumTime
