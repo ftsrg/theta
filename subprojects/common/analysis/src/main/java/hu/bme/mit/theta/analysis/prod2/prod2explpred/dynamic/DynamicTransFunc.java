@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static java.util.Collections.singleton;
 
-public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
+public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2State<ExplState, PredState>, A, DynamicPrec> {
 
     private final Solver solver;
 
@@ -50,7 +50,7 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
 
     @Override
     public Collection<? extends Prod2State<ExplState, PredState>> getSuccStates(Prod2State<ExplState, PredState> state,
-                                                                                A action, Prod2Prec<ExplPrec, PredPrec> prec) {
+                                                                                A action, DynamicPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -65,17 +65,9 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
         if (applyResult == StmtApplier.ApplyResult.BOTTOM) {
             return singleton(Prod2State.of(ExplState.bottom(), PredState.bottom()));
         } else {
-            // TODO make more efficient
-            final Map<VarDecl<?>, Integer> predCounts = Containers.createMap();
-            prec.getPrec2().getPreds().forEach(
-                    pred -> ExprUtils.getVars(pred).forEach(
-                            decl -> predCounts.put(decl, predCounts.getOrDefault(decl, 0) + 1)
-                    )
-            );
-
             final List<VarDecl<?>> remainingVarsOrdered = prec.getPrec1().getVars().stream()
                     .filter(Predicate.not(val.getDecls()::contains))
-                    .sorted(Comparator.comparingInt(decl -> predCounts.getOrDefault(decl, 0)))
+                    .sorted(Comparator.comparingInt(decl -> prec.getPredCount(decl)))
                     .collect(Collectors.toList());
 
             if (remainingVarsOrdered.isEmpty()) {
@@ -99,7 +91,7 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                 final Expr<BoolType> expr = And(ExprUtils.applyPrimes(node.getValuation().toExpr(), action.nextIndexing()), action.toExpr(), state.toExpr());
 
                 final var temporaryPrec = ExplPrec.of(ImmutableList.of(decl));
-                final var maxSuccToEnumerate = (1 << predCounts.getOrDefault(decl, 0));
+                final var maxSuccToEnumerate = (1 << prec.getPredCount(decl));
                 final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver, expr, 0,
                         temporaryPrec::createState, action.nextIndexing(), maxSuccToEnumerate + 1);
 

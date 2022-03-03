@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ItpRefToDynamicPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
+public class ItpRefToDynamicPrec implements RefutationToPrec<DynamicPrec, ItpRefutation> {
 
     private final ItpRefToExplPrec itpRefToExplPrec;
     private final ItpRefToPredPrec itpRefToPredPrec;
@@ -25,16 +25,16 @@ public class ItpRefToDynamicPrec implements RefutationToPrec<Prod2Prec<ExplPrec,
     }
 
     @Override
-    public Prod2Prec<ExplPrec, PredPrec> toPrec(ItpRefutation refutation, int index) {
+    public DynamicPrec toPrec(ItpRefutation refutation, int index) {
         final ExplPrec explPrec = itpRefToExplPrec.toPrec(refutation, index);
         final PredPrec predPrec = itpRefToPredPrec.toPrec(refutation, index);
-        return Prod2Prec.of(explPrec, predPrec);
+        return DynamicPrec.of(explPrec, predPrec);
 
     }
 
     @Override
-    public Prod2Prec<ExplPrec, PredPrec> join(Prod2Prec<ExplPrec, PredPrec> prec1, Prod2Prec<ExplPrec, PredPrec> prec2) {
-        return Prod2Prec.of(prec1.getPrec1().join(prec2.getPrec1()), prec1.getPrec2().join(prec2.getPrec2()));
+    public DynamicPrec join(DynamicPrec prec1, DynamicPrec prec2) {
+        return DynamicPrec.of(prec1.getPrec1().join(prec2.getPrec1()), prec1.getPrec2().join(prec2.getPrec2()));
     }
 
     @Override

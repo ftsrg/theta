@@ -25,14 +25,14 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
-public final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec>
+public class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec>
 		implements InitFunc<Prod2State<S1, S2>, Prod2Prec<P1, P2>> {
 
 	private final InitFunc<S1, P1> initFunc1;
 	private final InitFunc<S2, P2> initFunc2;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	private Prod2InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
+	protected Prod2InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
 						  final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.initFunc1 = checkNotNull(initFunc1);
 		this.initFunc2 = checkNotNull(initFunc2);

@@ -25,14 +25,14 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
+public class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
 	private static final int HASH_SEED = 2267;
 	private volatile int hashCode = 0;
 
 	private final P1 prec1;
 	private final P2 prec2;
 
-	private Prod2Prec(final P1 prec1, final P2 prec2) {
+	protected Prod2Prec(final P1 prec1, final P2 prec2) {
 		this.prec1 = checkNotNull(prec1);
 		this.prec2 = checkNotNull(prec2);
 	}
