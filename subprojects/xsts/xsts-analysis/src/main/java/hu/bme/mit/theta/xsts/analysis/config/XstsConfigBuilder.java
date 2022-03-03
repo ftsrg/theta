@@ -60,8 +60,8 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.mixed.ItpRefToMixedPrec;
-import hu.bme.mit.theta.analysis.prod2.prod2explpred.mixed.MixedAnalysis;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.dynamic.ItpRefToDynamicPrec;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.dynamic.DynamicAnalysis;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -92,12 +92,12 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain.MIXED;
+import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain.EXPL_PRED_DYNAMIC;
 
 public class XstsConfigBuilder {
 
     public enum Domain {
-        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED, MIXED
+        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED, EXPL_PRED_DYNAMIC
     }
 
     public enum Refinement {
@@ -427,7 +427,7 @@ public class XstsConfigBuilder {
                     logger);
             final Prod2Prec<ExplPrec, PredPrec> prec = initPrec.builder.createProd2ExplPred(xsts);
             return XstsConfig.create(checker, prec);
-        } else if (domain == MIXED) {
+        } else if (domain == EXPL_PRED_DYNAMIC) {
             final LTS<XstsState<Prod2State<ExplState, PredState>>, XstsAction> lts;
             if (optimizeStmts == OptimizeStmts.ON) {
                 lts = XstsLts.create(xsts, XstsStmtOptimizer.create(
@@ -441,7 +441,7 @@ public class XstsConfigBuilder {
             final Analysis<Prod2State<ExplState, PredState>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> mixedAnalysis;
             final Predicate<XstsState<Prod2State<ExplState, PredState>>> target = new XstsStatePredicate<ExprStatePredicate, Prod2State<ExplState, PredState>>(new ExprStatePredicate(negProp, abstractionSolver));
 
-            mixedAnalysis = MixedAnalysis.create(
+            mixedAnalysis = DynamicAnalysis.create(
                     abstractionSolver,
                     ExplAnalysis.create(abstractionSolver, xsts.getInitFormula()),
                     PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
@@ -460,7 +460,7 @@ public class XstsConfigBuilder {
             Refiner<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> refiner = null;
 
             final Set<VarDecl<?>> ctrlVars = xsts.getCtrlVars();
-            final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = ItpRefToMixedPrec.create(new ItpRefToExplPrec(),new ItpRefToPredPrec(predSplit.splitter));
+            final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = ItpRefToDynamicPrec.create(new ItpRefToExplPrec(),new ItpRefToPredPrec(predSplit.splitter));
             switch (refinement) {
                 case FW_BIN_ITP:
                     refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),

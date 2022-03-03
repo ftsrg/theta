@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.prod2.prod2explpred.mixed;
+package hu.bme.mit.theta.analysis.prod2.prod2explpred.dynamic;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
@@ -10,18 +10,18 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ItpRefToMixedPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
+public class ItpRefToDynamicPrec implements RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
     private final ItpRefToExplPrec itpRefToExplPrec;
     private final ItpRefToPredPrec itpRefToPredPrec;
 
-    private ItpRefToMixedPrec(final ItpRefToExplPrec itpRefToExplPrec, final ItpRefToPredPrec itpRefToPredPrec) {
+    private ItpRefToDynamicPrec(final ItpRefToExplPrec itpRefToExplPrec, final ItpRefToPredPrec itpRefToPredPrec) {
         this.itpRefToExplPrec = checkNotNull(itpRefToExplPrec);
         this.itpRefToPredPrec = checkNotNull(itpRefToPredPrec);
     }
 
-    public static ItpRefToMixedPrec create(final ItpRefToExplPrec itpRefToExplPrec, final ItpRefToPredPrec itpRefToPredPrec) {
-        return new ItpRefToMixedPrec(itpRefToExplPrec, itpRefToPredPrec);
+    public static ItpRefToDynamicPrec create(final ItpRefToExplPrec itpRefToExplPrec, final ItpRefToPredPrec itpRefToPredPrec) {
+        return new ItpRefToDynamicPrec(itpRefToExplPrec, itpRefToPredPrec);
     }
 
     @Override

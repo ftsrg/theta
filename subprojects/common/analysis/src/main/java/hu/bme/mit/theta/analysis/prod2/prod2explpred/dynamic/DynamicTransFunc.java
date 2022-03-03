@@ -1,6 +1,5 @@
-package hu.bme.mit.theta.analysis.prod2.prod2explpred.mixed;
+package hu.bme.mit.theta.analysis.prod2.prod2explpred.dynamic;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -25,10 +24,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -36,21 +33,19 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static java.util.Collections.singleton;
 
-public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
+public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
 
     private final Solver solver;
 
-    private MixedTransFunc(final Solver solver) {
+    private DynamicTransFunc(final Solver solver) {
         this.solver = solver;
     }
 
-    public static <A extends StmtAction> MixedTransFunc<A> create(final Solver solver) {
-        return new MixedTransFunc<A>(solver);
+    public static <A extends StmtAction> DynamicTransFunc<A> create(final Solver solver) {
+        return new DynamicTransFunc<A>(solver);
     }
 
     @Override
@@ -148,6 +143,7 @@ public class MixedTransFunc<A extends StmtAction> implements TransFunc<Prod2Stat
                             .collect(Collectors.toSet());
 
                     final Expr<BoolType> expr = And(ExprUtils.applyPrimes(tuple.get1().toExpr(), action.nextIndexing()), action.toExpr(), state.toExpr());
+
                     final PredPrec temporaryPrec = PredPrec.of(remainingPredicates);
                     final var abstractor = PredAbstractors.cartesianAbstractor(solver);
                     final var succStates = abstractor.createStatesForExpr(
