@@ -13,5 +13,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.xcfa.cli.stateless.XcfaCli"
+    mainClassName = "hu.bme.mit.theta.xcfa.cli.XcfaCli"
 }
