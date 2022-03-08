@@ -67,7 +67,7 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
         } else {
             final List<VarDecl<?>> remainingVarsOrdered = prec.getPrec1().getVars().stream()
                     .filter(Predicate.not(val.getDecls()::contains))
-                    .sorted(Comparator.comparingInt(decl -> prec.getPredCount(decl)))
+                    .sorted(Comparator.comparingInt(prec::getPredCount))
                     .collect(Collectors.toList());
 
             if (remainingVarsOrdered.isEmpty()) {
@@ -106,9 +106,9 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                             valuation.put(decl, valueOpt.get());
                             children.add(VariableAssignmentNode.of(valuation, remaining, node.getPredicateTracked()));
                         }else{
-                            var predicateTracked = Containers.createSet(node.getPredicateTracked());
-                            predicateTracked.add(decl);
-                            var newNode = VariableAssignmentNode.of(node.getValuation(), remaining, predicateTracked);
+//                            var predicateTracked = Containers.createSet(node.getPredicateTracked());
+//                            predicateTracked.add(decl);
+                            var newNode = VariableAssignmentNode.of(node.getValuation(), remaining, node.getPredicateTracked());
                             waitlist.add(newNode);
                             node.expand(singleton(newNode));
                         }
@@ -140,7 +140,10 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                     final var abstractor = PredAbstractors.cartesianAbstractor(solver);
                     final var succStates = abstractor.createStatesForExpr(
                             expr, VarIndexing.all(0), temporaryPrec, action.nextIndexing());
-                    succStates.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())),predState)));
+                    final var succStatesSimplified = succStates.stream().map(
+                            s -> PredState.of(ExprUtils.simplify(s.toExpr()))
+                    ).collect(Collectors.toSet());
+                    succStatesSimplified.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())),predState)));
                 }
             }
 
