@@ -71,11 +71,11 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                     .collect(Collectors.toList());
 
             if (remainingVarsOrdered.isEmpty()) {
-                return singleton(Prod2State.of(ExplState.of(projectValuation(val, prec.getPrec1())), PredState.of()));
+                return singleton(Prod2State.of(ExplState.of(projectValuation(val, prec.getPrec1())), PredState.of(True())));
             }
 
             // Build assignment graph for remaining vars
-            final VariableAssignmentNode root = VariableAssignmentNode.of(val, remainingVarsOrdered, Containers.createSet());
+            final VariableAssignmentNode root = VariableAssignmentNode.of(projectValuation(val, prec.getPrec1()), remainingVarsOrdered, Containers.createSet()); // TODO decide if projection needed
             final Waitlist<VariableAssignmentNode> waitlist = FifoWaitlist.create(ImmutableList.of(root));
             final Set<Tuple2<Valuation, Set<VarDecl<?>>>> branches = Containers.createSet();
 
@@ -88,24 +88,27 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                 }
                 var decl = remaining.removeFirst();
 
+                // TODO write expr simplifier function that can replace primed refexprs
                 final Expr<BoolType> expr = And(ExprUtils.applyPrimes(node.getValuation().toExpr(), action.nextIndexing()), action.toExpr(), state.toExpr());
 
                 final var temporaryPrec = ExplPrec.of(ImmutableList.of(decl));
-                final var maxSuccToEnumerate = (1 << prec.getPredCount(decl));
+                int maxSuccToEnumerate = (1 << prec.getPredCount(decl));
+                if(maxSuccToEnumerate < 0) maxSuccToEnumerate = 0;
                 final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver, expr, 0,
                         temporaryPrec::createState, action.nextIndexing(), maxSuccToEnumerate + 1);
 
                 if (succStates.isEmpty()) {
-                    return singleton(Prod2State.of(ExplState.bottom(), PredState.bottom()));
+                    // Drop this branch of the tree
+                    continue;
                 } else if (succStates.size() <= maxSuccToEnumerate) {
                     final Set<VariableAssignmentNode> children = Containers.createSet();
                     for (var assignment : succStates) {
                         final var valueOpt = assignment.eval(decl);
-                        if(valueOpt.isPresent()){
+                        if (valueOpt.isPresent()) {
                             final var valuation = MutableValuation.copyOf(node.getValuation());
                             valuation.put(decl, valueOpt.get());
                             children.add(VariableAssignmentNode.of(valuation, remaining, node.getPredicateTracked()));
-                        }else{
+                        } else {
 //                            var predicateTracked = Containers.createSet(node.getPredicateTracked());
 //                            predicateTracked.add(decl);
                             var newNode = VariableAssignmentNode.of(node.getValuation(), remaining, node.getPredicateTracked());
@@ -127,7 +130,7 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
             final Set<Prod2State<ExplState, PredState>> mixedStates = Containers.createSet();
 
             for (var tuple : branches) {
-                if(tuple.get2().isEmpty()){
+                if (tuple.get2().isEmpty()) {
                     mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())), PredState.of(True())));
                 } else {
                     final Set<Expr<BoolType>> remainingPredicates = prec.getPrec2().getPreds().stream()
@@ -141,9 +144,9 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                     final var succStates = abstractor.createStatesForExpr(
                             expr, VarIndexing.all(0), temporaryPrec, action.nextIndexing());
                     final var succStatesSimplified = succStates.stream().map(
-                            s -> PredState.of(ExprUtils.simplify(s.toExpr()))
+                            s -> PredState.of(ExprUtils.simplify(s.toExpr(), tuple.get1())) // TODO
                     ).collect(Collectors.toSet());
-                    succStatesSimplified.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())),predState)));
+                    succStatesSimplified.forEach(predState -> mixedStates.add(Prod2State.of(ExplState.of(projectValuation(tuple.get1(), prec.getPrec1())), predState)));
                 }
             }
 
@@ -195,8 +198,8 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
     private static Valuation projectValuation(Valuation val, ExplPrec prec) {
         final var valAsMap = val.toMap();
         final MutableValuation newVal = new MutableValuation();
-        for (var decl : prec.getVars()){
-            if(valAsMap.containsKey(decl)) newVal.put(decl, valAsMap.get(decl));
+        for (var decl : prec.getVars()) {
+            if (valAsMap.containsKey(decl)) newVal.put(decl, valAsMap.get(decl));
         }
         return newVal;
     }
