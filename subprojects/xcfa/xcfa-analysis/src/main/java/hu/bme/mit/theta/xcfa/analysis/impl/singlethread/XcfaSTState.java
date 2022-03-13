@@ -22,18 +22,26 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.Objects;
+import java.util.Stack;
 
 public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
-	private final XcfaLocation currentLoc;
+	private final Stack<XcfaLocation> locationStack;
 	private final S globalState;
 
 	private XcfaSTState(final XcfaLocation currentLoc, final S globalState) {
-		this.currentLoc = currentLoc;
+		this.locationStack = new Stack<>();
+		this.locationStack.push(currentLoc);
+		this.globalState = globalState;
+	}
+
+	private XcfaSTState(final Stack<XcfaLocation> locationStack, final S globalState) {
+		this.locationStack = new Stack<>();
+		this.locationStack.addAll(locationStack);
 		this.globalState = globalState;
 	}
 
 	public static <S extends ExprState> XcfaSTState<S> create(final XcfaLocation currentLoc, final S globalState) {
-		return new XcfaSTState<S>(currentLoc, globalState);
+		return new XcfaSTState<>(currentLoc, globalState);
 	}
 
 	@Override
@@ -53,7 +61,7 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 
 	@Override
 	public XcfaLocation getCurrentLoc() {
-		return currentLoc;
+		return locationStack.peek();
 	}
 
 	@Override
@@ -61,16 +69,19 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		XcfaSTState<?> that = (XcfaSTState<?>) o;
-		return Objects.equals(currentLoc, that.currentLoc) && globalState.equals(that.globalState);
+		if (!(globalState.equals(that.globalState) && locationStack.size() == that.locationStack.size())) return false;
+		for (int i = 0; i < locationStack.size(); ++i)
+			if (!Objects.equals(locationStack.get(i), that.locationStack.get(i))) return false;
+		return true;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(currentLoc, globalState);
+		return Objects.hash(locationStack, globalState);
 	}
 
 	public XcfaSTState<S> withState(final S succState) {
-		return create(currentLoc, succState);
+		return new XcfaSTState<>(this.locationStack, succState);
 	}
 
 	public XcfaSTState<S> withLocation(final XcfaLocation location) {
