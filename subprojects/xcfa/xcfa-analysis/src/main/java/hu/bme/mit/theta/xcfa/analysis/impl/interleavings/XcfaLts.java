@@ -80,9 +80,14 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 					}
 				}
 			}
+			if (firstComponent == null) {
+				AIGComponent newComponent = new AIGComponent(outgoingEdge, process);
+				components.add(newComponent);
+			}
 		}
 
 		public List<AbstractMap.SimpleImmutableEntry<Integer, XcfaEdge>> getMinimalComponent() {
+			if (components.size() == 0) return new ArrayList<>();
 			Comparator<AIGComponent> comparator = Comparator
 					.comparing((AIGComponent c) -> c.actions.size())
 					.thenComparing((AIGComponent c) -> c.parallelInterferences + c.conflictingActions)
@@ -96,6 +101,10 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 			private int parallelInterferences = 0;
 			private int conflictingActions = 0;
+
+			AIGComponent(XcfaEdge edge, Integer process) {
+				actions.add(new AbstractMap.SimpleImmutableEntry<>(process, edge));
+			}
 
 			private Set<VarDecl<?>> getUsedGlobalVars(XcfaEdge edge, List<VarDecl<? extends Type>> globalVars) {
 				Set<VarDecl<?>> vars = new HashSet<>();
