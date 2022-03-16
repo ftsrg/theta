@@ -64,6 +64,14 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 		return locationStack.peek();
 	}
 
+	XcfaLocation pop() {
+		return locationStack.pop();
+	}
+
+	void push(XcfaLocation location) {
+		locationStack.push(location);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
