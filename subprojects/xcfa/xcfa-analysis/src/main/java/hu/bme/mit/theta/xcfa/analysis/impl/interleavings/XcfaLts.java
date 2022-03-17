@@ -19,11 +19,13 @@ package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
@@ -32,6 +34,8 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 	}
 
 	private final POR_MODE porMode = POR_MODE.POR_STATIC;
+
+	// TODO global var query field in XcfaLts
 
 	@Override
 	public Collection<XcfaAction> getEnabledActionsFor(final XcfaState<?> state) {
@@ -48,16 +52,27 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 				break;
 
 			case POR_STATIC:
-				ActionInterferenceGraph actionInterferenceGraph = new ActionInterferenceGraph();
+				List<SimpleImmutableEntry<XcfaEdge, Integer>> enabledEdges = new ArrayList<>();
 				for (Integer enabledProcess : state.getEnabledProcesses()) {
 					final XcfaLocation loc = state.getProcessLocs().get(enabledProcess);
 					for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
-						actionInterferenceGraph.addEdge(outgoingEdge, enabledProcess);
+						enabledEdges.add(new SimpleImmutableEntry<>(outgoingEdge, enabledProcess));
 					}
 				}
-				for (var edge : actionInterferenceGraph.getMinimalComponent()) {
-					final XcfaAction xcfaAction = XcfaAction.create(edge.getKey(), edge.getValue());
-					xcfaActions.add(xcfaAction);
+
+				Set<SimpleImmutableEntry<XcfaEdge, Integer>> minimalPersistentSet = null;
+				for (var enabledEdge : enabledEdges) {
+					Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = calculatePersistentSet(enabledEdges, enabledEdge);
+					if (minimalPersistentSet == null || persistentSet.size() < minimalPersistentSet.size()) {
+						minimalPersistentSet = persistentSet;
+					}
+				}
+
+				if (minimalPersistentSet != null) {
+					for (var edge : minimalPersistentSet) {
+						final XcfaAction xcfaAction = XcfaAction.create(edge.getValue(), edge.getKey());
+						xcfaActions.add(xcfaAction);
+					}
 				}
 				break;
 		}
@@ -65,39 +80,56 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 	}
 
 
-	private static class ActionInterferenceGraph {
-		private final List<AIGComponent> components = new ArrayList<>();
+	private Set<SimpleImmutableEntry<XcfaEdge, Integer>> calculatePersistentSet(List<SimpleImmutableEntry<XcfaEdge, Integer>> enabledEdges, SimpleImmutableEntry<XcfaEdge, Integer> startingEdge) {
+		GlobalVarQuery globalVarQuery = new GlobalVarQuery(startingEdge.getKey().getSource().getParent().getParent().getParent());
 
-		public void addEdge(XcfaEdge outgoingEdge, Integer process) {
-			AIGComponent firstComponent = null;
-			for (AIGComponent component : components) {
-				boolean added = component.addEdgeIfNeeded(outgoingEdge, process, firstComponent);
-				if (added) {
-					if (firstComponent == null) {
-						firstComponent = component;
-					} else {
-						components.remove(component);
-					}
+		Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = new HashSet<>();
+		Set<Integer> processesInPS = new HashSet<>();
+		Set<VarDecl<? extends Type>> globalVarsInPS = new HashSet<>();
+		List<SimpleImmutableEntry<XcfaEdge, Integer>> otherEdges = new ArrayList<>(enabledEdges);
+
+		persistentSet.add(startingEdge);
+		processesInPS.add(startingEdge.getValue());
+		globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(startingEdge.getKey(), true));
+		otherEdges.remove(startingEdge);
+
+		boolean addedNewEdge = true;
+		while (addedNewEdge) {
+			addedNewEdge = false;
+			for (var action : otherEdges) {
+				XcfaEdge edge = action.getKey();
+				Integer process = action.getValue();
+
+				if (processesInPS.contains(process)) {
+					persistentSet.add(action);
+					globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(edge, true));
+					otherEdges.remove(action);
+					addedNewEdge = true;
+				} else if (globalVarQuery.getInfluencedGlobalVars(edge).stream().anyMatch(globalVarsInPS::contains)) {
+					persistentSet.add(action);
+					processesInPS.add(process);
+					globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(edge, true));
+					otherEdges.remove(action);
+					addedNewEdge = true;
 				}
 			}
 		}
 
-		public List<AbstractMap.SimpleImmutableEntry<Integer, XcfaEdge>> getMinimalComponent() {
-			Comparator<AIGComponent> comparator = Comparator
-					.comparing((AIGComponent c) -> c.actions.size())
-					.thenComparing((AIGComponent c) -> c.parallelInterferences + c.conflictingActions)
-					.thenComparing(c -> c.parallelInterferences);
-			components.sort(comparator);
-			return components.get(0).actions;
+		return persistentSet;
+	}
+
+
+	private static class GlobalVarQuery {
+		private final List<VarDecl<? extends Type>> globalVars;
+		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> usedGlobalVars = new HashMap<>();
+		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> influencedGlobalVars = new HashMap<>();
+
+		GlobalVarQuery(XCFA xcfa) {
+			globalVars = xcfa.getGlobalVars();
 		}
 
-		private static class AIGComponent {
-			private final List<AbstractMap.SimpleImmutableEntry<Integer, XcfaEdge>> actions = new ArrayList<>();
-
-			private int parallelInterferences = 0;
-			private int conflictingActions = 0;
-
-			private Set<VarDecl<?>> getUsedGlobalVars(XcfaEdge edge, List<VarDecl<? extends Type>> globalVars) {
+		private Set<VarDecl<? extends Type>> getUsedGlobalVars(XcfaEdge edge, boolean store) {
+			if (!usedGlobalVars.containsKey(edge)) {
 				Set<VarDecl<?>> vars = new HashSet<>();
 				edge.getLabels().forEach(label -> {
 					LabelUtils.getVars(label).forEach(usedVar -> {
@@ -106,40 +138,33 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 						}
 					});
 				});
-				return vars;
+				if (store) usedGlobalVars.put(edge, vars);
 			}
+			return usedGlobalVars.get(edge);
+		}
 
-			private boolean addEdgeIfNeeded(XcfaEdge edge, Integer process, AIGComponent mergeInto) {
-				var globalVars = edge.getSource().getParent().getParent().getParent().getGlobalVars();
-				var vars1 = getUsedGlobalVars(edge, globalVars);
-				boolean add = false;
-				for (var action : actions) {
-					if (action.getKey().equals(process)) {
-						conflictingActions++;
-						add = true;
-					} else {
-						var vars2 = getUsedGlobalVars(action.getValue(), globalVars);
-						if (vars1.stream().anyMatch(vars2::contains)) { // if they have common global variables
-							parallelInterferences++;
-							add = true;
+		private Set<VarDecl<? extends Type>> getInfluencedGlobalVars(XcfaEdge edge) {
+			if (!influencedGlobalVars.containsKey(edge)) {
+				Set<VarDecl<?>> vars = new HashSet<>();
+				List<XcfaEdge> exploredEdges = new ArrayList<>();
+				List<XcfaEdge> edgesToExplore = new ArrayList<>();
+				edgesToExplore.add(edge);
+
+				while (!edgesToExplore.isEmpty()) {
+					var exploring = edgesToExplore.get(0);
+					vars.addAll(getUsedGlobalVars(exploring, false));
+					for (var newEdge : exploring.getTarget().getOutgoingEdges()) {
+						if (!exploredEdges.contains(newEdge)) {
+							edgesToExplore.add(newEdge);
 						}
 					}
+					exploredEdges.add(exploring);
+					edgesToExplore.remove(0);
 				}
-				if (add) {
-					if (mergeInto == null) {
-						actions.add(new AbstractMap.SimpleImmutableEntry<>(process, edge));
-					} else {
-						mergeInto.mergeComponent(this);
-					}
-				}
-				return add;
+				influencedGlobalVars.put(edge, vars);
 			}
-
-			private void mergeComponent(AIGComponent component) {
-				actions.addAll(component.actions);
-				parallelInterferences += component.parallelInterferences;
-				conflictingActions += component.conflictingActions;
-			}
+			return influencedGlobalVars.get(edge);
 		}
 	}
+
 }
