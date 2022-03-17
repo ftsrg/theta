@@ -16,18 +16,19 @@
 
 package hu.bme.mit.theta.xcfa.passes.processpass;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.*;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class AnalyzeCallGraph extends ProcessPass {
 	@Override
@@ -38,19 +39,50 @@ public class AnalyzeCallGraph extends ProcessPass {
 		}
 
 		for (XcfaProcedure.Builder procedure : builder.getProcedures()) {
+			List<XcfaEdge> edgesToAdd = new ArrayList<>();
+			List<XcfaEdge> edgesToRemove = new ArrayList<>();
 			for (XcfaEdge edge : procedure.getEdges()) {
 				for (XcfaLabel label : edge.getLabels()) {
 					if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
 						XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) label;
 						Optional<XcfaProcedure.Builder> procedureOpt = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callLabel.getProcedure())).findAny();
 						if (procedureOpt.isPresent()) {
-							calledBy.get(procedureOpt.get()).add(procedure);
+							XcfaProcedure.Builder calledProcedure = procedureOpt.get();
+							calledBy.get(calledProcedure).add(procedure);
+							if (calledProcedure.getRetType() != null) {
+								XcfaLocation middle = XcfaLocation.uniqeCopyOf(edge.getSource());
+								procedure.addLoc(middle);
+								edgesToRemove.add(edge);
+								//procedure.removeEdge(edge);
+								edgesToAdd.add(XcfaEdge.of(edge.getSource(), middle, edge.getLabels()));
+								//procedure.addEdge(XcfaEdge.of(edge.getSource(), middle, edge.getLabels()));
+								List<XcfaLabel> retStmts = new ArrayList<>();
+								int paramCnt = 0;
+								for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : calledProcedure.getParams().entrySet()) {
+									VarDecl<?> varDecl = entry.getKey();
+									XcfaProcedure.Direction direction = entry.getValue();
+									if (direction != XcfaProcedure.Direction.IN) {
+										Expr<?> expr = callLabel.getParams().get(paramCnt);
+										checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>);
+										retStmts.add(Stmt(Assign(cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), varDecl.getType()), cast(varDecl.getRef(), varDecl.getType()))));
+									}
+									++paramCnt;
+								}
+								XcfaEdge retEdge = XcfaEdge.of(middle, edge.getTarget(), retStmts);
+								FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+									FrontendMetadata.create(retEdge, s, o);
+								});
+								edgesToAdd.add(retEdge);
+								//procedure.addEdge(retEdge);
+							}
 						} else {
 							FrontendMetadata.create(callLabel.getProcedure(), "ownFunction", false);
 						}
 					}
 				}
 			}
+			edgesToRemove.forEach(procedure::removeEdge);
+			edgesToAdd.forEach(procedure::addEdge);
 		}
 
 		boolean done = false;

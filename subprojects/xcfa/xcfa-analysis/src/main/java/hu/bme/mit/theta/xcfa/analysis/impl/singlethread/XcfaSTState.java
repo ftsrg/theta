@@ -50,6 +50,11 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	@Override
+	public boolean isError() {
+		return "reach_error".equals(this.getCurrentLoc().getParent().getName());
+	}
+
+	@Override
 	public Expr<BoolType> toExpr() {
 		return globalState.toExpr();
 	}
@@ -93,6 +98,9 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	public XcfaSTState<S> withLocation(final XcfaLocation location) {
-		return create(location, globalState);
+		XcfaSTState<S> state = new XcfaSTState<>(this.locationStack, this.globalState);
+		state.pop();
+		state.push(location);
+		return state;
 	}
 }

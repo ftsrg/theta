@@ -50,19 +50,18 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		XcfaSTState<S> state = (XcfaSTState<S>) inState;
 		XcfaSTAction action = (XcfaSTAction) inAction;
 
-		if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
-			XcfaLabel.ProcedureCallXcfaLabel label = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
-			Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures().stream().filter(procedure -> label.getProcedure().equals(procedure.getName())).findAny();
-			checkState(calledProcedure.isPresent(), " No such procedure " + label.getProcedure());
-			state.push(calledProcedure.get().getInitLoc());
-		}
-		if (state.getCurrentLoc().isEndLoc()) {
-			state.pop();
-		}
-
-		final Collection<XcfaState<S>> newStates = new ArrayList<>();
+		final Collection<XcfaSTState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, prec.getGlobalPrec())) {
-			final XcfaState<S> newState = state.withState(succState).withLocation(action.getTarget());
+			final XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
+			if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
+				XcfaLabel.ProcedureCallXcfaLabel label = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
+				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures().stream().filter(procedure -> label.getProcedure().equals(procedure.getName())).findAny();
+				checkState(calledProcedure.isPresent(), " No such procedure " + label.getProcedure());
+				newState.push(calledProcedure.get().getInitLoc());
+			}
+			if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
+				newState.pop();
+			}
 			newStates.add(newState);
 		}
 		return newStates;
