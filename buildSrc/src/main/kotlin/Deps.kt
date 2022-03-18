@@ -36,20 +36,34 @@ object Deps {
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 
-    val junit4 = "junit:junit:${Versions.junit4}"
-    val junit4engine = "org.junit.vintage:junit-vintage-engine"
-    val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
-    val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
-    val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
+    val pnmlCore = "fr.lip6.pnml:fr.lip6.pnml.framework.coremodel:${Versions.pnmlFramework}"
+    val pnmlPtnet = "fr.lip6.pnml:fr.lip6.pnml.framework.ptnet:${Versions.pnmlFramework}"
+    val pnmlSymmetric = "fr.lip6.pnml:fr.lip6.pnml.framework.symmetricnet:${Versions.pnmlFramework}"
+    val pnmlHlpn = "fr.lip6.pnml:fr.lip6.pnml.framework.hlpn:${Versions.pnmlFramework}"
+    val pnmlPthlpng = "fr.lip6.pnml:fr.lip6.pnml.framework.pthlpng:${Versions.pnmlFramework}"
+    val pnmlUtils = "fr.lip6.pnml:fr.lip6.pnml.framework.utils:${Versions.pnmlFramework}"
+    val pnmlNupn = "fr.lip6.pnml:fr.lip6.pnml.nupn.toolinfo:${Versions.pnmlFramework}"
+
+    val emfCommon = "org.eclipse.emf:org.eclipse.emf.common:${Versions.emfCommon}"
+    val emfCodegen = "org.eclipse.emf:org.eclipse.emf.codegen:${Versions.emfCodegen}"
+    val emfCodegenEcore = "org.eclipse.emf:org.eclipse.emf.codegen.ecore:${Versions.emfCodegenEcore}"
+    val emfEcore = "org.eclipse.emf:org.eclipse.emf.ecore:${Versions.emfEcore}"
+    val emfEcoreXmi = "org.eclipse.emf:org.eclipse.emf.ecore.xmi:${Versions.emfEcore}"
+
+    val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
+    val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
+    val jing = "com.thaiopensource:jing:${Versions.jing}"
+    val logback = "ch.qos.logback:logback-classic:${Versions.logback}"
+
+    val delta = "delta:hu.bme.mit.delta:${Versions.delta}"
+    val deltaCollections = "delta:hu.bme.mit.delta.collections:${Versions.deltaCollections}"
+
+    val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
+
+    val junit4 = "junit:junit:${Versions.junit}"
 
     object Mockito {
 
         val core = "org.mockito:mockito-core:${Versions.mockito}"
-    }
-
-    object Kotlin {
-
-        val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
-        val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
     }
 }

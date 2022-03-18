@@ -34,11 +34,9 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
+import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
+import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
@@ -55,9 +53,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import hu.bme.mit.theta.xsts.pnml.PnmlParser;
-import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
-import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
+import hu.bme.mit.theta.xsts.petrinet.PetriNetToXSTS;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -189,10 +185,10 @@ public class XstsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final XSTS xsts = loadModel();
 
-            if (metrics) {
-                XstsMetrics.printMetrics(logger, xsts);
-                return;
-            }
+			if (model.endsWith(".pnml")) {
+				final PetriNet petriNet = XMLPnmlToPetrinet.parse(model,initialMarking);
+				return PetriNetToXSTS.createXSTS(petriNet, propStream);
+			} else {
 
             final SafetyResult<?, ?> status;
             if (algorithm.equals(Algorithm.CEGAR)) {
