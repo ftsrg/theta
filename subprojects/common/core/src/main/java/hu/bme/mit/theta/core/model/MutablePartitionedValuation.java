@@ -39,6 +39,9 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /**
  * Mutable implementation of a partitioned valuation.
+ * A partitioned valuation contains orthogonal valuations, making it possible for a single declaration to have
+ * several valuations as per different views of the global state. This is especially useful for multi-threaded
+ * programs and distributed systems.
  */
 public final class MutablePartitionedValuation extends Valuation {
 
