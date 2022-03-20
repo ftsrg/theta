@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.runtimecheck;
+package hu.bme.mit.theta.common.exception;
 
 public class NotSolvableException extends RuntimeException {
-	NotSolvableException() {
+	public NotSolvableException() {
 		super("Task is not solvable with this configuration!");
 	}
 }
