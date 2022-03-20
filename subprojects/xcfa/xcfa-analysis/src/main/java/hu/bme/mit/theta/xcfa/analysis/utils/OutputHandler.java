@@ -47,6 +47,13 @@ import java.util.TimeZone;
 
 import static com.google.common.base.Preconditions.checkState;
 
+/**
+ * This class handles the creation of output files, including
+ * - a file for the xcfa
+ * - witnesses (violation/dummy)
+ * - statistics (csv and txt)
+ * (all of these files take place in the same timestamped results directory)
+ */
 public final class OutputHandler {
 	private static String basicFileName;
 	private static File model;

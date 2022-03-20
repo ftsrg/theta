@@ -35,6 +35,10 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ * Similar to CfaTraceConcretizer
+ * Takes a trace given by an unsafe result and uses and SMT solver to output a concrete counterexample
+ */
 public class XcfaTraceConcretizer {
 	public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
 			final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory) {

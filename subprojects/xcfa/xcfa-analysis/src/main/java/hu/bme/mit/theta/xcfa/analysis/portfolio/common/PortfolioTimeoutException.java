@@ -16,6 +16,9 @@
 
 package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
+/**
+ * Thrown if a portfolio reaches its global time limit
+ */
 public class PortfolioTimeoutException extends RuntimeException {
 	public PortfolioTimeoutException(String msg) {
 		super(msg);

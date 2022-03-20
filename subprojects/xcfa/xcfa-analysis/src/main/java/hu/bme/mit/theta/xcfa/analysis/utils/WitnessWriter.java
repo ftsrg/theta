@@ -42,7 +42,6 @@ import java.util.TimeZone;
  * - Composite nodes are ignored (handled the same as simple nodes.
  * - All edge attributes, except labels are ignored.
  */
-// TODO make singleton similarly to other graph writers
 public final class WitnessWriter extends AbstractGraphWriter {
 	private final String programHash;
 	private final boolean isViolationWitness;
