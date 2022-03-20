@@ -1,6 +1,36 @@
 # ANTLR-Based C-Frontend for Verification
 
-This subproject contains a C ANTLR grammar and related classes to parse preprocessed C files and transform the AST into an interlinked model of semantic elements (_IM_).
+This subproject adds an ANTLR-grammar based C-Frontend to Theta. This is independent of any formalism, and aims to be as widely applicable as possible.
+
+## Features
+
+This frontend can handle preprocessed .c or .i file with the following features:
+
+* Basic C support: global declarations (functions and variables), function definitions, loops, various data types, global typedefs, etc.
+* Integer- and bitvector-arithmetic support based on required features (e.g. for floats or bitwise operators bitvector precision is necessary)
+* Basic struct and array support
+* Basic (and experimental) flat-memory based pointer handling
+* ILP32 and LP64 type system support (with possible extensibility)
+
+## Limitations, known bugs
+
+A number of features are either not well tested or in certain aspects buggy. Error handling is done on a best-effort level as the C specification is way too complex to handle entirely correctly. In most cases an error, or a warning message is displayed, but in some unexpected situations a silent failure is also possible.
+
+In particular, the following features are either not implemented or can produce buggy models:
+
+* Floating-point pointers (produces an exception when (de)referred)
+* Structs including arrays and arrays including structs (produces an exception when accessed)
+* Enums (only produces a warning, behaves as a normal signed int would)
+* Unions (produces an exception when any element is accessed)
+* Alignof, Sizeof, various extensions (produces a parsing exception)
+* Pointer arithmetic (produces an exception)
+* Using a non-specific subtype of `char` (produces a warning) - use `(un)signed char` instead
+* Includes and other preprocessor directives (produces an exception or fails silently!)
+* Arrays are not pointers and pointers cannot be used as arrays (produces an exception)
+* Memory access is _not_ checked, and therefore it is easy to receive a faulty value by over-indexing an array (fails silently!)
+* Array elements are not range-checked and therefore false positives are possible (consider `char c[2]; if(c[1] > 500) reach_error()`)
+
+Note that only program elements that are (transitively) reachable from main() are checked against any violation of the above criteria, i.e. a program containing unsupported elements that are not utilized is handled correctly. This is necessary for handling most preprocessed (.i) files, as the standard library includes a lot of complex and unsupported code.
 
 ## High-Level Process
 
