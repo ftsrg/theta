@@ -25,8 +25,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -93,16 +91,6 @@ public class XcfaLabelVarCollector implements XcfaLabelVisitor<Tuple2<Set<VarDec
 
 	@Override
 	public Void visit(LoopStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
-		throw new UnsupportedOperationException("Not yet implemented!");
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(PushStmt<DeclType> stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
-		throw new UnsupportedOperationException("Not yet implemented!");
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 

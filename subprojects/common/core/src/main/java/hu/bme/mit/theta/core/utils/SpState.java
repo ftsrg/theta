@@ -27,8 +27,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -183,15 +181,6 @@ public class SpState {
 			throw new UnsupportedOperationException();
 		}
 
-		@Override
-		public <DeclType extends Type> SpState visit(PushStmt<DeclType> stmt, SpState param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> SpState visit(PopStmt<DeclType> stmt, SpState param) {
-			throw new UnsupportedOperationException();
-		}
 
 		public SpState visit(IfStmt stmt, SpState param) {
 			throw new UnsupportedOperationException();

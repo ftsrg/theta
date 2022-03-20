@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -149,15 +147,6 @@ public class LabelUtils {
 				return StmtUtils.getVars(stmt);
 			}
 
-			@Override
-			public <DeclType extends Type> Collection<VarDecl<?>> visit(PushStmt<DeclType> stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
-
-			@Override
-			public <DeclType extends Type> Collection<VarDecl<?>> visit(PopStmt<DeclType> stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
 
 			@Override
 			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {

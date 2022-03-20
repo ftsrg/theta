@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -282,16 +280,6 @@ public final class StmtApplier {
 	private static ApplyResult applyOrt(final OrtStmt stmt, final MutableValuation val,
 										final boolean approximate) {
 		throw new UnsupportedOperationException();
-	}
-
-
-	private static ApplyResult applyPush(final PushStmt<?> stmt, final MutableValuation val) {
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
-
-
-	private static ApplyResult applyPop(final PopStmt<?> stmt, final MutableValuation val) {
-		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 }

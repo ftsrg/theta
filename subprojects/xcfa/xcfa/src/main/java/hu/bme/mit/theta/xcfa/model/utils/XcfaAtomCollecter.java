@@ -23,8 +23,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -92,20 +90,6 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 
 	@Override
 	public Void visit(LoopStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
-
-		return null;
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(PushStmt<DeclType> stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
-
-		return null;
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Collection<Expr<BoolType>> param) {
 		param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
 		return null;

@@ -22,8 +22,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -73,16 +71,6 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 
 	@Override
 	public String visit(LoopStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <DeclType extends Type> String visit(PushStmt<DeclType> stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <DeclType extends Type> String visit(PopStmt<DeclType> stmt, Void param) {
 		throw new UnsupportedOperationException();
 	}
 
