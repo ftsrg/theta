@@ -25,6 +25,9 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * TODO: should this really inherit from expr?
+ */
 public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
 	private static final int HASH_SEED = 6987;
 	private static final String label = "&";

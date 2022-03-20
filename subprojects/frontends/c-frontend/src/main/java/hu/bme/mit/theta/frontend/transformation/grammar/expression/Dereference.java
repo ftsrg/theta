@@ -22,6 +22,9 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
+/**
+ * TODO: should this really inherit from expr?
+ */
 public class Dereference<R extends Type, T extends Type> extends UnaryExpr<R, T> {
 	private static final int HASH_SEED = 6988;
 	private static final String label = "*";
