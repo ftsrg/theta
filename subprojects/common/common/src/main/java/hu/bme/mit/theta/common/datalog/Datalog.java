@@ -265,7 +265,7 @@ public class Datalog {
 	}
 
 	public class Relation {
-		private String name;
+		private final String name;
 		private final Set<TupleN<DatalogArgument>> elements;
 		private final Set<TupleN<DatalogArgument>> newElements;
 		private final Set<TupleN<DatalogArgument>> toAdd;
@@ -275,10 +275,6 @@ public class Datalog {
 
 		private Relation(int n) {
 			this("", n);
-		}
-
-		public void setName(String name) {
-			this.name = name;
 		}
 
 		private Relation(String name, int n) {
