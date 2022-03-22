@@ -53,9 +53,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 								XcfaLocation middle = XcfaLocation.uniqeCopyOf(edge.getSource());
 								procedure.addLoc(middle);
 								edgesToRemove.add(edge);
-								//procedure.removeEdge(edge);
 								edgesToAdd.add(XcfaEdge.of(edge.getSource(), middle, edge.getLabels()));
-								//procedure.addEdge(XcfaEdge.of(edge.getSource(), middle, edge.getLabels()));
 								List<XcfaLabel> retStmts = new ArrayList<>();
 								int paramCnt = 0;
 								for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : calledProcedure.getParams().entrySet()) {
@@ -73,7 +71,6 @@ public class AnalyzeCallGraph extends ProcessPass {
 									FrontendMetadata.create(retEdge, s, o);
 								});
 								edgesToAdd.add(retEdge);
-								//procedure.addEdge(retEdge);
 							}
 						} else {
 							FrontendMetadata.create(callLabel.getProcedure(), "ownFunction", false);
