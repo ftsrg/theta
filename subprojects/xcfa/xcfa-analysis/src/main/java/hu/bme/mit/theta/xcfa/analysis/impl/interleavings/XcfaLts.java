@@ -21,21 +21,23 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.function.Predicate;
 
 public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 	private enum POR_MODE {
-		POR_OFF, POR_STATIC
+		POR_OFF, POR_ON
 	}
 
-	private final POR_MODE porMode = POR_MODE.POR_STATIC;
+	private final POR_MODE porMode = POR_MODE.POR_ON;
 
-	// TODO global var query field in XcfaLts
+	private GlobalVarQuery globalVarQuery = null;
 
 	@Override
 	public Collection<XcfaAction> getEnabledActionsFor(final XcfaState<?> state) {
@@ -51,7 +53,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 				}
 				break;
 
-			case POR_STATIC:
+			case POR_ON:
 				List<SimpleImmutableEntry<XcfaEdge, Integer>> enabledEdges = new ArrayList<>();
 				for (Integer enabledProcess : state.getEnabledProcesses()) {
 					final XcfaLocation loc = state.getProcessLocs().get(enabledProcess);
@@ -60,6 +62,9 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 					}
 				}
 
+				if (globalVarQuery == null && enabledEdges.size() > 0) {
+					globalVarQuery = new GlobalVarQuery(enabledEdges.get(0).getKey().getSource().getParent().getParent().getParent());
+				}
 				Set<SimpleImmutableEntry<XcfaEdge, Integer>> minimalPersistentSet = null;
 				for (var enabledEdge : enabledEdges) {
 					Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = calculatePersistentSet(enabledEdges, enabledEdge);
@@ -74,6 +79,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 						xcfaActions.add(xcfaAction);
 					}
 				}
+
 				break;
 		}
 		return xcfaActions;
@@ -81,8 +87,6 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 
 	private Set<SimpleImmutableEntry<XcfaEdge, Integer>> calculatePersistentSet(List<SimpleImmutableEntry<XcfaEdge, Integer>> enabledEdges, SimpleImmutableEntry<XcfaEdge, Integer> startingEdge) {
-		GlobalVarQuery globalVarQuery = new GlobalVarQuery(startingEdge.getKey().getSource().getParent().getParent().getParent());
-
 		Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = new HashSet<>();
 		Set<Integer> processesInPS = new HashSet<>();
 		Set<VarDecl<? extends Type>> globalVarsInPS = new HashSet<>();
@@ -96,20 +100,17 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 		boolean addedNewEdge = true;
 		while (addedNewEdge) {
 			addedNewEdge = false;
-			for (var action : otherEdges) {
+			for (int i = 0; i < otherEdges.size(); i++) {
+				SimpleImmutableEntry<XcfaEdge, Integer> action = otherEdges.get(i);
 				XcfaEdge edge = action.getKey();
 				Integer process = action.getValue();
 
-				if (processesInPS.contains(process)) {
-					persistentSet.add(action);
-					globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(edge, true));
-					otherEdges.remove(action);
-					addedNewEdge = true;
-				} else if (globalVarQuery.getInfluencedGlobalVars(edge).stream().anyMatch(globalVarsInPS::contains)) {
+				if (processesInPS.contains(process) || globalVarQuery.getInfluencedGlobalVars(edge).stream().anyMatch(globalVarsInPS::contains)) {
 					persistentSet.add(action);
 					processesInPS.add(process);
 					globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(edge, true));
 					otherEdges.remove(action);
+					i--;
 					addedNewEdge = true;
 				}
 			}
@@ -125,45 +126,60 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> influencedGlobalVars = new HashMap<>();
 
 		GlobalVarQuery(XCFA xcfa) {
+//			System.out.println(xcfa.toDot());
 			globalVars = xcfa.getGlobalVars();
+		}
+
+		private Set<VarDecl<? extends Type>> getDirectlyUsedGlobalVars(XcfaEdge edge) {
+			Set<VarDecl<?>> vars = new HashSet<>();
+			edge.getLabels().forEach(label -> LabelUtils.getVars(label).forEach(usedVar -> {
+				if (globalVars.contains(usedVar)) {
+					vars.add(usedVar);
+				}
+			}));
+			return vars;
 		}
 
 		private Set<VarDecl<? extends Type>> getUsedGlobalVars(XcfaEdge edge, boolean store) {
 			if (!usedGlobalVars.containsKey(edge)) {
-				Set<VarDecl<?>> vars = new HashSet<>();
-				edge.getLabels().forEach(label -> {
-					LabelUtils.getVars(label).forEach(usedVar -> {
-						if (globalVars.contains(usedVar)) {
-							vars.add(usedVar);
-						}
-					});
-				});
-				if (store) usedGlobalVars.put(edge, vars);
+				Set<VarDecl<?>> vars;
+				var labels = edge.getLabels();
+				if (labels.stream().anyMatch(label -> label instanceof XcfaLabel.AtomicBeginXcfaLabel)) {
+					vars = getVarsWithBFS(edge, xcfaEdge -> xcfaEdge.getLabels().stream().noneMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel));
+				} else {
+					vars = getDirectlyUsedGlobalVars(edge);
+				}
+
+				if (!store) return vars;
+				usedGlobalVars.put(edge, vars);
 			}
 			return usedGlobalVars.get(edge);
 		}
 
 		private Set<VarDecl<? extends Type>> getInfluencedGlobalVars(XcfaEdge edge) {
 			if (!influencedGlobalVars.containsKey(edge)) {
-				Set<VarDecl<?>> vars = new HashSet<>();
-				List<XcfaEdge> exploredEdges = new ArrayList<>();
-				List<XcfaEdge> edgesToExplore = new ArrayList<>();
-				edgesToExplore.add(edge);
-
-				while (!edgesToExplore.isEmpty()) {
-					var exploring = edgesToExplore.get(0);
-					vars.addAll(getUsedGlobalVars(exploring, false));
-					for (var newEdge : exploring.getTarget().getOutgoingEdges()) {
-						if (!exploredEdges.contains(newEdge)) {
-							edgesToExplore.add(newEdge);
-						}
-					}
-					exploredEdges.add(exploring);
-					edgesToExplore.remove(0);
-				}
-				influencedGlobalVars.put(edge, vars);
+				influencedGlobalVars.put(edge, getVarsWithBFS(edge, xcfaEdge -> true));
 			}
 			return influencedGlobalVars.get(edge);
+		}
+
+		private Set<VarDecl<?>> getVarsWithBFS(XcfaEdge startEdge, Predicate<XcfaEdge> visitEdge) {
+			Set<VarDecl<?>> vars = new HashSet<>();
+			List<XcfaEdge> exploredEdges = new ArrayList<>();
+			List<XcfaEdge> edgesToExplore = new ArrayList<>();
+			edgesToExplore.add(startEdge);
+
+			while (!edgesToExplore.isEmpty()) {
+				var exploring = edgesToExplore.remove(0);
+				vars.addAll(getDirectlyUsedGlobalVars(exploring));
+				for (var newEdge : exploring.getTarget().getOutgoingEdges()) {
+					if (!exploredEdges.contains(newEdge) && visitEdge.test(newEdge)) {
+						edgesToExplore.add(newEdge);
+					}
+				}
+				exploredEdges.add(exploring);
+			}
+			return vars;
 		}
 	}
 
