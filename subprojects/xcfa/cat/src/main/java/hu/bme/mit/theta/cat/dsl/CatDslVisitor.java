@@ -18,119 +18,163 @@ package hu.bme.mit.theta.cat.dsl;
 
 import hu.bme.mit.theta.cat.dsl.gen.CatBaseVisitor;
 import hu.bme.mit.theta.cat.dsl.gen.CatParser;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.common.datalog.Datalog;
 
-public class CatDslVisitor extends CatBaseVisitor<Void> {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class CatDslVisitor extends CatBaseVisitor<Datalog.Relation> {
+    private static final String[] unaryBasicExpressions = new String[] {"W", "R", "F"};
+    private static final String[] binaryBasicExpressions = new String[] {"po", "rf"};
 
     private final Datalog datalogProgram;
+    private final Datalog.Relation mustBeEmpty;
+    private int ruleNameCnt = 0;
 
     public CatDslVisitor() {
         this.datalogProgram = Datalog.createProgram();
+        mustBeEmpty = datalogProgram.createRelation("mustBeEmpty", 2);
+
+        for (String unaryBasicExpression : unaryBasicExpressions) {
+            datalogProgram.createRelation(unaryBasicExpression, 1);
+        }
+        for (String binaryBasicExpression : binaryBasicExpressions) {
+            datalogProgram.createRelation(binaryBasicExpression, 2);
+        }
     }
 
     @Override
-    public Void visitAcyclicDefinition(CatParser.AcyclicDefinitionContext ctx) {
-
-        return super.visitAcyclicDefinition(ctx);
+    public Datalog.Relation visitAcyclicDefinition(CatParser.AcyclicDefinitionContext ctx) {
+        final Datalog.Relation baseRelation = ctx.e.accept(this);
+        final Datalog.Relation transitive = datalogProgram.createTransitive(ctx.NAME() == null ? "acyclic_" + ruleNameCnt++ : ctx.NAME().getText(), baseRelation);
+        final Datalog.Variable var = datalogProgram.getVariable();
+        mustBeEmpty.addRule(TupleN.of(var, var), Set.of(Tuple2.of(transitive, TupleN.of(var, var))));
+        return mustBeEmpty;
     }
 
     @Override
-    public Void visitIrreflexiveDefinition(CatParser.IrreflexiveDefinitionContext ctx) {
-        return super.visitIrreflexiveDefinition(ctx);
+    public Datalog.Relation visitIrreflexiveDefinition(CatParser.IrreflexiveDefinitionContext ctx) {
+        final Datalog.Relation baseRelation = ctx.e.accept(this);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        mustBeEmpty.addRule(TupleN.of(var1, var2), Set.of(Tuple2.of(baseRelation, TupleN.of(var1, var2)), Tuple2.of(baseRelation, TupleN.of(var2, var1))));
+        return mustBeEmpty;
     }
 
     @Override
-    public Void visitEmptyDefinition(CatParser.EmptyDefinitionContext ctx) {
-        return super.visitEmptyDefinition(ctx);
+    public Datalog.Relation visitEmptyDefinition(CatParser.EmptyDefinitionContext ctx) {
+        final Datalog.Relation baseRelation = ctx.e.accept(this);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        mustBeEmpty.addRule(TupleN.of(var1, var2), Set.of(Tuple2.of(baseRelation, TupleN.of(var1, var2))));
+        return mustBeEmpty;
     }
 
     @Override
-    public Void visitLetDefinition(CatParser.LetDefinitionContext ctx) {
-        return super.visitLetDefinition(ctx);
+    public Datalog.Relation visitLetDefinition(CatParser.LetDefinitionContext ctx) {
+        final Datalog.Relation baseRelation = ctx.e.accept(this);
+        final Datalog.Relation relation = datalogProgram.createRelation(ctx.n.getText(), baseRelation.getArity());
+        List<Datalog.Variable> args = new ArrayList<>();
+        for (int i = 0; i < baseRelation.getArity(); i++) {
+            args.add(datalogProgram.getVariable());
+        }
+        relation.addRule(TupleN.of(args), Set.of(Tuple2.of(baseRelation, TupleN.of(args))));
+        return relation;
     }
 
     @Override
-    public Void visitLetRecDefinition(CatParser.LetRecDefinitionContext ctx) {
-        return super.visitLetRecDefinition(ctx);
+    public Datalog.Relation visitLetRecDefinition(CatParser.LetRecDefinitionContext ctx) {
+        throw new UnsupportedOperationException("Not yet supported");
     }
 
     @Override
-    public Void visitExprCartesian(CatParser.ExprCartesianContext ctx) {
-        return super.visitExprCartesian(ctx);
+    public Datalog.Relation visitExprCartesian(CatParser.ExprCartesianContext ctx) {
+        final Datalog.Relation baseRelation1 = ctx.e1.accept(this);
+        final Datalog.Relation baseRelation2 = ctx.e2.accept(this);
+        if(baseRelation1.getArity() != 1 || baseRelation2.getArity() != baseRelation1.getArity()) throw new UnsupportedOperationException("Only unary relations are supported");
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        final Datalog.Relation relation = datalogProgram.createRelation("rule_" + ruleNameCnt++, 2);
+        relation.addRule(TupleN.of(var1, var2), Set.of(Tuple2.of(baseRelation1, TupleN.of(var1)), Tuple2.of(baseRelation2, TupleN.of(var2))));
+        return relation;
     }
 
     @Override
-    public Void visitExprRangeIdentity(CatParser.ExprRangeIdentityContext ctx) {
-        return super.visitExprRangeIdentity(ctx);
+    public Datalog.Relation visitExprRangeIdentity(CatParser.ExprRangeIdentityContext ctx) {
+        throw new UnsupportedOperationException("Not yet supported");
     }
 
     @Override
-    public Void visitExprBasic(CatParser.ExprBasicContext ctx) {
-        return super.visitExprBasic(ctx);
+    public Datalog.Relation visitExprBasic(CatParser.ExprBasicContext ctx) {
+        final Map<String, Datalog.Relation> relations = datalogProgram.getRelations();
     }
 
     @Override
-    public Void visitExprMinus(CatParser.ExprMinusContext ctx) {
+    public Datalog.Relation visitExprMinus(CatParser.ExprMinusContext ctx) {
         return super.visitExprMinus(ctx);
     }
 
     @Override
-    public Void visitExprUnion(CatParser.ExprUnionContext ctx) {
+    public Datalog.Relation visitExprUnion(CatParser.ExprUnionContext ctx) {
         return super.visitExprUnion(ctx);
     }
 
     @Override
-    public Void visitExprComposition(CatParser.ExprCompositionContext ctx) {
+    public Datalog.Relation visitExprComposition(CatParser.ExprCompositionContext ctx) {
         return super.visitExprComposition(ctx);
     }
 
     @Override
-    public Void visitExprIntersection(CatParser.ExprIntersectionContext ctx) {
+    public Datalog.Relation visitExprIntersection(CatParser.ExprIntersectionContext ctx) {
         return super.visitExprIntersection(ctx);
     }
 
     @Override
-    public Void visitExprTransitive(CatParser.ExprTransitiveContext ctx) {
+    public Datalog.Relation visitExprTransitive(CatParser.ExprTransitiveContext ctx) {
         return super.visitExprTransitive(ctx);
     }
 
     @Override
-    public Void visitExprComplement(CatParser.ExprComplementContext ctx) {
+    public Datalog.Relation visitExprComplement(CatParser.ExprComplementContext ctx) {
         return super.visitExprComplement(ctx);
     }
 
     @Override
-    public Void visitExprInverse(CatParser.ExprInverseContext ctx) {
+    public Datalog.Relation visitExprInverse(CatParser.ExprInverseContext ctx) {
         return super.visitExprInverse(ctx);
     }
 
     @Override
-    public Void visitExprDomainIdentity(CatParser.ExprDomainIdentityContext ctx) {
+    public Datalog.Relation visitExprDomainIdentity(CatParser.ExprDomainIdentityContext ctx) {
         return super.visitExprDomainIdentity(ctx);
     }
 
     @Override
-    public Void visitExprIdentity(CatParser.ExprIdentityContext ctx) {
+    public Datalog.Relation visitExprIdentity(CatParser.ExprIdentityContext ctx) {
         return super.visitExprIdentity(ctx);
     }
 
     @Override
-    public Void visitExprTransRef(CatParser.ExprTransRefContext ctx) {
+    public Datalog.Relation visitExprTransRef(CatParser.ExprTransRefContext ctx) {
         return super.visitExprTransRef(ctx);
     }
 
     @Override
-    public Void visitExprFencerel(CatParser.ExprFencerelContext ctx) {
+    public Datalog.Relation visitExprFencerel(CatParser.ExprFencerelContext ctx) {
         return super.visitExprFencerel(ctx);
     }
 
     @Override
-    public Void visitExpr(CatParser.ExprContext ctx) {
+    public Datalog.Relation visitExpr(CatParser.ExprContext ctx) {
         return super.visitExpr(ctx);
     }
 
     @Override
-    public Void visitExprOptional(CatParser.ExprOptionalContext ctx) {
+    public Datalog.Relation visitExprOptional(CatParser.ExprOptionalContext ctx) {
         return super.visitExprOptional(ctx);
     }
 }
