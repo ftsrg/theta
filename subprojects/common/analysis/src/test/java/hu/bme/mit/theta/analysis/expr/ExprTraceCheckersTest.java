@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,28 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -27,29 +49,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import hu.bme.mit.theta.solver.UCSolver;
-import org.junit.Before;
-import org.junit.Test;
-
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public final class ExprTraceCheckersTest {
 	private Collection<ExprTraceChecker<?>> traceCheckers;
@@ -73,7 +72,7 @@ public final class ExprTraceCheckersTest {
 
 		final ExprAction actionMock = mock(ExprAction.class);
 		doReturn(trans).when(actionMock).toExpr();
-		when(actionMock.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(actionMock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
 		final List<ExprAction> actions = Arrays.asList(actionMock, actionMock, actionMock);
 		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
@@ -96,11 +95,11 @@ public final class ExprTraceCheckersTest {
 
 		final ExprAction action1Mock = mock(ExprAction.class);
 		doReturn(trans1).when(action1Mock).toExpr();
-		when(action1Mock.nextIndexing()).thenReturn(VarIndexing.all(1));
+		when(action1Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
 		final ExprAction action2Mock = mock(ExprAction.class);
 		doReturn(trans2).when(action2Mock).toExpr();
-		when(action2Mock.nextIndexing()).thenReturn(VarIndexing.all(0));
+		when(action2Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(0));
 
 		final List<ExprAction> actions = Arrays.asList(action1Mock, action2Mock);
 		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);

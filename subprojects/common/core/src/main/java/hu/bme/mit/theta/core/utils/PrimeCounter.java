@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.List;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+
+import java.util.List;
 
 final class PrimeCounter {
 
@@ -32,13 +35,13 @@ final class PrimeCounter {
 		return collectPrimes(expr, 0).build();
 	}
 
-	private static VarIndexing.Builder collectPrimes(final Expr<?> expr, final int nPrimes) {
+	private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(final Expr<?> expr, final int nPrimes) {
 		if (expr instanceof RefExpr) {
 			final RefExpr<?> ref = (RefExpr<?>) expr;
 			final Decl<?> decl = ref.getDecl();
 			if (decl instanceof VarDecl) {
 				final VarDecl<?> varDecl = (VarDecl<?>) decl;
-				return VarIndexing.builder(0).inc(varDecl, nPrimes);
+				return VarIndexingFactory.basicIndexingBuilder(0).inc(varDecl, nPrimes);
 			}
 		}
 
@@ -49,8 +52,8 @@ final class PrimeCounter {
 		}
 
 		final List<? extends Expr<?>> ops = expr.getOps();
-		return ops.stream().map(op -> collectPrimes(op, nPrimes)).reduce(VarIndexing.builder(0),
-				VarIndexing.Builder::join);
+		return ops.stream().map(op -> collectPrimes(op, nPrimes)).reduce(VarIndexingFactory.basicIndexingBuilder(0),
+				BasicVarIndexing.BasicVarIndexingBuilder::join);
 	}
 
 }

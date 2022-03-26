@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.container.Containers;
-import java.util.List;
-import java.util.Set;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Utility functions related to statements.

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public final class TypeUtils {
 		checkNotNull(type);
 
 		if (decl.getType().equals(type)) {
-			@SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) type;
+			@SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) decl;
 			return result;
 		} else {
 			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);

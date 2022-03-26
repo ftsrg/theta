@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -86,11 +86,13 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
@@ -346,6 +348,8 @@ final class Z3ExprTransformer {
 
 				.addCase(FpEqExpr.class, this::transformFpEq)
 
+				.addCase(FpAssignExpr.class, this::transformFpAssign)
+
 				.addCase(FpGeqExpr.class, this::transformFpGeq)
 
 				.addCase(FpLeqExpr.class, this::transformFpLeq)
@@ -369,6 +373,8 @@ final class Z3ExprTransformer {
 				.addCase(FpRemExpr.class, this::transformFpRem)
 
 				.addCase(FpIsNanExpr.class, this::transformFpIsNan)
+
+				.addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
 
 				.addCase(FpFromBvExpr.class, this::transformFpFromBv)
 
@@ -996,6 +1002,11 @@ final class Z3ExprTransformer {
 		return context.mkFPIsNaN(opTerm);
 	}
 
+	private com.microsoft.z3.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
+		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+		return context.mkFPIsInfinite(opTerm);
+	}
+
 	private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
 		final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
 		return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
@@ -1031,6 +1042,12 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
 		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 		return context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformFpAssign(final FpAssignExpr expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkEq(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformFpNeq(final FpNeqExpr expr) {
