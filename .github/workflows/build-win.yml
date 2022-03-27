@@ -15,11 +15,12 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.11
-    - name: Build with Gradle
+    - name: Install VC-Redist 2012
       run: |
         Install-Module -Name VcRedist -Force
-        New-Item -Path C:\Temp\VcRedist -ItemType Directory
+        New-Item -ItemType Directory
         $VcList = Get-VcList -Release "2012"
-        Save-VcRedist -VcList $VcList -Path C:\Temp\VcRedist
-        Install-VcRedist -Path C:\Temp\VcRedist -VcList $VcList -Silent
-        .\gradlew.bat build
+        Save-VcRedist -VcList $VcList
+        Install-VcRedist -VcList $VcList -Silent
+    - name: Build with Gradle
+      run: .\gradlew.bat build
