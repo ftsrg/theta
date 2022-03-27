@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -151,7 +152,7 @@ public class Datalog {
 	public Relation createRelation(String name, int n) {
 		checkState(stackDepth == 0, "Cannot create a relation when the program is in temporary (pushed) state");
 		checkState(n > 0, "Relation must have positive arity");
-		Relation ret = new Relation(n);
+		Relation ret = new Relation(name, n);
 		relations.put(name, ret);
 		return ret;
 	}
@@ -447,6 +448,35 @@ public class Datalog {
 			toAdd.clear();
 			toAdd.addAll(popped.get3());
 
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			for (Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule : rules) {
+				sb.append(name);
+				final Map<Object, String> names = new LinkedHashMap<>();
+				StringJoiner sj = new StringJoiner(", ", "(", ")");
+				for (Object o : rule.get1()) {
+					names.putIfAbsent(o, "_"+(names.size()+1));
+					sj.add(names.get(o));
+				}
+				sb.append(sj).append(" :- ");
+				sj = new StringJoiner(", ");
+				for (Tuple2<Relation, TupleN<Variable>> objects : rule.get2()) {
+					final StringBuilder innerSb = new StringBuilder();
+					innerSb.append(objects.get1().name);
+					final StringJoiner innerSj = new StringJoiner(", ", "(", ")");
+					for (Object o : objects.get2()) {
+						names.putIfAbsent(o, "_"+(names.size()+1));
+						innerSj.add(names.get(o));
+					}
+					innerSb.append(innerSj);
+					sj.add(innerSb);
+				}
+				sb.append(sj).append("\r\n");
+			}
+			return sb.toString();
 		}
 	}
 }
