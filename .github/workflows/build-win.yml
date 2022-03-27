@@ -18,7 +18,6 @@ jobs:
     - name: Install VC-Redist 2012
       run: |
         Install-Module -Name VcRedist -Force
-        New-Item -ItemType Directory
         $VcList = Get-VcList -Release "2012"
         Save-VcRedist -VcList $VcList
         Install-VcRedist -VcList $VcList -Silent
