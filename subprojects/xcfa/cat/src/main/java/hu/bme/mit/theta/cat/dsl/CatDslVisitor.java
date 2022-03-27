@@ -29,11 +29,15 @@ import java.util.Set;
 
 public class CatDslVisitor extends CatBaseVisitor<Datalog.Relation> {
     private static final String[] unaryBasicExpressions = new String[] {"W", "R", "F"};
-    private static final String[] binaryBasicExpressions = new String[] {"po", "rf"};
+    private static final String[] binaryBasicExpressions = new String[] {"po", "rf", "fr", "co"};
 
     private final Datalog datalogProgram;
     private final Datalog.Relation mustBeEmpty;
     private int ruleNameCnt = 0;
+
+    public Datalog getDatalogProgram() {
+        return datalogProgram;
+    }
 
     public CatDslVisitor() {
         this.datalogProgram = Datalog.createProgram();
@@ -111,70 +115,95 @@ public class CatDslVisitor extends CatBaseVisitor<Datalog.Relation> {
     @Override
     public Datalog.Relation visitExprBasic(CatParser.ExprBasicContext ctx) {
         final Map<String, Datalog.Relation> relations = datalogProgram.getRelations();
+        final Datalog.Relation relation = relations.get(ctx.n.getText());
+        if(relation == null) throw new RuntimeException("Unknown basic relation " + ctx.getText());
+        return relation;
     }
 
     @Override
     public Datalog.Relation visitExprMinus(CatParser.ExprMinusContext ctx) {
-        return super.visitExprMinus(ctx);
+        throw new UnsupportedOperationException("Subtraction of relations is not supported in Datalog.");
     }
 
     @Override
     public Datalog.Relation visitExprUnion(CatParser.ExprUnionContext ctx) {
-        return super.visitExprUnion(ctx);
+        return datalogProgram.createDisjunction("rule_" + ruleNameCnt++, List.of(ctx.e1.accept(this), ctx.e2.accept(this)));
     }
 
     @Override
     public Datalog.Relation visitExprComposition(CatParser.ExprCompositionContext ctx) {
-        return super.visitExprComposition(ctx);
+        final Datalog.Relation relation = datalogProgram.createRelation("rule_" + ruleNameCnt++, 2);
+        final Datalog.Relation e1 = ctx.e1.accept(this);
+        final Datalog.Relation e2 = ctx.e2.accept(this);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        final Datalog.Variable var3 = datalogProgram.getVariable();
+        relation.addRule(TupleN.of(var1, var3), Set.of(Tuple2.of(e1, TupleN.of(var1, var2)), Tuple2.of(e2, TupleN.of(var2, var3))));
+        return relation;
     }
 
     @Override
     public Datalog.Relation visitExprIntersection(CatParser.ExprIntersectionContext ctx) {
-        return super.visitExprIntersection(ctx);
+        return datalogProgram.createConjuction("rule_" + ruleNameCnt++, List.of(ctx.e1.accept(this), ctx.e2.accept(this)));
     }
 
     @Override
     public Datalog.Relation visitExprTransitive(CatParser.ExprTransitiveContext ctx) {
-        return super.visitExprTransitive(ctx);
+        return datalogProgram.createTransitive("rule_" + ruleNameCnt++, ctx.e.accept(this));
     }
 
     @Override
     public Datalog.Relation visitExprComplement(CatParser.ExprComplementContext ctx) {
-        return super.visitExprComplement(ctx);
+        throw new UnsupportedOperationException("Complementing of relations is not supported in Datalog.");
     }
 
     @Override
     public Datalog.Relation visitExprInverse(CatParser.ExprInverseContext ctx) {
-        return super.visitExprInverse(ctx);
+        final Datalog.Relation relation = datalogProgram.createRelation("rule_" + ruleNameCnt++, 2);
+        final Datalog.Relation e = ctx.e.accept(this);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        relation.addRule(TupleN.of(var1, var2), Set.of(Tuple2.of(e, TupleN.of(var2, var1))));
+        return relation;
     }
 
     @Override
     public Datalog.Relation visitExprDomainIdentity(CatParser.ExprDomainIdentityContext ctx) {
-        return super.visitExprDomainIdentity(ctx);
+        throw new UnsupportedOperationException("Not yet supported");
     }
 
     @Override
     public Datalog.Relation visitExprIdentity(CatParser.ExprIdentityContext ctx) {
-        return super.visitExprIdentity(ctx);
+        throw new UnsupportedOperationException("Not yet supported");
     }
 
     @Override
     public Datalog.Relation visitExprTransRef(CatParser.ExprTransRefContext ctx) {
-        return super.visitExprTransRef(ctx);
+        final Datalog.Relation e = ctx.e.accept(this);
+        final Datalog.Relation transitive = datalogProgram.createTransitive("rule_" + ruleNameCnt++, e);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        transitive.addRule(TupleN.of(var1, var1), Set.of());
+        return transitive;
     }
 
     @Override
     public Datalog.Relation visitExprFencerel(CatParser.ExprFencerelContext ctx) {
-        return super.visitExprFencerel(ctx);
+        throw new UnsupportedOperationException("Not yet supported");
     }
 
     @Override
     public Datalog.Relation visitExpr(CatParser.ExprContext ctx) {
-        return super.visitExpr(ctx);
+        return ctx.e.accept(this);
     }
 
     @Override
     public Datalog.Relation visitExprOptional(CatParser.ExprOptionalContext ctx) {
-        return super.visitExprOptional(ctx);
+        final Datalog.Relation e = ctx.e.accept(this);
+        final Datalog.Relation optional = datalogProgram.createRelation("rule_" + ruleNameCnt++, 2);
+        final Datalog.Variable var1 = datalogProgram.getVariable();
+        final Datalog.Variable var2 = datalogProgram.getVariable();
+        optional.addRule(TupleN.of(var1, var1), Set.of());
+        optional.addRule(TupleN.of(var1, var2), Set.of(Tuple2.of(e, TupleN.of(var1, var2))));
+        return optional;
     }
 }
