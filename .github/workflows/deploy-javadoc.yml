@@ -16,6 +16,7 @@ jobs:
       - name: Generate Javadoc
         run: ./gradlew aggregateJavadoc
       - name: Deploy Javadoc
+        if: github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           branch: gh-pages
