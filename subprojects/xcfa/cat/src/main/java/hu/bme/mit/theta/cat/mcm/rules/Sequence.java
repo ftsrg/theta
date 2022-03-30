@@ -14,15 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.models;
+package hu.bme.mit.theta.cat.mcm.rules;
 
-import hu.bme.mit.theta.cat.solver.MemoryModel;
-import hu.bme.mit.theta.cat.solver.MemoryModelBuilder;
+import hu.bme.mit.theta.cat.mcm.MCMRelation;
 
-public class NoassertMemory extends MemoryModel {
-	@Override
-	public void applyRules(MemoryModelBuilder memoryModelBuilder) {
-		super.applyRules(memoryModelBuilder);
+public class Sequence extends BinaryMCMRule{
+    public Sequence(MCMRelation e1, MCMRelation e2) {
+        super(e1, e2);
+    }
 
-	}
+    @Override
+    public String toString() {
+        return e1.toString() + " ; " + e2.toString();
+    }
 }

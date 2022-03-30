@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cat;
 
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
-import hu.bme.mit.theta.common.datalog.Datalog;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,11 +40,7 @@ public class ParseTest {
     @Test
     public void test() throws IOException {
         try(final InputStream fis = getClass().getResourceAsStream(filepath)) {
-            final Datalog program = CatDslManager.createProgram(fis);
-            program.getRelations().forEach((s, relation) -> {
-                System.out.println("%" + s + ":");
-                System.out.println(relation);
-            });
+            System.out.println(CatDslManager.createMCM(fis));
         }
     }
 }

@@ -436,7 +436,7 @@ public class Datalog {
 
 
 		public void push() {
-			stack.push(Tuple3.of(elements, newElements, toAdd));
+			stack.push(Tuple3.of(Set.copyOf(elements), Set.copyOf(newElements), Set.copyOf(toAdd)));
 		}
 
 		public void pop() {
@@ -474,7 +474,7 @@ public class Datalog {
 					innerSb.append(innerSj);
 					sj.add(innerSb);
 				}
-				sb.append(sj).append("\r\n");
+				sb.append(sj).append(".\r\n");
 			}
 			return sb.toString();
 		}

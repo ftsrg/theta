@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cat.dsl;
 
 import hu.bme.mit.theta.cat.dsl.gen.CatLexer;
 import hu.bme.mit.theta.cat.dsl.gen.CatParser;
-import hu.bme.mit.theta.common.datalog.Datalog;
+import hu.bme.mit.theta.cat.mcm.MCM;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 
 public class CatDslManager {
 
-    public static Datalog createProgram(final InputStream inputStream) throws IOException {
+    public static MCM createMCM(final InputStream inputStream) throws IOException {
         final CharStream input = CharStreams.fromStream(inputStream);
 
         final CatLexer lexer = new CatLexer(input);
@@ -39,14 +39,14 @@ public class CatDslManager {
 
         final CatParser.McmContext context = parser.mcm();
 
-        final CatDslVisitor catDslVisitor = new CatDslVisitor();
-        context.accept(catDslVisitor);
+        final hu.bme.mit.theta.cat.dsl.CatVisitor visitor = new hu.bme.mit.theta.cat.dsl.CatVisitor();
+        context.accept(visitor);
 
-        return catDslVisitor.getDatalogProgram();
+        return visitor.getMcm();
     }
 
-    public static Datalog createProgram(final String s) throws IOException {
-        return createProgram(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
+    public static MCM createMCM(final String s) throws IOException {
+        return createMCM(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
     }
 
 }
