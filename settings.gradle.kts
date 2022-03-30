@@ -23,6 +23,7 @@ include(
         "xta/xta",
         "xta/xta-analysis",
         "xta/xta-cli",
+        "xta/xta-testgen",
 
         "xsts/xsts",
         "xsts/xsts-analysis",
