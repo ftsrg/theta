@@ -14,24 +14,18 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.solver;
+package hu.bme.mit.theta.cat.mcm.rules;
 
-public interface RuleDerivationVisitor<P, R> {
-	R visit(RuleDerivation.Element derivation, P param);
+import hu.bme.mit.theta.cat.mcm.MCMRelation;
 
-	R visit(RuleDerivation.Union derivation, P param);
+public class Intersection extends BinaryMCMRule{
+    public Intersection(MCMRelation e1, MCMRelation e2) {
+        super(e1, e2);
+    }
 
-	R visit(RuleDerivation.Intersection derivation, P param);
 
-	R visit(RuleDerivation.Difference derivation, P param);
-
-	R visit(RuleDerivation.Inverse derivation, P param);
-
-	R visit(RuleDerivation.Transitive derivation, P param);
-
-	R visit(RuleDerivation.SelfOrTransitive derivation, P param);
-
-	R visit(RuleDerivation.Consecutive derivation, P param);
-
-	R visit(RuleDerivation.CartesianProduct derivation, P param);
+    @Override
+    public String toString() {
+        return e1.toString() + " & " + e2.toString();
+    }
 }
