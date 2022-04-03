@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cat;
 
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
+import hu.bme.mit.theta.cat.mcm.MCM;
+import hu.bme.mit.theta.cat.mcm.MCMRelation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -24,23 +26,40 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class ParseTest {
     @Parameterized.Parameter(0)
     public String filepath;
 
+    @Parameterized.Parameter(1)
+    public int constraintNumber;
+
+    @Parameterized.Parameter(2)
+    public Set<String> allowedPrimitives;
+
     @Parameterized.Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"/sc.cat"},
+                {"/syntax-test/simple.cat", 3, Set.of("po", "rf")},
         });
     }
 
     @Test
     public void test() throws IOException {
         try(final InputStream fis = getClass().getResourceAsStream(filepath)) {
-            System.out.println(CatDslManager.createMCM(fis));
+            final MCM mcm = CatDslManager.createMCM(fis);
+            assertEquals(constraintNumber, mcm.getConstraints().size());
+            Map<String, MCMRelation> relations = new LinkedHashMap<>();
+            mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
+            final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRules().size() == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            assertEquals(allowedPrimitives, primitives.keySet());
         }
     }
 }
