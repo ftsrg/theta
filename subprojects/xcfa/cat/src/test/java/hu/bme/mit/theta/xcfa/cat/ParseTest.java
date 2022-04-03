@@ -51,6 +51,7 @@ public class ParseTest {
                 {"/syntax-test/function.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/procedure.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/include-test.cat", 5, Set.of("po", "rf")},
+                {"/sc.cat", 2, Set.of("po", "rf", "co", "rmw", "ext", "id")},
         });
     }
 
