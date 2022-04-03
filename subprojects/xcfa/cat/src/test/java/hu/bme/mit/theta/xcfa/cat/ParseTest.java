@@ -33,7 +33,7 @@ public class ParseTest {
     @Parameterized.Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"/01simple.cat"},
+                {"/sc.cat"},
         });
     }
 
