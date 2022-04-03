@@ -22,8 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -50,18 +50,17 @@ public class ParseTest {
                 {"/syntax-test/simple.cat", 3, Set.of("po", "rf")},
                 {"/syntax-test/function.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/procedure.cat", 2, Set.of("po", "rf")},
+                {"/syntax-test/include-test.cat", 5, Set.of("po", "rf")},
         });
     }
 
     @Test
     public void test() throws IOException {
-        try(final InputStream fis = getClass().getResourceAsStream(filepath)) {
-            final MCM mcm = CatDslManager.createMCM(fis);
-            assertEquals(constraintNumber, mcm.getConstraints().size());
-            Map<String, MCMRelation> relations = new LinkedHashMap<>();
-            mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
-            final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRules().size() == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            assertEquals(allowedPrimitives, primitives.keySet());
-        }
+        final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(filepath).getFile()));
+        assertEquals(constraintNumber, mcm.getConstraints().size());
+        Map<String, MCMRelation> relations = new LinkedHashMap<>();
+        mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
+        final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRules().size() == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        assertEquals(allowedPrimitives, primitives.keySet());
     }
 }

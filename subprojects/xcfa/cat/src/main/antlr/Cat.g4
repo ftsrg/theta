@@ -5,7 +5,7 @@ mcm
     ;
 
 scopeBody
-    :   (procCall | functionDef | procDef | definition)+
+    :   (procCall | functionDef | procDef | definition | includeFile)+
     ;
 
 procCall
@@ -19,6 +19,10 @@ functionDef
 
 procDef
     :   PROCEDURE n = NAME LPAR params+=NAME (COMMA params+=NAME)* RPAR EQ body=scopeBody END
+    ;
+
+includeFile
+    :   INCLUDE QUOT file = NAME QUOT
     ;
 
 definition
@@ -70,6 +74,7 @@ WITH    :   'with';
 CALL    :   'call';
 PROCEDURE:  'procedure';
 END     :   'end';
+INCLUDE :   'include';
 
 ACYCLIC     :   'acyclic';
 IRREFLEXIVE :   'irreflexive';
@@ -95,6 +100,7 @@ RPAR    :   ')';
 LBRAC   :   '[';
 RBRAC   :   ']';
 COMMA   :   ',';
+QUOT    :   '"';
 
 NAME    : [A-Za-z0-9\-_.]+;
 
@@ -112,18 +118,13 @@ WS
     :   [ \t\r\n]+
         -> skip
     ;
-
-INCLUDE
-    :   'include "' .*? '"'
-        -> skip
-    ;
+//
+//INCLUDE
+//    :   'include "' .*? '"'
+//        -> skip
+//    ;
 
 SHOW
     :   'show ' .*? [\r\n]
-        -> skip
-    ;
-
-MODELNAME
-    :   '"' .*? '"'
         -> skip
     ;

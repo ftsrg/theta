@@ -36,6 +36,8 @@ import hu.bme.mit.theta.cat.mcm.rules.Toid;
 import hu.bme.mit.theta.cat.mcm.rules.TransitiveClosure;
 import hu.bme.mit.theta.cat.mcm.rules.Union;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,21 +45,24 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.cat.dsl.CatDslManager.setupCatAntlr;
 
 public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     private MCM mcm;
     private int ruleNameCnt = 0;
+    private final File file;
     private final Map<String, MCMRelation> relations;
     private final Map<String, CatParser.FunctionDefContext> functions;
     private final Map<String, CatParser.ProcDefContext> procedures;
     private final Map<String, MCMRelation> paramAssignment;
     private static final Set<String> unaryRelations = Set.of("W", "R", "F", "U");
 
-    public CatVisitor() {
+    public CatVisitor(final File file) {
         this.relations = new LinkedHashMap<>();
         this.procedures = new LinkedHashMap<>();
         this.functions = new LinkedHashMap<>();
         this.paramAssignment = new LinkedHashMap<>();
+        this.file = file;
     }
 
     public MCM getMcm() {
@@ -85,6 +90,20 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     public MCMRelation visitMcm(CatParser.McmContext ctx) {
         this.mcm = new MCM(ctx.NAME() == null ? "Unnamed" : ctx.NAME().getText());
         return super.visitMcm(ctx);
+    }
+
+    @Override
+    public MCMRelation visitIncludeFile(CatParser.IncludeFileContext ctx) {
+        final File file = new File(this.file.getParent() + File.separator + ctx.file.getText());
+        if(file.exists() && file.isFile()) {
+            try {
+                final CatParser.McmContext context = setupCatAntlr(file);
+                context.scopeBody().accept(this);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 
     @Override

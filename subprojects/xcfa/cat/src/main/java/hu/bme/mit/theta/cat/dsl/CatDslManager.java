@@ -23,30 +23,32 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 public class CatDslManager {
 
-    public static MCM createMCM(final InputStream inputStream) throws IOException {
-        final CharStream input = CharStreams.fromStream(inputStream);
-
-        final CatLexer lexer = new CatLexer(input);
-        final CommonTokenStream tokens = new CommonTokenStream(lexer);
-        final CatParser parser = new CatParser(tokens);
-
-        final CatParser.McmContext context = parser.mcm();
-
-        final hu.bme.mit.theta.cat.dsl.CatVisitor visitor = new hu.bme.mit.theta.cat.dsl.CatVisitor();
+    public static MCM createMCM(final File file) throws IOException {
+        final CatParser.McmContext context = setupCatAntlr(file);
+        final hu.bme.mit.theta.cat.dsl.CatVisitor visitor = new hu.bme.mit.theta.cat.dsl.CatVisitor(file);
         context.accept(visitor);
-
         return visitor.getMcm();
     }
 
-    public static MCM createMCM(final String s) throws IOException {
-        return createMCM(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
+    static CatParser.McmContext setupCatAntlr(File file) throws IOException {
+        FileInputStream inputStream = new FileInputStream(file);
+        final CharStream input = CharStreams.fromStream(inputStream);
+
+        final CatLexer lexer = new CatLexer(input);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new FileNameAntlrErrorListener(file.getName()));
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final CatParser parser = new CatParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new FileNameAntlrErrorListener(file.getName()));
+        inputStream.close();
+        return parser.mcm();
     }
 
 }
