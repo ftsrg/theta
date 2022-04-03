@@ -1,13 +1,29 @@
 grammar Cat;
 
 mcm
-    :   (NAME)? definition+ EOF
+    :   (NAME)? scopeBody EOF
+    ;
+
+scopeBody
+    :   (procCall | functionDef | procDef | definition)+
+    ;
+
+procCall
+    :   CALL proc = NAME LPAR params += expression (COMMA params += expression)* RPAR
+    ;
+
+functionDef
+    :   LET n = NAME LPAR params+=NAME (COMMA params+=NAME)* RPAR EQ e = expression
+    |   LET n = NAME (params+=NAME)+ EQ e = expression
+    ;
+
+procDef
+    :   PROCEDURE n = NAME LPAR params+=expression (COMMA params+=expression)* RPAR EQ body=scopeBody END
     ;
 
 definition
     :   axiomDefinition
     |   letDefinition
-    |   letRecDefinition
     ;
 
 axiomDefinition
@@ -17,14 +33,10 @@ axiomDefinition
     ;
 
 letDefinition
-    :   LET n = NAME EQ e = expression
+    :   LET REC? n = NAME EQ e = expression letAndDefinition*
     ;
 
-letRecDefinition
-    :   LET REC n = NAME EQ e = expression letRecAndDefinition*
-    ;
-
-letRecAndDefinition
+letAndDefinition
     :   AND n = NAME EQ e = expression
     ;
 
@@ -39,23 +51,32 @@ expression
     |   e1 = expression BAR e2 = expression                             # exprUnion
     |   e1 = expression BSLASH e2 = expression                          # exprMinus
     |   e1 = expression AMP e2 = expression                             # exprIntersection
-    |   LBRAC DOMAIN LPAR e = expression RPAR RBRAC                     # exprDomainIdentity
-    |   LBRAC RANGE LPAR e = expression RPAR RBRAC                      # exprRangeIdentity
-    |   (TOID LPAR e = expression RPAR | LBRAC e = expression RBRAC)    # exprIdentity
-    |   FENCEREL LPAR n = NAME RPAR                                     # exprFencerel
+    |   fun = NAME LPAR e += expression (COMMA e += expression)* RPAR   # exprFunctionCall
+    |   DOMAIN e = expression                                           # exprDomain
+    |   RANGE e = expression                                            # exprRange
     |   LPAR e = expression RPAR                                        # expr
     |   n = NAME                                                        # exprBasic
+    |   TRY e = expression WITH ('0' | expression)                      # exprTryWith
+    |   ('0' | '{' '}')                                                 # exprNull
+    |   LBRAC e = expression RBRAC                                      # exprToid
     ;
 
 LET     :   'let';
 REC     :   'rec';
 AND     :   'and';
 AS      :   'as';
-TOID    :   'toid';
+TRY     :   'try';
+WITH    :   'with';
+CALL    :   'call';
+PROCEDURE:  'procedure';
+END     :   'end';
 
 ACYCLIC     :   'acyclic';
 IRREFLEXIVE :   'irreflexive';
 EMPTY       :   'empty';
+
+DOMAIN  :   'domain';
+RANGE   :   'range';
 
 EQ      :   '=';
 STAR    :   '*';
@@ -73,10 +94,7 @@ LPAR    :   '(';
 RPAR    :   ')';
 LBRAC   :   '[';
 RBRAC   :   ']';
-
-FENCEREL    :   'fencerel';
-DOMAIN      :   'domain';
-RANGE       :   'range';
+COMMA   :   ',';
 
 NAME    : [A-Za-z0-9\-_.]+;
 
@@ -97,6 +115,11 @@ WS
 
 INCLUDE
     :   'include "' .*? '"'
+        -> skip
+    ;
+
+SHOW
+    :   'show ' .*? [\r\n]
         -> skip
     ;
 
