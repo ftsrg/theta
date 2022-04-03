@@ -18,7 +18,7 @@ functionDef
     ;
 
 procDef
-    :   PROCEDURE n = NAME LPAR params+=expression (COMMA params+=expression)* RPAR EQ body=scopeBody END
+    :   PROCEDURE n = NAME LPAR params+=NAME (COMMA params+=NAME)* RPAR EQ body=scopeBody END
     ;
 
 definition

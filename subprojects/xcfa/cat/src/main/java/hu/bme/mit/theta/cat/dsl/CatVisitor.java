@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     private MCM mcm;
@@ -143,6 +144,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     @Override
     public MCMRelation visitProcCall(CatParser.ProcCallContext ctx) {
         final CatParser.ProcDefContext procDefContext = procedures.get(ctx.NAME().getText());
+        checkNotNull(procDefContext, "Procedure with name " + ctx.NAME().getText() + " does not exist.");
         final List<CatParser.ExpressionContext> e = ctx.params;
         final Map<String, MCMRelation> toReset = new LinkedHashMap<>();
         for (int i = 0; i < e.size(); i++) {
@@ -153,7 +155,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
                     text,
                     expressionContext.accept(this));
         }
-        final MCMRelation accept = procDefContext.accept(this);
+        final MCMRelation accept = procDefContext.body.accept(this);
         toReset.forEach((s, mcmRelation) -> {
             if(mcmRelation == null) paramAssignment.remove(s);
             else paramAssignment.put(s, mcmRelation);
@@ -169,6 +171,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     @Override
     public MCMRelation visitExprFunctionCall(CatParser.ExprFunctionCallContext ctx) {
         final CatParser.FunctionDefContext functionDefContext = functions.get(ctx.NAME().getText());
+        checkNotNull(functionDefContext, "Function with name " + ctx.NAME().getText() + " does not exist.");
         List<CatParser.ExpressionContext> e = ctx.e;
         final Map<String, MCMRelation> toReset = new LinkedHashMap<>();
         for (int i = 0; i < e.size(); i++) {
@@ -179,7 +182,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
                     text,
                     expressionContext.accept(this));
         }
-        final MCMRelation accept = functionDefContext.accept(this);
+        final MCMRelation accept = functionDefContext.e.accept(this);
         toReset.forEach((s, mcmRelation) -> {
             if(mcmRelation == null) paramAssignment.remove(s);
             else paramAssignment.put(s, mcmRelation);

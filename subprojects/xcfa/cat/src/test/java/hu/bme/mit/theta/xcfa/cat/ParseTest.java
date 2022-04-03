@@ -48,6 +48,8 @@ public class ParseTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {"/syntax-test/simple.cat", 3, Set.of("po", "rf")},
+                {"/syntax-test/function.cat", 2, Set.of("po", "rf")},
+                {"/syntax-test/procedure.cat", 2, Set.of("po", "rf")},
         });
     }
 
