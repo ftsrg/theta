@@ -14,25 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
-import hu.bme.mit.theta.cat.mcm.MCMRule;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-import java.util.Map;
-
-public abstract class BinaryMCMRule extends MCMRule {
-    protected final MCMRelation e1;
-    protected final MCMRelation e2;
-
-    protected BinaryMCMRule(MCMRelation e1, MCMRelation e2) {
-        this.e1 = e1;
-        this.e2 = e2;
+public class Sequence extends BinaryMCMRule{
+    public Sequence(MCMRelation e1, MCMRelation e2) {
+        super(e1, e2);
     }
 
     @Override
-    public void collectRelations(final Map<String, MCMRelation> relations) {
-        e1.collectRelations(relations);
-        e2.collectRelations(relations);
+    public String toString() {
+        return e1.toString() + " ; " + e2.toString();
     }
 }

@@ -14,17 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
-
-public class IdentityClosure extends UnaryMCMRule{
-    public IdentityClosure(MCMRelation e) {
-        super(e);
-    }
-
-    @Override
-    public String toString() {
-        return e.toString() + "?";
-    }
+public class MCMChecker {
 }

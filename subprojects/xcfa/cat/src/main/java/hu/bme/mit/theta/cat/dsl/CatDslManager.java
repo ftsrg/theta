@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cat.dsl;
 
 import hu.bme.mit.theta.cat.dsl.gen.CatLexer;
 import hu.bme.mit.theta.cat.dsl.gen.CatParser;
-import hu.bme.mit.theta.cat.mcm.MCM;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

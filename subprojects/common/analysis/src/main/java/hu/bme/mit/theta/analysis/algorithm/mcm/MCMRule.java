@@ -14,17 +14,10 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import java.util.Map;
 
-public class TransitiveClosure extends UnaryMCMRule{
-    public TransitiveClosure(MCMRelation e) {
-        super(e);
-    }
-
-    @Override
-    public String toString() {
-        return e.toString() + "+";
-    }
+public abstract class MCMRule {
+    public abstract void collectRelations(final Map<String, MCMRelation> relations);
 }

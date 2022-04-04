@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-public class Toid extends UnaryMCMRule{
-    public Toid(MCMRelation e) {
+public class Complement extends UnaryMCMRule{
+    public Complement(MCMRelation e) {
         super(e);
     }
 
     @Override
     public String toString() {
-        return e.toString();
+        return "~" + e.toString();
     }
 }

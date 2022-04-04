@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-public class Inverse extends UnaryMCMRule{
-    public Inverse(MCMRelation e) {
-        super(e);
+public class CartesianProduct extends BinaryMCMRule {
+    public CartesianProduct(MCMRelation e1, MCMRelation e2) {
+        super(e1, e2);
     }
 
     @Override
     public String toString() {
-        return e.toString() + "^-1";
+        return e1.toString() + " X " + e2.toString();
     }
 }

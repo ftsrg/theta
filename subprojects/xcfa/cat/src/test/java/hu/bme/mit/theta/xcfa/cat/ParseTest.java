@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xcfa.cat;
 
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
-import hu.bme.mit.theta.cat.mcm.MCM;
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

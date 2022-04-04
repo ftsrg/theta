@@ -14,22 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
-import hu.bme.mit.theta.cat.mcm.MCMRule;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-import java.util.Map;
-
-public abstract class UnaryMCMRule extends MCMRule {
-    protected final MCMRelation e;
-
-    protected UnaryMCMRule(MCMRelation e) {
-        this.e = e;
+public class ReflexiveTransitiveClosure extends UnaryMCMRule{
+    public ReflexiveTransitiveClosure(MCMRelation e) {
+        super(e);
     }
 
     @Override
-    public void collectRelations(final Map<String, MCMRelation> relations) {
-        e.collectRelations(relations);
+    public String toString() {
+        return e.toString() + "*";
     }
 }

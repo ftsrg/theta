@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-public class Difference extends BinaryMCMRule{
-    public Difference(MCMRelation e1, MCMRelation e2) {
-        super(e1, e2);
+public class IdentityClosure extends UnaryMCMRule{
+    public IdentityClosure(MCMRelation e) {
+        super(e);
     }
 
     @Override
     public String toString() {
-        return e1.toString() + " \\ " + e2.toString();
+        return e.toString() + "?";
     }
 }

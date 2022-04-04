@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm.rules;
+package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.cat.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 
-public class Range extends UnaryMCMRule{
-    public Range(MCMRelation e) {
+public class Domain extends UnaryMCMRule{
+    public Domain(MCMRelation e) {
         super(e);
     }
 

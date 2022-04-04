@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.cat.mcm;
+package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
