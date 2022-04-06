@@ -79,6 +79,9 @@ public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, Va
 		return tExpr;
 	}
 
+	public static List<XcfaLabel> replaceVars(List<XcfaLabel> labels, Map<VarDecl<?>, VarDecl<?>> varLut) {
+		return labels.stream().map(label -> label.accept(new XcfaLabelVarReplacer(), varLut)).collect(Collectors.toList());
+	}
 
 	@Override
 	public XcfaLabel visit(SkipStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {

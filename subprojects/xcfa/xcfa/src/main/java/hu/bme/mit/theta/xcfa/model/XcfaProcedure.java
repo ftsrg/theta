@@ -48,6 +48,7 @@ public final class XcfaProcedure {
 	private final XcfaLocation finalLoc;
 	private final ImmutableList<XcfaEdge> edges;
 	private final XcfaProcess parent;
+	private int callCount = 0;
 
 	private XcfaProcedure(final Builder builder, final XcfaProcess parent) {
 		params = ImmutableMap.copyOf(builder.params);
@@ -198,6 +199,8 @@ public final class XcfaProcedure {
 	public XcfaProcedure duplicate(final XcfaProcess parent, final Map<VarDecl<?>, VarDecl<?>> varLut) {
 		return new XcfaProcedure(parent, this, varLut);
 	}
+
+	public int getCallCount() { return ++callCount; }
 
 	public static final class Builder {
 		private static final String RESULT_NAME = "result";

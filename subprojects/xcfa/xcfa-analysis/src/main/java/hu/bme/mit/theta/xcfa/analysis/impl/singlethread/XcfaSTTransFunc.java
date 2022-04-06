@@ -18,13 +18,13 @@ package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,9 +50,14 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		XcfaSTState<S> state = (XcfaSTState<S>) inState;
 		XcfaSTAction action = (XcfaSTAction) inAction;
 
+		ExplPrec globalPrec = (ExplPrec) prec.getGlobalPrec();
+		for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
+			globalPrec = globalPrec.join(ExplPrec.of(procedureLocation.getUsedVars()));
+		}
+
 		final Collection<XcfaSTState<S>> newStates = new ArrayList<>();
-		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, prec.getGlobalPrec())) {
-			final XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
+		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, (P) globalPrec)) {
+			XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
 			if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
 				XcfaLabel.ProcedureCallXcfaLabel label = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
 				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures().stream().filter(procedure -> label.getProcedure().equals(procedure.getName())).findAny();

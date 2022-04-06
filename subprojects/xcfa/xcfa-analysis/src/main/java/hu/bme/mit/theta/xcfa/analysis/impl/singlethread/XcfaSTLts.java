@@ -29,7 +29,7 @@ public final class XcfaSTLts implements LTS<XcfaSTState<?>, XcfaSTAction> {
 		final Collection<XcfaSTAction> xcfaActions = new ArrayList<>();
 		final XcfaLocation loc = state.getCurrentLoc();
 		for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
-			final XcfaSTAction xcfaAction = XcfaSTAction.create(outgoingEdge);
+			final XcfaSTAction xcfaAction = XcfaSTAction.createWithVars(outgoingEdge, state.getCurrentVars());
 			xcfaActions.add(xcfaAction);
 		}
 		return xcfaActions;
