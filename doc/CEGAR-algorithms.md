@@ -150,3 +150,12 @@ Available for CFA. The SMT-solver to use during verification. The `--abstraction
 * `<solver_name>:<solver_version>`: An installed SMT-LIB solver. (See subprojects [solver-smtlib](../subprojects/solver/solver-smtlib) and [solver-smtlib-cli](../subprojects/solver/solver-smtlib-cli) for more details.)
 
 It is recommended to stick with the default `Z3` option at first, and only use the SMT-LIB based solvers, if some required features are not supported by `Z3` (e.g. interpolating with bitvectors, floating points).
+
+### `--lbe`
+LBE (Large Block Encoding) can be configured the following ways (see further details in the [LBE documentation](LBE.md)):
+
+- `NO_LBE`: Turns off LBE completely
+- `LBE_SEQ`: Only applies sequential collapsing to edges
+- `LBE_FULL`: Applies sequential and parallel collapsing, too.
+
+`LBE_FULL` configuration performs better with predicate abstraction (both boolean and cartesian). `LBE_SEQ` gives better results in almost every case than `NO_LBE`.

@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-2019, windows-2016]
+        os: [windows-latest, windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -15,5 +15,11 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.11
+    - name: Install VC-Redist 2010 and 2012
+      run: |
+        Install-Module -Name VcRedist -Force
+        $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
+        Save-VcRedist -VcList $VcList
+        Install-VcRedist -VcList $VcList -Silent
     - name: Build with Gradle
       run: .\gradlew.bat build

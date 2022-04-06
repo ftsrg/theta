@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package hu.bme.mit.theta.core.decl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.type.Type;
+
 import java.util.Map;
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Type;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents a variable declaration. Variables cannot be directly passed to the SMT solver,
  * they must be replaced with constants for a given index ({@link IndexedConstDecl}).
  * See also {@link hu.bme.mit.theta.core.utils.PathUtils}.
+ *
  * @param <DeclType>
  */
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
@@ -37,6 +38,10 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 	VarDecl(final String name, final DeclType type) {
 		super(name, type);
 		indexToConst = Containers.createMap();
+	}
+
+	public static <DeclType extends Type> VarDecl<DeclType> copyOf(VarDecl<DeclType> from) {
+		return new VarDecl<>(from.getName(), from.getType());
 	}
 
 	public IndexedConstDecl<DeclType> getConstDecl(final int index) {
