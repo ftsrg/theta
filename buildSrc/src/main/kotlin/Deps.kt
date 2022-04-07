@@ -29,6 +29,11 @@ object Deps {
     val jing = "com.thaiopensource:jing:${Versions.jing}"
     val logback = "ch.qos.logback:logback-classic:${Versions.logback}"
 
+    val delta = "delta:hu.bme.mit.delta:${Versions.delta}"
+    val deltaCollections = "delta:hu.bme.mit.delta.collections:${Versions.deltaCollections}"
+
+    val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
+
     val junit4 = "junit:junit:${Versions.junit}"
 
     object Mockito {
