@@ -4,9 +4,13 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-xta"))
-    compile(project(":theta-xta-analysis"))
-    compile(project(":theta-solver-z3"))
+    implementation(project(":theta-xta"))
+    implementation(project(":theta-xta-analysis"))
+    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-analysis"))
 }
 
 application {
