@@ -25,6 +25,7 @@ plugins {
 repositories {
     gradlePluginPortal()
     mavenCentral()
+    mavenLocal()
 }
 
 apply(from = rootDir.resolve("../gradle/shared-with-buildSrc/mirrors.gradle.kts"))

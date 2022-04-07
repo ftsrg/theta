@@ -18,6 +18,10 @@ plugins {
     id("cli-tool")
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     implementation(project(":theta-xsts"))
     implementation(project(":theta-xsts-analysis"))
