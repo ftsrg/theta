@@ -22,9 +22,8 @@ include(
     "common/grammar",
     "common/multi-tests",
 
-    "frontends/c-frontend",
-    "frontends/chc-frontend",
-    "frontends/llvm",
+        "frontends/c-frontend",
+        "frontends/pnml-frontend",
 
     "cfa/cfa",
     "cfa/cfa-analysis",

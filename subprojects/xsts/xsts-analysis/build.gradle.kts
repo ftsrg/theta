@@ -28,4 +28,9 @@ dependencies {
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver-smtlib"))
     testImplementation(project(":theta-solver-javasmt"))
+    testImplementation(project(":theta-pnml-frontend"))
+}
+
+repositories {
+    mavenLocal()
 }
