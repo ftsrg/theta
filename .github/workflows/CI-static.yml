@@ -1,6 +1,40 @@
 name: CI
 
 on:
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
+  check-version:
+    name: Check whether version has been bumped
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          path: master
+      - uses: actions/checkout@v3
+        with:
+          path: pr
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: |
+          chmod +x master/gradlew
+          chmod +x pr/gradlew
+      - name: Compare versions
+        if: contains( github.event.pull_request.labels.*.name, 'skip-version-bump')
+        run: |
+          cd master
+          BASE_VERSION=$(./gradlew properties | grep ^version: | awk -F' ' '{print $2}')
+          cd ../pr
+          PR_VERSION=$(./gradlew properties | grep ^version: | awk -F' ' '{print $2}')
+          echo "Base version: $BASE_VERSION"
+          echo "PR version: $PR_VERSION"
+          dpkg --compare-versions "$BASE_VERSION" "lt" "PR_VERSION"
