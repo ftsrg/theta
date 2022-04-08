@@ -1,13 +1,15 @@
 package hu.bme.mit.theta.common;
 
+import hu.bme.mit.theta.common.version.VersionInfo;
+
 import java.io.PrintStream;
 
 public class CliUtils {
 	private CliUtils() { }
 
 	public static void printVersion(PrintStream ps) {
-		String ver = new CliUtils().getClass().getPackage().getImplementationVersion();
-		if (ver == null) ver = "Unknown version. Are you running from JAR file?";
-		ps.println(ver);
+		ps.println(VersionInfo.getInstance().getName() + " " + VersionInfo.getInstance().getVersion());
+		ps.println("Branch: " + VersionInfo.getInstance().getGitBranch());
+		ps.println("Commit: " + VersionInfo.getInstance().getGitCommit());
 	}
 }
