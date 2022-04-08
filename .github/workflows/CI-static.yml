@@ -37,4 +37,4 @@ jobs:
           cd ../pr
           PR_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
           echo "PR version: $PR_VERSION"
-          dpkg --compare-versions "$BASE_VERSION" "lt" "$PR_VERSION"
+          dpkg --compare-versions "$BASE_VERSION" "lt" "$PR_VERSION" 
