@@ -8,7 +8,7 @@ on:
 
 jobs:
   check-version:
-    name: Check whether version has been bumped
+    name: Check version bump
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
           chmod +x master/gradlew
           chmod +x pr/gradlew
       - name: Compare versions
-        if: contains( github.event.pull_request.labels.*.name, 'skip-version-bump')
+        if: ${{ !contains( github.event.pull_request.labels.*.name, 'skip-version-bump') }}
         run: |
           cd master
           BASE_VERSION=$(./gradlew properties | grep ^version: | awk -F' ' '{print $2}')
