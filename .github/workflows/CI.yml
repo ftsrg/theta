@@ -8,15 +8,14 @@ on:
   workflow_call:
 
 jobs:
-  # Builds Theta on different Linux versions
-  build-linux:
+  # Builds Theta
+  build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, ubuntu-20.04, ubuntu-18.04 ]
         java: [ 17 ]
-    runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.os }} with JDK ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    name: Build with JDK ${{ matrix.java }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -30,10 +29,37 @@ jobs:
         run: chmod +x gradlew
       - name: Build with Gradle
         run: ./gradlew build -x test --no-daemon
+      - name: Collect JARs
+        run: |
+          cp subprojects/cfa/cfa-cli/build/libs/theta-cfa-cli-*-all.jar /tmp/theta-cfa-cli.jar
+          cp subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-*-all.jar /tmp/theta-xcfa-cli.jar
+          cp subprojects/sts/sts-cli/build/libs/theta-sts-cli-*-all.jar /tmp/theta-sts-cli.jar
+          cp subprojects/xsts/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /tmp/theta-xsts-cli.jar
+          cp subprojects/xta/xta-cli/build/libs/theta-xta-cli-*-all.jar /tmp/theta-xta-cli.jar
+          cp subprojects/solver/solver-smtlib-cli/build/libs/theta-solver-smtlib-cli-*-all.jar /tmp/theta-solver-smtlib-cli.jar
+          cp lib/*.so /tmp/theta-linux/
+          cp lib/*.dll /tmp/theta-windows/
+          cd /tmp
+          mkdir theta-linux
+          cp *.jar theta-linux/
+          cp *.so theta-linux/
+          mkdir theta-windows
+          cp *.jar theta-windows/
+          cp *.dll theta-windows/
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: theta-linux
+          path: /tmp/theta-linux/
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: theta-windows
+          path: /tmp/theta-windows/
 
   # Tests Theta on different Linux versions
   test-linux:
-    needs: [ build-linux ]
+    needs: [ build ]
     strategy:
       fail-fast: false
       matrix:
@@ -53,45 +79,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Test with Gradle
-        run: ./gradlew test --no-daemon
-
-  # Builds Theta on different Windows versions
-  build-windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ windows-latest, windows-2022, windows-2019 ]
-        java: [ 17 ]
-    runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.os }} with JDK ${{ matrix.java }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up Java ${{ matrix.java }}
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: ${{ matrix.java }}
-          cache: gradle
-      - name: Install VC-Redist 2010 and 2012
-        run: |
-          Install-Module -Name VcRedist -Force
-          $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
-          Save-VcRedist -VcList $VcList
-          Install-VcRedist -VcList $VcList -Silent
-      - name: Build with Gradle
-        run: .\gradlew.bat build -x test --no-daemon
+        run: ./gradlew build --no-daemon
 
   # Tests Theta on different Windows versions
   test-windows:
-    needs: [ build-windows ]
+    needs: [ build ]
     strategy:
       fail-fast: false
       matrix:
         os: [ windows-latest, windows-2022, windows-2019 ]
         java: [ 17 ]
     runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.os }} with JDK ${{ matrix.java }}
+    name: Test on ${{ matrix.os }} with JDK ${{ matrix.java }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -108,10 +107,11 @@ jobs:
           Save-VcRedist -VcList $VcList
           Install-VcRedist -VcList $VcList -Silent
       - name: Test with Gradle
-        run: .\gradlew.bat test --no-daemon
+        run: .\gradlew.bat build --no-daemon
 
   # Builds the different Theta Docker images
   build-docker:
+    needs: [ build ]
     strategy:
       fail-fast: false
       matrix:
@@ -133,7 +133,7 @@ jobs:
       - name: Upload artifact ${{ matrix.container }}.tar
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.container }}
+          name: ${{ matrix.container }}.tar
           path: /tmp/${{ matrix.container }}.tar
   # Tests the different Theta Docker images
   test-docker:
@@ -148,7 +148,7 @@ jobs:
           { name: theta-xta-cli, test: "subprojects/xta/xta/src/test/resources/csma-2.xta -c LU -s BFS" }
         ]
     runs-on: ubuntu-latest
-    name: Test Docker image ${{ matrix.container }}
+    name: Test Docker image ${{ matrix.container.name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -157,7 +157,7 @@ jobs:
       - name: Download artifact ${{ matrix.container.name }}.tar
         uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.container.name }}
+          name: ${{ matrix.container.name }}.tar
           path: /tmp
       - name: Load image ${{ matrix.container.name }}
         run: |
