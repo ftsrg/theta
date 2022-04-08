@@ -32,9 +32,9 @@ jobs:
         if: ${{ !contains( github.event.pull_request.labels.*.name, 'skip-version-bump') }}
         run: |
           cd master
-          BASE_VERSION=$(./gradlew properties | grep ^version: | awk -F' ' '{print $2}')
-          cd ../pr
-          PR_VERSION=$(./gradlew properties | grep ^version: | awk -F' ' '{print $2}')
+          BASE_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
           echo "Base version: $BASE_VERSION"
+          cd ../pr
+          PR_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
           echo "PR version: $PR_VERSION"
-          dpkg --compare-versions "$BASE_VERSION" "lt" "PR_VERSION"
+          dpkg --compare-versions "$BASE_VERSION" "lt" "$PR_VERSION"
