@@ -37,8 +37,8 @@ jobs:
           cp subprojects/xsts/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /tmp/theta-xsts-cli.jar
           cp subprojects/xta/xta-cli/build/libs/theta-xta-cli-*-all.jar /tmp/theta-xta-cli.jar
           cp subprojects/solver/solver-smtlib-cli/build/libs/theta-solver-smtlib-cli-*-all.jar /tmp/theta-solver-smtlib-cli.jar
-          cp lib/*.so /tmp/theta-linux/
-          cp lib/*.dll /tmp/theta-windows/
+          cp lib/*.so /tmp/
+          cp lib/*.dll /tmp/
           cd /tmp
           mkdir theta-linux
           cp *.jar theta-linux/
