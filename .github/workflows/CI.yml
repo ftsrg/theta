@@ -130,7 +130,7 @@ jobs:
           file: docker/${{ matrix.container }}.Dockerfile
           tags: ${{ matrix.container }}:latest
           outputs: type=docker,dest=/tmp/${{ matrix.container }}.tar
-      - name: Upload artifact
+      - name: Upload artifact ${{ matrix.container }}.tar
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.container }}
@@ -154,13 +154,15 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Download artifact
+      - name: Download artifact ${{ matrix.container.name }}.tar
         uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.container.name }}
           path: /tmp
-      - name: Load image
+      - name: Load image ${{ matrix.container.name }}
         run: |
           docker load --input /tmp/${{ matrix.container.name }}.tar
           docker image ls -a
+      - name: Run test for ${{ matrix.container.name }}
+        run: |
           ./docker/run-${{ matrix.container.name }}.sh ${{ matrix.container.test }}
