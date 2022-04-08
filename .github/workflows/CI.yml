@@ -84,6 +84,7 @@ jobs:
 
   # Tests Theta on different Windows versions
   test-windows:
+    needs: [ build-windows ]
     strategy:
       fail-fast: false
       matrix:
