@@ -109,3 +109,58 @@ jobs:
           Install-VcRedist -VcList $VcList -Silent
       - name: Test with Gradle
         run: .\gradlew.bat test --no-daemon
+
+  # Builds the different Theta Docker images
+  build-docker:
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [ theta-cfa-cli, theta-sts-cli, theta-xsts-cli, theta-xta-cli ]
+    runs-on: ubuntu-latest
+    name: Build Docker image ${{ matrix.container }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build and export ${{ matrix.container }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/${{ matrix.container }}.Dockerfile
+          tags: ${{ matrix.container }}:latest
+          outputs: type=docker,dest=/tmp/${{ matrix.container }}.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.container }}
+          path: /tmp/${{ matrix.container }}.tar
+  # Tests the different Theta Docker images
+  test-docker:
+    needs: [ build-docker ]
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [
+          { name: theta-cfa-cli, test: "subprojects/cfa/cfa/src/test/resources/counter5_true.cfa" },
+          { name: theta-sts-cli, test: "subprojects/sts/sts/src/test/resources/simple1.system" },
+          { name: theta-xsts-cli, test: "subprojects/xsts/xsts-analysis/src/test/resources/model/sequential.xsts --property \"!(x==1)\"" },
+          { name: theta-xta-cli, test: "subprojects/xta/xta/src/test/resources/csma-2.xta -c LU -s BFS" }
+        ]
+    runs-on: ubuntu-latest
+    name: Test Docker image ${{ matrix.container }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.container.name }}
+          path: /tmp
+      - name: Load image
+        run: |
+          docker load --input /tmp/${{ matrix.container.name }}.tar
+          docker image ls -a
+          ./docker/run-${{ matrix.container.name }}.sh ${{ matrix.container.test }}
