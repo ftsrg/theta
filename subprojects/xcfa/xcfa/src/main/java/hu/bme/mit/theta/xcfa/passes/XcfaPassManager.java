@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class XcfaPassManager {
 	private static final List<ProcedurePass> procedurePasses = new ArrayList<>();
@@ -121,6 +122,7 @@ public class XcfaPassManager {
 	}
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		//System.out.println(builder.toDot(Set.of(), Set.of()));
 		for (ProcedurePass procedurePass : procedurePasses) {
 			if (!procedurePass.isPostInlining() || ProcedurePass.postInlining) builder = procedurePass.run(builder);
 		}
