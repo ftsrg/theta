@@ -1,0 +1,1575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+<net id="Dekker-PT-010" type="http://www.pnml.org/version-2009/grammar/ptnet">
+<name> <text>Dekker-PT-010</text> </name>
+<page id="page">
+
+<!-- places -->
+<place id="flag_0_0">
+<name><text>flag=0/0</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_0">
+<name><text>flag=1/0</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_1">
+<name><text>flag=0/1</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_1">
+<name><text>flag=1/1</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_2">
+<name><text>flag=0/2</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_2">
+<name><text>flag=1/2</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_3">
+<name><text>flag=0/3</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_3">
+<name><text>flag=1/3</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_4">
+<name><text>flag=0/4</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_4">
+<name><text>flag=1/4</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_5">
+<name><text>flag=0/5</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_5">
+<name><text>flag=1/5</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_6">
+<name><text>flag=0/6</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_6">
+<name><text>flag=1/6</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_7">
+<name><text>flag=0/7</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_7">
+<name><text>flag=1/7</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_8">
+<name><text>flag=0/8</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_8">
+<name><text>flag=1/8</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="flag_0_9">
+<name><text>flag=0/9</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="flag_1_9">
+<name><text>flag=1/9</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_0">
+<name><text>p0/0</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_0">
+<name><text>p1/0</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_0">
+<name><text>p3/0</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_1">
+<name><text>p0/1</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_1">
+<name><text>p1/1</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_1">
+<name><text>p3/1</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_2">
+<name><text>p0/2</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_2">
+<name><text>p1/2</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_2">
+<name><text>p3/2</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_3">
+<name><text>p0/3</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_3">
+<name><text>p1/3</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_3">
+<name><text>p3/3</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_4">
+<name><text>p0/4</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_4">
+<name><text>p1/4</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p34">
+<name><text>p3/4</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_5">
+<name><text>p0/5</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_5">
+<name><text>p1/5</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_5">
+<name><text>p3/5</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_6">
+<name><text>p0/6</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_6">
+<name><text>p1/6</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_6">
+<name><text>p3/6</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_7">
+<name><text>p0/7</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_7">
+<name><text>p1/7</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_7">
+<name><text>p3/7</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_8">
+<name><text>p0/8</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_8">
+<name><text>p1/8</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_8">
+<name><text>p3/8</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p0_9">
+<name><text>p0/9</text></name>
+<initialMarking> <text>1</text> </initialMarking>
+</place>
+<place id="p1_9">
+<name><text>p1/9</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+<place id="p3_9">
+<name><text>p3/9</text></name>
+<initialMarking> <text>0</text> </initialMarking>
+</place>
+
+<!-- transitions -->
+<transition id="withdraw_0_1">
+<name><text>withdraw/0/1</text></name>
+</transition>
+<transition id="withdraw_0_2">
+<name><text>withdraw/0/2</text></name>
+</transition>
+<transition id="withdraw_0_3">
+<name><text>withdraw/0/3</text></name>
+</transition>
+<transition id="withdraw_0_4">
+<name><text>withdraw/0/4</text></name>
+</transition>
+<transition id="withdraw_0_5">
+<name><text>withdraw/0/5</text></name>
+</transition>
+<transition id="withdraw_0_6">
+<name><text>withdraw/0/6</text></name>
+</transition>
+<transition id="withdraw_0_7">
+<name><text>withdraw/0/7</text></name>
+</transition>
+<transition id="withdraw_0_8">
+<name><text>withdraw/0/8</text></name>
+</transition>
+<transition id="withdraw_0_9">
+<name><text>withdraw/0/9</text></name>
+</transition>
+<transition id="try_0">
+<name><text>try/0</text></name>
+</transition>
+<transition id="enter_0">
+<name><text>enter/0</text></name>
+</transition>
+<transition id="exit_0">
+<name><text>exit/0</text></name>
+</transition>
+<transition id="withdraw_1_0">
+<name><text>withdraw/1/0</text></name>
+</transition>
+<transition id="withdraw_1_2">
+<name><text>withdraw/1/2</text></name>
+</transition>
+<transition id="withdraw_1_3">
+<name><text>withdraw/1/3</text></name>
+</transition>
+<transition id="withdraw_1_4">
+<name><text>withdraw/1/4</text></name>
+</transition>
+<transition id="withdraw_1_5">
+<name><text>withdraw/1/5</text></name>
+</transition>
+<transition id="withdraw_1_6">
+<name><text>withdraw/1/6</text></name>
+</transition>
+<transition id="withdraw_1_7">
+<name><text>withdraw/1/7</text></name>
+</transition>
+<transition id="withdraw_1_8">
+<name><text>withdraw/1/8</text></name>
+</transition>
+<transition id="withdraw_1_9">
+<name><text>withdraw/1/9</text></name>
+</transition>
+<transition id="try_1">
+<name><text>try/1</text></name>
+</transition>
+<transition id="enter_1">
+<name><text>enter/1</text></name>
+</transition>
+<transition id="exit_1">
+<name><text>exit/1</text></name>
+</transition>
+<transition id="withdraw_2_0">
+<name><text>withdraw/2/0</text></name>
+</transition>
+<transition id="withdraw_2_1">
+<name><text>withdraw/2/1</text></name>
+</transition>
+<transition id="withdraw_2_3">
+<name><text>withdraw/2/3</text></name>
+</transition>
+<transition id="withdraw_2_4">
+<name><text>withdraw/2/4</text></name>
+</transition>
+<transition id="withdraw_2_5">
+<name><text>withdraw/2/5</text></name>
+</transition>
+<transition id="withdraw_2_6">
+<name><text>withdraw/2/6</text></name>
+</transition>
+<transition id="withdraw_2_7">
+<name><text>withdraw/2/7</text></name>
+</transition>
+<transition id="withdraw_2_8">
+<name><text>withdraw/2/8</text></name>
+</transition>
+<transition id="withdraw_2_9">
+<name><text>withdraw/2/9</text></name>
+</transition>
+<transition id="try_2">
+<name><text>try/2</text></name>
+</transition>
+<transition id="enter_2">
+<name><text>enter/2</text></name>
+</transition>
+<transition id="exit_2">
+<name><text>exit/2</text></name>
+</transition>
+<transition id="withdraw_3_0">
+<name><text>withdraw/3/0</text></name>
+</transition>
+<transition id="withdraw_3_1">
+<name><text>withdraw/3/1</text></name>
+</transition>
+<transition id="withdraw_3_2">
+<name><text>withdraw/3/2</text></name>
+</transition>
+<transition id="withdraw_3_4">
+<name><text>withdraw/3/4</text></name>
+</transition>
+<transition id="withdraw_3_5">
+<name><text>withdraw/3/5</text></name>
+</transition>
+<transition id="withdraw_3_6">
+<name><text>withdraw/3/6</text></name>
+</transition>
+<transition id="withdraw_3_7">
+<name><text>withdraw/3/7</text></name>
+</transition>
+<transition id="withdraw_3_8">
+<name><text>withdraw/3/8</text></name>
+</transition>
+<transition id="withdraw_3_9">
+<name><text>withdraw/3/9</text></name>
+</transition>
+<transition id="try_3">
+<name><text>try/3</text></name>
+</transition>
+<transition id="enter_3">
+<name><text>enter/3</text></name>
+</transition>
+<transition id="exit_3">
+<name><text>exit/3</text></name>
+</transition>
+<transition id="withdraw_4_0">
+<name><text>withdraw/4/0</text></name>
+</transition>
+<transition id="withdraw_4_1">
+<name><text>withdraw/4/1</text></name>
+</transition>
+<transition id="withdraw_4_2">
+<name><text>withdraw/4/2</text></name>
+</transition>
+<transition id="withdraw_4_3">
+<name><text>withdraw/4/3</text></name>
+</transition>
+<transition id="withdraw_4_5">
+<name><text>withdraw/4/5</text></name>
+</transition>
+<transition id="withdraw_4_6">
+<name><text>withdraw/4/6</text></name>
+</transition>
+<transition id="withdraw_4_7">
+<name><text>withdraw/4/7</text></name>
+</transition>
+<transition id="withdraw_4_8">
+<name><text>withdraw/4/8</text></name>
+</transition>
+<transition id="withdraw_4_9">
+<name><text>withdraw/4/9</text></name>
+</transition>
+<transition id="try_4">
+<name><text>try/4</text></name>
+</transition>
+<transition id="enter_4">
+<name><text>enter/4</text></name>
+</transition>
+<transition id="exit_4">
+<name><text>exit/4</text></name>
+</transition>
+<transition id="withdraw_5_0">
+<name><text>withdraw/5/0</text></name>
+</transition>
+<transition id="withdraw_5_1">
+<name><text>withdraw/5/1</text></name>
+</transition>
+<transition id="withdraw_5_2">
+<name><text>withdraw/5/2</text></name>
+</transition>
+<transition id="withdraw_5_3">
+<name><text>withdraw/5/3</text></name>
+</transition>
+<transition id="withdraw_5_4">
+<name><text>withdraw/5/4</text></name>
+</transition>
+<transition id="withdraw_5_6">
+<name><text>withdraw/5/6</text></name>
+</transition>
+<transition id="withdraw_5_7">
+<name><text>withdraw/5/7</text></name>
+</transition>
+<transition id="withdraw_5_8">
+<name><text>withdraw/5/8</text></name>
+</transition>
+<transition id="withdraw_5_9">
+<name><text>withdraw/5/9</text></name>
+</transition>
+<transition id="try_5">
+<name><text>try/5</text></name>
+</transition>
+<transition id="enter_5">
+<name><text>enter/5</text></name>
+</transition>
+<transition id="exit_5">
+<name><text>exit/5</text></name>
+</transition>
+<transition id="withdraw_6_0">
+<name><text>withdraw/6/0</text></name>
+</transition>
+<transition id="withdraw_6_1">
+<name><text>withdraw/6/1</text></name>
+</transition>
+<transition id="withdraw_6_2">
+<name><text>withdraw/6/2</text></name>
+</transition>
+<transition id="withdraw_6_3">
+<name><text>withdraw/6/3</text></name>
+</transition>
+<transition id="withdraw_6_4">
+<name><text>withdraw/6/4</text></name>
+</transition>
+<transition id="withdraw_6_5">
+<name><text>withdraw/6/5</text></name>
+</transition>
+<transition id="withdraw_6_7">
+<name><text>withdraw/6/7</text></name>
+</transition>
+<transition id="withdraw_6_8">
+<name><text>withdraw/6/8</text></name>
+</transition>
+<transition id="withdraw_6_9">
+<name><text>withdraw/6/9</text></name>
+</transition>
+<transition id="try_6">
+<name><text>try/6</text></name>
+</transition>
+<transition id="enter_6">
+<name><text>enter/6</text></name>
+</transition>
+<transition id="exit_6">
+<name><text>exit/6</text></name>
+</transition>
+<transition id="withdraw_7_0">
+<name><text>withdraw/7/0</text></name>
+</transition>
+<transition id="withdraw_7_1">
+<name><text>withdraw/7/1</text></name>
+</transition>
+<transition id="withdraw_7_2">
+<name><text>withdraw/7/2</text></name>
+</transition>
+<transition id="withdraw_7_3">
+<name><text>withdraw/7/3</text></name>
+</transition>
+<transition id="withdraw_7_4">
+<name><text>withdraw/7/4</text></name>
+</transition>
+<transition id="withdraw_7_5">
+<name><text>withdraw/7/5</text></name>
+</transition>
+<transition id="withdraw_7_6">
+<name><text>withdraw/7/6</text></name>
+</transition>
+<transition id="withdraw_7_8">
+<name><text>withdraw/7/8</text></name>
+</transition>
+<transition id="withdraw_7_9">
+<name><text>withdraw/7/9</text></name>
+</transition>
+<transition id="try_7">
+<name><text>try/7</text></name>
+</transition>
+<transition id="enter_7">
+<name><text>enter/7</text></name>
+</transition>
+<transition id="exit_7">
+<name><text>exit/7</text></name>
+</transition>
+<transition id="withdraw_8_0">
+<name><text>withdraw/8/0</text></name>
+</transition>
+<transition id="withdraw_8_1">
+<name><text>withdraw/8/1</text></name>
+</transition>
+<transition id="withdraw_8_2">
+<name><text>withdraw/8/2</text></name>
+</transition>
+<transition id="withdraw_8_3">
+<name><text>withdraw/8/3</text></name>
+</transition>
+<transition id="withdraw_8_4">
+<name><text>withdraw/8/4</text></name>
+</transition>
+<transition id="withdraw_8_5">
+<name><text>withdraw/8/5</text></name>
+</transition>
+<transition id="withdraw_8_6">
+<name><text>withdraw/8/6</text></name>
+</transition>
+<transition id="withdraw_8_7">
+<name><text>withdraw/8/7</text></name>
+</transition>
+<transition id="withdraw_8_9">
+<name><text>withdraw/8/9</text></name>
+</transition>
+<transition id="try_8">
+<name><text>try/8</text></name>
+</transition>
+<transition id="enter_8">
+<name><text>enter/8</text></name>
+</transition>
+<transition id="exit_8">
+<name><text>exit/8</text></name>
+</transition>
+<transition id="withdraw_9_0">
+<name><text>withdraw/9/0</text></name>
+</transition>
+<transition id="withdraw_9_1">
+<name><text>withdraw/9/1</text></name>
+</transition>
+<transition id="withdraw_9_2">
+<name><text>withdraw/9/2</text></name>
+</transition>
+<transition id="withdraw_9_3">
+<name><text>withdraw/9/3</text></name>
+</transition>
+<transition id="withdraw_9_4">
+<name><text>withdraw/9/4</text></name>
+</transition>
+<transition id="withdraw_9_5">
+<name><text>withdraw/9/5</text></name>
+</transition>
+<transition id="withdraw_9_6">
+<name><text>withdraw/9/6</text></name>
+</transition>
+<transition id="withdraw_9_7">
+<name><text>withdraw/9/7</text></name>
+</transition>
+<transition id="withdraw_9_8">
+<name><text>withdraw/9/8</text></name>
+</transition>
+<transition id="try_9">
+<name><text>try/9</text></name>
+</transition>
+<transition id="enter_9">
+<name><text>enter/9</text></name>
+</transition>
+<transition id="exit_9">
+<name><text>exit/9</text></name>
+</transition>
+
+<!-- flow relation -->
+<arc id="a170" source="withdraw_0_4" target="flag_0_0"/>
+<arc id="a171" source="withdraw_0_6" target="flag_0_0"/>
+<arc id="a172" source="exit_0" target="flag_0_0"/>
+<arc id="a173" source="withdraw_0_1" target="flag_0_0"/>
+<arc id="a174" source="withdraw_0_8" target="flag_0_0"/>
+<arc id="a175" source="withdraw_0_2" target="flag_0_0"/>
+<arc id="a176" source="withdraw_0_5" target="flag_0_0"/>
+<arc id="a177" source="withdraw_0_3" target="flag_0_0"/>
+<arc id="a178" source="withdraw_0_7" target="flag_0_0"/>
+<arc id="a179" source="withdraw_0_9" target="flag_0_0"/>
+<arc id="a180" source="flag_0_0" target="try_0"/>
+<!-- read arc: -->
+ <arc id="ra181" source="flag_0_0" target="enter_2"/>
+ <arc id="ra182" source="enter_2" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra183" source="flag_0_0" target="enter_6"/>
+ <arc id="ra184" source="enter_6" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra185" source="flag_0_0" target="enter_8"/>
+ <arc id="ra186" source="enter_8" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra187" source="flag_0_0" target="enter_1"/>
+ <arc id="ra188" source="enter_1" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra189" source="flag_0_0" target="enter_7"/>
+ <arc id="ra190" source="enter_7" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra191" source="flag_0_0" target="enter_4"/>
+ <arc id="ra192" source="enter_4" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra193" source="flag_0_0" target="enter_5"/>
+ <arc id="ra194" source="enter_5" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra195" source="flag_0_0" target="enter_9"/>
+ <arc id="ra196" source="enter_9" target="flag_0_0"/>
+<!-- read arc: -->
+ <arc id="ra197" source="flag_0_0" target="enter_3"/>
+ <arc id="ra198" source="enter_3" target="flag_0_0"/>
+<arc id="a199" source="try_0" target="flag_1_0"/>
+<arc id="a200" source="flag_1_0" target="withdraw_0_4"/>
+<arc id="a201" source="flag_1_0" target="withdraw_0_6"/>
+<arc id="a202" source="flag_1_0" target="exit_0"/>
+<arc id="a203" source="flag_1_0" target="withdraw_0_1"/>
+<arc id="a204" source="flag_1_0" target="withdraw_0_8"/>
+<arc id="a205" source="flag_1_0" target="withdraw_0_2"/>
+<arc id="a206" source="flag_1_0" target="withdraw_0_5"/>
+<arc id="a207" source="flag_1_0" target="withdraw_0_3"/>
+<arc id="a208" source="flag_1_0" target="withdraw_0_7"/>
+<arc id="a209" source="flag_1_0" target="withdraw_0_9"/>
+<!-- read arc: -->
+ <arc id="ra210" source="flag_1_0" target="withdraw_1_0"/>
+ <arc id="ra211" source="withdraw_1_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra212" source="flag_1_0" target="withdraw_5_0"/>
+ <arc id="ra213" source="withdraw_5_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra214" source="flag_1_0" target="withdraw_4_0"/>
+ <arc id="ra215" source="withdraw_4_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra216" source="flag_1_0" target="withdraw_7_0"/>
+ <arc id="ra217" source="withdraw_7_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra218" source="flag_1_0" target="withdraw_3_0"/>
+ <arc id="ra219" source="withdraw_3_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra220" source="flag_1_0" target="withdraw_6_0"/>
+ <arc id="ra221" source="withdraw_6_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra222" source="flag_1_0" target="withdraw_9_0"/>
+ <arc id="ra223" source="withdraw_9_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra224" source="flag_1_0" target="withdraw_2_0"/>
+ <arc id="ra225" source="withdraw_2_0" target="flag_1_0"/>
+<!-- read arc: -->
+ <arc id="ra226" source="flag_1_0" target="withdraw_8_0"/>
+ <arc id="ra227" source="withdraw_8_0" target="flag_1_0"/>
+<arc id="a228" source="withdraw_1_0" target="flag_0_1"/>
+<arc id="a229" source="withdraw_1_5" target="flag_0_1"/>
+<arc id="a230" source="withdraw_1_2" target="flag_0_1"/>
+<arc id="a231" source="withdraw_1_7" target="flag_0_1"/>
+<arc id="a232" source="withdraw_1_3" target="flag_0_1"/>
+<arc id="a233" source="withdraw_1_6" target="flag_0_1"/>
+<arc id="a234" source="exit_1" target="flag_0_1"/>
+<arc id="a235" source="withdraw_1_9" target="flag_0_1"/>
+<arc id="a236" source="withdraw_1_4" target="flag_0_1"/>
+<arc id="a237" source="withdraw_1_8" target="flag_0_1"/>
+<arc id="a238" source="flag_0_1" target="try_1"/>
+<!-- read arc: -->
+ <arc id="ra239" source="flag_0_1" target="enter_2"/>
+ <arc id="ra240" source="enter_2" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra241" source="flag_0_1" target="enter_4"/>
+ <arc id="ra242" source="enter_4" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra243" source="flag_0_1" target="enter_8"/>
+ <arc id="ra244" source="enter_8" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra245" source="flag_0_1" target="enter_5"/>
+ <arc id="ra246" source="enter_5" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra247" source="flag_0_1" target="enter_0"/>
+ <arc id="ra248" source="enter_0" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra249" source="flag_0_1" target="enter_7"/>
+ <arc id="ra250" source="enter_7" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra251" source="flag_0_1" target="enter_9"/>
+ <arc id="ra252" source="enter_9" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra253" source="flag_0_1" target="enter_3"/>
+ <arc id="ra254" source="enter_3" target="flag_0_1"/>
+<!-- read arc: -->
+ <arc id="ra255" source="flag_0_1" target="enter_6"/>
+ <arc id="ra256" source="enter_6" target="flag_0_1"/>
+<arc id="a257" source="try_1" target="flag_1_1"/>
+<arc id="a258" source="flag_1_1" target="withdraw_1_0"/>
+<arc id="a259" source="flag_1_1" target="withdraw_1_5"/>
+<arc id="a260" source="flag_1_1" target="withdraw_1_2"/>
+<arc id="a261" source="flag_1_1" target="withdraw_1_7"/>
+<arc id="a262" source="flag_1_1" target="withdraw_1_3"/>
+<arc id="a263" source="flag_1_1" target="withdraw_1_6"/>
+<arc id="a264" source="flag_1_1" target="exit_1"/>
+<arc id="a265" source="flag_1_1" target="withdraw_1_9"/>
+<arc id="a266" source="flag_1_1" target="withdraw_1_4"/>
+<arc id="a267" source="flag_1_1" target="withdraw_1_8"/>
+<!-- read arc: -->
+ <arc id="ra268" source="flag_1_1" target="withdraw_2_1"/>
+ <arc id="ra269" source="withdraw_2_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra270" source="flag_1_1" target="withdraw_6_1"/>
+ <arc id="ra271" source="withdraw_6_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra272" source="flag_1_1" target="withdraw_9_1"/>
+ <arc id="ra273" source="withdraw_9_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra274" source="flag_1_1" target="withdraw_0_1"/>
+ <arc id="ra275" source="withdraw_0_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra276" source="flag_1_1" target="withdraw_4_1"/>
+ <arc id="ra277" source="withdraw_4_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra278" source="flag_1_1" target="withdraw_5_1"/>
+ <arc id="ra279" source="withdraw_5_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra280" source="flag_1_1" target="withdraw_8_1"/>
+ <arc id="ra281" source="withdraw_8_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra282" source="flag_1_1" target="withdraw_3_1"/>
+ <arc id="ra283" source="withdraw_3_1" target="flag_1_1"/>
+<!-- read arc: -->
+ <arc id="ra284" source="flag_1_1" target="withdraw_7_1"/>
+ <arc id="ra285" source="withdraw_7_1" target="flag_1_1"/>
+<arc id="a286" source="withdraw_2_1" target="flag_0_2"/>
+<arc id="a287" source="withdraw_2_6" target="flag_0_2"/>
+<arc id="a288" source="withdraw_2_9" target="flag_0_2"/>
+<arc id="a289" source="exit_2" target="flag_0_2"/>
+<arc id="a290" source="withdraw_2_3" target="flag_0_2"/>
+<arc id="a291" source="withdraw_2_4" target="flag_0_2"/>
+<arc id="a292" source="withdraw_2_5" target="flag_0_2"/>
+<arc id="a293" source="withdraw_2_8" target="flag_0_2"/>
+<arc id="a294" source="withdraw_2_0" target="flag_0_2"/>
+<arc id="a295" source="withdraw_2_7" target="flag_0_2"/>
+<arc id="a296" source="flag_0_2" target="try_2"/>
+<!-- read arc: -->
+ <arc id="ra297" source="flag_0_2" target="enter_6"/>
+ <arc id="ra298" source="enter_6" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra299" source="flag_0_2" target="enter_4"/>
+ <arc id="ra300" source="enter_4" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra301" source="flag_0_2" target="enter_8"/>
+ <arc id="ra302" source="enter_8" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra303" source="flag_0_2" target="enter_1"/>
+ <arc id="ra304" source="enter_1" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra305" source="flag_0_2" target="enter_7"/>
+ <arc id="ra306" source="enter_7" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra307" source="flag_0_2" target="enter_0"/>
+ <arc id="ra308" source="enter_0" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra309" source="flag_0_2" target="enter_5"/>
+ <arc id="ra310" source="enter_5" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra311" source="flag_0_2" target="enter_9"/>
+ <arc id="ra312" source="enter_9" target="flag_0_2"/>
+<!-- read arc: -->
+ <arc id="ra313" source="flag_0_2" target="enter_3"/>
+ <arc id="ra314" source="enter_3" target="flag_0_2"/>
+<arc id="a315" source="try_2" target="flag_1_2"/>
+<arc id="a316" source="flag_1_2" target="withdraw_2_1"/>
+<arc id="a317" source="flag_1_2" target="withdraw_2_6"/>
+<arc id="a318" source="flag_1_2" target="withdraw_2_9"/>
+<arc id="a319" source="flag_1_2" target="exit_2"/>
+<arc id="a320" source="flag_1_2" target="withdraw_2_3"/>
+<arc id="a321" source="flag_1_2" target="withdraw_2_4"/>
+<arc id="a322" source="flag_1_2" target="withdraw_2_5"/>
+<arc id="a323" source="flag_1_2" target="withdraw_2_8"/>
+<arc id="a324" source="flag_1_2" target="withdraw_2_0"/>
+<arc id="a325" source="flag_1_2" target="withdraw_2_7"/>
+<!-- read arc: -->
+ <arc id="ra326" source="flag_1_2" target="withdraw_3_2"/>
+ <arc id="ra327" source="withdraw_3_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra328" source="flag_1_2" target="withdraw_5_2"/>
+ <arc id="ra329" source="withdraw_5_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra330" source="flag_1_2" target="withdraw_8_2"/>
+ <arc id="ra331" source="withdraw_8_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra332" source="flag_1_2" target="withdraw_7_2"/>
+ <arc id="ra333" source="withdraw_7_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra334" source="flag_1_2" target="withdraw_1_2"/>
+ <arc id="ra335" source="withdraw_1_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra336" source="flag_1_2" target="withdraw_0_2"/>
+ <arc id="ra337" source="withdraw_0_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra338" source="flag_1_2" target="withdraw_6_2"/>
+ <arc id="ra339" source="withdraw_6_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra340" source="flag_1_2" target="withdraw_9_2"/>
+ <arc id="ra341" source="withdraw_9_2" target="flag_1_2"/>
+<!-- read arc: -->
+ <arc id="ra342" source="flag_1_2" target="withdraw_4_2"/>
+ <arc id="ra343" source="withdraw_4_2" target="flag_1_2"/>
+<arc id="a344" source="withdraw_3_2" target="flag_0_3"/>
+<arc id="a345" source="withdraw_3_5" target="flag_0_3"/>
+<arc id="a346" source="withdraw_3_8" target="flag_0_3"/>
+<arc id="a347" source="withdraw_3_4" target="flag_0_3"/>
+<arc id="a348" source="withdraw_3_9" target="flag_0_3"/>
+<arc id="a349" source="withdraw_3_0" target="flag_0_3"/>
+<arc id="a350" source="withdraw_3_6" target="flag_0_3"/>
+<arc id="a351" source="withdraw_3_7" target="flag_0_3"/>
+<arc id="a352" source="withdraw_3_1" target="flag_0_3"/>
+<arc id="a353" source="exit_3" target="flag_0_3"/>
+<arc id="a354" source="flag_0_3" target="try_3"/>
+<!-- read arc: -->
+ <arc id="ra355" source="flag_0_3" target="enter_2"/>
+ <arc id="ra356" source="enter_2" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra357" source="flag_0_3" target="enter_4"/>
+ <arc id="ra358" source="enter_4" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra359" source="flag_0_3" target="enter_8"/>
+ <arc id="ra360" source="enter_8" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra361" source="flag_0_3" target="enter_1"/>
+ <arc id="ra362" source="enter_1" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra363" source="flag_0_3" target="enter_0"/>
+ <arc id="ra364" source="enter_0" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra365" source="flag_0_3" target="enter_5"/>
+ <arc id="ra366" source="enter_5" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra367" source="flag_0_3" target="enter_9"/>
+ <arc id="ra368" source="enter_9" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra369" source="flag_0_3" target="enter_7"/>
+ <arc id="ra370" source="enter_7" target="flag_0_3"/>
+<!-- read arc: -->
+ <arc id="ra371" source="flag_0_3" target="enter_6"/>
+ <arc id="ra372" source="enter_6" target="flag_0_3"/>
+<arc id="a373" source="try_3" target="flag_1_3"/>
+<arc id="a374" source="flag_1_3" target="withdraw_3_2"/>
+<arc id="a375" source="flag_1_3" target="withdraw_3_5"/>
+<arc id="a376" source="flag_1_3" target="withdraw_3_8"/>
+<arc id="a377" source="flag_1_3" target="withdraw_3_4"/>
+<arc id="a378" source="flag_1_3" target="withdraw_3_9"/>
+<arc id="a379" source="flag_1_3" target="withdraw_3_0"/>
+<arc id="a380" source="flag_1_3" target="withdraw_3_6"/>
+<arc id="a381" source="flag_1_3" target="withdraw_3_7"/>
+<arc id="a382" source="flag_1_3" target="withdraw_3_1"/>
+<arc id="a383" source="flag_1_3" target="exit_3"/>
+<!-- read arc: -->
+ <arc id="ra384" source="flag_1_3" target="withdraw_4_3"/>
+ <arc id="ra385" source="withdraw_4_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra386" source="flag_1_3" target="withdraw_6_3"/>
+ <arc id="ra387" source="withdraw_6_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra388" source="flag_1_3" target="withdraw_7_3"/>
+ <arc id="ra389" source="withdraw_7_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra390" source="flag_1_3" target="withdraw_9_3"/>
+ <arc id="ra391" source="withdraw_9_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra392" source="flag_1_3" target="withdraw_2_3"/>
+ <arc id="ra393" source="withdraw_2_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra394" source="flag_1_3" target="withdraw_1_3"/>
+ <arc id="ra395" source="withdraw_1_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra396" source="flag_1_3" target="withdraw_5_3"/>
+ <arc id="ra397" source="withdraw_5_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra398" source="flag_1_3" target="withdraw_8_3"/>
+ <arc id="ra399" source="withdraw_8_3" target="flag_1_3"/>
+<!-- read arc: -->
+ <arc id="ra400" source="flag_1_3" target="withdraw_0_3"/>
+ <arc id="ra401" source="withdraw_0_3" target="flag_1_3"/>
+<arc id="a402" source="withdraw_4_3" target="flag_0_4"/>
+<arc id="a403" source="withdraw_4_6" target="flag_0_4"/>
+<arc id="a404" source="withdraw_4_7" target="flag_0_4"/>
+<arc id="a405" source="withdraw_4_0" target="flag_0_4"/>
+<arc id="a406" source="exit_4" target="flag_0_4"/>
+<arc id="a407" source="withdraw_4_1" target="flag_0_4"/>
+<arc id="a408" source="withdraw_4_5" target="flag_0_4"/>
+<arc id="a409" source="withdraw_4_9" target="flag_0_4"/>
+<arc id="a410" source="withdraw_4_8" target="flag_0_4"/>
+<arc id="a411" source="withdraw_4_2" target="flag_0_4"/>
+<arc id="a412" source="flag_0_4" target="try_4"/>
+<!-- read arc: -->
+ <arc id="ra413" source="flag_0_4" target="enter_2"/>
+ <arc id="ra414" source="enter_2" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra415" source="flag_0_4" target="enter_6"/>
+ <arc id="ra416" source="enter_6" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra417" source="flag_0_4" target="enter_8"/>
+ <arc id="ra418" source="enter_8" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra419" source="flag_0_4" target="enter_1"/>
+ <arc id="ra420" source="enter_1" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra421" source="flag_0_4" target="enter_7"/>
+ <arc id="ra422" source="enter_7" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra423" source="flag_0_4" target="enter_0"/>
+ <arc id="ra424" source="enter_0" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra425" source="flag_0_4" target="enter_5"/>
+ <arc id="ra426" source="enter_5" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra427" source="flag_0_4" target="enter_9"/>
+ <arc id="ra428" source="enter_9" target="flag_0_4"/>
+<!-- read arc: -->
+ <arc id="ra429" source="flag_0_4" target="enter_3"/>
+ <arc id="ra430" source="enter_3" target="flag_0_4"/>
+<arc id="a431" source="try_4" target="flag_1_4"/>
+<arc id="a432" source="flag_1_4" target="withdraw_4_3"/>
+<arc id="a433" source="flag_1_4" target="withdraw_4_6"/>
+<arc id="a434" source="flag_1_4" target="withdraw_4_7"/>
+<arc id="a435" source="flag_1_4" target="withdraw_4_0"/>
+<arc id="a436" source="flag_1_4" target="exit_4"/>
+<arc id="a437" source="flag_1_4" target="withdraw_4_1"/>
+<arc id="a438" source="flag_1_4" target="withdraw_4_5"/>
+<arc id="a439" source="flag_1_4" target="withdraw_4_9"/>
+<arc id="a440" source="flag_1_4" target="withdraw_4_8"/>
+<arc id="a441" source="flag_1_4" target="withdraw_4_2"/>
+<!-- read arc: -->
+ <arc id="ra442" source="flag_1_4" target="withdraw_0_4"/>
+ <arc id="ra443" source="withdraw_0_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra444" source="flag_1_4" target="withdraw_5_4"/>
+ <arc id="ra445" source="withdraw_5_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra446" source="flag_1_4" target="withdraw_8_4"/>
+ <arc id="ra447" source="withdraw_8_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra448" source="flag_1_4" target="withdraw_3_4"/>
+ <arc id="ra449" source="withdraw_3_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra450" source="flag_1_4" target="withdraw_2_4"/>
+ <arc id="ra451" source="withdraw_2_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra452" source="flag_1_4" target="withdraw_6_4"/>
+ <arc id="ra453" source="withdraw_6_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra454" source="flag_1_4" target="withdraw_7_4"/>
+ <arc id="ra455" source="withdraw_7_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra456" source="flag_1_4" target="withdraw_1_4"/>
+ <arc id="ra457" source="withdraw_1_4" target="flag_1_4"/>
+<!-- read arc: -->
+ <arc id="ra458" source="flag_1_4" target="withdraw_9_4"/>
+ <arc id="ra459" source="withdraw_9_4" target="flag_1_4"/>
+<arc id="a460" source="withdraw_5_0" target="flag_0_5"/>
+<arc id="a461" source="withdraw_5_4" target="flag_0_5"/>
+<arc id="a462" source="withdraw_5_8" target="flag_0_5"/>
+<arc id="a463" source="withdraw_5_1" target="flag_0_5"/>
+<arc id="a464" source="withdraw_5_2" target="flag_0_5"/>
+<arc id="a465" source="withdraw_5_6" target="flag_0_5"/>
+<arc id="a466" source="withdraw_5_7" target="flag_0_5"/>
+<arc id="a467" source="withdraw_5_3" target="flag_0_5"/>
+<arc id="a468" source="withdraw_5_9" target="flag_0_5"/>
+<arc id="a469" source="exit_5" target="flag_0_5"/>
+<arc id="a470" source="flag_0_5" target="try_5"/>
+<!-- read arc: -->
+ <arc id="ra471" source="flag_0_5" target="enter_6"/>
+ <arc id="ra472" source="enter_6" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra473" source="flag_0_5" target="enter_4"/>
+ <arc id="ra474" source="enter_4" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra475" source="flag_0_5" target="enter_8"/>
+ <arc id="ra476" source="enter_8" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra477" source="flag_0_5" target="enter_9"/>
+ <arc id="ra478" source="enter_9" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra479" source="flag_0_5" target="enter_1"/>
+ <arc id="ra480" source="enter_1" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra481" source="flag_0_5" target="enter_0"/>
+ <arc id="ra482" source="enter_0" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra483" source="flag_0_5" target="enter_7"/>
+ <arc id="ra484" source="enter_7" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra485" source="flag_0_5" target="enter_2"/>
+ <arc id="ra486" source="enter_2" target="flag_0_5"/>
+<!-- read arc: -->
+ <arc id="ra487" source="flag_0_5" target="enter_3"/>
+ <arc id="ra488" source="enter_3" target="flag_0_5"/>
+<arc id="a489" source="try_5" target="flag_1_5"/>
+<arc id="a490" source="flag_1_5" target="withdraw_5_0"/>
+<arc id="a491" source="flag_1_5" target="withdraw_5_4"/>
+<arc id="a492" source="flag_1_5" target="withdraw_5_8"/>
+<arc id="a493" source="flag_1_5" target="withdraw_5_1"/>
+<arc id="a494" source="flag_1_5" target="withdraw_5_2"/>
+<arc id="a495" source="flag_1_5" target="withdraw_5_6"/>
+<arc id="a496" source="flag_1_5" target="withdraw_5_7"/>
+<arc id="a497" source="flag_1_5" target="withdraw_5_3"/>
+<arc id="a498" source="flag_1_5" target="withdraw_5_9"/>
+<arc id="a499" source="flag_1_5" target="exit_5"/>
+<!-- read arc: -->
+ <arc id="ra500" source="flag_1_5" target="withdraw_1_5"/>
+ <arc id="ra501" source="withdraw_1_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra502" source="flag_1_5" target="withdraw_6_5"/>
+ <arc id="ra503" source="withdraw_6_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra504" source="flag_1_5" target="withdraw_7_5"/>
+ <arc id="ra505" source="withdraw_7_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra506" source="flag_1_5" target="withdraw_0_5"/>
+ <arc id="ra507" source="withdraw_0_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra508" source="flag_1_5" target="withdraw_9_5"/>
+ <arc id="ra509" source="withdraw_9_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra510" source="flag_1_5" target="withdraw_3_5"/>
+ <arc id="ra511" source="withdraw_3_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra512" source="flag_1_5" target="withdraw_4_5"/>
+ <arc id="ra513" source="withdraw_4_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra514" source="flag_1_5" target="withdraw_2_5"/>
+ <arc id="ra515" source="withdraw_2_5" target="flag_1_5"/>
+<!-- read arc: -->
+ <arc id="ra516" source="flag_1_5" target="withdraw_8_5"/>
+ <arc id="ra517" source="withdraw_8_5" target="flag_1_5"/>
+<arc id="a518" source="withdraw_6_1" target="flag_0_6"/>
+<arc id="a519" source="withdraw_6_5" target="flag_0_6"/>
+<arc id="a520" source="withdraw_6_7" target="flag_0_6"/>
+<arc id="a521" source="withdraw_6_2" target="flag_0_6"/>
+<arc id="a522" source="withdraw_6_9" target="flag_0_6"/>
+<arc id="a523" source="withdraw_6_3" target="flag_0_6"/>
+<arc id="a524" source="withdraw_6_4" target="flag_0_6"/>
+<arc id="a525" source="withdraw_6_0" target="flag_0_6"/>
+<arc id="a526" source="withdraw_6_8" target="flag_0_6"/>
+<arc id="a527" source="exit_6" target="flag_0_6"/>
+<arc id="a528" source="flag_0_6" target="try_6"/>
+<!-- read arc: -->
+ <arc id="ra529" source="flag_0_6" target="enter_2"/>
+ <arc id="ra530" source="enter_2" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra531" source="flag_0_6" target="enter_4"/>
+ <arc id="ra532" source="enter_4" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra533" source="flag_0_6" target="enter_8"/>
+ <arc id="ra534" source="enter_8" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra535" source="flag_0_6" target="enter_1"/>
+ <arc id="ra536" source="enter_1" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra537" source="flag_0_6" target="enter_7"/>
+ <arc id="ra538" source="enter_7" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra539" source="flag_0_6" target="enter_0"/>
+ <arc id="ra540" source="enter_0" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra541" source="flag_0_6" target="enter_5"/>
+ <arc id="ra542" source="enter_5" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra543" source="flag_0_6" target="enter_9"/>
+ <arc id="ra544" source="enter_9" target="flag_0_6"/>
+<!-- read arc: -->
+ <arc id="ra545" source="flag_0_6" target="enter_3"/>
+ <arc id="ra546" source="enter_3" target="flag_0_6"/>
+<arc id="a547" source="try_6" target="flag_1_6"/>
+<arc id="a548" source="flag_1_6" target="withdraw_6_1"/>
+<arc id="a549" source="flag_1_6" target="withdraw_6_5"/>
+<arc id="a550" source="flag_1_6" target="withdraw_6_7"/>
+<arc id="a551" source="flag_1_6" target="withdraw_6_2"/>
+<arc id="a552" source="flag_1_6" target="withdraw_6_9"/>
+<arc id="a553" source="flag_1_6" target="withdraw_6_3"/>
+<arc id="a554" source="flag_1_6" target="withdraw_6_4"/>
+<arc id="a555" source="flag_1_6" target="withdraw_6_0"/>
+<arc id="a556" source="flag_1_6" target="withdraw_6_8"/>
+<arc id="a557" source="flag_1_6" target="exit_6"/>
+<!-- read arc: -->
+ <arc id="ra558" source="flag_1_6" target="withdraw_2_6"/>
+ <arc id="ra559" source="withdraw_2_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra560" source="flag_1_6" target="withdraw_4_6"/>
+ <arc id="ra561" source="withdraw_4_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra562" source="flag_1_6" target="withdraw_1_6"/>
+ <arc id="ra563" source="withdraw_1_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra564" source="flag_1_6" target="withdraw_8_6"/>
+ <arc id="ra565" source="withdraw_8_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra566" source="flag_1_6" target="withdraw_0_6"/>
+ <arc id="ra567" source="withdraw_0_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra568" source="flag_1_6" target="withdraw_5_6"/>
+ <arc id="ra569" source="withdraw_5_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra570" source="flag_1_6" target="withdraw_3_6"/>
+ <arc id="ra571" source="withdraw_3_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra572" source="flag_1_6" target="withdraw_7_6"/>
+ <arc id="ra573" source="withdraw_7_6" target="flag_1_6"/>
+<!-- read arc: -->
+ <arc id="ra574" source="flag_1_6" target="withdraw_9_6"/>
+ <arc id="ra575" source="withdraw_9_6" target="flag_1_6"/>
+<arc id="a576" source="withdraw_7_2" target="flag_0_7"/>
+<arc id="a577" source="withdraw_7_4" target="flag_0_7"/>
+<arc id="a578" source="exit_7" target="flag_0_7"/>
+<arc id="a579" source="withdraw_7_3" target="flag_0_7"/>
+<arc id="a580" source="withdraw_7_8" target="flag_0_7"/>
+<arc id="a581" source="withdraw_7_0" target="flag_0_7"/>
+<arc id="a582" source="withdraw_7_5" target="flag_0_7"/>
+<arc id="a583" source="withdraw_7_1" target="flag_0_7"/>
+<arc id="a584" source="withdraw_7_6" target="flag_0_7"/>
+<arc id="a585" source="withdraw_7_9" target="flag_0_7"/>
+<arc id="a586" source="flag_0_7" target="try_7"/>
+<!-- read arc: -->
+ <arc id="ra587" source="flag_0_7" target="enter_2"/>
+ <arc id="ra588" source="enter_2" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra589" source="flag_0_7" target="enter_4"/>
+ <arc id="ra590" source="enter_4" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra591" source="flag_0_7" target="enter_8"/>
+ <arc id="ra592" source="enter_8" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra593" source="flag_0_7" target="enter_1"/>
+ <arc id="ra594" source="enter_1" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra595" source="flag_0_7" target="enter_0"/>
+ <arc id="ra596" source="enter_0" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra597" source="flag_0_7" target="enter_5"/>
+ <arc id="ra598" source="enter_5" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra599" source="flag_0_7" target="enter_9"/>
+ <arc id="ra600" source="enter_9" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra601" source="flag_0_7" target="enter_3"/>
+ <arc id="ra602" source="enter_3" target="flag_0_7"/>
+<!-- read arc: -->
+ <arc id="ra603" source="flag_0_7" target="enter_6"/>
+ <arc id="ra604" source="enter_6" target="flag_0_7"/>
+<arc id="a605" source="try_7" target="flag_1_7"/>
+<arc id="a606" source="flag_1_7" target="withdraw_7_2"/>
+<arc id="a607" source="flag_1_7" target="withdraw_7_4"/>
+<arc id="a608" source="flag_1_7" target="exit_7"/>
+<arc id="a609" source="flag_1_7" target="withdraw_7_3"/>
+<arc id="a610" source="flag_1_7" target="withdraw_7_8"/>
+<arc id="a611" source="flag_1_7" target="withdraw_7_0"/>
+<arc id="a612" source="flag_1_7" target="withdraw_7_5"/>
+<arc id="a613" source="flag_1_7" target="withdraw_7_1"/>
+<arc id="a614" source="flag_1_7" target="withdraw_7_6"/>
+<arc id="a615" source="flag_1_7" target="withdraw_7_9"/>
+<!-- read arc: -->
+ <arc id="ra616" source="flag_1_7" target="withdraw_3_7"/>
+ <arc id="ra617" source="withdraw_3_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra618" source="flag_1_7" target="withdraw_5_7"/>
+ <arc id="ra619" source="withdraw_5_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra620" source="flag_1_7" target="withdraw_6_7"/>
+ <arc id="ra621" source="withdraw_6_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra622" source="flag_1_7" target="withdraw_2_7"/>
+ <arc id="ra623" source="withdraw_2_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra624" source="flag_1_7" target="withdraw_9_7"/>
+ <arc id="ra625" source="withdraw_9_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra626" source="flag_1_7" target="withdraw_1_7"/>
+ <arc id="ra627" source="withdraw_1_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra628" source="flag_1_7" target="withdraw_4_7"/>
+ <arc id="ra629" source="withdraw_4_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra630" source="flag_1_7" target="withdraw_0_7"/>
+ <arc id="ra631" source="withdraw_0_7" target="flag_1_7"/>
+<!-- read arc: -->
+ <arc id="ra632" source="flag_1_7" target="withdraw_8_7"/>
+ <arc id="ra633" source="withdraw_8_7" target="flag_1_7"/>
+<arc id="a634" source="withdraw_8_3" target="flag_0_8"/>
+<arc id="a635" source="withdraw_8_5" target="flag_0_8"/>
+<arc id="a636" source="withdraw_8_0" target="flag_0_8"/>
+<arc id="a637" source="withdraw_8_6" target="flag_0_8"/>
+<arc id="a638" source="withdraw_8_1" target="flag_0_8"/>
+<arc id="a639" source="withdraw_8_4" target="flag_0_8"/>
+<arc id="a640" source="withdraw_8_9" target="flag_0_8"/>
+<arc id="a641" source="exit_8" target="flag_0_8"/>
+<arc id="a642" source="withdraw_8_2" target="flag_0_8"/>
+<arc id="a643" source="withdraw_8_7" target="flag_0_8"/>
+<arc id="a644" source="flag_0_8" target="try_8"/>
+<!-- read arc: -->
+ <arc id="ra645" source="flag_0_8" target="enter_2"/>
+ <arc id="ra646" source="enter_2" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra647" source="flag_0_8" target="enter_4"/>
+ <arc id="ra648" source="enter_4" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra649" source="flag_0_8" target="enter_1"/>
+ <arc id="ra650" source="enter_1" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra651" source="flag_0_8" target="enter_7"/>
+ <arc id="ra652" source="enter_7" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra653" source="flag_0_8" target="enter_0"/>
+ <arc id="ra654" source="enter_0" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra655" source="flag_0_8" target="enter_5"/>
+ <arc id="ra656" source="enter_5" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra657" source="flag_0_8" target="enter_9"/>
+ <arc id="ra658" source="enter_9" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra659" source="flag_0_8" target="enter_3"/>
+ <arc id="ra660" source="enter_3" target="flag_0_8"/>
+<!-- read arc: -->
+ <arc id="ra661" source="flag_0_8" target="enter_6"/>
+ <arc id="ra662" source="enter_6" target="flag_0_8"/>
+<arc id="a663" source="try_8" target="flag_1_8"/>
+<arc id="a664" source="flag_1_8" target="withdraw_8_3"/>
+<arc id="a665" source="flag_1_8" target="withdraw_8_5"/>
+<arc id="a666" source="flag_1_8" target="withdraw_8_0"/>
+<arc id="a667" source="flag_1_8" target="withdraw_8_6"/>
+<arc id="a668" source="flag_1_8" target="withdraw_8_1"/>
+<arc id="a669" source="flag_1_8" target="withdraw_8_4"/>
+<arc id="a670" source="flag_1_8" target="withdraw_8_9"/>
+<arc id="a671" source="flag_1_8" target="exit_8"/>
+<arc id="a672" source="flag_1_8" target="withdraw_8_2"/>
+<arc id="a673" source="flag_1_8" target="withdraw_8_7"/>
+<!-- read arc: -->
+ <arc id="ra674" source="flag_1_8" target="withdraw_0_8"/>
+ <arc id="ra675" source="withdraw_0_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra676" source="flag_1_8" target="withdraw_4_8"/>
+ <arc id="ra677" source="withdraw_4_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra678" source="flag_1_8" target="withdraw_9_8"/>
+ <arc id="ra679" source="withdraw_9_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra680" source="flag_1_8" target="withdraw_3_8"/>
+ <arc id="ra681" source="withdraw_3_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra682" source="flag_1_8" target="withdraw_7_8"/>
+ <arc id="ra683" source="withdraw_7_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra684" source="flag_1_8" target="withdraw_2_8"/>
+ <arc id="ra685" source="withdraw_2_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra686" source="flag_1_8" target="withdraw_5_8"/>
+ <arc id="ra687" source="withdraw_5_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra688" source="flag_1_8" target="withdraw_1_8"/>
+ <arc id="ra689" source="withdraw_1_8" target="flag_1_8"/>
+<!-- read arc: -->
+ <arc id="ra690" source="flag_1_8" target="withdraw_6_8"/>
+ <arc id="ra691" source="withdraw_6_8" target="flag_1_8"/>
+<arc id="a692" source="withdraw_9_0" target="flag_0_9"/>
+<arc id="a693" source="withdraw_9_4" target="flag_0_9"/>
+<arc id="a694" source="withdraw_9_8" target="flag_0_9"/>
+<arc id="a695" source="exit_9" target="flag_0_9"/>
+<arc id="a696" source="withdraw_9_1" target="flag_0_9"/>
+<arc id="a697" source="withdraw_9_7" target="flag_0_9"/>
+<arc id="a698" source="withdraw_9_2" target="flag_0_9"/>
+<arc id="a699" source="withdraw_9_5" target="flag_0_9"/>
+<arc id="a700" source="withdraw_9_3" target="flag_0_9"/>
+<arc id="a701" source="withdraw_9_6" target="flag_0_9"/>
+<arc id="a702" source="flag_0_9" target="try_9"/>
+<!-- read arc: -->
+ <arc id="ra703" source="flag_0_9" target="enter_2"/>
+ <arc id="ra704" source="enter_2" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra705" source="flag_0_9" target="enter_4"/>
+ <arc id="ra706" source="enter_4" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra707" source="flag_0_9" target="enter_8"/>
+ <arc id="ra708" source="enter_8" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra709" source="flag_0_9" target="enter_1"/>
+ <arc id="ra710" source="enter_1" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra711" source="flag_0_9" target="enter_7"/>
+ <arc id="ra712" source="enter_7" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra713" source="flag_0_9" target="enter_0"/>
+ <arc id="ra714" source="enter_0" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra715" source="flag_0_9" target="enter_5"/>
+ <arc id="ra716" source="enter_5" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra717" source="flag_0_9" target="enter_3"/>
+ <arc id="ra718" source="enter_3" target="flag_0_9"/>
+<!-- read arc: -->
+ <arc id="ra719" source="flag_0_9" target="enter_6"/>
+ <arc id="ra720" source="enter_6" target="flag_0_9"/>
+<arc id="a721" source="try_9" target="flag_1_9"/>
+<arc id="a722" source="flag_1_9" target="withdraw_9_0"/>
+<arc id="a723" source="flag_1_9" target="withdraw_9_4"/>
+<arc id="a724" source="flag_1_9" target="withdraw_9_8"/>
+<arc id="a725" source="flag_1_9" target="exit_9"/>
+<arc id="a726" source="flag_1_9" target="withdraw_9_1"/>
+<arc id="a727" source="flag_1_9" target="withdraw_9_7"/>
+<arc id="a728" source="flag_1_9" target="withdraw_9_2"/>
+<arc id="a729" source="flag_1_9" target="withdraw_9_5"/>
+<arc id="a730" source="flag_1_9" target="withdraw_9_3"/>
+<arc id="a731" source="flag_1_9" target="withdraw_9_6"/>
+<!-- read arc: -->
+ <arc id="ra732" source="flag_1_9" target="withdraw_1_9"/>
+ <arc id="ra733" source="withdraw_1_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra734" source="flag_1_9" target="withdraw_5_9"/>
+ <arc id="ra735" source="withdraw_5_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra736" source="flag_1_9" target="withdraw_0_9"/>
+ <arc id="ra737" source="withdraw_0_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra738" source="flag_1_9" target="withdraw_6_9"/>
+ <arc id="ra739" source="withdraw_6_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra740" source="flag_1_9" target="withdraw_3_9"/>
+ <arc id="ra741" source="withdraw_3_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra742" source="flag_1_9" target="withdraw_4_9"/>
+ <arc id="ra743" source="withdraw_4_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra744" source="flag_1_9" target="withdraw_8_9"/>
+ <arc id="ra745" source="withdraw_8_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra746" source="flag_1_9" target="withdraw_2_9"/>
+ <arc id="ra747" source="withdraw_2_9" target="flag_1_9"/>
+<!-- read arc: -->
+ <arc id="ra748" source="flag_1_9" target="withdraw_7_9"/>
+ <arc id="ra749" source="withdraw_7_9" target="flag_1_9"/>
+<arc id="a750" source="withdraw_0_4" target="p0_0"/>
+<arc id="a751" source="withdraw_0_6" target="p0_0"/>
+<arc id="a752" source="exit_0" target="p0_0"/>
+<arc id="a753" source="withdraw_0_1" target="p0_0"/>
+<arc id="a754" source="withdraw_0_8" target="p0_0"/>
+<arc id="a755" source="withdraw_0_2" target="p0_0"/>
+<arc id="a756" source="withdraw_0_5" target="p0_0"/>
+<arc id="a757" source="withdraw_0_3" target="p0_0"/>
+<arc id="a758" source="withdraw_0_7" target="p0_0"/>
+<arc id="a759" source="withdraw_0_9" target="p0_0"/>
+<arc id="a760" source="p0_0" target="try_0"/>
+<arc id="a761" source="try_0" target="p1_0"/>
+<arc id="a762" source="p1_0" target="withdraw_0_4"/>
+<arc id="a763" source="p1_0" target="withdraw_0_6"/>
+<arc id="a764" source="p1_0" target="withdraw_0_1"/>
+<arc id="a765" source="p1_0" target="withdraw_0_8"/>
+<arc id="a766" source="p1_0" target="withdraw_0_2"/>
+<arc id="a767" source="p1_0" target="withdraw_0_5"/>
+<arc id="a768" source="p1_0" target="enter_0"/>
+<arc id="a769" source="p1_0" target="withdraw_0_3"/>
+<arc id="a770" source="p1_0" target="withdraw_0_7"/>
+<arc id="a771" source="p1_0" target="withdraw_0_9"/>
+<arc id="a772" source="enter_0" target="p3_0"/>
+<arc id="a773" source="p3_0" target="exit_0"/>
+<arc id="a774" source="withdraw_1_0" target="p0_1"/>
+<arc id="a775" source="withdraw_1_5" target="p0_1"/>
+<arc id="a776" source="withdraw_1_2" target="p0_1"/>
+<arc id="a777" source="withdraw_1_7" target="p0_1"/>
+<arc id="a778" source="withdraw_1_3" target="p0_1"/>
+<arc id="a779" source="withdraw_1_6" target="p0_1"/>
+<arc id="a780" source="exit_1" target="p0_1"/>
+<arc id="a781" source="withdraw_1_9" target="p0_1"/>
+<arc id="a782" source="withdraw_1_4" target="p0_1"/>
+<arc id="a783" source="withdraw_1_8" target="p0_1"/>
+<arc id="a784" source="p0_1" target="try_1"/>
+<arc id="a785" source="try_1" target="p1_1"/>
+<arc id="a786" source="p1_1" target="withdraw_1_0"/>
+<arc id="a787" source="p1_1" target="withdraw_1_5"/>
+<arc id="a788" source="p1_1" target="enter_1"/>
+<arc id="a789" source="p1_1" target="withdraw_1_2"/>
+<arc id="a790" source="p1_1" target="withdraw_1_7"/>
+<arc id="a791" source="p1_1" target="withdraw_1_3"/>
+<arc id="a792" source="p1_1" target="withdraw_1_6"/>
+<arc id="a793" source="p1_1" target="withdraw_1_9"/>
+<arc id="a794" source="p1_1" target="withdraw_1_4"/>
+<arc id="a795" source="p1_1" target="withdraw_1_8"/>
+<arc id="a796" source="enter_1" target="p3_1"/>
+<arc id="a797" source="p3_1" target="exit_1"/>
+<arc id="a798" source="withdraw_2_1" target="p0_2"/>
+<arc id="a799" source="withdraw_2_6" target="p0_2"/>
+<arc id="a800" source="withdraw_2_9" target="p0_2"/>
+<arc id="a801" source="exit_2" target="p0_2"/>
+<arc id="a802" source="withdraw_2_3" target="p0_2"/>
+<arc id="a803" source="withdraw_2_4" target="p0_2"/>
+<arc id="a804" source="withdraw_2_5" target="p0_2"/>
+<arc id="a805" source="withdraw_2_8" target="p0_2"/>
+<arc id="a806" source="withdraw_2_0" target="p0_2"/>
+<arc id="a807" source="withdraw_2_7" target="p0_2"/>
+<arc id="a808" source="p0_2" target="try_2"/>
+<arc id="a809" source="try_2" target="p1_2"/>
+<arc id="a810" source="p1_2" target="withdraw_2_1"/>
+<arc id="a811" source="p1_2" target="withdraw_2_6"/>
+<arc id="a812" source="p1_2" target="withdraw_2_9"/>
+<arc id="a813" source="p1_2" target="withdraw_2_3"/>
+<arc id="a814" source="p1_2" target="withdraw_2_4"/>
+<arc id="a815" source="p1_2" target="withdraw_2_5"/>
+<arc id="a816" source="p1_2" target="withdraw_2_8"/>
+<arc id="a817" source="p1_2" target="enter_2"/>
+<arc id="a818" source="p1_2" target="withdraw_2_0"/>
+<arc id="a819" source="p1_2" target="withdraw_2_7"/>
+<arc id="a820" source="enter_2" target="p3_2"/>
+<arc id="a821" source="p3_2" target="exit_2"/>
+<arc id="a822" source="withdraw_3_2" target="p0_3"/>
+<arc id="a823" source="withdraw_3_5" target="p0_3"/>
+<arc id="a824" source="withdraw_3_8" target="p0_3"/>
+<arc id="a825" source="withdraw_3_4" target="p0_3"/>
+<arc id="a826" source="withdraw_3_9" target="p0_3"/>
+<arc id="a827" source="withdraw_3_0" target="p0_3"/>
+<arc id="a828" source="withdraw_3_6" target="p0_3"/>
+<arc id="a829" source="withdraw_3_7" target="p0_3"/>
+<arc id="a830" source="withdraw_3_1" target="p0_3"/>
+<arc id="a831" source="exit_3" target="p0_3"/>
+<arc id="a832" source="p0_3" target="try_3"/>
+<arc id="a833" source="try_3" target="p1_3"/>
+<arc id="a834" source="p1_3" target="withdraw_3_2"/>
+<arc id="a835" source="p1_3" target="withdraw_3_5"/>
+<arc id="a836" source="p1_3" target="withdraw_3_8"/>
+<arc id="a837" source="p1_3" target="enter_3"/>
+<arc id="a838" source="p1_3" target="withdraw_3_4"/>
+<arc id="a839" source="p1_3" target="withdraw_3_9"/>
+<arc id="a840" source="p1_3" target="withdraw_3_0"/>
+<arc id="a841" source="p1_3" target="withdraw_3_6"/>
+<arc id="a842" source="p1_3" target="withdraw_3_7"/>
+<arc id="a843" source="p1_3" target="withdraw_3_1"/>
+<arc id="a844" source="enter_3" target="p3_3"/>
+<arc id="a845" source="p3_3" target="exit_3"/>
+<arc id="a846" source="withdraw_4_3" target="p0_4"/>
+<arc id="a847" source="withdraw_4_6" target="p0_4"/>
+<arc id="a848" source="withdraw_4_7" target="p0_4"/>
+<arc id="a849" source="withdraw_4_0" target="p0_4"/>
+<arc id="a850" source="exit_4" target="p0_4"/>
+<arc id="a851" source="withdraw_4_1" target="p0_4"/>
+<arc id="a852" source="withdraw_4_5" target="p0_4"/>
+<arc id="a853" source="withdraw_4_9" target="p0_4"/>
+<arc id="a854" source="withdraw_4_8" target="p0_4"/>
+<arc id="a855" source="withdraw_4_2" target="p0_4"/>
+<arc id="a856" source="p0_4" target="try_4"/>
+<arc id="a857" source="try_4" target="p1_4"/>
+<arc id="a858" source="p1_4" target="withdraw_4_3"/>
+<arc id="a859" source="p1_4" target="withdraw_4_6"/>
+<arc id="a860" source="p1_4" target="withdraw_4_7"/>
+<arc id="a861" source="p1_4" target="withdraw_4_0"/>
+<arc id="a862" source="p1_4" target="withdraw_4_1"/>
+<arc id="a863" source="p1_4" target="withdraw_4_5"/>
+<arc id="a864" source="p1_4" target="withdraw_4_9"/>
+<arc id="a865" source="p1_4" target="withdraw_4_8"/>
+<arc id="a866" source="p1_4" target="withdraw_4_2"/>
+<arc id="a867" source="p1_4" target="enter_4"/>
+<arc id="a868" source="enter_4" target="p34"/>
+<arc id="a869" source="p34" target="exit_4"/>
+<arc id="a870" source="withdraw_5_0" target="p0_5"/>
+<arc id="a871" source="withdraw_5_4" target="p0_5"/>
+<arc id="a872" source="withdraw_5_8" target="p0_5"/>
+<arc id="a873" source="withdraw_5_1" target="p0_5"/>
+<arc id="a874" source="withdraw_5_2" target="p0_5"/>
+<arc id="a875" source="withdraw_5_6" target="p0_5"/>
+<arc id="a876" source="withdraw_5_7" target="p0_5"/>
+<arc id="a877" source="withdraw_5_3" target="p0_5"/>
+<arc id="a878" source="withdraw_5_9" target="p0_5"/>
+<arc id="a879" source="exit_5" target="p0_5"/>
+<arc id="a880" source="p0_5" target="try_5"/>
+<arc id="a881" source="try_5" target="p1_5"/>
+<arc id="a882" source="p1_5" target="withdraw_5_0"/>
+<arc id="a883" source="p1_5" target="withdraw_5_4"/>
+<arc id="a884" source="p1_5" target="withdraw_5_8"/>
+<arc id="a885" source="p1_5" target="withdraw_5_1"/>
+<arc id="a886" source="p1_5" target="enter_5"/>
+<arc id="a887" source="p1_5" target="withdraw_5_2"/>
+<arc id="a888" source="p1_5" target="withdraw_5_6"/>
+<arc id="a889" source="p1_5" target="withdraw_5_7"/>
+<arc id="a890" source="p1_5" target="withdraw_5_3"/>
+<arc id="a891" source="p1_5" target="withdraw_5_9"/>
+<arc id="a892" source="enter_5" target="p3_5"/>
+<arc id="a893" source="p3_5" target="exit_5"/>
+<arc id="a894" source="withdraw_6_1" target="p0_6"/>
+<arc id="a895" source="withdraw_6_5" target="p0_6"/>
+<arc id="a896" source="withdraw_6_7" target="p0_6"/>
+<arc id="a897" source="withdraw_6_2" target="p0_6"/>
+<arc id="a898" source="withdraw_6_9" target="p0_6"/>
+<arc id="a899" source="withdraw_6_3" target="p0_6"/>
+<arc id="a900" source="withdraw_6_4" target="p0_6"/>
+<arc id="a901" source="withdraw_6_0" target="p0_6"/>
+<arc id="a902" source="withdraw_6_8" target="p0_6"/>
+<arc id="a903" source="exit_6" target="p0_6"/>
+<arc id="a904" source="p0_6" target="try_6"/>
+<arc id="a905" source="try_6" target="p1_6"/>
+<arc id="a906" source="p1_6" target="withdraw_6_1"/>
+<arc id="a907" source="p1_6" target="withdraw_6_5"/>
+<arc id="a908" source="p1_6" target="withdraw_6_7"/>
+<arc id="a909" source="p1_6" target="withdraw_6_2"/>
+<arc id="a910" source="p1_6" target="withdraw_6_9"/>
+<arc id="a911" source="p1_6" target="withdraw_6_3"/>
+<arc id="a912" source="p1_6" target="withdraw_6_4"/>
+<arc id="a913" source="p1_6" target="withdraw_6_0"/>
+<arc id="a914" source="p1_6" target="withdraw_6_8"/>
+<arc id="a915" source="p1_6" target="enter_6"/>
+<arc id="a916" source="enter_6" target="p3_6"/>
+<arc id="a917" source="p3_6" target="exit_6"/>
+<arc id="a918" source="withdraw_7_2" target="p0_7"/>
+<arc id="a919" source="withdraw_7_4" target="p0_7"/>
+<arc id="a920" source="exit_7" target="p0_7"/>
+<arc id="a921" source="withdraw_7_3" target="p0_7"/>
+<arc id="a922" source="withdraw_7_8" target="p0_7"/>
+<arc id="a923" source="withdraw_7_0" target="p0_7"/>
+<arc id="a924" source="withdraw_7_5" target="p0_7"/>
+<arc id="a925" source="withdraw_7_1" target="p0_7"/>
+<arc id="a926" source="withdraw_7_6" target="p0_7"/>
+<arc id="a927" source="withdraw_7_9" target="p0_7"/>
+<arc id="a928" source="p0_7" target="try_7"/>
+<arc id="a929" source="try_7" target="p1_7"/>
+<arc id="a930" source="p1_7" target="withdraw_7_2"/>
+<arc id="a931" source="p1_7" target="withdraw_7_4"/>
+<arc id="a932" source="p1_7" target="withdraw_7_3"/>
+<arc id="a933" source="p1_7" target="withdraw_7_8"/>
+<arc id="a934" source="p1_7" target="enter_7"/>
+<arc id="a935" source="p1_7" target="withdraw_7_0"/>
+<arc id="a936" source="p1_7" target="withdraw_7_5"/>
+<arc id="a937" source="p1_7" target="withdraw_7_1"/>
+<arc id="a938" source="p1_7" target="withdraw_7_6"/>
+<arc id="a939" source="p1_7" target="withdraw_7_9"/>
+<arc id="a940" source="enter_7" target="p3_7"/>
+<arc id="a941" source="p3_7" target="exit_7"/>
+<arc id="a942" source="withdraw_8_3" target="p0_8"/>
+<arc id="a943" source="withdraw_8_5" target="p0_8"/>
+<arc id="a944" source="withdraw_8_0" target="p0_8"/>
+<arc id="a945" source="withdraw_8_6" target="p0_8"/>
+<arc id="a946" source="withdraw_8_1" target="p0_8"/>
+<arc id="a947" source="withdraw_8_4" target="p0_8"/>
+<arc id="a948" source="withdraw_8_9" target="p0_8"/>
+<arc id="a949" source="exit_8" target="p0_8"/>
+<arc id="a950" source="withdraw_8_2" target="p0_8"/>
+<arc id="a951" source="withdraw_8_7" target="p0_8"/>
+<arc id="a952" source="p0_8" target="try_8"/>
+<arc id="a953" source="try_8" target="p1_8"/>
+<arc id="a954" source="p1_8" target="withdraw_8_3"/>
+<arc id="a955" source="p1_8" target="withdraw_8_5"/>
+<arc id="a956" source="p1_8" target="enter_8"/>
+<arc id="a957" source="p1_8" target="withdraw_8_0"/>
+<arc id="a958" source="p1_8" target="withdraw_8_6"/>
+<arc id="a959" source="p1_8" target="withdraw_8_1"/>
+<arc id="a960" source="p1_8" target="withdraw_8_4"/>
+<arc id="a961" source="p1_8" target="withdraw_8_9"/>
+<arc id="a962" source="p1_8" target="withdraw_8_2"/>
+<arc id="a963" source="p1_8" target="withdraw_8_7"/>
+<arc id="a964" source="enter_8" target="p3_8"/>
+<arc id="a965" source="p3_8" target="exit_8"/>
+<arc id="a966" source="withdraw_9_0" target="p0_9"/>
+<arc id="a967" source="withdraw_9_4" target="p0_9"/>
+<arc id="a968" source="withdraw_9_8" target="p0_9"/>
+<arc id="a969" source="exit_9" target="p0_9"/>
+<arc id="a970" source="withdraw_9_1" target="p0_9"/>
+<arc id="a971" source="withdraw_9_7" target="p0_9"/>
+<arc id="a972" source="withdraw_9_2" target="p0_9"/>
+<arc id="a973" source="withdraw_9_5" target="p0_9"/>
+<arc id="a974" source="withdraw_9_3" target="p0_9"/>
+<arc id="a975" source="withdraw_9_6" target="p0_9"/>
+<arc id="a976" source="p0_9" target="try_9"/>
+<arc id="a977" source="try_9" target="p1_9"/>
+<arc id="a978" source="p1_9" target="withdraw_9_0"/>
+<arc id="a979" source="p1_9" target="withdraw_9_4"/>
+<arc id="a980" source="p1_9" target="withdraw_9_8"/>
+<arc id="a981" source="p1_9" target="withdraw_9_1"/>
+<arc id="a982" source="p1_9" target="withdraw_9_7"/>
+<arc id="a983" source="p1_9" target="withdraw_9_2"/>
+<arc id="a984" source="p1_9" target="withdraw_9_5"/>
+<arc id="a985" source="p1_9" target="enter_9"/>
+<arc id="a986" source="p1_9" target="withdraw_9_3"/>
+<arc id="a987" source="p1_9" target="withdraw_9_6"/>
+<arc id="a988" source="enter_9" target="p3_9"/>
+<arc id="a989" source="p3_9" target="exit_9"/>
+
+</page>
+</net>
+</pnml>
