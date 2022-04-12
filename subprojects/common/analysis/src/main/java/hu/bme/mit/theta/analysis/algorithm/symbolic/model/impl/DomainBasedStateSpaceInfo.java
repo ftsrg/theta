@@ -1,11 +1,10 @@
-package hu.bme.mit.theta.frontend.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl;
 
 import hu.bme.mit.delta.collections.ElementChain;
-import hu.bme.mit.delta.collections.IntCursor;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
-import hu.bme.mit.theta.frontend.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 import java.util.Objects;
 

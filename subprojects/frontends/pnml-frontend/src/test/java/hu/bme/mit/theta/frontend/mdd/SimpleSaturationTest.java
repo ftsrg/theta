@@ -6,10 +6,7 @@ import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.frontend.mdd.mdd.SimpleSaturationProvider;
-import hu.bme.mit.theta.frontend.mdd.ptnet.PtNetAnalyzer;
-import hu.bme.mit.theta.frontend.mdd.ptnet.PtNetSystem;
-import hu.bme.mit.theta.frontend.mdd.ptnet.VariableOrderingFactory;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.mdd.SimpleSaturationProvider;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -66,7 +63,6 @@ public final class SimpleSaturationTest {
 		//System.out.println(dot);
 		
 		System.out.println(ss.getSaturatedNodes().size());
-		System.out.println(PtNetAnalyzer.MddNodeCollector.collectNodes(stateSpace).size());
 		
 		// StringSelection stringSelection = new StringSelection(dot);
 		// Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();

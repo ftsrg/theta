@@ -44,13 +44,12 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.frontend.mdd.mdd.BfsProvider;
-import hu.bme.mit.theta.frontend.mdd.mdd.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.frontend.mdd.mdd.SimpleSaturationProvider;
-import hu.bme.mit.theta.frontend.mdd.ptnet.PtNetAnalyzer;
-import hu.bme.mit.theta.frontend.mdd.ptnet.PtNetDependency2Gxl;
-import hu.bme.mit.theta.frontend.mdd.ptnet.PtNetSystem;
-import hu.bme.mit.theta.frontend.mdd.ptnet.VariableOrderingFactory;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.mdd.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.mdd.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.mdd.SimpleSaturationProvider;
+import hu.bme.mit.theta.frontend.mdd.PtNetDependency2Gxl;
+import hu.bme.mit.theta.frontend.mdd.PtNetSystem;
+import hu.bme.mit.theta.frontend.mdd.VariableOrderingFactory;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -83,6 +82,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
 
 public class XstsCli {
 
@@ -185,7 +186,7 @@ public class XstsCli {
 
     @Parameter(names = "--iterationStrategy", description = "The state space generation algorithm to use (BFS, Saturation or " +
             "GeneralizedSaturation)")
-    PtNetAnalyzer.IterationStrategy iterationStrategy = PtNetAnalyzer.IterationStrategy.GSAT;
+    IterationStrategy iterationStrategy = IterationStrategy.GSAT;
 
     //////////// petri net output options ////////////
 

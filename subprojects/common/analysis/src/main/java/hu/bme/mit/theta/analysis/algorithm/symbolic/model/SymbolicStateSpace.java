@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddSignature;

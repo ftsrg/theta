@@ -1,6 +1,5 @@
-package hu.bme.mit.theta.frontend.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
-import hu.bme.mit.delta.collections.IntCursor;
 import hu.bme.mit.delta.collections.IntSetView;
 
 /**
