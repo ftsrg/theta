@@ -37,7 +37,7 @@ public final class PetriNetParser {
 	
 	public List<PetriNet> parsePTNet() throws PnmlParseException {
 		if (root instanceof PetriNetDocHLAPI) {
-			return new Pnml2Ptnet((PetriNetDocHLAPI) root).parse();
+			return new Lip6PnmlToPetrinet((PetriNetDocHLAPI) root).parse();
 		}
 		throw new PnmlParseException("The file was not a P/T Net.");
 	}

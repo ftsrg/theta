@@ -3,11 +3,9 @@ plugins {
     id("cli-tool")
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
+    compile(project(":theta-pnml-frontend"))
+
     compile(project(":theta-xsts"))
     compile(project(":theta-xsts-analysis"))
     compile(project(":theta-solver-z3"))

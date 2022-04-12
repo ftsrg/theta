@@ -2,12 +2,7 @@ plugins {
     id("java-common")
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
-
     compile(project(":theta-analysis"))
     compile(project(":theta-common"))
     compile(project(":theta-core"))

@@ -2,10 +2,6 @@ plugins {
     id("java-common")
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
     implementation(Deps.pnmlCore)
     implementation(Deps.pnmlSymmetric)
@@ -27,8 +23,8 @@ dependencies {
     implementation(Deps.jing)
     implementation(Deps.koloboke)
 
-    implementation(Deps.delta)
-    implementation(Deps.deltaCollections)
+    implementation(files(rootDir.resolve(Deps.delta)))
+    implementation(files(rootDir.resolve(Deps.deltaCollections)))
 
     implementation(Deps.jcommander)
 

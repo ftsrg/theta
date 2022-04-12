@@ -18,8 +18,8 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParser;
-import hu.bme.mit.theta.frontend.petrinet.pnml.elements.PnmlNet;
+import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
+import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
@@ -30,7 +30,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import hu.bme.mit.theta.xsts.petrinet.PnmlToXSTS;
+import hu.bme.mit.theta.xsts.petrinet.PetriNetToXSTS;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;
@@ -182,8 +182,8 @@ public class XstsCli {
 			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
 
 			if (model.endsWith(".pnml")) {
-				final PnmlNet pnmlNet = PnmlParser.parse(model,initialMarking);
-				return PnmlToXSTS.createXSTS(pnmlNet, propStream);
+				final PetriNet petriNet = XMLPnmlToPetrinet.parse(model,initialMarking);
+				return PetriNetToXSTS.createXSTS(petriNet, propStream);
 			} else {
 
 				try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
