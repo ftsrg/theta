@@ -19,13 +19,13 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParser;
+import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
+import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.petrinet.PnmlToXSTS;
-import hu.bme.mit.theta.frontend.petrinet.pnml.elements.PnmlNet;
+import hu.bme.mit.theta.xsts.petrinet.PetriNetToXSTS;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -76,13 +76,12 @@ public class PnmlTest {
 
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
-        final PnmlNet pnmlNet = PnmlParser.parse(filePath, initialMarking);
+		final PetriNet petriNet = XMLPnmlToPetrinet.parse(filePath,initialMarking);
 
-        XSTS xsts;
-        try (InputStream propStream = new ByteArrayInputStream(
-                ("prop { " + targetMarking + " }").getBytes())) {
-            xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
-        }
+		XSTS xsts;
+		try (InputStream propStream = new ByteArrayInputStream(("prop { " + targetMarking + " }").getBytes())) {
+			xsts = PetriNetToXSTS.createXSTS(petriNet, propStream);
+		}
 
         final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
                 XstsConfigBuilder.Refinement.SEQ_ITP, Z3LegacySolverFactory.getInstance(),
