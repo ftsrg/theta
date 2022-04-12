@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.mdd.ptnet;
+package hu.bme.mit.theta.frontend.mdd;
 
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;

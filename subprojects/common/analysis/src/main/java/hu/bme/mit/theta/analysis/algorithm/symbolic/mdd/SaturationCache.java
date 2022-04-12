@@ -1,10 +1,10 @@
-package hu.bme.mit.theta.frontend.mdd.mdd;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.mdd;
 
 import hu.bme.mit.delta.java.mdd.BinaryOperationCache;
 import hu.bme.mit.delta.java.mdd.Cache;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.TernaryOperationCache;
-import hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 
 public final class SaturationCache implements Cache {
 	private final BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>                               saturateCache = new BinaryOperationCache<>();

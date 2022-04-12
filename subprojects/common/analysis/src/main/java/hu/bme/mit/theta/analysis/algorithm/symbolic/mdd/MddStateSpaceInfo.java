@@ -1,11 +1,9 @@
-package hu.bme.mit.theta.frontend.mdd.mdd;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.mdd;
 
-import hu.bme.mit.delta.collections.ElementChain;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.delta.java.mdd.MddVariableHandle;
-import hu.bme.mit.theta.frontend.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 public final class MddStateSpaceInfo implements StateSpaceInfo {
 	private final MddVariable variable;

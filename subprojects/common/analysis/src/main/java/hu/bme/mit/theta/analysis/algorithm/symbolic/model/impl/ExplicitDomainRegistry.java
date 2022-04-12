@@ -1,13 +1,10 @@
-package hu.bme.mit.theta.frontend.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl;
 
 import com.koloboke.collect.set.IntSet;
 import com.koloboke.collect.set.hash.HashIntSets;
 
 import hu.bme.mit.delta.collections.IntCursor;
-import hu.bme.mit.delta.collections.IntSetView;
-import hu.bme.mit.delta.collections.impl.IntCursors;
-import hu.bme.mit.delta.collections.impl.IntSetViews;
-import hu.bme.mit.theta.frontend.mdd.model.DomainRegistry;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.DomainRegistry;
 
 // TODO: this cannot describe infinite domains
 public final class ExplicitDomainRegistry implements DomainRegistry {
