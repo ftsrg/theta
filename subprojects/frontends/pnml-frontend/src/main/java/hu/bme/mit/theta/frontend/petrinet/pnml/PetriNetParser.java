@@ -19,7 +19,7 @@ public final class PetriNetParser {
 	
 	private final HLAPIRootClass root;
 	
-	public static PetriNetParser loadPnml(File file) throws InvalidIDException, ImportException {
+	public static PetriNetParser loadPnml(File file) throws Exception {
 		final HLAPIRootClass root = PNMLUtils.importPnmlDocument(file, false);
 		return new PetriNetParser(root);
 	}

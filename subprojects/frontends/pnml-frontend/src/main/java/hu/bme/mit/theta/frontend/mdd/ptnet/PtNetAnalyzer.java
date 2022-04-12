@@ -44,7 +44,7 @@ public final class PtNetAnalyzer {
 	
 	@Parameter(names = "--id", description = "Path of the input model")
 	String id = "";
-	
+
 	@Parameter(names = "--csv", description = "Path of the CSV file", required = true)
 	String csv;
 	
@@ -59,16 +59,16 @@ public final class PtNetAnalyzer {
 		"Generate GXL representation of (extended) dependency graph for variable ordering in the" +
 		" specified file")
 	String depGxl;
-	
+
 	@Parameter(names = "--depgxlgsat", description =
 		"Generate GXL representation of (extended) dependency graph for variable ordering in the" +
 		" specified file")
 	String depGxlGsat;
-	
+
 	@Parameter(names = "--depmat",
 	           description = "Generate dependency matrix from the model as a CSV file to the specified path")
 	String depMat;
-	
+
 	@Parameter(names = "--depmatpng",
 	           description = "Generate dependency matrix from the model as a PNG file to the specified path")
 	String depMatPng;
@@ -146,11 +146,11 @@ public final class PtNetAnalyzer {
 		} catch (InvalidIDException e) {
 			System.err.println("[ERROR] Invalid ID detected: " + e.getMessage());
 			return;
-		} catch (ImportException e) {
+		} catch (Exception e) {
 			System.err.println("[ERROR] An error occured while loading the modelPath: " + e.getMessage());
 			return;
 		}
-		
+
 		if (petriNets.isEmpty()) {
 			System.err.println("[ERROR] No Petri net found in the PNML document.");
 			return;
@@ -335,19 +335,19 @@ public final class PtNetAnalyzer {
 		sb.reverse();
 		return sb.toString();
 	}
-	
+
 	public static class MddNodeCollector {
 		public static Set<MddNode> collectNodes(MddHandle root) {
 			Set<MddNode> ret = HashObjSets.newUpdatableSet();
 			collect(root.getNode(), ret);
 			return ret;
 		}
-		
+
 		private static void collect(MddNode node, Set<MddNode> result) {
 			if (!result.add(node)) {
 				return;
 			}
-			
+
 			if (!node.isTerminal()) {
 				for (IntObjCursor<? extends MddNode> c = node.cursor(); c.moveNext();) {
 					collect(c.value(), result);
@@ -413,28 +413,28 @@ public final class PtNetAnalyzer {
 		String id = this.id;
 		String modelPath = this.modelPath;
 		String modelName = system.getName();
-		
+
 		Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(result);
 		long nodeCount = variableOrder.getMddGraph().getUniqueTableSize();
-		
+
 		long unionCacheSize = variableOrder.getDefaultUnionProvider().getCacheSize();
 		long unionQueryCount = variableOrder.getDefaultUnionProvider().getQueryCount();
 		long unionHitCount = variableOrder.getDefaultUnionProvider().getHitCount();
-		
+
 		long saturateCacheSize = provider.getSaturateCache().getCacheSize();
 		long saturateQueryCount = provider.getSaturateCache().getQueryCount();
 		long saturateHitCount = provider.getSaturateCache().getHitCount();
-		
+
 		long relProdCacheSize = provider.getSaturateCache().getCacheSize();
 		long relProdQueryCount = provider.getSaturateCache().getQueryCount();
 		long relProdHitCount = provider.getSaturateCache().getHitCount();
-		
+
 		final Set<MddNode> nodes = MddNodeCollector.collectNodes(result);
 		long finalMddSize = nodes.size();
-		
+
 		final Set<MddNode> saturatedNodes = provider.getSaturatedNodes();
 		long saturatedNodeCount = saturatedNodes.size() + 2;
-		
+
 		writer.cell(id);
 		writer.cell(modelPath);
 		writer.cell(modelName);
@@ -455,7 +455,7 @@ public final class PtNetAnalyzer {
 		writer.cell(saturatedNodeCount);
 		writer.newRow();
 	}
-	
+
 	private void printAnalyzeResults(
 		TableWriter writer,
 		MddVariableOrder variableOrder,
@@ -468,29 +468,29 @@ public final class PtNetAnalyzer {
 		String id = this.id;
 		String modelPath = this.modelPath;
 		String modelName = system.getName();
-		
+
 		Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(result);
 		long nodeCount = variableOrder.getMddGraph().getUniqueTableSize();
-		
+
 		long unionCacheSize = variableOrder.getDefaultUnionProvider().getCacheSize();
 		long unionQueryCount = variableOrder.getDefaultUnionProvider().getQueryCount();
 		long unionHitCount = variableOrder.getDefaultUnionProvider().getHitCount();
-		
+
 		long saturateCacheSize = provider.getSaturateCache().getCacheSize();
 		long saturateQueryCount = provider.getSaturateCache().getQueryCount();
 		long saturateHitCount = provider.getSaturateCache().getHitCount();
-		
+
 		long relProdCacheSize = provider.getSaturateCache().getCacheSize();
 		long relProdQueryCount = provider.getSaturateCache().getQueryCount();
 		long relProdHitCount = provider.getSaturateCache().getHitCount();
-		
-		
+
+
 		final Set<MddNode> nodes = MddNodeCollector.collectNodes(result);
 		long finalMddSize = nodes.size();
-		
+
 		final Set<MddNode> saturatedNodes = provider.getSaturatedNodes();
 		long saturatedNodeCount = saturatedNodes.size() + 2;
-		
+
 		writer.cell(id);
 		writer.cell(modelPath);
 		writer.cell(modelName);
@@ -511,7 +511,7 @@ public final class PtNetAnalyzer {
 		writer.cell(saturatedNodeCount);
 		writer.newRow();
 	}
-	
+
 	private void printAnalyzeResults(
 		TableWriter writer,
 		MddVariableOrder variableOrder,
@@ -524,21 +524,21 @@ public final class PtNetAnalyzer {
 		String id = this.id;
 		String modelPath = this.modelPath;
 		String modelName = system.getName();
-		
+
 		Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(result);
 		long nodeCount = variableOrder.getMddGraph().getUniqueTableSize();
-		
+
 		long unionCacheSize = variableOrder.getDefaultUnionProvider().getCacheSize();
 		long unionQueryCount = variableOrder.getDefaultUnionProvider().getQueryCount();
 		long unionHitCount = variableOrder.getDefaultUnionProvider().getHitCount();
-		
+
 		long relProdCacheSize = provider.getRelProdCache().getCacheSize();
 		long relProdQueryCount = provider.getRelProdCache().getQueryCount();
 		long relProdHitCount = provider.getRelProdCache().getHitCount();
-		
+
 		final Set<MddNode> nodes = MddNodeCollector.collectNodes(result);
 		long finalMddSize = nodes.size();
-		
+
 		writer.cell(id);
 		writer.cell(modelPath);
 		writer.cell(modelName);

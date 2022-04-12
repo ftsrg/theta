@@ -93,6 +93,20 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class XstsConfigBuilder {
 
+	//////////// algorithm selection ////////////
+
+	public enum Algorithm {
+		CEGAR, SYMBOLIC
+	}
+
+	//////////// symbolic configuration ////////////
+
+	public enum IterationStrategy {
+		BFS, SAT, GSAT
+	}
+
+	//////////// CEGAR configuration ////////////
+
 	public enum Domain {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED
 	}
