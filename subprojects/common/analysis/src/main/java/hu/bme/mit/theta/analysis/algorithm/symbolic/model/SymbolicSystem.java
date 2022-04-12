@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import java.util.ArrayList;
 import java.util.List;

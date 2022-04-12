@@ -1,9 +1,9 @@
-package hu.bme.mit.theta.frontend.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.theta.frontend.mdd.model.impl.EmptyNextStateDescriptor;
-import hu.bme.mit.theta.frontend.mdd.model.impl.IdentityNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.EmptyNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.IdentityNextStateDescriptor;
 
 import java.util.Optional;
 

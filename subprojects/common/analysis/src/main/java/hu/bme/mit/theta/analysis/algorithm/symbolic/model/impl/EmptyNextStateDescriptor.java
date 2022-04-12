@@ -1,10 +1,10 @@
-package hu.bme.mit.theta.frontend.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl;
 
 import java.util.Optional;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.frontend.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 public final class EmptyNextStateDescriptor implements AbstractNextStateDescriptor {
 	private EmptyNextStateDescriptor() {}

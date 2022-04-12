@@ -1,7 +1,7 @@
-package hu.bme.mit.theta.frontend.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl;
 
 import hu.bme.mit.delta.collections.IntCursor;
-import hu.bme.mit.theta.frontend.mdd.model.DomainRegistry;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.DomainRegistry;
 
 public class BoundedDomainRegistry implements DomainRegistry {
 	private class BoundedDomainCursor implements IntCursor {

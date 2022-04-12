@@ -29,4 +29,5 @@ dependencies {
     implementation(Deps.jcommander)
 
     compile(project(":theta-core"))
+    compile(project(":theta-analysis"))
 }

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.mdd.ptnet;
+package hu.bme.mit.theta.frontend.mdd;
 
 import hu.bme.mit.theta.common.table.TableWriter;
 

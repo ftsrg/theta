@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.mdd.ptnet;
+package hu.bme.mit.theta.frontend.mdd;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.koloboke.collect.map.ObjIntMap;
@@ -7,10 +7,9 @@ import com.koloboke.collect.map.hash.HashObjObjMap;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.delta.collections.impl.MapUniqueTable;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
-import hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.frontend.mdd.model.impl.OrNextStateDescriptor;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;

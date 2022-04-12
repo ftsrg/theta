@@ -1,15 +1,14 @@
-package hu.bme.mit.theta.frontend.mdd.ptnet;
+package hu.bme.mit.theta.frontend.mdd;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.model.Transition;
-import hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.frontend.mdd.model.StateSpaceInfo;
 
 import java.util.NoSuchElementException;
 
-import static hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor.*;
 
 public final class PtNetTransitionNextStateDescriptor implements AbstractNextStateDescriptor {
 	private Transition representedTransition;
@@ -67,7 +66,7 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
 				
 				@Override
 				public AbstractNextStateDescriptor defaultValue() {
-					return terminalEmpty();
+					return AbstractNextStateDescriptor.terminalEmpty();
 				}
 				
 				@Override
@@ -157,7 +156,7 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
 							
 							@Override
 							public AbstractNextStateDescriptor defaultValue() {
-								return terminalEmpty();
+								return AbstractNextStateDescriptor.terminalEmpty();
 							}
 							
 							@Override

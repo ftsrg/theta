@@ -1,11 +1,11 @@
-package hu.bme.mit.theta.frontend.mdd.mdd;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.mdd;
 
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.frontend.mdd.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 
 import java.util.Optional;
 import java.util.Set;
