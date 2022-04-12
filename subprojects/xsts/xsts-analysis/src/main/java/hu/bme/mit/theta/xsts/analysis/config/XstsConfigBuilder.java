@@ -69,18 +69,26 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class XstsConfigBuilder {
 
-    private final Domain domain;
-    private final Refinement refinement;
-    private final SolverFactory abstractionSolverFactory;
-    private final SolverFactory refinementSolverFactory;
-    private Logger logger = NullLogger.getInstance();
-    private Search search = Search.BFS;
-    private PredSplit predSplit = PredSplit.WHOLE;
-    private int maxEnum = 0;
-    private InitPrec initPrec = InitPrec.EMPTY;
-    private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
-    private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
-    private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	//////////// algorithm selection ////////////
+
+    public enum Algorithm {
+        CEGAR,
+        KINDUCTION,
+        IMC,
+        SYMBOLIC
+    }
+
+	//////////// symbolic configuration ////////////
+
+	public enum IterationStrategy {
+		BFS, SAT, GSAT
+	}
+
+	//////////// CEGAR configuration ////////////
+
+	public enum Domain {
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED
+	}
 
     public XstsConfigBuilder(final Domain domain, final Refinement refinement,
                              final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
