@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xsts.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
@@ -96,7 +97,7 @@ public class XstsCli {
     @Parameter(names = {"--model"}, description = "Path of the input model (XSTS or Pnml)", required = true)
     String model;
 
-    @Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)", required = true)
+    @Parameter(names = {"--property"}, description = "Input property as a string or a file (*.prop)")
     String property;
 
     @Parameter(names = "--id", description = "Id of the input model")
@@ -182,9 +183,9 @@ public class XstsCli {
 
     //////////// symbolic configuration options ////////////
 
-    @Parameter(names = "--algorithm", description = "The state space generation algorithm to use (BFS, Saturation or " +
+    @Parameter(names = "--iterationStrategy", description = "The state space generation algorithm to use (BFS, Saturation or " +
             "GeneralizedSaturation)")
-    PtNetAnalyzer.IterationStrategy iterationStrategy;
+    PtNetAnalyzer.IterationStrategy iterationStrategy = PtNetAnalyzer.IterationStrategy.GSAT;
 
     //////////// petri net output options ////////////
 
@@ -437,6 +438,7 @@ public class XstsCli {
 
     private XSTS loadXSTSModel() throws Exception {
         InputStream propStream = null;
+        Preconditions.checkNotNull(property, "No property defined. Did you select the correct algorithm? (Default is CEGAR)");
         try {
             if (property.endsWith(".prop")) propStream = new FileInputStream(property);
             else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
