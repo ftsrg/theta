@@ -8,6 +8,6 @@ dependencies {
     compile(project(":theta-core"))
     compile(project(":theta-xsts"))
 
-    testImplementation(project(":theta-pnml-frontend"))
+    testImplementation(project(":theta-petrinet-frontend"))
     testImplementation(project(":theta-solver-z3"))
 }

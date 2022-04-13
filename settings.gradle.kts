@@ -6,7 +6,7 @@ include(
         "common/core",
 
         "frontends/c-frontend",
-        "frontends/pnml-frontend",
+        "frontends/petrinet-frontend",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
