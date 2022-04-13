@@ -66,9 +66,9 @@ public final class GeneralizedSaturationTest {
 		String dot = GraphvizSerializer.serialize(stateSpace);
 		System.out.println(dot);
 		
-		StringSelection stringSelection = new StringSelection(dot);
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		clipboard.setContents(stringSelection, null);
+//		StringSelection stringSelection = new StringSelection(dot);
+//		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//		clipboard.setContents(stringSelection, null);
 		
 		final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
 		assertEquals(TestData.STATESPACESIZE, stateSpaceSize.longValue());
