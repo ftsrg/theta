@@ -1,0 +1,126 @@
+package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
+
+import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
+
+import java.util.Optional;
+
+public final class BfsProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+	public static boolean verbose = false;
+	
+	private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(
+		v -> new BinaryOperationCache<>());
+	private final MddVariableOrder                                                                  variableOrder;
+	private final RelationalProductProvider relProdProvider;
+	
+	public BfsProvider(final MddVariableOrder variableOrder) {
+		this(variableOrder, new RelationalProductProvider(variableOrder));
+	}
+	
+	public BfsProvider(final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider) {
+		this.variableOrder = variableOrder;
+		this.relProdProvider = relProdProvider;
+		this.variableOrder.getMddGraph().registerCleanupListener(this);
+	}
+	
+	public MddHandle compute(
+		AbstractNextStateDescriptor.Postcondition initializer,
+		AbstractNextStateDescriptor nextStateRelation,
+		MddVariableHandle highestAffectedVariable
+	) {
+		
+		final MddHandle initialStates =
+			relProdProvider.compute(((MddGraph<Boolean>) variableOrder.getMddGraph()).getHandleFor(true,
+			highestAffectedVariable
+		), initializer, highestAffectedVariable);
+		
+		MddNode result;
+		
+		if (highestAffectedVariable.getVariable().isPresent()) {
+			final MddVariable variable = highestAffectedVariable.getVariable().get();
+			result = this.compute(initialStates.getNode(), nextStateRelation, variable);
+		} else {
+			result = this.computeTerminal(initialStates.getNode(), nextStateRelation,
+				highestAffectedVariable.getMddGraph());
+		}
+		
+		
+		return highestAffectedVariable.getHandleFor(result);
+	}
+	
+	@Override
+	public MddNode compute(
+		final MddNode mddNode,
+		final AbstractNextStateDescriptor nextStateRelation,
+		final MddVariable mddVariable
+	) {
+		MddNode res = variableOrder.getMddGraph().getTerminalZeroNode();
+		MddNode nextLayer = mddNode;
+		
+		while (res != nextLayer) {
+			if (verbose) {
+				System.out.println("Starting new layer...");
+				// System.out.println("Previous result: " + res);
+				// System.out.println(GraphvizSerializer.serialize(variableOrder.getDefaultSetSignature().getTopVariableHandle().getHandleFor(res)));
+				// System.out.println("New result: " + nextLayer);
+				// System.out.println(GraphvizSerializer.serialize(variableOrder.getDefaultSetSignature().getTopVariableHandle().getHandleFor(nextLayer)));
+			}
+			res = nextLayer;
+			final Optional<Iterable<AbstractNextStateDescriptor>> splitNS = nextStateRelation.split();
+			if (splitNS.isPresent()) {
+				for (AbstractNextStateDescriptor next : splitNS.get()) {
+					if (verbose) {
+						System.out.println("Applying transition: " + next);
+					}
+					nextLayer = mddVariable.union(nextLayer, relProdProvider.compute(nextLayer, next, mddVariable));
+				}
+			} else {
+				if (verbose) {
+					System.out.println("Applying transition: " + nextStateRelation);
+				}
+				nextLayer = mddVariable.union(nextLayer, relProdProvider.compute(nextLayer, nextStateRelation, mddVariable));
+			}
+		}
+		
+		return res;
+	}
+	
+	@Override
+	public MddNode computeTerminal(
+		final MddNode mddNode, final AbstractNextStateDescriptor nextStateRelation, final MddGraph<?> mddGraph
+	) {
+		MddNode res = variableOrder.getMddGraph().getTerminalZeroNode();
+		MddNode nextLayer = mddNode;
+		
+		while (res != nextLayer) {
+			nextLayer = mddGraph.unionTerminal(
+				res,
+				relProdProvider.computeTerminal(res, nextStateRelation, mddGraph)
+			);
+		}
+		
+		return res;
+	}
+	
+	@Override
+	public void dispose() {
+		this.variableOrder.getMddGraph().unregisterCleanupListener(this);
+	}
+	
+	@Override
+	public void clear() {
+		this.cacheManager.clearAll();
+	}
+	
+	@Override
+	public void cleanup() {
+		this.cacheManager.forEachCache((cache) -> cache.clearSelectively((source, ns, result) -> source.getReferenceCount() ==
+		                                                                                         0 ||
+		                                                                                         result.getReferenceCount() ==
+		                                                                                         0));
+	}
+	
+	public Cache getRelProdCache() {
+		return relProdProvider.getRelProdCache();
+	}
+}

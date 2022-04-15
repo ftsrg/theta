@@ -4,7 +4,9 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-petrinet-frontend"))
+    compile(project(":theta-petrinet-model"))
+    compile(project(":theta-petrinet-analysis"))
+    compile(project(":theta-petrinet-xsts"))
 
     compile(project(":theta-xsts"))
     compile(project(":theta-xsts-analysis"))

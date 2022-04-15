@@ -6,7 +6,9 @@ include(
         "common/core",
 
         "frontends/c-frontend",
-        "frontends/petrinet-frontend",
+        "frontends/petrinet-frontend/petrinet-model",
+        "frontends/petrinet-frontend/petrinet-analysis",
+        "frontends/petrinet-frontend/petrinet-xsts",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
