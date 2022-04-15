@@ -3,11 +3,11 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-common"))
-    compile(project(":theta-core"))
-    compile(project(":theta-cfa"))
-    compile(project(":theta-cfa-analysis"))
-    compile(project(":theta-solver-z3"))
-    compile(project(":theta-c-frontend"))
-    testCompile(project(":theta-c-frontend"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-cfa"))
+    implementation(project(":theta-cfa-analysis"))
+    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-c-frontend"))
+    testImplementation(project(":theta-c-frontend"))
 }

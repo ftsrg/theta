@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-xcfa"))
-    compile(project(":theta-common"))
-    compile(project(":theta-core"))
-    compile(project(":theta-solver"))
-    compile(project(":theta-solver-z3"))
+    implementation(project(":theta-xcfa"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-solver"))
+    implementation(project(":theta-solver-z3"))
 }
