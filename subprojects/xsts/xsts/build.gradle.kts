@@ -20,8 +20,6 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-petrinet-frontend"))
-
-    compile(project(":theta-common"))
-    compile(project(":theta-core"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
 }

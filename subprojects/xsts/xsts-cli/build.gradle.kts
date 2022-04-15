@@ -19,11 +19,17 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-petrinet-frontend"))
-
-    compile(project(":theta-xsts"))
-    compile(project(":theta-xsts-analysis"))
-    compile(project(":theta-solver-z3"))
+    implementation(project(":theta-petrinet-model"))
+    implementation(project(":theta-petrinet-analysis"))
+    implementation(project(":theta-petrinet-xsts"))
+    implementation(project(":theta-xsts"))
+    implementation(project(":theta-xsts-analysis"))
+    implementation(project(":theta-analysis"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-solver-z3-legacy"))
+    implementation(project(":theta-solver-smtlib"))
+    implementation(project(":theta-solver"))
 }
 
 application {
