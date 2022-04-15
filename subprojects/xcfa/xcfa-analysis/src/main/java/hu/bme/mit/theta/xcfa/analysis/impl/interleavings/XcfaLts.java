@@ -31,11 +31,11 @@ import java.util.function.Predicate;
 
 public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
-	private enum POR_MODE {
+	public enum POR_MODE {
 		POR_OFF, POR_ON
 	}
 
-	private final POR_MODE porMode = POR_MODE.POR_ON;
+	public static POR_MODE porMode = POR_MODE.POR_ON;
 
 	private GlobalVarQuery globalVarQuery = null;
 
@@ -79,9 +79,12 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 				// Calculating the persistent set starting from every enabled edge; the minimal persistent set is stored
 				Set<SimpleImmutableEntry<XcfaEdge, Integer>> minimalPersistentSet = null;
-				for (var enabledEdge : enabledEdges) {
-					// TODO small optimization: enough to start persistent set calculation from one edge per process
-					Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = calculatePersistentSet(enabledEdges, enabledEdge);
+				for (Integer enabledProcess : state.getEnabledProcesses()) {
+					final XcfaLocation loc = state.getProcessLocs().get(enabledProcess);
+					if(loc.getOutgoingEdges().size() == 0) continue;
+
+					var startingEdge = new SimpleImmutableEntry<>(loc.getOutgoingEdges().get(0), enabledProcess);
+					Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = calculatePersistentSet(enabledEdges, startingEdge);
 					if (minimalPersistentSet == null || persistentSet.size() < minimalPersistentSet.size()) {
 						minimalPersistentSet = persistentSet;
 					}
@@ -174,7 +177,6 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> influencedGlobalVars = new HashMap<>();
 
 		GlobalVarQuery(XCFA xcfa) {
-			System.out.println(xcfa.toDot());
 			globalVars = xcfa.getGlobalVars();
 		}
 

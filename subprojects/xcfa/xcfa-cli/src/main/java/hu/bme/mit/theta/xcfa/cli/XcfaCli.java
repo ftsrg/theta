@@ -56,6 +56,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.SequentialPortfolio;
@@ -204,6 +205,12 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
+	@Parameter(names = "--lbe", description = "Large-block encoding level")
+	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
+
+	@Parameter(names = "--por", description = "Partial order reduction enabling for multithreaded programs")
+	XcfaLts.POR_MODE porMode = XcfaLts.POR_MODE.POR_OFF;
+
 	//////////// SMTLib options ////////////
 
 	@Parameter(names = "--smt-home", description = "The path of the solver registry")
@@ -220,9 +227,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--validate-abstraction-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
 	boolean validateAbstractionSolver = false;
-
-	@Parameter(names = "--lbe", description = "Large-block encoding level")
-	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
@@ -262,6 +266,7 @@ public class XcfaCli {
 		}
 
 		SimpleLbePass.level = lbeLevel;
+		XcfaLts.porMode = porMode; // I don't know where to place it exactly
 
 		// TODO later we might want to merge these two flags
 		if (witnessOnly) {
