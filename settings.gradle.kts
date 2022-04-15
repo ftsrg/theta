@@ -22,8 +22,12 @@ include(
     "common/grammar",
     "common/multi-tests",
 
-        "frontends/c-frontend",
-        "frontends/petrinet-frontend",
+    "frontends/c-frontend",
+    "frontends/petrinet-frontend/petrinet-model",
+    "frontends/petrinet-frontend/petrinet-analysis",
+    "frontends/petrinet-frontend/petrinet-xsts",
+    "frontends/chc-frontend",
+    "frontends/llvm",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
