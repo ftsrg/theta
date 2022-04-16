@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
@@ -79,9 +80,11 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 				// Calculating the persistent set starting from every enabled edge; the minimal persistent set is stored
 				Set<SimpleImmutableEntry<XcfaEdge, Integer>> minimalPersistentSet = null;
-				for (Integer enabledProcess : state.getEnabledProcesses()) {
+				var enabledProcesses = new ArrayList<>(state.getEnabledProcesses());
+				Collections.shuffle(enabledProcesses);
+				for (Integer enabledProcess : enabledProcesses) {
 					final XcfaLocation loc = state.getProcessLocs().get(enabledProcess);
-					if(loc.getOutgoingEdges().size() == 0) continue;
+					if (loc.getOutgoingEdges().size() == 0) continue;
 
 					var startingEdge = new SimpleImmutableEntry<>(loc.getOutgoingEdges().get(0), enabledProcess);
 					Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = calculatePersistentSet(enabledEdges, startingEdge);
@@ -97,6 +100,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 						xcfaActions.add(xcfaAction);
 					}
 				}
+				int a = 2;
 
 				break;
 		}
@@ -177,6 +181,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> influencedGlobalVars = new HashMap<>();
 
 		GlobalVarQuery(XCFA xcfa) {
+//			System.out.println(xcfa.toDot()); // For debugging only
 			globalVars = xcfa.getGlobalVars();
 		}
 
@@ -247,7 +252,17 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 			while (!edgesToExplore.isEmpty()) {
 				var exploring = edgesToExplore.remove(0);
 				vars.addAll(getDirectlyUsedGlobalVars(exploring));
-				for (var newEdge : exploring.getTarget().getOutgoingEdges()) {
+
+				var outgoingEdges = new ArrayList<>(exploring.getTarget().getOutgoingEdges());
+				List<XcfaLabel.StartThreadXcfaLabel> startThreads = exploring.getLabels().stream()
+						.filter(label -> label instanceof XcfaLabel.StartThreadXcfaLabel)
+						.map(label -> (XcfaLabel.StartThreadXcfaLabel) label).collect(Collectors.toList());
+				if (startThreads.size() > 0) { // for start thread labels, the thread procedure must be explored, too!
+					startThreads.forEach(startThread ->
+							outgoingEdges.addAll(startThread.getProcess().getMainProcedure().getInitLoc().getOutgoingEdges()));
+				}
+
+				for (var newEdge : outgoingEdges) {
 					if (!exploredEdges.contains(newEdge) && visitEdge.test(newEdge)) {
 						edgesToExplore.add(newEdge);
 					}
