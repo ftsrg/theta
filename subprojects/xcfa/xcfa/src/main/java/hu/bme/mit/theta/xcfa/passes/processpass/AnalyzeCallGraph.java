@@ -41,6 +41,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 		for (XcfaProcedure.Builder procedure : builder.getProcedures()) {
 			List<XcfaEdge> edgesToAdd = new ArrayList<>();
 			List<XcfaEdge> edgesToRemove = new ArrayList<>();
+			Map<XcfaProcedure.Builder, Set<XcfaLabel.ProcedureCallXcfaLabel>> procedureCalls = new LinkedHashMap<>();
 			for (XcfaEdge edge : procedure.getEdges()) {
 				for (XcfaLabel label : edge.getLabels()) {
 					if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
@@ -49,6 +50,9 @@ public class AnalyzeCallGraph extends ProcessPass {
 						if (procedureOpt.isPresent()) {
 							XcfaProcedure.Builder calledProcedure = procedureOpt.get();
 							calledBy.get(calledProcedure).add(procedure);
+							Set<XcfaLabel.ProcedureCallXcfaLabel> callLabels = procedureCalls.getOrDefault(calledProcedure, new HashSet<>());
+							callLabels.add(callLabel);
+							procedureCalls.put(calledProcedure, callLabels);
 							if (calledProcedure.getRetType() != null) {
 								XcfaLocation middle = XcfaLocation.uniqeCopyOf(edge.getSource());
 								procedure.addLoc(middle);
@@ -80,6 +84,7 @@ public class AnalyzeCallGraph extends ProcessPass {
 			}
 			edgesToRemove.forEach(procedure::removeEdge);
 			edgesToAdd.forEach(procedure::addEdge);
+			procedureCalls.forEach((calledProcedure, callLabels) -> callLabels.forEach(calledProcedure::addParamInitLoc));
 		}
 
 		boolean done = false;

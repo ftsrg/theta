@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
@@ -50,19 +51,27 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		XcfaSTState<S> state = (XcfaSTState<S>) inState;
 		XcfaSTAction action = (XcfaSTAction) inAction;
 
-		ExplPrec globalPrec = (ExplPrec) prec.getGlobalPrec();
-		for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
-			globalPrec = globalPrec.join(ExplPrec.of(procedureLocation.getUsedVars()));
+		P globalPrec = prec.getGlobalPrec();
+		if (prec.getGlobalPrec() instanceof ExplPrec) {
+			ExplPrec explPrec = (ExplPrec) globalPrec;
+			for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
+				explPrec = explPrec.join(ExplPrec.of(procedureLocation.getUsedVars()));
+			}
+			globalPrec = (P) explPrec;
 		}
 
 		final Collection<XcfaSTState<S>> newStates = new ArrayList<>();
-		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, (P) globalPrec)) {
-			XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
+		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, globalPrec)) {
+			final XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
 			if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
-				XcfaLabel.ProcedureCallXcfaLabel label = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
-				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures().stream().filter(procedure -> label.getProcedure().equals(procedure.getName())).findAny();
-				checkState(calledProcedure.isPresent(), " No such procedure " + label.getProcedure());
-				newState.push(calledProcedure.get().getInitLoc());
+				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
+				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
+						.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
+				Optional<XcfaEdge> originalCallEdge = action.getSource().getOutgoingEdges()
+						.stream().filter(edge -> edge.getTarget() == action.getTarget() && edge.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
+				checkState(calledProcedure.isPresent() && originalCallEdge.isPresent(), " No such procedure " + callLabel.getProcedure());
+				XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) originalCallEdge.get().getLabels().get(0);
+				newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
 			}
 			if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
 				newState.pop();

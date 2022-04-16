@@ -118,6 +118,16 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 			varLut.put(var, Decls.Var(var.getName() + callCount, var.getType()));
 		}
 		locationStack.push(new ProcedureLocation(location, varLut));
+		updateParams();
+	}
+
+	void updateParams() {
+		Map<VarDecl<?>, VarDecl<?>> calledProcedureParams = locationStack.peek().location.getParent().getParamLut();
+		Map<VarDecl<?>, VarDecl<?>> procedureVars = locationStack.get(locationStack.size() - 2).varLut;
+		calledProcedureParams.forEach((var, param) -> {
+			if (procedureVars.get(var) != null) // calling proc has the same var
+				locationStack.peek().varLut.put(param, procedureVars.get(var));
+		});
 	}
 
 	@Override

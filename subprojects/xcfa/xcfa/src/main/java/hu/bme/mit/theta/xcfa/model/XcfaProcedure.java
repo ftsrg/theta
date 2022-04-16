@@ -18,9 +18,12 @@ package hu.bme.mit.theta.xcfa.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 
 import java.util.ArrayList;
@@ -43,6 +46,8 @@ public final class XcfaProcedure {
 	private final ImmutableMap<VarDecl<?>, Optional<LitExpr<?>>> localVars;
 	private final ImmutableList<XcfaLocation> locs;
 	private final Type retType;
+	private final Map<VarDecl<?>, VarDecl<?>> paramLut;
+	private final Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaLocation> paramInitLocs;
 	private final XcfaLocation initLoc;
 	private final XcfaLocation errorLoc;
 	private final XcfaLocation finalLoc;
@@ -55,6 +60,9 @@ public final class XcfaProcedure {
 		localVars = ImmutableMap.copyOf(builder.localVars);
 		locs = ImmutableList.copyOf(builder.locs);
 		locs.forEach(location -> location.setParent(this));
+		paramLut = builder.paramLut;
+		paramInitLocs = builder.paramInitLocs;
+		paramInitLocs.values().forEach(loc -> loc.setParent(this));
 		initLoc = builder.initLoc;
 		errorLoc = builder.errorLoc;
 		finalLoc = builder.finalLoc;
@@ -77,6 +85,11 @@ public final class XcfaProcedure {
 			varLut.put(varDecl, newVar);
 			return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
 		}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+		paramLut = new LinkedHashMap<>();
+		from.paramLut.forEach((var, param) -> {
+			VarDecl<?> newVar = varLut.get(var);
+			paramLut.put(newVar, XcfaProcedure.getParamCopy(newVar));
+		});
 		final Map<XcfaLocation, XcfaLocation> locLut = new LinkedHashMap<>();
 		locs = ImmutableList.copyOf(from.locs.stream().map(xcfaLocation -> {
 			final XcfaLocation newLoc = XcfaLocation.copyOf(xcfaLocation);
@@ -84,6 +97,8 @@ public final class XcfaProcedure {
 			return newLoc;
 		}).collect(Collectors.toList()));
 		locs.forEach(location -> location.setParent(this));
+		paramInitLocs = new LinkedHashMap<>();
+		from.paramInitLocs.forEach((callLabel, initLoc) -> paramInitLocs.put(callLabel, locLut.get(initLoc)));
 		initLoc = locLut.get(from.initLoc);
 		errorLoc = locLut.get(from.errorLoc);
 		finalLoc = locLut.get(from.finalLoc);
@@ -163,6 +178,14 @@ public final class XcfaProcedure {
 		return locs;
 	}
 
+	public XcfaLocation getParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel) {
+		return paramInitLocs.get(callLabel);
+	}
+
+	public Map<VarDecl<?>, VarDecl<?>> getParamLut() {
+		return paramLut;
+	}
+
 	public XcfaLocation getInitLoc() {
 		return initLoc;
 	}
@@ -202,15 +225,21 @@ public final class XcfaProcedure {
 
 	public int getCallCount() { return ++callCount; }
 
+	private static VarDecl<?> getParamCopy(VarDecl<?> var) {
+		return Decls.Var(var.getName() + "'", var.getType());
+	}
+
 	public static final class Builder {
 		private static final String RESULT_NAME = "result";
 
 		private final LinkedHashMap<VarDecl<?>, Direction> params;
 		private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
+		private final Map<VarDecl<?>, VarDecl<?>> paramLut;
 		private final List<XcfaLocation> locs;
 		private final List<XcfaEdge> edges;
 		private Type retType;
 		private String name;
+		private final Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaLocation> paramInitLocs;
 		private XcfaLocation initLoc;
 		private XcfaLocation errorLoc;
 		private XcfaLocation finalLoc;
@@ -220,6 +249,8 @@ public final class XcfaProcedure {
 		private Builder() {
 			params = new LinkedHashMap<>();
 			localVars = new LinkedHashMap<>();
+			paramLut = new LinkedHashMap<>();
+			paramInitLocs = new LinkedHashMap<>();
 			locs = new ArrayList<>();
 			edges = new ArrayList<>();
 		}
@@ -279,6 +310,22 @@ public final class XcfaProcedure {
 		public void createParam(final Direction direction, final VarDecl<?> param) {
 			checkNotBuilt();
 			params.put(param, direction);
+			if (direction != Direction.OUT) paramLut.put(param, XcfaProcedure.getParamCopy(param));
+		}
+
+		public void addParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel) {
+			checkNotBuilt();
+			XcfaLocation paramLoc = XcfaLocation.uniqeCopyOf(initLoc);
+			addLoc(paramLoc);
+			List<XcfaLabel> paramAssignments = new ArrayList<>();
+			int i = 0;
+			for (Map.Entry<VarDecl<?>, Direction> entry : params.entrySet()) {
+				if (entry.getValue() != Direction.OUT)
+					paramAssignments.add(XcfaLabel.Stmt(AssignStmt.create(entry.getKey(), XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i), paramLut))));
+				++i;
+			}
+			addEdge(XcfaEdge.of(paramLoc, initLoc, paramAssignments));
+			paramInitLocs.put(callLabel, paramLoc);
 		}
 
 		// localVars
