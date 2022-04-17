@@ -21,15 +21,19 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -67,10 +71,9 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
 				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
 						.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
-				Optional<XcfaEdge> originalCallEdge = action.getSource().getOutgoingEdges()
-						.stream().filter(edge -> edge.getTarget() == action.getTarget() && edge.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
-				checkState(calledProcedure.isPresent() && originalCallEdge.isPresent(), " No such procedure " + callLabel.getProcedure());
-				XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) originalCallEdge.get().getLabels().get(0);
+				checkState(calledProcedure.isPresent(), " No such procedure " + callLabel.getProcedure());
+				Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+				XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
 				newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
 			}
 			if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
