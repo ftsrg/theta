@@ -36,10 +36,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
-import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
-import hu.bme.mit.theta.xcfa.passes.processpass.FunctionCallsToPushPops;
-import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
-import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
+import hu.bme.mit.theta.xcfa.passes.processpass.*;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.DemoteThreadLocalGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.RemoveUnusedGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
@@ -88,9 +85,10 @@ public class XcfaPassManager {
 				new RemoveDeadEnds()
 		));
 		processPasses.addAll(List.of(
-				new AnalyzeCallGraph()
+				new AnalyzeCallGraph(),
 //				new FunctionInlining(),
 //				new FunctionCallsToPushPops()
+				new AssignFunctionParam()
 		));
 		xcfaPasses.addAll((List.of(
 				new RemoveUnusedGlobals(),
