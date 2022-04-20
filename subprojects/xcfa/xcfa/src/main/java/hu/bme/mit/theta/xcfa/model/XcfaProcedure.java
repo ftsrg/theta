@@ -315,8 +315,6 @@ public final class XcfaProcedure {
 
 		public void addParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel) {
 			checkNotBuilt();
-			XcfaLocation paramLoc = XcfaLocation.uniqeCopyOf(initLoc);
-			addLoc(paramLoc);
 			List<XcfaLabel> paramAssignments = new ArrayList<>();
 			int i = 0;
 			for (Map.Entry<VarDecl<?>, Direction> entry : params.entrySet()) {
@@ -324,8 +322,14 @@ public final class XcfaProcedure {
 					paramAssignments.add(XcfaLabel.Stmt(AssignStmt.create(entry.getKey(), XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i), paramLut))));
 				++i;
 			}
-			addEdge(XcfaEdge.of(paramLoc, initLoc, paramAssignments));
-			paramInitLocs.put(callLabel, paramLoc);
+			if (paramAssignments.isEmpty()) {
+				paramInitLocs.put(callLabel, initLoc);
+			} else {
+				XcfaLocation paramLoc = XcfaLocation.uniqeCopyOf(initLoc);
+				addLoc(paramLoc);
+				addEdge(XcfaEdge.of(paramLoc, initLoc, paramAssignments));
+				paramInitLocs.put(callLabel, paramLoc);
+			}
 		}
 
 		// localVars

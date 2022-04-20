@@ -71,10 +71,11 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
 				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
 						.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
-				checkState(calledProcedure.isPresent(), " No such procedure " + callLabel.getProcedure());
-				Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-				XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
-				newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
+				if (calledProcedure.isPresent()) {
+					Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+					XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
+					newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
+				}
 			}
 			if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
 				newState.pop();
