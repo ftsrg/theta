@@ -1,3 +1,5 @@
+import org.sonarqube.gradle.SonarQubeTask
+
 plugins {
     base
     id("jacoco-common")
@@ -15,6 +17,7 @@ allprojects {
     version = "4.0.0"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
+    apply(plugin = "jacoco-common")
 }
 
 sonarqube {
@@ -22,7 +25,7 @@ sonarqube {
         property("sonar.projectKey", "ftsrg_theta")
         property("sonar.organization", "ftsrg-github")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml,build/reports/jacoco/test/jacocoTestReport.xml")
     }
 }
 
@@ -61,14 +64,23 @@ tasks {
     check {
         dependsOn(test)
     }
+
+    named<SonarQubeTask>("sonarqube") {
+        dependsOn(jacocoRootReport)
+    }
 }
 
 subprojects {
     tasks.named("jacocoTestReport", JacocoReport::class) {
+        dependsOn("test")
         reports {
             html.required.set(false)
             xml.required.set(true)
             csv.required.set(false)
         }
+    }
+
+    tasks.named("test") {
+        finalizedBy("jacocoTestReport")
     }
 }
