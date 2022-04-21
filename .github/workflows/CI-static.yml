@@ -1,4 +1,4 @@
-name: CI
+name: CI-static
 
 on:
   pull_request:
@@ -29,7 +29,6 @@ jobs:
           chmod +x master/gradlew
           chmod +x pr/gradlew
       - name: Compare versions
-        if: ${{ !contains( github.event.pull_request.labels.*.name, 'skip-version-bump') }}
         run: |
           cd master
           BASE_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
@@ -37,4 +36,5 @@ jobs:
           cd ../pr
           PR_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
           echo "PR version: $PR_VERSION"
-          dpkg --compare-versions "$BASE_VERSION" "lt" "$PR_VERSION" 
+          echo "PR is expected not to be up-to-date with and not to modify the version number compared to the master branch"
+          [ $BASE_VERSION == $PR_VERSION ]

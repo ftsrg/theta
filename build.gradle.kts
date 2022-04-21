@@ -2,6 +2,7 @@ plugins {
     base
     id("jacoco-common")
     id("io.freefair.aggregate-javadoc") version "5.2"
+    id("org.sonarqube") version "3.3"
 }
 
 buildscript {
@@ -14,6 +15,15 @@ allprojects {
     version = "4.0.0"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "ftsrg_theta")
+        property("sonar.organization", "ftsrg-github")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+    }
 }
 
 evaluationDependsOnChildren()
