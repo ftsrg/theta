@@ -17,6 +17,16 @@ allprojects {
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
 
+subprojects {
+    tasks.named("jacocoTestReport", JacocoReport::class) {
+        reports {
+            html.required.set(false)
+            xml.required.set(true)
+            csv.required.set(false)
+        }
+    }
+}
+
 sonarqube {
     properties {
         property("sonar.projectKey", "ftsrg_theta")
@@ -34,9 +44,9 @@ tasks {
         description = "Generates merged code coverage report for all test tasks."
 
         reports {
-            html.isEnabled = false
-            xml.isEnabled = true
-            csv.isEnabled = false
+            html.required.set(true)
+            xml.required.set(true)
+            csv.required.set(false)
         }
 
         val reportTasks = subprojects.mapNotNull { subproject ->
