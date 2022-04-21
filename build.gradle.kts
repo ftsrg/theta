@@ -17,16 +17,6 @@ allprojects {
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
 
-subprojects {
-    tasks.named("jacocoTestReport", JacocoReport::class) {
-        reports {
-            html.required.set(false)
-            xml.required.set(true)
-            csv.required.set(false)
-        }
-    }
-}
-
 sonarqube {
     properties {
         property("sonar.projectKey", "ftsrg_theta")
@@ -70,5 +60,15 @@ tasks {
 
     check {
         dependsOn(test)
+    }
+}
+
+subprojects {
+    tasks.named("jacocoTestReport", JacocoReport::class) {
+        reports {
+            html.required.set(false)
+            xml.required.set(true)
+            csv.required.set(false)
+        }
     }
 }
