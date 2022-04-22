@@ -14,7 +14,8 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.inf.theta"
-    version = "4.0.0"
+    // DO NOT MODIFY THIS BY HAND!!! Use the bumpVersion task!
+    version = /*<THETA_VERSION>*/ "4.0.0" /*</THETA_VERSION>*/
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
     apply(plugin = "jacoco-common")
@@ -67,6 +68,41 @@ tasks {
 
     named<SonarQubeTask>("sonarqube") {
         dependsOn(jacocoRootReport)
+    }
+
+    val bumpVersion by creating {
+        fun generateVersion(version: String): String {
+            val updateMode = project.properties["mode"] ?: "patch"
+            val (oldMajor, oldMinor, oldPatch) = version.split(".").map(String::toInt)
+            var (newMajor, newMinor, newPatch) = arrayOf(oldMajor, oldMinor, 0)
+            when (updateMode) {
+                "major" -> newMajor = (oldMajor + 1).also { newMinor = 0 }
+                "minor" -> newMinor = oldMinor + 1
+                /* "patch" */ else -> newPatch = oldPatch + 1
+            }
+            return "$newMajor.$newMinor.$newPatch"
+        }
+
+        doLast {
+            if(!project.hasProperty("mode") && !project.hasProperty("overrideVersion")) {
+                println("""
+                    Usage:
+                    ./gradlew bumpVersion [-P[mode=major|minor|patch]|[overrideVersion=x]]
+                """.trimIndent())
+                return@doLast
+            }
+
+            val oldVersion = rootProject.version as String
+            val newVersion = project.properties["overrideVersion"] as String? ?: generateVersion(oldVersion)
+            println("Bump version from $oldVersion to $newVersion")
+
+            var script = buildFile.readText()
+            script = script.replace(
+                """/*<THETA_VERSION>*/ "$oldVersion" /*</THETA_VERSION>*/""",
+                """/*<THETA_VERSION>*/ "$newVersion" /*</THETA_VERSION>*/"""
+            )
+            buildFile.writeText(script)
+        }
     }
 }
 
