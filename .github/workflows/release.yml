@@ -63,7 +63,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           empty: true
       - name: Create tag
-        uses: rickstaa/action-create-tag@v1
+        uses: rickstaa/action-create-tag@test/action-create-tag
         with:
           tag: ${{ steps.bump_version.outputs.tag }}
           message: ${{ steps.bump_version.outputs.tag }}
