@@ -15,7 +15,7 @@ buildscript {
 allprojects {
     group = "hu.bme.mit.inf.theta"
     // DO NOT MODIFY THIS BY HAND!!! Use the bumpVersion task!
-    version = /*<THETA_VERSION>*/ "4.0.2" /*</THETA_VERSION>*/
+    version = /*<THETA_VERSION>*/ "4.0.3" /*</THETA_VERSION>*/
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
     apply(plugin = "jacoco-common")
