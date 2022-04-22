@@ -1,5 +1,8 @@
 name: release
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -24,3 +27,88 @@ on:
         default: true
 
 jobs:
+  bump_version:
+    runs-on: ubuntu-latest
+    name: Bump version
+    outputs:
+      tag: ${{ steps.bump_version.outputs.tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Bump version
+        id: bump_version
+        run: |
+          if [[ "${{ github.event.inputs.mode }}" = "custom_override" ]]
+          then
+            ./gradlew bumpVersion -PoverrideVersion="${{ github.event.inputs.custom_override }}" --no-daemon
+            echo "::set-output name=tag::${{ github.event.inputs.custom_override }}"
+          else
+            ./gradlew bumpVersion -Pmode="${{ github.event.inputs.mode }}" --no-daemon
+            VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
+            echo "::set-output name=tag::v$VERSION"
+          fi
+      - name: Commit & Push changes
+        uses: actions-js/push@v1.3
+        with:
+          message: "Bump version"
+          branch: ${{ github.ref_name }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          empty: true
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.bump_version.outputs.tag }}
+          message: ${{ steps.bump_version.outputs.tag }}
+  CI:
+    needs: [ bump_version ]
+    name: CI
+    uses: ./.github/workflows/CI.yml
+
+  release:
+    needs: [ bump_version, CI ]
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Download artifact theta-linux
+        uses: actions/download-artifact@v2
+        with:
+          name: theta-linux
+          path: /tmp/theta-linux
+      - name: Download artifact theta-windows
+        uses: actions/download-artifact@v2
+        with:
+          name: theta-windows
+          path: /tmp/theta-windows
+      - name: Prepare zip files
+        run: |
+          echo "${{ needs.bump_version.outputs.tag }}" > VERSION
+          cp LICENSE NOTICE VERSION CONTRIBUTORS.md /tmp/theta-linux
+          cp LICENSE NOTICE VERSION CONTRIBUTORS.md /tmp/theta-windows
+          cd /tmp
+          zip -r theta-linux.zip theta-linux
+          zip -r theta-windows.zip theta-windows
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.bump_version.outputs.tag }}
+          name: ${{ needs.bump_version.outputs.tag }}
+          draft: true
+          files: |
+            /tmp/theta-linux/theta-cfa-cli.jar
+            /tmp/theta-linux/theta-xcfa-cli.jar
+            /tmp/theta-linux/theta-sts-cli.jar
+            /tmp/theta-linux/theta-xsts-cli.jar
+            /tmp/theta-linux/theta-xta-cli.jar
+            /tmp/theta-linux/theta-solver-smtlib-cli.jar
+            /tmp/theta-linux
+            /tmp/theta-windows
