@@ -63,7 +63,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           empty: true
       - name: Create tag
-        uses: rickstaa/action-create-tag@test/action-create-tag
+        uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ steps.bump_version.outputs.tag }}
           message: ${{ steps.bump_version.outputs.tag }}
@@ -97,6 +97,10 @@ jobs:
           cd /tmp
           zip -r theta-linux.zip theta-linux
           zip -r theta-windows.zip theta-windows
+      - name: "Change permissions on GITHUB_WORKSPACE"
+        run: |
+          sudo chown -R root:root $GITHUB_WORKSPACE
+          sudo chmod -R 0777 $GITHUB_WORKSPACE
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
