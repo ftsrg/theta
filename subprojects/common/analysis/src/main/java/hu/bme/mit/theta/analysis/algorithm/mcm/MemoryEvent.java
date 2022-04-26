@@ -16,19 +16,26 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
-import hu.bme.mit.theta.analysis.Action;
+public class MemoryEvent {
+    private final int varId;
+    private final MemoryEventType type;
 
-import java.util.Collection;
+    public MemoryEvent(int varId, MemoryEventType type) {
+        this.varId = varId;
+        this.type = type;
+    }
 
-@FunctionalInterface
-public interface MemoryEventProvider<A extends Action> {
+    public int getVarId() {
+        return varId;
+    }
 
-    /**
-     * Gets the memory events of a given action.
-     *
-     * @param action
-     * @return
-     */
-    Collection<MemoryEvent> getMemoryEventsOf(A action);
+    public MemoryEventType getType() {
+        return type;
+    }
 
+    public enum MemoryEventType {
+        READ,
+        WRITE,
+        FENCE
+    }
 }

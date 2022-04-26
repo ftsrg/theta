@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2017 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,22 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.State;
 
 import java.util.Collection;
+import java.util.Map;
 
-@FunctionalInterface
-public interface MemoryEventProvider<A extends Action> {
+public class MultiprocLTS<S extends State, A extends Action> {
+	private final Map<Integer, LTS<S, A>> ltsMap;
 
-    /**
-     * Gets the memory events of a given action.
-     *
-     * @param action
-     * @return
-     */
-    Collection<MemoryEvent> getMemoryEventsOf(A action);
+	public MultiprocLTS(final Map<Integer, LTS<S, A>> ltsMap) {
+		this.ltsMap = ltsMap;
+	}
+
+	public Collection<A> getEnabledActionsFor(final int pid, S state) {
+		if(ltsMap.containsKey(pid)) return ltsMap.get(pid).getEnabledActionsFor(state);
+		else throw new RuntimeException("No such process: " + pid + ". Known processes: " + ltsMap.keySet());
+	}
 
 }

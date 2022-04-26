@@ -1,0 +1,111 @@
+/*
+ *  Copyright 2017 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.analysis.algorithm;
+
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.mcm.*;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import org.junit.Test;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+public class MCMTest {
+	@Test
+	public void test() {
+		final TestState thrd1_loc3 = new TestState(List.of());
+		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
+		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
+
+		final TestState thrd2_loc3 = new TestState(List.of());
+		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
+		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
+
+
+		MCMChecker mcmChecker = new MCMChecker(
+				new TestMemoryEventProvider(),
+				new MultiprocLTS(Map.of(2, new TestLTS(), 3, new TestLTS())),
+				new MultiprocInitFunc(Map.of(2, new TestInitFunc(thrd1_loc1), 3, new TestInitFunc(thrd2_loc1))),
+				new MultiprocTransFunc(Map.of(2, new TestTransFunc(), 3, new TestTransFunc())),
+				List.of(2, 3));
+
+		mcmChecker.check(new TestPrec());
+	}
+
+	private class TestMemoryEventProvider implements MemoryEventProvider<TestAction> {
+		@Override
+		public Collection<MemoryEvent> getMemoryEventsOf(TestAction action) {
+			return List.of(action.event);
+		}
+	}
+	private class TestLTS implements LTS<TestState, TestAction> {
+
+		@Override
+		public Collection<TestAction> getEnabledActionsFor(TestState state) {
+			return state.outgoingActions;
+		}
+	}
+	private class TestInitFunc implements InitFunc<TestState, TestPrec> {
+		private final TestState initState;
+
+		private TestInitFunc(TestState initState) {
+			this.initState = initState;
+		}
+
+		@Override
+		public Collection<? extends TestState> getInitStates(TestPrec prec) {
+			return List.of(initState);
+		}
+	}
+	private class TestTransFunc implements TransFunc<TestState, TestAction, TestPrec> {
+
+		@Override
+		public Collection<? extends TestState> getSuccStates(TestState state, TestAction action, TestPrec prec) {
+			return List.of(action.target);
+		}
+	}
+
+	private class TestState implements State {
+		private final Collection<TestAction> outgoingActions;
+
+		private TestState(Collection<TestAction> outgoingActions) {
+			this.outgoingActions = outgoingActions;
+		}
+
+		@Override
+		public boolean isBottom() {
+			return false;
+		}
+	}
+
+	private class TestAction implements Action {
+		private final MemoryEvent event;
+		private final TestState target;
+
+		private TestAction(MemoryEvent event, TestState target) {
+			this.event = event;
+			this.target = target;
+		}
+	}
+
+	private class TestPrec implements Prec {
+		@Override
+		public Collection<VarDecl<?>> getUsedVars() {
+			return null;
+		}
+	}
+}

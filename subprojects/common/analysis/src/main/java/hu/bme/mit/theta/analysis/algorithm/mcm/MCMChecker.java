@@ -16,73 +16,72 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.ExplTransFunc;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.solver.Solver;
 
 import java.util.Collection;
-import java.util.Map;
 
-import static org.abego.treelayout.internal.util.Contract.checkState;
+import static com.google.common.base.Preconditions.checkState;
 
-/**
- * This class contains the implementation of the reachability checker based on the Herd-style declarative algorithm
- * @param <S>   The state type used in the analysis
- * @param <A>   The action type used in the analysis
- * @param <P>   The explicit precision that contains the set of variables to track
- * @param <SID> The scope ID type
- * @param <PID> The process ID type
- */
-public class MCMChecker<S extends ExplState, A extends ExprAction, P extends ExplPrec, SID, PID> implements SafetyChecker<S, A, P> {
-    private final MemoryEventProvider<S, A, SID, PID> memoryEventProvider;
-    private final ExplTransFunc transFunc;
+public class MCMChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
+    private final MemoryEventProvider<A> memoryEventProvider;
+    private final MultiprocLTS<S, A> multiprocLTS;
+    private final MultiprocInitFunc<S, P> multiprocInitFunc;
+    private final MultiprocTransFunc<S, A, P> multiprocTransFunc;
+    private final Collection<Integer> pids;
+    private final ExecutionGraph executionGraph;
 
-    public MCMChecker(MemoryEventProvider<S, A, SID, PID> memoryEventProvider, final Solver solver) {
+    public MCMChecker(
+            final MemoryEventProvider<A> memoryEventProvider,
+            final MultiprocLTS<S, A> multiprocLTS,
+            final MultiprocInitFunc<S, P> multiprocInitFunc,
+            final MultiprocTransFunc<S, A, P> multiprocTransFunc,
+            final Collection<Integer> pids) {
         this.memoryEventProvider = memoryEventProvider;
-        transFunc = ExplTransFunc.create(solver);
+        this.multiprocLTS = multiprocLTS;
+        this.multiprocInitFunc = multiprocInitFunc;
+        this.multiprocTransFunc = multiprocTransFunc;
+        this.pids = pids;
+        executionGraph = new ExecutionGraph();
     }
 
     @Override
     public SafetyResult<S, A> check(final P prec) {
-        final ExecutionGraph<SID, PID> executionGraph = new ExecutionGraph<>();
-        int uniqueCounter = 0;
-        final Map<SID, Map<PID, Collection<S>>> initialStates = memoryEventProvider.getInitialStates();
-        for (Map.Entry<SID, Map<PID, Collection<S>>> entry : initialStates.entrySet()) {
-            final SID sid = entry.getKey();
-            final Map<PID, Collection<S>> processes = entry.getValue();
-            for (Map.Entry<PID, Collection<S>> e : processes.entrySet()) {
-                final PID pid = e.getKey();
-                ExecutionGraph.Node<SID, PID> lastNode = executionGraph.addNode("init", Tuple2.of(sid, pid), "init", "init");
-                final Collection<S> states = e.getValue();
-                checkState(states.size() == 1, "Only a single initial state per process is supported right now.");
-                S state = states.stream().findAny().get();
-                while(state != null) {
-                    final Collection<MCMAction<A>> enabledActionsFor = memoryEventProvider.getEnabledActionsFor(state).get(sid).get(pid);
-                    checkState(enabledActionsFor.size() <= 1, "Only deterministic programs are supported right now.");
-                    if(enabledActionsFor.size() == 1) {
-                        final MCMAction<A> action = enabledActionsFor.stream().findAny().get();
-                        if(!action.isEmpty()) {
-                            final MCMAction.MCMEventAction<A> eventAction = action.asEventAction();
-                            final ExecutionGraph.Node<SID, PID> newNode = executionGraph.addNode(eventAction.getType() + uniqueCounter++, Tuple2.of(sid, pid), eventAction.getType(), eventAction.getTag());
-                            executionGraph.addEdge(lastNode, newNode, "po");
-                        }
-                        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action.getAction(), ExplPrec.empty());
-                        checkState(succStates.size() == 1, "Only deterministic programs are supported right now.");
-                        //noinspection unchecked
-                        state = (S) succStates.stream().findAny().get();
-                    } else {
-                        state = null;
+        for (final int pid : pids) {
+            final Collection<? extends S> initStates = multiprocInitFunc.getInitStates(pid, prec);
+            checkState(initStates.size() == 1);
+            int lastId = -1;
+            S state = null;
+            for (final S initState : initStates) { // will only execute once
+                state = initState;
+            }
+            while(true) {
+                final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
+                if (enabledActionsFor.size() == 0) break;
+                checkState(enabledActionsFor.size() == 1);
+                for (final A a : enabledActionsFor) { // will execute only once
+                    final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(a);
+                    for (final MemoryEvent memoryEvent : memoryEventsOf) {
+                        lastId = switch (memoryEvent.getType()) {
+                            case READ -> executionGraph.addRead(pid, memoryEvent.getVarId(), lastId);
+                            case WRITE -> executionGraph.addWrite(pid, memoryEvent.getVarId(), lastId);
+                            case FENCE -> executionGraph.addFence(pid, lastId);
+                        };
+                    }
+                    final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, state, a, prec);
+                    checkState(succStates.size() == 1);
+                    for (final S succState : succStates) { // will execute only once
+                        state = succState;
                     }
                 }
             }
         }
 
-//        System.out.println(executionGraph);
+        executionGraph.print();
+
         return null;
     }
 }

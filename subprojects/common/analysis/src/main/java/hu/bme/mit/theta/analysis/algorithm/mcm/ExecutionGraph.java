@@ -16,99 +16,97 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Tuple3;
+import tools.refinery.store.map.Cursor;
+import tools.refinery.store.model.Model;
+import tools.refinery.store.model.ModelStore;
+import tools.refinery.store.model.ModelStoreImpl;
+import tools.refinery.store.model.Tuple;
+import tools.refinery.store.model.representation.Relation;
+import tools.refinery.store.model.representation.TruthValue;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-/**
- * Represents an execution graph (i.e., events and relations among them)
- * @param <S>   Key type for scopes
- * @param <K>   Key type for processes
- */
-public class ExecutionGraph<S, K> {
-    private final Map<S, Collection<K>> processesByScope;
-    private final Map<K, Collection<Node<S, K>>> eventsByProcess;
-    private final Map<String, Collection<Node<S, K>>> eventsByType;
-    private final Map<String, Collection<Node<S, K>>> eventsByTag;
-    private final Map<String, Collection<Tuple3<Node<S, K>, Node<S, K>, String>>> edges;
+public class ExecutionGraph {
+    private final Model model;
+    private final Relation<Boolean> po, _int, loc, R, W, F;
+    private final Relation<TruthValue> rf, co;
+
+    private int lastCnt = 1025; // will support a maximum of 1024 threads
 
     public ExecutionGraph() {
-        eventsByProcess = new LinkedHashMap<>();
-        eventsByType = new LinkedHashMap<>();
-        edges = new LinkedHashMap<>();
-        processesByScope = new LinkedHashMap<>();
-        eventsByTag = new LinkedHashMap<>();
+        po = new Relation<>("po", 2, false);
+        _int = new Relation<>("int", 2, false);
+        loc = new Relation<>("loc", 2, false);
+        R = new Relation<>("R", 1, false);
+        W = new Relation<>("W", 1, false);
+        F = new Relation<>("F", 1, false);
+        rf = new Relation<>("rf", 2, TruthValue.UNKNOWN);
+        co = new Relation<>("co", 2, TruthValue.UNKNOWN);
+        final ModelStore store = new ModelStoreImpl(Set.of(po, _int, loc, R, W, F, rf, co));
+        model = store.createModel();
     }
 
-    public Node<S, K> addNode(final String name, final Tuple2<S, K> owner, final String type, final String tag) {
-        processesByScope.putIfAbsent(owner.get1(), new LinkedHashSet<>());
-        processesByScope.get(owner.get1()).add(owner.get2());
-        final Node<S, K> newNode = new Node(name, owner, type, tag);
-        eventsByType.putIfAbsent(type, new LinkedHashSet<>());
-        eventsByType.get(type).add(newNode);
-        eventsByTag.putIfAbsent(tag, new LinkedHashSet<>());
-        eventsByTag.get(tag).add(newNode);
-        eventsByProcess.putIfAbsent(owner.get2(), new LinkedHashSet<>());
-        eventsByProcess.get(owner.get2()).add(newNode);
-        return newNode;
+    private int addEvent(int processId, int lastNode) {
+        final int id = lastCnt++;
+        if(lastNode > 0) {
+            model.put(po, Tuple.of(lastNode, id), true);
+        }
+        model.put(_int, Tuple.of(processId, id), true);
+        return id;
     }
 
-    public void addEdge(final Node<S, K> from, final Node<S, K> to, final String label) {
-        to.incomingEdges.add(Tuple2.of(label, from));
-        from.outgoingEdges.add(Tuple2.of(label, to));
+    private int addMemoryEvent(int processId, int varId, int lastNode, Relation<Boolean> r) {
+        final int id = addEvent(processId, lastNode);
+        model.put(loc, Tuple.of(varId, id), true);
+        model.put(r, Tuple.of(id), true);
+        return id;
     }
 
-    public Map<String, Collection<Tuple3<Node<S, K>, Node<S, K>, String>>> getEdges() {
-        return edges;
+    public int addRead(final int processId, final int varId, final int lastNode) {
+        return addMemoryEvent(processId, varId, lastNode, R);
     }
 
+    public int addWrite(final int processId, final int varId, final int lastNode) {
+        return addMemoryEvent(processId, varId, lastNode, W);
+    }
 
-    public static class Node<S, K> {
-        private final String name;
-        private final Tuple2<S, K> owner;
-        private final String type;
-        private final String tag;
-        private final List<Tuple2<String, Node<S, K>>> outgoingEdges;
-        private final List<Tuple2<String, Node<S, K>>> incomingEdges;
+    public int addFence(final int processId, final int lastNode) {
+        final int id = addEvent(processId, lastNode);
+        model.put(F, Tuple.of(id), true);
+        return id;
+    }
 
-        public Node(final String name, final Tuple2<S, K> owner, final String type, final String tag) {
-            this.name = name;
-            this.owner = owner;
-            this.type = type;
-            this.tag = tag;
-            outgoingEdges = new ArrayList<>();
-            incomingEdges = new ArrayList<>();
+    public void print() {
+        System.out.println("digraph G{");
+        printUnaryRelation(R);
+        printUnaryRelation(W);
+        printUnaryRelation(F);
+        printBinaryRelation(po);
+        System.out.println("}");
+    }
+
+    private void printUnaryRelation(Relation<Boolean> r) {
+        Cursor<Tuple, Boolean> all = model.getAll(r);
+        all.move();
+        while(!all.isTerminated()) {
+            if(all.getValue()) {
+                int key = all.getKey().get(0);
+                System.out.println(key + "[label=\"" + r.getName() + "\"];");
+            }
+            all.move();
         }
+    }
 
-        public String getName() {
-            return name;
-        }
-
-        public Tuple2<S, K> getOwner() {
-            return owner;
-        }
-
-        public String getTag() {
-            return tag;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public List<Tuple2<String, Node<S, K>>> getOutgoingEdges() {
-            return ImmutableList.copyOf(outgoingEdges);
-        }
-
-        public List<Tuple2<String, Node<S, K>>> getIncomingEdges() {
-            return ImmutableList.copyOf(incomingEdges);
+    private void printBinaryRelation(Relation<Boolean> r) {
+        Cursor<Tuple, Boolean> all = model.getAll(r);
+        all.move();
+        while(!all.isTerminated()) {
+            if(all.getValue()) {
+                int source = all.getKey().get(0);
+                int target = all.getKey().get(1);
+                System.out.println(source + " -> " + target + "[label=\"" + r.getName() + "\"];");
+            }
+            all.move();
         }
     }
 }
