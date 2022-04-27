@@ -82,11 +82,6 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	@Override
-	public boolean isError() {
-		return "reach_error".equals(this.getCurrentLoc().getParent().getName());
-	}
-
-	@Override
 	public Expr<BoolType> toExpr() {
 		return globalState.toExpr();
 	}

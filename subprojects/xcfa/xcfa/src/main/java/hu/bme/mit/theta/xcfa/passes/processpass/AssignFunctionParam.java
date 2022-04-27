@@ -5,6 +5,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.*;
+import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.*;
 
@@ -12,6 +15,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getNonModifiedVars;
 
 public class AssignFunctionParam extends ProcessPass {
 	private final List<XcfaEdge> edgesToAdd = new ArrayList<>();
@@ -20,6 +24,7 @@ public class AssignFunctionParam extends ProcessPass {
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		builder = buildProcesses(builder);
 		for (XcfaProcedure.Builder procedure : builder.getProcedures()) {
 			edgesToAdd.clear();
 			edgesToRemove.clear();
@@ -43,7 +48,29 @@ public class AssignFunctionParam extends ProcessPass {
 			edgesToAdd.forEach(procedure::addEdge);
 			procedureCalls.forEach((calledProcedure, callLabels) -> callLabels.forEach(calledProcedure::addParamInitLoc));
 		}
+
 		return builder;
+	}
+
+	private XcfaProcess.Builder buildProcesses(XcfaProcess.Builder builder) {
+		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
+		newBuilder.setName(builder.getName());
+		newBuilder.getThreadLocalVars().putAll(builder.getThreadLocalVars());
+		for (VarDecl<?> param : builder.getParams()) {
+			newBuilder.createParam(param);
+		}
+		for (XcfaProcedure.Builder procBuilder : builder.getProcedures()) {
+			Set<VarDecl<?>> usedVars = new LinkedHashSet<>();
+			for (XcfaEdge edge : procBuilder.getEdges()) {
+				for (XcfaLabel label : edge.getLabels()) {
+					usedVars.addAll(getNonModifiedVars(label));
+				}
+			}
+			UnusedVarRemovalPass.removeUnusedVars(procBuilder, usedVars);
+			newBuilder.addProcedure(XcfaPassManager.run(procBuilder));
+			if (procBuilder == builder.getMainProcedure()) newBuilder.setMainProcedure(procBuilder);
+		}
+		return newBuilder;
 	}
 
 	private void assignParams(XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder calledProcedure) {

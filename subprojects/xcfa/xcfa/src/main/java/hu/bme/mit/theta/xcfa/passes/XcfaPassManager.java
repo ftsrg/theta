@@ -63,7 +63,7 @@ public class XcfaPassManager {
 				new SimplifyExprs(),
 //				new SimplifyAssumptions(),
 				new CallsToFinalLocs(),
-				new CallsToHavocs(),
+//				new CallsToHavocs(),
 //				new HavocAssignments(),
 				//new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
@@ -121,7 +121,7 @@ public class XcfaPassManager {
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (ProcedurePass procedurePass : procedurePasses) {
-			if (!procedurePass.isPostInlining() || ProcedurePass.postInlining) builder = procedurePass.run(builder);
+			builder = procedurePass.run(builder);
 		}
 		return builder;
 	}
