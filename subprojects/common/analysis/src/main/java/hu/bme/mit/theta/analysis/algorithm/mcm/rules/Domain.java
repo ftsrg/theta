@@ -16,7 +16,17 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 public class Domain extends UnaryMCMRule{
     public Domain(MCMRelation e) {
@@ -26,5 +36,17 @@ public class Domain extends UnaryMCMRule{
     @Override
     public String toString() {
         return e.toString();
+    }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            List<Expr<BoolType>> subexprs = new ArrayList<>();
+            for (final int i : idList) {
+                subexprs.add(events.get(TupleN.of(tuple.get(0), i)).getRef());
+            }
+            encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), Or(subexprs)));
+        });
     }
 }

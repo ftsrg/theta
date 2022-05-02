@@ -16,11 +16,31 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 public class Sequence extends BinaryMCMRule{
     public Sequence(MCMRelation e1, MCMRelation e2) {
         super(e1, e2);
+    }
+
+    @Override
+    public void encodeSingleEvent(int i, int j, List<Integer> idList, ConstDecl<BoolType> constDecl, EventConstantLookup e1, EventConstantLookup e2, EncodedRelationWrapper encodedRelationWrapper) {
+        final List<Expr<BoolType>> subexprs = new ArrayList<>();
+        for (final int k : idList) {
+            subexprs.add(And(e1.get(TupleN.of(i, k)).getRef(), e2.get(TupleN.of(k, j)).getRef()));
+        }
+        encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), Or(subexprs)));
     }
 
     @Override

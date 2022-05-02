@@ -18,24 +18,28 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import hu.bme.mit.theta.common.TupleN;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public class MCMRelation {
     private final int arity;
     private final String name;
 
-    private final Collection<TupleN<Object>> facts;
-    private final Collection<MCMRule> rules;
+    private MCMRule rule;
 
     public MCMRelation(int arity, String name) {
         this.arity = arity;
         this.name = name;
-        this.facts = new LinkedHashSet<>();
-        this.rules = new LinkedHashSet<>();
     }
 
+    public MCMRelation(int arity, String name, MCMRule rule) {
+        this(arity, name);
+        this.rule = rule;
+    }
     public int getArity() {
         return arity;
     }
@@ -44,28 +48,19 @@ public class MCMRelation {
         return name;
     }
 
-    public Collection<TupleN<Object>> getFacts() {
-        return facts;
-    }
-
-    public Collection<MCMRule> getRules() {
-        return rules;
-    }
-
-    public void addFact(final TupleN<Object> fact) {
-        facts.add(fact);
+    public MCMRule getRule() {
+        return rule;
     }
 
     public void addRule(final MCMRule rule) {
-        rules.add(rule);
+        checkState(this.rule == null, "Rule already set");
+        this.rule = rule;
     }
 
     public void collectRelations(final Map<String, MCMRelation> relations) {
         if(!relations.containsKey(name)) {
             relations.put(name, this);
-            for (MCMRule rule : getRules()) {
-                rule.collectRelations(relations);
-            }
+            if(rule != null) rule.collectRelations(relations);
         } else {
             if(!relations.get(name).equals(this)) throw new RuntimeException("Different definitions for the relation " + name);
         }
@@ -76,8 +71,32 @@ public class MCMRelation {
         return "MCMRelation{" +
                 "arity=" + arity +
                 ", name='" + name + '\'' +
-                ", facts=" + facts +
-                ", rules=" + rules +
+                ", rule=" + rule +
                 '}';
+    }
+
+    public EventConstantLookup encodeEvents(final List<Integer> idList, final EncodedRelationWrapper encodedRelationWrapper) {
+        if(encodedRelationWrapper.getEventLookup(name) != null) return encodedRelationWrapper.getEventLookup(name);
+
+        final EventConstantLookup eventConstantLookup = new EventConstantLookup();
+        encodedRelationWrapper.addEvent(name, eventConstantLookup);
+        createConstants(idList, eventConstantLookup);
+
+        if(rule != null) rule.encodeEvents(idList, eventConstantLookup, encodedRelationWrapper);
+        return eventConstantLookup;
+    }
+
+    private void createConstants(List<Integer> idList, EventConstantLookup eventConstantLookup) {
+        if(arity == 1) {
+            for (final int i : idList) {
+                eventConstantLookup.add(TupleN.of(i), Const(name + "_" + i, Bool()));
+            }
+        } else if (arity == 2) {
+            for (final int i : idList) {
+                for (final int j : idList) {
+                    eventConstantLookup.add(TupleN.of(i, j), Const(name + "_" + i + "_" + j, Bool()));
+                }
+            }
+        } else throw new UnsupportedOperationException("Relations with arity " + arity + " not supported.");
     }
 }

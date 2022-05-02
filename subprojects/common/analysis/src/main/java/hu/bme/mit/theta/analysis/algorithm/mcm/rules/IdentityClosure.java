@@ -16,7 +16,13 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 
 public class IdentityClosure extends UnaryMCMRule{
     public IdentityClosure(MCMRelation e) {
@@ -26,5 +32,14 @@ public class IdentityClosure extends UnaryMCMRule{
     @Override
     public String toString() {
         return e.toString() + "?";
+    }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            if(tuple.get(0) == tuple.get(1)) encodedRelationWrapper.getSolver().add(constDecl.getRef());
+            else encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), events.get(tuple).getRef()));
+        });
     }
 }

@@ -16,7 +16,14 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.common.TupleN;
+
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 
 public class Inverse extends UnaryMCMRule{
     public Inverse(MCMRelation e) {
@@ -26,5 +33,13 @@ public class Inverse extends UnaryMCMRule{
     @Override
     public String toString() {
         return e.toString() + "^-1";
+    }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), events.get(TupleN.of(tuple.get(1), tuple.get(0))).getRef()));
+        });
     }
 }

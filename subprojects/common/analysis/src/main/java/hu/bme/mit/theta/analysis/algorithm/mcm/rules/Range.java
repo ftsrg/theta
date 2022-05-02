@@ -16,7 +16,18 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
 public class Range extends UnaryMCMRule{
     public Range(MCMRelation e) {
@@ -26,5 +37,17 @@ public class Range extends UnaryMCMRule{
     @Override
     public String toString() {
         return e.toString();
+    }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            List<Expr<BoolType>> subexprs = new ArrayList<>();
+            for (final int i : idList) {
+                subexprs.add(events.get(TupleN.of(i, tuple.get(0))).getRef());
+            }
+            encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), Or(subexprs)));
+        });
     }
 }

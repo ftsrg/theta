@@ -16,8 +16,11 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
+import java.util.List;
 import java.util.Map;
 
 public abstract class MCMRule {
     public abstract void collectRelations(final Map<String, MCMRelation> relations);
+
+    public abstract void encodeEvents(final List<Integer> idList, final EventConstantLookup resultEvents, final EncodedRelationWrapper encodedRelationWrapper);
 }

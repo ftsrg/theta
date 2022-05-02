@@ -16,7 +16,15 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.common.TupleN;
+
+import java.util.List;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class Toid extends UnaryMCMRule{
     public Toid(MCMRelation e) {
@@ -26,5 +34,14 @@ public class Toid extends UnaryMCMRule{
     @Override
     public String toString() {
         return e.toString();
+    }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            if(tuple.get(0) == tuple.get(1)) encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), events.get(TupleN.of(tuple.get(0))).getRef()));
+            else encodedRelationWrapper.getSolver().add(Not(constDecl.getRef()));
+        });
     }
 }

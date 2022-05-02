@@ -21,10 +21,18 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverStatus;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 public class MCMChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
     private final MemoryEventProvider<A> memoryEventProvider;
@@ -32,24 +40,30 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
     private final MultiprocInitFunc<S, P> multiprocInitFunc;
     private final MultiprocTransFunc<S, A, P> multiprocTransFunc;
     private final Collection<Integer> pids;
-    private final ExecutionGraph executionGraph;
+    private final Solver solver;
+    private final MCM mcm;
 
     public MCMChecker(
             final MemoryEventProvider<A> memoryEventProvider,
             final MultiprocLTS<S, A> multiprocLTS,
             final MultiprocInitFunc<S, P> multiprocInitFunc,
             final MultiprocTransFunc<S, A, P> multiprocTransFunc,
-            final Collection<Integer> pids) {
+            final Collection<Integer> pids,
+            final Solver solver,
+            final MCM mcm) {
         this.memoryEventProvider = memoryEventProvider;
         this.multiprocLTS = multiprocLTS;
         this.multiprocInitFunc = multiprocInitFunc;
         this.multiprocTransFunc = multiprocTransFunc;
         this.pids = pids;
-        executionGraph = new ExecutionGraph();
+        this.solver = solver;
+        this.mcm = mcm;
     }
 
     @Override
     public SafetyResult<S, A> check(final P prec) {
+        final ExecutionGraph executionGraph = new ExecutionGraph();
+
         for (final int pid : pids) {
             final Collection<? extends S> initStates = multiprocInitFunc.getInitStates(pid, prec);
             checkState(initStates.size() == 1);
@@ -80,8 +94,38 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
             }
         }
 
-        executionGraph.print();
+        EncodedRelationWrapper encodedRelationWrapper = new EncodedRelationWrapper(solver);
+        Collection<ConstDecl<BoolType>> rfConsts = executionGraph.encode(mcm, encodedRelationWrapper);
 
-        return null;
+        final List<String> toDraw = List.of("po", "co", "rf");
+
+        while(solver.check().isSat()) {
+            System.out.println("digraph G{");
+            final List<Expr<BoolType>> subexprs = new ArrayList<>();
+            solver.getModel().toMap().entrySet().stream().filter(e -> e.getValue().equals(True())).forEach(e -> {
+                String[] constDecl = e.getKey().getName().split("_");
+                if(constDecl.length != 3) throw new RuntimeException("Wrong format for constant");
+
+                if(toDraw.contains(constDecl[0])) {
+                    System.out.print(constDecl[1] + " -> " + constDecl[2]);
+                    if (!constDecl[0].equals("po")) {
+                        System.out.print(" [label=\"" + constDecl[0] + "\",color=grey,constraint=false]");
+                    }
+                    System.out.println(";");
+                }
+
+                if(rfConsts.contains(e.getKey())) {
+                    subexprs.add((Expr<BoolType>) e.getKey().getRef());
+
+                }
+            });
+            solver.add(Not(And(subexprs)));
+            System.out.println("}");
+            System.out.println("");
+            System.out.println("=====");
+            System.out.println("");
+        }
+
+        return solver.check() == SolverStatus.UNSAT ? SafetyResult.safe(null) : SafetyResult.unsafe(null, null);
     }
 }

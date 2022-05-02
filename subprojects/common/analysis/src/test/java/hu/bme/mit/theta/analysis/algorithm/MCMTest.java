@@ -17,7 +17,11 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.mcm.*;
+import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Inverse;
+import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Sequence;
+import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Union;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -35,13 +39,29 @@ public class MCMTest {
 		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
 		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
 
+		MCM mcm = new MCM("example");
+		MCMRelation sc = new MCMRelation(2, "sc");
+		MCMRelation po = new MCMRelation(2, "po");
+		MCMRelation rf = new MCMRelation(2, "rf");
+		MCMRelation fr = new MCMRelation(2, "fr");
+		MCMRelation fr1 = new MCMRelation(2, "fr1");
+		MCMRelation co = new MCMRelation(2, "co");
+		MCMRelation com = new MCMRelation(2, "com");
+		MCMRelation com1 = new MCMRelation(2, "com1");
+		sc.addRule(new Union(po, com));
+		com1.addRule(new Union(rf, fr));
+		com.addRule(new Union(com1, co));
+		fr1.addRule(new Inverse(rf));
+		fr.addRule(new Sequence(fr1, co));
+		mcm.addConstraint(new MCMConstraint(sc, MCMConstraint.ConstraintType.ACYCLIC));
+
 
 		MCMChecker mcmChecker = new MCMChecker(
 				new TestMemoryEventProvider(),
 				new MultiprocLTS(Map.of(2, new TestLTS(), 3, new TestLTS())),
 				new MultiprocInitFunc(Map.of(2, new TestInitFunc(thrd1_loc1), 3, new TestInitFunc(thrd2_loc1))),
 				new MultiprocTransFunc(Map.of(2, new TestTransFunc(), 3, new TestTransFunc())),
-				List.of(2, 3));
+				List.of(2, 3), Z3SolverFactory.getInstance().createSolver(), mcm);
 
 		mcmChecker.check(new TestPrec());
 	}

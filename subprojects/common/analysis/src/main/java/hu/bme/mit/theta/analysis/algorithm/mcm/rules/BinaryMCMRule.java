@@ -16,9 +16,15 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRule;
+import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+import java.util.List;
 import java.util.Map;
 
 public abstract class BinaryMCMRule extends MCMRule {
@@ -35,4 +41,17 @@ public abstract class BinaryMCMRule extends MCMRule {
         e1.collectRelations(relations);
         e2.collectRelations(relations);
     }
+
+    @Override
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        final EventConstantLookup e1Events = e1.encodeEvents(idList, encodedRelationWrapper);
+        final EventConstantLookup e2Events = e2.encodeEvents(idList, encodedRelationWrapper);
+        for (final int i : idList) {
+            for (final int j : idList) {
+                encodeSingleEvent(i, j, idList, resultEvents.get(TupleN.of(i, j)), e1Events, e2Events, encodedRelationWrapper);
+            }
+        }
+    }
+
+    public abstract void encodeSingleEvent(int i, int j, List<Integer> idList, ConstDecl<BoolType> constDecl, EventConstantLookup e1, EventConstantLookup e2, EncodedRelationWrapper encodedRelationWrapper);
 }
