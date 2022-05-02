@@ -24,19 +24,13 @@ import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extends Prec> implements TransFunc<XcfaState<S>, A, XcfaPrec<P>> {
 
@@ -50,19 +44,30 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		return new XcfaSTTransFunc<>(transFunc);
 	}
 
+	private P stateVarsIntoPrec(P globalPrec, XcfaSTState<S> state) {
+		if (globalPrec instanceof ExplPrec) {
+			ExplPrec explPrec = (ExplPrec) globalPrec;
+			for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
+				Set<VarDecl<?>> localVars = new HashSet<>();
+				final Set<VarDecl<?>> precVars = explPrec.getVars();
+				procedureLocation.getUsedVars().forEach((var, localVar) -> {
+					if (precVars.contains(var))
+						localVars.add(localVar);
+				});
+				if (!localVars.isEmpty())
+					explPrec = explPrec.join(ExplPrec.of(localVars));
+			}
+			globalPrec = (P) explPrec;
+		}
+		return globalPrec;
+	}
+
 	@Override
 	public Collection<? extends XcfaState<S>> getSuccStates(final XcfaState<S> inState, final A inAction, final XcfaPrec<P> prec) {
 		XcfaSTState<S> state = (XcfaSTState<S>) inState;
 		XcfaSTAction action = (XcfaSTAction) inAction;
 
-		P globalPrec = prec.getGlobalPrec();
-		if (prec.getGlobalPrec() instanceof ExplPrec) {
-			ExplPrec explPrec = (ExplPrec) globalPrec;
-			for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
-				explPrec = explPrec.join(ExplPrec.of(procedureLocation.getUsedVars()));
-			}
-			globalPrec = (P) explPrec;
-		}
+		P globalPrec = stateVarsIntoPrec(prec.getGlobalPrec(), state);
 
 		final Collection<XcfaSTState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, globalPrec)) {
@@ -72,7 +77,7 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
 						.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
 				if (calledProcedure.isPresent()) {
-					Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+					Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getReverseVars();
 					XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
 					newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
 				}
