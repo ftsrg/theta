@@ -26,12 +26,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaStmtUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -44,6 +39,7 @@ public final class XcfaProcedure {
 	private final String name;
 	private final ImmutableMap<VarDecl<?>, Direction> params;
 	private final ImmutableMap<VarDecl<?>, Optional<LitExpr<?>>> localVars;
+	private final Map<Stack<XcfaLocation>, Map<VarDecl<?>, VarDecl<?>>> instantiatedVars;
 	private final ImmutableList<XcfaLocation> locs;
 	private final Type retType;
 	private final Map<VarDecl<?>, VarDecl<?>> paramLut;
@@ -58,6 +54,7 @@ public final class XcfaProcedure {
 	private XcfaProcedure(final Builder builder, final XcfaProcess parent) {
 		params = ImmutableMap.copyOf(builder.params);
 		localVars = ImmutableMap.copyOf(builder.localVars);
+		instantiatedVars = new LinkedHashMap<>();
 		locs = ImmutableList.copyOf(builder.locs);
 		locs.forEach(location -> location.setParent(this));
 		paramLut = builder.paramLut;
@@ -99,6 +96,14 @@ public final class XcfaProcedure {
 		locs.forEach(location -> location.setParent(this));
 		paramInitLocs = new LinkedHashMap<>();
 		from.paramInitLocs.forEach((callLabel, initLoc) -> paramInitLocs.put(callLabel, locLut.get(initLoc)));
+		instantiatedVars = new LinkedHashMap<>();
+		from.instantiatedVars.forEach((stack, localVarLut) -> {
+			Stack<XcfaLocation> newStack = new Stack<>();
+			stack.forEach(loc -> stack.push(locLut.get(loc)));
+			Map<VarDecl<?>, VarDecl<?>> newLocalVarLut = new LinkedHashMap<>();
+			localVarLut.forEach((var, localVar) -> newLocalVarLut.put(varLut.get(var), localVar));
+			instantiatedVars.put(newStack, newLocalVarLut);
+		});
 		initLoc = locLut.get(from.initLoc);
 		errorLoc = locLut.get(from.errorLoc);
 		finalLoc = locLut.get(from.finalLoc);
@@ -223,7 +228,18 @@ public final class XcfaProcedure {
 		return new XcfaProcedure(parent, this, varLut);
 	}
 
-	public int getCallCount() { return ++callCount; }
+	public Map<VarDecl<?>, VarDecl<?>> getInstantiatedVars(Stack<XcfaLocation> locationStack) {
+		Map<VarDecl<?>, VarDecl<?>> varLut = instantiatedVars.get(locationStack);
+		if (varLut == null) {
+			varLut = new LinkedHashMap<>();
+			for (VarDecl<?> var : getLocalVarMap().keySet()) {
+				varLut.put(var, Decls.Var(var.getName() + callCount, var.getType()));
+			}
+			++callCount;
+			instantiatedVars.put(locationStack, varLut);
+		}
+		return varLut;
+	}
 
 	private static VarDecl<?> getParamCopy(VarDecl<?> var) {
 		return Decls.Var(var.getName() + "'", var.getType());

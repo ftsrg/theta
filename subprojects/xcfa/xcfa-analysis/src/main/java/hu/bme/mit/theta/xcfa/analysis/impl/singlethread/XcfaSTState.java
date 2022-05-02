@@ -16,18 +16,21 @@
 package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 
-	class ProcedureLocation {
+	public class ProcedureLocation {
 		private final XcfaLocation location;
 		private final Map<VarDecl<?>, VarDecl<?>> varLut;
 
@@ -40,8 +43,8 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 			this.varLut = varLut;
 		}
 
-		Collection<VarDecl<?>> getUsedVars() {
-			return varLut.values();
+		Map<VarDecl<?>, VarDecl<?>> getUsedVars() {
+			return varLut;
 		}
 
 		ProcedureLocation withLocation(XcfaLocation location) {
@@ -102,16 +105,18 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 
 	public Map<VarDecl<?>, VarDecl<?>> getCurrentVars() { return locationStack.peek().varLut; }
 
+	public Map<VarDecl<?>, VarDecl<?>> getReverseVars() {
+		return this.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+	}
+
 	XcfaLocation pop() {
 		return locationStack.pop().location;
 	}
 
 	void push(XcfaLocation location) {
-		Map<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
-		String callCount = String.valueOf(location.getParent().getCallCount());
-		for (VarDecl<?> var : location.getParent().getLocalVarMap().keySet()) {
-			varLut.put(var, Decls.Var(var.getName() + callCount, var.getType()));
-		}
+		Stack<XcfaLocation> stack = new Stack<>();
+		locationStack.forEach(procLoc -> stack.push(procLoc.location));
+		Map<VarDecl<?>, VarDecl<?>> varLut = location.getParent().getInstantiatedVars(stack);
 		locationStack.push(new ProcedureLocation(location, varLut));
 		updateParams();
 	}
