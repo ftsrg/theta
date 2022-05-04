@@ -28,16 +28,20 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 public class MCMTest {
 	@Test
 	public void test() {
+		final VarDecl<?> var = Var("x", Int());
 		final TestState thrd1_loc3 = new TestState(List.of());
-		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
-		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
+		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
+		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
 
 		final TestState thrd2_loc3 = new TestState(List.of());
-		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
-		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
+		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
+		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
 
 		MCM mcm = new MCM("example");
 		MCMRelation sc = new MCMRelation(2, "sc");

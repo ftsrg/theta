@@ -18,13 +18,15 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.TupleN;
-import hu.bme.mit.theta.common.datalog.Datalog;
 import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import hu.bme.mit.theta.common.datalog.GenericDatalogArgument;
-import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
 import tools.refinery.store.map.Cursor;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.model.ModelStore;
@@ -35,20 +37,22 @@ import tools.refinery.store.model.representation.TruthValue;
 
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 public class ExecutionGraph {
-    private final Model model;
+    private final MCM mcm;
+    private final EncodedRelationWrapper encodedRelationWrapper;
+    private final ModelStore store;
+    private Model model;
     private final Relation<Boolean> po, _int, loc, R, W, F, U;
     private final Map<String, Relation<Boolean>> tags;
     private final Relation<TruthValue> rf, co;
-    private final Datalog.Relation poRaw, intRaw, locRaw;
-    private final Datalog.Relation poCalculated, intCalculated, locCalculated;
-    private int lastCnt = 1;
+    private final long staticOnlyCommit;
 
-    public ExecutionGraph(final Collection<String> tags) {
+    public ExecutionGraph(final ExecutionGraphBuilder builder, final MCM mcm, final Solver solver) {
+        this.mcm = mcm;
+        encodedRelationWrapper = new EncodedRelationWrapper(solver);
         po = new Relation<>("po", 2, false);
         _int = new Relation<>("_int", 2, false);
         loc = new Relation<>("loc", 2, false);
@@ -59,136 +63,74 @@ public class ExecutionGraph {
         rf = new Relation<>("rf", 2, TruthValue.UNKNOWN);
         co = new Relation<>("co", 2, TruthValue.UNKNOWN);
         this.tags = new LinkedHashMap<>();
-        tags.forEach(s -> this.tags.put(s, new Relation<>(s, 1, false)));
-        final ModelStore store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, loc, R, W, F, U, rf, co)));
+        store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, loc, R, W, F, U, rf, co)));
         model = store.createModel();
-        final Datalog program = Datalog.createProgram();
-        poRaw = program.createRelation("po_raw", 2);
-        intRaw = program.createRelation("int_raw", 2);
-        locRaw = program.createRelation("loc_raw", 2);
-        poCalculated = program.createTransitive("po", poRaw);
-        intCalculated = program.createCommonSource("int", intRaw);
-        locCalculated = program.createCommonSource("loc", locRaw);
+
+        builder.getPoCalculated().getElements().forEach(elem -> model.put(po, datalog2tup(elem), true));
+        builder.getLocCalculated().getElements().forEach(elem -> model.put(loc, datalog2tup(elem), true));
+        builder.getIntCalculated().getElements().forEach(elem -> model.put(_int, datalog2tup(elem), true));
+        builder.getR().getElements().forEach(elem -> model.put(R, datalog2tup(elem), true));
+        builder.getW().getElements().forEach(elem -> model.put(W, datalog2tup(elem), true));
+        builder.getF().getElements().forEach(elem -> model.put(F, datalog2tup(elem), true));
+        builder.getU().getElements().forEach(elem -> model.put(U, datalog2tup(elem), true));
+        builder.getTags().forEach((key, value) -> {
+            final Relation<Boolean> rel = new Relation<>(key, 1, false);
+            this.tags.put(key, rel);
+            value.getElements().forEach(elem -> model.put(rel, datalog2tup(elem), true));
+        });
+
+        encode();
+
+        staticOnlyCommit = model.commit();
+        encodedRelationWrapper.getSolver().push();
     }
 
-    private static TupleN<DatalogArgument> arg(int i, int j) {
-        return TupleN.of(GenericDatalogArgument.createArgument(i), GenericDatalogArgument.createArgument(j));
+    public void reset() {
+        model = store.createModel(staticOnlyCommit);
+        encodedRelationWrapper.getSolver().pop();
     }
 
-    private int addEvent(int processId, int lastNode, final Collection<String> tags) {
-        final int id = lastCnt++;
-        if(lastNode > 0) {
-            poRaw.addFact(arg(lastNode, id));
+    public boolean nextSolution() {
+        model = store.createModel(staticOnlyCommit);
+        if(encodedRelationWrapper.getSolver().check().isSat()) {
+            final EventConstantLookup rf = encodedRelationWrapper.getEventLookup("rf");
+            final EventConstantLookup co = encodedRelationWrapper.getEventLookup("co");
+
+            final Map<Decl<?>, LitExpr<?>> lut = encodedRelationWrapper.getSolver().getModel().toMap();
+            final List<Expr<BoolType>> subexprs = new ArrayList<>();
+
+            rf.getAll().forEach((tuple, constDecl) -> {
+                if(lut.get(constDecl).equals(True())) {
+                    model.put(this.rf, tup(tuple), TruthValue.TRUE);
+                    subexprs.add(constDecl.getRef());
+                } else subexprs.add(Not(constDecl.getRef()));
+            });
+            co.getAll().forEach((tuple, constDecl) -> {
+                if(lut.get(constDecl).equals(True())) model.put(this.co, tup(tuple), TruthValue.TRUE);
+            });
+
+            encodedRelationWrapper.getSolver().add(Not(And(subexprs)));
+
+            return true;
         }
-        for (final String tag : tags) {
-            final Relation<Boolean> relation = checkNotNull(this.tags.get(tag));
-            model.put(relation, Tuple.of(id), true);
-        }
-        intRaw.addFact(arg(processId, id));
-        model.put(U, Tuple.of(id), true);
-        return id;
+        return false;
     }
 
-    private int addMemoryEvent(int processId, int varId, int lastNode, Relation<Boolean> r, final Collection<String> tags) {
-        final int id = addEvent(processId, lastNode, tags);
-        locRaw.addFact(arg(varId, id));
-        model.put(r, Tuple.of(id), true);
-        return id;
+    private Tuple datalog2tup(final TupleN<DatalogArgument> from) {
+        final int i = ((GenericDatalogArgument<Integer>) from.get(0)).getContent();
+        if(from.arity() == 1) return Tuple.of(i);
+        final int j = ((GenericDatalogArgument<Integer>) from.get(1)).getContent();
+        return Tuple.of(i, j);
     }
 
-    public int addRead(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
-        return addMemoryEvent(processId, varId, lastNode, R, tags);
+    private Tuple tup(final TupleN<Integer> from) {
+        final int i = from.get(0);
+        if(from.arity() == 1) return Tuple.of(i);
+        final int j = from.get(1);
+        return Tuple.of(i, j);
     }
 
-    public int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
-        return addMemoryEvent(processId, varId, lastNode, W, tags);
-    }
-
-    public int addFence(final int processId, final int lastNode, final Collection<String> tags) {
-        final int id = addEvent(processId, lastNode, tags);
-        model.put(F, Tuple.of(id), true);
-        return id;
-    }
-
-    public void print() {
-        syncDatalogRefinery();
-        System.out.println("digraph G{");
-        printUnaryRelation(R);
-        printUnaryRelation(W);
-        printUnaryRelation(F);
-        printBinaryRelation(po);
-        printBinaryCalculatedRelation(rf);
-        printBinaryCalculatedRelation(co);
-        System.out.println("}");
-    }
-
-    private void syncDatalogRefinery() {
-        extractElements(poCalculated, po);
-        extractElements(intCalculated, _int);
-        extractElements(locCalculated, loc);
-    }
-
-    private void extractElements(Datalog.Relation from, Relation<Boolean> to) {
-        for (TupleN<DatalogArgument> element : from.getElements()) {
-            GenericDatalogArgument<Integer> i = (GenericDatalogArgument<Integer>) element.get(0);
-            GenericDatalogArgument<Integer> j = (GenericDatalogArgument<Integer>) element.get(1);
-            model.put(to, Tuple.of(i.getContent(), j.getContent()), true);
-        }
-    }
-
-    private void printUnaryRelation(Relation<Boolean> r) {
-        Cursor<Tuple, Boolean> all = model.getAll(r);
-        all.move();
-        while(!all.isTerminated()) {
-            if(all.getValue()) {
-                int key = all.getKey().get(0);
-                System.out.println(key + "[label=\"" + r.getName() + "\"];");
-            }
-            all.move();
-        }
-    }
-
-    private void printBinaryRelation(Relation<Boolean> r) {
-        Cursor<Tuple, Boolean> all = model.getAll(r);
-        all.move();
-        while(!all.isTerminated()) {
-            if(all.getValue()) {
-                int source = all.getKey().get(0);
-                int target = all.getKey().get(1);
-                System.out.println(source + " -> " + target + "[label=\"" + r.getName() + "\"];");
-            }
-            all.move();
-        }
-    }
-    private void printBinaryCalculatedRelation(Relation<TruthValue> r) {
-        Cursor<Tuple, TruthValue> all = model.getAll(r);
-        all.move();
-        while(!all.isTerminated()) {
-            int source = all.getKey().get(0);
-            int target = all.getKey().get(1);
-            String name = "\"" + r.getName() + "\"";
-            if(all.getValue() == TruthValue.FALSE) name = "<s>\"" + r.getName() + "\"</s>";
-            System.out.println(source + " -> " + target + "[label=" + name + "];");
-            all.move();
-        }
-    }
-
-    private EventConstantLookup getOrCreate(
-            final EncodedRelationWrapper encodedRelationWrapper,
-            final List<Integer> idList,
-            final String name,
-            final boolean isUnary) {
-        EventConstantLookup lookup = encodedRelationWrapper.getEventLookup(name);
-        if(lookup == null) {
-            lookup = createDummyRelation(idList, name, isUnary);
-        }
-        return lookup;
-    }
-
-
-    public Collection<ConstDecl<BoolType>> encode(final MCM mcm, final EncodedRelationWrapper encodedRelationWrapper) {
-        syncDatalogRefinery();
-
+    private void encode() {
         final Cursor<Tuple, Boolean> allEvents = model.getAll(U);
         final List<Integer> idList = new ArrayList<>();
         for(allEvents.move(); !allEvents.isTerminated(); allEvents.move()) {
@@ -207,11 +149,13 @@ public class ExecutionGraph {
         EventConstantLookup R = getOrCreate(encodedRelationWrapper, idList, "R", true);
         EventConstantLookup W = getOrCreate(encodedRelationWrapper, idList, "W", true);
         EventConstantLookup F = getOrCreate(encodedRelationWrapper, idList, "F", true);
+        EventConstantLookup U = getOrCreate(encodedRelationWrapper, idList, "U", true);
 
         for (final int i : idList) {
             encodeUnaryRelation(this.R, encodedRelationWrapper, R, i);
             encodeUnaryRelation(this.W, encodedRelationWrapper, W, i);
             encodeUnaryRelation(this.F, encodedRelationWrapper, F, i);
+            encodeUnaryRelation(this.U, encodedRelationWrapper, U, i);
         }
 
         encodeRelation(encodedRelationWrapper, idList, this.po, po);
@@ -222,8 +166,19 @@ public class ExecutionGraph {
             addRfConstraints(encodedRelationWrapper, idList, rf, i);
             addCoConstraints(encodedRelationWrapper, idList, co, i);
         }
+    }
 
-        return rf.getConstants();
+    private EventConstantLookup getOrCreate(
+            final EncodedRelationWrapper encodedRelationWrapper,
+            final List<Integer> idList,
+            final String name,
+            final boolean isUnary) {
+        EventConstantLookup lookup = encodedRelationWrapper.getEventLookup(name);
+        if(lookup == null) {
+            lookup = createDummyRelation(idList, name, isUnary);
+            encodedRelationWrapper.addEvent(name, lookup);
+        }
+        return lookup;
     }
 
     private void encodeUnaryRelation(Relation<Boolean> rel, EncodedRelationWrapper encodedRelationWrapper, EventConstantLookup R, int i) {
@@ -312,6 +267,74 @@ public class ExecutionGraph {
             for (final int j : idList) {
                 encodedRelationWrapper.getSolver().add(Not(rf.get(TupleN.of(j, i)).getRef())); // not W->R [samevar]
             }
+        }
+    }
+
+
+    public void print(Map<Integer, VarDecl<?>> vars) {
+        System.out.println("digraph G{");
+        printEvents(vars);
+        printBinaryRelation(po, true);
+//        printBinaryRelation(loc, false);
+        printBinaryCalculatedRelation(rf, "red");
+        printBinaryCalculatedRelation(co, "purple");
+        System.out.println("}");
+    }
+
+    private void printEvents(Map<Integer, VarDecl<?>> vars) {
+        Cursor<Tuple, Boolean> all = model.getAll(U);
+        all.move();
+        while(!all.isTerminated()) {
+            if(all.getValue()) {
+                final int key = all.getKey().get(0);
+                final String name = whichEvent(all.getKey());
+                final String tags = collectTags(all.getKey());
+                final VarDecl<?> var = vars.get(key);
+                System.out.println(key + "[label=\"" + name + (var == null ? "" : "(" + var.getName() + ")") + tags + "\"];");
+            }
+            all.move();
+        }
+    }
+
+    private String collectTags(Tuple key) {
+        final List<String> ret = new ArrayList<>();
+        tags.forEach((s, booleanRelation) -> {
+            if(model.get(booleanRelation, key)) ret.add(s);
+        });
+        final StringJoiner sj = new StringJoiner(", ", "[", "]");
+        return sj.toString();
+    }
+
+    private String whichEvent(Tuple key) {
+        if(model.get(R, key)) return "R";
+        if(model.get(W, key)) return "W";
+        if(model.get(F, key)) return "F";
+        throw new RuntimeException("Unsupported event type");
+    }
+
+    private void printBinaryRelation(Relation<Boolean> r, boolean constraint) {
+        Cursor<Tuple, Boolean> all = model.getAll(r);
+        all.move();
+        while(!all.isTerminated()) {
+            if(all.getValue()) {
+                int source = all.getKey().get(0);
+                int target = all.getKey().get(1);
+                System.out.println(source + " -> " + target + "[label=\"" + r.getName() + "\"" + (constraint ? "" : ",constraint=false") +  "];");
+            }
+            all.move();
+        }
+    }
+
+    private void printBinaryCalculatedRelation(Relation<TruthValue> r, String color) {
+        Cursor<Tuple, TruthValue> all = model.getAll(r);
+        all.move();
+        while(!all.isTerminated()) {
+            int source = all.getKey().get(0);
+            int target = all.getKey().get(1);
+            String name = "\"" + r.getName() + "\"";
+            if(all.getValue() == TruthValue.FALSE) name = "<s>\"" + r.getName() + "\"</s>";
+            System.out.println(source + " -> " + target + "[label=" + name + ",constraint=false,color=" + color + "];");
+            all.move();
         }
     }
 }
