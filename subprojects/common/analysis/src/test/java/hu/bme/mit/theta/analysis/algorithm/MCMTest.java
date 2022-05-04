@@ -32,12 +32,12 @@ public class MCMTest {
 	@Test
 	public void test() {
 		final TestState thrd1_loc3 = new TestState(List.of());
-		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
-		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
+		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
+		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
 
 		final TestState thrd2_loc3 = new TestState(List.of());
-		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
-		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(1, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
+		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
+		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
 
 		MCM mcm = new MCM("example");
 		MCMRelation sc = new MCMRelation(2, "sc");
@@ -58,10 +58,10 @@ public class MCMTest {
 
 		MCMChecker mcmChecker = new MCMChecker(
 				new TestMemoryEventProvider(),
-				new MultiprocLTS(Map.of(2, new TestLTS(), 3, new TestLTS())),
-				new MultiprocInitFunc(Map.of(2, new TestInitFunc(thrd1_loc1), 3, new TestInitFunc(thrd2_loc1))),
-				new MultiprocTransFunc(Map.of(2, new TestTransFunc(), 3, new TestTransFunc())),
-				List.of(2, 3), Z3SolverFactory.getInstance().createSolver(), mcm);
+				new MultiprocLTS(Map.of(-1, new TestLTS(), -2, new TestLTS())),
+				new MultiprocInitFunc(Map.of(-1, new TestInitFunc(thrd1_loc1), -2, new TestInitFunc(thrd2_loc1))),
+				new MultiprocTransFunc(Map.of(-1, new TestTransFunc(), -2, new TestTransFunc())),
+				List.of(-1, -2), List.of(), Z3SolverFactory.getInstance().createSolver(), mcm);
 
 		mcmChecker.check(new TestPrec());
 	}

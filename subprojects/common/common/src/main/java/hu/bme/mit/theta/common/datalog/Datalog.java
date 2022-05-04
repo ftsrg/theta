@@ -198,6 +198,35 @@ public class Datalog {
 		return path;
 	}
 
+	public Relation createCommonSource(String name, Relation simple) {
+		checkState(simple.arity == 2, "Only binary relations should have common source relations!");
+		Relation path = createRelation(name, 2);
+		Datalog.Variable var1 = getVariable(), var2 = getVariable(), var3 = getVariable();
+		path.addRule(
+				TupleN.of(
+						var1,
+						var2
+				),
+				Set.of(
+						Tuple2.of(
+								simple,
+								TupleN.of(
+										var3,
+										var1
+								)
+						),
+						Tuple2.of(
+								simple,
+								TupleN.of(
+										var3,
+										var2
+								)
+						)
+				)
+		);
+		return path;
+	}
+
 	public Relation createDisjunction(String name, Iterable<Relation> relations) {
 		Integer arity = null;
 		for (Relation relation : relations) {

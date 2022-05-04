@@ -16,11 +16,14 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class MemoryEvent {
     private final int varId;
     private final MemoryEventType type;
 
     public MemoryEvent(int varId, MemoryEventType type) {
+        checkArgument(varId < 0, "Meta event IDs must be negative!");
         this.varId = varId;
         this.type = type;
     }
