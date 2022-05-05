@@ -16,22 +16,26 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
+import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRule;
 
+import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-public abstract class UnaryMCMRule extends MCMRule {
-    protected final MCMRelation e;
-
-    protected UnaryMCMRule(MCMRelation e) {
-        this.e = checkNotNull(e);
+public class EmptyRelation extends MCMRule {
+    @Override
+    public void collectRelations(Map<String, MCMRelation> relations) {
+        return;
     }
 
     @Override
-    public void collectRelations(final Map<String, MCMRelation> relations) {
-        e.collectRelations(relations);
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        resultEvents.getAll().forEach((tuple, constDecl) -> {
+            encodedRelationWrapper.getSolver().add(Not(constDecl.getRef()));
+        });
     }
 }

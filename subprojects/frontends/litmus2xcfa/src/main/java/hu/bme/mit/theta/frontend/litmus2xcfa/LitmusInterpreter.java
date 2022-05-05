@@ -14,24 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
+package hu.bme.mit.theta.frontend.litmus2xcfa;
 
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRule;
-
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public abstract class UnaryMCMRule extends MCMRule {
-    protected final MCMRelation e;
-
-    protected UnaryMCMRule(MCMRelation e) {
-        this.e = checkNotNull(e);
-    }
-
-    @Override
-    public void collectRelations(final Map<String, MCMRelation> relations) {
-        e.collectRelations(relations);
-    }
+public class LitmusInterpreter {
 }

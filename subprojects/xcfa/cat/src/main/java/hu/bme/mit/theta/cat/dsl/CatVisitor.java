@@ -16,25 +16,12 @@
 
 package hu.bme.mit.theta.cat.dsl;
 
-import hu.bme.mit.theta.cat.dsl.gen.CatBaseVisitor;
-import hu.bme.mit.theta.cat.dsl.gen.CatParser;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMConstraint;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.CartesianProduct;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Complement;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Difference;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Domain;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.IdentityClosure;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Intersection;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Inverse;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Range;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.ReflexiveTransitiveClosure;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Self;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Sequence;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Toid;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.TransitiveClosure;
-import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Union;
+import hu.bme.mit.theta.analysis.algorithm.mcm.rules.*;
+import hu.bme.mit.theta.cat.dsl.gen.CatBaseVisitor;
+import hu.bme.mit.theta.cat.dsl.gen.CatParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -215,14 +202,18 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
         CatParser.ExpressionContext eCtx = ctx.e;
 
         relations.remove(name);
+        for (CatParser.LetAndDefinitionContext letAndDefinitionContext : ctx.letAndDefinition()) {
+            name = letAndDefinitionContext.NAME().getText();
+            relations.remove(name);
+        }
         final MCMRelation relation = getOrCreateRelation(ctx.NAME().getText());
         relation.addRule(new Self(eCtx.accept(this)));
         for (CatParser.LetAndDefinitionContext letAndDefinitionContext : ctx.letAndDefinition()) {
             name = letAndDefinitionContext.NAME().getText();
             eCtx = letAndDefinitionContext.e;
 
-            relations.remove(name);
-            final MCMRelation relationAnd = getOrCreateRelation(ctx.NAME().getText());
+
+            final MCMRelation relationAnd = getOrCreateRelation(name);
             relationAnd.addRule(new Self(eCtx.accept(this)));
         }
 
@@ -306,6 +297,13 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     public MCMRelation visitExprOptional(CatParser.ExprOptionalContext ctx) {
         final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
         relation.addRule(new IdentityClosure(ctx.e.accept(this)));
+        return relation;
+    }
+
+    @Override
+    public MCMRelation visitExprNull(CatParser.ExprNullContext ctx) {
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
+        relation.addRule(new EmptyRelation());
         return relation;
     }
 

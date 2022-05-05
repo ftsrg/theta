@@ -52,6 +52,10 @@ public class ParseTest {
                 {"/syntax-test/procedure.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/include-test.cat", 5, Set.of("po", "rf")},
                 {"/sc.cat", 2, Set.of("po", "rf", "co", "rmw", "ext", "id")},
+                {"/aarch64.cat", 3, null},
+                {"/ppc.cat", 5, null},
+                {"/X86.cat", 3, null},
+                {"/svcomp.cat", 1, null},
         });
     }
 
@@ -61,7 +65,9 @@ public class ParseTest {
         assertEquals(constraintNumber, mcm.getConstraints().size());
         Map<String, MCMRelation> relations = new LinkedHashMap<>();
         mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
-        final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRules().size() == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        assertEquals(allowedPrimitives, primitives.keySet());
+        if(allowedPrimitives != null) {
+            final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRule() == null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            assertEquals(allowedPrimitives, primitives.keySet());
+        }
     }
 }

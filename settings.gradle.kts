@@ -6,6 +6,7 @@ include(
         "common/core",
 
         "frontends/c-frontend",
+        "frontends/litmus2xcfa",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
