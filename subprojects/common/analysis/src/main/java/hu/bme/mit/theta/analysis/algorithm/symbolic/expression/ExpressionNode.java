@@ -1,16 +1,16 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
 import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.IntObjMap;
-import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddSymbolicNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.SolverFactory;
 
 public class ExpressionNode implements MddSymbolicNode {
 
@@ -21,16 +21,14 @@ public class ExpressionNode implements MddSymbolicNode {
     private final int              hashCode;
     private       int              references = 0;
 
-    // Ebbe cachelnénk ami megvan: menet közben változik át struturallé a semantic megadás
-    // Azért lenne jobb ide, mint a cursorba mert így akkor is használhatók a cachelt dolgok több egyszerre használt cursorból is
-    private final IntObjMap<ExpressionNode> children;
+    private final AssignmentEnumerator enumerator;
 
-    public ExpressionNode(Pair<Expr<BoolType>, MddVariable> decision, DdLevel<MddNode> level, int hashCode) {
+    public ExpressionNode(Pair<Expr<BoolType>, MddVariable> decision, DdLevel<MddNode> level, int hashCode, SolverFactory solverFactory) {
         this.decision = decision;
         this.level = level;
         this.hashCode = hashCode;
 
-        this.children = HashIntObjMaps.newUpdatableMap();
+        this.enumerator = new AssignmentEnumerator<>(decision.first, decision.second.getTraceInfo(Decl.class), solverFactory.createSolver());
     }
 
     @Override
@@ -75,6 +73,7 @@ public class ExpressionNode implements MddSymbolicNode {
     }
 
     private void acquireChildren() {
+        // Ez így biztos nem lesz jó
         for (IntObjCursor<? extends MddNode> c = this.cursor(); c.moveNext(); ) {
             c.value().acquire();
         }
@@ -108,9 +107,7 @@ public class ExpressionNode implements MddSymbolicNode {
 
     @Override
     public boolean isEmpty() {
-        // Check if unsat -> true
-        // Cache model if found
-        return false;
+        return !enumerator.isSat();
     }
 
     @Override
@@ -120,16 +117,16 @@ public class ExpressionNode implements MddSymbolicNode {
 
     @Override
     public boolean containsKey(int key) {
-        if(children.containsKey(key)) return true;
         // Check if sat -> true
         // Cache model if found
-        return false;
+        return enumerator.isValidAssignment(LitExprConverter.toLitExpr(key, decision.second.getTraceInfo(Decl.class).getType()));
     }
 
     @Override
     public MddNode get(int key) {
-        if(children.containsKey(key)) return children.get(key);
-        // Check if sat, simplify
+        if (enumerator.isValidAssignment(LitExprConverter.toLitExpr(key, decision.second.getTraceInfo(Decl.class).getType()))){
+            // Simplify expr, ask for new node with simplified expr, cache child
+        }
         return null;
     }
 
@@ -144,7 +141,7 @@ public class ExpressionNode implements MddSymbolicNode {
         // Kéne egy custom cursor ami lazyn felsorolja az összes értéket amivel sat
         // Amit tud, azt először vegye ki a children cacheből: nem elég egyszer, hanem mindig meg kell nézni, hogy nincs-e új ami azóta cachelődött
 //        return new LazyCursor<ExpressionNode>(this, initializer, cacher);
-        return null;
+        return new LazyCursor<>(enumerator);
     }
 
     @Override

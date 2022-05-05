@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -7,12 +8,13 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 
 public class AssignmentEnumerator<T extends Type> {
 
@@ -38,6 +40,35 @@ public class AssignmentEnumerator<T extends Type> {
         while(enumeratedAssignments.size() <= index && !enumeratedAll) queryNext();
         if(enumeratedAll) return Optional.empty();
         return Optional.of(enumeratedAssignments.get(index));
+    }
+
+    public int size(){
+        return enumeratedAssignments.size();
+    }
+
+    public boolean isValidAssignment(LitExpr<T> assignment){
+        if(enumeratedAssignments.contains(assignment)) return true;
+        else {
+            SolverStatus status = null;
+            try(WithPushPop wpp = new WithPushPop(solver)){
+                solver.add(Eq(decl.getRef(),assignment));
+                solver.check();
+                status = solver.getStatus();
+            }
+            Preconditions.checkNotNull(status);
+            if(status.isSat()) {
+                enumeratedAssignments.add(assignment);
+                solver.add(Neq(decl.getRef(), assignment));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isSat(){
+        if(enumeratedAssignments.size() > 0) return true;
+        else if(!enumeratedAll) queryNext();
+        return enumeratedAssignments.size() > 0;
     }
 
     public boolean enumeratedAll() {

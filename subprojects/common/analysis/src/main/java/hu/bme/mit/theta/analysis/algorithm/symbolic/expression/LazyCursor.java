@@ -1,38 +1,42 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
-import com.koloboke.collect.set.hash.HashIntSets;
-import hu.bme.mit.delta.Pair;
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.java.mdd.MddSymbolicNode;
+import hu.bme.mit.theta.core.type.LitExpr;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 public class LazyCursor<T extends MddSymbolicNode> implements IntObjCursor<T> {
 
-    private final Supplier<Pair<Integer, MddSymbolicNode>> initializer;
-    private final Consumer<Pair<Integer, MddSymbolicNode>> cacher;
-
+    private final AssignmentEnumerator enumerator;
+    private int currentIndex;
     private int currentKey;
-    private MddSymbolicNode currentValue;
 
-    public LazyCursor(Supplier<Pair<Integer, MddSymbolicNode>> initializer, Consumer<Pair<Integer, MddSymbolicNode>> cacher) {
-        this.initializer = initializer;
-        this.cacher = cacher;
+    public LazyCursor(AssignmentEnumerator enumerator) {
+        this.enumerator = enumerator;
+        this.currentIndex = 0;
     }
 
     @Override
     public int key() {
-        return 0;
+        return currentKey;
     }
 
     @Override
     public T value() {
+        // request new ExpressionNode from somewhere using the key
         return null;
     }
 
     @Override
     public boolean moveNext() {
-        return false;
+        Optional<LitExpr<?>> optional = enumerator.get(currentIndex++);
+        if(optional.isPresent()){
+            currentKey = LitExprConverter.toInt(optional.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 }
