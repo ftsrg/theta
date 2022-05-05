@@ -5,6 +5,7 @@ import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 
 import java.util.Optional;
@@ -122,7 +123,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 			))
 		);
 		
-		MddNode nsat = variable.checkInNode(satTemplate);
+		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
 		
 		boolean changed;
 		
@@ -234,7 +235,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 			}
 		}
 		
-		MddNode ret = variable.checkInNode(templateBuilder.buildAndReset());
+		MddNode ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 		
 		if (verbose) {
 			indent--;
@@ -346,7 +347,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 			}
 		}
 		
-		ret = variable.checkInNode(templateBuilder.buildAndReset());
+		ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 		
 		ret = saturate(ret, dsat, variable, cache);
 		

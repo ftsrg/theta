@@ -53,17 +53,26 @@ object Deps {
     val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
     val jing = "com.thaiopensource:jing:${Versions.jing}"
-    val logback = "ch.qos.logback:logback-classic:${Versions.logback}"
 
-    val delta = "delta:hu.bme.mit.delta:${Versions.delta}"
-    val deltaCollections = "delta:hu.bme.mit.delta.collections:${Versions.deltaCollections}"
+    val delta = "lib/hu.bme.mit.delta"
+    val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
 
     val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
 
-    val junit4 = "junit:junit:${Versions.junit}"
+    val junit4 = "junit:junit:${Versions.junit4}"
+    val junit4engine = "org.junit.vintage:junit-vintage-engine"
+    val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
+    val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
+    val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
 
     object Mockito {
 
         val core = "org.mockito:mockito-core:${Versions.mockito}"
+    }
+
+    object Kotlin {
+
+        val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
+        val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
     }
 }

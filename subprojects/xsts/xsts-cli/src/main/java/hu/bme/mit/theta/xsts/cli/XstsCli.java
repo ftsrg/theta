@@ -22,10 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
-import hu.bme.mit.delta.java.mdd.JavaMddFactory;
-import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariableOrder;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
@@ -55,7 +52,11 @@ import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParseException;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
@@ -83,6 +84,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
 
 public class XstsCli {
@@ -223,6 +226,7 @@ public class XstsCli {
     }
 
     private void run() {
+
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
             logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
