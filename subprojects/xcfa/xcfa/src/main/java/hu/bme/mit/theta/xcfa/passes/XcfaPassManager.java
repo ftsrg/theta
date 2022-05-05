@@ -80,7 +80,7 @@ public class XcfaPassManager {
 //				new AssignmentChainRemoval(),
 //				new NoReadVarRemovalPass(),
 //				new GlobalVarsToStoreLoad(),
-				new UnusedVarRemovalPass(),
+//				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new RemoveDeadEnds()
 		));

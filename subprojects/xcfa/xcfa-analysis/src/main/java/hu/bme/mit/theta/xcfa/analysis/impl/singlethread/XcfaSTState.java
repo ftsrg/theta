@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
@@ -35,7 +34,7 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 		private final Map<VarDecl<?>, VarDecl<?>> varLut;
 
 		ProcedureLocation(XcfaLocation location) {
-			this(location, new HashMap<>());
+			this(location, location.getParent().getInstantiatedVars(new Stack<>()));
 		}
 
 		ProcedureLocation(XcfaLocation location, Map<VarDecl<?>, VarDecl<?>> varLut) {
@@ -122,11 +121,11 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	void updateParams() {
-		Map<VarDecl<?>, VarDecl<?>> calledProcedureParams = locationStack.peek().location.getParent().getParamLut();
-		Map<VarDecl<?>, VarDecl<?>> procedureVars = locationStack.get(locationStack.size() - 2).varLut;
-		calledProcedureParams.forEach((var, param) -> {
-			if (procedureVars.get(var) != null) // calling proc has the same var
-				locationStack.peek().varLut.put(param, procedureVars.get(var));
+		Map<VarDecl<?>, VarDecl<?>> callingProcedureAltVars = locationStack.get(locationStack.size() - 2).location.getParent().getAltVars();
+		Map<VarDecl<?>, VarDecl<?>> callingProcedureVars = locationStack.get(locationStack.size() - 2).varLut;
+		callingProcedureAltVars.forEach((var, altVar) -> {
+			if (callingProcedureVars.get(var) != null) // calling proc has the same var instantiated
+				locationStack.peek().varLut.put(altVar, callingProcedureVars.get(var));
 		});
 	}
 

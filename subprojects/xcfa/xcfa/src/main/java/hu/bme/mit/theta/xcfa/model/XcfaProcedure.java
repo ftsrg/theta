@@ -42,7 +42,7 @@ public final class XcfaProcedure {
 	private final Map<Stack<XcfaLocation>, Map<VarDecl<?>, VarDecl<?>>> instantiatedVars;
 	private final ImmutableList<XcfaLocation> locs;
 	private final Type retType;
-	private final Map<VarDecl<?>, VarDecl<?>> paramLut;
+	private final Map<VarDecl<?>, VarDecl<?>> altVars;
 	private final Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaLocation> paramInitLocs;
 	private final XcfaLocation initLoc;
 	private final XcfaLocation errorLoc;
@@ -57,7 +57,7 @@ public final class XcfaProcedure {
 		instantiatedVars = new LinkedHashMap<>();
 		locs = ImmutableList.copyOf(builder.locs);
 		locs.forEach(location -> location.setParent(this));
-		paramLut = builder.paramLut;
+		altVars = builder.altVars;
 		paramInitLocs = builder.paramInitLocs;
 		paramInitLocs.values().forEach(loc -> loc.setParent(this));
 		initLoc = builder.initLoc;
@@ -82,10 +82,10 @@ public final class XcfaProcedure {
 			varLut.put(varDecl, newVar);
 			return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
 		}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-		paramLut = new LinkedHashMap<>();
-		from.paramLut.forEach((var, param) -> {
+		altVars = new LinkedHashMap<>();
+		from.altVars.forEach((var, param) -> {
 			VarDecl<?> newVar = varLut.get(var);
-			paramLut.put(newVar, XcfaProcedure.getParamCopy(newVar));
+			altVars.put(newVar, XcfaProcedure.getAltVar(newVar));
 		});
 		final Map<XcfaLocation, XcfaLocation> locLut = new LinkedHashMap<>();
 		locs = ImmutableList.copyOf(from.locs.stream().map(xcfaLocation -> {
@@ -187,8 +187,8 @@ public final class XcfaProcedure {
 		return paramInitLocs.get(callLabel);
 	}
 
-	public Map<VarDecl<?>, VarDecl<?>> getParamLut() {
-		return paramLut;
+	public Map<VarDecl<?>, VarDecl<?>> getAltVars() {
+		return altVars;
 	}
 
 	public XcfaLocation getInitLoc() {
@@ -241,7 +241,7 @@ public final class XcfaProcedure {
 		return varLut;
 	}
 
-	private static VarDecl<?> getParamCopy(VarDecl<?> var) {
+	private static VarDecl<?> getAltVar(VarDecl<?> var) {
 		return Decls.Var(var.getName() + "'", var.getType());
 	}
 
@@ -250,7 +250,7 @@ public final class XcfaProcedure {
 
 		private final LinkedHashMap<VarDecl<?>, Direction> params;
 		private final Map<VarDecl<?>, Optional<LitExpr<?>>> localVars;
-		private final Map<VarDecl<?>, VarDecl<?>> paramLut;
+		private final Map<VarDecl<?>, VarDecl<?>> altVars;
 		private final List<XcfaLocation> locs;
 		private final List<XcfaEdge> edges;
 		private Type retType;
@@ -265,7 +265,7 @@ public final class XcfaProcedure {
 		private Builder() {
 			params = new LinkedHashMap<>();
 			localVars = new LinkedHashMap<>();
-			paramLut = new LinkedHashMap<>();
+			altVars = new LinkedHashMap<>();
 			paramInitLocs = new LinkedHashMap<>();
 			locs = new ArrayList<>();
 			edges = new ArrayList<>();
@@ -326,16 +326,16 @@ public final class XcfaProcedure {
 		public void createParam(final Direction direction, final VarDecl<?> param) {
 			checkNotBuilt();
 			params.put(param, direction);
-			if (direction != Direction.OUT) paramLut.put(param, XcfaProcedure.getParamCopy(param));
 		}
 
-		public void addParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel) {
+		public void addParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder callingProcedure) {
 			checkNotBuilt();
+
 			List<XcfaLabel> paramAssignments = new ArrayList<>();
 			int i = 0;
 			for (Map.Entry<VarDecl<?>, Direction> entry : params.entrySet()) {
 				if (entry.getValue() != Direction.OUT)
-					paramAssignments.add(XcfaLabel.Stmt(AssignStmt.create(entry.getKey(), XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i), paramLut))));
+					paramAssignments.add(XcfaLabel.Stmt(AssignStmt.create(entry.getKey(), XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i), callingProcedure.altVars))));
 				++i;
 			}
 			if (paramAssignments.isEmpty()) {
@@ -356,6 +356,7 @@ public final class XcfaProcedure {
 		public void createVar(final VarDecl<?> var, final LitExpr<?> initValue) {
 			checkNotBuilt();
 			localVars.put(var, Optional.ofNullable(initValue));
+			altVars.put(var, XcfaProcedure.getAltVar(var));
 		}
 
 		// rtype
@@ -464,6 +465,7 @@ public final class XcfaProcedure {
 			checkState(finalLoc.getOutgoingEdges().isEmpty(), "Final location cannot have outgoing edges.");
 			if (errorLoc != null)
 				checkState(errorLoc.getOutgoingEdges().isEmpty(), "Error location cannot have outgoing edges.");
+			//initLocalVars();
 			XcfaProcedure procedure = new XcfaProcedure(this, process);
 			built = procedure;
 			return procedure;

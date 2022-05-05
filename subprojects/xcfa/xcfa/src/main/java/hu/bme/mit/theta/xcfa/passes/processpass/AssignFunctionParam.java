@@ -6,7 +6,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 
 import java.util.*;
@@ -20,7 +19,7 @@ import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getNonModifiedVar
 public class AssignFunctionParam extends ProcessPass {
 	private final List<XcfaEdge> edgesToAdd = new ArrayList<>();
 	private final List<XcfaEdge> edgesToRemove = new ArrayList<>();
-	private final Map<XcfaProcedure.Builder, Set<XcfaLabel.ProcedureCallXcfaLabel>> procedureCalls = new LinkedHashMap<>();
+	private final Map<XcfaProcedure.Builder, Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaProcedure.Builder>> procedureCalls = new LinkedHashMap<>();
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
@@ -35,7 +34,7 @@ public class AssignFunctionParam extends ProcessPass {
 						XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) label;
 						Optional<XcfaProcedure.Builder> procedureOpt = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callLabel.getProcedure())).findAny();
 						procedureOpt.ifPresent(calledProcedure -> {
-							assignParams(callLabel, calledProcedure);
+							assignParams(procedure, callLabel, calledProcedure);
 							if (calledProcedure.getRetType() != null) {
 								List<XcfaLabel> retStmts = getRetStmts(callLabel, calledProcedure);
 								assignReturns(procedure, edge, retStmts);
@@ -73,9 +72,9 @@ public class AssignFunctionParam extends ProcessPass {
 		return newBuilder;
 	}
 
-	private void assignParams(XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder calledProcedure) {
-		Set<XcfaLabel.ProcedureCallXcfaLabel> callLabels = procedureCalls.getOrDefault(calledProcedure, new HashSet<>());
-		callLabels.add(callLabel);
+	private void assignParams(XcfaProcedure.Builder callingProcedure, XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder calledProcedure) {
+		Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaProcedure.Builder> callLabels = procedureCalls.getOrDefault(calledProcedure, new HashMap<>());
+		callLabels.put(callLabel, callingProcedure);
 		procedureCalls.put(calledProcedure, callLabels);
 	}
 
