@@ -59,13 +59,16 @@ instructionRow
     ;
 
 instruction
+    :   simpleInstruction
+    |   exclusiveInstruction
+    ;
+
+simpleInstruction
     :
     |   mov
     |   arithmetic
     |   load
-    |   loadExclusive
     |   store
-    |   storeExclusive
     |   cmp
     |   branch
     |   branchRegister
@@ -73,44 +76,49 @@ instruction
     |   fence
     ;
 
-mov locals [String rD, int size]
-    :   MovInstruction r32 = register32 Comma expr32 {$rD = $r32.id; $size = 32;}
-    |   MovInstruction r64 = register64 Comma expr64 {$rD = $r64.id; $size = 64;}
+exclusiveInstruction
+    :   loadExclusive
+    |   storeExclusive
     ;
 
-cmp locals [String rD, int size]
-    :   CmpInstruction r32 = register32 Comma expr32 {$rD = $r32.id; $size = 32;}
-    |   CmpInstruction r64 = register64 Comma expr64 {$rD = $r64.id; $size = 64;}
+mov
+    :   MovInstruction r32 = register32 Comma expr32 #mov32
+    |   MovInstruction r64 = register64 Comma expr64 #mov64
     ;
 
-arithmetic locals [String rD, String rV, int size]
-    :   arithmeticInstruction rD32 = register32 Comma rV32 = register32 Comma expr32 {$rD = $rD32.id; $rV = $rV32.id; $size = 32;}
-    |   arithmeticInstruction rD64 = register64 Comma rV64 = register64 Comma expr64 {$rD = $rD64.id; $rV = $rV64.id; $size = 64;}
+cmp
+    :   CmpInstruction r32 = register32 Comma expr32 #cmp32
+    |   CmpInstruction r64 = register64 Comma expr64 #cmp64
     ;
 
-load  locals [String rD, int size]
-    :   loadInstruction rD32 = register32 Comma LBracket address (Comma offset)? RBracket {$rD = $rD32.id; $size = 32;}
-    |   loadInstruction rD64 = register64 Comma LBracket address (Comma offset)? RBracket {$rD = $rD64.id; $size = 64;}
+arithmetic
+    :   arithmeticInstruction rD32 = register32 Comma rV32 = register32 Comma expr32 #arith32
+    |   arithmeticInstruction rD64 = register64 Comma rV64 = register64 Comma expr64 #arith64
     ;
 
-loadExclusive  locals [String rD, int size]
-    :   loadExclusiveInstruction rD32 = register32 Comma LBracket address (Comma offset)? RBracket {$rD = $rD32.id; $size = 32;}
-    |   loadExclusiveInstruction rD64 = register64 Comma LBracket address (Comma offset)? RBracket {$rD = $rD64.id; $size = 64;}
+load
+    :   loadInstruction rD32 = register32 Comma LBracket address (Comma offset)? RBracket #load32
+    |   loadInstruction rD64 = register64 Comma LBracket address (Comma offset)? RBracket #load64
     ;
 
-store  locals [String rV, int size]
-    :   storeInstruction rV32 = register32 Comma LBracket address (Comma offset)? RBracket {$rV = $rV32.id; $size = 32;}
-    |   storeInstruction rV64 = register64 Comma LBracket address (Comma offset)? RBracket {$rV = $rV64.id; $size = 64;}
+loadExclusive
+    :   loadExclusiveInstruction rD32 = register32 Comma LBracket address (Comma offset)? RBracket #loadX32
+    |   loadExclusiveInstruction rD64 = register64 Comma LBracket address (Comma offset)? RBracket #loadX64
     ;
 
-storeExclusive  locals [String rS, String rV, int size]
-    :   storeExclusiveInstruction rS32 = register32 Comma rV32 = register32 Comma LBracket address (Comma offset)? RBracket {$rS = $rS32.id; $rV = $rV32.id; $size = 32;}
-    |   storeExclusiveInstruction rS32 = register32 Comma rV64 = register64 Comma LBracket address (Comma offset)? RBracket {$rS = $rS32.id; $rV = $rV64.id; $size = 64;}
+store
+    :   storeInstruction rV32 = register32 Comma LBracket address (Comma offset)? RBracket #store32
+    |   storeInstruction rV64 = register64 Comma LBracket address (Comma offset)? RBracket #store64
     ;
 
-fence locals [String opt]
-    :   Fence {$opt = "SY";}
-    |   Fence FenceOpt {$opt = $FenceOpt.text;}
+storeExclusive
+    :   storeExclusiveInstruction rS32 = register32 Comma rV32 = register32 Comma LBracket address (Comma offset)? RBracket #storeX32
+    |   storeExclusiveInstruction rS32 = register32 Comma rV64 = register64 Comma LBracket address (Comma offset)? RBracket #storeX64
+    ;
+
+fence
+    :   Fence
+    |   Fence FenceOpt
     ;
 
 branch
@@ -127,49 +135,49 @@ branchLabel
     ;
 
 loadInstruction locals [String mo]
-    :   LDR     {$mo = MO_RX;}
-    |   LDAR    {$mo = MO_ACQ;}
+    :   LDR     {$mo = "MO_RX";}
+    |   LDAR    {$mo = "MO_ACQ";}
     ;
 
 loadExclusiveInstruction locals [String mo]
-    :   LDXR    {$mo = MO_RX;}
-    |   LDAXR   {$mo = MO_ACQ;}
+    :   LDXR    {$mo = "MO_RX";}
+    |   LDAXR   {$mo = "MO_ACQ";}
     ;
 
 storeInstruction locals [String mo]
-    :   STR     {$mo = MO_RX;}
-    |   STLR    {$mo = MO_REL;}
+    :   STR     {$mo = "MO_RX";}
+    |   STLR    {$mo = "MO_REL";}
     ;
 
 storeExclusiveInstruction locals [String mo]
-    :   STXR    {$mo = MO_RX;}
-    |   STLXR   {$mo = MO_REL;}
+    :   STXR    {$mo = "MO_RX";}
+    |   STLXR   {$mo = "MO_REL";}
     ;
 
-arithmeticInstruction locals [IOpBin op]
-    :   ADD     { $op = IOpBin.PLUS; }
+arithmeticInstruction
+    :   ADD #addInstruction
 //    |   ADDS    { throw new RuntimeException("Instruction ADDS is not implemented"); }
-    |   SUB     { $op = IOpBin.MINUS; }
+    |   SUB #subInstruction
 //    |   SUBS    { throw new RuntimeException("Instruction SUBS is not implemented"); }
 //    |   ADC     { throw new RuntimeException("Instruction ADC is not implemented"); }
 //    |   ADCS    { throw new RuntimeException("Instruction ADCS is not implemented"); }
 //    |   SBC     { throw new RuntimeException("Instruction SBC is not implemented"); }
 //    |   SBCS    { throw new RuntimeException("Instruction SBCS is not implemented"); }
-    |   AND     { $op = IOpBin.AND; }
-    |   ORR     { $op = IOpBin.OR; }
-    |   EOR     { $op = IOpBin.XOR; }
+    |   AND #andInstruction
+    |   ORR #orrInstruction
+    |   EOR #eorInstruction
 //    |   BIC     { throw new RuntimeException("Instruction BIC is not implemented"); }
 //    |   ORN     { throw new RuntimeException("Instruction ORN is not implemented"); }
 //    |   EON     { throw new RuntimeException("Instruction EON is not implemented"); }
     ;
 
-branchCondition returns [COpBin op]
-    :   EQ {$op = COpBin.EQ;}
-    |   NE {$op = COpBin.NEQ;}
-    |   GE {$op = COpBin.GTE;}
-    |   LE {$op = COpBin.LTE;}
-    |   GT {$op = COpBin.GT;}
-    |   LT {$op = COpBin.LT;}
+branchCondition
+    :   EQ #eqCondition
+    |   NE #neCondition
+    |   GE #geCondition
+    |   LE #leCondition
+    |   GT #gtCondition
+    |   LT #ltCondition
 //    |   CS
 //    |   HS
 //    |   CC
@@ -183,26 +191,34 @@ branchCondition returns [COpBin op]
 //    |   AL
     ;
 
-branchRegInstruction returns [COpBin op]
-    :   CBZ     {$op = COpBin.EQ;}
-    |   CBNZ    {$op = COpBin.NEQ;}
+branchRegInstruction
+    :   CBZ  #cbzInstruction
+    |   CBNZ #cbnzInstruction
     ;
 
-shiftOperator returns [IOpBin op]
-    :   LSL { $op = IOpBin.L_SHIFT; }
-    |   LSR { $op = IOpBin.R_SHIFT; }
-    |   ASR { $op = IOpBin.AR_SHIFT; }
-    ;
+//shiftOperator
+//    :   LSL #lslOperator
+//    |   LSR #lsrOperator
+//    |   ASR #asrOperator
+//    ;
 
 expr64
     :   expressionRegister64
-    |   expressionImmediate
+    |   expressionImmediate64
     |   expressionConversion
     ;
 
 expr32
     :   expressionRegister32
-    |   expressionImmediate
+    |   expressionImmediate32
+    ;
+
+expressionImmediate64
+    :   expressionImmediate
+    ;
+
+expressionImmediate32
+    :   expressionImmediate
     ;
 
 offset
@@ -210,20 +226,20 @@ offset
     |   expressionConversion
     ;
 
-shift
-    :   Comma shiftOperator immediate
-    ;
+//shift
+//    :   Comma shiftOperator immediate
+//    ;
 
 expressionRegister64
-    :   register64 shift?
+    :   register64// shift?
     ;
 
 expressionRegister32
-    :   register32 shift?
+    :   register32// shift?
     ;
 
 expressionImmediate
-    :   immediate shift?
+    :   immediate// shift?
     ;
 
 expressionConversion

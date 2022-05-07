@@ -1,7 +1,10 @@
 grammar Cat;
 
 mcm
-    :   (QUOT? NAME QUOT?)? scopeBody EOF
+    :   name? scopeBody EOF
+    ;
+
+name:   (QUOT? NAME+ QUOT?)
     ;
 
 scopeBody

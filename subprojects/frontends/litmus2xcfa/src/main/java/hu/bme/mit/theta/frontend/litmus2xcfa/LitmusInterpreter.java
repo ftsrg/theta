@@ -16,5 +16,24 @@
 
 package hu.bme.mit.theta.frontend.litmus2xcfa;
 
+import hu.bme.mit.theta.frontend.litmus2xcfa.dsl.LitmusAArch64;
+import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Lexer;
+import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Parser;
+import hu.bme.mit.theta.xcfa.model.XCFA;
+import org.antlr.v4.runtime.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 public class LitmusInterpreter {
+
+    public XCFA getXcfa(final InputStream from) throws IOException {
+        final CharStream input = CharStreams.fromStream(from);
+
+        final Lexer lexer = new LitmusAArch64Lexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final LitmusAArch64 visitor = new LitmusAArch64();
+
+        return new LitmusAArch64Parser(tokens).main().accept(visitor);
+    }
 }

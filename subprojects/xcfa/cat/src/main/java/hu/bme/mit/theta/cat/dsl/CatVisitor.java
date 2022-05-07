@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.cat.dsl.CatDslManager.setupCatAntlr;
+import static java.lang.Character.isUpperCase;
 
 public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     private MCM mcm;
@@ -56,16 +56,13 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
         return mcm;
     }
 
-    private MCMRelation getOrCreateRelation(final String name) {
-        int arity = unaryRelations.contains(name) ? 1 : 2;
+    private MCMRelation getOrCreateRelation(final String name, final int arity) {
         if(paramAssignment.containsKey(name)) {
             final MCMRelation mcmRelation = paramAssignment.get(name);
-            checkArgument(arity == mcmRelation.getArity(), "Arity of relations do not match!");
             return mcmRelation;
         }
         if(relations.containsKey(name)) {
             final MCMRelation mcmRelation = relations.get(name);
-            checkArgument(arity == mcmRelation.getArity(), "Arity of relations do not match!");
             return mcmRelation;
         }
         final MCMRelation relation = new MCMRelation(arity, name);
@@ -75,7 +72,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
 
     @Override
     public MCMRelation visitMcm(CatParser.McmContext ctx) {
-        this.mcm = new MCM(ctx.NAME() == null ? "Unnamed" : ctx.NAME().getText());
+        this.mcm = new MCM(ctx.name() == null ? "Unnamed" : ctx.name().getText());
         return super.visitMcm(ctx);
     }
 
@@ -128,22 +125,25 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
 
     @Override
     public MCMRelation visitExprToid(CatParser.ExprToidContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Toid(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, 2);
+        relation.addRule(new Toid(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprRange(CatParser.ExprRangeContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Range(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, 1);
+        relation.addRule(new Range(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprDomain(CatParser.ExprDomainContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Domain(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, 1);
+        relation.addRule(new Domain(rel));
         return relation;
     }
 
@@ -206,15 +206,16 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
             name = letAndDefinitionContext.NAME().getText();
             relations.remove(name);
         }
-        final MCMRelation relation = getOrCreateRelation(ctx.NAME().getText());
-        relation.addRule(new Self(eCtx.accept(this)));
+        MCMRelation rel = eCtx.accept(this);
+        final MCMRelation relation = getOrCreateRelation(ctx.NAME().getText(), rel.getArity());
+        relation.addRule(new Self(rel));
         for (CatParser.LetAndDefinitionContext letAndDefinitionContext : ctx.letAndDefinition()) {
             name = letAndDefinitionContext.NAME().getText();
             eCtx = letAndDefinitionContext.e;
+            rel = eCtx.accept(this);
 
-
-            final MCMRelation relationAnd = getOrCreateRelation(name);
-            relationAnd.addRule(new Self(eCtx.accept(this)));
+            final MCMRelation relationAnd = getOrCreateRelation(name, rel.getArity());
+            relationAnd.addRule(new Self(rel));
         }
 
         return relation;
@@ -222,69 +223,78 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
 
     @Override
     public MCMRelation visitExprCartesian(CatParser.ExprCartesianContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new CartesianProduct(ctx.e1.accept(this), ctx.e2.accept(this)));
+        MCMRelation rel = ctx.e1.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new CartesianProduct(rel, ctx.e2.accept(this)));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprBasic(CatParser.ExprBasicContext ctx) {
-        return getOrCreateRelation(ctx.NAME().getText());
+        return getOrCreateRelation(ctx.NAME().getText(), isUpperCase(ctx.NAME().getText().charAt(0)) ? 1 : 2);
     }
 
     @Override
     public MCMRelation visitExprMinus(CatParser.ExprMinusContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Difference(ctx.e1.accept(this), ctx.e2.accept(this)));
+        MCMRelation rel = ctx.e1.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Difference(rel, ctx.e2.accept(this)));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprUnion(CatParser.ExprUnionContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Union(ctx.e1.accept(this), ctx.e2.accept(this)));
+        MCMRelation rel = ctx.e1.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Union(rel, ctx.e2.accept(this)));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprComposition(CatParser.ExprCompositionContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Sequence(ctx.e1.accept(this), ctx.e2.accept(this)));
+        MCMRelation rel = ctx.e1.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Sequence(rel, ctx.e2.accept(this)));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprIntersection(CatParser.ExprIntersectionContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Intersection(ctx.e1.accept(this), ctx.e2.accept(this)));
+        MCMRelation rel = ctx.e1.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Intersection(rel, ctx.e2.accept(this)));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprTransitive(CatParser.ExprTransitiveContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new TransitiveClosure(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new TransitiveClosure(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprComplement(CatParser.ExprComplementContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Complement(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Complement(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprInverse(CatParser.ExprInverseContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new Inverse(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new Inverse(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprTransRef(CatParser.ExprTransRefContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new ReflexiveTransitiveClosure(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new ReflexiveTransitiveClosure(rel));
         return relation;
     }
 
@@ -295,14 +305,15 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
 
     @Override
     public MCMRelation visitExprOptional(CatParser.ExprOptionalContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
-        relation.addRule(new IdentityClosure(ctx.e.accept(this)));
+        MCMRelation rel = ctx.e.accept(this);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, rel.getArity());
+        relation.addRule(new IdentityClosure(rel));
         return relation;
     }
 
     @Override
     public MCMRelation visitExprNull(CatParser.ExprNullContext ctx) {
-        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++);
+        final MCMRelation relation = getOrCreateRelation("rule_" + ruleNameCnt++, 1);
         relation.addRule(new EmptyRelation());
         return relation;
     }

@@ -225,7 +225,7 @@ public class ExecutionGraph {
                     else {
                         subexprs.add(Xor(co.get(TupleN.of(i, j)).getRef(), co.get(TupleN.of(j, i)).getRef()));
                         for (final int k : idList) {
-                            if (model.get(W, Tuple.of(k)) && i != k && j != k) {
+                            if (model.get(W, Tuple.of(k)) && model.get(loc, Tuple.of(i, k)) && i != k && j != k) {
                                 final RefExpr<BoolType> a = co.get(TupleN.of(i, k)).getRef();
                                 final RefExpr<BoolType> b = co.get(TupleN.of(k, j)).getRef();
                                 final RefExpr<BoolType> c = co.get(TupleN.of(i, j)).getRef();

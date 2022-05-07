@@ -21,13 +21,14 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -101,8 +102,18 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
         }
 
         final ExecutionGraph executionGraph = new ExecutionGraph(builder, mcm, solver);
+        Set<ConstDecl<?>> vars1 = new LinkedHashSet<>();
+        for (Expr<BoolType> assertion : solver.getAssertions()) {
+            vars1.addAll(ExprUtils.getConstants(assertion));
+        }
+        for (ConstDecl<?> varDecl : vars1) {
+//            System.out.println("(declare-fun " + varDecl.getName() + " () Bool)");
+        }
+        for (Expr<BoolType> assertion : solver.getAssertions()) {
+//            System.out.println("(assert " + assertion + " )");
+        }
 
-//        executionGraph.print();
+//        executionGraph.print(vars);
         while(executionGraph.nextSolution()) {
             executionGraph.print(vars);
             System.out.println("====");

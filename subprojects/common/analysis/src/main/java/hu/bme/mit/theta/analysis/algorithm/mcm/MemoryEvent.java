@@ -27,7 +27,7 @@ public class MemoryEvent {
 
     public MemoryEvent(int varId, VarDecl<?> var, MemoryEventType type) {
         this.var = var;
-        checkArgument(varId < 0, "Meta event IDs must be negative!");
+        checkArgument(varId <= 0, "Meta event IDs must be negative!");
         this.varId = varId;
         this.type = type;
     }

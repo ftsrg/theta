@@ -44,13 +44,13 @@ assertionListExpectation
     :   AssertionListExpectationTest Colon AssertionNot? AssertionExists Semi
     ;
 
-assertionCompare returns [COpBin op]
-    :   (Equals | EqualsEquals) {$op = COpBin.EQ;}
-    |   NotEquals               {$op = COpBin.NEQ;}
-    |   GreaterEquals           {$op = COpBin.GTE;}
-    |   LessEquals              {$op = COpBin.LTE;}
-    |   Less                    {$op = COpBin.LT;}
-    |   Greater                 {$op = COpBin.GT;}
+assertionCompare
+    :   (Equals | EqualsEquals) #eqCompare
+    |   NotEquals               #neqCompare
+    |   GreaterEquals           #geqCompare
+    |   LessEquals              #leqCompare
+    |   Less                    #ltCompare
+    |   Greater                 #gtCompare
     ;
 
 threadId returns [int id]

@@ -573,7 +573,7 @@ public abstract class XcfaLabel {
 	public static <T extends Type, R extends Type> StoreXcfaLabel<T> Store(final VarDecl<T> global, final VarDecl<R> local, final boolean atomic, final String ordering) {
 		TypeUtils.checkAllTypesEqual(global.getRef(), local.getRef());
 		final VarDecl<T> localT = cast(local, global.getType());
-		return StoreXcfaLabel.of(global, localT, atomic, ordering);
+		return StoreXcfaLabel.of(localT, global, atomic, ordering);
 	}
 
 	public static SequenceLabel Sequence(final List<XcfaLabel> labels) {

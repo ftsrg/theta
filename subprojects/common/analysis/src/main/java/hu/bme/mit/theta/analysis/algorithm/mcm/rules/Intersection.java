@@ -37,6 +37,19 @@ public class Intersection extends BinaryMCMRule{
         encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), And(e1.get(TupleN.of(i, j)).getRef(), e2.get(TupleN.of(i, j)).getRef())));
     }
 
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
+        if(e1.getArity() == 1) {
+            final EventConstantLookup e1Events = e1.encodeEvents(idList, encodedRelationWrapper);
+            final EventConstantLookup e2Events = e2.encodeEvents(idList, encodedRelationWrapper);
+            for (final int i : idList) {
+                ConstDecl<BoolType> constDecl = resultEvents.get(TupleN.of(i));
+                encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), And(e1Events.get(TupleN.of(i)).getRef(), e2Events.get(TupleN.of(i)).getRef())));
+            }
+        } else {
+            super.encodeEvents(idList, resultEvents, encodedRelationWrapper);
+        }
+    }
+
 
     @Override
     public String toString() {
