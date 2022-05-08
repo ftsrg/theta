@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 
-	public class ProcedureLocation {
+	public static class ProcedureLocation {
 		private final XcfaLocation location;
 		private final Map<VarDecl<?>, VarDecl<?>> varLut;
 
@@ -54,8 +54,13 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
-			XcfaSTState<?>.ProcedureLocation that = (XcfaSTState<?>.ProcedureLocation) o;
+			XcfaSTState.ProcedureLocation that = (XcfaSTState.ProcedureLocation) o;
 			return location == that.location && varLut.entrySet().stream().noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(location, varLut);
 		}
 	}
 
@@ -146,11 +151,11 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	public XcfaSTState<S> withState(final S succState) {
-		return new XcfaSTState<S>(this.locationStack, succState);
+		return new XcfaSTState<>(this.locationStack, succState);
 	}
 
 	public XcfaSTState<S> withLocation(final XcfaLocation location) {
-		XcfaSTState<S> state = new XcfaSTState<S>(this.locationStack, this.globalState);
+		XcfaSTState<S> state = new XcfaSTState<>(this.locationStack, this.globalState);
 		ProcedureLocation top = state.locationStack.pop();
 		state.locationStack.push(top.withLocation(location));
 		return state;

@@ -47,7 +47,7 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 	private P stateVarsIntoPrec(P globalPrec, XcfaSTState<S> state) {
 		if (globalPrec instanceof ExplPrec) {
 			ExplPrec explPrec = (ExplPrec) globalPrec;
-			for (XcfaSTState<S>.ProcedureLocation procedureLocation : state.getCurrentStack()) {
+			for (XcfaSTState.ProcedureLocation procedureLocation : state.getCurrentStack()) {
 				Set<VarDecl<?>> localVars = new HashSet<>();
 				final Set<VarDecl<?>> precVars = explPrec.getVars();
 				procedureLocation.getUsedVars().forEach((var, localVar) -> {

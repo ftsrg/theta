@@ -233,7 +233,7 @@ public final class XcfaProcedure {
 		if (varLut == null) {
 			varLut = new LinkedHashMap<>();
 			for (VarDecl<?> var : getLocalVarMap().keySet()) {
-				varLut.put(var, Decls.Var(var.getName() + callCount, var.getType()));
+				varLut.put(var, Decls.Var(var.getName() + "@" + callCount, var.getType()));
 			}
 			++callCount;
 			instantiatedVars.put(locationStack, varLut);
@@ -465,7 +465,6 @@ public final class XcfaProcedure {
 			checkState(finalLoc.getOutgoingEdges().isEmpty(), "Final location cannot have outgoing edges.");
 			if (errorLoc != null)
 				checkState(errorLoc.getOutgoingEdges().isEmpty(), "Error location cannot have outgoing edges.");
-			//initLocalVars();
 			XcfaProcedure procedure = new XcfaProcedure(this, process);
 			built = procedure;
 			return procedure;
