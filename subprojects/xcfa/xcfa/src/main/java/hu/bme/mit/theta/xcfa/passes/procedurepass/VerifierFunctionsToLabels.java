@@ -16,16 +16,12 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedurepass;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,23 +41,16 @@ public class VerifierFunctionsToLabels extends ProcedurePass {
 				for (XcfaLabel label : edge.getLabels()) {
 					if (label == e.get()) {
 						final String procName = ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure();
-						if (procName.startsWith("__VERIFIER_nondet")) {
-							Collection<VarDecl<?>> usedVars = LabelUtils.getVars(label);
-							VarDecl<?> havocedVar = usedVars.iterator().next();
-							XcfaLabel havocLabel = XcfaLabel.StmtXcfaLabel.of(HavocStmt.of(havocedVar));
-							collect.add(havocLabel);
-						}
-						else {
-							switch (procName) {
-								case atomicBegin:
-									collect.add(AtomicBegin());
-									break;
-								case atomicEnd:
-									collect.add(AtomicEnd());
-									break;
-								default:
-									collect.add(label);
-							}
+						switch (procName) {
+							case atomicBegin:
+								collect.add(AtomicBegin());
+								break;
+							case atomicEnd:
+								collect.add(AtomicEnd());
+								break;
+							default:
+								collect.add(label);
+								break;
 						}
 					} else collect.add(label);
 				}

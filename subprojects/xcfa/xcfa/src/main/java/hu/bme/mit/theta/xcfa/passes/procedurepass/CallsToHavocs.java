@@ -39,19 +39,14 @@ public class CallsToHavocs extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		boolean found = true;
-		while (found) {
-			found = false;
-			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get()).findAny();
-				if (e.isPresent()) {
-					List<XcfaLabel> collect = new ArrayList<>();
-					for (XcfaLabel stmt : edge.getLabels()) {
-						if (stmt == e.get()) { // TODO: all _OUT_ params should be havoced!
-							if (!((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure().startsWith("__VERIFIER_nondet")) {
-								throw new UnsupportedOperationException("Non-nondet function call used as nondet!");
-							}
-							Expr<?> expr = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getParams().get(0);
+		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get()).findAny();
+			if (e.isPresent()) {
+				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) e.get();
+				List<XcfaLabel> collect = new ArrayList<>();
+				for (XcfaLabel stmt : edge.getLabels()) {
+					if (stmt == callLabel && callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
+						for (Expr<?> expr : callLabel.getParams()) {
 							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
 							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
 							if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
@@ -59,17 +54,16 @@ public class CallsToHavocs extends ProcedurePass {
 								FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
 								collect.add(Stmt(havoc));
 							}
-						} else collect.add(stmt);
-					}
-					XcfaEdge xcfaEdge;
-					xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
-					builder.removeEdge(edge);
-					builder.addEdge(xcfaEdge);
-					found = true;
-					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-						FrontendMetadata.create(xcfaEdge, s, o);
-					});
+						}
+					} else collect.add(stmt);
 				}
+				XcfaEdge xcfaEdge;
+				xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
+				builder.removeEdge(edge);
+				builder.addEdge(xcfaEdge);
+				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+					FrontendMetadata.create(xcfaEdge, s, o);
+				});
 			}
 		}
 
