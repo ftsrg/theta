@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class XcfaProcessInitFunc<S extends ExprState, P extends Prec> implements InitFunc<XcfaProcessState<S>, P> {
@@ -37,6 +38,6 @@ public class XcfaProcessInitFunc<S extends ExprState, P extends Prec> implements
     @Override
     public Collection<? extends XcfaProcessState<S>> getInitStates(P prec) {
         final XcfaLocation initLoc = process.getMainProcedure().getInitLoc();
-        return initFunc.getInitStates(prec).stream().map(it -> new XcfaProcessState<S>(it, initLoc)).collect(Collectors.toList());
+        return initFunc.getInitStates(prec).stream().map(it -> new XcfaProcessState<S>(it, initLoc, Map.of())).collect(Collectors.toList());
     }
 }

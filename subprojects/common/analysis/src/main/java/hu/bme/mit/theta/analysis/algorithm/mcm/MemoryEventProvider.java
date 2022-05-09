@@ -17,18 +17,20 @@
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.core.decl.VarDecl;
 
 import java.util.Collection;
 
-@FunctionalInterface
-public interface MemoryEventProvider<A extends Action> {
+public interface MemoryEventProvider<S extends State, A extends Action> {
 
     /**
-     * Gets the memory events of a given action.
+     * Gets the memory events of a given action from a given state.
      *
      * @param action
      * @return
      */
-    Collection<MemoryEvent> getMemoryEventsOf(A action);
+    Collection<MemoryEvent> getMemoryEventsOf(S state, A action);
+    int getVarId(VarDecl<?> var);
 
 }

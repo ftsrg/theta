@@ -18,15 +18,13 @@ package hu.bme.mit.theta.xcfa.analysis.impl.multithread;
 
 import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEventProvider;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-public class XcfaProcessMemEventProvider implements MemoryEventProvider<XcfaProcessAction> {
+public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryEventProvider<XcfaProcessState<S>, XcfaProcessAction> {
     private final Map<VarDecl<?>, Integer> varIdLookup;
     private final int idOffset;
 
@@ -43,27 +41,36 @@ public class XcfaProcessMemEventProvider implements MemoryEventProvider<XcfaProc
     }
 
     @Override
-    public Collection<MemoryEvent> getMemoryEventsOf(XcfaProcessAction action) {
+    public Collection<MemoryEvent> getMemoryEventsOf(XcfaProcessState<S> state, XcfaProcessAction action) {
         final Collection<MemoryEvent> memoryEvents = new ArrayList<>();
+        Map<VarDecl<?>, Set<VarDecl<?>>> dependencies = new LinkedHashMap<>(state.getDependencies());
         for (final XcfaLabel label : action.getEdge().getLabels()) {
-            collectMemoryEvents(memoryEvents, label);
+            collectMemoryEvents(memoryEvents, label, dependencies);
         }
         return memoryEvents;
     }
 
-    private void collectMemoryEvents(Collection<MemoryEvent> memoryEvents, XcfaLabel label) {
+    @Override
+    public int getVarId(VarDecl<?> var) {
+        return getId(var);
+    }
+
+    private void collectMemoryEvents(Collection<MemoryEvent> memoryEvents, XcfaLabel label, Map<VarDecl<?>, Set<VarDecl<?>>> dependencies) {
         if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal();
-            memoryEvents.add(new MemoryEvent(getId(global), global, MemoryEvent.MemoryEventType.WRITE));
+            VarDecl<?> local = ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal();
+            memoryEvents.add(new MemoryEvent(getId(global), global, local, dependencies.get(local), MemoryEvent.MemoryEventType.WRITE));
         } else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal();
-            memoryEvents.add(new MemoryEvent(getId(global), global, MemoryEvent.MemoryEventType.READ));
+            VarDecl<?> local = ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal();
+            memoryEvents.add(new MemoryEvent(getId(global), global, local, Set.of(), MemoryEvent.MemoryEventType.READ));
         } else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-            memoryEvents.add(new MemoryEvent(0, null, MemoryEvent.MemoryEventType.FENCE));
+            memoryEvents.add(new MemoryEvent(0, null, null, Set.of(), MemoryEvent.MemoryEventType.FENCE));
         } else if (label instanceof XcfaLabel.SequenceLabel) {
             for (XcfaLabel xcfaLabel : ((XcfaLabel.SequenceLabel) label).getLabels()) {
-                collectMemoryEvents(memoryEvents, xcfaLabel);
+                collectMemoryEvents(memoryEvents, xcfaLabel, dependencies);
             }
         }
+        label.accept(new XcfaLabelDependencyCollector(), dependencies);
     }
 }

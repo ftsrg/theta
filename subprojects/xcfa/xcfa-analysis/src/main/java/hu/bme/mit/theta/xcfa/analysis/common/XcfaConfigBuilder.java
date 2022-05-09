@@ -415,7 +415,7 @@ public class XcfaConfigBuilder {
 				explPrec = ExplPrec.of(XcfaUtils.getVars(xcfa));
 				break;
 			case ALLGLOBALS:
-				explPrec = ExplPrec.of(xcfa.getGlobalVars());
+				explPrec = ExplPrec.of(xcfa.getvars());
 				break;
 			case EVERYTHING:
 				predPrec = XcfaPrec.collectAssumes(xcfa).getGlobalPrec();
@@ -435,7 +435,7 @@ public class XcfaConfigBuilder {
 			case ALLVARS:
 				return XcfaPrec.create(ExplPrec.of(XcfaUtils.getVars(xcfa)));
 			case ALLGLOBALS:
-				return XcfaPrec.create(ExplPrec.of(xcfa.getGlobalVars()));
+				return XcfaPrec.create(ExplPrec.of(xcfa.getvars()));
 			default:
 				throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
 						domain + " domain");

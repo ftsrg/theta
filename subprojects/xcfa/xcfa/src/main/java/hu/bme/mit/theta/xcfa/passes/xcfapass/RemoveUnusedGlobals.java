@@ -45,10 +45,10 @@ public class RemoveUnusedGlobals extends XcfaPass {
 				}
 			}
 		}
-		Set<Map.Entry<VarDecl<?>, Optional<LitExpr<?>>>> newGlobals = builder.getGlobalVars().entrySet().stream().filter(varDeclOptionalEntry -> usedGlobals.contains(varDeclOptionalEntry.getKey())).collect(Collectors.toSet());
-		builder.getGlobalVars().clear();
+		Set<Map.Entry<VarDecl<?>, Optional<LitExpr<?>>>> newGlobals = builder.getvars().entrySet().stream().filter(varDeclOptionalEntry -> usedGlobals.contains(varDeclOptionalEntry.getKey())).collect(Collectors.toSet());
+		builder.getvars().clear();
 		for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> newGlobal : newGlobals) {
-			builder.addGlobalVar(newGlobal.getKey(), newGlobal.getValue().orElse(null));
+			builder.addvar(newGlobal.getKey(), newGlobal.getValue().orElse(null));
 		}
 		return builder;
 	}

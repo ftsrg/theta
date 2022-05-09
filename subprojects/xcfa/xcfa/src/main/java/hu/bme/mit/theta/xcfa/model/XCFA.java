@@ -43,14 +43,14 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
  */
 @SuppressWarnings("unused")
 public final class XCFA {
-	private final ImmutableMap<VarDecl<? extends Type>, Optional<LitExpr<?>>> globalVars;
+	private final ImmutableMap<VarDecl<? extends Type>, Optional<LitExpr<?>>> vars;
 	private final ImmutableList<XcfaProcess> processes;
 	private final XcfaProcess mainProcess;
 	private final String name;
 	private final boolean dynamic;
 
 	private XCFA(Builder builder) {
-		globalVars = ImmutableMap.copyOf(builder.globalVars);
+		vars = ImmutableMap.copyOf(builder.vars);
 		processes = builder.processes.stream().map(builder1 -> builder1.build(this)).collect(ImmutableList.toImmutableList());
 		mainProcess = builder.mainProcess.build(this);
 		name = builder.name;
@@ -142,20 +142,20 @@ public final class XCFA {
 
 	public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
 		StringBuilder ret = new StringBuilder("digraph G{\n");
-		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
-			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar).get()).append("\";\n");
+		for (VarDecl<? extends Type> var : getvars()) {
+			ret.append("\"var ").append(var).append(" = ").append(getInitValue(var).get()).append("\";\n");
 		}
 		ret.append(getMainProcess().toDot(cexLocations, cexEdges));
 		ret.append("}\n");
 		return ret.toString();
 	}
 
-	public List<VarDecl<? extends Type>> getGlobalVars() {
-		return List.copyOf(globalVars.keySet());
+	public List<VarDecl<? extends Type>> getvars() {
+		return List.copyOf(vars.keySet());
 	}
 
 	public Optional<LitExpr<?>> getInitValue(final VarDecl<?> varDecl) {
-		return globalVars.get(varDecl);
+		return vars.get(varDecl);
 	}
 
 	public List<XcfaProcess> getProcesses() {
@@ -167,7 +167,7 @@ public final class XCFA {
 	}
 
 	public static final class Builder {
-		private final Map<VarDecl<?>, Optional<LitExpr<?>>> globalVars;
+		private final Map<VarDecl<?>, Optional<LitExpr<?>>> vars;
 		private final List<XcfaProcess.Builder> processes;
 		private XcfaProcess.Builder mainProcess;
 		private String name;
@@ -176,7 +176,7 @@ public final class XCFA {
 		private XCFA built = null;
 
 		private Builder() {
-			globalVars = new LinkedHashMap<>();
+			vars = new LinkedHashMap<>();
 			processes = new ArrayList<>();
 		}
 
@@ -184,14 +184,14 @@ public final class XCFA {
 			checkState(built == null, "An XCFA was already built.");
 		}
 
-		// globalVars
-		public Map<VarDecl<?>, Optional<LitExpr<?>>> getGlobalVars() {
-			return globalVars;
+		// vars
+		public Map<VarDecl<?>, Optional<LitExpr<?>>> getvars() {
+			return vars;
 		}
 
-		public void addGlobalVar(final VarDecl<?> var, final LitExpr<?> initValue) {
+		public void addvar(final VarDecl<?> var, final LitExpr<?> initValue) {
 			checkNotBuilt();
-			globalVars.put(var, Optional.ofNullable(initValue));
+			vars.put(var, Optional.ofNullable(initValue));
 		}
 
 		// processes

@@ -17,17 +17,23 @@
 package hu.bme.mit.theta.xcfa.analysis.impl.multithread;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
+import java.util.Map;
+import java.util.Set;
+
 public class XcfaProcessState<S extends ExprState> implements ExprState {
     private final S state;
     private final XcfaLocation location;
+    private final Map<VarDecl<?>, Set<VarDecl<?>>> dependencies;
 
-    public XcfaProcessState(final S state, final XcfaLocation location) {
+    public XcfaProcessState(final S state, final XcfaLocation location, final Map<VarDecl<?>, Set<VarDecl<?>>> dependencies) {
         this.state = state;
         this.location = location;
+        this.dependencies = dependencies;
     }
 
     @Override
@@ -46,5 +52,9 @@ public class XcfaProcessState<S extends ExprState> implements ExprState {
 
     public XcfaLocation getLocation() {
         return location;
+    }
+
+    public Map<VarDecl<?>, Set<VarDecl<?>>> getDependencies() {
+        return Map.copyOf(dependencies);
     }
 }

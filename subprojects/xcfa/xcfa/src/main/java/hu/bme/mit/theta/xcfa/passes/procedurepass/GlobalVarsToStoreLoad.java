@@ -41,7 +41,7 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Load;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
-public class GlobalVarsToStoreLoad extends ProcedurePass {
+public class varsToStoreLoad extends ProcedurePass {
 
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {

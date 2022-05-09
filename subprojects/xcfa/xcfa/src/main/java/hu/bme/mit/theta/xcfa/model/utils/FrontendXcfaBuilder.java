@@ -122,7 +122,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 				System.err.println("WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable");
 				continue;
 			}
-			builder.addGlobalVar(globalDeclaration.get2(), type.getNullValue());
+			builder.addvar(globalDeclaration.get2(), type.getNullValue());
 			if (globalDeclaration.get1().getInitExpr() != null) {
 				initStmtList.add(Stmt(Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().getType()), cast(type.castTo(globalDeclaration.get1().getInitExpr().getExpression()), globalDeclaration.get2().getType()))));
 			} else {

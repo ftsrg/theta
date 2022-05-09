@@ -81,7 +81,7 @@ public class XcfaPassManager {
 //				new HavocPromotion(),
 //				new AssignmentChainRemoval(),
 //				new NoReadVarRemovalPass(),
-//				new GlobalVarsToStoreLoad(),
+//				new varsToStoreLoad(),
 				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new RemoveDeadEnds()

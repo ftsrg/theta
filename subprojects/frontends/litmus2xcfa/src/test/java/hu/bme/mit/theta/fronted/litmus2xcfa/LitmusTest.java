@@ -70,7 +70,7 @@ public class LitmusTest {
         final LitmusInterpreter litmusInterpreter = new LitmusInterpreter();
         final XCFA xcfa = litmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
 
-        Assert.assertEquals(globalsNum, xcfa.getGlobalVars().size());
+        Assert.assertEquals(globalsNum, xcfa.getvars().size());
         Assert.assertEquals(threadNum, xcfa.getProcesses().size());
         final List<XcfaProcess> processes = xcfa.getProcesses();
         for (int i = 0; i < processes.size(); i++) {
@@ -95,7 +95,8 @@ public class LitmusTest {
         final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplTransFunc.create(solver)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(mcmFilename).getFile()));
-        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, List.of(), solver, mcm);
+        final List<MemoryEvent> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent(memEventProvider.getVarId(it), it, null,  Set.of(), MemoryEvent.MemoryEventType.WRITE)).collect(Collectors.toList());
+        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, List.of(), solver, mcm);
         mcmChecker.check(ExplPrec.empty());
     }
 }

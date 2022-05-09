@@ -38,7 +38,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.*;
 
 public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
-    private final Map<String, Tuple2<VarDecl<BvType>, Optional<LitExpr<BvType>>>> globalVars;
+    private final Map<String, Tuple2<VarDecl<BvType>, Optional<LitExpr<BvType>>>> vars;
     private final Map<Integer, Map<String, VarDecl<BvType>>> regLookup;
     private final List<Integer> threadIds;
     private final Map<Integer, Map<String, VarDecl<BvType>>> globalAddresses;
@@ -58,7 +58,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         lastLocation = new LinkedHashMap<>();
         locations = new LinkedHashMap<>();
         builders = new LinkedHashMap<>();
-        globalVars = new LinkedHashMap<>();
+        vars = new LinkedHashMap<>();
         threadIds = new ArrayList<>();
         locationVisitor = new LocationVisitor();
     }
@@ -79,7 +79,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             else if(regDeclCtx != null && regDeclCtx.Amp() == null) {
                 final int id = regDeclCtx.threadId().id;
                 globalAddresses.putIfAbsent(id, new LinkedHashMap<>());
-                globalAddresses.get(id).put(regDeclCtx.register64().getText(), getGlobalFromName(regDeclCtx.location().getText(), null, builder));
+                globalAddresses.get(id).put(regDeclCtx.register64().getText(), getGlobalFromName(regDeclCtx.location().getText(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64), builder));
             } else {
                 throw new UnsupportedOperationException("Only registers storing addresses of global variables are supported!");
             }
@@ -117,12 +117,12 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
     }
 
     private VarDecl<BvType> getGlobalFromName(final String name, final LitExpr<BvType> litExpr, final XCFA.Builder builder) {
-        if(!globalVars.containsKey(name)) {
+        if(!vars.containsKey(name)) {
             VarDecl<BvType> var = Var(name, BvType(64));
-            builder.addGlobalVar(var, litExpr);
-            globalVars.put(name, Tuple2.of(var, Optional.ofNullable(litExpr)));
+            builder.addvar(var, litExpr);
+            vars.put(name, Tuple2.of(var, Optional.ofNullable(litExpr)));
         }
-        return globalVars.get(name).get1();
+        return vars.get(name).get1();
     }
 
     private VarDecl<BvType> getOrCreateVar(final String name, final int size) {

@@ -58,6 +58,6 @@ public class XcfaNewOperandsAutoExpl implements XcfaAutoExpl {
 									);
 						}
 				);
-		return new NewOperandsAutoExpl(Set.copyOf(xcfa.getGlobalVars()), declToOps, 0);
+		return new NewOperandsAutoExpl(Set.copyOf(xcfa.getvars()), declToOps, 0);
 	}
 }

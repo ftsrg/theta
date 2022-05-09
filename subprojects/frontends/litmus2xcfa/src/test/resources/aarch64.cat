@@ -44,12 +44,13 @@
  * location and then consequently defines the fr relation using co and
  * rf.
  *)
+include "stdlib.cat"
 include "cos.cat"
 
 (*
  * Include aarch64fences.cat so that barriers show up in generated diagrams.
  *)
-include "aarch64fences.cat"
+(* include "aarch64fences.cat" *)
 
 (*
  * As a restriction of the model, all observers are limited to the same

@@ -29,12 +29,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ExecutionGraphBuilder {
     private final Datalog program;
-    private final Datalog.Relation poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U;
+    private final Datalog.Relation initWrite, poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data;
     private final Map<String, Datalog.Relation> tags;
     private int lastCnt = 1;
 
     public ExecutionGraphBuilder(final Collection<String> tags) {
         program = Datalog.createProgram();
+        initWrite = program.createRelation("IW", 1);
         poRaw = program.createRelation("po_raw", 2);
         intRaw = program.createRelation("int_raw", 2);
         locRaw = program.createRelation("loc_raw", 2);
@@ -42,10 +43,12 @@ public class ExecutionGraphBuilder {
         W = program.createRelation("W", 1);
         F = program.createRelation("F", 1);
         U = program.createRelation("U", 1);
+        data = program.createRelation("data", 2);
         this.tags = new LinkedHashMap<>();
         tags.forEach(s -> this.tags.put(s, program.createRelation(s, 1)));
 
         poCalculated = program.createTransitive("po", poRaw);
+        Datalog.Variable var1 = program.getVariable(), var2 = program.getVariable();
         intCalculated = program.createCommonSource("int", intRaw);
         locCalculated = program.createCommonSource("loc", locRaw);
     }
@@ -61,6 +64,11 @@ public class ExecutionGraphBuilder {
         final int id = lastCnt++;
         if(lastNode > 0) {
             poRaw.addFact(arg(lastNode, id));
+        } else {
+            for (TupleN<DatalogArgument> element : initWrite.getElements()) {
+                int iw = ((GenericDatalogArgument<Integer>) element.get(0)).getContent();
+                poRaw.addFact(arg(iw, id));
+            }
         }
         for (final String tag : tags) {
             final Datalog.Relation relation = checkNotNull(this.tags.get(tag));
@@ -84,6 +92,19 @@ public class ExecutionGraphBuilder {
 
     public int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
         return addMemoryEvent(processId, varId, lastNode, W, tags);
+    }
+
+    public void addDependency(int read, int write) {
+        data.addFact(arg(read, write));
+    }
+
+    public int addInitialWrite(final int varId) {
+        final int id = lastCnt++;
+        locRaw.addFact(arg(varId, id));
+        initWrite.addFact(arg(id));
+        W.addFact(arg(id));
+        U.addFact(arg(id));
+        return id;
     }
 
     public int addFence(final int processId, final int lastNode, final Collection<String> tags) {
@@ -114,6 +135,10 @@ public class ExecutionGraphBuilder {
 
     public Datalog.Relation getLocCalculated() {
         return locCalculated;
+    }
+
+    public Datalog.Relation getData() {
+        return data;
     }
 
     public Datalog.Relation getR() {

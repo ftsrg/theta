@@ -28,7 +28,7 @@ import java.util.Set;
 public class XcfaUtils {
 
 	public static Collection<VarDecl<?>> getVars(XCFA xcfa) {
-		Set<VarDecl<?>> ret = new LinkedHashSet<>(xcfa.getGlobalVars());
+		Set<VarDecl<?>> ret = new LinkedHashSet<>(xcfa.getvars());
 		xcfa.getProcesses().forEach(process -> {
 			ret.addAll(process.getParams());
 			ret.addAll(process.getThreadLocalVars());

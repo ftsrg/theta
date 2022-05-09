@@ -18,30 +18,18 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 
+import java.util.Set;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class MemoryEvent {
-    private final int varId;
-    private final VarDecl<?> var;
-    private final MemoryEventType type;
-
-    public MemoryEvent(int varId, VarDecl<?> var, MemoryEventType type) {
-        this.var = var;
+public record MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, MemoryEventType type) {
+    public MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, MemoryEventType type) {
         checkArgument(varId <= 0, "Meta event IDs must be negative!");
+        this.var = var;
+        this.localVar = localVar;
+        this.dependencies = dependencies;
         this.varId = varId;
         this.type = type;
-    }
-
-    public int getVarId() {
-        return varId;
-    }
-
-    public MemoryEventType getType() {
-        return type;
-    }
-
-    public VarDecl<?> getVar() {
-        return var;
     }
 
     public enum MemoryEventType {

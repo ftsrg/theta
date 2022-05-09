@@ -20,10 +20,10 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public class XcfaProcessTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaProcessState<S>, XcfaProcessAction, P> {
     private final TransFunc<S, ExprAction, P> transFunc;
@@ -36,11 +36,15 @@ public class XcfaProcessTransFunc<S extends ExprState, P extends Prec> implement
     @Override
     public Collection<? extends XcfaProcessState<S>> getSuccStates(final XcfaProcessState<S> state, final XcfaProcessAction action, final P prec) {
         final Collection<XcfaProcessState<S>> states = new ArrayList<>();
-        for (XcfaEdge it : state.getLocation().getOutgoingEdges()) {
-            for (S succState : transFunc.getSuccStates(state.getState(), action, prec)) {
-                states.add(new XcfaProcessState<>(succState, it.getTarget()));
-            }
+        Map<VarDecl<?>, Set<VarDecl<?>>> dependencies = new LinkedHashMap<>(state.getDependencies());
+        for (XcfaLabel label : action.getEdge().getLabels()) {
+            label.accept(new XcfaLabelDependencyCollector(), dependencies);
+        }
+
+        for (S succState : transFunc.getSuccStates(state.getState(), action, prec)) {
+            states.add(new XcfaProcessState<>(succState, action.getEdge().getTarget(), dependencies));
         }
         return states;
     }
+
 }

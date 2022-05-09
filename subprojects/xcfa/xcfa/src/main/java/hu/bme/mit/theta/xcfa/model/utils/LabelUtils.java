@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 public class LabelUtils {
 
 	public static boolean isGlobal(XcfaLabel label, XCFA xcfa) {
-		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
+		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> xcfa.getvars().contains(varDecl));
 	}
 
 	public static Collection<VarDecl<?>> getVars(XcfaLabel xcfaLabel) {

@@ -74,7 +74,7 @@ final class XtaSpecification implements Scope {
 		final Env env = new Env();
 
 		defineAllTypes(env);
-		createAllGlobalVariables(system, env);
+		createAllvariables(system, env);
 
 		for (final String processId : processIds) {
 			final Symbol symbol = symbolTable.get(processId).get();
@@ -127,7 +127,7 @@ final class XtaSpecification implements Scope {
 		}
 	}
 
-	private void createAllGlobalVariables(final XtaSystem system, final Env env) {
+	private void createAllvariables(final XtaSystem system, final Env env) {
 		for (final XtaVariableSymbol variable : variables) {
 			if (variable.isConstant()) {
 				// do nothing; will be defined lazily on first occurrence
