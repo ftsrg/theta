@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplTransFunc;
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
@@ -82,21 +83,21 @@ public class LitmusTest {
     @Test
     public void check() throws IOException {
         final Solver solver = Z3SolverFactory.getInstance().createSolver();
-        final LitmusInterpreter litmusInterpreter = new LitmusInterpreter();
-        final XCFA xcfa = litmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
+        final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
         final List<XcfaProcess> processes = xcfa.getProcesses();
         final List<Integer> processIds = new ArrayList<>();
         for (int i = 0; i < processes.size(); i++) {
             processIds.add(i*-1 - 1);
         }
-        //MemoryEventProvider<A> memoryEventProvider, MultiprocLTS<S, A> multiprocLTS, MultiprocInitFunc<S, P> multiprocInitFunc, MultiprocTransFunc<S, A, P> multiprocTransFunc, Collection<Integer> pids, Collection<String> tags, Solver
+
         final XcfaProcessMemEventProvider memEventProvider = new XcfaProcessMemEventProvider(processes.size());
         final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplTransFunc.create(solver)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(mcmFilename).getFile()));
         final List<MemoryEvent> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent(memEventProvider.getVarId(it), it, null,  Set.of(), MemoryEvent.MemoryEventType.WRITE)).collect(Collectors.toList());
-        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, List.of(), solver, mcm);
+
+        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, List.of(), solver, mcm, NullLogger.getInstance());
         mcmChecker.check(ExplPrec.empty());
     }
 }

@@ -20,14 +20,24 @@ import hu.bme.mit.theta.frontend.litmus2xcfa.dsl.LitmusAArch64;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Lexer;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Parser;
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Lexer;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class LitmusInterpreter {
 
-    public XCFA getXcfa(final InputStream from) throws IOException {
+    public static XCFA getXcfa(final File from) throws IOException {
+        try(FileInputStream fis = new FileInputStream(from)) {
+            return getXcfa(fis);
+        }
+    }
+    public static XCFA getXcfa(final InputStream from) throws IOException {
         final CharStream input = CharStreams.fromStream(from);
 
         final Lexer lexer = new LitmusAArch64Lexer(input);

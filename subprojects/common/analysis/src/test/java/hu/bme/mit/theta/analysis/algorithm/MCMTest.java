@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.mcm.*;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Inverse;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Sequence;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Union;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.Test;
@@ -66,7 +67,7 @@ public class MCMTest {
 				new MultiprocLTS(Map.of(-1, new TestLTS(), -2, new TestLTS())),
 				new MultiprocInitFunc(Map.of(-1, new TestInitFunc(thrd1_loc1), -2, new TestInitFunc(thrd2_loc1))),
 				new MultiprocTransFunc(Map.of(-1, new TestTransFunc(), -2, new TestTransFunc())),
-				List.of(-1, -2), List.of(), List.of(), Z3SolverFactory.getInstance().createSolver(), mcm);
+				List.of(-1, -2), List.of(), List.of(), Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
 
 		mcmChecker.check(new TestPrec());
 	}

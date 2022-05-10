@@ -37,4 +37,12 @@ public record MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<Va
         WRITE,
         FENCE
     }
+
+    @Override
+    public String toString() {
+        return type + "{" +
+                ", var=" + var +
+                ", localVar=" + localVar +
+                '}';
+    }
 }

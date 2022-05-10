@@ -348,4 +348,17 @@ public class ExecutionGraph {
             all.move();
         }
     }
+
+    public Collection<Tuple> getRf() {
+        final Cursor<Tuple, TruthValue> cursor = model.getAll(rf);
+        cursor.move();
+        final Collection<Tuple> ret = new ArrayList<>();
+        while(!cursor.isTerminated()) {
+            if(cursor.getValue().must()) {
+                ret.add(cursor.getKey());
+            }
+            cursor.move();
+        }
+        return ret;
+    }
 }

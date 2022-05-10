@@ -29,7 +29,6 @@ import java.util.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class ExecutionGraphVisualizer implements Runnable{
-    private final ExecutionGraph executionGraph;
     private final List<Map<Decl<?>, LitExpr<?>>> solutions;
     private int currentSolution = 0;
     private final Map<Integer, Tuple2<Double, Double>> events;
@@ -39,11 +38,9 @@ public class ExecutionGraphVisualizer implements Runnable{
     private static final Set<String> alwaysShow = Set.of("rf", "R", "W", "F");
 
     public ExecutionGraphVisualizer(
-            final ExecutionGraph executionGraph,
             final Collection<Map<Decl<?>, LitExpr<?>>> solutions,
             final List<List<Integer>> threadEvents,
             final List<Integer> initialWrites) {
-        this.executionGraph = executionGraph;
         this.solutions = List.copyOf(solutions);
         this.events = new LinkedHashMap<>();
         int threadNum = Integer.max(threadEvents.size(), initialWrites.size());
@@ -78,7 +75,7 @@ public class ExecutionGraphVisualizer implements Runnable{
     @Override
     public void run() {
         final JFrame frame = new JFrame("Execution Graph Visualizer - Theta");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setSize(1024, 768);
         final JPanel mainPanel = new JPanel(new BorderLayout());
         frame.setContentPane(mainPanel);
@@ -121,16 +118,7 @@ public class ExecutionGraphVisualizer implements Runnable{
             relationPanel.add(jCheckBox);
         });
         mainPanel.add(scrollpanel, BorderLayout.WEST);
-
-
         frame.setVisible(true);
-        while(true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private Color getColor(String relation) {
@@ -224,7 +212,7 @@ public class ExecutionGraphVisualizer implements Runnable{
         }
 
         private void drawLabelForEvent(String s, int x, int y, Graphics g) {
-            ((Graphics2D)g).setFont(g.getFont().deriveFont(getWidth()/100.0f/4 * 15));
+            g.setFont(g.getFont().deriveFont((float) (0.5 * Double.min(eventHeight*getWidth() / 100.0f, eventWidth*getWidth() / 100.0f))));
             FontMetrics fontMetrics = g.getFontMetrics();
             ((Graphics2D)g).setStroke(new BasicStroke(getWidth()/100.0f/4));
             g.drawString(s, x - fontMetrics.stringWidth(s) / 2, y + fontMetrics.getHeight()/4);

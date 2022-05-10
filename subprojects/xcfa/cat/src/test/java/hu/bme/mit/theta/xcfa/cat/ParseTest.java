@@ -51,7 +51,7 @@ public class ParseTest {
                 {"/syntax-test/function.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/procedure.cat", 2, Set.of("po", "rf")},
                 {"/syntax-test/include-test.cat", 5, Set.of("po", "rf")},
-                {"/sc.cat", 2, Set.of("po", "rf", "co", "rmw", "ext", "id")},
+                {"/sc.cat", 2, Set.of("po", "rf", "co", "rmw", "int", "U", "id")},
                 {"/aarch64.cat", 3, null},
                 {"/ppc.cat", 5, null},
                 {"/X86.cat", 3, null},
@@ -61,13 +61,17 @@ public class ParseTest {
 
     @Test
     public void test() throws IOException {
-        final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(filepath).getFile()));
-        assertEquals(constraintNumber, mcm.getConstraints().size());
-        Map<String, MCMRelation> relations = new LinkedHashMap<>();
-        mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
-        if(allowedPrimitives != null) {
-            final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRule() == null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            assertEquals(allowedPrimitives, primitives.keySet());
+        try {
+            final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(filepath).getFile()));
+            assertEquals(constraintNumber, mcm.getConstraints().size());
+            Map<String, MCMRelation> relations = new LinkedHashMap<>();
+            mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
+            if (allowedPrimitives != null) {
+                final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRule() == null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                assertEquals(allowedPrimitives, primitives.keySet());
+            }
+        } catch (IOException e) {
+            throw new IOException(filepath, e);
         }
     }
 }

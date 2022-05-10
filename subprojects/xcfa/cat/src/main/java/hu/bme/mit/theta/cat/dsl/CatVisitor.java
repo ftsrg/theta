@@ -74,12 +74,14 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     @Override
     public MCMRelation visitMcm(CatParser.McmContext ctx) {
         this.mcm = new MCM(ctx.name() == null ? "Unnamed" : ctx.name().getText());
+
+        final File file = new File(this.file.getParent() + File.separator + "stdlib.cat");
+        visitIncludedFile(file);
+
         return super.visitMcm(ctx);
     }
 
-    @Override
-    public MCMRelation visitIncludeFile(CatParser.IncludeFileContext ctx) {
-        final File file = new File(this.file.getParent() + File.separator + ctx.file.getText());
+    private void visitIncludedFile(File file) {
         if(file.exists() && file.isFile()) {
             try {
                 final CatParser.McmContext context = setupCatAntlr(file);
@@ -88,6 +90,12 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
                 e.printStackTrace();
             }
         } else throw new RuntimeException(new FileNotFoundException(file.getAbsolutePath()));
+    }
+
+    @Override
+    public MCMRelation visitIncludeFile(CatParser.IncludeFileContext ctx) {
+        final File file = new File(this.file.getParent() + File.separator + ctx.file.getText());
+        visitIncludedFile(file);
         return null;
     }
 

@@ -19,15 +19,9 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 import java.util.*;
@@ -37,7 +31,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.READ;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.WRITE;
 
-public class MCMChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
+public class MCMChecker<S extends State, A extends Action, P extends Prec> {
     private final MemoryEventProvider<S, A> memoryEventProvider;
     private final MultiprocLTS<S, A> multiprocLTS;
     private final MultiprocInitFunc<S, P> multiprocInitFunc;
@@ -47,6 +41,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
     private final Collection<String> tags;
     private final Solver solver;
     private final MCM mcm;
+    private final Logger logger;
 
     public MCMChecker(
             final MemoryEventProvider<S, A> memoryEventProvider,
@@ -57,7 +52,8 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
             final Collection<MemoryEvent> initialWrites,
             final Collection<String> tags,
             final Solver solver,
-            final MCM mcm) {
+            final MCM mcm,
+            final Logger logger) {
         this.initialWrites = initialWrites;
         this.tags = tags;
         checkArgument(pids.stream().noneMatch(i -> i >= 0), "Meta event IDs must be negative!");
@@ -69,35 +65,38 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
         this.pids = pids;
         this.solver = solver;
         this.mcm = mcm;
+        this.logger = logger;
     }
 
-    @Override
-    public SafetyResult<S, A> check(final P prec) {
+    public MCMSafetyResult check(final P prec) {
+        logger.write(Logger.Level.MAINSTEP, "Starting verification\n");
         final ExecutionGraphBuilder builder = new ExecutionGraphBuilder(tags);
 
-        final List<Integer> initialWriteIds = new ArrayList<>();
+        final List<Integer> initialWriteEvents = new ArrayList<>();
 
-        final Map<Integer, VarDecl<?>> vars = new LinkedHashMap<>();
         for (MemoryEvent initialWrite : initialWrites) {
             int i = builder.addInitialWrite(initialWrite.varId());
-            vars.put(i, initialWrite.var());
-            initialWriteIds.add(i);
+            initialWriteEvents.add(i);
         }
+        logger.write(Logger.Level.SUBSTEP, "|-- Added initial writes: " + initialWriteEvents.size() + "\n");
 
-        List<List<Integer>> events = new ArrayList<>();
-
+        final List<List<Integer>> events = new ArrayList<>();
 
         for (final int pid : pids) {
-            Map<MemoryEvent, Integer> reads = new LinkedHashMap<>();
-            List<Integer> list = new ArrayList<>();
-            events.add(list);
+            logger.write(Logger.Level.SUBSTEP, "|-- Starting exploration of pid " + pid + "\n");
+            final Map<MemoryEvent, Integer> reads = new LinkedHashMap<>();
+            final List<Integer> eventList = new ArrayList<>();
+            events.add(eventList);
+
             final Collection<? extends S> initStates = multiprocInitFunc.getInitStates(pid, prec);
             checkState(initStates.size() == 1);
+
             int lastId = 0;
             S state = null;
             for (final S initState : initStates) { // will only execute once
                 state = initState;
             }
+
             while(true) {
                 final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
                 if (enabledActionsFor.size() == 0) break;
@@ -105,6 +104,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
                 for (final A a : enabledActionsFor) { // will execute only once
                     final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(state, a);
                     for (MemoryEvent memoryEvent : memoryEventsOf) {
+                        logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event " + memoryEvent + "\n");
                         lastId = switch (memoryEvent.type()) {
                             case READ -> builder.addRead(pid, memoryEvent.varId(), lastId, Set.of());
                             case WRITE -> builder.addWrite(pid, memoryEvent.varId(), lastId, Set.of());
@@ -120,8 +120,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
                             }
                         }
 
-                        if (memoryEvent.var() != null) vars.put(lastId, memoryEvent.var());
-                        list.add(lastId);
+                        eventList.add(lastId);
                     }
                     final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, state, a, prec);
                     checkState(succStates.size() == 1);
@@ -133,39 +132,44 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> imple
         }
 
         final ExecutionGraph executionGraph = new ExecutionGraph(builder, mcm, solver);
-        Set<ConstDecl<?>> vars1 = new LinkedHashSet<>();
-        for (Expr<BoolType> assertion : solver.getAssertions()) {
-            vars1.addAll(ExprUtils.getConstants(assertion));
-        }
-        for (ConstDecl<?> varDecl : vars1) {
-//            System.out.println("(declare-fun " + varDecl.getName() + " () Bool)");
-        }
-        for (Expr<BoolType> assertion : solver.getAssertions()) {
-            System.out.println("(assert " + assertion + " )");
-        }
+        final Collection<Map<Decl<?>, LitExpr<?>>> solutions = new ArrayList<>();
 
-        Collection<Map<Decl<?>, LitExpr<?>>> solutions = new ArrayList<>();
-
-        executionGraph.print(vars);
-        int i = 0;
+        logger.write(Logger.Level.SUBSTEP, "|-- Successfully built execution graph\n");
         while(executionGraph.nextSolution(solutions)) {
-            executionGraph.print(vars);
-            System.out.println("====");
-            i++;
+            logger.write(Logger.Level.SUBSTEP, "|-- Found new solution: " + executionGraph.getRf() + "\n");
         }
         executionGraph.reset();
 
-        System.out.println("Found " + i + " distinct executions.");
+        logger.write(Logger.Level.RESULT, "Number of executions: " + solutions.size() + "\n");
+        logger.write(Logger.Level.MAINSTEP, "Verification ended\n");
+        return new MCMSafetyResult(solutions, events, initialWriteEvents);
+    }
 
-        final ExecutionGraphVisualizer visualizer = new ExecutionGraphVisualizer(executionGraph, solutions, events, initialWriteIds);
-        Thread t = new Thread(visualizer);
-        t.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public static class MCMSafetyResult {
+        private final Collection<Map<Decl<?>, LitExpr<?>>> solutions;
+        private final List<List<Integer>> events;
+        private final List<Integer> initialWriteEvents;
+
+        public MCMSafetyResult(Collection<Map<Decl<?>, LitExpr<?>>> solutions, List<List<Integer>> events, List<Integer> initialWriteEvents) {
+            this.solutions = solutions;
+            this.events = events;
+            this.initialWriteEvents = initialWriteEvents;
         }
 
-        return null;
+        public Collection<Map<Decl<?>, LitExpr<?>>> getSolutions() {
+            return solutions;
+        }
+
+        public List<List<Integer>> getEvents() {
+            return events;
+        }
+
+        public List<Integer> getInitialWriteEvents() {
+            return initialWriteEvents;
+        }
+
+        public void visualize() {
+            new Thread(new ExecutionGraphVisualizer(solutions, events, initialWriteEvents)).start();
+        }
     }
 }

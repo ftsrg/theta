@@ -20,6 +20,7 @@ include(
         "xcfa/xcfa-analysis",
         "xcfa/xcfa-cli",
         "xcfa/cat",
+        "xcfa/litmus-cli",
 
         "xta/xta",
         "xta/xta-analysis",
