@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ExecutionGraphBuilder {
     private final Datalog program;
-    private final Datalog.Relation initWrite, poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data;
+    private final Datalog.Relation initWrite, poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
     private final Map<String, Datalog.Relation> tags;
     private int lastCnt = 1;
 
@@ -44,6 +44,10 @@ public class ExecutionGraphBuilder {
         F = program.createRelation("F", 1);
         U = program.createRelation("U", 1);
         data = program.createRelation("data", 2);
+        addr = program.createRelation("addr", 2);
+        ctrl  = program.createRelation("ctrl", 2);
+        rmw = program.createRelation("rmw", 2);
+        amo = program.createRelation("amo", 2);
         this.tags = new LinkedHashMap<>();
         tags.forEach(s -> this.tags.put(s, program.createRelation(s, 1)));
 
@@ -155,6 +159,23 @@ public class ExecutionGraphBuilder {
 
     public Datalog.Relation getU() {
         return U;
+    }
+
+
+    public Datalog.Relation getAddr() {
+        return addr;
+    }
+
+    public Datalog.Relation getCtrl() {
+        return ctrl;
+    }
+
+    public Datalog.Relation getRmw() {
+        return rmw;
+    }
+
+    public Datalog.Relation getAmo() {
+        return amo;
     }
 
     public Map<String, Datalog.Relation> getTags() {

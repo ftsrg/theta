@@ -45,7 +45,7 @@ public class ExecutionGraph {
     private final EncodedRelationWrapper encodedRelationWrapper;
     private final ModelStore store;
     private Model model;
-    private final Relation<Boolean> po, _int, loc, id, data, R, W, F, U;
+    private final Relation<Boolean> po, _int, ext, addr, ctrl, rmw, amo, loc, id, data, R, W, F, U;
     private final Map<String, Relation<Boolean>> tags;
     private final Relation<TruthValue> rf, co;
     private final long staticOnlyCommit;
@@ -55,6 +55,11 @@ public class ExecutionGraph {
         encodedRelationWrapper = new EncodedRelationWrapper(solver);
         po = new Relation<>("po", 2, false);
         _int = new Relation<>("_int", 2, false);
+        ext = new Relation<>("ext", 2, false);
+        addr = new Relation<>("addr", 2, false);
+        ctrl = new Relation<>("ctrl", 2, false);
+        rmw = new Relation<>("rmw", 2, false);
+        amo = new Relation<>("amo", 2, false);
         loc = new Relation<>("loc", 2, false);
         id = new Relation<>("id", 2, false);
         data = new Relation<>("data", 2, false);
@@ -65,19 +70,30 @@ public class ExecutionGraph {
         rf = new Relation<>("rf", 2, TruthValue.UNKNOWN);
         co = new Relation<>("co", 2, TruthValue.UNKNOWN);
         this.tags = new LinkedHashMap<>();
-        store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, loc, id, data, R, W, F, U, rf, co)));
+        store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, ext, addr, ctrl, rmw, amo, loc, id, data, R, W, F, U, rf, co)));
         model = store.createModel();
 
         builder.getPoCalculated().getElements().forEach(elem -> model.put(po, datalog2tup(elem), true));
         builder.getLocCalculated().getElements().forEach(elem -> model.put(loc, datalog2tup(elem), true));
         builder.getIntCalculated().getElements().forEach(elem -> model.put(_int, datalog2tup(elem), true));
         builder.getData().getElements().forEach(elem -> model.put(data, datalog2tup(elem), true));
+        builder.getAddr().getElements().forEach(elem -> model.put(addr, datalog2tup(elem), true));
+        builder.getCtrl().getElements().forEach(elem -> model.put(ctrl, datalog2tup(elem), true));
+        builder.getRmw().getElements().forEach(elem -> model.put(rmw, datalog2tup(elem), true));
+        builder.getAmo().getElements().forEach(elem -> model.put(amo, datalog2tup(elem), true));
         builder.getR().getElements().forEach(elem -> model.put(R, datalog2tup(elem), true));
         builder.getW().getElements().forEach(elem -> model.put(W, datalog2tup(elem), true));
         builder.getF().getElements().forEach(elem -> model.put(F, datalog2tup(elem), true));
+        Collection<TupleN<DatalogArgument>> intElements = builder.getIntCalculated().getElements();
         builder.getU().getElements().forEach(elem -> {
             model.put(U, datalog2tup(elem), true);
             model.put(id, Tuple.of(datalog2tup(elem).get(0), datalog2tup(elem).get(0)), true);
+            builder.getU().getElements().forEach(elem2 -> {
+                TupleN<Integer> tuple = tupleN(elem.get(0), elem2.get(0));
+                if(!intElements.contains(tuple)) {
+                    model.put(ext, tup(tuple), true);
+                }
+            });
         });
         builder.getTags().forEach((key, value) -> {
             final Relation<Boolean> rel = new Relation<>(key, 1, false);
@@ -123,6 +139,12 @@ public class ExecutionGraph {
         return false;
     }
 
+    private TupleN<Integer> tupleN(final DatalogArgument a, final DatalogArgument b) {
+        final int i = ((GenericDatalogArgument<Integer>) a).getContent();
+        final int j = ((GenericDatalogArgument<Integer>) b).getContent();
+        return TupleN.of(i, j);
+    }
+
     private Tuple datalog2tup(final TupleN<DatalogArgument> from) {
         final int i = ((GenericDatalogArgument<Integer>) from.get(0)).getContent();
         if(from.arity() == 1) return Tuple.of(i);
@@ -152,6 +174,11 @@ public class ExecutionGraph {
         EventConstantLookup _int = getOrCreate(encodedRelationWrapper, idList, "int", false);
         EventConstantLookup loc = getOrCreate(encodedRelationWrapper, idList, "loc", false);
         EventConstantLookup data = getOrCreate(encodedRelationWrapper, idList, "data", false);
+        EventConstantLookup rmw = getOrCreate(encodedRelationWrapper, idList, "rmw", false);
+        EventConstantLookup amo = getOrCreate(encodedRelationWrapper, idList, "amo", false);
+        EventConstantLookup ctrl = getOrCreate(encodedRelationWrapper, idList, "ctrl", false);
+        EventConstantLookup ext = getOrCreate(encodedRelationWrapper, idList, "ext", false);
+        EventConstantLookup addr = getOrCreate(encodedRelationWrapper, idList, "addr", false);
         EventConstantLookup id = getOrCreate(encodedRelationWrapper, idList, "id", false);
         EventConstantLookup rf = getOrCreate(encodedRelationWrapper, idList, "rf", false);
         EventConstantLookup co = getOrCreate(encodedRelationWrapper, idList, "co", false);
@@ -172,6 +199,11 @@ public class ExecutionGraph {
         encodeRelation(encodedRelationWrapper, idList, this.loc, loc);
         encodeRelation(encodedRelationWrapper, idList, this.id, id);
         encodeRelation(encodedRelationWrapper, idList, this.data, data);
+        encodeRelation(encodedRelationWrapper, idList, this.rmw, rmw);
+        encodeRelation(encodedRelationWrapper, idList, this.amo, amo);
+        encodeRelation(encodedRelationWrapper, idList, this.ctrl, ctrl);
+        encodeRelation(encodedRelationWrapper, idList, this.ext, ext);
+        encodeRelation(encodedRelationWrapper, idList, this.addr, addr);
 
         for (final int i : idList) {
             addRfConstraints(encodedRelationWrapper, idList, rf, i);
