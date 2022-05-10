@@ -32,7 +32,7 @@ public class ExecutionGraphVisualizer implements Runnable{
     private final List<Map<Decl<?>, LitExpr<?>>> solutions;
     private int currentSolution = 0;
     private final Map<Integer, Tuple2<Double, Double>> events;
-    private final double eventWidth, eventHeight;
+    private final double eventWidth, eventHeight, separatorY;
     private final Map<String, Color> relations;
     private final Map<String, Integer> possibleRelations;
     private static final Set<String> alwaysShow = Set.of("rf", "R", "W", "F");
@@ -49,6 +49,7 @@ public class ExecutionGraphVisualizer implements Runnable{
         double dY = 90.0 / (instructionNum + 1);
         eventWidth = dX * 0.45;
         eventHeight = dY * 0.45;
+        separatorY = dY + 5.0 + eventHeight;
         for (int i = 1; i <= threadEvents.size(); i++) {
             double x = i * dX + 5.0;
             for (int j = 1; j <= threadEvents.get(i-1).size(); j++) {
@@ -138,6 +139,21 @@ public class ExecutionGraphVisualizer implements Runnable{
             ((Graphics2D)g).setStroke(new BasicStroke(strokeSize));
             ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+            double separatorY = ExecutionGraphVisualizer.this.separatorY * getHeight() / 100.0f;
+            int width = getWidth();
+            Path2D.Double myPath = new Path2D.Double();
+            boolean drawing = false;
+            for(int i = 0; i < width; i+=width/50) {
+                if(drawing) {
+                    myPath.lineTo(i, separatorY);
+                } else {
+                    myPath.moveTo(i, separatorY);
+                }
+                drawing = !drawing;
+            }
+            ((Graphics2D) g).draw(myPath);
+
             double eventWidth = ExecutionGraphVisualizer.this.eventWidth * getWidth() / 100.0f;
             double eventHeight = ExecutionGraphVisualizer.this.eventHeight * getHeight() / 100.0f;
             solutions.get(currentSolution).forEach((decl, lit) -> {
