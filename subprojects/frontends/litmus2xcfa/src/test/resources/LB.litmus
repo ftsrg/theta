@@ -12,7 +12,7 @@ Orig=DpDatadW Rfe DpDatadW PosWW Rfe
  EOR W2,W0,W0 | EOR W2,W0,W0 ;
  ADD W2,W2,#1 | ADD W2,W2,#1 ;
  STR W2,[X3]  | STR W2,[X3]  ;
-              | MOV W4,#2    ;
+ DMB SY       | MOV W4,#2    ;
               | STR W4,[X3]  ;
 exists
 (x=2 /\ 0:X0=2 /\ 1:X0=1)

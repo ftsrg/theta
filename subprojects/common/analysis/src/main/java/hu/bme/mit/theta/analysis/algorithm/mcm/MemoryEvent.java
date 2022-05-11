@@ -22,14 +22,17 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public record MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, MemoryEventType type) {
-    public MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, MemoryEventType type) {
-        checkArgument(varId <= 0, "Meta event IDs must be negative!");
-        this.var = var;
-        this.localVar = localVar;
-        this.dependencies = dependencies;
-        this.varId = varId;
+public class MemoryEvent {
+    protected final MemoryEventType type;
+    protected final String tag;
+
+    public MemoryEvent(MemoryEventType type, String tag) {
         this.type = type;
+        this.tag = tag;
+    }
+
+    public String tag() {
+        return tag;
     }
 
     public enum MemoryEventType {
@@ -38,11 +41,99 @@ public record MemoryEvent(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<Va
         FENCE
     }
 
-    @Override
-    public String toString() {
-        return type + "{" +
-                ", var=" + var +
-                ", localVar=" + localVar +
-                '}';
+    public MemoryEventType type() {
+        return type;
     }
+
+    public Read asRead() {
+        throw new UnsupportedOperationException("Not a read!");
+    }
+    public Write asWrite() {
+        throw new UnsupportedOperationException("Not a write!");
+    }
+    public Fence asFence() {
+        throw new UnsupportedOperationException("Not a fence!");
+    }
+    public MemoryIO asMemoryIO() {
+        throw new UnsupportedOperationException("Not memory IO!");
+    }
+
+    public static abstract class MemoryIO extends MemoryEvent {
+        private final int varId;
+        private final VarDecl<?> var;
+        private final VarDecl<?> localVar;
+        public MemoryIO(int varId, VarDecl<?> var, VarDecl<?> localVar, MemoryEventType type, String tag) {
+            super(type, tag);
+            checkArgument(varId <= 0, "Meta event IDs must be negative!");
+            this.var = var;
+            this.localVar = localVar;
+            this.varId = varId;
+        }
+
+        @Override
+        public MemoryIO asMemoryIO() {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return type + "{" +
+                    ", var=" + var +
+                    ", localVar=" + localVar +
+                    ", tag=" + tag +
+                    '}';
+        }
+
+        public int varId() {
+            return varId;
+        }
+
+        public VarDecl<?> var() {
+            return var;
+        }
+
+        public VarDecl<?> localVar() {
+            return localVar;
+        }
+
+    }
+
+    public static final class Read extends MemoryIO{
+        public Read(int varId, VarDecl<?> var, VarDecl<?> localVar, String tag) {
+            super(varId, var, localVar, MemoryEventType.READ, tag);
+        }
+
+        @Override
+        public Read asRead() {
+            return this;
+        }
+    }
+    public static final class Write extends MemoryIO{
+        private final Set<VarDecl<?>> dependencies;
+        public Write(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, String tag) {
+            super(varId, var, localVar, MemoryEventType.WRITE, tag);
+            this.dependencies = dependencies;
+        }
+
+        @Override
+        public Write asWrite() {
+            return this;
+        }
+
+        public Set<VarDecl<?>> dependencies() {
+            return dependencies;
+        }
+    }
+    public static final class Fence extends MemoryEvent{
+        public Fence(String tag) {
+            super(MemoryEventType.FENCE, tag);
+        }
+
+        @Override
+        public Fence asFence() {
+            return this;
+        }
+
+    }
+
 }

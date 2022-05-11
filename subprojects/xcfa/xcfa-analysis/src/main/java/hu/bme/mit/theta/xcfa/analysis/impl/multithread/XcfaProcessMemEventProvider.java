@@ -59,13 +59,13 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
         if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal();
             VarDecl<?> local = ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal();
-            memoryEvents.add(new MemoryEvent(getId(global), global, local, dependencies.get(local), MemoryEvent.MemoryEventType.WRITE));
+            memoryEvents.add(new MemoryEvent.Write(getId(global), global, local, dependencies.get(local), ((XcfaLabel.StoreXcfaLabel<?>) label).getOrdering()));
         } else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal();
             VarDecl<?> local = ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal();
-            memoryEvents.add(new MemoryEvent(getId(global), global, local, Set.of(), MemoryEvent.MemoryEventType.READ));
+            memoryEvents.add(new MemoryEvent.Read(getId(global), global, local, ((XcfaLabel.LoadXcfaLabel<?>) label).getOrdering()));
         } else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-            memoryEvents.add(new MemoryEvent(0, null, null, Set.of(), MemoryEvent.MemoryEventType.FENCE));
+            memoryEvents.add(new MemoryEvent.Fence(((XcfaLabel.FenceXcfaLabel) label).getType()));
         } else if (label instanceof XcfaLabel.SequenceLabel) {
             for (XcfaLabel xcfaLabel : ((XcfaLabel.SequenceLabel) label).getLabels()) {
                 collectMemoryEvents(memoryEvents, xcfaLabel, dependencies);

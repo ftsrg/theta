@@ -70,6 +70,10 @@ public class ExecutionGraph {
         rf = new Relation<>("rf", 2, TruthValue.UNKNOWN);
         co = new Relation<>("co", 2, TruthValue.UNKNOWN);
         this.tags = new LinkedHashMap<>();
+        builder.getTags().forEach((key, value) -> {
+            final Relation<Boolean> rel = new Relation<>(key, 1, false);
+            this.tags.put(key, rel);
+        });
         store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, ext, addr, ctrl, rmw, amo, loc, id, data, R, W, F, U, rf, co)));
         model = store.createModel();
 
@@ -95,11 +99,11 @@ public class ExecutionGraph {
                 }
             });
         });
+
         builder.getTags().forEach((key, value) -> {
-            final Relation<Boolean> rel = new Relation<>(key, 1, false);
-            this.tags.put(key, rel);
-            value.getElements().forEach(elem -> model.put(rel, datalog2tup(elem), true));
+            value.getElements().forEach(elem -> model.put(this.tags.get(key), datalog2tup(elem), true));
         });
+
 
         encode();
 
@@ -193,6 +197,12 @@ public class ExecutionGraph {
             encodeUnaryRelation(this.F, encodedRelationWrapper, F, i);
             encodeUnaryRelation(this.U, encodedRelationWrapper, U, i);
         }
+        this.tags.forEach((s, rel) -> {
+            EventConstantLookup ecl = getOrCreate(encodedRelationWrapper, idList, s, true);
+            for (int i : idList) {
+                encodeUnaryRelation(rel, encodedRelationWrapper, ecl, i);
+            }
+        });
 
         encodeRelation(encodedRelationWrapper, idList, this.po, po);
         encodeRelation(encodedRelationWrapper, idList, this._int, _int);
@@ -209,6 +219,27 @@ public class ExecutionGraph {
             addRfConstraints(encodedRelationWrapper, idList, rf, i);
             addCoConstraints(encodedRelationWrapper, idList, co, i);
         }
+
+        // encode missing relations
+        encodedRelationWrapper.getNonEncoded().forEach((key, value) -> {
+            final MCMRelation mcmRelation = mcm.getRelations().get(key);
+            if(mcmRelation != null && mcmRelation.getRule() == null) {
+                System.err.println(key);
+                final int arity = mcmRelation.getArity();
+                EventConstantLookup ecl = getOrCreate(encodedRelationWrapper, idList, key, arity == 1);
+                encodedRelationWrapper.setEncoded(ecl);
+                for (final int i : idList) {
+                    if (arity == 1) {
+                        encodedRelationWrapper.getSolver().add(Not(ecl.get(TupleN.of(i)).getRef()));
+                    } else {
+                        for (final int j : idList) {
+                            encodedRelationWrapper.getSolver().add(Not(ecl.get(TupleN.of(i, j)).getRef()));
+                        }
+                    }
+                }
+            }
+
+        });
     }
 
     private EventConstantLookup getOrCreate(
@@ -224,15 +255,17 @@ public class ExecutionGraph {
         return lookup;
     }
 
-    private void encodeUnaryRelation(Relation<Boolean> rel, EncodedRelationWrapper encodedRelationWrapper, EventConstantLookup R, int i) {
+    private void encodeUnaryRelation(Relation<Boolean> rel, EncodedRelationWrapper encodedRelationWrapper, EventConstantLookup enc, int i) {
+        encodedRelationWrapper.setEncoded(enc);
         if(model.get(rel, Tuple.of(i))) {
-            encodedRelationWrapper.getSolver().add(R.get(TupleN.of(i)).getRef());
+            encodedRelationWrapper.getSolver().add(enc.get(TupleN.of(i)).getRef());
         } else {
-            encodedRelationWrapper.getSolver().add(Not(R.get(TupleN.of(i)).getRef()));
+            encodedRelationWrapper.getSolver().add(Not(enc.get(TupleN.of(i)).getRef()));
         }
     }
 
     private void encodeRelation(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, Relation<Boolean> rel, EventConstantLookup enc) {
+        encodedRelationWrapper.setEncoded(enc);
         for (final int i : idList) {
             for (final int j : idList) {
                 if(model.get(rel, Tuple.of(i, j))) {
@@ -260,6 +293,7 @@ public class ExecutionGraph {
     }
 
     private void addCoConstraints(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, EventConstantLookup co, int i) {
+        encodedRelationWrapper.setEncoded(co);
         if(model.get(W, Tuple.of(i))) {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
             for (final int j : idList) {
@@ -289,6 +323,7 @@ public class ExecutionGraph {
     }
 
     private void addRfConstraints(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, EventConstantLookup rf, int i) {
+        encodedRelationWrapper.setEncoded(rf);
         if(model.get(R, Tuple.of(i))) {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
             for (final int j : idList) {

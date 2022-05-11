@@ -25,15 +25,13 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class ExecutionGraphBuilder {
     private final Datalog program;
     private final Datalog.Relation initWrite, poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
     private final Map<String, Datalog.Relation> tags;
     private int lastCnt = 1;
 
-    public ExecutionGraphBuilder(final Collection<String> tags) {
+    public ExecutionGraphBuilder() {
         program = Datalog.createProgram();
         initWrite = program.createRelation("IW", 1);
         poRaw = program.createRelation("po_raw", 2);
@@ -49,7 +47,6 @@ public class ExecutionGraphBuilder {
         rmw = program.createRelation("rmw", 2);
         amo = program.createRelation("amo", 2);
         this.tags = new LinkedHashMap<>();
-        tags.forEach(s -> this.tags.put(s, program.createRelation(s, 1)));
 
         poCalculated = program.createTransitive("po", poRaw);
         Datalog.Variable var1 = program.getVariable(), var2 = program.getVariable();
@@ -75,7 +72,8 @@ public class ExecutionGraphBuilder {
             }
         }
         for (final String tag : tags) {
-            final Datalog.Relation relation = checkNotNull(this.tags.get(tag));
+            this.tags.putIfAbsent(tag, program.createRelation(tag, 1));
+            final Datalog.Relation relation = this.tags.get(tag);
             relation.addFact(arg(id));
         }
         intRaw.addFact(arg(processId, id));

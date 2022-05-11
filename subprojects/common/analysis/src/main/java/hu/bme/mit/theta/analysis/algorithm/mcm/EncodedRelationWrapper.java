@@ -20,25 +20,41 @@ import hu.bme.mit.theta.solver.Solver;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class EncodedRelationWrapper {
     private final Solver solver;
     private final Map<String, EventConstantLookup> eventLookup;
+    private final Map<EventConstantLookup, Boolean> encodedStatus;
 
     public EncodedRelationWrapper(final Solver solver) {
         this.solver = solver;
         this.eventLookup = new LinkedHashMap<>();
+        encodedStatus = new LinkedHashMap<>();
     }
 
     public void addEvent(final String name, final EventConstantLookup lookup) {
         checkState(!eventLookup.containsKey(name), "Name " + name + " already exists in the lookup.");
         eventLookup.put(name, lookup);
+        encodedStatus.put(lookup, false);
     }
 
     public EventConstantLookup getEventLookup(final String name) {
         return eventLookup.get(name);
+    }
+
+    public void setEncoded(final EventConstantLookup eventConstantLookup) {
+        encodedStatus.put(eventConstantLookup, true);
+    }
+
+    public boolean isEncoded(final EventConstantLookup eventConstantLookup) {
+        return encodedStatus.get(eventConstantLookup);
+    }
+
+    public Map<String, EventConstantLookup> getNonEncoded() {
+        return eventLookup.entrySet().stream().filter(i -> !isEncoded(i.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public Solver getSolver() {

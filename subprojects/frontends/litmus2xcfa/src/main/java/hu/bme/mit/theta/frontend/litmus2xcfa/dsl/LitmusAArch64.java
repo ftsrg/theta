@@ -270,7 +270,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
 
         @Override
         public XcfaLabel visitFence(LitmusAArch64Parser.FenceContext ctx) {
-            return Fence(ctx.getText());
+            return Fence(ctx.Fence().getText() + (ctx.FenceOpt() == null ? "" : "." + ctx.FenceOpt().getText()));
         }
     }
 

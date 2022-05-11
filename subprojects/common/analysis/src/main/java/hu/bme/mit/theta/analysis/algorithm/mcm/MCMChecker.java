@@ -37,8 +37,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
     private final MultiprocInitFunc<S, P> multiprocInitFunc;
     private final MultiprocTransFunc<S, A, P> multiprocTransFunc;
     private final Collection<Integer> pids;
-    private final Collection<MemoryEvent> initialWrites;
-    private final Collection<String> tags;
+    private final Collection<MemoryEvent.Write> initialWrites;
     private final Solver solver;
     private final MCM mcm;
     private final Logger logger;
@@ -49,13 +48,11 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
             final MultiprocInitFunc<S, P> multiprocInitFunc,
             final MultiprocTransFunc<S, A, P> multiprocTransFunc,
             final Collection<Integer> pids,
-            final Collection<MemoryEvent> initialWrites,
-            final Collection<String> tags,
+            final Collection<MemoryEvent.Write> initialWrites,
             final Solver solver,
             final MCM mcm,
             final Logger logger) {
         this.initialWrites = initialWrites;
-        this.tags = tags;
         checkArgument(pids.stream().noneMatch(i -> i >= 0), "Meta event IDs must be negative!");
 
         this.memoryEventProvider = memoryEventProvider;
@@ -70,11 +67,11 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
 
     public MCMSafetyResult check(final P prec) {
         logger.write(Logger.Level.MAINSTEP, "Starting verification\n");
-        final ExecutionGraphBuilder builder = new ExecutionGraphBuilder(tags);
+        final ExecutionGraphBuilder builder = new ExecutionGraphBuilder();
 
         final List<Integer> initialWriteEvents = new ArrayList<>();
 
-        for (MemoryEvent initialWrite : initialWrites) {
+        for (MemoryEvent.Write initialWrite : initialWrites) {
             int i = builder.addInitialWrite(initialWrite.varId());
             initialWriteEvents.add(i);
         }
@@ -84,7 +81,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
 
         for (final int pid : pids) {
             logger.write(Logger.Level.SUBSTEP, "|-- Starting exploration of pid " + pid + "\n");
-            final Map<MemoryEvent, Integer> reads = new LinkedHashMap<>();
+            final Map<MemoryEvent.Read, Integer> reads = new LinkedHashMap<>();
             final List<Integer> eventList = new ArrayList<>();
             events.add(eventList);
 
@@ -106,15 +103,15 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
                     for (MemoryEvent memoryEvent : memoryEventsOf) {
                         logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event " + memoryEvent + "\n");
                         lastId = switch (memoryEvent.type()) {
-                            case READ -> builder.addRead(pid, memoryEvent.varId(), lastId, Set.of());
-                            case WRITE -> builder.addWrite(pid, memoryEvent.varId(), lastId, Set.of());
-                            case FENCE -> builder.addFence(pid, lastId, Set.of());
+                            case READ -> builder.addRead(pid, memoryEvent.asRead().varId(), lastId, Set.of(memoryEvent.tag()));
+                            case WRITE -> builder.addWrite(pid, memoryEvent.asWrite().varId(), lastId, Set.of(memoryEvent.tag()));
+                            case FENCE -> builder.addFence(pid, lastId, Set.of(memoryEvent.tag()));
                         };
 
-                        if (memoryEvent.type() == READ) reads.put(memoryEvent, lastId);
+                        if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), lastId);
                         else if (memoryEvent.type() == WRITE) {
-                            for (MemoryEvent read : reads.keySet()) {
-                                if (memoryEvent.dependencies().contains(read.localVar())) {
+                            for (MemoryEvent.Read read : reads.keySet()) {
+                                if (memoryEvent.asWrite().dependencies().contains(read.localVar())) {
                                     builder.addDependency(reads.get(read), lastId);
                                 }
                             }

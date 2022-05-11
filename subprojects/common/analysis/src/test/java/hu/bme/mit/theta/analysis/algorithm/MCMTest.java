@@ -38,12 +38,12 @@ public class MCMTest {
 	public void test() {
 		final VarDecl<?> var = Var("x", Int());
 		final TestState thrd1_loc3 = new TestState(List.of());
-		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, null, Set.of(), MemoryEvent.MemoryEventType.WRITE), thrd1_loc3)));
-		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, null, Set.of(),  MemoryEvent.MemoryEventType.WRITE), thrd1_loc2)));
+		final TestState thrd1_loc2 = new TestState(List.of(new TestAction(new MemoryEvent.Write(-3, var, null, Set.of()), thrd1_loc3)));
+		final TestState thrd1_loc1 = new TestState(List.of(new TestAction(new MemoryEvent.Write(-3, var, null, Set.of()), thrd1_loc2)));
 
 		final TestState thrd2_loc3 = new TestState(List.of());
-		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, null, Set.of(),  MemoryEvent.MemoryEventType.READ), thrd2_loc3)));
-		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent(-3, var, null, Set.of(),  MemoryEvent.MemoryEventType.READ), thrd2_loc2)));
+		final TestState thrd2_loc2 = new TestState(List.of(new TestAction(new MemoryEvent.Read(-3, var, null), thrd2_loc3)));
+		final TestState thrd2_loc1 = new TestState(List.of(new TestAction(new MemoryEvent.Read(-3, var, null), thrd2_loc2)));
 
 		MCM mcm = new MCM("example");
 		MCMRelation sc = new MCMRelation(2, "sc");
@@ -67,7 +67,7 @@ public class MCMTest {
 				new MultiprocLTS(Map.of(-1, new TestLTS(), -2, new TestLTS())),
 				new MultiprocInitFunc(Map.of(-1, new TestInitFunc(thrd1_loc1), -2, new TestInitFunc(thrd2_loc1))),
 				new MultiprocTransFunc(Map.of(-1, new TestTransFunc(), -2, new TestTransFunc())),
-				List.of(-1, -2), List.of(), List.of(), Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
+				List.of(-1, -2), List.of(), Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
 
 		mcmChecker.check(new TestPrec());
 	}
