@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class ExecutionGraphBuilder {
     private final Datalog program;
-    private final Datalog.Relation initWrite, poRaw, poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
+    private final Datalog.Relation initWrite, poRaw, /*TODO: remove */poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
     private final Map<String, Datalog.Relation> tags;
     private int lastCnt = 1;
 
@@ -48,8 +48,7 @@ public class ExecutionGraphBuilder {
         amo = program.createRelation("amo", 2);
         this.tags = new LinkedHashMap<>();
 
-        poCalculated = program.createTransitive("po", poRaw);
-        Datalog.Variable var1 = program.getVariable(), var2 = program.getVariable();
+        poCalculated = program.createRelation("po", 2);
         intCalculated = program.createCommonSource("int", intRaw);
         locCalculated = program.createCommonSource("loc", locRaw);
     }

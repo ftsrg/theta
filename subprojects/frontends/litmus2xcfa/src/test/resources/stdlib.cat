@@ -1,5 +1,13 @@
 STDLIB
 
+let po-raw-int = po-raw & int
+let po-sibling = (po-raw-int^-1; po-raw-int) \ id
+empty po-sibling as po-sibling-unambigous
+let po = po-raw+
+
+let same-execution = (po^-1; po)
+empty rf \ same-execution as rf-same-execution
+
 let po-loc = po & loc
 let rfe = rf & ext
 let rfi = rf & int

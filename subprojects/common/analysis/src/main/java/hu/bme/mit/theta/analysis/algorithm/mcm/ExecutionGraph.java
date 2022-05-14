@@ -36,6 +36,7 @@ import tools.refinery.store.model.representation.Relation;
 import tools.refinery.store.model.representation.TruthValue;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -53,7 +54,7 @@ public class ExecutionGraph {
     public ExecutionGraph(final ExecutionGraphBuilder builder, final MCM mcm, final Solver solver) {
         this.mcm = mcm;
         encodedRelationWrapper = new EncodedRelationWrapper(solver);
-        po = new Relation<>("po", 2, false);
+        po = new Relation<>("po-raw", 2, false);
         _int = new Relation<>("_int", 2, false);
         ext = new Relation<>("ext", 2, false);
         addr = new Relation<>("addr", 2, false);
@@ -77,7 +78,7 @@ public class ExecutionGraph {
         store = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.of(po, _int, ext, addr, ctrl, rmw, amo, loc, id, data, R, W, F, U, rf, co)));
         model = store.createModel();
 
-        builder.getPoCalculated().getElements().forEach(elem -> model.put(po, datalog2tup(elem), true));
+        builder.getPoRaw().getElements().forEach(elem -> model.put(po, datalog2tup(elem), true));
         builder.getLocCalculated().getElements().forEach(elem -> model.put(loc, datalog2tup(elem), true));
         builder.getIntCalculated().getElements().forEach(elem -> model.put(_int, datalog2tup(elem), true));
         builder.getData().getElements().forEach(elem -> model.put(data, datalog2tup(elem), true));
@@ -94,7 +95,8 @@ public class ExecutionGraph {
             model.put(id, Tuple.of(datalog2tup(elem).get(0), datalog2tup(elem).get(0)), true);
             builder.getU().getElements().forEach(elem2 -> {
                 TupleN<Integer> tuple = tupleN(elem.get(0), elem2.get(0));
-                if(!intElements.contains(tuple)) {
+                TupleN<DatalogArgument> tupleDA = TupleN.of(GenericDatalogArgument.createArgument(elem.get(0)), GenericDatalogArgument.createArgument(elem2.get(0)));
+                if(!intElements.contains(tupleDA)) {
                     model.put(ext, tup(tuple), true);
                 }
             });
@@ -174,7 +176,7 @@ public class ExecutionGraph {
             constraint.encodeEvents(idList, encodedRelationWrapper);
         }
 
-        EventConstantLookup po = getOrCreate(encodedRelationWrapper, idList, "po", false);
+        EventConstantLookup po = getOrCreate(encodedRelationWrapper, idList, "po-raw", false);
         EventConstantLookup _int = getOrCreate(encodedRelationWrapper, idList, "int", false);
         EventConstantLookup loc = getOrCreate(encodedRelationWrapper, idList, "loc", false);
         EventConstantLookup data = getOrCreate(encodedRelationWrapper, idList, "data", false);
@@ -204,8 +206,9 @@ public class ExecutionGraph {
             }
         });
 
-        encodeRelation(encodedRelationWrapper, idList, this.po, po);
+
         encodeRelation(encodedRelationWrapper, idList, this._int, _int);
+        encodePo(encodedRelationWrapper, idList, this.po, this._int, po);
         encodeRelation(encodedRelationWrapper, idList, this.loc, loc);
         encodeRelation(encodedRelationWrapper, idList, this.id, id);
         encodeRelation(encodedRelationWrapper, idList, this.data, data);
@@ -224,7 +227,6 @@ public class ExecutionGraph {
         encodedRelationWrapper.getNonEncoded().forEach((key, value) -> {
             final MCMRelation mcmRelation = mcm.getRelations().get(key);
             if(mcmRelation != null && mcmRelation.getRule() == null) {
-                System.err.println(key);
                 final int arity = mcmRelation.getArity();
                 EventConstantLookup ecl = getOrCreate(encodedRelationWrapper, idList, key, arity == 1);
                 encodedRelationWrapper.setEncoded(ecl);
@@ -240,6 +242,39 @@ public class ExecutionGraph {
             }
 
         });
+    }
+
+    private void encodePo(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, Relation<Boolean> rel, Relation<Boolean> _int, EventConstantLookup enc) {
+        encodedRelationWrapper.setEncoded(enc);
+        for (final int i : idList) {
+            List<Set<Integer>> collectors = new ArrayList<>();
+            for (final int j : idList) {
+                if(model.get(rel, Tuple.of(i, j))) {
+                    boolean foundSet = false;
+                    for (Set<Integer> integers : collectors) {
+                        if(model.get(_int, Tuple.of(j, integers.stream().findAny().get()))) {
+                            integers.add(j);
+                            foundSet = true;
+                            break;
+                        }
+                    }
+                    if(!foundSet) {
+                        Set<Integer> set = new LinkedHashSet<>();
+                        set.add(j);
+                        collectors.add(set);
+                    }
+                } else {
+                    encodedRelationWrapper.getSolver().add(Not(enc.get(TupleN.of(i, j)).getRef()));
+                }
+            }
+            for (Set<Integer> collector : collectors) {
+                if(collector.size() > 1) {
+                    encodedRelationWrapper.getSolver().add(Or(collector.stream().map(j -> enc.get(TupleN.of(i, j)).getRef()).collect(Collectors.toList())));
+                } else if (collector.size() > 0) {
+                    encodedRelationWrapper.getSolver().add(enc.get(TupleN.of(i, collector.stream().findAny().get())).getRef());
+                }
+            }
+        }
     }
 
     private EventConstantLookup getOrCreate(

@@ -44,7 +44,6 @@
  * location and then consequently defines the fr relation using co and
  * rf.
  *)
-include "stdlib.cat"
 include "cos.cat"
 
 (*

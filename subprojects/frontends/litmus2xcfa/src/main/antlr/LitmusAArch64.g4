@@ -60,6 +60,9 @@ instructionRow
 
 instruction
     :   simpleInstruction
+    |   branch
+    |   branchRegister
+    |   branchLabel
     |   exclusiveInstruction
     ;
 
@@ -70,9 +73,6 @@ simpleInstruction
     |   load
     |   store
     |   cmp
-    |   branch
-    |   branchRegister
-    |   branchLabel
     |   fence
     ;
 
@@ -125,9 +125,9 @@ branch
     :   BranchInstruction (Period branchCondition)? label
     ;
 
-branchRegister locals [String rV, int size]
-    :   branchRegInstruction rV32 = register32 Comma label {$rV = $rV32.id; $size = 32;}
-    |   branchRegInstruction rV64 = register64 Comma label {$rV = $rV64.id; $size = 64;}
+branchRegister
+    :   branchRegInstruction rV32 = register32 Comma label #branchRegister32
+    |   branchRegInstruction rV64 = register64 Comma label #branchRegister64
     ;
 
 branchLabel
@@ -135,23 +135,23 @@ branchLabel
     ;
 
 loadInstruction locals [String mo]
-    :   LDR     {$mo = "MO_RX";}
-    |   LDAR    {$mo = "MO_ACQ";}
+    :   LDR     {$mo = "RX";}
+    |   LDAR    {$mo = "A";}
     ;
 
 loadExclusiveInstruction locals [String mo]
-    :   LDXR    {$mo = "MO_RX";}
-    |   LDAXR   {$mo = "MO_ACQ";}
+    :   LDXR    {$mo = "RX";}
+    |   LDAXR   {$mo = "A";}
     ;
 
 storeInstruction locals [String mo]
-    :   STR     {$mo = "MO_RX";}
-    |   STLR    {$mo = "MO_REL";}
+    :   STR     {$mo = "RX";}
+    |   STLR    {$mo = "L";}
     ;
 
 storeExclusiveInstruction locals [String mo]
-    :   STXR    {$mo = "MO_RX";}
-    |   STLXR   {$mo = "MO_REL";}
+    :   STXR    {$mo = "RX";}
+    |   STLXR   {$mo = "L";}
     ;
 
 arithmeticInstruction
@@ -191,9 +191,9 @@ branchCondition
 //    |   AL
     ;
 
-branchRegInstruction
-    :   CBZ  #cbzInstruction
-    |   CBNZ #cbnzInstruction
+branchRegInstruction locals [boolean zerotest]
+    :   CBZ  {$zerotest = true;}
+    |   CBNZ {$zerotest = false;}
     ;
 
 //shiftOperator

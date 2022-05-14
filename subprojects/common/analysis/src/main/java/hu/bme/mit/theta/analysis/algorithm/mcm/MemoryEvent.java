@@ -78,7 +78,7 @@ public class MemoryEvent {
         @Override
         public String toString() {
             return type + "{" +
-                    ", var=" + var +
+                    "var=" + var +
                     ", localVar=" + localVar +
                     ", tag=" + tag +
                     '}';
@@ -134,6 +134,12 @@ public class MemoryEvent {
             return this;
         }
 
+        @Override
+        public String toString() {
+            return type + "{" +
+                    "tag='" + tag + '\'' +
+                    '}';
+        }
     }
 
 }

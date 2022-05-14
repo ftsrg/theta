@@ -33,6 +33,7 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.*;
@@ -275,6 +276,66 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
     }
 
     public class LocationVisitor extends LitmusAArch64BaseVisitor<XcfaLocation> {
+        @Override
+        public XcfaLocation visitBranchRegister32(LitmusAArch64Parser.BranchRegister32Context ctx) {
+            VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
+            final StmtXcfaLabel stmt1, stmt2;
+            if(ctx.branchRegInstruction().zerotest) {
+                stmt1 = Stmt(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+                stmt2 = Stmt(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+            } else {
+                stmt1 = Stmt(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+                stmt2 = Stmt(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+            }
+            final XcfaLocation branchTo = getOrCreateLoc(ctx.label().getText());
+            final XcfaLocation newLoc = newAnonymousLoc();
+            builders.get(currentProc).addEdge(XcfaEdge.of(
+                    lastLocation.get(currentProc),
+                    branchTo,
+                    List.of(stmt1)));
+            builders.get(currentProc).addEdge(XcfaEdge.of(
+                    lastLocation.get(currentProc),
+                    newLoc,
+                    List.of(stmt2)));
+            lastLocation.put(currentProc, newLoc);
+            return newLoc;
+        }
+        @Override
+        public XcfaLocation visitBranchRegister64(LitmusAArch64Parser.BranchRegister64Context ctx) {
+            VarDecl<BvType> var = getOrCreateVar(ctx.rV64.getText(), 64);
+            final StmtXcfaLabel stmt1, stmt2;
+            if(ctx.branchRegInstruction().zerotest) {
+                stmt1 = Stmt(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+                stmt2 = Stmt(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+            } else {
+                stmt1 = Stmt(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+                stmt2 = Stmt(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+            }
+            final XcfaLocation branchTo = getOrCreateLoc(ctx.label().getText());
+            final XcfaLocation newLoc = newAnonymousLoc();
+            builders.get(currentProc).addEdge(XcfaEdge.of(
+                    lastLocation.get(currentProc),
+                    branchTo,
+                    List.of(stmt1)));
+            builders.get(currentProc).addEdge(XcfaEdge.of(
+                    lastLocation.get(currentProc),
+                    newLoc,
+                    List.of(stmt2)));
+            lastLocation.put(currentProc, newLoc);
+            return newLoc;
+        }
+        @Override
+        public XcfaLocation visitBranch(LitmusAArch64Parser.BranchContext ctx) {
+            final XcfaLocation branchTo = getOrCreateLoc(ctx.label().getText());
+            final XcfaLocation newLoc = newAnonymousLoc();
+            builders.get(currentProc).addEdge(XcfaEdge.of(
+                    lastLocation.get(currentProc),
+                    branchTo,
+                    List.of()));
+            lastLocation.put(currentProc, newLoc);
+            return newLoc;
+        }
+
         @Override
         public XcfaLocation visitBranchLabel(LitmusAArch64Parser.BranchLabelContext ctx) {
             final XcfaLocation newLoc = getOrCreateLoc(ctx.label().getText());

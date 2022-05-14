@@ -47,6 +47,9 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
         for (final XcfaLabel label : action.getEdge().getLabels()) {
             collectMemoryEvents(memoryEvents, label, dependencies);
         }
+        if(action.getEdge().getTarget().isEndLoc()) {
+            memoryEvents.add(new MemoryEvent.Fence("thread-end"));
+        }
         return memoryEvents;
     }
 

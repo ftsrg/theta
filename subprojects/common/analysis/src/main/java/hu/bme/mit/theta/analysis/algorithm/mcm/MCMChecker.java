@@ -19,6 +19,7 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -94,36 +95,47 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
                 state = initState;
             }
 
+            final Collection<Tuple2<Integer, S>> descriptorSet = new LinkedHashSet<>();
+            descriptorSet.add(Tuple2.of(lastId, state));
+
             while(true) {
+                Optional<Tuple2<Integer, S>> any = descriptorSet.stream().findAny();
+                if(!any.isPresent()) break;
+                descriptorSet.remove(any.get());
+                lastId = any.get().get1();
+                state = any.get().get2();
+
                 final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
                 if (enabledActionsFor.size() == 0) break;
-                checkState(enabledActionsFor.size() == 1);
-                for (final A a : enabledActionsFor) { // will execute only once
-                    final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(state, a);
+                for (final A a : enabledActionsFor) {
+                    int savedLastId = lastId;
+                    S savedState = state;
+                    final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(savedState, a);
                     for (MemoryEvent memoryEvent : memoryEventsOf) {
                         logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event " + memoryEvent + "\n");
-                        lastId = switch (memoryEvent.type()) {
-                            case READ -> builder.addRead(pid, memoryEvent.asRead().varId(), lastId, Set.of(memoryEvent.tag()));
-                            case WRITE -> builder.addWrite(pid, memoryEvent.asWrite().varId(), lastId, Set.of(memoryEvent.tag()));
-                            case FENCE -> builder.addFence(pid, lastId, Set.of(memoryEvent.tag()));
+                        savedLastId = switch (memoryEvent.type()) {
+                            case READ -> builder.addRead(pid, memoryEvent.asRead().varId(), savedLastId, Set.of(memoryEvent.tag()));
+                            case WRITE -> builder.addWrite(pid, memoryEvent.asWrite().varId(), savedLastId, Set.of(memoryEvent.tag()));
+                            case FENCE -> builder.addFence(pid, savedLastId, Set.of(memoryEvent.tag()));
                         };
 
-                        if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), lastId);
+                        if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), savedLastId);
                         else if (memoryEvent.type() == WRITE) {
                             for (MemoryEvent.Read read : reads.keySet()) {
                                 if (memoryEvent.asWrite().dependencies().contains(read.localVar())) {
-                                    builder.addDependency(reads.get(read), lastId);
+                                    builder.addDependency(reads.get(read), savedLastId);
                                 }
                             }
                         }
 
-                        eventList.add(lastId);
+                        eventList.add(savedLastId);
                     }
-                    final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, state, a, prec);
+                    final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, savedState, a, prec);
                     checkState(succStates.size() == 1);
                     for (final S succState : succStates) { // will execute only once
-                        state = succState;
+                        savedState = succState;
                     }
+                    descriptorSet.add(Tuple2.of(savedLastId, savedState));
                 }
             }
         }

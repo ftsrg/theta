@@ -74,6 +74,8 @@ public class LitmusCli {
 
 	@Parameter(names = "--visualize", description = "Visualize solutions")
 	boolean visualize;
+	@Parameter(names = "--print-xcfa", description = "Print xcfa as a DOT file")
+	boolean printxcfa;
 
 	//////////// SMTLib options ////////////
 
@@ -132,6 +134,15 @@ public class LitmusCli {
 			final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
 			logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
 
+			if(printxcfa) {
+				System.out.println("digraph G{");
+				for (XcfaProcess process : xcfa.getProcesses()) {
+					String s = process.toDot(List.of(), List.of());
+					System.out.println(s);
+				}
+				System.out.println("}");
+			}
+
 			final List<XcfaProcess> processes = xcfa.getProcesses();
 			final List<Integer> processIds = listToRange(processes, -1, -1);
 
@@ -143,7 +154,13 @@ public class LitmusCli {
 
 			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, solver, mcm, logger);
 			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.empty());
-			if(visualize) mcmSafetyResult.visualize();
+			if(visualize) {
+				if(mcmSafetyResult.getSolutions().size() == 0) {
+					logger.write(Logger.Level.RESULT, "No solutions found, nothing to visualize\n");
+				} else {
+					mcmSafetyResult.visualize();
+				}
+			}
 		} catch (final Throwable t) {
 			t.printStackTrace();
 			System.exit(-1);
