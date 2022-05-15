@@ -43,7 +43,7 @@ public class Difference extends BinaryMCMRule{
             final EventConstantLookup e2Events = e2.encodeEvents(idList, encodedRelationWrapper);
             for (final int i : idList) {
                 ConstDecl<BoolType> constDecl = resultEvents.get(TupleN.of(i));
-                encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), Or(e1Events.get(TupleN.of(i)).getRef(), e2Events.get(TupleN.of(i)).getRef())));
+                encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), And(e1Events.get(TupleN.of(i)).getRef(), Not(e2Events.get(TupleN.of(i)).getRef()))));
             }
         } else {
             super.encodeEvents(idList, resultEvents, encodedRelationWrapper);

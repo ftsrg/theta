@@ -19,6 +19,7 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.mcm.cegar.AbstractExecutionGraph;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -68,12 +69,12 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
 
     public MCMSafetyResult check(final P prec) {
         logger.write(Logger.Level.MAINSTEP, "Starting verification\n");
-        final ExecutionGraphBuilder builder = new ExecutionGraphBuilder();
+        final AbstractExecutionGraph executionGraph = new AbstractExecutionGraph(List.of("RX", "A", "DMB.SY", "thread-end"), solver, this.mcm);
 
         final List<Integer> initialWriteEvents = new ArrayList<>();
 
         for (MemoryEvent.Write initialWrite : initialWrites) {
-            int i = builder.addInitialWrite(initialWrite.varId());
+            int i = executionGraph.addInitialWrite(initialWrite.varId(), Set.of());
             initialWriteEvents.add(i);
         }
         logger.write(Logger.Level.SUBSTEP, "|-- Added initial writes: " + initialWriteEvents.size() + "\n");
@@ -112,18 +113,18 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
                     S savedState = state;
                     final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(savedState, a);
                     for (MemoryEvent memoryEvent : memoryEventsOf) {
-                        logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event " + memoryEvent + "\n");
                         savedLastId = switch (memoryEvent.type()) {
-                            case READ -> builder.addRead(pid, memoryEvent.asRead().varId(), savedLastId, Set.of(memoryEvent.tag()));
-                            case WRITE -> builder.addWrite(pid, memoryEvent.asWrite().varId(), savedLastId, Set.of(memoryEvent.tag()));
-                            case FENCE -> builder.addFence(pid, savedLastId, Set.of(memoryEvent.tag()));
+                            case READ -> executionGraph.addRead(pid, memoryEvent.asRead().varId(), savedLastId, Set.of(memoryEvent.tag()));
+                            case WRITE -> executionGraph.addWrite(pid, memoryEvent.asWrite().varId(), savedLastId, Set.of(memoryEvent.tag()));
+                            case FENCE -> executionGraph.addFence(pid, savedLastId, Set.of(memoryEvent.tag()));
                         };
+                        logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + savedLastId + ": " + memoryEvent + "\n");
 
                         if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), savedLastId);
                         else if (memoryEvent.type() == WRITE) {
                             for (MemoryEvent.Read read : reads.keySet()) {
                                 if (memoryEvent.asWrite().dependencies().contains(read.localVar())) {
-                                    builder.addDependency(reads.get(read), savedLastId);
+                                    executionGraph.addDataDependency(reads.get(read), savedLastId);
                                 }
                             }
                         }
@@ -140,14 +141,13 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
             }
         }
 
-        final ExecutionGraph executionGraph = new ExecutionGraph(builder, mcm, solver);
         final Collection<Map<Decl<?>, LitExpr<?>>> solutions = new ArrayList<>();
+        EventConstantLookup rf = executionGraph.encode();
 
         logger.write(Logger.Level.SUBSTEP, "|-- Successfully built execution graph\n");
         while(executionGraph.nextSolution(solutions)) {
             logger.write(Logger.Level.SUBSTEP, "|-- Found new solution: " + executionGraph.getRf() + "\n");
         }
-        executionGraph.reset();
 
         logger.write(Logger.Level.RESULT, "Number of executions: " + solutions.size() + "\n");
         logger.write(Logger.Level.MAINSTEP, "Verification ended\n");

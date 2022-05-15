@@ -245,13 +245,10 @@ public class ExecutionGraphVisualizer implements Runnable{
         }
 
         private boolean isChosen(Integer j) {
-            if(initialWrites.contains(j)) return true;
-            for (Integer i : initialWrites) {
-                for (Map.Entry<Decl<?>, LitExpr<?>> entry : solutions.get(currentSolution).entrySet()) {
-                    Decl<?> decl = entry.getKey();
-                    LitExpr<?> litExpr = entry.getValue();
-                    if (decl.getName().equals("po_" + i + "_" + j) && litExpr.equals(True())) return true;
-                }
+            for (Map.Entry<Decl<?>, LitExpr<?>> entry : solutions.get(currentSolution).entrySet()) {
+                Decl<?> decl = entry.getKey();
+                LitExpr<?> litExpr = entry.getValue();
+                if (decl.getName().equals("T_" + j) && litExpr.equals(True())) return true;
             }
             return false;
         }
