@@ -21,16 +21,56 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 import java.util.Collection;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public interface MemoryEventProvider<S extends State, A extends Action> {
 
     /**
-     * Gets the memory events of a given action from a given state.
+     * Gets a piecewise representation of an action, separating memory events from independent parts of the action.
+     * It is required that the original action's effect stays the same when the piecewise representation is applied.
      *
      * @param action
      * @return
      */
-    Collection<MemoryEvent> getMemoryEventsOf(S state, A action);
+    Collection<ResultElement<A>> getPiecewiseAction(S state, A action);
     int getVarId(VarDecl<?> var);
+
+    class ResultElement<A extends Action> {
+        private final Optional<MemoryEvent> memoryEvent;
+        private final Optional<A> action;
+
+        public ResultElement(final MemoryEvent memoryEvent) {
+            this.memoryEvent = Optional.of(checkNotNull(memoryEvent));
+            this.action = Optional.empty();
+        }
+        public ResultElement(final A action) {
+            this.memoryEvent = Optional.empty();
+            this.action = Optional.of(checkNotNull(action));
+        }
+
+        public MemoryEvent getMemoryEvent() {
+            return memoryEvent.orElseThrow();
+        }
+
+        public A getAction() {
+            return action.orElseThrow();
+        }
+
+        public boolean isMemoryEvent() {
+            return memoryEvent.isPresent();
+        }
+
+        public boolean isAction() {
+            return action.isPresent();
+        }
+
+        @Override
+        public String toString() {
+            if(memoryEvent.isPresent()) return memoryEvent.get().toString();
+            else return action.toString();
+        }
+    }
 
 }

@@ -74,8 +74,8 @@ public class MCMTest {
 
 	private class TestMemoryEventProvider implements MemoryEventProvider<TestState, TestAction> {
 		@Override
-		public Collection<MemoryEvent> getMemoryEventsOf(TestState state, TestAction action) {
-			return List.of(action.event);
+		public Collection<ResultElement<TestAction>> getPiecewiseAction(TestState state, TestAction action) {
+			return List.of(new ResultElement<>(action.event));
 		}
 
 		@Override

@@ -30,7 +30,6 @@ import hu.bme.mit.theta.solver.Solver;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.READ;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.WRITE;
 
@@ -91,52 +90,60 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
             final List<Integer> eventList = new ArrayList<>();
             events.add(eventList);
 
-            final Collection<? extends S> initStates = multiprocInitFunc.getInitStates(pid, prec);
-            checkState(initStates.size() == 1);
+            final Collection<Tuple2<Integer, S>> descriptorSet = new LinkedHashSet<>();
 
-            int lastId = 0;
-            S state = null;
-            for (final S initState : initStates) { // will only execute once
-                state = initState;
+            final Collection<? extends S> initStates = multiprocInitFunc.getInitStates(pid, prec);
+
+            for (final S initState : initStates) {
+                int id = executionGraph.addInitialState(pid, initState, false);
+                logger.write(Logger.Level.SUBSTEP, "|------ Adding init state #" + id + "(pid #" + pid + ")\n");
+                descriptorSet.add(Tuple2.of(id, initState));
             }
 
-            final Collection<Tuple2<Integer, S>> descriptorSet = new LinkedHashSet<>();
-            descriptorSet.add(Tuple2.of(lastId, state));
 
             while(true) {
                 Optional<Tuple2<Integer, S>> any = descriptorSet.stream().findAny();
                 if(!any.isPresent()) break;
                 descriptorSet.remove(any.get());
-                lastId = any.get().get1();
-                state = any.get().get2();
+                final int lastId = any.get().get1();
+                final S state = any.get().get2();
 
                 final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
                 if (enabledActionsFor.size() == 0) break;
                 for (final A a : enabledActionsFor) {
-                    int savedLastId = lastId;
-                    S savedState = state;
-                    final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(savedState, a);
-                    for (MemoryEvent memoryEvent : memoryEventsOf) {
-                        savedLastId = executionGraph.addMemoryEvent(memoryEvent, pid, savedLastId);
-                        logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + savedLastId + ": " + memoryEvent + "\n");
+                    final Collection<MemoryEventProvider.ResultElement<A>> piecesOf = memoryEventProvider.getPiecewiseAction(state, a);
+                    Collection<Tuple2<Integer, S>> states = new ArrayList<>(List.of(Tuple2.of(lastId, state)));
+                    Collection<Tuple2<Integer, S>> nextStates = new ArrayList<>();
+                    for (MemoryEventProvider.ResultElement<A> piece : piecesOf) {
+                        for (Tuple2<Integer, S> s : states) {
+                            if(piece.isMemoryEvent()) {
+                                MemoryEvent memoryEvent = piece.getMemoryEvent();
+                                int nextId = executionGraph.addMemoryEvent(memoryEvent, pid, s.get1());
+                                logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + nextId + ": " + piece + "\n");
 
-                        if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), savedLastId);
-                        else if (memoryEvent.type() == WRITE) {
-                            for (MemoryEvent.Read read : reads.keySet()) {
-                                if (memoryEvent.asWrite().dependencies().contains(read.localVar())) {
-                                    executionGraph.addDataDependency(reads.get(read), savedLastId);
+                                if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), nextId);
+                                else if (memoryEvent.type() == WRITE) {
+                                    for (MemoryEvent.Read read : reads.keySet()) {
+                                        if (memoryEvent.asWrite().dependencies().contains(read.localVar())) {
+                                            executionGraph.addDataDependency(reads.get(read), nextId);
+                                        }
+                                    }
+                                }
+                                eventList.add(nextId);
+                                nextStates.add(Tuple2.of(nextId, s.get2()));
+                            } else {
+                                final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, s.get2(), piece.getAction(), prec);
+                                for (final S succState : succStates) {
+                                    int id = executionGraph.addState(s.get1(), pid, piece.getAction(), succState, false);
+                                    logger.write(Logger.Level.SUBSTEP, "|------ Adding action #" + id + ": " + piece.getAction() + "\n");
+                                    nextStates.add(Tuple2.of(id, succState));
                                 }
                             }
                         }
-
-                        eventList.add(savedLastId);
+                        states = nextStates;
+                        nextStates = new ArrayList<>();
                     }
-                    final Collection<? extends S> succStates = multiprocTransFunc.getSuccStates(pid, savedState, a, prec);
-                    checkState(succStates.size() == 1);
-                    for (final S succState : succStates) { // will execute only once
-                        savedState = succState;
-                    }
-                    descriptorSet.add(Tuple2.of(savedLastId, savedState));
+                    descriptorSet.addAll(states);
                 }
             }
         }

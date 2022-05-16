@@ -93,6 +93,7 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     private final Map<Integer, ARG<S, ActionUnion<A>>> threadArgs;
     private final Map<Integer, ArgNode<S, ActionUnion<A>>> argNodeLookup;
     private final PartialOrd<S> partialOrd;
+    private final Map<Integer, Integer> lastMemEventLookup;
 
     public AbstractExecutionGraph(final Collection<String> tags, final Solver solver, final MCM mcm, final PartialOrd<S> partialOrd) {
         this.mcm = mcm;
@@ -104,6 +105,7 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
         encodedRelationWrapper = new EncodedRelationWrapper(solver);
         threadArgs = new LinkedHashMap<>();
         argNodeLookup = new LinkedHashMap<>();
+        lastMemEventLookup = new LinkedHashMap<>();
     }
 
     // Encoder method
@@ -227,15 +229,22 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
 
     public int addMemoryEvent(final MemoryEvent memoryEvent, final int pid, final int lastId) {
         checkState(threadArgs.containsKey(pid));
+        final int actualLastId = getActualLastId(lastId);
         int id = switch (memoryEvent.type()) {
-            case READ -> addRead(pid, memoryEvent.asRead().varId(), lastId, Set.of(memoryEvent.tag()));
-            case WRITE -> addWrite(pid, memoryEvent.asWrite().varId(), lastId, Set.of(memoryEvent.tag()));
-            case FENCE -> addFence(pid, lastId, Set.of(memoryEvent.tag()));
+            case READ -> addRead(pid, memoryEvent.asRead().varId(), actualLastId, Set.of(memoryEvent.tag()));
+            case WRITE -> addWrite(pid, memoryEvent.asWrite().varId(), actualLastId, Set.of(memoryEvent.tag()));
+            case FENCE -> addFence(pid, actualLastId, Set.of(memoryEvent.tag()));
         };
         final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastId);
         final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.MemoryEventAction<>(memoryEvent), lastArgNode.getState(), false);
         argNodeLookup.put(id, succNode);
         return id;
+    }
+
+    private int getActualLastId(int lastId) {
+        if(lastMemEventLookup.containsKey(lastId)) {
+            return getActualLastId(lastMemEventLookup.get(lastId));
+        } else return lastId;
     }
 
     private int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
@@ -270,11 +279,11 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     }
 
     public int addInitialState(final int pid, final S state, final boolean target) {
-        checkState(threadArgs.containsKey(pid));
-        final int id = lastCnt++;
-        for (final Tuple iw : getMustValues(rel("IW"))) {
-            setTrue("po-raw", unbox(iw), id);
+        if(!threadArgs.containsKey(pid)) {
+            threadArgs.put(pid, ARG.create(partialOrd));
         }
+        final int id = lastCnt++;
+        lastMemEventLookup.put(id, 0);
         ArgNode<S, ActionUnion<A>> initNode = threadArgs.get(pid).createInitNode(state, target);
         argNodeLookup.put(id, initNode);
         return id;
@@ -283,7 +292,7 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     public int addState(final int lastNode, final int pid, final A action, final S state, final boolean target) {
         checkState(threadArgs.containsKey(pid));
         final int id = lastCnt++;
-        setTrue("po-raw", lastNode, id);
+        lastMemEventLookup.put(id, lastNode);
         ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(argNodeLookup.get(lastNode), new ActionUnion.ActionWrapper<>(action), state, target);
         argNodeLookup.put(id, succNode);
         return id;
@@ -292,7 +301,7 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     public int addAction(final int lastNode, final int pid, final A action) {
         checkState(threadArgs.containsKey(pid));
         final int id = lastCnt++;
-        setTrue("po-raw", lastNode, id);
+        lastMemEventLookup.put(id, lastNode);
         final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastNode);
         final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.ActionWrapper<>(action), lastArgNode.getState(), false);
         argNodeLookup.put(id, succNode);
@@ -311,7 +320,9 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     private int addNormalEvent(int processId, int lastNode, Collection<String> tags) {
         final int id = addAnyEvent(tags);
         if(lastNode == 0) {
-            throw new RuntimeException("Initial state should have been added!");
+            for (final Tuple iw : getMustValues(rel("IW"))) {
+                setTrue("po-raw", unbox(iw), id);
+            }
         } else {
             setTrue("po-raw", lastNode, id);
         }

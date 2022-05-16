@@ -15,27 +15,22 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.bfs;
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.combine;
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.creationAsc;
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.creationDesc;
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.dfs;
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.targetFirst;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.stubs.ActionStub;
+import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
+import hu.bme.mit.theta.analysis.stubs.StateStub;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.stubs.ActionStub;
-import hu.bme.mit.theta.analysis.stubs.StateStub;
+import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.*;
 
 public class ArgNodeComparatorsTest {
 
-	private final ARG<State, Action> arg = ARG.create();
+	private final ARG<State, Action> arg = ARG.create(new PartialOrdStub());
 	private final Action act = new ActionStub("A");
 
 	private final ArgNode<State, Action> s0 = arg.createInitNode(new StateStub("s0"), false);

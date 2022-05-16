@@ -103,7 +103,7 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
 			}
 		}
 		if (isSafe) {
-			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create());// TODO: this is only a placeholder, we don't give back an ARG)
+			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
 			logger.write(Logger.Level.RESULT, "%s%n", result);
 			return result;
 		}
@@ -126,12 +126,12 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
 		}
 
 		if (resumeSet.size() == 0) {
-			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create());// TODO: this is only a placeholder, we don't give back an ARG)
+			final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create((state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
 			logger.write(Logger.Level.RESULT, "%s%n", result);
 			return result;
 		}
 
-		SafetyResult<S, A> bmcresult = SafetyResult.safe(ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG
+		SafetyResult<S, A> bmcresult = SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		logger.write(Logger.Level.RESULT, "BmcOutOfBounds: %s%n", bmcresult);
 		return bmcresult;
 	}
@@ -147,7 +147,7 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
 					Streams.concat(trace.getActions().stream(), Stream.of(action)).collect(Collectors.toList()));
 		}
 		if (unsafePredicate.test(state)) {
-			return SafetyResult.unsafe(trace, ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG
+			return SafetyResult.unsafe(trace, ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
 		}
 
 		if (currentStep >= bound) {
@@ -176,7 +176,7 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
 			solver.pop();
 		}
 		if (isSafe)
-			return SafetyResult.safe(ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG)
+			return SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG)
 		return null;
 	}
 

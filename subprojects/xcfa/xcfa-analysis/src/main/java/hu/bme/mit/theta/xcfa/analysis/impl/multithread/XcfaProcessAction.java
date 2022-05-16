@@ -44,4 +44,9 @@ public class XcfaProcessAction extends StmtAction {
     public XcfaEdge getEdge() {
         return edge;
     }
+
+    @Override
+    public String toString() {
+        return edge.getLabels().toString();
+    }
 }

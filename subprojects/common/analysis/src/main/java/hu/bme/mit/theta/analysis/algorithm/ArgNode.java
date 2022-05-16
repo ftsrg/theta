@@ -15,18 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import hu.bme.mit.theta.common.container.Containers;
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArgNode<S extends State, A extends Action> {
 
@@ -86,7 +86,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public boolean mayCover(final ArgNode<S, A> node) {
-		if (arg.partialOrd.isLeq(node.getState(), this.getState())) {
+		if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
 			return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
 		} else {
 			return false;

@@ -55,7 +55,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	}
 
 	public ARG<S, A> createArg() {
-		return ARG.create();
+		return ARG.create(analysis.getPartialOrd());
 	}
 
 	public Collection<ArgNode<S, A>> init(final ARG<S, A> arg, final P prec) {

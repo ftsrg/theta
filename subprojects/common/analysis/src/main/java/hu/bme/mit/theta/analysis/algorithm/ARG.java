@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.container.Containers;
 
@@ -38,14 +39,16 @@ public final class ARG<S extends State, A extends Action> {
 	private final Collection<ArgNode<S, A>> initNodes;
 	boolean initialized; // Set by ArgBuilder
 	private int nextId = 0;
+	private final PartialOrd<S> partialOrd;
 
-	private ARG() {
+	private ARG(final PartialOrd<S> partialOrd) {
 		initNodes = Containers.createSet();
+		this.partialOrd = partialOrd;
 		this.initialized = false;
 	}
 
-	public static <S extends State, A extends Action> ARG<S, A> create() {
-		return new ARG<>();
+	public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
+		return new ARG<>(partialOrd);
 	}
 
 	////
@@ -68,6 +71,11 @@ public final class ARG<S extends State, A extends Action> {
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
 		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
+	}
+
+
+	PartialOrd<S> getPartialOrd() {
+		return partialOrd;
 	}
 
 	////

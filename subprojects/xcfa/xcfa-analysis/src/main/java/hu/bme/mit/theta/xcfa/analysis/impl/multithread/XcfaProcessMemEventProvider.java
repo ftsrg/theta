@@ -20,10 +20,11 @@ import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEventProvider;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.*;
-
 public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryEventProvider<XcfaProcessState<S>, XcfaProcessAction> {
     private final Map<VarDecl<?>, Integer> varIdLookup;
     private final int idOffset;
@@ -41,16 +42,18 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
     }
 
     @Override
-    public Collection<MemoryEvent> getMemoryEventsOf(XcfaProcessState<S> state, XcfaProcessAction action) {
-        final Collection<MemoryEvent> memoryEvents = new ArrayList<>();
+    public Collection<ResultElement<XcfaProcessAction>> getPiecewiseAction(XcfaProcessState<S> state, XcfaProcessAction action) {
+        final Collection<ResultElement<XcfaProcessAction>> ret = new ArrayList<>();
         Map<VarDecl<?>, Set<VarDecl<?>>> dependencies = new LinkedHashMap<>(state.getDependencies());
-        for (final XcfaLabel label : action.getEdge().getLabels()) {
-            collectMemoryEvents(memoryEvents, label, dependencies);
+        XcfaEdge edge = action.getEdge();
+        for (final XcfaLabel label : edge.getLabels()) {
+            collectPieces(ret, label, dependencies, edge.getSource());
         }
-        if(action.getEdge().getTarget().isEndLoc()) {
-            memoryEvents.add(new MemoryEvent.Fence("thread-end"));
+        if(edge.getTarget().isEndLoc()) {
+            ret.add(new ResultElement<>(new MemoryEvent.Fence("thread-end")));
         }
-        return memoryEvents;
+        ret.add(new ResultElement<>(new XcfaProcessAction(edge.withLabels(List.of()))));
+        return ret;
     }
 
     @Override
@@ -58,21 +61,23 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
         return getId(var);
     }
 
-    private void collectMemoryEvents(Collection<MemoryEvent> memoryEvents, XcfaLabel label, Map<VarDecl<?>, Set<VarDecl<?>>> dependencies) {
+    private void collectPieces(Collection<ResultElement<XcfaProcessAction>> ret, XcfaLabel label, Map<VarDecl<?>, Set<VarDecl<?>>> dependencies, XcfaLocation source) {
         if(label instanceof XcfaLabel.StoreXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.StoreXcfaLabel<?>) label).getGlobal();
             VarDecl<?> local = ((XcfaLabel.StoreXcfaLabel<?>) label).getLocal();
-            memoryEvents.add(new MemoryEvent.Write(getId(global), global, local, dependencies.get(local), ((XcfaLabel.StoreXcfaLabel<?>) label).getOrdering()));
+            ret.add(new ResultElement<>(new MemoryEvent.Write(getId(global), global, local, dependencies.get(local), ((XcfaLabel.StoreXcfaLabel<?>) label).getOrdering())));
         } else if (label instanceof XcfaLabel.LoadXcfaLabel<?>) {
             VarDecl<?> global = ((XcfaLabel.LoadXcfaLabel<?>) label).getGlobal();
             VarDecl<?> local = ((XcfaLabel.LoadXcfaLabel<?>) label).getLocal();
-            memoryEvents.add(new MemoryEvent.Read(getId(global), global, local, ((XcfaLabel.LoadXcfaLabel<?>) label).getOrdering()));
+            ret.add(new ResultElement<>(new MemoryEvent.Read(getId(global), global, local, ((XcfaLabel.LoadXcfaLabel<?>) label).getOrdering())));
         } else if (label instanceof XcfaLabel.FenceXcfaLabel) {
-            memoryEvents.add(new MemoryEvent.Fence(((XcfaLabel.FenceXcfaLabel) label).getType()));
+            ret.add(new ResultElement<>(new MemoryEvent.Fence(((XcfaLabel.FenceXcfaLabel) label).getType())));
         } else if (label instanceof XcfaLabel.SequenceLabel) {
             for (XcfaLabel xcfaLabel : ((XcfaLabel.SequenceLabel) label).getLabels()) {
-                collectMemoryEvents(memoryEvents, xcfaLabel, dependencies);
+                collectPieces(ret, xcfaLabel, dependencies, source);
             }
+        } else {
+            ret.add(new ResultElement<>(new XcfaProcessAction(XcfaEdge.of(source, source, List.of(label)))));
         }
         label.accept(new XcfaLabelDependencyCollector(), dependencies);
     }

@@ -66,7 +66,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 		final Waitlist<ArgNode<XtaState<S>, XtaAction>> waiting;
 
 		public CheckMethod() {
-			arg = ARG.create();
+			arg = ARG.create(partialOrd);
 			stats = LazyXtaStatistics.builder(arg);
 			passed = Partition.of(n -> algorithmStrategy.getProjection().apply(n.getState()));
 			waiting = searchStrategy.createWaitlist();

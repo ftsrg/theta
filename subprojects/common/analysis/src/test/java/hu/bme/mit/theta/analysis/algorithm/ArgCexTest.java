@@ -15,24 +15,23 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
+import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ArgCexTest {
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = ARG.create();
+		final ARG<State, Action> arg = ARG.create(new PartialOrdStub());
 
 		final State s1 = new StateStub("S1");
 		final State s2 = new StateStub("S2");
