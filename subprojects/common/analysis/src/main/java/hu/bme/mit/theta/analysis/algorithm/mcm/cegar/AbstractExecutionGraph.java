@@ -17,6 +17,8 @@
 package hu.bme.mit.theta.analysis.algorithm.mcm.cegar;
 
 import com.google.common.collect.Sets;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
 import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
@@ -30,6 +32,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.UCSolver;
 import tools.refinery.store.map.Cursor;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.model.ModelStore;
@@ -46,7 +50,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class AbstractExecutionGraph {
+public class AbstractExecutionGraph<S extends State, A extends Action> {
     private final Map<String, Relation<TruthValue>> preDefinedRelations = Map.ofEntries(
             Map.entry("emptyset", new Relation<>("emptyset", 1, TruthValue.FALSE)),
             Map.entry("W", new Relation<>("W", 1, TruthValue.FALSE)),
@@ -137,7 +141,7 @@ public class AbstractExecutionGraph {
             if(currentModel.get(rel("IW"), Tuple.of(i)).must()) encodedRelationWrapper.getSolver().add(t.get(TupleN.of(i)).getRef());
 
             for (final int j : idList) {
-                if(currentModel.get(rel("po"), Tuple.of(i, j)).must()) {
+                if(currentModel.get(rel("po-raw"), Tuple.of(i, j)).must()) {
                     boolean found = false;
                     for (List<Integer> partition : partitions) {
                         if(currentModel.get(rel("int"), Tuple.of(partition.get(0), j)).must()) {
@@ -155,8 +159,25 @@ public class AbstractExecutionGraph {
             }
             for (List<Integer> partition : partitions) {
                 encodedRelationWrapper.getSolver().add(Imply(t.get(TupleN.of(i)).getRef(), Or(partition.stream().map(j -> t.get(TupleN.of(j)).getRef()).collect(Collectors.toList()))));
+                for (final int j : partition) {
+                    encodedRelationWrapper.getSolver().add(Imply(t.get(TupleN.of(j)).getRef(), t.get(TupleN.of(i)).getRef()));
+                    encodedRelationWrapper.getSolver().add(Imply(t.get(TupleN.of(j)).getRef(), Not(Or(partition.stream().filter(k -> k!=j).map(k -> t.get(TupleN.of(k)).getRef()).collect(Collectors.toList())))));
+                }
             }
         }
+
+        if(encodedRelationWrapper.getSolver().check().isUnsat()) {
+            try(final UCSolver solver = SolverManager.resolveSolverFactory("Z3").createUCSolver()) {
+                solver.track(encodedRelationWrapper.getSolver().getAssertions());
+                solver.check();
+                for (Expr<BoolType> boolTypeExpr : solver.getUnsatCore()) {
+                    System.err.println(boolTypeExpr);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return getOrCreate(encodedRelationWrapper, idList, "rf", false);
     }
 
@@ -200,28 +221,28 @@ public class AbstractExecutionGraph {
 
     public int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
         check(processId, varId, lastNode, tags);
-        final int id = addMemoryEvent(processId, varId, lastNode);
+        final int id = addMemoryEvent(processId, varId, lastNode, tags);
         setTrue("W", id);
         return id;
     }
 
     public int addRead(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
         check(processId, varId, lastNode, tags);
-        final int id = addMemoryEvent(processId, varId, lastNode);
+        final int id = addMemoryEvent(processId, varId, lastNode, tags);
         setTrue("R", id);
         return id;
     }
 
     public int addFence(final int processId, final int lastNode, final Collection<String> tags) {
         check(processId, -1, lastNode, tags);
-        final int id = addNormalEvent(processId, lastNode);
+        final int id = addNormalEvent(processId, lastNode, tags);
         setTrue("F", id);
         return id;
     }
 
     public int addInitialWrite(final int varId, final Collection<String> tags) {
         check(-1, varId, 0, tags);
-        final int id = addAnyEvent();
+        final int id = addAnyEvent(tags);
         setTrue("W", id);
         setTrue("IW", id);
         setTrue("M", id);
@@ -229,36 +250,45 @@ public class AbstractExecutionGraph {
         return id;
     }
 
-    public void mustInclude(final int id) {
-        setTrue("in-trace", id);
+    public int addState(final int lastNode, final S state) {
+        final int id = lastCnt++;
+        setTrue("po-raw", lastNode, id);
+        return id;
+    }
+
+    public int addAction(final int lastNode, final A action) {
+        final int id = lastCnt++;
+        setTrue("po-raw", lastNode, id);
+        return id;
     }
 
     // support methods for builders
 
-    private int addMemoryEvent(int processId, int varId, int lastNode) {
-        final int id = addNormalEvent(processId, lastNode);
+    private int addMemoryEvent(int processId, int varId, int lastNode, Collection<String> tags) {
+        final int id = addNormalEvent(processId, lastNode, tags);
         setTrue("M", id);
         setTrue("loc-raw", varId, id);
         return id;
     }
 
-    private int addNormalEvent(int processId, int lastNode) {
-        final int id = addAnyEvent();
+    private int addNormalEvent(int processId, int lastNode, Collection<String> tags) {
+        final int id = addAnyEvent(tags);
         if(lastNode == 0) {
             for (final Tuple iw : getMustValues(rel("IW"))) {
-                setTrue("po", unbox(iw), id);
+                setTrue("po-raw", unbox(iw), id);
             }
         } else {
-            setTrue("po", lastNode, id);
+            setTrue("po-raw", lastNode, id);
         }
         setTrue("int-raw", processId, id);
         return id;
     }
 
-    private int addAnyEvent() {
+    private int addAnyEvent(Collection<String> tags) {
         final int id = lastCnt++;
         setTrue("id", id, id);
         setTrue("U", id);
+        tags.forEach(s -> setTrue(s, id));
         return id;
     }
 

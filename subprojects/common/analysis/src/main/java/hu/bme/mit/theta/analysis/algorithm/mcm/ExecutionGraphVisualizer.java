@@ -182,7 +182,7 @@ public class ExecutionGraphVisualizer implements Runnable{
                         Color color = g.getColor();
                         g.setColor(relations.get(s[0]));
                         Path2D.Double path = new Path2D.Double();
-                        double offset = 10 * (0.8 + 0.4 * new Random(decl.hashCode()).nextDouble());
+                        double offset = 25 * (0.8 + 0.4 * new Random(decl.hashCode()).nextDouble());
 //                        double offset = Double.min(Math.abs(a.get1() - b.get1()),  Math.abs(a.get2() - b.get2())) * 0.1 * (0.8 + 0.4 * new Random(decl.hashCode()).nextDouble());
                         Tuple2<Double, Double> normal = Tuple2.of(a.get2() - b.get2(), b.get1() - a.get1());
                         double norm = Math.sqrt(normal.get1()*normal.get1() + normal.get2()*normal.get2());

@@ -15,11 +15,6 @@ empty rf \ loc as rfReadsSameVar
 empty (rf; rf^-1)\id as onlyOneRfPerRead
 empty (R & T) \ range(rf) as everyReadReads
 
-let po-sibling = ((po^-1; po) \ po \ id) & int
-empty po-sibling & both-in-trace
-
-empty po & ((~T) * T) as ancestorMustBeChosen
-
 let po-loc = po & loc
 let rfe = rf & ext
 let rfi = rf & int

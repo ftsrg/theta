@@ -15,7 +15,7 @@ Orig=DpDatadW Rfe DpDatadW PosWW Rfe
  CBZ W2,a     | ;
  B end        | ;
  a:           | MOV W4,#2    ;
- DMB SY       | STR W4,[X3]  ;
+ LDR W0,[X1]       | STR W4,[X3]  ;
 end:          | ;
 exists
 (x=2 /\ 0:X0=2 /\ 1:X0=1)
