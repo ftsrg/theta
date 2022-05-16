@@ -151,8 +151,9 @@ public class LitmusCli {
 			final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 			final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplTransFunc.create(solver)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 			final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
+			final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>();
 
-			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, solver, mcm, logger);
+			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, solver, mcm, logger);
 			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.empty());
 			if(visualize) {
 				if(mcmSafetyResult.getSolutions().size() == 0) {
