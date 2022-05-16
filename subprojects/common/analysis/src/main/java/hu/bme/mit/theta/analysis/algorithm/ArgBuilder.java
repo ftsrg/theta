@@ -15,19 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import hu.bme.mit.theta.analysis.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.TransFunc;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Helper class for building the ARG with a given analysis and precision.
@@ -60,7 +55,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	}
 
 	public ARG<S, A> createArg() {
-		return ARG.create(analysis.getPartialOrd());
+		return ARG.create();
 	}
 
 	public Collection<ArgNode<S, A>> init(final ARG<S, A> arg, final P prec) {

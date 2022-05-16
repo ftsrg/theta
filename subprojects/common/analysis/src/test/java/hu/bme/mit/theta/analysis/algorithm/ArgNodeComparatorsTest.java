@@ -31,12 +31,11 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
-import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 
 public class ArgNodeComparatorsTest {
 
-	private final ARG<State, Action> arg = ARG.create(new PartialOrdStub());
+	private final ARG<State, Action> arg = ARG.create();
 	private final Action act = new ActionStub("A");
 
 	private final ArgNode<State, Action> s0 = arg.createInitNode(new StateStub("s0"), false);

@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.mcm.cegar.AbstractExecutionGraph;
@@ -40,6 +41,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
     private final MultiprocTransFunc<S, A, P> multiprocTransFunc;
     private final Collection<Integer> pids;
     private final Collection<MemoryEvent.Write> initialWrites;
+    private final PartialOrd<S> partialOrd;
     private final Solver solver;
     private final MCM mcm;
     private final Logger logger;
@@ -51,10 +53,12 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
             final MultiprocTransFunc<S, A, P> multiprocTransFunc,
             final Collection<Integer> pids,
             final Collection<MemoryEvent.Write> initialWrites,
+            final PartialOrd<S> partialOrd,
             final Solver solver,
             final MCM mcm,
             final Logger logger) {
         this.initialWrites = initialWrites;
+        this.partialOrd = partialOrd;
         checkArgument(pids.stream().noneMatch(i -> i >= 0), "Meta event IDs must be negative!");
 
         this.memoryEventProvider = memoryEventProvider;
@@ -69,7 +73,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
 
     public MCMSafetyResult check(final P prec) {
         logger.write(Logger.Level.MAINSTEP, "Starting verification\n");
-        final AbstractExecutionGraph executionGraph = new AbstractExecutionGraph(List.of("RX", "A", "DMB.SY", "thread-end"), solver, this.mcm);
+        final AbstractExecutionGraph<S, A> executionGraph = new AbstractExecutionGraph<S, A>(List.of("RX", "A", "DMB.SY", "thread-end"), solver, this.mcm, partialOrd);
 
         final List<Integer> initialWriteEvents = new ArrayList<>();
 
@@ -113,11 +117,7 @@ public class MCMChecker<S extends State, A extends Action, P extends Prec> {
                     S savedState = state;
                     final Collection<MemoryEvent> memoryEventsOf = memoryEventProvider.getMemoryEventsOf(savedState, a);
                     for (MemoryEvent memoryEvent : memoryEventsOf) {
-                        savedLastId = switch (memoryEvent.type()) {
-                            case READ -> executionGraph.addRead(pid, memoryEvent.asRead().varId(), savedLastId, Set.of(memoryEvent.tag()));
-                            case WRITE -> executionGraph.addWrite(pid, memoryEvent.asWrite().varId(), savedLastId, Set.of(memoryEvent.tag()));
-                            case FENCE -> executionGraph.addFence(pid, savedLastId, Set.of(memoryEvent.tag()));
-                        };
+                        savedLastId = executionGraph.addMemoryEvent(memoryEvent, pid, savedLastId);
                         logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + savedLastId + ": " + memoryEvent + "\n");
 
                         if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), savedLastId);

@@ -18,11 +18,11 @@ package hu.bme.mit.theta.analysis.algorithm.mcm.cegar;
 
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
-import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMConstraint;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.mcm.*;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.common.datalog.Datalog;
 import hu.bme.mit.theta.common.datalog.DatalogArgument;
@@ -47,6 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
@@ -89,14 +90,20 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     private Model currentModel;
     private final EncodedRelationWrapper encodedRelationWrapper;
     private int lastCnt = 1;
+    private final Map<Integer, ARG<S, ActionUnion<A>>> threadArgs;
+    private final Map<Integer, ArgNode<S, ActionUnion<A>>> argNodeLookup;
+    private final PartialOrd<S> partialOrd;
 
-    public AbstractExecutionGraph(final Collection<String> tags, final Solver solver, final MCM mcm) {
+    public AbstractExecutionGraph(final Collection<String> tags, final Solver solver, final MCM mcm, final PartialOrd<S> partialOrd) {
         this.mcm = mcm;
+        this.partialOrd = partialOrd;
         this.tags = new LinkedHashMap<>();
         tags.forEach(t -> this.tags.put(t, new Relation<>(t, 1, TruthValue.FALSE)));
         modelStore = new ModelStoreImpl(Sets.union(Set.copyOf(this.tags.values()), Set.copyOf(preDefinedRelations.values())));
         currentModel = modelStore.createModel();
         encodedRelationWrapper = new EncodedRelationWrapper(solver);
+        threadArgs = new LinkedHashMap<>();
+        argNodeLookup = new LinkedHashMap<>();
     }
 
     // Encoder method
@@ -218,22 +225,34 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
         setTrue("data", i, j);
     }
 
+    public int addMemoryEvent(final MemoryEvent memoryEvent, final int pid, final int lastId) {
+        checkState(threadArgs.containsKey(pid));
+        int id = switch (memoryEvent.type()) {
+            case READ -> addRead(pid, memoryEvent.asRead().varId(), lastId, Set.of(memoryEvent.tag()));
+            case WRITE -> addWrite(pid, memoryEvent.asWrite().varId(), lastId, Set.of(memoryEvent.tag()));
+            case FENCE -> addFence(pid, lastId, Set.of(memoryEvent.tag()));
+        };
+        final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastId);
+        final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.MemoryEventAction<>(memoryEvent), lastArgNode.getState(), false);
+        argNodeLookup.put(id, succNode);
+        return id;
+    }
 
-    public int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
+    private int addWrite(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
         check(processId, varId, lastNode, tags);
         final int id = addMemoryEvent(processId, varId, lastNode, tags);
         setTrue("W", id);
         return id;
     }
 
-    public int addRead(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
+    private int addRead(final int processId, final int varId, final int lastNode, final Collection<String> tags) {
         check(processId, varId, lastNode, tags);
         final int id = addMemoryEvent(processId, varId, lastNode, tags);
         setTrue("R", id);
         return id;
     }
 
-    public int addFence(final int processId, final int lastNode, final Collection<String> tags) {
+    private int addFence(final int processId, final int lastNode, final Collection<String> tags) {
         check(processId, -1, lastNode, tags);
         final int id = addNormalEvent(processId, lastNode, tags);
         setTrue("F", id);
@@ -250,15 +269,33 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
         return id;
     }
 
-    public int addState(final int lastNode, final S state) {
+    public int addInitialState(final int pid, final S state, final boolean target) {
+        checkState(threadArgs.containsKey(pid));
         final int id = lastCnt++;
-        setTrue("po-raw", lastNode, id);
+        for (final Tuple iw : getMustValues(rel("IW"))) {
+            setTrue("po-raw", unbox(iw), id);
+        }
+        ArgNode<S, ActionUnion<A>> initNode = threadArgs.get(pid).createInitNode(state, target);
+        argNodeLookup.put(id, initNode);
         return id;
     }
 
-    public int addAction(final int lastNode, final A action) {
+    public int addState(final int lastNode, final int pid, final A action, final S state, final boolean target) {
+        checkState(threadArgs.containsKey(pid));
         final int id = lastCnt++;
         setTrue("po-raw", lastNode, id);
+        ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(argNodeLookup.get(lastNode), new ActionUnion.ActionWrapper<>(action), state, target);
+        argNodeLookup.put(id, succNode);
+        return id;
+    }
+
+    public int addAction(final int lastNode, final int pid, final A action) {
+        checkState(threadArgs.containsKey(pid));
+        final int id = lastCnt++;
+        setTrue("po-raw", lastNode, id);
+        final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastNode);
+        final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.ActionWrapper<>(action), lastArgNode.getState(), false);
+        argNodeLookup.put(id, succNode);
         return id;
     }
 
@@ -274,9 +311,7 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
     private int addNormalEvent(int processId, int lastNode, Collection<String> tags) {
         final int id = addAnyEvent(tags);
         if(lastNode == 0) {
-            for (final Tuple iw : getMustValues(rel("IW"))) {
-                setTrue("po-raw", unbox(iw), id);
-            }
+            throw new RuntimeException("Initial state should have been added!");
         } else {
             setTrue("po-raw", lastNode, id);
         }
@@ -399,5 +434,60 @@ public class AbstractExecutionGraph<S extends State, A extends Action> {
         if(t.getSize() == 1) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)));
         if(t.getSize() == 2) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)), GenericDatalogArgument.createArgument(t.get(1)));
         throw new UnsupportedOperationException("Relations with higher arities not supported");
+    }
+
+    private static abstract class ActionUnion<A> implements Action {
+       private final boolean isMemoryEvent;
+
+       protected ActionWrapper asActionWrapper() {
+           throw new ClassCastException("Cannot be cast to ActionWrapper");
+       }
+       protected MemoryEventAction asMemoryEventAction() {
+           throw new ClassCastException("Cannot be cast to MemoryEventAction");
+       }
+
+       protected ActionUnion(boolean isMemoryEvent) {
+            this.isMemoryEvent = isMemoryEvent;
+       }
+
+        public boolean isMemoryEvent() {
+            return isMemoryEvent;
+        }
+
+        private static final class MemoryEventAction<A> extends ActionUnion<A> {
+            private final MemoryEvent memoryEvent;
+
+            private MemoryEventAction(MemoryEvent memoryEvent) {
+                super(true);
+                this.memoryEvent = memoryEvent;
+            }
+
+            public MemoryEvent getMemoryEvent() {
+                return memoryEvent;
+            }
+
+           @Override
+           protected MemoryEventAction<A> asMemoryEventAction() {
+               return this;
+           }
+       }
+
+        private static final class ActionWrapper<A> extends ActionUnion<A> {
+            private final A action;
+
+            private ActionWrapper(A action) {
+                super(false);
+                this.action = action;
+            }
+
+            public A getAction() {
+                return action;
+            }
+
+            @Override
+            protected ActionWrapper<A> asActionWrapper() {
+                return this;
+            }
+        }
     }
 }

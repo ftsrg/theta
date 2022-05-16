@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.container.Containers;
 
@@ -39,16 +38,14 @@ public final class ARG<S extends State, A extends Action> {
 	private final Collection<ArgNode<S, A>> initNodes;
 	boolean initialized; // Set by ArgBuilder
 	private int nextId = 0;
-	final PartialOrd<S> partialOrd;
 
-	private ARG(final PartialOrd<S> partialOrd) {
+	private ARG() {
 		initNodes = Containers.createSet();
-		this.partialOrd = partialOrd;
 		this.initialized = false;
 	}
 
-	public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
-		return new ARG<>(partialOrd);
+	public static <S extends State, A extends Action> ARG<S, A> create() {
+		return new ARG<>();
 	}
 
 	////

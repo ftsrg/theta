@@ -131,7 +131,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 							if (feasible) {
 								final boolean unsafe = unsafePredicate.test(succState);
 								if (unsafe) {
-									bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+									bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(), ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG
 									break outerloop;
 								}
 							} else {
@@ -144,7 +144,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 							}
 						} else {
 							if (unsafePredicate.test(succState) && trace.isFeasible(solver)) {
-								bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+								bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(), ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG
 								break outerloop;
 							}
 						}
@@ -161,7 +161,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 			}
 		}
 		if (bmcresult == null) {
-			bmcresult = SafetyResult.safe(ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+			bmcresult = SafetyResult.safe(ARG.create()); // TODO: this is only a placeholder, we don't give back an ARG
 		}
 		logger.write(Logger.Level.RESULT, "%s%n", bmcresult);
 		return bmcresult;
