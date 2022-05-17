@@ -239,6 +239,7 @@ public class ExecutionGraphVisualizer implements Runnable{
                     drawEvent((int) (getWidth() / 100.0f * tuple.get1()), (int) (getHeight() / 100.0f * tuple.get2()), g);
                     StringJoiner stringJoiner = new StringJoiner(", ", "{", "}");
                     eventLabels.get(integer).forEach(i -> stringJoiner.add(i));
+                    stringJoiner.add("" + integer);
                     drawLabelForEvent(stringJoiner.toString(), (int) (getWidth() / 100.0f * tuple.get1()), (int) (getHeight() / 100.0f * tuple.get2()), g);
                 }
             });

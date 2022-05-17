@@ -157,16 +157,6 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
 
     private class ExpressionVisitor extends LitmusAArch64BaseVisitor<Expr<BvType>> {
         @Override
-        public Expr<BvType> visitExpressionRegister64(LitmusAArch64Parser.ExpressionRegister64Context ctx) {
-            return getOrCreateVar("X" + ctx.register64().id, 64).getRef();
-        }
-
-        @Override
-        public Expr<BvType> visitExpressionRegister32(LitmusAArch64Parser.ExpressionRegister32Context ctx) {
-            return getOrCreateVar("W" + ctx.register32().id, 32).getRef();
-        }
-
-        @Override
         public Expr<BvType> visitExpressionConversion(LitmusAArch64Parser.ExpressionConversionContext ctx) {
             return ctx.register32().accept(this);
         }

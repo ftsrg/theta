@@ -88,6 +88,11 @@ public class PushPopVarIndexing implements VarIndexing {
 		return new PushPopVarIndexing.PushPopVarIndexingBuilder(this);
 	}
 
+	@Override
+	public VarIndexing inc(VarDecl<?> varDecl, int n) {
+		throw new UnsupportedOperationException("");
+	}
+
 	/**
 	 * Increment the index of a given variable by one
 	 *

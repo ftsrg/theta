@@ -23,6 +23,8 @@ public interface VarIndexing {
 
 	VarIndexing inc(VarDecl<?> varDecl);
 
+	VarIndexing inc(VarDecl<?> varDecl, int n);
+
 	VarIndexing add(VarIndexing indexing);
 
 	VarIndexing sub(VarIndexing indexing);

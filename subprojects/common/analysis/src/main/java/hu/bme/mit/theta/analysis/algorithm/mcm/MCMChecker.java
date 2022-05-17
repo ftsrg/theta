@@ -16,11 +16,11 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm;
 
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.mcm.cegar.AbstractExecutionGraph;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.READ;
 import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.WRITE;
 
-public class MCMChecker<S extends State, A extends Action, P extends Prec> {
+public class MCMChecker<S extends State, A extends StmtAction, P extends Prec> {
     private final MemoryEventProvider<S, A> memoryEventProvider;
     private final MultiprocLTS<S, A> multiprocLTS;
     private final MultiprocInitFunc<S, P> multiprocInitFunc;
