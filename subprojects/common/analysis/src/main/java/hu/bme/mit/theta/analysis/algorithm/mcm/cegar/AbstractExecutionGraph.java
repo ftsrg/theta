@@ -196,79 +196,17 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         // Otherwise L1 -> [x := y] -> L2; L1 -> [x := -y] -> L2 is not solvable
 
         threadArgs.forEach((pid, arg) -> {
-            final Collection<Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing>> waitSet = new LinkedHashSet<>();
-            arg.getInitNodes().forEach(node -> waitSet.add(Tuple2.of(node, VarIndexingFactory.indexing(0))));
-            VarIndexing lhsIndexing = VarIndexingFactory.indexing(0);
-            while(!waitSet.isEmpty()) {
-                final Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing> nextElement = waitSet.stream().findAny().get();
-                waitSet.remove(nextElement);
-                final ArgNode<S, ActionUnion<A>> node = nextElement.get1();
-                final VarIndexing rhsIndexing = nextElement.get2();
-
-                for (ArgEdge<S, ActionUnion<A>> argEdge : node.getOutEdges().toList()) {
-                    final ActionUnion<A> actionOrMemEvent = argEdge.getAction();
-                    if(actionOrMemEvent.isMemoryEvent()) {
-                        VarIndexing localIndexing = rhsIndexing;
-                        MemoryEvent memoryEvent = actionOrMemEvent.asMemoryEventAction().getMemoryEvent();
-                        switch(memoryEvent.type()) {
-                            case READ -> {
-                                lhsIndexing = lhsIndexing.inc(memoryEvent.asRead().localVar());
-                                localIndexing = localIndexing.inc(memoryEvent.asRead().localVar(), lhsIndexing.get(memoryEvent.asRead().localVar()) - localIndexing.get(memoryEvent.asRead().localVar()));
-                                readVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asRead().localVar().getRef(), localIndexing));
-                            }
-                            case WRITE -> writeVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asWrite().localVar().getRef(), localIndexing));
-                            default -> {}
-                        }
-                        waitSet.add(Tuple2.of(argEdge.getTarget(), localIndexing));
-                    }
-                    if(!actionOrMemEvent.isMemoryEvent()) {
-                        final A action = actionOrMemEvent.asActionWrapper().getAction();
-                        VarIndexing localIndexing = rhsIndexing;
-                        for (Stmt stmt : action.getStmts()) {
-                            Tuple3<Collection<Expr<BoolType>>, VarIndexing, VarIndexing> unfoldResult = StmtTreeUnfolder.unfold(stmt, lhsIndexing, localIndexing);
-                            Expr<BoolType> base = Or(collectImmediateSuccessors(argEdge).stream().map(i -> t.get(TupleN.of(i)).getRef()).toList());
-                            solver.add(Imply(base, And(unfoldResult.get1())));
-                            System.err.println(Imply(base, And(unfoldResult.get1())));
-                            lhsIndexing = unfoldResult.get2();
-                            localIndexing = unfoldResult.get3();
-                        }
-                        waitSet.add(Tuple2.of(argEdge.getTarget(), localIndexing));
-                    }
-                }
-            }
+            encodeArg(solver, t, writeVarIndexingMap, readVarIndexingMap, arg);
         });
 
         writeVarIndexingMap.forEach((i, writeConst) -> readVarIndexingMap.forEach((j, readConst) ->
                 solver.add(Imply(rf.get(TupleN.of(i, j)).getRef(), Eq(writeConst, readConst)))));
 
 
-
-        if(solver.check().isUnsat()) {
-            try(final UCSolver ucSolver = SolverManager.resolveSolverFactory("Z3").createUCSolver()) {
-                ucSolver.track(solver.getAssertions());
-                ucSolver.check();
-                for (Expr<BoolType> boolTypeExpr : ucSolver.getUnsatCore()) {
-                    System.err.println(boolTypeExpr);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
+        printUC(solver);
 
 
         return rf;
-    }
-
-    private Set<Integer> collectImmediateSuccessors(final ArgEdge<S, ActionUnion<A>> edge) {
-        if(edge.getAction().isMemoryEvent) {
-            return Set.of(edge.getAction().asMemoryEventAction().getId());
-        } else {
-            final Set<Integer> ret = new LinkedHashSet<>();
-            for (ArgEdge<S, ActionUnion<A>> outEdge : edge.getTarget().getOutEdges().toList()) {
-                ret.addAll(collectImmediateSuccessors(outEdge));
-            }
-            return ret;
-        }
     }
 
     Long commit = null;
@@ -527,6 +465,74 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         if(t.getSize() == 1) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)));
         if(t.getSize() == 2) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)), GenericDatalogArgument.createArgument(t.get(1)));
         throw new UnsupportedOperationException("Relations with higher arities not supported");
+    }
+
+    private void printUC(Solver solver) {
+        if(solver.check().isUnsat()) {
+            try(final UCSolver ucSolver = SolverManager.resolveSolverFactory("Z3").createUCSolver()) {
+                ucSolver.track(solver.getAssertions());
+                ucSolver.check();
+                for (Expr<BoolType> boolTypeExpr : ucSolver.getUnsatCore()) {
+                    System.err.println(boolTypeExpr);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void encodeArg(Solver solver, EventConstantLookup t, Map<Integer, Expr<?>> writeVarIndexingMap, Map<Integer, Expr<?>> readVarIndexingMap, ARG<S, ActionUnion<A>> arg) {
+        final Collection<Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing>> waitSet = new LinkedHashSet<>();
+        arg.getInitNodes().forEach(node -> waitSet.add(Tuple2.of(node, VarIndexingFactory.indexing(0))));
+        VarIndexing lhsIndexing = VarIndexingFactory.indexing(0);
+        while(!waitSet.isEmpty()) {
+            final Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing> nextElement = waitSet.stream().findAny().get();
+            waitSet.remove(nextElement);
+            final ArgNode<S, ActionUnion<A>> node = nextElement.get1();
+            final VarIndexing rhsIndexing = nextElement.get2();
+
+            for (ArgEdge<S, ActionUnion<A>> argEdge : node.getOutEdges().toList()) {
+                final ActionUnion<A> actionOrMemEvent = argEdge.getAction();
+                if(actionOrMemEvent.isMemoryEvent()) {
+                    VarIndexing localIndexing = rhsIndexing;
+                    MemoryEvent memoryEvent = actionOrMemEvent.asMemoryEventAction().getMemoryEvent();
+                    switch(memoryEvent.type()) {
+                        case READ -> {
+                            lhsIndexing = lhsIndexing.inc(memoryEvent.asRead().localVar());
+                            localIndexing = localIndexing.inc(memoryEvent.asRead().localVar(), lhsIndexing.get(memoryEvent.asRead().localVar()) - localIndexing.get(memoryEvent.asRead().localVar()));
+                            readVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asRead().localVar().getRef(), localIndexing));
+                        }
+                        case WRITE -> writeVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asWrite().localVar().getRef(), localIndexing));
+                        default -> {}
+                    }
+                    waitSet.add(Tuple2.of(argEdge.getTarget(), localIndexing));
+                }
+                if(!actionOrMemEvent.isMemoryEvent()) {
+                    final A action = actionOrMemEvent.asActionWrapper().getAction();
+                    VarIndexing localIndexing = rhsIndexing;
+                    for (Stmt stmt : action.getStmts()) {
+                        Tuple3<Collection<Expr<BoolType>>, VarIndexing, VarIndexing> unfoldResult = StmtTreeUnfolder.unfold(stmt, lhsIndexing, localIndexing);
+                        Expr<BoolType> base = Or(collectImmediateSuccessors(argEdge).stream().map(i -> t.get(TupleN.of(i)).getRef()).toList());
+                        solver.add(Imply(base, And(unfoldResult.get1())));
+                        lhsIndexing = unfoldResult.get2();
+                        localIndexing = unfoldResult.get3();
+                    }
+                    waitSet.add(Tuple2.of(argEdge.getTarget(), localIndexing));
+                }
+            }
+        }
+    }
+
+    private Set<Integer> collectImmediateSuccessors(final ArgEdge<S, ActionUnion<A>> edge) {
+        if(edge.getAction().isMemoryEvent) {
+            return Set.of(edge.getAction().asMemoryEventAction().getId());
+        } else {
+            final Set<Integer> ret = new LinkedHashSet<>();
+            for (ArgEdge<S, ActionUnion<A>> outEdge : edge.getTarget().getOutEdges().toList()) {
+                ret.addAll(collectImmediateSuccessors(outEdge));
+            }
+            return ret;
+        }
     }
 
     private static abstract class ActionUnion<A> implements Action {
