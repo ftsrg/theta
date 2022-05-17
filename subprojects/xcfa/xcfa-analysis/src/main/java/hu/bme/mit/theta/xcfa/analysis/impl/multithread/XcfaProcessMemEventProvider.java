@@ -25,6 +25,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.*;
+
 public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryEventProvider<XcfaProcessState<S>, XcfaProcessAction> {
     private final Map<VarDecl<?>, Integer> varIdLookup;
     private final int idOffset;
@@ -53,6 +54,29 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
             ret.add(new ResultElement<>(new MemoryEvent.Fence("thread-end")));
         }
         ret.add(new ResultElement<>(new XcfaProcessAction(edge.withLabels(List.of()))));
+        return simplify(ret);
+    }
+
+    private static Collection<ResultElement<XcfaProcessAction>> simplify(Collection<ResultElement<XcfaProcessAction>> from) {
+        final List<ResultElement<XcfaProcessAction>> ret = new ArrayList<>();
+        final List<XcfaLabel> labels = new ArrayList<>();
+        XcfaEdge template = null;
+        XcfaLocation target = null;
+        for (ResultElement<XcfaProcessAction> resultElement : from) {
+            if(resultElement.isAction()) {
+                final XcfaEdge edge = resultElement.getAction().getEdge();
+                if(template == null) template = edge;
+                target = edge.getTarget();
+                labels.addAll(edge.getLabels());
+            } else {
+                if(labels.size() > 0) ret.add(new ResultElement<>(new XcfaProcessAction(template.withLabels(labels))));
+                labels.clear();
+                target = null;
+                ret.add(resultElement);
+            }
+        }
+        ret.add(new ResultElement<>(new XcfaProcessAction(template.withLabels(labels).withTarget(target))));
+
         return ret;
     }
 
