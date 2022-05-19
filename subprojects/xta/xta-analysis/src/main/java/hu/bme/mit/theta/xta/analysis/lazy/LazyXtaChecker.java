@@ -15,19 +15,9 @@
  */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
 import com.google.common.collect.Lists;
-
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.*;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -35,6 +25,11 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
 	private final XtaLts lts;
@@ -66,7 +61,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 		final Waitlist<ArgNode<XtaState<S>, XtaAction>> waiting;
 
 		public CheckMethod() {
-			arg = ARG.create(partialOrd);
+			arg = ARG.create(algorithmStrategy.getAnalysis().getPartialOrd());
 			stats = LazyXtaStatistics.builder(arg);
 			passed = Partition.of(n -> algorithmStrategy.getProjection().apply(n.getState()));
 			waiting = searchStrategy.createWaitlist();
