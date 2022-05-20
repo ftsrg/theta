@@ -19,8 +19,10 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,6 +38,8 @@ public interface MemoryEventProvider<S extends State, A extends Action> {
      */
     Collection<ResultElement<A>> getPiecewiseAction(S state, A action);
     int getVarId(VarDecl<?> var);
+
+    A createAction(List<Stmt> stmt);
 
     class ResultElement<A extends Action> {
         private final Optional<MemoryEvent> memoryEvent;

@@ -34,6 +34,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.analysis.impl.multithread.*;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
 import hu.bme.mit.theta.xcfa.model.XCFA;
@@ -153,7 +154,7 @@ public class LitmusCli {
 			final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
 			final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>();
 
-			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, solver, mcm, logger);
+			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.top(), solver, mcm, logger);
 			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.empty());
 			if(visualize) {
 				if(mcmSafetyResult.getSolutions().size() == 0) {

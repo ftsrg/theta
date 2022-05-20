@@ -20,10 +20,13 @@ import hu.bme.mit.theta.analysis.algorithm.mcm.*;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Inverse;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Sequence;
 import hu.bme.mit.theta.analysis.algorithm.mcm.rules.Union;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.Test;
 
@@ -33,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class MCMTest {
@@ -69,7 +73,7 @@ public class MCMTest {
 				new MultiprocLTS<>(Map.of(-1, new TestLTS(), -2, new TestLTS())),
 				new MultiprocInitFunc<>(Map.of(-1, new TestInitFunc(thrd1_loc1), -2, new TestInitFunc(thrd2_loc1))),
 				new MultiprocTransFunc<>(Map.of(-1, new TestTransFunc(), -2, new TestTransFunc())),
-				List.of(-1, -2), List.<MemoryEvent.Write>of(), new TestPartialOrder(), Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
+				List.of(-1, -2), List.<MemoryEvent.Write>of(), new TestPartialOrder(), globalInitState, Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
 
 		mcmChecker.check(new TestPrec());
 	}
@@ -83,6 +87,11 @@ public class MCMTest {
 		@Override
 		public int getVarId(VarDecl<?> var) {
 			return -3;
+		}
+
+		@Override
+		public TestAction createAction(List<Stmt> stmt) {
+			return null;
 		}
 	}
 	private class TestLTS implements LTS<TestState, TestAction> {
@@ -112,7 +121,7 @@ public class MCMTest {
 		}
 	}
 
-	private class TestState implements State {
+	private class TestState implements ExprState {
 		private final Collection<TestAction> outgoingActions;
 
 		private TestState(Collection<TestAction> outgoingActions) {
@@ -122,6 +131,11 @@ public class MCMTest {
 		@Override
 		public boolean isBottom() {
 			return false;
+		}
+
+		@Override
+		public Expr<BoolType> toExpr() {
+			return True();
 		}
 	}
 

@@ -20,11 +20,13 @@ import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEventProvider;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryEventProvider<XcfaProcessState<S>, XcfaProcessAction> {
     private final Map<VarDecl<?>, Integer> varIdLookup;
@@ -83,6 +85,11 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
     @Override
     public int getVarId(VarDecl<?> var) {
         return getId(var);
+    }
+
+    @Override
+    public XcfaProcessAction createAction(List<Stmt> stmt) {
+        return new XcfaProcessAction(XcfaEdge.of(XcfaLocation.create(""), XcfaLocation.create(""), stmt.stream().map(XcfaLabel.StmtXcfaLabel::of).collect(Collectors.toList())));
     }
 
     private void collectPieces(Collection<ResultElement<XcfaProcessAction>> ret, XcfaLabel label, Map<VarDecl<?>, Set<VarDecl<?>>> dependencies, XcfaLocation source) {

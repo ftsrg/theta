@@ -242,6 +242,19 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
 
     // Builder methods
 
+
+    public boolean tryCover(int pid, int id) {
+        checkState(threadArgs.containsKey(pid));
+        final ARG<S, ActionUnion<A>> arg = threadArgs.get(pid);
+        final ArgNode<S, ActionUnion<A>> node = argNodeLookup.get(id);
+        final Optional<ArgNode<S, ActionUnion<A>>> covering = arg.getNodes().filter(argNode -> argNode.mayCover(node)).findFirst();
+        if(covering.isEmpty()) return false;
+        else {
+            covering.get().cover(node);
+            return true;
+        }
+    }
+
     public void addDataDependency(final int i, final int j) {
         setTrue("data", i, j);
     }
@@ -314,16 +327,6 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         final int id = lastCnt++;
         lastMemEventLookup.put(id, lastNode);
         ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(argNodeLookup.get(lastNode), new ActionUnion.ActionWrapper<>(action), state, target);
-        argNodeLookup.put(id, succNode);
-        return id;
-    }
-
-    public int addAction(final int lastNode, final int pid, final A action) {
-        checkState(threadArgs.containsKey(pid));
-        final int id = lastCnt++;
-        lastMemEventLookup.put(id, lastNode);
-        final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastNode);
-        final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.ActionWrapper<>(action), lastArgNode.getState(), false);
         argNodeLookup.put(id, succNode);
         return id;
     }

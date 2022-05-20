@@ -98,7 +98,7 @@ public class LitmusTest {
         final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(mcmFilename).getFile()));
         final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null,  Set.of(), null)).collect(Collectors.toList());
 
-        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, solver, mcm, NullLogger.getInstance());
+        final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, globalInitState, solver, mcm, NullLogger.getInstance());
         mcmChecker.check(ExplPrec.empty());
     }
 }
