@@ -18,17 +18,17 @@ package hu.bme.mit.theta.xcfa.analysis.impl.multithread;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.util.*;
 
 public class XcfaProcessTransFunc<S extends ExprState, P extends Prec> implements TransFunc<XcfaProcessState<S>, XcfaProcessAction, P> {
-    private final TransFunc<S, ExprAction, P> transFunc;
+    private final TransFunc<S, StmtAction, P> transFunc;
 
-    public XcfaProcessTransFunc(final TransFunc<S, ExprAction, P> transFunc) {
+    public XcfaProcessTransFunc(final TransFunc<S, StmtAction, P> transFunc) {
         this.transFunc = transFunc;
     }
 

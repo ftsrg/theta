@@ -17,10 +17,7 @@
 package hu.bme.mit.theta.fronted.litmus2xcfa;
 
 import hu.bme.mit.theta.analysis.algorithm.mcm.*;
-import hu.bme.mit.theta.analysis.expl.ExplInitFunc;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.ExplTransFunc;
+import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter;
@@ -94,7 +91,7 @@ public class LitmusTest {
         final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplTransFunc.create(solver)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-        final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>();
+        final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
         final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(mcmFilename).getFile()));
         final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null,  Set.of(), null)).collect(Collectors.toList());
 

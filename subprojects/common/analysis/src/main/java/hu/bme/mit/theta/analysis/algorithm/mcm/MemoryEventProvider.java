@@ -39,7 +39,7 @@ public interface MemoryEventProvider<S extends State, A extends Action> {
     Collection<ResultElement<A>> getPiecewiseAction(S state, A action);
     int getVarId(VarDecl<?> var);
 
-    A createAction(List<Stmt> stmt);
+    A createAction(S s, List<Stmt> stmt);
 
     class ResultElement<A extends Action> {
         private final Optional<MemoryEvent> memoryEvent;

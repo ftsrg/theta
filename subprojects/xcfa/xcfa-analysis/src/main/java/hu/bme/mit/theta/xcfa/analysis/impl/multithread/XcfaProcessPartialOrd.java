@@ -20,9 +20,14 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 
 public class XcfaProcessPartialOrd<S extends ExprState> implements PartialOrd<XcfaProcessState<S>> {
+    private final PartialOrd<S> partialOrd;
+
+    public XcfaProcessPartialOrd(PartialOrd<S> partialOrd) {
+        this.partialOrd = partialOrd;
+    }
+
     @Override
     public boolean isLeq(XcfaProcessState<S> state1, XcfaProcessState<S> state2) {
-        // TODO
-        return false;
+        return state1.getLocation().equals(state2.getLocation()) && partialOrd.isLeq(state1.getState(), state2.getState());
     }
 }

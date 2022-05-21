@@ -25,12 +25,15 @@ import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.mcm.*;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.common.datalog.Datalog;
 import hu.bme.mit.theta.common.datalog.DatalogArgument;
 import hu.bme.mit.theta.common.datalog.GenericDatalogArgument;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -105,6 +108,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     private final Map<Integer, Integer> lastMemEventLookup;
     private final Map<Integer, MemoryEvent> memoryEventLookup;
     private final Collection<Tuple3<Integer, Integer, Integer>> fixedRf;
+    private final Map<Integer, Collection<ArgNode<S, ActionUnion<A>>>> potentialCoveringNodes;
 
     public AbstractExecutionGraph(final Collection<String> tags, final Solver solver, final MCM mcm, final PartialOrd<S> partialOrd) {
         this.mcm = mcm;
@@ -119,6 +123,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         lastMemEventLookup = new LinkedHashMap<>();
         memoryEventLookup = new LinkedHashMap<>();
         fixedRf = new LinkedHashSet<>();
+        potentialCoveringNodes = new LinkedHashMap<>();
     }
 
     // Encoder method
@@ -199,6 +204,8 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         });
 
         for (Tuple3<Integer, Integer, Integer> tuple : fixedRf) {
+//            final ArgEdge<S, ActionUnion<A>> inEdge = argNodeLookup.get(tuple.get1()).getInEdge().get();
+//            final Expr<BoolType> inTrace = Or(collectImmediateSuccessors(inEdge).stream().map(i -> t.get(TupleN.of(i)).getRef()).toList());
             final Expr<BoolType> inTrace = t.get(TupleN.of(tuple.get1())).getRef();
             final Expr<BoolType> fixedRf = rf.get(TupleN.of(tuple.get2(), tuple.get3())).getRef();
             solver.add(Imply(inTrace, fixedRf));
@@ -250,12 +257,11 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
 
     public boolean tryCover(int pid, int id) {
         checkState(threadArgs.containsKey(pid));
-        final ARG<S, ActionUnion<A>> arg = threadArgs.get(pid);
         final ArgNode<S, ActionUnion<A>> node = argNodeLookup.get(id);
-        final Optional<ArgNode<S, ActionUnion<A>>> covering = arg.getNodes().filter(argNode -> argNode.mayCover(node)).findFirst();
+        final Optional<ArgNode<S, ActionUnion<A>>> covering = potentialCoveringNodes.get(pid).stream().filter(argNode -> argNode.mayCover(node)).findFirst();
         if(covering.isEmpty()) return false;
         else {
-            covering.get().cover(node);
+            node.cover(covering.get());
             return true;
         }
     }
@@ -264,11 +270,19 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         setTrue("data", i, j);
     }
 
-    public void addMustRf(final int id, final int write, final int read) {
-        fixedRf.add(Tuple3.of(id, write, read));
+
+    public int addMustRf(int pid, int read, A action, S state, int readsFrom) {
+        int i = addMemoryEvent(new MemoryEvent(MemoryEvent.MemoryEventType.META, "meta"), pid, read, state);
+        fixedRf.add(Tuple3.of(i, readsFrom, read));
+        return i;
     }
 
     public int addMemoryEvent(final MemoryEvent memoryEvent, final int pid, final int lastId) {
+        final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastId);
+        return addMemoryEvent(memoryEvent, pid, lastId, lastArgNode.getState());
+    }
+
+    public int addMemoryEvent(final MemoryEvent memoryEvent, final int pid, final int lastId, final S nextState) {
         checkState(threadArgs.containsKey(pid));
         final int actualLastId = getActualLastId(lastId);
         int id = switch (memoryEvent.type()) {
@@ -278,7 +292,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             case META -> addNormalEvent(pid, actualLastId, Set.of(memoryEvent.tag()));
         };
         final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastId);
-        final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.MemoryEventAction<>(memoryEvent, id), lastArgNode.getState(), false);
+        final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.MemoryEventAction<>(memoryEvent, id), nextState, false);
         argNodeLookup.put(id, succNode);
         memoryEventLookup.put(id, memoryEvent);
         return id;
@@ -332,11 +346,15 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         return id;
     }
 
-    public int addState(final int lastNode, final int pid, final A action, final S state, final boolean target) {
+    public int addState(final int lastNode, final int pid, final A action, final S state, final boolean target, final boolean isLastPiece) {
         checkState(threadArgs.containsKey(pid));
         final int id = lastCnt++;
         lastMemEventLookup.put(id, lastNode);
         ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(argNodeLookup.get(lastNode), new ActionUnion.ActionWrapper<>(action), state, target);
+        if(isLastPiece) {
+            potentialCoveringNodes.putIfAbsent(pid, new LinkedHashSet<>());
+            potentialCoveringNodes.get(pid).add(succNode);
+        }
         argNodeLookup.put(id, succNode);
         return id;
     }
@@ -580,12 +598,20 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             }
 
            @Override
-           protected MemoryEventAction<A> asMemoryEventAction() {
+            protected MemoryEventAction<A> asMemoryEventAction() {
                return this;
            }
 
             public int getId() {
                 return id;
+            }
+
+            @Override
+            public String toString() {
+                return "MemoryEventAction{" +
+                        "memoryEvent=" + memoryEvent +
+                        ", id=" + id +
+                        '}';
             }
         }
 
@@ -605,6 +631,19 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             protected ActionWrapper<A> asActionWrapper() {
                 return this;
             }
+
+            @Override
+            public String toString() {
+                return "ActionWrapper{" +
+                        "action=" + action +
+                        '}';
+            }
         }
+    }
+
+    public String toDot(int pid) {
+        ARG<S, ActionUnion<A>> arg = threadArgs.get(pid);
+        Graph g = ArgVisualizer.getDefault().visualize(arg);
+        return GraphvizWriter.getInstance().writeString(g);
     }
 }

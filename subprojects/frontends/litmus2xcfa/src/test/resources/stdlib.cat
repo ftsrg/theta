@@ -15,8 +15,8 @@ empty (R & T) \ range(rf) as everyReadReads
 
 empty co \ (W * W) as coOnlyBetweenWrites
 empty co \ loc as coForSameVar
-empty ((IW * W) & loc) \ id \ co as coInitialFirst
-empty ((W * W) & loc) \ id \ co \ co^-1 as coTotalOrder0
+empty ((IW * W) & loc & both-in-trace) \ id \ co as coInitialFirst
+empty ((W * W) & loc & both-in-trace) \ id \ co \ co^-1 as coTotalOrder0
 acyclic co as coTotalOrder1
 
 

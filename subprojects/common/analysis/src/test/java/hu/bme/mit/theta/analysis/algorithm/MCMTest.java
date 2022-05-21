@@ -91,7 +91,7 @@ public class MCMTest {
 		}
 
 		@Override
-		public TestAction createAction(List<Stmt> stmt) {
+		public TestAction createAction(TestState s, List<Stmt> stmt) {
 			return null;
 		}
 	}

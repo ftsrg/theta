@@ -88,8 +88,8 @@ public class XcfaProcessMemEventProvider<S extends ExprState> implements MemoryE
     }
 
     @Override
-    public XcfaProcessAction createAction(List<Stmt> stmt) {
-        return new XcfaProcessAction(XcfaEdge.of(XcfaLocation.create(""), XcfaLocation.create(""), stmt.stream().map(XcfaLabel.StmtXcfaLabel::of).collect(Collectors.toList())));
+    public XcfaProcessAction createAction(XcfaProcessState<S> state, List<Stmt> stmt) {
+        return new XcfaProcessAction(XcfaEdge.of(state.getLocation(), state.getLocation(), stmt.stream().map(XcfaLabel.StmtXcfaLabel::of).collect(Collectors.toList())));
     }
 
     private void collectPieces(Collection<ResultElement<XcfaProcessAction>> ret, XcfaLabel label, Map<VarDecl<?>, Set<VarDecl<?>>> dependencies, XcfaLocation source) {

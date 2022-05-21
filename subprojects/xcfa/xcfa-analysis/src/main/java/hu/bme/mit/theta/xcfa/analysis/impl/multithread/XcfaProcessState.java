@@ -57,4 +57,12 @@ public class XcfaProcessState<S extends ExprState> implements ExprState {
     public Map<VarDecl<?>, Set<VarDecl<?>>> getDependencies() {
         return Map.copyOf(dependencies);
     }
+
+    @Override
+    public String toString() {
+        return "XcfaProcessState{" +
+                "state=" + state +
+                ", location=" + location +
+                '}';
+    }
 }
