@@ -19,7 +19,6 @@ package hu.bme.mit.theta.analysis.algorithm.mcm;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.algorithm.mcm.cegar.AbstractExecutionGraph;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -34,8 +33,7 @@ import hu.bme.mit.theta.solver.Solver;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.READ;
-import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.WRITE;
+import static hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent.MemoryEventType.*;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 
 public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Prec> {
@@ -46,7 +44,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
     private final Collection<Integer> pids;
     private final Collection<MemoryEvent.Write> initialWrites;
     private final PartialOrd<S> partialOrd;
-    private final ExplState globalInitState;
+    private final ExprState globalInitState;
     private final Solver solver;
     private final MCM mcm;
     private final Logger logger;
@@ -59,7 +57,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             final Collection<Integer> pids,
             final Collection<MemoryEvent.Write> initialWrites,
             final PartialOrd<S> partialOrd,
-            final ExplState globalInitState,
+            final ExprState globalInitState,
             final Solver solver,
             final MCM mcm,
             final Logger logger) {
@@ -135,42 +133,10 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             final List<Integer> eventList = eventListMap.get(pid);
 
             if(delayedEvent.get() instanceof final DelayedRead delayedRead) {
-                final A a = delayedRead.getA();
-                final int pieceNo = delayedRead.getPieceNo();
-
-                final List<MemoryEventProvider.ResultElement<A>> piecesOf = List.copyOf(memoryEventProvider.getPiecewiseAction(state, a));
-                Collection<DelayedEvent> states = new ArrayList<>(List.of(new DelayedEvent(pid, lastId, state)));
-                Collection<DelayedEvent> nextStates = new ArrayList<>();
-                for (int i = pieceNo + 1; i < piecesOf.size(); i++) {
-                    MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
-                    if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece)) {
-                        states = nextStates;
-                        break;
-                    }
-                    states = nextStates;
-                    nextStates = new ArrayList<>();
-                }
-                delayedEvents.addAll(states);
+                handleDelayedRead(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, delayedRead);
             }
             else {
-                final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
-                if (enabledActionsFor.size() == 0) break;
-                for (final A a : enabledActionsFor) {
-                    final List<MemoryEventProvider.ResultElement<A>> piecesOf = List.copyOf(memoryEventProvider.getPiecewiseAction(state, a));
-                    Collection<DelayedEvent> states = new ArrayList<>(List.of(new DelayedEvent(pid, lastId, state)));
-                    Collection<DelayedEvent> nextStates = new ArrayList<>();
-
-                    for (int i = 0; i < piecesOf.size(); i++) {
-                        MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
-                        if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece)) {
-                            states = nextStates;
-                            break;
-                        }
-                        states = nextStates;
-                        nextStates = new ArrayList<>();
-                    }
-                    delayedEvents.addAll(states);
-                }
+                handleEvent(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList);
             }
         }
 
@@ -185,6 +151,48 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         logger.write(Logger.Level.RESULT, "Number of executions: " + solutions.size() + "\n");
         logger.write(Logger.Level.MAINSTEP, "Verification ended\n");
         return new MCMSafetyResult(solutions, events, initialWriteEvents);
+    }
+
+    private void handleEvent(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList) {
+        final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
+        for (final A a : enabledActionsFor) {
+            final List<MemoryEventProvider.ResultElement<A>> piecesOf = List.copyOf(memoryEventProvider.getPiecewiseAction(state, a));
+            Collection<DelayedEvent> states = new ArrayList<>(List.of(new DelayedEvent(pid, lastId, state)));
+            Collection<DelayedEvent> nextStates = new ArrayList<>();
+
+            for (int i = 0; i < piecesOf.size(); i++) {
+                MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
+                if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece)) {
+                    states = nextStates;
+                    break;
+                }
+                states = nextStates;
+                nextStates = new ArrayList<>();
+            }
+            delayedEvents.addAll(states);
+        }
+    }
+
+    private void handleDelayedRead(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, DelayedRead delayedRead) {
+        final A a = delayedRead.getA();
+        final int pieceNo = delayedRead.getPieceNo();
+
+        lastId = executionGraph.addMemoryEvent(new MemoryEvent(META, ""), pid, lastId);
+        executionGraph.addMustRf(lastId, delayedRead.getReadsFrom(), delayedRead.getId());
+
+        final List<MemoryEventProvider.ResultElement<A>> piecesOf = List.copyOf(memoryEventProvider.getPiecewiseAction(state, a));
+        Collection<DelayedEvent> states = new ArrayList<>(List.of(new DelayedEvent(pid, lastId, state)));
+        Collection<DelayedEvent> nextStates = new ArrayList<>();
+        for (int i = pieceNo + 1; i < piecesOf.size(); i++) {
+            MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
+            if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece)) {
+                states = nextStates;
+                break;
+            }
+            states = nextStates;
+            nextStates = new ArrayList<>();
+        }
+        delayedEvents.addAll(states);
     }
 
     private boolean exploreActionPiece(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, A a, Collection<DelayedEvent> states, Collection<DelayedEvent> nextStates, int i, MemoryEventProvider.ResultElement<A> piece) {
@@ -211,8 +219,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
                     }
                 }
                 eventList.add(nextId);
-//                if (memoryEvent.type() == READ && usedVars.contains(memoryEvent.asRead().var())) {
-                if (memoryEvent.type() == READ) {
+                if (memoryEvent.type() == READ && usedVars.contains(memoryEvent.asRead().var())) {
                     delayedReads.putIfAbsent(memoryEvent.asRead().varId(), new LinkedHashSet<>());
                     DelayedRead delayedRead = new DelayedRead(pid, nextId, a, i, s.getS(), -1);
                     delayedReads.get(memoryEvent.asRead().varId()).add(delayedRead);
@@ -279,6 +286,10 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
 
         public int getPieceNo() {
             return pieceNo;
+        }
+
+        public int getReadsFrom() {
+            return readsFrom;
         }
 
         public DelayedRead withS(final S s) {

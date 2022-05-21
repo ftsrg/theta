@@ -38,7 +38,8 @@ public class MemoryEvent {
     public enum MemoryEventType {
         READ,
         WRITE,
-        FENCE
+        FENCE,
+        META
     }
 
     public MemoryEventType type() {

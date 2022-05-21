@@ -104,6 +104,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     private final PartialOrd<S> partialOrd;
     private final Map<Integer, Integer> lastMemEventLookup;
     private final Map<Integer, MemoryEvent> memoryEventLookup;
+    private final Collection<Tuple3<Integer, Integer, Integer>> fixedRf;
 
     public AbstractExecutionGraph(final Collection<String> tags, final Solver solver, final MCM mcm, final PartialOrd<S> partialOrd) {
         this.mcm = mcm;
@@ -117,6 +118,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         argNodeLookup = new LinkedHashMap<>();
         lastMemEventLookup = new LinkedHashMap<>();
         memoryEventLookup = new LinkedHashMap<>();
+        fixedRf = new LinkedHashSet<>();
     }
 
     // Encoder method
@@ -192,12 +194,15 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         final Map<Integer, Expr<?>> readVarIndexingMap = new LinkedHashMap<>();
 
 
-        // problem: branches should use the same origin indexing but a different target indexing
-        // Otherwise L1 -> [x := y] -> L2; L1 -> [x := -y] -> L2 is not solvable
-
         threadArgs.forEach((pid, arg) -> {
             encodeArg(solver, t, writeVarIndexingMap, readVarIndexingMap, arg);
         });
+
+        for (Tuple3<Integer, Integer, Integer> tuple : fixedRf) {
+            final Expr<BoolType> inTrace = t.get(TupleN.of(tuple.get1())).getRef();
+            final Expr<BoolType> fixedRf = rf.get(TupleN.of(tuple.get2(), tuple.get3())).getRef();
+            solver.add(Imply(inTrace, fixedRf));
+        }
 
         writeVarIndexingMap.forEach((i, writeConst) -> readVarIndexingMap.forEach((j, readConst) ->
                 solver.add(Imply(rf.get(TupleN.of(i, j)).getRef(), Eq(writeConst, readConst)))));
@@ -259,6 +264,10 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         setTrue("data", i, j);
     }
 
+    public void addMustRf(final int id, final int write, final int read) {
+        fixedRf.add(Tuple3.of(id, write, read));
+    }
+
     public int addMemoryEvent(final MemoryEvent memoryEvent, final int pid, final int lastId) {
         checkState(threadArgs.containsKey(pid));
         final int actualLastId = getActualLastId(lastId);
@@ -266,6 +275,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             case READ -> addRead(pid, memoryEvent.asRead().varId(), actualLastId, Set.of(memoryEvent.tag()));
             case WRITE -> addWrite(pid, memoryEvent.asWrite().varId(), actualLastId, Set.of(memoryEvent.tag()));
             case FENCE -> addFence(pid, actualLastId, Set.of(memoryEvent.tag()));
+            case META -> addNormalEvent(pid, actualLastId, Set.of(memoryEvent.tag()));
         };
         final ArgNode<S, ActionUnion<A>> lastArgNode = argNodeLookup.get(lastId);
         final ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(lastArgNode, new ActionUnion.MemoryEventAction<>(memoryEvent, id), lastArgNode.getState(), false);
@@ -330,7 +340,6 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         argNodeLookup.put(id, succNode);
         return id;
     }
-
     // support methods for builders
 
     private int addMemoryEvent(int processId, int varId, int lastNode, Collection<String> tags) {
