@@ -38,7 +38,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 	public static POR_MODE porMode = POR_MODE.POR_ON;
 
-	private GlobalVarQuery globalVarQuery = null;
+	private PersistentSetQuery persistentSetQuery = null;
 
 	/**
 	 * Returns the enabled actions in the ARG from the given state.
@@ -72,10 +72,9 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 				}
 
 				// Initializing the global variable query manager and the XCFA backward edge registry
-				if (globalVarQuery == null && enabledEdges.size() > 0) {
+				if (persistentSetQuery == null && enabledEdges.size() > 0) {
 					XCFA xcfa = enabledEdges.get(0).getKey().getSource().getParent().getParent().getParent();
-					globalVarQuery = new GlobalVarQuery(xcfa);
-					collectBackwardEdges(xcfa);
+					persistentSetQuery = new PersistentSetQuery(xcfa);
 				}
 
 				// Calculating the persistent set starting from every enabled edge; the minimal persistent set is stored
@@ -100,7 +99,6 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 						xcfaActions.add(xcfaAction);
 					}
 				}
-				int a = 2;
 
 				break;
 		}
@@ -120,7 +118,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 	 * @return Returns the calculated persistent set: a set of edges (and their processes).
 	 */
 	private Set<SimpleImmutableEntry<XcfaEdge, Integer>> calculatePersistentSet(List<SimpleImmutableEntry<XcfaEdge, Integer>> enabledEdges, SimpleImmutableEntry<XcfaEdge, Integer> startingEdge) {
-		if (backwardEdges.contains(startingEdge.getKey())) return new HashSet<>(enabledEdges);
+		if (persistentSetQuery.backwardEdges.contains(startingEdge.getKey())) return new HashSet<>(enabledEdges);
 
 		Set<SimpleImmutableEntry<XcfaEdge, Integer>> persistentSet = new HashSet<>();
 		Set<Integer> processesInPS = new HashSet<>(); // the id number of the processes who has at least one edge already in the persistent set
@@ -129,7 +127,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 		persistentSet.add(startingEdge);
 		processesInPS.add(startingEdge.getValue());
-		globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(startingEdge.getKey()));
+		globalVarsInPS.addAll(persistentSetQuery.getUsedGlobalVars(startingEdge.getKey()));
 		otherEdges.remove(startingEdge);
 
 		boolean addedNewEdge = true;
@@ -142,14 +140,14 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 				XcfaEdge edge = action.getKey();
 				Integer process = action.getValue();
 
-				if (processesInPS.contains(process) || globalVarQuery.getInfluencedGlobalVars(edge).stream().anyMatch(globalVarsInPS::contains)) {
-					if (backwardEdges.contains(edge)) {
+				if (processesInPS.contains(process) || persistentSetQuery.getInfluencedGlobalVars(edge).stream().anyMatch(globalVarsInPS::contains)) {
+					if (persistentSetQuery.backwardEdges.contains(edge)) {
 						return new HashSet<>(enabledEdges); // to prevent ignoring other threads in "infinite" loops, at least once in every loop (at a backward edge) all enabled edges are returned
 					}
 
 					persistentSet.add(action);
 					processesInPS.add(process);
-					globalVarsInPS.addAll(globalVarQuery.getUsedGlobalVars(edge));
+					globalVarsInPS.addAll(persistentSetQuery.getUsedGlobalVars(edge));
 					otherEdges.remove(action);
 					i--;
 					addedNewEdge = true;
@@ -164,7 +162,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 	/**
 	 * Provides different methods for querying certain global variables.
 	 */
-	private static class GlobalVarQuery {
+	private static class PersistentSetQuery {
 		/**
 		 * Global variables in the XCFA.
 		 */
@@ -180,9 +178,9 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 		 */
 		private final HashMap<XcfaEdge, Set<VarDecl<? extends Type>>> influencedGlobalVars = new HashMap<>();
 
-		GlobalVarQuery(XCFA xcfa) {
-//			System.out.println(xcfa.toDot()); // For debugging only
+		PersistentSetQuery(XCFA xcfa) {
 			globalVars = xcfa.getGlobalVars();
+			collectBackwardEdges(xcfa);
 		}
 
 		/**
@@ -271,36 +269,36 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 			}
 			return vars;
 		}
-	}
-
-	/**
-	 * Backward edges in the XCFA (an edge of a loop).
-	 */
-	private final List<XcfaEdge> backwardEdges = new ArrayList<>();
 
 
-	/**
-	 * Collects backward edges of the given XCFA.
-	 *
-	 * @param xcfa the XCFA whose backward edges are to be collected
-	 */
-	private void collectBackwardEdges(XCFA xcfa) {
-		for (var process : xcfa.getProcesses()) {
-			for (var procedure : process.getProcedures()) {
-				// DFS for every procedure of the XCFA to discover backward edges
-				Set<XcfaLocation> visitedLocations = new HashSet<>();
-				Stack<XcfaLocation> stack = new Stack<>();
+		/**
+		 * Backward edges in the XCFA (an edge of a loop).
+		 */
+		private final List<XcfaEdge> backwardEdges = new ArrayList<>();
 
-				stack.push(procedure.getInitLoc()); // start from the initial location of the procedure
-				while (!stack.isEmpty()) {
-					XcfaLocation visiting = stack.pop();
-					visitedLocations.add(visiting);
-					for (var outgoingEdge : visiting.getOutgoingEdges()) {
-						var target = outgoingEdge.getTarget();
-						if (visitedLocations.contains(target)) { // backward edge
-							backwardEdges.add(outgoingEdge);
-						} else {
-							stack.push(target);
+		/**
+		 * Collects backward edges of the given XCFA.
+		 *
+		 * @param xcfa the XCFA whose backward edges are to be collected
+		 */
+		private void collectBackwardEdges(XCFA xcfa) {
+			for (var process : xcfa.getProcesses()) {
+				for (var procedure : process.getProcedures()) {
+					// DFS for every procedure of the XCFA to discover backward edges
+					Set<XcfaLocation> visitedLocations = new HashSet<>();
+					Stack<XcfaLocation> stack = new Stack<>();
+
+					stack.push(procedure.getInitLoc()); // start from the initial location of the procedure
+					while (!stack.isEmpty()) {
+						XcfaLocation visiting = stack.pop();
+						visitedLocations.add(visiting);
+						for (var outgoingEdge : visiting.getOutgoingEdges()) {
+							var target = outgoingEdge.getTarget();
+							if (visitedLocations.contains(target)) { // backward edge
+								backwardEdges.add(outgoingEdge);
+							} else {
+								stack.push(target);
+							}
 						}
 					}
 				}

@@ -122,7 +122,6 @@ public class XcfaPassManager {
 	}
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		//System.out.println(builder.toDot(Set.of(), Set.of()));
 		for (ProcedurePass procedurePass : procedurePasses) {
 			if (!procedurePass.isPostInlining() || ProcedurePass.postInlining) builder = procedurePass.run(builder);
 		}
