@@ -1,0 +1,5 @@
+BLOCKING
+
+procedure blocking(R, T, rf) =
+    empty (R & T) \ range(rf) as everyReadReads
+end
