@@ -15,6 +15,14 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
     private LazyState(){
     }
 
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
+        if (state.isBottom()) {
+            return new Bottom<>(state);
+        } else {
+            return new NonBottom<>(state, initAbstractor.getInitAbstrState(state));
+        }
+    }
+
     public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr concrState, final SAbstr abstrState) {
         if (concrState.isBottom()) {
             return new Bottom<>(concrState);
@@ -23,12 +31,8 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
         }
     }
 
-    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
-        if (state.isBottom()) {
-            return new Bottom<>(state);
-        } else {
-            return new NonBottom<>(state, initAbstractor.getInitAbstrState(state));
-        }
+    public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> bottom(final SConcr state) {
+        return new Bottom<>(state);
     }
 
     public abstract SConcr getConcrState();

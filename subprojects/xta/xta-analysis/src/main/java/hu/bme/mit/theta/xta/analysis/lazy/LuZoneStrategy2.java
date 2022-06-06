@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
 import static java.util.stream.Collectors.toList;
 
-public class LuZoneStrategy2<S extends State> implements LazyStrategy<ZoneState, LuZoneState, S, XtaAction> {
+public final class LuZoneStrategy2<S extends State> implements LazyStrategy<ZoneState, LuZoneState, S, XtaAction> {
 
     private final Lens<S, LuZoneState> lens;
     private final Function<S, ?> projection;
@@ -48,6 +48,11 @@ public class LuZoneStrategy2<S extends State> implements LazyStrategy<ZoneState,
     @Override
     public PartialOrd<LuZoneState> getPartialOrd() {
         return partialOrd;
+    }
+
+    @Override
+    public boolean inconsistentState(ZoneState state) {
+        return state.isBottom();
     }
 
     @Override

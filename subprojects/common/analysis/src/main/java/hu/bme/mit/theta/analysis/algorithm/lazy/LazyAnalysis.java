@@ -5,7 +5,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class LazyAnalysis<SConcr extends State, SAbstr extends ExprState, A extends Action, P extends Prec> implements Analysis<LazyState<SConcr, SAbstr>, A, P> {
+public final class LazyAnalysis<SConcr extends State, SAbstr extends ExprState, A extends Action, P extends Prec> implements Analysis<LazyState<SConcr, SAbstr>, A, P> {
 
     private final LazyOrd<SConcr, SAbstr> partialOrd;
     private final LazyInitFunc<SConcr, SAbstr, P> initFunc;

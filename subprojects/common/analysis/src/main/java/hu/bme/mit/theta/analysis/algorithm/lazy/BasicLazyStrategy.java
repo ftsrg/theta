@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm.lazy;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.algorithm.lazy.itp.Concretizer;
 import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
@@ -13,20 +14,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class BasicLazyStrategy<SConcr extends State, S extends State, A extends Action> implements LazyStrategy<SConcr, SConcr, S, A> {
 
-    private final Lens<S, ? extends State> lens;
+    private final Lens<S, SConcr> lens;
     private final PartialOrd<SConcr> partialOrd;
-    private final Function<S, ?> projection;
+    private final Function<S, SConcr> projection;
+    private final Concretizer<SConcr, SConcr> concretizer;
     private final InitAbstractor<SConcr, SConcr> initAbstractor;
 
-    public BasicLazyStrategy(final Lens<S, ? extends State> lens) {
+    public BasicLazyStrategy(final Lens<S, SConcr> lens, final Concretizer<SConcr, SConcr> concretizer) {
         this.lens = checkNotNull(lens);
+        this.concretizer = checkNotNull(concretizer);
         partialOrd = (s1, s2) -> s1.isBottom() || s1.equals(s2);
         projection = s -> lens.get(s);
         initAbstractor = s -> s;
     }
 
     @Override
-    public final Function<S, ?> getProjection() {
+    public final Function<S, SConcr> getProjection() {
         return projection;
     }
 
@@ -38,6 +41,11 @@ public final class BasicLazyStrategy<SConcr extends State, S extends State, A ex
     @Override
     public PartialOrd<SConcr> getPartialOrd() {
         return partialOrd;
+    }
+
+    @Override
+    public boolean inconsistentState(SConcr state) {
+        return concretizer.inconsistentConcrState(state);
     }
 
     @Override

@@ -6,18 +6,33 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public final class ExprLattice implements Lattice<BasicExprState> {
 
-    private final PartialOrd<ExprState> partialOrd;
+    @FunctionalInterface
+    public interface MeetStrategy {
+        BasicExprState meet(final BasicExprState state1, final BasicExprState state2);
+    }
 
-    private ExprLattice(final Solver solver) {
+    private final PartialOrd<ExprState> partialOrd;
+    private final MeetStrategy meetStrategy;
+
+    private ExprLattice(final Solver solver, final MeetStrategy meetStrategy) {
+        checkNotNull(solver);
         partialOrd = ExprOrd.create(solver);
+        this.meetStrategy = checkNotNull(meetStrategy);
     }
 
     public static ExprLattice create(final Solver solver) {
-        return new ExprLattice(solver);
+        return new ExprLattice(solver, BasicExprMeetStrategy.getInstance());
+    }
+
+    public static ExprLattice create(final Solver solver, final MeetStrategy meetStrategy) {
+        return new ExprLattice(solver, meetStrategy);
     }
 
     @Override
@@ -32,8 +47,7 @@ public final class ExprLattice implements Lattice<BasicExprState> {
 
     @Override
     public BasicExprState meet(BasicExprState state1, BasicExprState state2) {
-        final Expr<BoolType> andExpr = And(state1.toExpr(), state2.toExpr());
-        return BasicExprState.of(andExpr);
+        return meetStrategy.meet(state1, state2);
     }
 
     @Override

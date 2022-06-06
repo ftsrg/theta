@@ -26,4 +26,9 @@ public final class BasicConcretizer<S extends State> implements Concretizer<S, S
     public boolean proves(final S state1, final S state2) {
         return ord.isLeq(state1, state2);
     }
+
+    @Override
+    public boolean inconsistentConcrState(S state) {
+        return state.isBottom();
+    }
 }

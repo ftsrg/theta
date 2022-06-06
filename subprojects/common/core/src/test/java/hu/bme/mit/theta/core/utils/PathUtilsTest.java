@@ -37,6 +37,7 @@ public class PathUtilsTest {
 	final VarDecl<IntType> vx = Decls.Var("x", Int());
 	final VarDecl<IntType> vy = Decls.Var("y", Int());
 	final VarDecl<IntType> vz = Decls.Var("z", Int());
+	final IndexedConstDecl<IntType> x0 = vx.getConstDecl(0);
 	final IndexedConstDecl<IntType> x1 = vx.getConstDecl(1);
 	final IndexedConstDecl<IntType> x2 = vx.getConstDecl(2);
 	final IndexedConstDecl<IntType> y0 = vy.getConstDecl(0);
@@ -49,6 +50,16 @@ public class PathUtilsTest {
 
 		Assert.assertEquals(Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
 				PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
+	}
+
+	@Test
+	public void testUnfoldReversed() {
+		Assert.assertEquals(Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
+				PathUtils.unfoldReverse(Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))), VarIndexing.all(0)));
+		Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
+				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))), VarIndexing.all(0)));
+		Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
+				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))), VarIndexing.all(0)));
 	}
 
 	@Test

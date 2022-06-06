@@ -15,14 +15,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends State, SAbstr1 extends State, SAbstr2 extends State, S extends State, A extends Action> implements LazyStrategy<Prod2State<SConcr1, SConcr2>, Prod2State<SAbstr1, SAbstr2>, S, A> {
 
-    private final Lens<S, ? extends Prod2State<?, ?>> lens;
+    private final Lens<S, Prod2State<SConcr1, SConcr2>> lens;
     private final LazyStrategy<SConcr1, SAbstr1, S, A> strategy1;
     private final LazyStrategy<SConcr2, SAbstr2, S, A> strategy2;
     private final Function<S, ?> projection;
     private final InitAbstractor<Prod2State<SConcr1, SConcr2>, Prod2State<SAbstr1, SAbstr2>> initAbstractor;
     private final PartialOrd<Prod2State<SAbstr1, SAbstr2>> partialOrd;
 
-    public Prod2LazyStrategy(final Lens<S, ? extends Prod2State<?, ?>> lens,
+    public Prod2LazyStrategy(final Lens<S, Prod2State<SConcr1, SConcr2>> lens,
                              final LazyStrategy<SConcr1, SAbstr1, S, A> strategy1,
                              final LazyStrategy<SConcr2, SAbstr2, S, A> strategy2,
                              final Function<S, ?> projection) {
@@ -52,6 +52,12 @@ public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends Stat
     }
 
     @Override
+    public boolean inconsistentState(Prod2State<SConcr1, SConcr2> state) {
+        return state.isBottom() ||
+                strategy1.inconsistentState(state.getState1()) || strategy2.inconsistentState(state.getState2());
+    }
+
+    @Override
     public boolean mightCover(ArgNode<S, A> coveree, ArgNode<S, A> coverer) {
         return strategy1.mightCover(coveree, coverer) && strategy2.mightCover(coveree, coverer);
     }
@@ -68,11 +74,11 @@ public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends Stat
 
     @Override
     public void disable(ArgNode<S, A> node, A action, S succState, Collection<ArgNode<S, A>> uncoveredNodes) {
-        assert succState.isBottom();
-        Prod2State<?, ?> bottomState = lens.get(succState);
-        if (bottomState.isBottom1()) {
+        Prod2State<SConcr1, SConcr2> state = lens.get(succState);
+        assert inconsistentState(state);
+        if (state.isBottom1() || (!state.isBottom2() && strategy1.inconsistentState(state.getState1()))) {
             strategy1.disable(node, action, succState, uncoveredNodes);
-        } else if (bottomState.isBottom2()) {
+        } else if (strategy2.inconsistentState(state.getState2())) {
             strategy2.disable(node, action, succState, uncoveredNodes);
         } else {
             throw new AssertionError();

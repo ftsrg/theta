@@ -11,7 +11,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
-public class LazyInitFunc<SConcr extends State, SAbstr extends ExprState, P extends Prec> implements InitFunc<LazyState<SConcr, SAbstr>, P> {
+public final class LazyInitFunc<SConcr extends State, SAbstr extends ExprState, P extends Prec> implements InitFunc<LazyState<SConcr, SAbstr>, P> {
 
     private final InitFunc<SConcr, P> concrInitFunc;
     private final InitAbstractor<SConcr, SAbstr> initAbstractor;

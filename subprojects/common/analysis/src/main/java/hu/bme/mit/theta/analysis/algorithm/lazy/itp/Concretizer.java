@@ -2,10 +2,12 @@ package hu.bme.mit.theta.analysis.algorithm.lazy.itp;
 
 import hu.bme.mit.theta.analysis.State;
 
-public interface Concretizer<S1 extends State, S2 extends State> {
+public interface Concretizer<SConcr extends State, SAbstr extends State> {
 
-    S2 concretize(final S1 state);
+    SAbstr concretize(final SConcr state);
 
-    boolean proves(final S1 state1, final S2 state2);
+    boolean proves(final SConcr state1, final SAbstr state2);
+
+    boolean inconsistentConcrState(final SConcr state);
 
 }
