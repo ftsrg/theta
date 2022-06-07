@@ -30,6 +30,8 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts.POR_MODE.POR_OFF;
+
 public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 	public enum POR_MODE {
@@ -38,7 +40,11 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 
 	public static POR_MODE porMode = POR_MODE.POR_ON;
 
-	private PersistentSetQuery persistentSetQuery = null;
+	private final PersistentSetQuery persistentSetQuery;
+
+	public XcfaLts(XCFA xcfa) {
+		persistentSetQuery = new PersistentSetQuery(xcfa);
+	}
 
 	/**
 	 * Returns the enabled actions in the ARG from the given state.
@@ -49,7 +55,7 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 	@Override
 	public Collection<XcfaAction> getEnabledActionsFor(final XcfaState<?> state) {
 		final List<XcfaAction> xcfaActions = new ArrayList<>();
-		switch (porMode) {
+		switch (/*/porMode/*/POR_OFF/**/) {
 			case POR_OFF: // Every outgoing edge of every enabled process is returned
 				for (Integer enabledProcess : state.getEnabledProcesses()) {
 					final XcfaLocation loc = state.getProcessLocs().get(enabledProcess);
@@ -69,12 +75,6 @@ public final class XcfaLts implements LTS<XcfaState<?>, XcfaAction> {
 					for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
 						enabledEdges.add(new SimpleImmutableEntry<>(outgoingEdge, enabledProcess));
 					}
-				}
-
-				// Initializing the global variable query manager and the XCFA backward edge registry
-				if (persistentSetQuery == null && enabledEdges.size() > 0) {
-					XCFA xcfa = enabledEdges.get(0).getKey().getSource().getParent().getParent().getParent();
-					persistentSetQuery = new PersistentSetQuery(xcfa);
 				}
 
 				// Calculating the persistent set starting from every enabled edge; the minimal persistent set is stored

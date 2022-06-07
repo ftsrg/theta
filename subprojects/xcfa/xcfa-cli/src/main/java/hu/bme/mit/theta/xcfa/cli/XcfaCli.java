@@ -526,7 +526,7 @@ public class XcfaCli {
 				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
-				final LTS lts = algorithm.getLts();
+				final LTS lts = algorithm.getLts(xcfa);
 				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
 						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =

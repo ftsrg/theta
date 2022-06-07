@@ -66,11 +66,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewAtomsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewOperandsAutoExpl;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaInitFunc;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaOrd;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaPrecRefiner;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaTransFunc;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.*;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTInitFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTLts;
@@ -101,7 +97,7 @@ public class XcfaConfigBuilder {
 	public enum Algorithm {
 		SINGLETHREAD {
 			@Override
-			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
 				return new XcfaSTLts();
 			}
 
@@ -134,8 +130,9 @@ public class XcfaConfigBuilder {
 
 		INTERLEAVINGS {
 			@Override
-			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
-				return new XcfaLts();
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
+				return XcfaLts.porMode == XcfaLts.POR_MODE.POR_ON ? new XcfaPorLts(xcfa) : new XcfaLts(xcfa);
+//				return new XcfaLts(xcfa);
 			}
 
 			@Override
@@ -164,7 +161,7 @@ public class XcfaConfigBuilder {
 			}
 		};
 
-		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts();
+		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
 
 		public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
 
@@ -299,7 +296,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final LTS lts = algorithm.getLts();
+		final LTS lts = algorithm.getLts(xcfa);
 		final Abstractor abstractor;
 		final Refiner refiner;
 		final XcfaPrec prec;
