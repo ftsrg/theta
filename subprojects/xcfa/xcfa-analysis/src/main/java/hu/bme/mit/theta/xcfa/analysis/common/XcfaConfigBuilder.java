@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
+import hu.bme.mit.theta.analysis.algorithm.PorLts;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
@@ -131,8 +132,7 @@ public class XcfaConfigBuilder {
 		INTERLEAVINGS {
 			@Override
 			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
-				return XcfaLts.porMode == XcfaLts.POR_MODE.POR_ON ? new XcfaPorLts(xcfa) : new XcfaLts(xcfa);
-//				return new XcfaLts(xcfa);
+				return PorLts.porMode == PorLts.PorMode.POR_ON ? new XcfaPorLts(xcfa) : new XcfaLts();
 			}
 
 			@Override

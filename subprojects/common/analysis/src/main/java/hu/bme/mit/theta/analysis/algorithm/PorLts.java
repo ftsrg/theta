@@ -3,17 +3,35 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Type;
 
 import java.util.*;
+import java.util.function.Predicate;
 
-public abstract class PorLts<S extends State, A extends Action> implements LTS<S, A> {
+public abstract class PorLts<S extends State, A extends Action, T> implements LTS<S, A> {
 
+	public enum PorMode {
+		POR_OFF, POR_ON
+	}
+
+	/**
+	 * Configuration variable that stores whether POR is enabled or not.
+	 */
+	public static PorMode porMode = PorMode.POR_ON;
+
+	/**
+	 * Returns the enabled actions in the ARG from the given state filtered with a POR algorithm.
+	 *
+	 * @param state the state whose enabled actions we would like to know
+	 * @return the enabled actions
+	 */
 	@Override
 	public Collection<A> getEnabledActionsFor(S state) {
-		// Collecting enabled edges (with their processes)
+		// Collecting enabled actions
 		Collection<A> allEnabledActions = getAllEnabledActionsFor(state);
 
-		// Calculating the persistent set starting from every enabled edge; the minimal persistent set is stored
+		// Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
 		Collection<A> minimalPersistentSet = new HashSet<>();
 		Collection<A> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
 		for (A firstAction : persistentSetFirstActions) {
@@ -26,20 +44,27 @@ public abstract class PorLts<S extends State, A extends Action> implements LTS<S
 		return minimalPersistentSet;
 	}
 
+	/**
+	 * Calculates a persistent set of enabled actions starting from a particular action.
+	 *
+	 * @param enabledActions the enabled actions in the present state
+	 * @param firstAction    the action who will be added to the persistent set as the first action
+	 * @return the persistent set of enabled actions
+	 */
 	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, A firstAction) {
 		if (isBackwardAction(firstAction)) {
 			return new HashSet<>(enabledActions);
 		}
 
 		Set<A> persistentSet = new HashSet<>();
-		List<A> otherActions = new ArrayList<>(enabledActions); // edges not in the persistent set // TODO: replace List with Set
+		List<A> otherActions = new ArrayList<>(enabledActions); // actions not in the persistent set // TODO: replace List with Set
 
 		persistentSet.add(firstAction);
 		otherActions.remove(firstAction);
 
-		boolean addedNewEdge = true;
-		while (addedNewEdge) {
-			addedNewEdge = false;
+		boolean addedNewAction = true;
+		while (addedNewAction) {
+			addedNewAction = false;
 			for (int i = 0; i < otherActions.size(); i++) {
 				// for every action that is not in the persistent set it is checked whether it should be added to the persistent set
 				// (because it is dependent with an action already in the persistent set)
@@ -47,13 +72,13 @@ public abstract class PorLts<S extends State, A extends Action> implements LTS<S
 
 				if (persistentSet.stream().anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {
 					if (isBackwardAction(action)) {
-						return new HashSet<>(enabledActions); // to prevent ignoring other threads in "infinite" loops, at least once in every loop (at a backward edge) all enabled edges are returned
+						return new HashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
 					}
 
 					persistentSet.add(action);
 					otherActions.remove(action);
 					i--;
-					addedNewEdge = true;
+					addedNewAction = true;
 				}
 			}
 		}
@@ -61,14 +86,171 @@ public abstract class PorLts<S extends State, A extends Action> implements LTS<S
 		return persistentSet;
 	}
 
+	/**
+	 * Returns all the enabled actions in a state.
+	 *
+	 * @param state the state whose enabled actions are to be returned
+	 * @return the enabled actions in the state
+	 */
 	protected abstract Collection<A> getAllEnabledActionsFor(S state);
 
+	/**
+	 * Returns the actions from where persistent sets will be calculated (a subset of the given enabled actions).
+	 * The default implementation returns all enabled actions.
+	 *
+	 * @param allEnabledActions all the enabled actions in the present state
+	 * @return the actions from where persistent sets will be calculated
+	 */
 	protected Collection<A> getPersistentSetFirstActions(Collection<A> allEnabledActions) {
 		return allEnabledActions;
 	}
 
-	protected abstract boolean areDependents(A persistentSetAction, A action);
+	/**
+	 * Determines whether an action is dependent with another one (based on the notions introduced for the POR
+	 * algorithm) already in the persistent set.
+	 *
+	 * @param persistentSetAction the action in the persistent set
+	 * @param action              the other action (not in the persistent set)
+	 * @return true, if the two actions are dependent in the context of persistent sets
+	 */
+	protected boolean areDependents(A persistentSetAction, A action) {
+		return canEnOrDisableEachOther(persistentSetAction, action) ||
+				getInfluencedSharedObjects(getTransitionOf(action)).stream().anyMatch(varDecl ->
+						getCachedUsedSharedObjects(getTransitionOf(persistentSetAction)).contains(varDecl));
+	}
 
-	protected abstract boolean isBackwardAction(A action);
+	/**
+	 * Determines whether two actions can enable or disable each other (if true, the two actions are dependent).
+	 *
+	 * @param action1 action 1
+	 * @param action2 action 2
+	 * @return true, if the two actions can enable or disable each other
+	 */
+	protected abstract boolean canEnOrDisableEachOther(A action1, A action2);
 
+	/**
+	 * Determines whether the given action is a backward action.
+	 *
+	 * @param action the action to be classified as backward action or non-backward action
+	 * @return true, if the action is a backward action
+	 */
+	protected boolean isBackwardAction(A action) {
+		return backwardTransitions.contains(getTransitionOf(action));
+	}
+
+	/**
+	 * Get the original transition of an action (from which the action has been created).
+	 *
+	 * @param action whose original transition is to be returned
+	 * @return the original transition
+	 */
+	protected abstract T getTransitionOf(A action);
+
+	/**
+	 * Returns the successive transitions of a transition (transitions whose source is the target of the given
+	 * parameter).
+	 *
+	 * @param transition whose successive transitions is to be returned
+	 * @return the successive transitions of the transition given as the parameter
+	 */
+	protected abstract Set<T> getSuccessiveTransitions(T transition);
+
+
+	/* CACHE COLLECTIONS */
+
+	/**
+	 * Shared objects (~global variables) used by a transition.
+	 */
+	private final HashMap<T, Set<? extends Decl<? extends Type>>> usedSharedObjects = new HashMap<>();
+
+	/**
+	 * Shared objects (~global variables) that are used by the key transition or by transitions reachable from the
+	 * current state via a given transition.
+	 */
+	private final HashMap<T, Set<? extends Decl<? extends Type>>> influencedSharedObjects = new HashMap<>();
+
+
+	/**
+	 * Returns the shared objects (~global variables) that an action uses (it is present in one of its labels).
+	 *
+	 * @param transition whose shared objects are to be returned
+	 * @return the set of used shared objects
+	 */
+	protected abstract Set<? extends Decl<? extends Type>> getDirectlyUsedSharedObjects(T transition);
+
+	/**
+	 * Returns the shared objects (~global variables) that an action uses.
+	 *
+	 * @param transition whose shared objects are to be returned
+	 * @return the set of directly or indirectly used shared objects
+	 */
+	protected Set<? extends Decl<? extends Type>> getUsedSharedObjects(T transition) {
+		return getDirectlyUsedSharedObjects(transition);
+	}
+
+	/**
+	 * Same as {@link PorLts#getUsedSharedObjects(T transition)} with an additional cache layer.
+	 *
+	 * @param transition whose shared objects are to be returned
+	 * @return the set of directly or indirectly used shared objects
+	 */
+	private Set<? extends Decl<? extends Type>> getCachedUsedSharedObjects(T transition) {
+		if (!usedSharedObjects.containsKey(transition)) {
+			Set<? extends Decl<? extends Type>> vars = getUsedSharedObjects(transition);
+			usedSharedObjects.put(transition, vars);
+		}
+		return usedSharedObjects.get(transition);
+	}
+
+	/**
+	 * Returns the shared objects (~global variables) used by the given transition or by transitions that are reachable
+	 * via the given transition ("influenced shared objects").
+	 *
+	 * @param transition whose successor transitions' shared objects are to be returned.
+	 * @return the set of influenced shared objects
+	 */
+	protected Set<? extends Decl<? extends Type>> getInfluencedSharedObjects(T transition) {
+		if (!influencedSharedObjects.containsKey(transition)) {
+			influencedSharedObjects.put(transition, getSharedObjectsWithBFS(transition, t -> true));
+		}
+		return influencedSharedObjects.get(transition);
+	}
+
+	/**
+	 * Returns shared objects (~global variables) encountered in a search starting from a given transition.
+	 *
+	 * @param startTransition the start point (transition) of the search
+	 * @param visitTransition the predicate that tells whether a transition has to be explored
+	 * @return the set of encountered shared objects
+	 */
+	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> visitTransition) {
+		Set<Decl<? extends Type>> vars = new HashSet<>();
+		List<T> exploredTransitions = new ArrayList<>();
+		List<T> transitionsToExplore = new ArrayList<>();
+		transitionsToExplore.add(startTransition);
+
+		while (!transitionsToExplore.isEmpty()) {
+			T exploring = transitionsToExplore.remove(0);
+			vars.addAll(getDirectlyUsedSharedObjects(exploring));
+			Set<T> successiveTransitions = getSuccessiveTransitions(exploring);
+
+			for (var newTransition : successiveTransitions) {
+				if (!exploredTransitions.contains(newTransition) && visitTransition.test(newTransition)) {
+					transitionsToExplore.add(newTransition);
+				}
+			}
+			exploredTransitions.add(exploring);
+		}
+		return vars;
+	}
+
+	/**
+	 * Backward transitions in the transition system (a transition of a loop).
+	 */
+	protected final Set<T> backwardTransitions = new HashSet<>();
+
+	/**
+	 * Collects backward transitions of the transition system.
+	 */
+	protected abstract void collectBackwardTransitions();
 }

@@ -22,6 +22,7 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.algorithm.PorLts;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
@@ -205,11 +206,11 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
+	@Parameter(names = "--por", description = "Enable/disable partial order reduction for interleaving based multithreaded programs")
+	PorLts.PorMode porMode = PorLts.PorMode.POR_OFF;
+
 	@Parameter(names = "--lbe", description = "Large-block encoding level")
 	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
-
-	@Parameter(names = "--por", description = "Partial order reduction enabling for multithreaded programs")
-	XcfaLts.POR_MODE porMode = XcfaLts.POR_MODE.POR_OFF;
 
 	//////////// SMTLib options ////////////
 
@@ -257,7 +258,6 @@ public class XcfaCli {
 		File inputOrModel = input == null ? model : input;
 
 		logger = new ConsoleLogger(logLevel);
-		;
 
 		/// version
 		if (versionInfo) {
@@ -266,7 +266,7 @@ public class XcfaCli {
 		}
 
 		SimpleLbePass.level = lbeLevel;
-		XcfaLts.porMode = porMode; // I don't know where to place it exactly
+		PorLts.porMode = porMode; // I don't know where to place it exactly
 
 		// TODO later we might want to merge these two flags
 		if (witnessOnly) {
