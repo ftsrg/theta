@@ -57,30 +57,28 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		}
 
 		Set<A> persistentSet = new HashSet<>();
-		List<A> otherActions = new ArrayList<>(enabledActions); // actions not in the persistent set // TODO: replace List with Set
-
+		Set<A> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
 		persistentSet.add(firstAction);
 		otherActions.remove(firstAction);
 
 		boolean addedNewAction = true;
 		while (addedNewAction) {
 			addedNewAction = false;
-			for (int i = 0; i < otherActions.size(); i++) {
+			Set<A> actionsToRemove = new HashSet<>();
+			for (A action: otherActions) {
 				// for every action that is not in the persistent set it is checked whether it should be added to the persistent set
 				// (because it is dependent with an action already in the persistent set)
-				A action = otherActions.get(i);
-
 				if (persistentSet.stream().anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {
 					if (isBackwardAction(action)) {
 						return new HashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
 					}
 
 					persistentSet.add(action);
-					otherActions.remove(action);
-					i--;
+					actionsToRemove.add(action);
 					addedNewAction = true;
 				}
 			}
+			actionsToRemove.forEach(otherActions::remove);
 		}
 
 		return persistentSet;
