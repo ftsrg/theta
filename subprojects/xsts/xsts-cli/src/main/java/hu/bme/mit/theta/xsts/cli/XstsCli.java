@@ -120,6 +120,8 @@ public class XstsCli {
 
 	@Parameter(names = "--no-stuck-check")
 	boolean noStuckCheck = false;
+	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
+	boolean tracegen = false;
 
 	private Logger logger;
 
