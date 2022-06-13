@@ -102,6 +102,9 @@ public class XstsCli {
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
+	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
+	boolean tracegen = false;
+
 	private Logger logger;
 
 	public XstsCli(final String[] args) {
