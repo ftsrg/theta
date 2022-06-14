@@ -4,10 +4,20 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+<<<<<<< HEAD
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+=======
+import hu.bme.mit.theta.analysis.algorithm.tracegen.TraceGenChecker;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
+import hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
+>>>>>>> 24e9ef677 (tracgen half-done, but ran into some issues; refactor next)
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -23,11 +33,11 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.XstsAction;
-import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.*;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -41,7 +51,10 @@ import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XstsCli {
 
@@ -160,12 +173,34 @@ public class XstsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XSTS xsts = loadModel();
 
+
+			if(tracegen) {
+				final Solver solver1 = Z3SolverFactory.getInstance().createSolver(); // refinement // TODO handle separate solvers in a nicer way
+				final Solver solver2 = Z3SolverFactory.getInstance().createSolver(); // abstraction // TODO handle separate solvers in a nicer way
+
+				final ExplStmtAnalysis analysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
+				final LTS lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
+
+				final InitFunc<XstsState<ExplState>, ExplPrec> initFunc = XstsInitFunc.create(analysis.getInitFunc());
+				final TransFunc<XstsState<ExplState>, XstsAction, ExplPrec> transFunc = XstsTransFunc.create(analysis.getTransFunc());
+
+				TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, lts, initFunc, transFunc, solver1);
+				XstsConfig<XstsState<ExplState>, XstsAction, ExplPrec> config = XstsConfig.create(tracegenChecker, ExplPrec.empty());
+
+				config.check();
+
+				sw.stop();
+				logger.write(Logger.Level.MAINSTEP, "Elapsed time: %s", sw.elapsed(TimeUnit.MILLISECONDS));
+				return;
+			}
+
 			if (metrics) {
 				XstsMetrics.printMetrics(logger, xsts);
 				return;
 			}
 
 			final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
