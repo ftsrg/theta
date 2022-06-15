@@ -8,16 +8,13 @@ import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-<<<<<<< HEAD
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-=======
 import hu.bme.mit.theta.analysis.algorithm.tracegen.TraceGenChecker;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
->>>>>>> 24e9ef677 (tracgen half-done, but ran into some issues; refactor next)
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -43,6 +40,8 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
+import hu.bme.mit.theta.xsts.analysis.config.XstsTracegenBuilder;
+import hu.bme.mit.theta.xsts.analysis.config.XstsTracegenConfig;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
@@ -50,8 +49,8 @@ import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -175,22 +174,21 @@ public class XstsCli {
 
 
 			if(tracegen) {
-				final Solver solver1 = Z3SolverFactory.getInstance().createSolver(); // refinement // TODO handle separate solvers in a nicer way
-				final Solver solver2 = Z3SolverFactory.getInstance().createSolver(); // abstraction // TODO handle separate solvers in a nicer way
-
-				final ExplStmtAnalysis analysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
-				final LTS lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
-
-				final InitFunc<XstsState<ExplState>, ExplPrec> initFunc = XstsInitFunc.create(analysis.getInitFunc());
-				final TransFunc<XstsState<ExplState>, XstsAction, ExplPrec> transFunc = XstsTransFunc.create(analysis.getTransFunc());
-
-				TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, lts, initFunc, transFunc, solver1);
-				XstsConfig<XstsState<ExplState>, XstsAction, ExplPrec> config = XstsConfig.create(tracegenChecker, ExplPrec.empty());
-
-				config.check();
+				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).build(xsts);
+				tracegenConfig.check();
+				List<? extends Trace<? extends State, ? extends Action>> traces = tracegenConfig.getTraces();
+				for (Trace<? extends State, ? extends Action> trace : traces) {
+					try {
+						XstsStateSequence concretizedTrace = XstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);// TODO something nicer
+						logger.write(Logger.Level.SUBSTEP, "%s%n", concretizedTrace);
+						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
+					} catch(IllegalArgumentException e) {
+						logger.write(Logger.Level.SUBSTEP, "Trace is infeasible%n");
+					}
+				}
 
 				sw.stop();
-				logger.write(Logger.Level.MAINSTEP, "Elapsed time: %s", sw.elapsed(TimeUnit.MILLISECONDS));
+				logger.write(Logger.Level.MAINSTEP, "%nElapsed time: %s%n", sw.elapsed(TimeUnit.MILLISECONDS));
 				return;
 			}
 
