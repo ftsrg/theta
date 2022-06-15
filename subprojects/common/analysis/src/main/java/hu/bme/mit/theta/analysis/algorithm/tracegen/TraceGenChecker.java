@@ -2,11 +2,16 @@ package hu.bme.mit.theta.analysis.algorithm.tracegen;
 
 import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.*;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.*;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -14,6 +19,7 @@ import hu.bme.mit.theta.solver.Solver;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
@@ -23,42 +29,64 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
     private final InitFunc<S, P> initFunc;
     private final TransFunc<S, A, P> transFunc;
     private final Solver solver;
+    private final Abstractor<S, A, P> abstractor;
 
     private TraceGenChecker(final Logger logger,
                             final LTS<S, A> lts,
                             final InitFunc<S, P> initFunc,
                             final TransFunc<S, A, P> transFunc,
-                            final Solver solver) {
+                            final Solver solver,
+                            final Abstractor<S, A, P> abstractor) {
+
         this.logger = logger;
         this.lts = lts;
         this.initFunc = initFunc;
         this.transFunc = transFunc;
         this.solver = solver;
+        this.abstractor = abstractor;
     }
 
-    public static <S extends ExprState, A extends StmtAction, P extends Prec> TraceGenChecker create(final Logger logger,
+    public static <S extends ExprState, A extends StmtAction, P extends Prec> TraceGenChecker<S,A,P> create(final Logger logger,
                                                                                                      final LTS<S, A> lts,
                                                                                                      final InitFunc<S, P> initFunc,
                                                                                                      final TransFunc<S, A, P> transFunc,
-                                                                                                     final Solver solver) {
-        return new TraceGenChecker(logger, lts, initFunc, transFunc, solver);
+                                                                                                     final Solver solver,
+                                                                                                     final Abstractor<S,A,P> abstractor) {
+        return new TraceGenChecker<S,A,P>(logger, lts, initFunc, transFunc, solver, abstractor);
     }
 
-    private final List<Trace<S,A>> traces = new ArrayList<>();
+    private List<Trace<S,A>> traces = new ArrayList<>();
+
+    public List<Trace<S, A>> getTraces() {
+        return traces;
+    }
 
     @Override
     public SafetyResult<S, A> check(P prec) {
-        if(!prec.getUsedVars().isEmpty()) throw new AssertionError("The precision used for trace generation should be explicit and empty!");
-
-        logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
-        generateTraces(prec); // generates traces and puts them into the member list traces
-        for (Trace<S, A> trace : traces) {
+        final ARG<S, A> arg = abstractor.createArg();
+        AbstractorResult abstractorResult = abstractor.check(arg, prec);
+        // Stream<ArgTrace<S, A>> cexs = arg.getCexs();
+        traces = arg.getNodes().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
+        // traces = cexs.map(ArgTrace::toTrace).toList();
+        /*
+        for (Trace<S, A> trace : this.traces) {
             logger.write(Logger.Level.SUBSTEP, "%s%n", trace);
             logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
         }
-        return SafetyResult.unsafe(traces.get(0), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder
-    }
+        */
 
+        /*
+        logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
+        generateTraces(prec); // generates traces and puts them into the member list traces
+        for (Trace<S, A> trace : this.traces) {
+            logger.write(Logger.Level.SUBSTEP, "%s%n", trace);
+            logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
+        }
+         */
+
+        return SafetyResult.unsafe(this.traces.get(0), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder
+    }
+/*
     private void generateTraces(P prec) {
         final Collection<? extends S> initStates = initFunc.getInitStates(prec);
         traces.clear();
@@ -140,6 +168,7 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         }
         return foundOne;
     }
+     */
 
     @Override
     public String toString() {
