@@ -62,12 +62,12 @@ public final class LazyXtaAbstractorFactory {
         create() {
             final LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>,
                     LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-                    lazyStrategy = createAlgorithmStrategy(system, dataStrategy, clockStrategy);
+                    lazyStrategy = createLazyStrategy(system, dataStrategy, clockStrategy);
 
             final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd = lazyStrategy.getPartialOrd();
             final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor = lazyStrategy.getInitAbstractor();
             final LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-                    lazyAnalysis = createItpAnalysis(abstrPartialOrd, initAbstractor);
+                    lazyAnalysis = createLazyAnalysis(abstrPartialOrd, initAbstractor);
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
             final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
@@ -105,8 +105,8 @@ public final class LazyXtaAbstractorFactory {
         }
 
         private LazyAnalysis<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>, XtaAction, Prod2Prec<DPrec, CPrec>>
-        createItpAnalysis(final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd,
-                          final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor) {
+        createLazyAnalysis(final PartialOrd<Prod2State<DAbstr, CAbstr>> abstrPartialOrd,
+                           final InitAbstractor<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>> initAbstractor) {
 
             final XtaOrd<Prod2State<DAbstr, CAbstr>> xtaAbstrPartialOrd = XtaOrd.create(abstrPartialOrd);
 
@@ -157,7 +157,7 @@ public final class LazyXtaAbstractorFactory {
         }
 
         private LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
-        createAlgorithmStrategy(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy){
+        createLazyStrategy(final XtaSystem system, final DataStrategy dataStrategy, final ClockStrategy clockStrategy){
             final LazyStrategy<DConcr, DAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
                     dataLazyStrategy = createDataStrategy(system, dataStrategy);
             final LazyStrategy<CConcr, CAbstr, LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
@@ -179,14 +179,14 @@ public final class LazyXtaAbstractorFactory {
                     return new BasicLazyStrategy<>(lens);
                 case BWITP:
                 case FWITP:
-                    return createItpExplStrategy(system, dataStrategy);
+                    return createLazyExplStrategy(system, dataStrategy);
                 default:
                     throw new AssertionError();
             }
         }
 
         private LazyStrategy<ExplState, ExplState, LazyState<XtaState<Prod2State<ExplState, ?>>, XtaState<Prod2State<ExplState, ?>>>, XtaAction>
-        createItpExplStrategy(final XtaSystem system, final DataStrategy dataStrategy){
+        createLazyExplStrategy(final XtaSystem system, final DataStrategy dataStrategy){
 
             final Lattice<ExplState> lattice = ExplLattice.getInstance();
             final Interpolator<ExplState, BasicExprState> interpolator = ExplExprInterpolator.getInstance();
@@ -209,7 +209,7 @@ public final class LazyXtaAbstractorFactory {
             switch (clockStrategy) {
                 case BWITP:
                 case FWITP:
-                    return createItpZoneStrategy(system, clockStrategy);
+                    return createLazyZoneStrategy(system, clockStrategy);
                 case LU:
                     final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, LuZoneState>>>, LuZoneState>
                             lens = LazyXtaLensUtils.createAbstrClockLens();
@@ -220,7 +220,7 @@ public final class LazyXtaAbstractorFactory {
         }
 
         private LazyStrategy<ZoneState, ZoneState, LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, XtaAction>
-        createItpZoneStrategy(final XtaSystem system, final ClockStrategy clockStrategy){
+        createLazyZoneStrategy(final XtaSystem system, final ClockStrategy clockStrategy){
 
             final Lens<LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>, LazyState<ZoneState, ZoneState>>
                     lens = LazyXtaLensUtils.createItpClockLens();
