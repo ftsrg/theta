@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -32,6 +25,13 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class ExplState extends Valuation implements ExprState {
 
@@ -183,4 +183,5 @@ public abstract class ExplState extends Valuation implements ExprState {
 	private static class TopLazyHolder {
 		static final ExplState INSTANCE = new NonBottom(ImmutableValuation.empty());
 	}
+
 }

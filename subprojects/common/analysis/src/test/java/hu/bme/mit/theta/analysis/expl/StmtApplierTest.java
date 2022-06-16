@@ -15,6 +15,24 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
+
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.BOTTOM;
 import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.FAILURE;
@@ -24,31 +42,11 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
-
-import hu.bme.mit.theta.analysis.expl.StmtApplier;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public final class StmtApplierTest {

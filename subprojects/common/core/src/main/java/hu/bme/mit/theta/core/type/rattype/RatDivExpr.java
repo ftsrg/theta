@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class RatDivExpr extends DivExpr<RatType> {
 
@@ -37,8 +39,24 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	}
 
 	public static RatDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
-		final Expr<RatType> newRightOp = cast(rightOp, Rat());
+		final Expr<RatType> newLeftOp;
+		if (leftOp.getType() instanceof RatType) {
+			newLeftOp = cast(leftOp, Rat());
+		} else if (leftOp.getType() instanceof IntType) {
+			newLeftOp = IntToRatExpr.create(leftOp);
+		} else {
+			throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
+		}
+
+		final Expr<RatType> newRightOp;
+		if (rightOp.getType() instanceof RatType) {
+			newRightOp = cast(rightOp, Rat());
+		} else if (rightOp.getType() instanceof IntType) {
+			newRightOp = IntToRatExpr.create(rightOp);
+		} else {
+			throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
+		}
+
 		return RatDivExpr.of(newLeftOp, newRightOp);
 	}
 

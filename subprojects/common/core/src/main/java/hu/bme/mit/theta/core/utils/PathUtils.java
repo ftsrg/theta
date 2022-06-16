@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-
-import java.util.Collection;
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -33,6 +26,15 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+
+import java.util.Collection;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 
 /**
  * Utility functions related to paths.
@@ -81,7 +83,7 @@ public class PathUtils {
 	 */
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return unfold(expr, VarIndexing.all(i));
+		return unfold(expr, VarIndexingFactory.indexing(i));
 	}
 
 	/**
@@ -107,7 +109,7 @@ public class PathUtils {
 	 */
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return foldin(expr, VarIndexing.all(i));
+		return foldin(expr, VarIndexingFactory.indexing(i));
 	}
 
 	/**
@@ -145,7 +147,7 @@ public class PathUtils {
 	 */
 	public static Valuation extractValuation(final Valuation model, final int i) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexing.all(i));
+		return extractValuation(model, VarIndexingFactory.indexing(i));
 	}
 
 	/**
@@ -183,7 +185,7 @@ public class PathUtils {
 	public static Valuation extractValuation(final Valuation model, final int i,
 											 final Collection<? extends VarDecl<?>> varDecls) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexing.all(i), varDecls);
+		return extractValuation(model, VarIndexingFactory.indexing(i), varDecls);
 	}
 
 	////

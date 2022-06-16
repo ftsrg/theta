@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 		}
 
 		final com.microsoft.z3.BoolExpr andTerm = z3Context
-			.mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
+				.mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
 		final com.microsoft.z3.BoolExpr term = z3Context.MkInterpolant(andTerm);
 		return term;
 	}

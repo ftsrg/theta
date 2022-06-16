@@ -1,0 +1,31 @@
+static simple
+main process p0 {
+    main procedure mainProcedure (){
+        var a : int
+        init loc L0
+        loc L1
+        error loc Le
+        final loc Lf
+        L0 -> L1 {
+            call func(a, 1, 2)
+        }
+        L1 -> Lf {
+            assume (a = 3)
+        }
+        L1 -> Le {
+            assume not (a = 3)
+        }
+    }
+    procedure func(OUT c : int, IN a : int, IN b : int) {
+        init loc L1
+        final loc L2
+        L1->L2 {
+            assume a >= 5
+            c := a+b
+        }
+        L1->L2 {
+            assume a < 5
+            call func(c, a+b, b)
+        }
+    }
+}

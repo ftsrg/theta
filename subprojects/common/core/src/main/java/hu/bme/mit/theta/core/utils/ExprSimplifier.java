@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,11 +75,13 @@ import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
@@ -109,6 +111,7 @@ import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -221,6 +224,8 @@ public final class ExprSimplifier {
 
 			.addCase(IntModExpr.class, this::simplifyMod)
 
+			.addCase(IntRemExpr.class, this::simplifyRem)
+
 			.addCase(IntEqExpr.class, this::simplifyIntEq)
 
 			.addCase(IntNeqExpr.class, this::simplifyIntNeq)
@@ -324,6 +329,8 @@ public final class ExprSimplifier {
 			.addCase(FpDivExpr.class, this::simplifyFpDiv)
 
 			.addCase(FpEqExpr.class, this::simplifyFpEq)
+
+			.addCase(FpAssignExpr.class, this::simplifyFpAssign)
 
 			.addCase(FpGeqExpr.class, this::simplifyFpGeq)
 
@@ -452,14 +459,14 @@ public final class ExprSimplifier {
 		boolean nonLiteralFound = false;
 		List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
 		Expr<ET> newElseElem = simplify(t.getElseElem(), val);
-		if(!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
+		if (!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
 		for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
 			Expr<IT> newIndex = simplify(element.get1(), val);
 			Expr<ET> newElement = simplify(element.get2(), val);
 			newElements.add(Tuple2.of(newIndex, newElement));
-			if(!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
+			if (!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
 		}
-		if(nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
+		if (nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
 		else return t.eval(val);
 	}
 
@@ -1023,6 +1030,23 @@ public final class ExprSimplifier {
 			final IntLitExpr leftLit = (IntLitExpr) leftOp;
 			final IntLitExpr rightLit = (IntLitExpr) rightOp;
 			return leftLit.mod(rightLit);
+		} else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
+			return leftOp;
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private Expr<IntType> simplifyRem(final IntRemExpr expr, final Valuation val) {
+		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+			final IntLitExpr leftLit = (IntLitExpr) leftOp;
+			final IntLitExpr rightLit = (IntLitExpr) rightOp;
+			return leftLit.rem(rightLit);
+		} else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
+			return simplify(leftOp, val);
 		}
 
 		return expr.with(leftOp, rightOp);
@@ -1888,6 +1912,16 @@ public final class ExprSimplifier {
 		return expr.with(op);
 	}
 
+	private Expr<BoolType> simplifyFpIsInfinite(final FpIsInfiniteExpr expr, final Valuation val) {
+		final Expr<FpType> op = simplify(expr.getOp(), val);
+
+		if (op instanceof FpLitExpr) {
+			return Bool((((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
+		}
+
+		return expr.with(op);
+	}
+
 	private Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
 		final Expr<FpType> op = simplify(expr.getOp(), val);
 
@@ -1970,6 +2004,17 @@ public final class ExprSimplifier {
 			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private static Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
+		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+			return Bool(leftOp.equals(rightOp));
 		}
 
 		return expr.with(leftOp, rightOp);
@@ -2091,8 +2136,7 @@ public final class ExprSimplifier {
 
 		if (op instanceof FpLitExpr) {
 			return expr.eval(val);
-		}
-		else if (op instanceof FpToFpExpr) {
+		} else if (op instanceof FpToFpExpr) {
 			return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
 		}
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 package hu.bme.mit.theta.analysis.unit;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Collection;
+import java.util.Set;
 
 public final class UnitPrec implements Prec {
 
@@ -31,5 +35,10 @@ public final class UnitPrec implements Prec {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName();
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() {
+		return Set.of();
 	}
 }

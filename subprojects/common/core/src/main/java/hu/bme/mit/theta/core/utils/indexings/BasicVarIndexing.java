@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,35 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.utils;
+package hu.bme.mit.theta.core.utils.indexings;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.max;
 
-import hu.bme.mit.theta.common.container.Containers;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-
-import hu.bme.mit.theta.core.decl.VarDecl;
-
 /**
  * Represents an immutable mapping, where each variable is associated with an
  * index. The inner builder class can also be used to create a new instance.
  */
-public class VarIndexing {
+public class BasicVarIndexing implements VarIndexing {
 
-	private static final VarIndexing ALL_ZERO = new Builder(0).build();
-	private static final VarIndexing ALL_ONE = new Builder(1).build();
+	private static final BasicVarIndexing ALL_ZERO = new BasicVarIndexingBuilder(0).build();
+	private static final BasicVarIndexing ALL_ONE = new BasicVarIndexingBuilder(1).build();
 
 	private final int defaultIndex;
 	private final Map<VarDecl<?>, Integer> varToOffset;
 
-	private VarIndexing(final Builder builder) {
+	private BasicVarIndexing(final BasicVarIndexingBuilder builder) {
 		defaultIndex = builder.defaultIndex;
 		varToOffset = ImmutableMap.copyOf(builder.varToOffset);
 	}
@@ -52,7 +51,7 @@ public class VarIndexing {
 	 * @param defaultIndex Default index
 	 * @return New instance
 	 */
-	public static VarIndexing all(final int defaultIndex) {
+	static BasicVarIndexing all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		switch (defaultIndex) {
 			case 0:
@@ -60,7 +59,7 @@ public class VarIndexing {
 			case 1:
 				return ALL_ONE;
 			default:
-				return new Builder(defaultIndex).build();
+				return new BasicVarIndexingBuilder(defaultIndex).build();
 		}
 	}
 
@@ -70,9 +69,9 @@ public class VarIndexing {
 	 * @param defaultIndex Default index
 	 * @return New builder
 	 */
-	public static Builder builder(final int defaultIndex) {
+	static BasicVarIndexingBuilder builder(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
-		return new Builder(defaultIndex);
+		return new BasicVarIndexingBuilder(defaultIndex);
 	}
 
 	/**
@@ -80,8 +79,9 @@ public class VarIndexing {
 	 *
 	 * @return New builder
 	 */
-	public Builder transform() {
-		return new Builder(this);
+	@Override
+	public BasicVarIndexingBuilder transform() {
+		return new BasicVarIndexingBuilder(this);
 	}
 
 	/**
@@ -91,7 +91,7 @@ public class VarIndexing {
 	 * @param n       Amount to increment
 	 * @return Transformed indexing
 	 */
-	public VarIndexing inc(final VarDecl<?> varDecl, final int n) {
+	public BasicVarIndexing inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
 		return transform().inc(varDecl, n).build();
 	}
@@ -102,7 +102,8 @@ public class VarIndexing {
 	 * @param varDecl Variable to increment
 	 * @return Transformed indexing
 	 */
-	public VarIndexing inc(final VarDecl<?> varDecl) {
+	@Override
+	public BasicVarIndexing inc(final VarDecl<?> varDecl) {
 		return inc(varDecl, 1);
 	}
 
@@ -112,7 +113,8 @@ public class VarIndexing {
 	 * @param indexing Other indexing
 	 * @return Sum of the two indexings
 	 */
-	public VarIndexing add(final VarIndexing indexing) {
+	@Override
+	public BasicVarIndexing add(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().add(indexing.transform()).build();
 	}
@@ -123,7 +125,8 @@ public class VarIndexing {
 	 * @param indexing Other indexing
 	 * @return Difference of the two indexings
 	 */
-	public VarIndexing sub(final VarIndexing indexing) {
+	@Override
+	public BasicVarIndexing sub(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().sub(indexing.transform()).build();
 	}
@@ -134,7 +137,8 @@ public class VarIndexing {
 	 * @param indexing Other indexing
 	 * @return Joined indexing
 	 */
-	public VarIndexing join(final VarIndexing indexing) {
+	@Override
+	public BasicVarIndexing join(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().join(indexing.transform()).build();
 	}
@@ -145,44 +149,29 @@ public class VarIndexing {
 	 * @param varDecl Variable
 	 * @return Index
 	 */
+	@Override
 	public int get(final VarDecl<?> varDecl) {
 		checkNotNull(varDecl);
 		final Integer offset = varToOffset.getOrDefault(varDecl, 0);
 		return defaultIndex + offset;
 	}
 
-	@Override
-	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "IndexMap(", ")");
-		sj.add(Integer.toString(defaultIndex));
-		for (final VarDecl<?> varDecl : varToOffset.keySet()) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(varDecl.getName());
-			sb.append(" -> ");
-			sb.append(get(varDecl));
-			sj.add(sb);
-		}
-		return sj.toString();
-	}
-
-	////
-
-	public static final class Builder {
+	public static class BasicVarIndexingBuilder implements VarIndexingBuilder {
 		private int defaultIndex;
 		private Map<VarDecl<?>, Integer> varToOffset;
 
-		private Builder(final int defaultIndex) {
+		private BasicVarIndexingBuilder(final int defaultIndex) {
 			checkArgument(defaultIndex >= 0, "Negative default index");
 			this.defaultIndex = defaultIndex;
 			varToOffset = Containers.createMap();
 		}
 
-		private Builder(final VarIndexing indexing) {
+		private BasicVarIndexingBuilder(final BasicVarIndexing indexing) {
 			this.defaultIndex = indexing.defaultIndex;
 			this.varToOffset = Containers.createMap(indexing.varToOffset);
 		}
 
-		public Builder inc(final VarDecl<?> varDecl, final int n) {
+		public BasicVarIndexingBuilder inc(final VarDecl<?> varDecl, final int n) {
 			checkNotNull(varDecl);
 
 			if (n != 0) {
@@ -195,17 +184,23 @@ public class VarIndexing {
 			return this;
 		}
 
-		public Builder inc(final VarDecl<?> varDecl) {
+		@Override
+		public BasicVarIndexingBuilder inc(final VarDecl<?> varDecl) {
 			return inc(varDecl, 1);
 		}
 
-		public Builder incAll() {
+		@Override
+		public BasicVarIndexingBuilder incAll() {
 			defaultIndex = defaultIndex + 1;
 			return this;
 		}
 
-		public Builder add(final Builder that) {
-			checkNotNull(that);
+		@Override
+		public BasicVarIndexingBuilder add(final VarIndexingBuilder genericThat) {
+			checkNotNull(genericThat);
+			checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be added together!");
+
+			BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
 			final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
 			final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
@@ -227,8 +222,12 @@ public class VarIndexing {
 			return this;
 		}
 
-		public Builder sub(final Builder that) {
-			checkNotNull(that);
+		@Override
+		public BasicVarIndexingBuilder sub(final VarIndexingBuilder genericThat) {
+			checkNotNull(genericThat);
+			checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be subtracted!");
+
+			BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
 			final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
 			checkArgument(newDefaultIndex >= 0, "Negative default index");
@@ -251,8 +250,12 @@ public class VarIndexing {
 			return this;
 		}
 
-		public Builder join(final Builder that) {
-			checkNotNull(that);
+		@Override
+		public BasicVarIndexingBuilder join(final VarIndexingBuilder genericThat) {
+			checkNotNull(genericThat);
+			checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be joined!");
+
+			BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
 			final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
 			final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
@@ -273,16 +276,34 @@ public class VarIndexing {
 			return this;
 		}
 
+		@Override
 		public int get(final VarDecl<?> varDecl) {
 			checkNotNull(varDecl);
 			final Integer offset = varToOffset.getOrDefault(varDecl, 0);
 			return defaultIndex + offset;
 		}
 
-		public VarIndexing build() {
-			return new VarIndexing(this);
+		@Override
+		public BasicVarIndexing build() {
+			return new BasicVarIndexing(this);
 		}
 
 	}
+
+	@Override
+	public String toString() {
+		final StringJoiner sj = new StringJoiner(", ", "IndexMap(", ")");
+		sj.add(Integer.toString(defaultIndex));
+		for (final VarDecl<?> varDecl : varToOffset.keySet()) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(varDecl.getName());
+			sb.append(" -> ");
+			sb.append(get(varDecl));
+			sj.add(sb);
+		}
+		return sj.toString();
+	}
+
+	////
 
 }

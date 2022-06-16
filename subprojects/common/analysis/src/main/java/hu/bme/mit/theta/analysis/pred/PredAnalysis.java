@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredAnalysis implements Analysis<PredState, ExprAction, PredPrec> {
+public final class PredAnalysis<A extends ExprAction> implements Analysis<PredState, A, PredPrec> {
 
 	private final PartialOrd<PredState> partialOrd;
 	private final InitFunc<PredState, PredPrec> initFunc;
-	private final TransFunc<PredState, ExprAction, PredPrec> transFunc;
+	private final TransFunc<PredState, A, PredPrec> transFunc;
 
 	private PredAnalysis(final Solver solver, final PredAbstractor predAbstractor, final Expr<BoolType> initExpr) {
 		partialOrd = PredOrd.create(solver);
@@ -37,9 +37,9 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 		transFunc = PredTransFunc.create(predAbstractor);
 	}
 
-	public static PredAnalysis create(final Solver solver, final PredAbstractor predAbstractor,
-									  final Expr<BoolType> initExpr) {
-		return new PredAnalysis(solver, predAbstractor, initExpr);
+	public static <A extends ExprAction> PredAnalysis<A> create(final Solver solver, final PredAbstractor predAbstractor,
+																final Expr<BoolType> initExpr) {
+		return new PredAnalysis<A>(solver, predAbstractor, initExpr);
 	}
 
 	////
@@ -55,7 +55,7 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	}
 
 	@Override
-	public TransFunc<PredState, ExprAction, PredPrec> getTransFunc() {
+	public TransFunc<PredState, A, PredPrec> getTransFunc() {
 		return transFunc;
 	}
 

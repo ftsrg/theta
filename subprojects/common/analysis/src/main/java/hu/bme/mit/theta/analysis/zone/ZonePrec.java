@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-import java.util.Set;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ZonePrec implements Prec {
 
@@ -64,5 +64,10 @@ public final class ZonePrec implements Prec {
 	@Override
 	public int hashCode() {
 		return 31 * clocks.hashCode();
+	}
+
+	@Override
+	public Collection<VarDecl<?>> getUsedVars() { // This could be way more elegant
+		return clocks.stream().map(ratTypeVarDecl -> (VarDecl<?>) ratTypeVarDecl).collect(Collectors.toSet());
 	}
 }
