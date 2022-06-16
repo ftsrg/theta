@@ -36,7 +36,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
+public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
 	private final XtaLts lts;
 	private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
 	private final SearchStrategy searchStrategy;
@@ -152,5 +152,4 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 			stats.stopExpanding();
 		}
 	}
-
 }

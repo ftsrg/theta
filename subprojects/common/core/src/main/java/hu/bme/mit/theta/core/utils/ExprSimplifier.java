@@ -142,8 +142,22 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.SimplifierLevel.*;
 
 public final class ExprSimplifier {
+
+	private final SimplifierLevel level;
+
+	private ExprSimplifier(final SimplifierLevel level) {
+		this.level = level;
+	}
+
+	public static ExprSimplifier create() {
+		return create(FULL);
+	}
+	public static ExprSimplifier create(final SimplifierLevel level) {
+		return new ExprSimplifier(level);
+	}
 
 	private static final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
 
@@ -478,7 +492,7 @@ public final class ExprSimplifier {
 			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
 			return Bool(!leftValue || rightValue);
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -503,7 +517,7 @@ public final class ExprSimplifier {
 			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
 			return Bool(leftValue == rightValue);
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -530,7 +544,7 @@ public final class ExprSimplifier {
 			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
 			return Bool(leftValue != rightValue);
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -752,7 +766,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
 			return Bool(leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -767,7 +781,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
 			return Bool(!leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -786,7 +800,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -805,7 +819,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -824,7 +838,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -843,7 +857,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1024,7 +1038,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			return Bool(leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1039,7 +1053,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			return Bool(!leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1058,7 +1072,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1077,7 +1091,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1096,7 +1110,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1115,7 +1129,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1607,7 +1621,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
 			return Bool(leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1622,7 +1636,7 @@ public final class ExprSimplifier {
 		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
 			return Bool(!leftOp.equals(rightOp));
 		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1641,7 +1655,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1660,7 +1674,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1679,7 +1693,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1698,7 +1712,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1717,7 +1731,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1736,7 +1750,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}
@@ -1755,7 +1769,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return True();
 			}
 		}
@@ -1774,7 +1788,7 @@ public final class ExprSimplifier {
 		}
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
+			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
 				return False();
 			}
 		}

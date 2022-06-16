@@ -23,12 +23,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
+import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -101,5 +98,4 @@ public final class LazyXtaCheckerTest {
 		final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
 		assertTrue(argCheckResult);
 	}
-
 }

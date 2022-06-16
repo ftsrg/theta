@@ -31,7 +31,7 @@ final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 	private XtaZoneInitFunc() {
 	}
 
-	static XtaZoneInitFunc getInstance() {
+	public static XtaZoneInitFunc getInstance() {
 		return INSTANCE;
 	}
 

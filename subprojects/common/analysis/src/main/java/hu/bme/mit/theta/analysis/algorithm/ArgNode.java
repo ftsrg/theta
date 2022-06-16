@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 
-public final class ArgNode<S extends State, A extends Action> {
+public class ArgNode<S extends State, A extends Action> {
 
 	private static final int HASH_SEED = 8543;
 	private volatile int hashCode = 0;

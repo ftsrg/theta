@@ -1,0 +1,10 @@
+digraph arg {
+	label="";
+		node_0 [label="(ItpState (XtaState (p_s1)\l            (Prod2State\l              (ExplState (x 0))\l              (ZoneState y >= 0)))\l          (XtaState (p_s1)\l            (Prod2State\l              (ExplState (x 0))\l              (ZoneState))))\l",style="solid,filled",fontname="courier",fillcolor="#FFFFFF",color="#000000",shape=rectangle];
+		node_1 [label="(ItpState (XtaState (p_s1)\l            (Prod2State\l              (ExplState (x 1))\l              (ZoneState y >= 0)))\l          (XtaState (p_s1)\l            (Prod2State\l              (ExplState (x 1))\l              (ZoneState))))\l",style="solid,filled",fontname="courier",fillcolor="#FFFFFF",color="#000000",shape=rectangle];
+		node_2 [label="(ItpState (XtaState (p_s2)\l            (Prod2State\l              (ExplState (x 1))\l              (ZoneState y > 4)))\l          (XtaState (p_s2)\l            (Prod2State\l              (ExplState (x 1))\l              (ZoneState y > 4))))\l",style="solid,filled",fontname="courier",fillcolor="#FFFFFF",color="#000000",shape=rectangle];
+		phantom_init0 [label="\n",style="solid,filled",fillcolor="#FFFFFF",color="#FFFFFF",shape=ellipse];
+	node_0 -> node_1 [label="(BasicXtaAction\l  (< x 1)\l  (assign x (+ x 1))\l  (reset y 0))\l",color="#000000",style=solid,fontname="courier"];
+	node_0 -> node_2 [label="(BasicXtaAction\l  y > 4\l  (assign x (+ x 1)))\l",color="#000000",style=solid,fontname="courier"];
+	phantom_init0 -> node_0 [label="\n",color="#000000",style=solid];
+}

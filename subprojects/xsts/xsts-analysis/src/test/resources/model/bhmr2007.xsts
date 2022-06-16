@@ -1,7 +1,7 @@
-var i : integer = 0
+ctrl var i : integer = 0
 var n : integer = 0
-var a : integer = 0
-var b : integer = 0
+ctrl var a : integer = 0
+ctrl var b : integer = 0
 var error : boolean = false
 
 trans {
