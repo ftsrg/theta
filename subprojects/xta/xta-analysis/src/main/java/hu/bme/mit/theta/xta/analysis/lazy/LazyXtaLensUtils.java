@@ -7,18 +7,22 @@ import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-public class LazyXtaLensUtils {
+public final class LazyXtaLensUtils {
 
     public static <DConcr extends State, DAbstr extends ExprState> Lens<LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>>, LazyState<DConcr, DAbstr>>
-    createItpDataLens() {
+    createLazyDataLens() {
         final Lens<LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>>, DConcr> concrLens = createConcrDataLens();
         final Lens<LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>>, DAbstr> abstrLens = createAbstrDataLens();
         return new Lens<>() {
             @Override
             public LazyState<DConcr, DAbstr> get(LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> state) {
                 final DConcr concrState = concrLens.get(state);
-                final DAbstr abstrState = abstrLens.get(state);
-                return LazyState.of(concrState, abstrState);
+                if (concrState.isBottom()) {
+                    return LazyState.bottom(concrState);
+                } else {
+                    final DAbstr abstrState = abstrLens.get(state);
+                    return LazyState.of(concrState, abstrState);
+                }
             }
             @Override
             public LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> set(
@@ -32,15 +36,19 @@ public class LazyXtaLensUtils {
     }
 
     public static <CConcr extends State, CAbstr extends ExprState> Lens<LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>>, LazyState<CConcr, CAbstr>>
-    createItpClockLens() {
+    createLazyClockLens() {
         final Lens<LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>>, CConcr> concrLens = createConcrClockLens();
         final Lens<LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>>, CAbstr> abstrLens = createAbstrClockLens();
         return new Lens<>() {
             @Override
             public LazyState<CConcr, CAbstr> get(LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> state) {
                 final CConcr concrState = concrLens.get(state);
-                final CAbstr abstrState = abstrLens.get(state);
-                return LazyState.of(concrState, abstrState);
+                if (concrState.isBottom()) {
+                    return LazyState.bottom(concrState);
+                } else {
+                    final CAbstr abstrState = abstrLens.get(state);
+                    return LazyState.of(concrState, abstrState);
+                }
             }
             @Override
             public LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> set(

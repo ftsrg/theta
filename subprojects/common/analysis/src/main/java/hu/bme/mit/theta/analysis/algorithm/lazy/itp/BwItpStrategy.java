@@ -1,6 +1,10 @@
 package hu.bme.mit.theta.analysis.algorithm.lazy.itp;
 
-import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.InvTransFunc;
+import hu.bme.mit.theta.analysis.Lattice;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
@@ -10,15 +14,15 @@ import hu.bme.mit.theta.core.utils.Lens;
 import java.util.Collection;
 
 public final class BwItpStrategy<SConcr extends State, SAbstr extends ExprState, SItp extends State, S extends State, A extends Action, P extends Prec>
-    extends ItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
+    extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
 
     public BwItpStrategy(final Lens<S, LazyState<SConcr, SAbstr>> lens,
-                          final Lattice<SAbstr> abstrLattice,
-                          final Interpolator<SAbstr, SItp> interpolator,
-                          final Concretizer<SConcr, SAbstr> concretizer,
-                          final InvTransFunc<SItp, A, P> invTransFunc,
-                          final P prec){
-        super(lens, abstrLattice, interpolator, concretizer, invTransFunc, prec);
+                         final Lattice<SAbstr> abstrLattice,
+                         final Interpolator<SAbstr, SItp> interpolator,
+                         final Concretizer<SConcr, SAbstr> concretizer,
+                         final InvTransFunc<SItp, A, P> invTransFunc,
+                         final P prec){
+        super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
     }
 
     @Override

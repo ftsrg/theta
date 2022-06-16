@@ -6,11 +6,12 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy2;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaAbstractorFactory;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import org.junit.Before;
@@ -48,7 +49,7 @@ public final class LazyXtaAbstractorTest {
     public String filepath;
 
     @Parameter(1)
-    public DataStrategy dataStrategy;
+    public DataStrategy2 dataStrategy;
 
     @Parameter(2)
     public ClockStrategy clockStrategy;
@@ -59,7 +60,8 @@ public final class LazyXtaAbstractorTest {
     public static Collection<Object[]> data() {
         final Collection<Object[]> result = new ArrayList<>();
         for (final String model : MODELS) {
-            for (final DataStrategy dataStrategy : DataStrategy.values()) {
+
+            for (final DataStrategy2 dataStrategy : DataStrategy2.getValidStrategies()) {
                 for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
                     if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
                         result.add(new Object[]{model, dataStrategy, clockStrategy});
@@ -74,7 +76,7 @@ public final class LazyXtaAbstractorTest {
     public void initialize() throws IOException {
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
-        abstractor = LazyXtaAbstractorFactory.create(system, dataStrategy, clockStrategy, BFS);
+        abstractor = LazyXtaAbstractorFactory.create(system, dataStrategy, clockStrategy, BFS, ExprMeetStrategy.SYNTACTIC);
     }
 
     @Test

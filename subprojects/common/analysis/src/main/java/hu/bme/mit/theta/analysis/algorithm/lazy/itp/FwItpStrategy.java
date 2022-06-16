@@ -1,6 +1,11 @@
 package hu.bme.mit.theta.analysis.algorithm.lazy.itp;
 
-import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.InvTransFunc;
+import hu.bme.mit.theta.analysis.Lattice;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
@@ -12,7 +17,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState, SItp extends State, S extends State, A extends Action, P extends Prec, PAbstr extends Prec>
-    extends ItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
+    extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
 
     private final TransFunc<SAbstr, A, PAbstr> transFunc;
     private final PAbstr abstrPrec;
@@ -25,7 +30,7 @@ public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState,
                          final P prec,
                          final TransFunc<SAbstr, A, PAbstr> transFunc,
                          final PAbstr abstrPrec){
-        super(lens, abstrLattice, interpolator, concretizer, invTransFunc, prec);
+        super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
         this.transFunc = checkNotNull(transFunc);
         this.abstrPrec = checkNotNull(abstrPrec);
     }
