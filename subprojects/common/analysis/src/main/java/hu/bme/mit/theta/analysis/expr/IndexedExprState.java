@@ -3,7 +3,8 @@ package hu.bme.mit.theta.analysis.expr;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -23,7 +24,7 @@ public final class IndexedExprState implements ExprState {
     }
 
     public static IndexedExprState bottom() {
-        return new IndexedExprState(False(), VarIndexing.all(0));
+        return new IndexedExprState(False(), VarIndexingFactory.indexing(0));
     }
 
     public VarIndexing getVarIndexing() {

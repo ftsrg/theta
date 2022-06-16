@@ -84,6 +84,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 	private final UCSolver solver;
 	private final Expr<BoolType> init;
 	private final Expr<BoolType> target;
+	private final ExprSimplifier exprSimplifier;
 
 	private final boolean IT; // Whether to abstract the trace or not
 	private final AssertionGeneratorMethod SPorWP; // Whether to use pre- or postconditions
@@ -329,7 +330,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			for (var stmt : trace.getAction(i - 1).getStmts()) {
 				spState = spState.sp(stmt);
 			}
-			assertions.add(ExprSimplifier.simplify(spState.getExpr(), ImmutableValuation.empty()));
+			assertions.add(exprSimplifier.simplify(spState.getExpr(), ImmutableValuation.empty()));
 			constCount = spState.getConstCount();
 		}
 
@@ -357,7 +358,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			for (var stmt : Lists.reverse(trace.getAction(i).getStmts())) {
 				wpState = wpState.wep(stmt);
 			}
-			assertions.set(i, ExprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
+			assertions.set(i, exprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
 			constCount = wpState.getConstCount();
 		}
 

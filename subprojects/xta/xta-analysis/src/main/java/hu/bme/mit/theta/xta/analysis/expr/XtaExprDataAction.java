@@ -12,7 +12,9 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingBuilder;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
@@ -127,7 +129,7 @@ public final class XtaExprDataAction implements ExprAction {
                 )
         );
 
-        final VarIndexing.Builder indexingBuilder = addUpdates(emitEdge, actionExprs).transform();
+        final VarIndexingBuilder indexingBuilder = addUpdates(emitEdge, actionExprs).transform();
         recvEdges.forEach(recvEdge -> indexingBuilder.join(addUpdates(recvEdge, actionExprs).transform()));
         final VarIndexing indexing = indexingBuilder.build();
 
@@ -148,11 +150,11 @@ public final class XtaExprDataAction implements ExprAction {
     private VarIndexing addUpdates(final Edge edge, final Collection<Expr<BoolType>> actionExprs) {
         final Collection<Update> updates = edge.getUpdates();
         final Collection<Expr<BoolType>> dataUpdateExprs = new ArrayList<>();
-        VarIndexing.Builder indexingBuilder = VarIndexing.builder(0);
+        VarIndexingBuilder indexingBuilder = VarIndexingFactory.indexingBuilder(0);
         for (final Update update : updates) {
             if (update.isDataUpdate()) {
                 final Stmt updateStmt = update.toStmt();
-                final StmtUnfoldResult toExprResult = StmtUtils.toExpr(updateStmt, VarIndexing.all(0));
+                final StmtUnfoldResult toExprResult = StmtUtils.toExpr(updateStmt, VarIndexingFactory.indexing(0));
                 dataUpdateExprs.addAll(toExprResult.getExprs());
                 indexingBuilder.join(toExprResult.getIndexing().transform());
             }

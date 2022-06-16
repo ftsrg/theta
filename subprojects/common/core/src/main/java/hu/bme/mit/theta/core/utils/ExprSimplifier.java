@@ -244,7 +244,8 @@ public final class ExprSimplifier {
 
 			.addCase(ArrayWriteExpr.class, this::simplifyArrayWrite)
 
-			.addCase(ArrayInitExpr.class, this::simplifyArrayInit)
+			//.addCase(ArrayInitExpr.class, this::simplifyArrayInit)
+			.addCase(ArrayInitExpr.class, (arrayInitExpr, valuation) -> this.simplifyArrayInit(arrayInitExpr, valuation))
 
 			// Bitvectors
 
@@ -2009,7 +2010,7 @@ public final class ExprSimplifier {
 		return expr.with(leftOp, rightOp);
 	}
 
-	private static Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
+	private Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
 		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
 		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 

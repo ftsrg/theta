@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,11 +56,11 @@ public class PathUtilsTest {
 	@Test
 	public void testUnfoldReversed() {
 		Assert.assertEquals(Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
-				PathUtils.unfoldReverse(Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))), VarIndexing.all(0)));
+				PathUtils.unfoldReverse(Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
 		Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
-				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))), VarIndexing.all(0)));
+				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
 		Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
-				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))), VarIndexing.all(0)));
+				PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))), VarIndexingFactory.indexing(0)));
 	}
 
 	@Test

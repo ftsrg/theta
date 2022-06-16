@@ -5,7 +5,8 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +27,7 @@ public final class IndexedExprInitFunc implements InitFunc<IndexedExprState, Uni
 
     @Override
     public Collection<? extends IndexedExprState> getInitStates(UnitPrec prec) {
-        final VarIndexing varIndexing = VarIndexing.all(0);
+        final VarIndexing varIndexing = VarIndexingFactory.indexing(0);
         final Expr<BoolType> indexedInitExpr = PathUtils.unfold(initExpr, varIndexing);
         return Collections.singleton(IndexedExprState.of(indexedInitExpr, varIndexing));
     }
