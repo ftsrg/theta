@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public final class NoPropertyXstsTraceConcretizerUtil {
@@ -29,9 +30,8 @@ public final class NoPropertyXstsTraceConcretizerUtil {
 
         final VarFilter varFilter = VarFilter.of(xsts);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
-                Not(xsts.getProp()), solverFactory.createItpSolver());
+                Bool(true), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
-        checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
 
         assert valuations.getStates().size() == trace.getStates().size();

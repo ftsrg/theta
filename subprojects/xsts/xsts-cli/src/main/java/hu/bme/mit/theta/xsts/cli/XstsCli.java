@@ -4,10 +4,12 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+<<<<<<< HEAD
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.algorithm.tracegen.TraceGenChecker;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -15,6 +17,8 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+=======
+>>>>>>> a709678ee (Writing generated traces into files)
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -27,14 +31,18 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+<<<<<<< HEAD
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.Solver;
+=======
+>>>>>>> a709678ee (Writing generated traces into files)
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
+import hu.bme.mit.theta.xsts.analysis.concretizer.NoPropertyXstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -177,9 +185,26 @@ public class XstsCli {
 				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).build(xsts);
 				tracegenConfig.check();
 				List<? extends Trace<? extends State, ? extends Action>> traces = tracegenConfig.getTraces();
+				final File modelFile = new File(model);
+				final String tracePath = modelFile.getParent() + File.separator + "traces";
+				final File traceDir = new File(tracePath);
+				if(traceDir.exists()) {
+					MoreFiles.deleteRecursively(traceDir.toPath());
+				}
+				traceDir.mkdir();
+
+				int i = 0;
+
 				for (Trace<? extends State, ? extends Action> trace : traces) {
 					try {
-						XstsStateSequence concretizedTrace = XstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);// TODO something nicer
+						XstsStateSequence concretizedTrace = NoPropertyXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);// TODO something nicer
+
+						final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
+						try (PrintWriter printWriter = new PrintWriter(traceFile)) {
+							printWriter.write(concretizedTrace.toString());
+						}
+						i++;
+
 						logger.write(Logger.Level.SUBSTEP, "%s%n", concretizedTrace);
 						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
 					} catch(IllegalArgumentException e) {
