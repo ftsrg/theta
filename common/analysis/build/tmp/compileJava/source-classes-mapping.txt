@@ -1,0 +1,377 @@
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredAnalysis.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAnalysis
+hu/bme/mit/theta/analysis/pred/PredState.java
+ hu.bme.mit.theta.analysis.pred.PredState
+hu/bme/mit/theta/analysis/pred/PredAnalysis.java
+ hu.bme.mit.theta.analysis.pred.PredAnalysis
+hu/bme/mit/theta/analysis/prod2/DefaultPreStrengtheningOperator.java
+ hu.bme.mit.theta.analysis.prod2.DefaultPreStrengtheningOperator
+hu/bme/mit/theta/analysis/algorithm/ArgEdge.java
+ hu.bme.mit.theta.analysis.algorithm.ArgEdge
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceSeqItpChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker
+hu/bme/mit/theta/analysis/prod4/Prod4Analysis.java
+ hu.bme.mit.theta.analysis.prod4.Prod4Analysis
+hu/bme/mit/theta/analysis/zone/ZeroVar.java
+ hu.bme.mit.theta.analysis.zone.ZeroVar
+hu/bme/mit/theta/analysis/Prec.java
+ hu.bme.mit.theta.analysis.Prec
+hu/bme/mit/theta/analysis/expr/refinement/ItpRefutation.java
+ hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
+hu/bme/mit/theta/analysis/stmtoptimizer/DefaultStmtOptimizer.java
+ hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer
+hu/bme/mit/theta/analysis/algorithm/SafetyChecker.java
+ hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+hu/bme/mit/theta/analysis/algorithm/ArgBuilder.java
+ hu.bme.mit.theta.analysis.algorithm.ArgBuilder
+hu/bme/mit/theta/analysis/expr/refinement/autoexpl/AutoExpl.java
+ hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl
+hu/bme/mit/theta/analysis/algorithm/ARG.java
+ hu.bme.mit.theta.analysis.algorithm.ARG
+hu/bme/mit/theta/analysis/pred/ItpRefToPredPrec.java
+ hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec
+hu/bme/mit/theta/analysis/TransFunc.java
+ hu.bme.mit.theta.analysis.TransFunc
+hu/bme/mit/theta/analysis/Analysis.java
+ hu.bme.mit.theta.analysis.Analysis
+hu/bme/mit/theta/analysis/LTS.java
+ hu.bme.mit.theta.analysis.LTS
+hu/bme/mit/theta/analysis/algorithm/cegar/abstractor/StopCriterion.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
+hu/bme/mit/theta/analysis/InitFunc.java
+ hu.bme.mit.theta.analysis.InitFunc
+hu/bme/mit/theta/analysis/algorithm/ArgNodeComparators.java
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$ArgNodeComparator
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$Combinator
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$CreationOrder
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$DepthOrder
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$Inverter
+ hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators$TargetFirst
+hu/bme/mit/theta/analysis/zone/DbmSignature.java
+ hu.bme.mit.theta.analysis.zone.DbmSignature
+hu/bme/mit/theta/analysis/Trace.java
+ hu.bme.mit.theta.analysis.Trace
+hu/bme/mit/theta/analysis/prod2/Prod2TransFunc.java
+ hu.bme.mit.theta.analysis.prod2.Prod2TransFunc
+hu/bme/mit/theta/analysis/unit/UnitOrd.java
+ hu.bme.mit.theta.analysis.unit.UnitOrd
+hu/bme/mit/theta/analysis/expr/refinement/RefutationToPrec.java
+ hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
+hu/bme/mit/theta/analysis/expr/refinement/PrecRefiner.java
+ hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner
+hu/bme/mit/theta/analysis/zone/ZoneState.java
+ hu.bme.mit.theta.analysis.zone.ZoneState
+ hu.bme.mit.theta.analysis.zone.ZoneState$Builder
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceUnsatCoreChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker
+hu/bme/mit/theta/analysis/expr/refinement/JoiningPrecRefiner.java
+ hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner
+hu/bme/mit/theta/analysis/unit/UnitTransFunc.java
+ hu.bme.mit.theta.analysis.unit.UnitTransFunc
+hu/bme/mit/theta/analysis/zone/ZoneOrd.java
+ hu.bme.mit.theta.analysis.zone.ZoneOrd
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceStatus.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus$Feasible
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus$Infeasible
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceUCBChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUCBChecker
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUCBChecker$UCBAction
+hu/bme/mit/theta/analysis/prod2/Prod2Prec.java
+ hu.bme.mit.theta.analysis.prod2.Prod2Prec
+hu/bme/mit/theta/analysis/pred/PredOrd.java
+ hu.bme.mit.theta.analysis.pred.PredOrd
+hu/bme/mit/theta/analysis/zone/DbmRelation.java
+ hu.bme.mit.theta.analysis.zone.DbmRelation
+hu/bme/mit/theta/analysis/expr/refinement/MultiExprTraceRefiner.java
+ hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner
+ hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner$1
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredStmtOptimizer.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtOptimizer
+hu/bme/mit/theta/analysis/expr/StmtAction.java
+ hu.bme.mit.theta.analysis.expr.StmtAction
+hu/bme/mit/theta/analysis/prod4/Prod4InitFunc.java
+ hu.bme.mit.theta.analysis.prod4.Prod4InitFunc
+hu/bme/mit/theta/analysis/algorithm/cegar/BasicAbstractor.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
+ hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor$Builder
+hu/bme/mit/theta/analysis/algorithm/cegar/CegarStatistics.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
+hu/bme/mit/theta/analysis/expr/refinement/autoexpl/NewOperandsAutoExpl.java
+ hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewOperandsAutoExpl
+hu/bme/mit/theta/analysis/prod2/Prod2InitFunc.java
+ hu.bme.mit.theta.analysis.prod2.Prod2InitFunc
+hu/bme/mit/theta/analysis/algorithm/cegar/Refiner.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+hu/bme/mit/theta/analysis/algorithm/ArgUtils.java
+ hu.bme.mit.theta.analysis.algorithm.ArgUtils
+hu/bme/mit/theta/analysis/algorithm/SafetyResult.java
+ hu.bme.mit.theta.analysis.algorithm.SafetyResult
+ hu.bme.mit.theta.analysis.algorithm.SafetyResult$Safe
+ hu.bme.mit.theta.analysis.algorithm.SafetyResult$Unsafe
+hu/bme/mit/theta/analysis/stmtoptimizer/StmtSimplifier.java
+ hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier
+ hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier$SimplifyResult
+ hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier$SimplifyStatus
+ hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier$StmtSimplifierVisitor
+hu/bme/mit/theta/analysis/impl/PrecMappingAnalysis.java
+ hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis
+hu/bme/mit/theta/analysis/impl/PrecMappingInitFunc.java
+ hu.bme.mit.theta.analysis.impl.PrecMappingInitFunc
+hu/bme/mit/theta/analysis/prod3/Prod3Prec.java
+ hu.bme.mit.theta.analysis.prod3.Prod3Prec
+hu/bme/mit/theta/analysis/algorithm/cegar/Abstractor.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+hu/bme/mit/theta/analysis/expl/VarsRefToExplPrec.java
+ hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec
+hu/bme/mit/theta/analysis/expl/ExplStmtAnalysis.java
+ hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis
+hu/bme/mit/theta/analysis/pred/ExprSplitters.java
+ hu.bme.mit.theta.analysis.pred.ExprSplitters
+ hu.bme.mit.theta.analysis.pred.ExprSplitters$Atoms
+ hu.bme.mit.theta.analysis.pred.ExprSplitters$Conjuncts
+ hu.bme.mit.theta.analysis.pred.ExprSplitters$ExprSplitter
+ hu.bme.mit.theta.analysis.pred.ExprSplitters$Whole
+hu/bme/mit/theta/analysis/stmtoptimizer/StmtOptimizer.java
+ hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer
+hu/bme/mit/theta/analysis/expl/ItpRefToExplPrec.java
+ hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
+hu/bme/mit/theta/analysis/pred/PredAbstractors.java
+ hu.bme.mit.theta.analysis.pred.PredAbstractors
+ hu.bme.mit.theta.analysis.pred.PredAbstractors$BooleanAbstractor
+ hu.bme.mit.theta.analysis.pred.PredAbstractors$CartesianAbstractor
+ hu.bme.mit.theta.analysis.pred.PredAbstractors$PredAbstractor
+hu/bme/mit/theta/analysis/Action.java
+ hu.bme.mit.theta.analysis.Action
+hu/bme/mit/theta/analysis/expr/refinement/autoexpl/NewAtomsAutoExpl.java
+ hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewAtomsAutoExpl
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceStatusMergers.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatusMergers
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatusMergers$MaxPruneIndex
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatusMergers$MinPruneIndex
+hu/bme/mit/theta/analysis/waitlist/package-info.java
+ hu.bme.mit.theta.analysis.waitlist.package-info
+hu/bme/mit/theta/analysis/expr/ExprAction.java
+ hu.bme.mit.theta.analysis.expr.ExprAction
+hu/bme/mit/theta/analysis/expr/refinement/SingleExprTraceRefiner.java
+ hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner
+ hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner$1
+hu/bme/mit/theta/analysis/expl/ExplStmtTransFunc.java
+ hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
+hu/bme/mit/theta/analysis/prod3/Prod3State.java
+ hu.bme.mit.theta.analysis.prod3.Prod3State
+ hu.bme.mit.theta.analysis.prod3.Prod3State$Bottom
+ hu.bme.mit.theta.analysis.prod3.Prod3State$Bottom1
+ hu.bme.mit.theta.analysis.prod3.Prod3State$Bottom2
+ hu.bme.mit.theta.analysis.prod3.Prod3State$Bottom3
+ hu.bme.mit.theta.analysis.prod3.Prod3State$Product
+hu/bme/mit/theta/analysis/prod3/Prod3TransFunc.java
+ hu.bme.mit.theta.analysis.prod3.Prod3TransFunc
+hu/bme/mit/theta/analysis/expr/ExprOrd.java
+ hu.bme.mit.theta.analysis.expr.ExprOrd
+hu/bme/mit/theta/analysis/impl/PrecMappingTransFunc.java
+ hu.bme.mit.theta.analysis.impl.PrecMappingTransFunc
+hu/bme/mit/theta/analysis/prod2/Prod2Analysis.java
+ hu.bme.mit.theta.analysis.prod2.Prod2Analysis
+hu/bme/mit/theta/analysis/utils/ArgVisualizer.java
+ hu.bme.mit.theta.analysis.utils.ArgVisualizer
+ hu.bme.mit.theta.analysis.utils.ArgVisualizer$LazyHolderDefault
+ hu.bme.mit.theta.analysis.utils.ArgVisualizer$LazyHolderStructureOnly
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+hu/bme/mit/theta/analysis/prod4/Prod4Prec.java
+ hu.bme.mit.theta.analysis.prod4.Prod4Prec
+hu/bme/mit/theta/analysis/waitlist/PriorityWaitlist.java
+ hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
+hu/bme/mit/theta/analysis/algorithm/ArgTrace.java
+ hu.bme.mit.theta.analysis.algorithm.ArgTrace
+hu/bme/mit/theta/analysis/expl/ExplState.java
+ hu.bme.mit.theta.analysis.expl.ExplState
+ hu.bme.mit.theta.analysis.expl.ExplState$Bottom
+ hu.bme.mit.theta.analysis.expl.ExplState$BottomLazyHolder
+ hu.bme.mit.theta.analysis.expl.ExplState$NonBottom
+ hu.bme.mit.theta.analysis.expl.ExplState$TopLazyHolder
+hu/bme/mit/theta/analysis/prod3/Prod3Analysis.java
+ hu.bme.mit.theta.analysis.prod3.Prod3Analysis
+hu/bme/mit/theta/analysis/prod2/PreStrengtheningOperator.java
+ hu.bme.mit.theta.analysis.prod2.PreStrengtheningOperator
+hu/bme/mit/theta/analysis/pred/PredStmtOptimizer.java
+ hu.bme.mit.theta.analysis.pred.PredStmtOptimizer
+ hu.bme.mit.theta.analysis.pred.PredStmtOptimizer$LazyHolder
+hu/bme/mit/theta/analysis/prod3/Prod3Ord.java
+ hu.bme.mit.theta.analysis.prod3.Prod3Ord
+hu/bme/mit/theta/analysis/waitlist/RandomWaitlist.java
+ hu.bme.mit.theta.analysis.waitlist.RandomWaitlist
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredStrengtheningOperator.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator
+hu/bme/mit/theta/analysis/reachedset/Partition.java
+ hu.bme.mit.theta.analysis.reachedset.Partition
+hu/bme/mit/theta/analysis/unit/UnitInitFunc.java
+ hu.bme.mit.theta.analysis.unit.UnitInitFunc
+hu/bme/mit/theta/analysis/prod2/prod2explpred/ItpRefToProd2ExplPredPrec.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.ItpRefToProd2ExplPredPrec
+hu/bme/mit/theta/analysis/expr/ExprStatePredicate.java
+ hu.bme.mit.theta.analysis.expr.ExprStatePredicate
+hu/bme/mit/theta/analysis/waitlist/Waitlist.java
+ hu.bme.mit.theta.analysis.waitlist.Waitlist
+hu/bme/mit/theta/analysis/expl/ExplPrec.java
+ hu.bme.mit.theta.analysis.expl.ExplPrec
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceBwBinItpChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker
+hu/bme/mit/theta/analysis/algorithm/ArgNode.java
+ hu.bme.mit.theta.analysis.algorithm.ArgNode
+hu/bme/mit/theta/analysis/pred/PredTransFunc.java
+ hu.bme.mit.theta.analysis.pred.PredTransFunc
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredPreStrengtheningOperator.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredPreStrengtheningOperator
+hu/bme/mit/theta/analysis/expr/refinement/Refutation.java
+ hu.bme.mit.theta.analysis.expr.refinement.Refutation
+hu/bme/mit/theta/analysis/expr/ExprStates.java
+ hu.bme.mit.theta.analysis.expr.ExprStates
+hu/bme/mit/theta/analysis/prod4/Prod4State.java
+ hu.bme.mit.theta.analysis.prod4.Prod4State
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Bottom
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Bottom1
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Bottom2
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Bottom3
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Bottom4
+ hu.bme.mit.theta.analysis.prod4.Prod4State$Product
+hu/bme/mit/theta/analysis/algorithm/Statistics.java
+ hu.bme.mit.theta.analysis.algorithm.Statistics
+hu/bme/mit/theta/analysis/algorithm/cegar/RefinerResult.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
+ hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult$Spurious
+ hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult$Unsafe
+hu/bme/mit/theta/analysis/prod2/Prod2StmtOptimizer.java
+ hu.bme.mit.theta.analysis.prod2.Prod2StmtOptimizer
+hu/bme/mit/theta/analysis/prod4/Prod4Ord.java
+ hu.bme.mit.theta.analysis.prod4.Prod4Ord
+hu/bme/mit/theta/analysis/zone/BoundFunc.java
+ hu.bme.mit.theta.analysis.zone.BoundFunc
+ hu.bme.mit.theta.analysis.zone.BoundFunc$BoundFunctionVarConstrVisitor
+ hu.bme.mit.theta.analysis.zone.BoundFunc$Builder
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceStatusMerger.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatusMerger
+hu/bme/mit/theta/analysis/expl/ExplStmtOptimizer.java
+ hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer
+ hu.bme.mit.theta.analysis.expl.ExplStmtOptimizer$LazyHolder
+hu/bme/mit/theta/analysis/prod3/Prod3InitFunc.java
+ hu.bme.mit.theta.analysis.prod3.Prod3InitFunc
+hu/bme/mit/theta/analysis/algorithm/ArgChecker.java
+ hu.bme.mit.theta.analysis.algorithm.ArgChecker
+hu/bme/mit/theta/analysis/prod4/Prod4TransFunc.java
+ hu.bme.mit.theta.analysis.prod4.Prod4TransFunc
+hu/bme/mit/theta/analysis/expr/ExprState.java
+ hu.bme.mit.theta.analysis.expr.ExprState
+hu/bme/mit/theta/analysis/unit/UnitState.java
+ hu.bme.mit.theta.analysis.unit.UnitState
+hu/bme/mit/theta/analysis/reachedset/ReachedSet.java
+ hu.bme.mit.theta.analysis.reachedset.ReachedSet
+hu/bme/mit/theta/analysis/utils/TraceVisualizer.java
+ hu.bme.mit.theta.analysis.utils.TraceVisualizer
+ hu.bme.mit.theta.analysis.utils.TraceVisualizer$LazyHolder
+hu/bme/mit/theta/analysis/package-info.java
+ hu.bme.mit.theta.analysis.package-info
+hu/bme/mit/theta/analysis/prod2/Prod2State.java
+ hu.bme.mit.theta.analysis.prod2.Prod2State
+ hu.bme.mit.theta.analysis.prod2.Prod2State$Bottom
+ hu.bme.mit.theta.analysis.prod2.Prod2State$Bottom1
+ hu.bme.mit.theta.analysis.prod2.Prod2State$Bottom2
+ hu.bme.mit.theta.analysis.prod2.Prod2State$Product
+hu/bme/mit/theta/analysis/expr/ExprStateUtils.java
+ hu.bme.mit.theta.analysis.expr.ExprStateUtils
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceCombinedChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCombinedChecker
+hu/bme/mit/theta/analysis/prod2/StrengtheningOperator.java
+ hu.bme.mit.theta.analysis.prod2.StrengtheningOperator
+hu/bme/mit/theta/analysis/algorithm/cegar/CegarChecker.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredDedicatedTransFunc.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
+hu/bme/mit/theta/analysis/zone/BasicDbm.java
+ hu.bme.mit.theta.analysis.zone.BasicDbm
+hu/bme/mit/theta/analysis/expl/ExplInitFunc.java
+ hu.bme.mit.theta.analysis.expl.ExplInitFunc
+hu/bme/mit/theta/analysis/pred/PredPrec.java
+ hu.bme.mit.theta.analysis.pred.PredPrec
+hu/bme/mit/theta/analysis/unit/UnitPrec.java
+ hu.bme.mit.theta.analysis.unit.UnitPrec
+hu/bme/mit/theta/analysis/expr/refinement/VarsRefutation.java
+ hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation
+hu/bme/mit/theta/analysis/prod2/prod2explpred/Prod2ExplPredAbstractors.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors$BooleanAbstractor
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors$Prod2ExplPredAbstractor
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceCombinedCheckers.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCombinedCheckers
+hu/bme/mit/theta/analysis/zone/DBM.java
+ hu.bme.mit.theta.analysis.zone.DBM
+ hu.bme.mit.theta.analysis.zone.DBM$AndOperationVisitor
+ hu.bme.mit.theta.analysis.zone.DBM$ExecuteVisitor
+ hu.bme.mit.theta.analysis.zone.DBM$Procedure
+hu/bme/mit/theta/analysis/algorithm/cegar/abstractor/StopCriterions.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
+ hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions$AtLeastNCexs
+ hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions$FirstCex
+ hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions$FullExploration
+hu/bme/mit/theta/analysis/State.java
+ hu.bme.mit.theta.analysis.State
+hu/bme/mit/theta/analysis/expr/refinement/PruneStrategy.java
+ hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
+hu/bme/mit/theta/analysis/expr/refinement/autoexpl/StaticAutoExpl.java
+ hu.bme.mit.theta.analysis.expr.refinement.autoexpl.StaticAutoExpl
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceFwBinItpChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
+hu/bme/mit/theta/analysis/expl/ExplTransFunc.java
+ hu.bme.mit.theta.analysis.expl.ExplTransFunc
+hu/bme/mit/theta/analysis/algorithm/cegar/AbstractorResult.java
+ hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult
+hu/bme/mit/theta/analysis/zone/ZonePrec.java
+ hu.bme.mit.theta.analysis.zone.ZonePrec
+hu/bme/mit/theta/analysis/PartialOrd.java
+ hu.bme.mit.theta.analysis.PartialOrd
+hu/bme/mit/theta/analysis/prod2/prod2explpred/AutomaticItpRefToProd2ExplPredPrec.java
+ hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
+hu/bme/mit/theta/analysis/algorithm/SearchStrategy.java
+ hu.bme.mit.theta.analysis.algorithm.SearchStrategy
+ hu.bme.mit.theta.analysis.algorithm.SearchStrategy$1
+ hu.bme.mit.theta.analysis.algorithm.SearchStrategy$2
+ hu.bme.mit.theta.analysis.algorithm.SearchStrategy$3
+hu/bme/mit/theta/analysis/expr/refinement/ExprTraceNewtonChecker.java
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$1
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$2
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$3
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$4
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$AssertionGeneratorMethod
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$ExprTraceNewtonCheckerAssertBuilder
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$ExprTraceNewtonCheckerITBuilder
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$ExprTraceNewtonCheckerLVBuilder
+ hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$NewtonAction
+hu/bme/mit/theta/analysis/prod2/Prod2Ord.java
+ hu.bme.mit.theta.analysis.prod2.Prod2Ord
+hu/bme/mit/theta/analysis/expl/ExplAnalysis.java
+ hu.bme.mit.theta.analysis.expl.ExplAnalysis
+hu/bme/mit/theta/analysis/expl/ExplOrd.java
+ hu.bme.mit.theta.analysis.expl.ExplOrd
+ hu.bme.mit.theta.analysis.expl.ExplOrd$LazyHolder
+hu/bme/mit/theta/analysis/expr/ExprTraceUtils.java
+ hu.bme.mit.theta.analysis.expr.ExprTraceUtils
+hu/bme/mit/theta/analysis/unit/UnitAnalysis.java
+ hu.bme.mit.theta.analysis.unit.UnitAnalysis
+hu/bme/mit/theta/analysis/zone/DiffBounds.java
+ hu.bme.mit.theta.analysis.zone.DiffBounds
+hu/bme/mit/theta/analysis/pred/PredInitFunc.java
+ hu.bme.mit.theta.analysis.pred.PredInitFunc
+hu/bme/mit/theta/analysis/waitlist/LifoWaitlist.java
+ hu.bme.mit.theta.analysis.waitlist.LifoWaitlist
+hu/bme/mit/theta/analysis/waitlist/FifoWaitlist.java
+ hu.bme.mit.theta.analysis.waitlist.FifoWaitlist
+hu/bme/mit/theta/analysis/expr/BasicExprState.java
+ hu.bme.mit.theta.analysis.expr.BasicExprState
+hu/bme/mit/theta/analysis/expl/StmtApplier.java
+ hu.bme.mit.theta.analysis.expl.StmtApplier
+ hu.bme.mit.theta.analysis.expl.StmtApplier$ApplyResult
+hu/bme/mit/theta/analysis/expl/ExplStatePredicate.java
+ hu.bme.mit.theta.analysis.expl.ExplStatePredicate
