@@ -12,8 +12,11 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
@@ -21,6 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
 public class TraceGenChecker <S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
@@ -64,7 +68,7 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
     @Override
     public SafetyResult<S, A> check(P prec) {
         final ARG<S, A> arg = abstractor.createArg();
-        AbstractorResult abstractorResult = abstractor.check(arg, prec);
+        abstractor.check(arg, prec);
         // Stream<ArgTrace<S, A>> cexs = arg.getCexs();
         traces = arg.getNodes().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
         // traces = cexs.map(ArgTrace::toTrace).toList();
