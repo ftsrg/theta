@@ -82,6 +82,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         this.IT = it;
         this.SPorWP = checkNotNull(sPorWP);
         this.LV = lv;
+        this.exprSimplifier = ExprSimplifier.create();
     }
 
     public static ExprTraceNewtonCheckerITBuilder create(

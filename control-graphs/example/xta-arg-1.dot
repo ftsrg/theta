@@ -1,6 +1,0 @@
-digraph arg {
-	label="";
-		node_0 [label="(XtaState (p_s1)\l  (Prod2State\l    (ItpExplState\l      (ExplState (x 0))\l      (ExplState))\l    (ItpZoneState\l      (ZoneState y >= 0)\l      (ZoneState))))\l",style="solid,filled",fontname="courier",fillcolor="#FFFFFF",color="#000000",shape=rectangle];
-		phantom_init0 [label="\n",style="solid,filled",fillcolor="#FFFFFF",color="#FFFFFF",shape=ellipse];
-	phantom_init0 -> node_0 [label="\n",color="#000000",style=solid];
-}

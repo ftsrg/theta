@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.analysis.expr.BasicExprState;
-import hu.bme.mit.theta.analysis.itp.Interpolator;
+import hu.bme.mit.theta.analysis.algorithm.lazy.itp.Interpolator;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -18,7 +18,7 @@ import java.util.Collections;
 
 import static java.util.stream.Collectors.toList;
 
-public class ExplExprInterpolator implements Interpolator<ExplState, BasicExprState> {
+public final class ExplExprInterpolator implements Interpolator<ExplState, BasicExprState> {
 
     private static final ExprSimplifier exprSimplifier = ExprSimplifier.create(SimplifierLevel.LITERAL_ONLY);
     private static final ExplExprInterpolator INSTANCE = new ExplExprInterpolator();

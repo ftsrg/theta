@@ -40,7 +40,7 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * An ExprTraceChecker that generates new predicates based on the UCB algorithm by
- * Leucker, Martin & Markin, Grigory & Neuhäußer, Martin. (2015). A New Refinement
+ * Leucker, Martin &amp; Markin, Grigory &amp; Neuhäußer, Martin. (2015). A New Refinement
  * Strategy for CEGAR-Based Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
@@ -48,11 +48,13 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
     private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
+    private final ExprSimplifier exprSimplifier;
 
     private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
+        this.exprSimplifier = ExprSimplifier.create();
     }
 
     public static ExprTraceUCBChecker create(
@@ -179,7 +181,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
 
                 /* Add the negated of the above expression as the new predicate */
                 predicates.add(
-                    ExprSimplifier.simplify(
+                    exprSimplifier.simplify(
                         Not(And(new HashSet<>(predicate))),
                         ImmutableValuation.empty()
                     )

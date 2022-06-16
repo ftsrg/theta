@@ -45,13 +45,8 @@ final class XtaStateSymbol implements Symbol {
 						  final CommitContext commit) {
 		checkNotNull(context);
 		name = context.fId.getText();
-		kind = isError(name) ? LocKind.ERROR : isCommited(name, commit) ? LocKind.COMMITTED
-				: isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
+		kind = isCommited(name, commit) ? LocKind.COMMITTED : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
 		expression = context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
-	}
-
-	private static boolean isError(final String name) {
-		return name.toLowerCase().contains("error");
 	}
 
 	private static boolean isUrgent(final String name, final UrgentContext urgent) {

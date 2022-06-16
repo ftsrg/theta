@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.analysis.zone;
 
-import hu.bme.mit.theta.analysis.itp.Interpolator;
+import hu.bme.mit.theta.analysis.algorithm.lazy.itp.Interpolator;
 
 import java.util.Collection;
 
-public class ZoneInterpolator implements Interpolator<ZoneState, ZoneState> {
+public final class ZoneInterpolator implements Interpolator<ZoneState, ZoneState> {
 
     private static final ZoneInterpolator INSTANCE = new ZoneInterpolator();
 
