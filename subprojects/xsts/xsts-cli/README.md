@@ -17,7 +17,7 @@ For more information about the XSTS formalism and its supported language element
     * The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
     * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-xsts-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-xsts-cli.jar_.
     * Alternatively, you can use our docker image (see below).
-2. Running the tool requires Java (JRE) 11.
+2. Running the tool requires Java (JRE) 17.
 3. The tool also requires the [Z3 SMT solver libraries](../../../doc/Build.md) to be available on `PATH`.
 4. The tool can be executed with `java -jar theta-xsts-cli.jar [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible values.

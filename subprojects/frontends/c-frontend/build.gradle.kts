@@ -3,5 +3,6 @@ plugins {
     id("antlr-grammar")
 }
 dependencies {
-    compile(project(":theta-core"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-common"))
 }

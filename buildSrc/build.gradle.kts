@@ -27,8 +27,8 @@ fun gradlePlugin(id: String, version: String): String = "$id:$id.gradle.plugin:$
 
 dependencies {
     compileOnly(gradleKotlinDsl())
-    compile(kotlin("gradle-plugin", kotlinVersion))
-    compile(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
+    implementation(kotlin("gradle-plugin", kotlinVersion))
+    implementation(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
 }
 
 // Force the embeddable Kotlin compiler version to be the selected kotlinVersion.
