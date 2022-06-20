@@ -1,5 +1,5 @@
 main process cfa {
-	var x : fp[8:24]
+	var x : fp[8,24]
 
 	init loc L0
     loc L1

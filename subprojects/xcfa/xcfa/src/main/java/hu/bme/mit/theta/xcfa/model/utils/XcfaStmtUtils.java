@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 public class XcfaStmtUtils {
 	/**
-	 * Replace expressions in a stmt based on a given Expr -> Opt(Expr) mapping function
+	 * Replace expressions in a stmt based on a given Expr to Opt(Expr) mapping function
 	 *
 	 * @param stmt   Statement to replace expressions in
 	 * @param mapper Mapping function that returns a new Expression when necessary, empty otherwise
@@ -44,7 +44,7 @@ public class XcfaStmtUtils {
 	}
 
 	/**
-	 * Replace expressions in a stmt based on a given Var -> Opt(Var) mapping function
+	 * Replace expressions in a stmt based on a given Var to Opt(Var) mapping function
 	 *
 	 * @param stmt   Statement to replace expressions in
 	 * @param mapper Mapping function that returns a new VarDecl when necessary, empty otherwise

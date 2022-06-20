@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -122,15 +120,6 @@ public final class ClockOps {
 		}
 
 		@Override
-		public <DeclType extends Type> ClockOp visit(PushStmt<DeclType> stmt, Void param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> ClockOp visit(PopStmt<DeclType> stmt, Void param) {
-			throw new UnsupportedOperationException();
-		}
-
 		public ClockOp visit(IfStmt stmt, Void param) {
 			throw new UnsupportedOperationException();
 		}

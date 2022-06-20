@@ -57,8 +57,15 @@ public final class CfaDslManagerTest {
 
 				{"/bv.cfa", 1, 6, 6, 6},
 
-				{"/bv2.cfa", 1, 6, 6, 6}
+				{"/bv2.cfa", 1, 6, 6, 6},
 
+				{"/bv3.cfa", 1, 6, 6, 6},
+
+				{"/bv4.cfa", 2, 7, 8, 8},
+
+				{"/fp1.cfa", 4, 7, 6, 6},
+
+				{"/fp2.cfa", 4, 7, 6, 6}
 		});
 	}
 

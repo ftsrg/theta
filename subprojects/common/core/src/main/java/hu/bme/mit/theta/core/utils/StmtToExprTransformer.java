@@ -24,8 +24,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -36,7 +34,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.indexings.PushPopVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
 import java.util.ArrayList;
@@ -161,26 +158,6 @@ final class StmtToExprTransformer {
 			final Expr<BoolType> expr = Or(branchExprs);
 			VarPoolUtil.returnInt(tempVar);
 			return StmtUnfoldResult.of(ImmutableList.of(expr), jointIndexing);
-		}
-
-		@Override
-		public <DeclType extends Type> StmtUnfoldResult visit(PushStmt<DeclType> stmt, VarIndexing param) {
-			if (param instanceof PushPopVarIndexing) {
-				final PushPopVarIndexing newIndexing = ((PushPopVarIndexing) param).push(stmt.getVarDecl());
-				return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
-			}
-//			return StmtUnfoldResult.of(ImmutableList.of(True()), param);
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> StmtUnfoldResult visit(PopStmt<DeclType> stmt, VarIndexing param) {
-			if (param instanceof PushPopVarIndexing) {
-				final PushPopVarIndexing newIndexing = ((PushPopVarIndexing) param).pop(stmt.getVarDecl());
-				return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
-			}
-//			return StmtUnfoldResult.of(ImmutableList.of(True()), param);
-			throw new UnsupportedOperationException();
 		}
 
 		@Override

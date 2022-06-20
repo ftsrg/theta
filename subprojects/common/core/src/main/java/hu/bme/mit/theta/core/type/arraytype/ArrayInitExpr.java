@@ -103,6 +103,11 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 	}
 
 	@Override
+	public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> withOps(List<? extends Expr<?>> ops) {
+		return with(ops.stream().map(op -> (Expr<Type>) op).collect(Collectors.toList()));
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}

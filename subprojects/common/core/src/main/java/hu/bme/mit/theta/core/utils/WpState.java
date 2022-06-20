@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -180,16 +178,6 @@ public final class WpState {
 			throw new UnsupportedOperationException();
 		}
 
-		@Override
-		public <DeclType extends Type> WpState visit(PushStmt<DeclType> stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> WpState visit(PopStmt<DeclType> stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
-
 		public WpState visit(IfStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
@@ -247,16 +235,6 @@ public final class WpState {
 
 		@Override
 		public WpState visit(LoopStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> WpState visit(PushStmt<DeclType> stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> WpState visit(PopStmt<DeclType> stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
 
