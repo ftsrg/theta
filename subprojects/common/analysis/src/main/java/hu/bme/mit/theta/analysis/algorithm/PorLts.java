@@ -9,6 +9,13 @@ import hu.bme.mit.theta.core.type.Type;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * LTS with a POR (Partial Order Reduction) algorithm applied as a filter when returning enabled actions.
+ *
+ * @param <S> the type of the state
+ * @param <A> the type of the action (transition in the state space)
+ * @param <T> the type of the transition in the original formalism
+ */
 public abstract class PorLts<S extends State, A extends Action, T> implements LTS<S, A> {
 
 	public enum PorMode {
@@ -65,7 +72,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		while (addedNewAction) {
 			addedNewAction = false;
 			Set<A> actionsToRemove = new HashSet<>();
-			for (A action: otherActions) {
+			for (A action : otherActions) {
 				// for every action that is not in the persistent set it is checked whether it should be added to the persistent set
 				// (because it is dependent with an action already in the persistent set)
 				if (persistentSet.stream().anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {

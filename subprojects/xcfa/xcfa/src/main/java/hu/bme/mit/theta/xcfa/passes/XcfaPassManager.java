@@ -46,7 +46,6 @@ import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class XcfaPassManager {
 	private static final List<ProcedurePass> procedurePasses = new ArrayList<>();
