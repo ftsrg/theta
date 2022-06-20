@@ -149,7 +149,6 @@ public class XstsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final XSTS xsts = loadModel();
 
-
 			if(tracegen) {
 				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).build(xsts);
 				tracegenConfig.check();
@@ -169,6 +168,7 @@ public class XstsCli {
 						XstsStateSequence concretizedTrace = NoPropertyXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);// TODO something nicer
 
 						final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
+						logger.write(Logger.Level.MAINSTEP, "Writing trace into file: %s%n", traceFile.getPath());
 						try (PrintWriter printWriter = new PrintWriter(traceFile)) {
 							printWriter.write(concretizedTrace.toString());
 						}
@@ -226,7 +226,12 @@ public class XstsCli {
 	private XSTS loadModel() throws Exception {
 		InputStream propStream = null;
 		try {
-			if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+			if(tracegen) {
+				propStream = new ByteArrayInputStream(("prop {\n" +
+						"\ttrue\n" +
+						"}\n").getBytes());
+			} // TODO temporary
+			else if (property.endsWith(".prop")) propStream = new FileInputStream(property);
 			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
 
 			if (model.endsWith(".pnml")) {

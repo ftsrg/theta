@@ -37,6 +37,7 @@ final public class XstsTracegenBuilder {
     }
 
     public XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
+
         final Solver solver1 = solverFactory.createSolver(); // refinement // TODO handle separate solvers in a nicer way
         final Solver solver2 = solverFactory.createSolver(); // abstraction // TODO handle separate solvers in a nicer way
 

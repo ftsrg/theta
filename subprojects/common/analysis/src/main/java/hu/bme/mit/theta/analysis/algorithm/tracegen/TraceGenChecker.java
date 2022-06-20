@@ -70,8 +70,9 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         final ARG<S, A> arg = abstractor.createArg();
         abstractor.check(arg, prec);
         // Stream<ArgTrace<S, A>> cexs = arg.getCexs();
+
+        // traces = arg.getNodes().filter(saArgNode -> saArgNode.children().findAny().isEmpty()).map(ArgTrace::to).map(ArgTrace::toTrace).toList();
         traces = arg.getNodes().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
-        // traces = cexs.map(ArgTrace::toTrace).toList();
         /*
         for (Trace<S, A> trace : this.traces) {
             logger.write(Logger.Level.SUBSTEP, "%s%n", trace);
