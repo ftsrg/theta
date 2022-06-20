@@ -18,15 +18,6 @@ import java.util.function.Predicate;
  */
 public abstract class PorLts<S extends State, A extends Action, T> implements LTS<S, A> {
 
-	public enum PorMode {
-		POR_OFF, POR_ON
-	}
-
-	/**
-	 * Configuration variable that stores whether POR is enabled or not.
-	 */
-	public static PorMode porMode = PorMode.POR_ON;
-
 	/**
 	 * Returns the enabled actions in the ARG from the given state filtered with a POR algorithm.
 	 *

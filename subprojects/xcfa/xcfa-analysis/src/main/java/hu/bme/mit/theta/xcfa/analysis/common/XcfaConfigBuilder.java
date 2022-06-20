@@ -132,7 +132,7 @@ public class XcfaConfigBuilder {
 		INTERLEAVINGS {
 			@Override
 			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
-				return PorLts.porMode == PorLts.PorMode.POR_ON ? new XcfaPorLts(xcfa) : new XcfaLts();
+				return new XcfaLts();
 			}
 
 			@Override
@@ -158,6 +158,38 @@ public class XcfaConfigBuilder {
 			@Override
 			public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<XcfaState<S>, A, XcfaPrec<P>> getAnalysis(final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
 				return XcfaAnalysis.create(initLocs, getPartialOrder(analysis.getPartialOrd()), getInitFunc(initLocs, analysis.getInitFunc()), getTransFunc(analysis.getTransFunc()));
+			}
+		},
+
+		INTERLEAVINGS_POR {
+			@Override
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
+				return new XcfaPorLts(xcfa);
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
+				return INTERLEAVINGS.getInitFunc(initLocs, initFunc);
+			}
+
+			@Override
+			public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(TransFunc<S, A, P> transFunc) {
+				return INTERLEAVINGS.getTransFunc(transFunc);
+			}
+
+			@Override
+			public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(RefutationToPrec<P, R> refToPrec) {
+				return INTERLEAVINGS.getPrecRefiner(refToPrec);
+			}
+
+			@Override
+			public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(PartialOrd<S> partialOrd) {
+				return INTERLEAVINGS.getPartialOrder(partialOrd);
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>, ? extends A, ? extends XcfaPrec<P>> getAnalysis(List<XcfaLocation> initLoc, Analysis<S, A, P> analysis) {
+				return INTERLEAVINGS.getAnalysis(initLoc, analysis);
 			}
 		};
 

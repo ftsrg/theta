@@ -206,9 +206,6 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
-	@Parameter(names = "--por", description = "Enable/disable partial order reduction for interleaving based multithreaded programs")
-	PorLts.PorMode porMode = PorLts.PorMode.POR_OFF;
-
 	@Parameter(names = "--lbe", description = "Large-block encoding level")
 	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
@@ -266,7 +263,6 @@ public class XcfaCli {
 		}
 
 		SimpleLbePass.level = lbeLevel;
-		PorLts.porMode = porMode; // I don't know where to place it exactly
 
 		// TODO later we might want to merge these two flags
 		if (witnessOnly) {
