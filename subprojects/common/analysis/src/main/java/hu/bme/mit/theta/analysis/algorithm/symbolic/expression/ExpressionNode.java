@@ -1,18 +1,19 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
 import com.google.common.base.Preconditions;
+import com.koloboke.collect.map.IntObjMap;
+import com.koloboke.collect.map.hash.HashIntObjMap;
+import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
-import hu.bme.mit.delta.collections.IntObjCursor;
+import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddSymbolicNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.SolverFactory;
 
-public class ExpressionNode implements MddSymbolicNode {
+public class ExpressionNode implements IMddSymbolicNode{
 
     private final Pair<Expr<BoolType>, MddVariable> decision;
 
@@ -21,14 +22,20 @@ public class ExpressionNode implements MddSymbolicNode {
     private final int              hashCode;
     private       int              references = 0;
 
-    private final AssignmentEnumerator enumerator;
+    private final HashIntObjMap<ExpressionNode> cache;
 
-    public ExpressionNode(Pair<Expr<BoolType>, MddVariable> decision, DdLevel<MddNode> level, int hashCode, SolverFactory solverFactory) {
+    private ExpressionNode defaultValue;
+
+    private boolean complete;
+
+    public ExpressionNode(Pair<Expr<BoolType>, MddVariable> decision, DdLevel<MddNode> level, int hashCode) {
         this.decision = decision;
         this.level = level;
         this.hashCode = hashCode;
 
-        this.enumerator = new AssignmentEnumerator<>(decision.first, decision.second.getTraceInfo(Decl.class), solverFactory.createSolver());
+        this.cache = HashIntObjMaps.newMutableMap();
+        this.defaultValue = null;
+        this.complete = false;
     }
 
     @Override
@@ -38,6 +45,10 @@ public class ExpressionNode implements MddSymbolicNode {
 
     @Override
     public Object getSymbolicRepresentation() {
+        return decision;
+    }
+
+    public Pair<Expr<BoolType>, MddVariable> getDecision(){
         return decision;
     }
 
@@ -74,12 +85,12 @@ public class ExpressionNode implements MddSymbolicNode {
 
     private void acquireChildren() {
         // Ez így biztos nem lesz jó
-        for (IntObjCursor<? extends MddNode> c = this.cursor(); c.moveNext(); ) {
-            c.value().acquire();
-        }
-        if ((this.defaultValue() != null) && (this.defaultValue() != this)) {
-            this.defaultValue().acquire();
-        }
+//        for (IntObjCursor<? extends MddNode> c = this.cursor(); c.moveNext(); ) {
+//            c.value().acquire();
+//        }
+//        if ((this.defaultValue() != null) && (this.defaultValue() != this)) {
+//            this.defaultValue().acquire();
+//        }
     }
 
     @Override
@@ -92,12 +103,12 @@ public class ExpressionNode implements MddSymbolicNode {
     }
 
     private void releaseChildren() {
-        for (IntObjCursor<? extends MddNode> c = this.cursor(); c.moveNext(); ) {
-            c.value().release();
-        }
-        if ((this.defaultValue() != null) && (this.defaultValue() != this)) {
-            this.defaultValue().release();
-        }
+//        for (IntObjCursor<? extends MddNode> c = this.cursor(); c.moveNext(); ) {
+//            c.value().release();
+//        }
+//        if ((this.defaultValue() != null) && (this.defaultValue() != this)) {
+//            this.defaultValue().release();
+//        }
     }
 
     @Override
@@ -105,48 +116,24 @@ public class ExpressionNode implements MddSymbolicNode {
         return references;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return !enumerator.isSat();
+    public void cacheNode(int key, ExpressionNode node){
+        if(!complete) this.cache.put(key, node);
     }
 
-    @Override
-    public boolean isProcedural() {
-        return false;
+    public void cacheDefault(ExpressionNode defaultValue){
+        Preconditions.checkArgument(!complete);
+        this.defaultValue = defaultValue;
     }
 
-    @Override
-    public boolean containsKey(int key) {
-        // Check if sat -> true
-        // Cache model if found
-        return enumerator.isValidAssignment(LitExprConverter.toLitExpr(key, decision.second.getTraceInfo(Decl.class).getType()));
+    public void setComplete(){
+        this.complete = true;
     }
 
-    @Override
-    public MddNode get(int key) {
-        if (enumerator.isValidAssignment(LitExprConverter.toLitExpr(key, decision.second.getTraceInfo(Decl.class).getType()))){
-            // Simplify expr, ask for new node with simplified expr, cache child
-        }
-        return null;
+    public IntObjMapView<ExpressionNode> getCacheView(){
+        return IntObjMapView.of(cache, defaultValue);
     }
 
-    @Override
-    public MddNode defaultValue() {
-        // Kéne a terminal 0-ra egy referencia
-        return null;
-    }
-
-    @Override
-    public IntObjCursor<? extends MddNode> cursor() {
-        // Kéne egy custom cursor ami lazyn felsorolja az összes értéket amivel sat
-        // Amit tud, azt először vegye ki a children cacheből: nem elég egyszer, hanem mindig meg kell nézni, hogy nincs-e új ami azóta cachelődött
-//        return new LazyCursor<ExpressionNode>(this, initializer, cacher);
-        return new LazyCursor<>(enumerator);
-    }
-
-    @Override
-    public int size() {
-        // Na ez drága lesz
-        return 0;
+    public boolean isComplete(){
+        return complete;
     }
 }
