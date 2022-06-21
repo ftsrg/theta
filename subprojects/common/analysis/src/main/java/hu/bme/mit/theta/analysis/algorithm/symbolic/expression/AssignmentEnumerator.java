@@ -49,7 +49,7 @@ public class AssignmentEnumerator<T extends Type> {
     public boolean isValidAssignment(LitExpr<T> assignment){
         if(enumeratedAssignments.contains(assignment)) return true;
         else {
-            SolverStatus status = null;
+            SolverStatus status;
             try(WithPushPop wpp = new WithPushPop(solver)){
                 solver.add(Eq(decl.getRef(),assignment));
                 solver.check();
