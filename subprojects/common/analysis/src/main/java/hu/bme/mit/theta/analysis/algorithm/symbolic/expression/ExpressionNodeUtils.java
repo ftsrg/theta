@@ -52,6 +52,7 @@ public class ExpressionNodeUtils {
                 } else {
                     // TODO itt mi van?
                     node.cacheNode(LitExprConverter.toInt(literal.get()),null);
+                    variable = null;
                 }
 
 

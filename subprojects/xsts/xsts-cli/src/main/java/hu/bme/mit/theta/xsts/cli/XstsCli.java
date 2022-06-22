@@ -22,17 +22,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
-import hu.bme.mit.delta.java.mdd.JavaMddFactory;
-import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariableOrder;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.AssignmentEnumerator;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -48,12 +44,6 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.BfsProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.SimpleSaturationProvider;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem;
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory;
@@ -90,13 +80,10 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
@@ -239,6 +226,7 @@ public class XstsCli {
     }
 
     private void run() {
+
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
             logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
