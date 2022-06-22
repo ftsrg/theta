@@ -33,7 +33,7 @@ public class ExpressionNode implements IMddSymbolicNode{
         this.level = level;
         this.hashCode = hashCode;
 
-        this.cache = HashIntObjMaps.newMutableMap();
+        this.cache = HashIntObjMaps.newUpdatableMap();
         this.defaultValue = null;
         this.complete = false;
     }

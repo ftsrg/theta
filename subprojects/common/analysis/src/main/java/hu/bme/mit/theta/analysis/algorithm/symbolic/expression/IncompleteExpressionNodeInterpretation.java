@@ -2,6 +2,8 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import com.koloboke.collect.set.ObjSet;
+import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -54,7 +56,9 @@ public class IncompleteExpressionNodeInterpretation implements IntObjMapView<Exp
 
     @Override
     public IntObjCursor<? extends ExpressionNode> cursor() {
-        return new IncompleteExpressionNodeCursor();
+        // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
+        while (!node.isComplete()) traverser.queryAssignment();
+        return node.getCacheView().cursor();
     }
 
     @Override
@@ -64,24 +68,25 @@ public class IncompleteExpressionNodeInterpretation implements IntObjMapView<Exp
     }
 
     // TODO ez csak akkor működik, ha a koloboke intobjmapview cursor-a tudja kezelni ha az alatta lévő mapbe elemet raknak
-    private class IncompleteExpressionNodeCursor implements IntObjCursor<ExpressionNode>{
-        private final IntObjCursor<? extends ExpressionNode> cacheCursor = node.getCacheView().cursor();
-
-        @Override
-        public int key() {
-            return cacheCursor.key();
-        }
-
-        @Override
-        public ExpressionNode value() {
-            return cacheCursor.value();
-        }
-
-        @Override
-        public boolean moveNext() {
-            if(cacheCursor.moveNext()) return true;
-            else if(!node.isComplete()) traverser.queryAssignment();
-            return cacheCursor.moveNext();
-        }
-    }
+    // sajnos nem így van
+//    private class IncompleteExpressionNodeCursor implements IntObjCursor<ExpressionNode>{
+//        private final IntObjCursor<? extends ExpressionNode> cacheCursor = node.getCacheView().cursor();
+//
+//        @Override
+//        public int key() {
+//            return cacheCursor.key();
+//        }
+//
+//        @Override
+//        public ExpressionNode value() {
+//            return cacheCursor.value();
+//        }
+//
+//        @Override
+//        public boolean moveNext() {
+//            if(cacheCursor.moveNext()) return true;
+//            else if(!node.isComplete()) traverser.queryAssignment();
+//            return cacheCursor.moveNext();
+//        }
+//    }
 }
