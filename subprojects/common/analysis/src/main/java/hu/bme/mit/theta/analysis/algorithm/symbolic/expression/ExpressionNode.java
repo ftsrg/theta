@@ -1,12 +1,10 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
 import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.IntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
@@ -117,11 +115,12 @@ public class ExpressionNode implements IMddSymbolicNode{
     }
 
     public void cacheNode(int key, ExpressionNode node){
-        if(!complete) this.cache.put(key, node);
+        Preconditions.checkState(!complete);
+        this.cache.put(key, node);
     }
 
     public void cacheDefault(ExpressionNode defaultValue){
-        Preconditions.checkArgument(!complete);
+        Preconditions.checkState(!complete);
         this.defaultValue = defaultValue;
     }
 
