@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -32,7 +31,7 @@ public class ExpressionNodeTraverser {
 
         this.currentNode = Preconditions.checkNotNull(rootNode);
         stack.push(rootNode);
-        solver.add(rootNode.getSymbolicRepresentation(Expr.class));
+        solver.add(rootNode.getDecision().first);
         pushNegatedAssignments();
     }
 
@@ -78,12 +77,13 @@ public class ExpressionNodeTraverser {
             }
             solver.check();
             if(solver.getStatus().isSat()){
-                Optional<LitExpr<?>> optionalLitExpr = solver.getModel().eval(currentNode.getVariable().getTraceInfo(Decl.class));
+                final Valuation model = solver.getModel();
+                Optional<LitExpr<?>> optionalLitExpr = model.eval(currentNode.getVariable().getTraceInfo(Decl.class));
                 if(optionalLitExpr.isPresent()){
                     LitExpr<?> literal = optionalLitExpr.get();
                     solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), literal));
                     pushedNegatedAssignments++;
-                    cacheModel(solver.getModel());
+                    cacheModel(model);
                 } else {
                     // TODO na itt mi van?
                     throw new UnsupportedOperationException("Not implemented yet");
