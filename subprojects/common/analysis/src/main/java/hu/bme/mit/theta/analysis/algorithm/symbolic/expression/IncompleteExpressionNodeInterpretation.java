@@ -37,12 +37,12 @@ public class IncompleteExpressionNodeInterpretation implements IntObjMapView<Exp
     public boolean containsKey(int key) {
         // Check if sat -> true
         // Cache model if found
-        return traverser.queryAssignment(LitExprConverter.toLitExpr(key, node.getDecision().second.getTraceInfo(Decl.class).getType()));
+        return traverser.queryAssignment(key);
     }
 
     @Override
     public ExpressionNode get(int key) {
-        traverser.queryAssignment(LitExprConverter.toLitExpr(key, node.getDecision().second.getTraceInfo(Decl.class).getType()));
+        traverser.queryAssignment(key);
         // Simplify expr, ask for new node with simplified expr, cache child
         // Traverser is responsible for caching
         return node.getCacheView().get(key);
