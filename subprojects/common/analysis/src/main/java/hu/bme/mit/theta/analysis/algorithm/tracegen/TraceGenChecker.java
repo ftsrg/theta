@@ -11,9 +11,12 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -29,34 +32,18 @@ import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
 public class TraceGenChecker <S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
     private final Logger logger;
-    private final LTS<S, A> lts;
-    private final InitFunc<S, P> initFunc;
-    private final TransFunc<S, A, P> transFunc;
-    private final Solver solver;
     private final Abstractor<S, A, P> abstractor;
 
     private TraceGenChecker(final Logger logger,
-                            final LTS<S, A> lts,
-                            final InitFunc<S, P> initFunc,
-                            final TransFunc<S, A, P> transFunc,
-                            final Solver solver,
                             final Abstractor<S, A, P> abstractor) {
 
         this.logger = logger;
-        this.lts = lts;
-        this.initFunc = initFunc;
-        this.transFunc = transFunc;
-        this.solver = solver;
         this.abstractor = abstractor;
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> TraceGenChecker<S,A,P> create(final Logger logger,
-                                                                                                     final LTS<S, A> lts,
-                                                                                                     final InitFunc<S, P> initFunc,
-                                                                                                     final TransFunc<S, A, P> transFunc,
-                                                                                                     final Solver solver,
                                                                                                      final Abstractor<S,A,P> abstractor) {
-        return new TraceGenChecker<S,A,P>(logger, lts, initFunc, transFunc, solver, abstractor);
+        return new TraceGenChecker<S,A,P>(logger, abstractor);
     }
 
     private List<Trace<S,A>> traces = new ArrayList<>();
@@ -69,10 +56,18 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
     public SafetyResult<S, A> check(P prec) {
         final ARG<S, A> arg = abstractor.createArg();
         abstractor.check(arg, prec);
-        // Stream<ArgTrace<S, A>> cexs = arg.getCexs();
+        logger.write(Logger.Level.INFO, "Printing ARG..." + System.lineSeparator());
+        Graph g = ArgVisualizer.getDefault().visualize(arg);
+        logger.write(Logger.Level.INFO, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
+        logger.write(Logger.Level.INFO, "-----------------------");
 
-        // traces = arg.getNodes().filter(saArgNode -> saArgNode.children().findAny().isEmpty()).map(ArgTrace::to).map(ArgTrace::toTrace).toList();
-        traces = arg.getNodes().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
+        // traces to end nodes/deadlocks
+        // finds all possible traces, as nodes have each a single parent
+        // and they just get covered with another node when they should have more with another node
+        // to which we also generate a trace
+        Stream<ArgNode<S, A>> nodeStream = arg.getNodes().filter(saArgNode -> saArgNode.children().findAny().isEmpty());
+
+        traces = nodeStream.map(ArgTrace::to).map(ArgTrace::toTrace).toList();
         /*
         for (Trace<S, A> trace : this.traces) {
             logger.write(Logger.Level.SUBSTEP, "%s%n", trace);

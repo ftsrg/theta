@@ -37,15 +37,10 @@ final public class XstsTracegenBuilder {
     }
 
     public XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
-
-        final Solver solver1 = solverFactory.createSolver(); // refinement // TODO handle separate solvers in a nicer way
         final Solver solver2 = solverFactory.createSolver(); // abstraction // TODO handle separate solvers in a nicer way
 
-        final XstsAnalysis<ExplState, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver2, True(), 1));
+        final XstsAnalysis<ExplState, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver2, True(),0));
         final LTS<XstsState<ExplState>, XstsAction> lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
-
-        final InitFunc<XstsState<ExplState>, ExplPrec> initFunc = analysis.getInitFunc();
-        final TransFunc<XstsState<ExplState>, XstsAction, ExplPrec> transFunc = analysis.getTransFunc();
 
         final Expr<BoolType> negProp = Not(xsts.getProp());
         final Predicate<XstsState<ExplState>> target = new XstsStatePredicate<ExplStatePredicate, ExplState>(new ExplStatePredicate(negProp, solver2));
@@ -56,7 +51,7 @@ final public class XstsTracegenBuilder {
                 .stopCriterion(StopCriterions.fullExploration())
                 .logger(logger).build();
 
-        TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, lts, initFunc, transFunc, solver1, abstractor);
+        TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor);
         return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
     }
 }
