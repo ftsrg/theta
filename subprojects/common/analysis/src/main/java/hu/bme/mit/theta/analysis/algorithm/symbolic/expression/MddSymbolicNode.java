@@ -3,31 +3,29 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
-import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public class ExpressionNode implements IMddSymbolicNode{
+public class MddSymbolicNode implements IMddSymbolicNode{
 
-    private final Pair<Expr<BoolType>, MddVariable> decision;
+    private final Object symbolicRepresentation;
+    private final MddVariable variable;
 
     // MddNodeból lopva
     private final DdLevel<MddNode> level;
     private final int              hashCode;
     private       int              references = 0;
 
-    private final HashIntObjMap<ExpressionNode> cache;
-
-    private ExpressionNode defaultValue;
+    private final HashIntObjMap<MddSymbolicNode> cache;
+    private MddSymbolicNode defaultValue;
 
     private boolean complete;
 
-    public ExpressionNode(Pair<Expr<BoolType>, MddVariable> decision, DdLevel<MddNode> level, int hashCode) {
-        this.decision = decision;
+    public MddSymbolicNode(Object symbolicRepresentation, MddVariable variable, DdLevel<MddNode> level, int hashCode) {
+        this.symbolicRepresentation = symbolicRepresentation;
+        this.variable = variable;
         this.level = level;
         this.hashCode = hashCode;
 
@@ -38,16 +36,12 @@ public class ExpressionNode implements IMddSymbolicNode{
 
     @Override
     public MddVariable getVariable() {
-        return decision.second;
+        return variable;
     }
 
     @Override
     public Object getSymbolicRepresentation() {
-        return decision;
-    }
-
-    public Pair<Expr<BoolType>, MddVariable> getDecision(){
-        return decision;
+        return symbolicRepresentation;
     }
 
     @Override
@@ -114,12 +108,12 @@ public class ExpressionNode implements IMddSymbolicNode{
         return references;
     }
 
-    public void cacheNode(int key, ExpressionNode node){
+    public void cacheNode(int key, MddSymbolicNode node){
         Preconditions.checkState(!complete);
         this.cache.put(key, node);
     }
 
-    public void cacheDefault(ExpressionNode defaultValue){
+    public void cacheDefault(MddSymbolicNode defaultValue){
         Preconditions.checkState(!complete);
         this.defaultValue = defaultValue;
     }
@@ -128,7 +122,7 @@ public class ExpressionNode implements IMddSymbolicNode{
         this.complete = true;
     }
 
-    public IntObjMapView<ExpressionNode> getCacheView(){
+    public IntObjMapView<MddSymbolicNode> getCacheView(){
         return IntObjMapView.of(cache, defaultValue);
     }
 

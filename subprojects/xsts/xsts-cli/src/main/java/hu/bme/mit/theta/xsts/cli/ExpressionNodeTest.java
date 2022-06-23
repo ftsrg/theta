@@ -1,14 +1,13 @@
 package hu.bme.mit.theta.xsts.cli;
 
-import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.ExpressionNode;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.ExpressionNodeInterpreter;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.ExpressionVariable;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.expression.ExpressionNodeTraverser;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -37,15 +36,19 @@ public class ExpressionNodeTest {
         // x >= 2 && y = x + 1 && x <= 6
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
 
-        ExpressionNode rootNode = new ExpressionNode(new Pair<>(expr, x),x.getLevel(),0);
+        MddSymbolicNode rootNode = new MddSymbolicNode(expr, x, x.getLevel(), 0);
+
+        var incompleteInterpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
+
+        var node2 = incompleteInterpreter.get(2);
 
         ExpressionNodeTraverser traverser = new ExpressionNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
 
-        while(!rootNode.isComplete()) traverser.queryAssignment();
+        while(!rootNode.isComplete()) traverser.queryChild();
 
-        var interpeter = ExpressionNodeInterpreter.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
+        var interpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
 
-        interpeter.size();
+        interpreter.size();
 
     }
 

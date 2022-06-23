@@ -1,25 +1,23 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
 
-import com.google.common.base.Supplier;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.theta.solver.Solver;
 
-public class IncompleteExpressionNodeInterpretation implements IntObjMapView<ExpressionNode> {
+public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
 
-    private final ExpressionNode node;
-    private final ExpressionNodeTraverser traverser;
+    private final MddSymbolicNode node;
+    private final MddSymbolicNodeTraverser traverser;
 
-    public IncompleteExpressionNodeInterpretation(ExpressionNode node, Supplier<Solver> solverSupplier) {
+    public IncompleteMddSymbolicNodeInterpretation(MddSymbolicNode node, MddSymbolicNodeTraverser traverser) {
         this.node = node;
-        this.traverser = new ExpressionNodeTraverser(node, solverSupplier);
+        this.traverser = traverser;
     }
 
     @Override
     public boolean isEmpty() {
         // TODO ha default value van akkor mi?
         if(!node.getCacheView().isEmpty()) return false;
-        traverser.queryAssignment();
+        traverser.queryChild();
         return node.getCacheView().isEmpty();
     }
 
@@ -32,27 +30,26 @@ public class IncompleteExpressionNodeInterpretation implements IntObjMapView<Exp
     public boolean containsKey(int key) {
         // Check if sat -> true
         // Cache model if found
-        return traverser.queryAssignment(key);
+        return traverser.queryChild(key);
     }
 
     @Override
-    public ExpressionNode get(int key) {
-        traverser.queryAssignment(key);
-        // Simplify expr, ask for new node with simplified expr, cache child
+    public MddSymbolicNode get(int key) {
+        traverser.queryChild(key);
         // Traverser is responsible for caching
         return node.getCacheView().get(key);
     }
 
     @Override
-    public ExpressionNode defaultValue() {
+    public MddSymbolicNode defaultValue() {
         // Terminal 0
         return null;
     }
 
     @Override
-    public IntObjCursor<? extends ExpressionNode> cursor() {
+    public IntObjCursor<? extends MddSymbolicNode> cursor() {
         // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
-        while (!node.isComplete()) traverser.queryAssignment();
+        while (!node.isComplete()) traverser.queryChild();
         return node.getCacheView().cursor();
     }
 
@@ -63,7 +60,7 @@ public class IncompleteExpressionNodeInterpretation implements IntObjMapView<Exp
     }
 
     // TODO ez csak akkor működik, ha a koloboke intobjmapview cursor-a tudja kezelni ha az alatta lévő mapbe elemet raknak
-    // sajnos nem így van
+    // sajnos nem
 //    private class IncompleteExpressionNodeCursor implements IntObjCursor<ExpressionNode>{
 //        private final IntObjCursor<? extends ExpressionNode> cacheCursor = node.getCacheView().cursor();
 //
