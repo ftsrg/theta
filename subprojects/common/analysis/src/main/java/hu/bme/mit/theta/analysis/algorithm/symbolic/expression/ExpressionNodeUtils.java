@@ -15,12 +15,12 @@ import java.util.Optional;
 
 public class ExpressionNodeUtils {
 
-    private static UniqueTable<ExpressionNode> uniqueTable = UniqueTable.newInstance((a,b) -> a.getDecision().equals(b.getDecision()),n -> n.getDecision().hashCode());
+    private static UniqueTable<MddSymbolicNode> uniqueTable = UniqueTable.newInstance((a, b) -> a.getSymbolicRepresentation().equals(b.getSymbolicRepresentation()), n -> n.getSymbolicRepresentation().hashCode());
 
-    public static void cacheModel(ExpressionNode rootNode, Valuation valuation){
-        ExpressionNode node = rootNode;
-        Expr<BoolType> expr = node.getDecision().first;
-        MddVariable variable = node.getDecision().second;
+    public static void cacheModel(MddSymbolicNode rootNode, Valuation valuation){
+        MddSymbolicNode node = rootNode;
+        Expr expr = node.getSymbolicRepresentation(Expr.class);
+        MddVariable variable = node.getVariable();
 
         while(variable != null){
 
@@ -35,7 +35,7 @@ public class ExpressionNodeUtils {
                 expr = ExprUtils.simplify(expr, val);
 
                 if(lower.isPresent()){
-                    ExpressionNode childNode;
+                    MddSymbolicNode childNode;
                     if(node.getCacheView().containsKey(LitExprConverter.toInt(literal.get()))){
                         // Existing cached child
                         childNode = node.getCacheView().get(LitExprConverter.toInt(literal.get()));
@@ -43,7 +43,7 @@ public class ExpressionNodeUtils {
                     } else {
                         // New child
                         // TODO hashcode
-                        childNode = uniqueTable.checkIn(new ExpressionNode(new Pair<>(expr,lower.get()),lower.get().getLevel(),0));
+                        childNode = uniqueTable.checkIn(new MddSymbolicNode((Expr<BoolType>) expr,lower.get(),lower.get().getLevel(),0));
                         node.cacheNode(LitExprConverter.toInt(literal.get()),childNode);
                     }
                     node = childNode;

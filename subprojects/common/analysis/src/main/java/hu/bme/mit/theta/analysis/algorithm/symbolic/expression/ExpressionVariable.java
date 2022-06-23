@@ -5,17 +5,16 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
 
-public class ExpressionNodeInterpreter {
+public class ExpressionVariable {
 
-    public static IntObjMapView<ExpressionNode> getNodeInterpreter(ExpressionNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
+    public static <T> IntObjMapView<MddSymbolicNode> getNodeInterpreter(MddSymbolicNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
         if (!node.isOn(variable)) {
             if (!node.isBelow(variable)) {
                 throw new AssertionError();
             }
 
-            IntObjMapView<ExpressionNode> nodeInterpreter = IntObjMapView.empty(node);
+            IntObjMapView<MddSymbolicNode> nodeInterpreter = IntObjMapView.empty(node);
             if (variable.isBounded()) {
                 nodeInterpreter = ((IntObjMapView)nodeInterpreter).trim(IntSetView.range(0, variable.getDomainSize()));
             }
@@ -25,7 +24,7 @@ public class ExpressionNodeInterpreter {
         if(node.isComplete()){
             return node.getCacheView();
         } else {
-            return new IncompleteExpressionNodeInterpretation(node, solverSupplier);
+            return new IncompleteMddSymbolicNodeInterpretation(node, new ExpressionNodeTraverser(node, solverSupplier));
         }
     }
 
