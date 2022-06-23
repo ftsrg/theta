@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -15,27 +16,27 @@ import java.util.Stack;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 
-public class ExpressionNodeTraverser {
+public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser{
 
-    private ExpressionNode currentNode;
+    private MddSymbolicNode currentNode;
 
     private final Solver solver;
 
-    private final Stack<ExpressionNode> stack;
+    private final Stack<MddSymbolicNode> stack;
     private int pushedNegatedAssignments = 0;
 
 
-    public ExpressionNodeTraverser(ExpressionNode rootNode, Supplier<Solver> solverSupplier) {
+    public ExpressionNodeTraverser(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier) {
         this.solver = solverSupplier.get();
         this.stack = new Stack<>();
 
         this.currentNode = Preconditions.checkNotNull(rootNode);
         stack.push(rootNode);
-        solver.add(rootNode.getDecision().first);
+        solver.add(rootNode.getSymbolicRepresentation(Expr.class));
         pushNegatedAssignments();
     }
 
-    public boolean isOn(final ExpressionNode node){
+    public boolean isOn(final MddSymbolicNode node){
         Preconditions.checkNotNull(node);
         return currentNode.equals(node);
     }
@@ -48,28 +49,30 @@ public class ExpressionNodeTraverser {
         pushNegatedAssignments();
     }
 
-    public boolean queryAssignment(int assignment){
+    public boolean queryChild(int assignment){
         if(currentNode.getCacheView().keySet().contains(assignment)) return true;
         else if(!currentNode.isComplete()){
-            SolverStatus status;
+            final SolverStatus status;
+            final Valuation model;
             final LitExpr<?> litExpr = LitExprConverter.toLitExpr(assignment, currentNode.getVariable().getTraceInfo(Decl.class).getType());
             try(WithPushPop wpp = new WithPushPop(solver)){
                 solver.add(Eq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), litExpr));
                 solver.check();
                 status = solver.getStatus();
+                model = solver.getModel();
             }
             Preconditions.checkNotNull(status);
             if(status.isSat()) {
+                cacheModel(model);
                 solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), litExpr));
                 pushedNegatedAssignments++;
-                cacheModel(solver.getModel());
                 return true;
             }
         }
         return false;
     }
 
-    public void queryAssignment(){
+    public void queryChild(){
         if(!currentNode.isComplete()){
             if(pushedNegatedAssignments != currentNode.getCacheView().keySet().size()){
                 popNegatedAssignments();
@@ -96,7 +99,7 @@ public class ExpressionNodeTraverser {
     }
 
     public void moveDown(int assignment){
-        if(queryAssignment(assignment)){
+        if(queryChild(assignment)){
             popNegatedAssignments();
             solver.push();
             solver.add(Eq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getVariable().getTraceInfo(Decl.class).getType())));
