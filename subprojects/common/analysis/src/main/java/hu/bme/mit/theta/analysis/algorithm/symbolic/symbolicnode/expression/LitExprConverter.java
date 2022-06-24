@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.type.LitExpr;
