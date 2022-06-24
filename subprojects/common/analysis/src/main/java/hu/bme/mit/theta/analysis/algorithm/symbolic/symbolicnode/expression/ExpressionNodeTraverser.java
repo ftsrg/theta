@@ -1,11 +1,16 @@
-package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import hu.bme.mit.delta.Pair;
+import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
@@ -16,7 +21,7 @@ import java.util.Stack;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 
-public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser{
+public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
 
     private MddSymbolicNode currentNode;
 
@@ -32,7 +37,7 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser{
 
         this.currentNode = Preconditions.checkNotNull(rootNode);
         stack.push(rootNode);
-        solver.add(rootNode.getSymbolicRepresentation(Expr.class));
+        solver.add(((Pair<Expr<BoolType>, MddVariable>)rootNode.getSymbolicRepresentation()).first);
         pushNegatedAssignments();
     }
 

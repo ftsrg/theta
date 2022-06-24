@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;

@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
+import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -10,8 +11,7 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 
 public class MddSymbolicNode implements IMddSymbolicNode{
 
-    private final Object symbolicRepresentation;
-    private final MddVariable variable;
+    private final Pair<Object, MddVariable> symbolicRepresentation;
 
     // MddNodeból lopva
     private final DdLevel<MddNode> level;
@@ -23,9 +23,8 @@ public class MddSymbolicNode implements IMddSymbolicNode{
 
     private boolean complete;
 
-    public MddSymbolicNode(Object symbolicRepresentation, MddVariable variable, DdLevel<MddNode> level, int hashCode) {
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level, int hashCode) {
         this.symbolicRepresentation = symbolicRepresentation;
-        this.variable = variable;
         this.level = level;
         this.hashCode = hashCode;
 
@@ -36,7 +35,7 @@ public class MddSymbolicNode implements IMddSymbolicNode{
 
     @Override
     public MddVariable getVariable() {
-        return variable;
+        return symbolicRepresentation.second;
     }
 
     @Override
