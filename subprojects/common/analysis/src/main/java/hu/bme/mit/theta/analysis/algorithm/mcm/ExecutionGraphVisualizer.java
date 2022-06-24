@@ -33,6 +33,7 @@ public class ExecutionGraphVisualizer implements Runnable{
     private int currentSolution = 0;
     private final Map<Integer, Tuple2<Double, Double>> events;
     private final Map<Integer, List<String>> eventLabels;
+    private final Map<Integer, String> varLookup;
     private final double eventWidth, eventHeight, separatorY;
     private final Map<String, Color> relations;
     private final Map<String, Integer> possibleRelations;
@@ -42,8 +43,9 @@ public class ExecutionGraphVisualizer implements Runnable{
     public ExecutionGraphVisualizer(
             final Collection<Map<Decl<?>, LitExpr<?>>> solutions,
             final List<List<Integer>> threadEvents,
-            final List<Integer> initialWrites) {
+            Map<Integer, String> varLookup, final List<Integer> initialWrites) {
         this.solutions = List.copyOf(solutions);
+        this.varLookup = varLookup;
         this.events = new LinkedHashMap<>();
         int threadNum = Integer.max(threadEvents.size(), initialWrites.size());
         int instructionNum = threadEvents.stream().map(List::size).max(Integer::compareTo).get() + 1;
@@ -240,6 +242,7 @@ public class ExecutionGraphVisualizer implements Runnable{
                     StringJoiner stringJoiner = new StringJoiner(", ", "{", "}");
                     if(eventLabels.containsKey(integer)) eventLabels.get(integer).forEach(i -> stringJoiner.add(i));
                     stringJoiner.add("" + integer);
+                    if(varLookup.containsKey(integer)) stringJoiner.add(varLookup.get(integer));
                     drawLabelForEvent(stringJoiner.toString(), (int) (getWidth() / 100.0f * tuple.get1()), (int) (getHeight() / 100.0f * tuple.get2()), g);
                 }
             });

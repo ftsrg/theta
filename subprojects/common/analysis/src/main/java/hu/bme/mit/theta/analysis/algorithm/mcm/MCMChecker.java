@@ -87,6 +87,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         final List<Integer> initialWriteEvents = new ArrayList<>();
 
         final List<List<Integer>> events = new ArrayList<>();
+        final Map<Integer, String> eventVarLookup = new LinkedHashMap<>();
         final Collection<DelayedEvent> delayedEvents = new LinkedHashSet<>();
         final Map<Integer, Collection<DelayedRead>> delayedReads = new LinkedHashMap<>();
         final Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes = new LinkedHashMap<>();
@@ -96,6 +97,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             initialWriteEvents.add(i);
             writes.putIfAbsent(initialWrite.varId(), new LinkedHashSet<>());
             writes.get(initialWrite.varId()).add(Tuple2.of(i, globalInitState.toExpr()));
+            eventVarLookup.put(i, initialWrite.var().getName());
         }
         logger.write(Logger.Level.SUBSTEP, "|-- Added initial writes: " + initialWriteEvents.size() + "\n");
 
@@ -134,10 +136,10 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             final List<Integer> eventList = eventListMap.get(pid);
 
             if(delayedEvent.get() instanceof final DelayedRead delayedRead) {
-                handleDelayedRead(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, delayedRead);
+                handleDelayedRead(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, delayedRead, eventVarLookup);
             }
             else {
-                handleEvent(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList);
+                handleEvent(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, eventVarLookup);
             }
         }
 
@@ -151,10 +153,10 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
 
         logger.write(Logger.Level.RESULT, "Number of executions: " + solutions.size() + "\n");
         logger.write(Logger.Level.MAINSTEP, "Verification ended\n");
-        return new MCMSafetyResult(solutions, events, initialWriteEvents);
+        return new MCMSafetyResult(solutions, events, initialWriteEvents, eventVarLookup);
     }
 
-    private void handleEvent(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList) {
+    private void handleEvent(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, Map<Integer, String> eventVarLookup) {
         final Collection<A> enabledActionsFor = multiprocLTS.getEnabledActionsFor(pid, state);
         for (final A a : enabledActionsFor) {
             final List<MemoryEventProvider.ResultElement<A>> piecesOf = List.copyOf(memoryEventProvider.getPiecewiseAction(state, a));
@@ -163,7 +165,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
 
             for (int i = 0; i < piecesOf.size(); i++) {
                 MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
-                if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece, i == piecesOf.size() - 1)) {
+                if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece, i == piecesOf.size() - 1, eventVarLookup)) {
                     states = nextStates;
                     break;
                 }
@@ -178,7 +180,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         }
     }
 
-    private void handleDelayedRead(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, DelayedRead delayedRead) {
+    private void handleDelayedRead(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int lastId, S state, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, DelayedRead delayedRead, Map<Integer, String> eventVarLookup) {
         final A a = delayedRead.getA();
         final int pieceNo = delayedRead.getPieceNo();
 
@@ -194,7 +196,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         Collection<DelayedEvent> nextStates = new ArrayList<>();
         for (int i = pieceNo + 1; i < piecesOf.size(); i++) {
             MemoryEventProvider.ResultElement<A> piece = piecesOf.get(i);
-            if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece, i == piecesOf.size() - 1)) {
+            if (exploreActionPiece(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, pid, reads, eventList, a, states, nextStates, i, piece, i == piecesOf.size() - 1, eventVarLookup)) {
                 states = nextStates;
                 break;
             }
@@ -208,12 +210,17 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         }
     }
 
-    private boolean exploreActionPiece(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, A a, Collection<DelayedEvent> states, Collection<DelayedEvent> nextStates, int i, MemoryEventProvider.ResultElement<A> piece, boolean isLastPiece) {
+    private boolean exploreActionPiece(P prec, Collection<VarDecl<?>> usedVars, AbstractExecutionGraph<S, A> executionGraph, Collection<DelayedEvent> delayedEvents, Map<Integer, Collection<DelayedRead>> delayedReads, Map<Integer, Collection<Tuple2<Integer, Expr<BoolType>>>> writes, int pid, Map<MemoryEvent.Read, Integer> reads, List<Integer> eventList, A a, Collection<DelayedEvent> states, Collection<DelayedEvent> nextStates, int i, MemoryEventProvider.ResultElement<A> piece, boolean isLastPiece, Map<Integer, String> eventVarLookup) {
         for (DelayedEvent s : states) {
             if (piece.isMemoryEvent()) {
                 MemoryEvent memoryEvent = piece.getMemoryEvent();
                 int nextId = executionGraph.addMemoryEvent(memoryEvent, pid, s.getId());
                 logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + nextId + ": " + piece + "\n");
+
+                if(memoryEvent.type == READ || memoryEvent.type == WRITE) {
+                    MemoryEvent.MemoryIO memoryIO = memoryEvent.asMemoryIO();
+                    eventVarLookup.put(nextId, memoryIO.var().getName());
+                }
 
                 if (memoryEvent.type() == READ) reads.put(memoryEvent.asRead(), nextId);
                 else if (memoryEvent.type() == WRITE) {
@@ -317,11 +324,13 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         private final Collection<Map<Decl<?>, LitExpr<?>>> solutions;
         private final List<List<Integer>> events;
         private final List<Integer> initialWriteEvents;
+        private final Map<Integer, String> eventVarLookup;
 
-        public MCMSafetyResult(Collection<Map<Decl<?>, LitExpr<?>>> solutions, List<List<Integer>> events, List<Integer> initialWriteEvents) {
+        public MCMSafetyResult(Collection<Map<Decl<?>, LitExpr<?>>> solutions, List<List<Integer>> events, List<Integer> initialWriteEvents, Map<Integer, String> eventVarLookup) {
             this.solutions = solutions;
             this.events = events;
             this.initialWriteEvents = initialWriteEvents;
+            this.eventVarLookup = eventVarLookup;
         }
 
         public Collection<Map<Decl<?>, LitExpr<?>>> getSolutions() {
@@ -337,7 +346,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         }
 
         public void visualize() {
-            new Thread(new ExecutionGraphVisualizer(solutions, events, initialWriteEvents)).start();
+            new Thread(new ExecutionGraphVisualizer(solutions, events, eventVarLookup, initialWriteEvents)).start();
         }
     }
 }

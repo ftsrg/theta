@@ -26,6 +26,10 @@ import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
@@ -37,6 +41,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -150,8 +155,13 @@ public class LitmusCli {
 			final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
 			final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
 
-			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.top(), solver, mcm, logger);
-			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.empty());
+			final MutableValuation val = new MutableValuation();
+			for (VarDecl<? extends Type> var : xcfa.getvars()) {
+				val.put(var, BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64));
+			}
+
+			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.of(val), solver, mcm, logger);
+			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.of(xcfa.getvars().stream().filter(e -> e.getName().equals("crit")).toList()));
 			if(visualize) {
 				if(mcmSafetyResult.getSolutions().size() == 0) {
 					logger.write(Logger.Level.RESULT, "No solutions found, nothing to visualize\n");
