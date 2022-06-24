@@ -59,6 +59,7 @@ public class ExpressionNodeUtils {
 
                 } else {
                     if(expr instanceof TrueExpr){
+                        terminalOne.setComplete();
                         node.cacheNode(LitExprConverter.toInt(literal.get()), terminalOne);
                     } else {
                         node.cacheNode(LitExprConverter.toInt(literal.get()),null);

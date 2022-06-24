@@ -25,7 +25,6 @@ public class MddSymbolicNodeVisualizer {
     private static final String NODE_ID_PREFIX = "node_";
     private static final Color FILL_COLOR = Color.WHITE;
     private static final Color LINE_COLOR = Color.BLACK;
-    private static final String PHANTOM_INIT_ID = "phantom_init";
 
     private final Function<MddSymbolicNode, String> nodeToString;
 
@@ -71,13 +70,6 @@ public class MddSymbolicNodeVisualizer {
 
         traverse(graph, rootNode, traversed);
 
-        final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
-                .lineColor(FILL_COLOR).lineStyle(CHILD_EDGE_STYLE).peripheries(1).build();
-        graph.addNode(PHANTOM_INIT_ID + idFor(rootNode), nAttributes);
-        final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-                .lineStyle(CHILD_EDGE_STYLE).build();
-        graph.addEdge(PHANTOM_INIT_ID + idFor(rootNode), NODE_ID_PREFIX + idFor(rootNode), eAttributes);
-
         return graph;
     }
 
@@ -90,10 +82,11 @@ public class MddSymbolicNodeVisualizer {
         }
         final String nodeId = NODE_ID_PREFIX + idFor(node);
         final LineStyle lineStyle = CHILD_EDGE_STYLE;
+        final int peripheries = node.isComplete()?2:1;
 
         final NodeAttributes nAttributes = NodeAttributes.builder().label(nodeToString.apply(node))
                 .alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
-                .lineStyle(lineStyle).build();
+                .peripheries(peripheries).lineStyle(lineStyle).build();
 
         graph.addNode(nodeId, nAttributes);
 
