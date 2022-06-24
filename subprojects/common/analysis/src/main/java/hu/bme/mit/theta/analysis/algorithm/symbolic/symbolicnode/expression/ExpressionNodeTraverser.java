@@ -46,6 +46,10 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
         return currentNode.equals(node);
     }
 
+    public MddSymbolicNode getCurrentNode(){
+        return currentNode;
+    }
+
     public void moveUp(){
         Preconditions.checkState(stack.size()>1);
         popNegatedAssignments();
