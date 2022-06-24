@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.symbolic.expression;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 public interface MddSymbolicNodeTraverser {
 
