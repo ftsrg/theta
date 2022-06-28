@@ -44,18 +44,18 @@ public class ExpressionNodeTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 2 && y = x + 1 && x <= 6
-//        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
-        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
+        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
+//        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x), x.getLevel(), 0);
+        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x), x.getLevel());
 
-        var incompleteInterpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
-
-        var node2 = incompleteInterpreter.get(4);
+//        var incompleteInterpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
+//
+//        var node2 = incompleteInterpreter.get(4);
 
         MddSymbolicNodeTraverser traverser = ExpressionVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
 
-        while(!rootNode.isComplete()) traverser.queryChild();
+        while(!rootNode.isComplete()) traverser.queryNext();
 
         var interpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
 
