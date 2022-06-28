@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.solver.Solver;
 
-public class ExpressionVariable {
+public class ExpressionVariable{
 
     public static IntObjMapView<MddSymbolicNode> getNodeInterpreter(MddSymbolicNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
         if (!node.isOn(variable)) {

@@ -17,12 +17,13 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     public boolean isEmpty() {
         // TODO ha default value van akkor mi?
         if(!node.getCacheView().isEmpty()) return false;
-        traverser.queryChild();
+        traverser.queryNext();
         return node.getCacheView().isEmpty();
     }
 
     @Override
     public boolean isProcedural() {
+
         return true;
     }
 
@@ -30,12 +31,12 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     public boolean containsKey(int key) {
         // Check if sat -> true
         // Cache model if found
-        return traverser.queryChild(key);
+        return traverser.queryNext(key);
     }
 
     @Override
     public MddSymbolicNode get(int key) {
-        traverser.queryChild(key);
+        traverser.queryNext(key);
         // Traverser is responsible for caching
         return node.getCacheView().get(key);
     }
@@ -49,7 +50,7 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     @Override
     public IntObjCursor<? extends MddSymbolicNode> cursor() {
         // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
-        while (!node.isComplete()) traverser.queryChild();
+        while (!node.isComplete()) traverser.queryNext();
         return node.getCacheView().cursor();
     }
 

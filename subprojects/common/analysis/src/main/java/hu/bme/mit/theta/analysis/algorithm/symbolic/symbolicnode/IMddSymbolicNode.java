@@ -23,8 +23,6 @@ public interface IMddSymbolicNode {
 
     int getReferenceCount();
 
-    MddVariable getVariable();
-
     default <T> T getSymbolicRepresentation(Class<T> typeToken) {
         return typeToken.cast(this.getSymbolicRepresentation());
     }

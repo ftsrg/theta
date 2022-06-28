@@ -1,39 +1,31 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import com.google.common.base.Preconditions;
-import com.koloboke.collect.map.hash.HashIntObjMap;
-import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 
-public class MddSymbolicNode implements IMddSymbolicNode{
+public class MddSymbolicNode implements IMddSymbolicNode {
 
     private final Pair<Object, MddVariable> symbolicRepresentation;
 
     // MddNodeból lopva
     private final DdLevel<MddNode> level;
-    private final int              hashCode;
-    private       int              references = 0;
+    private final int hashCode;
+    private int references = 0;
 
-    private final HashIntObjMap<MddSymbolicNode> cache;
-    private MddSymbolicNode defaultValue;
+    private final MddSymbolicNodeTraverser.ExplicitRepresentation explicitRepresentation;
 
-    private boolean complete;
-
-    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level, int hashCode) {
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
         this.symbolicRepresentation = symbolicRepresentation;
         this.level = level;
-        this.hashCode = hashCode;
+        this.hashCode = symbolicRepresentation.hashCode();
 
-        this.cache = HashIntObjMaps.newUpdatableMap();
-        this.defaultValue = null;
-        this.complete = false;
+        this.explicitRepresentation = new MddSymbolicNodeTraverser.ExplicitRepresentation();
     }
 
-    @Override
     public MddVariable getVariable() {
         return symbolicRepresentation.second;
     }
@@ -107,25 +99,15 @@ public class MddSymbolicNode implements IMddSymbolicNode{
         return references;
     }
 
-    public void cacheNode(int key, MddSymbolicNode node){
-        Preconditions.checkState(!complete);
-        this.cache.put(key, node);
+    public MddSymbolicNodeTraverser.ExplicitRepresentation getExplicitRepresentation() {
+        return explicitRepresentation;
     }
 
-    public void cacheDefault(MddSymbolicNode defaultValue){
-        Preconditions.checkState(!complete);
-        this.defaultValue = defaultValue;
+    public IntObjMapView<MddSymbolicNode> getCacheView() {
+        return explicitRepresentation.getCacheView();
     }
 
-    public void setComplete(){
-        this.complete = true;
-    }
-
-    public IntObjMapView<MddSymbolicNode> getCacheView(){
-        return IntObjMapView.of(cache, defaultValue);
-    }
-
-    public boolean isComplete(){
-        return complete;
+    public boolean isComplete() {
+        return explicitRepresentation.isComplete();
     }
 }
