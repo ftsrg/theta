@@ -7,21 +7,25 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Stack;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 
-public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
+public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
 
     private MddSymbolicNode currentNode;
 
@@ -41,24 +45,29 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
         pushNegatedAssignments();
     }
 
+    @Override
     public boolean isOn(final MddSymbolicNode node){
         Preconditions.checkNotNull(node);
         return currentNode.equals(node);
     }
 
+    @Override
     public MddSymbolicNode getCurrentNode(){
         return currentNode;
     }
 
-    public void moveUp(){
+    @Override
+    public MddSymbolicNode moveUp(){
         Preconditions.checkState(stack.size()>1);
         popNegatedAssignments();
         solver.pop(); // pop assignment that brought us here
         currentNode = stack.pop();
         pushNegatedAssignments();
+        return currentNode;
     }
 
-    public boolean queryChild(int assignment){
+    @Override
+    public boolean queryNext(int assignment){
         if(currentNode.getCacheView().keySet().contains(assignment)) return true;
         else if(!currentNode.isComplete()){
             final SolverStatus status;
@@ -81,7 +90,8 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
         return false;
     }
 
-    public void queryChild(){
+    @Override
+    public OptionalInt queryNext(){
         if(!currentNode.isComplete()){
             if(pushedNegatedAssignments != currentNode.getCacheView().keySet().size()){
                 popNegatedAssignments();
@@ -96,30 +106,29 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
                     solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), literal));
                     pushedNegatedAssignments++;
                     cacheModel(model);
+                    return OptionalInt.of(LitExprConverter.toInt(literal));
                 } else {
                     // TODO na itt mi van?
                     throw new UnsupportedOperationException("Not implemented yet");
                 }
             } else {
-                currentNode.setComplete();
+                setComplete(currentNode);
             }
         }
-
+        return OptionalInt.empty();
     }
 
-    public void moveDown(int assignment){
-        if(queryChild(assignment)){
+    // TODO összevonni queryChilddal
+    public MddSymbolicNode moveDown(int assignment){
+        if(queryNext(assignment)){
             popNegatedAssignments();
             solver.push();
             solver.add(Eq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getVariable().getTraceInfo(Decl.class).getType())));
             currentNode = currentNode.getCacheView().get(assignment);
             stack.push(currentNode);
             pushNegatedAssignments();
-        } else throw new IllegalArgumentException("The provided assignment does not satisfy the formula.");
-    }
-
-    private void cacheModel(Valuation model){
-        ExpressionNodeUtils.cacheModel(currentNode,model);
+            return currentNode;
+        } else return null;
     }
 
     private void pushNegatedAssignments(){
@@ -133,6 +142,57 @@ public class ExpressionNodeTraverser implements MddSymbolicNodeTraverser {
     private void popNegatedAssignments(){
         solver.pop();
         pushedNegatedAssignments = 0;
+    }
+
+    private void cacheModel(Valuation valuation){
+        MddSymbolicNode node = currentNode;
+        Expr expr = ((Pair<Expr<BoolType>, MddVariable>)node.getSymbolicRepresentation()).first;
+        MddVariable variable = node.getVariable();
+
+        while(variable != null){
+
+            final Optional<? extends MddVariable> lower = variable.getLower();
+            final Decl decl = variable.getTraceInfo(Decl.class);
+            final Optional<LitExpr<?>> literal = valuation.eval(decl);
+
+            if(literal.isPresent()){
+                final MutableValuation val = new MutableValuation();
+
+                val.put(decl, literal.get());
+                expr = ExprUtils.simplify(expr, val);
+
+                if(lower.isPresent()){
+                    MddSymbolicNode childNode;
+                    if(node.getCacheView().containsKey(LitExprConverter.toInt(literal.get()))){
+                        // Existing cached child
+                        childNode = node.getCacheView().get(LitExprConverter.toInt(literal.get()));
+                        assert childNode.isOn(lower.get());
+                    } else {
+                        // New child
+                        // TODO hashcode
+                        childNode = ExpressionNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>((Expr<BoolType>) expr,lower.get()),lower.get().getLevel()));
+                        cacheNode(node,LitExprConverter.toInt(literal.get()),childNode);
+                    }
+                    node = childNode;
+                    variable = lower.get();
+
+                } else {
+                    if(expr instanceof TrueExpr){
+                        setComplete(ExpressionNodeUtils.terminalOne);
+                        cacheNode(node,LitExprConverter.toInt(literal.get()), ExpressionNodeUtils.terminalOne);
+                    } else {
+                        cacheNode(node,LitExprConverter.toInt(literal.get()),null);
+                    }
+                    // TODO itt mi van?
+                    variable = null;
+                }
+
+
+            } else {
+                // TODO ilyenkor bármi lehet az értéke
+                // máshogy kell kezelni ha azért mert nincs benne a kifejezésben, meg ha azért mert minden behelyettesítésére igaz
+            }
+        }
     }
 
 
