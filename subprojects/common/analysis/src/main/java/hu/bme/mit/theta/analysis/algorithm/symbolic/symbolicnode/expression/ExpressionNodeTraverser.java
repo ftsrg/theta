@@ -41,7 +41,7 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
 
         this.currentNode = Preconditions.checkNotNull(rootNode);
         stack.push(rootNode);
-        solver.add(((Pair<Expr<BoolType>, MddVariable>)rootNode.getSymbolicRepresentation()).first);
+        solver.add(rootNode.getSymbolicRepresentation(Expr.class).first);
         pushNegatedAssignments();
     }
 
@@ -67,14 +67,14 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
     }
 
     @Override
-    public boolean queryNext(int assignment){
+    public boolean queryEdge(int assignment){
         if(currentNode.getCacheView().keySet().contains(assignment)) return true;
         else if(!currentNode.isComplete()){
             final SolverStatus status;
             final Valuation model;
-            final LitExpr<?> litExpr = LitExprConverter.toLitExpr(assignment, currentNode.getVariable().getTraceInfo(Decl.class).getType());
+            final LitExpr<?> litExpr = LitExprConverter.toLitExpr(assignment, currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getType());
             try(WithPushPop wpp = new WithPushPop(solver)){
-                solver.add(Eq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), litExpr));
+                solver.add(Eq(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getRef(), litExpr));
                 solver.check();
                 status = solver.getStatus();
                 model = solver.getModel();
@@ -82,7 +82,7 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
             Preconditions.checkNotNull(status);
             if(status.isSat()) {
                 cacheModel(model);
-                solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), litExpr));
+                solver.add(Neq(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getRef(), litExpr));
                 pushedNegatedAssignments++;
                 return true;
             }
@@ -91,7 +91,7 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
     }
 
     @Override
-    public OptionalInt queryNext(){
+    public OptionalInt queryEdge(){
         if(!currentNode.isComplete()){
             if(pushedNegatedAssignments != currentNode.getCacheView().keySet().size()){
                 popNegatedAssignments();
@@ -100,10 +100,10 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
             solver.check();
             if(solver.getStatus().isSat()){
                 final Valuation model = solver.getModel();
-                Optional<LitExpr<?>> optionalLitExpr = model.eval(currentNode.getVariable().getTraceInfo(Decl.class));
+                Optional<LitExpr<?>> optionalLitExpr = model.eval(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class));
                 if(optionalLitExpr.isPresent()){
                     LitExpr<?> literal = optionalLitExpr.get();
-                    solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), literal));
+                    solver.add(Neq(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getRef(), literal));
                     pushedNegatedAssignments++;
                     cacheModel(model);
                     return OptionalInt.of(LitExprConverter.toInt(literal));
@@ -120,10 +120,10 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
 
     // TODO összevonni queryChilddal
     public MddSymbolicNode moveDown(int assignment){
-        if(queryNext(assignment)){
+        if(queryEdge(assignment)){
             popNegatedAssignments();
             solver.push();
-            solver.add(Eq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getVariable().getTraceInfo(Decl.class).getType())));
+            solver.add(Eq(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getType())));
             currentNode = currentNode.getCacheView().get(assignment);
             stack.push(currentNode);
             pushNegatedAssignments();
@@ -134,7 +134,7 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
     private void pushNegatedAssignments(){
         solver.push();
         for(var cur = currentNode.getCacheView().cursor();cur.moveNext();){
-            solver.add(Neq(currentNode.getVariable().getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(cur.key(), currentNode.getVariable().getTraceInfo(Decl.class).getType())));
+            solver.add(Neq(currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getRef(), LitExprConverter.toLitExpr(cur.key(), currentNode.getSymbolicRepresentation().second.getTraceInfo(Decl.class).getType())));
             pushedNegatedAssignments++;
         }
     }
@@ -146,8 +146,8 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
 
     private void cacheModel(Valuation valuation){
         MddSymbolicNode node = currentNode;
-        Expr expr = ((Pair<Expr<BoolType>, MddVariable>)node.getSymbolicRepresentation()).first;
-        MddVariable variable = node.getVariable();
+        Expr expr = node.getSymbolicRepresentation(Expr.class).first;
+        MddVariable variable = node.getSymbolicRepresentation().second;
 
         while(variable != null){
 
@@ -169,7 +169,10 @@ public class ExpressionNodeTraverser extends MddSymbolicNodeTraverser {
                         assert childNode.isOn(lower.get());
                     } else {
                         // New child
-                        // TODO hashcode
+                        // TODO a getLevel DdLevel<MddNode>-ot ad és a symbolic node még nem az
+//                        final DdLevel<MddSymbolicNode> level = node.getSymbolicRepresentation().second.getLevel();
+//                        final MddSymbolicNode.SymbolicRepresentation symbolicRepresentation = MddSymbolicNode.SymbolicRepresentation.of(new Pair<>((Expr<BoolType>) expr,lower.get()));
+//                        childNode = level.checkIn(symbolicRepresentation, sr -> new MddSymbolicNode((MddSymbolicNode.SymbolicRepresentation) sr));
                         childNode = ExpressionNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>((Expr<BoolType>) expr,lower.get()),lower.get().getLevel()));
                         cacheNode(node,LitExprConverter.toInt(literal.get()),childNode);
                     }

@@ -3,6 +3,8 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 
+import java.util.OptionalInt;
+
 public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
 
     private final MddSymbolicNode node;
@@ -17,7 +19,7 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     public boolean isEmpty() {
         // TODO ha default value van akkor mi?
         if(!node.getCacheView().isEmpty()) return false;
-        traverser.queryNext();
+        traverser.queryEdge();
         return node.getCacheView().isEmpty();
     }
 
@@ -31,12 +33,12 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     public boolean containsKey(int key) {
         // Check if sat -> true
         // Cache model if found
-        return traverser.queryNext(key);
+        return traverser.queryEdge(key);
     }
 
     @Override
     public MddSymbolicNode get(int key) {
-        traverser.queryNext(key);
+        traverser.queryEdge(key);
         // Traverser is responsible for caching
         return node.getCacheView().get(key);
     }
@@ -49,9 +51,10 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
 
     @Override
     public IntObjCursor<? extends MddSymbolicNode> cursor() {
-        // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
-        while (!node.isComplete()) traverser.queryNext();
-        return node.getCacheView().cursor();
+        return new IncompleteMddSymbolicNodeCursor();
+//        // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
+//        while (!node.isComplete()) traverser.queryEdge();
+//        return node.getCacheView().cursor();
     }
 
     @Override
@@ -60,26 +63,47 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
         return -1;
     }
 
-    // TODO ez csak akkor működik, ha a koloboke intobjmapview cursor-a tudja kezelni ha az alatta lévő mapbe elemet raknak
-    // sajnos nem
-//    private class IncompleteExpressionNodeCursor implements IntObjCursor<ExpressionNode>{
-//        private final IntObjCursor<? extends ExpressionNode> cacheCursor = node.getCacheView().cursor();
-//
-//        @Override
-//        public int key() {
-//            return cacheCursor.key();
-//        }
-//
-//        @Override
-//        public ExpressionNode value() {
-//            return cacheCursor.value();
-//        }
-//
-//        @Override
-//        public boolean moveNext() {
-//            if(cacheCursor.moveNext()) return true;
-//            else if(!node.isComplete()) traverser.queryAssignment();
-//            return cacheCursor.moveNext();
-//        }
-//    }
+    private class IncompleteMddSymbolicNodeCursor implements IntObjCursor<MddSymbolicNode>{
+        private int index;
+        private int key;
+        private MddSymbolicNode value;
+
+        private IncompleteMddSymbolicNodeCursor(){
+            this.index = -1;
+            this.key = -1;
+            this.value = null;
+        }
+
+        @Override
+        public int key() {
+            if(index < 0) throw new IllegalStateException("Cursor is not initialized");
+            return key;
+        }
+
+        @Override
+        public MddSymbolicNode value() {
+            if(index < 0) throw new IllegalStateException("Cursor is not initialized");
+            return value;
+        }
+
+        @Override
+        public boolean moveNext() {
+            if(index < node.getExplicitRepresentation().getSize() - 1){
+                index++;
+                key = node.getExplicitRepresentation().getEdge(index);
+                value = node.getExplicitRepresentation().getCacheView().get(key);
+                return true;
+            }
+            else if(!node.isComplete()) {
+                final OptionalInt optionalKey = traverser.queryEdge();
+                if(optionalKey.isPresent()){
+                    index++;
+                    key = optionalKey.getAsInt();
+                    value = node.getExplicitRepresentation().getCacheView().get(key);
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
