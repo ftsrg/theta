@@ -7,18 +7,19 @@ import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 
+import java.util.Objects;
+
 public class MddSymbolicNode implements IMddSymbolicNode {
 
-    private final Pair<Object, MddVariable> symbolicRepresentation;
+    private final SymbolicRepresentation symbolicRepresentation;
+    private final MddSymbolicNodeTraverser.ExplicitRepresentation explicitRepresentation;
 
     // MddNodeból lopva
     private final DdLevel<MddNode> level;
     private final int hashCode;
     private int references = 0;
 
-    private final MddSymbolicNodeTraverser.ExplicitRepresentation explicitRepresentation;
-
-    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
+    public MddSymbolicNode(SymbolicRepresentation symbolicRepresentation, DdLevel<MddNode> level) {
         this.symbolicRepresentation = symbolicRepresentation;
         this.level = level;
         this.hashCode = symbolicRepresentation.hashCode();
@@ -26,13 +27,50 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         this.explicitRepresentation = new MddSymbolicNodeTraverser.ExplicitRepresentation();
     }
 
-    public MddVariable getVariable() {
-        return symbolicRepresentation.second;
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
+        this(new SymbolicRepresentation(symbolicRepresentation), level);
+    }
+
+    public MddSymbolicNode(SymbolicRepresentation symbolicRepresentation){
+        this(symbolicRepresentation, symbolicRepresentation.value.second.getLevel());
+    }
+
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation) {
+        this(new SymbolicRepresentation(symbolicRepresentation), symbolicRepresentation.second.getLevel());
+    }
+
+    public static class SymbolicRepresentation {
+        private final Pair<Object, MddVariable> value;
+
+        private SymbolicRepresentation(final Pair<Object, MddVariable> value) {
+            this.value = value;
+        }
+
+        public static SymbolicRepresentation of(final Pair<Object, MddVariable> value){
+            return new SymbolicRepresentation(value);
+        }
+
+        @Override
+        public boolean equals(Object that) {
+            if (this == that) return true;
+            if (that instanceof SymbolicRepresentation) {
+                return Objects.equals(value, ((SymbolicRepresentation) that).value);
+            }
+            if (that instanceof MddSymbolicNode) {
+                return Objects.equals(value, ((MddSymbolicNode) that).symbolicRepresentation.value);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return value.hashCode();
+        }
     }
 
     @Override
-    public Object getSymbolicRepresentation() {
-        return symbolicRepresentation;
+    public Pair<Object, MddVariable> getSymbolicRepresentation() {
+        return symbolicRepresentation.value;
     }
 
     @Override
