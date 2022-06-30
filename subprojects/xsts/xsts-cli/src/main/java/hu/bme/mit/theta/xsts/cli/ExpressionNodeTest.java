@@ -10,16 +10,13 @@ import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExpressionVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -49,13 +46,26 @@ public class ExpressionNodeTest {
 
         MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x), x.getLevel());
 
-//        var incompleteInterpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
-//
-//        var node2 = incompleteInterpreter.get(4);
+        var incompleteInterpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
+
+        var node2 = incompleteInterpreter.get(4);
+
+        var cur = incompleteInterpreter.cursor();
+        var cur2 = incompleteInterpreter.cursor();
+
+        cur2.moveNext();
+        cur2.moveNext();
+        cur2.moveNext();
+
+        cur.moveNext();
+        cur.moveNext();
+        cur.moveNext();
 
         MddSymbolicNodeTraverser traverser = ExpressionVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
 
-        while(!rootNode.isComplete()) traverser.queryNext();
+        var node3 = traverser.moveDown(4);
+
+        while(!node3.isComplete()) traverser.queryEdge();
 
         var interpreter = ExpressionVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
 
@@ -69,8 +79,8 @@ public class ExpressionNodeTest {
     }
 
     private static String nodeToString(MddSymbolicNode node){
-        final var symbolicRepresentation = node.getSymbolicRepresentation(Pair.class);
-        return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+((MddVariable)symbolicRepresentation.second).getTraceInfo(Decl.class).getName());
+        final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
+        return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
     }
 
 }

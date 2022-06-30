@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
+import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.java.mdd.MddSymbolicNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 
@@ -23,11 +24,12 @@ public interface IMddSymbolicNode {
 
     int getReferenceCount();
 
-    default <T> T getSymbolicRepresentation(Class<T> typeToken) {
-        return typeToken.cast(this.getSymbolicRepresentation());
+    default <T> Pair<T, MddVariable> getSymbolicRepresentation(Class<T> typeToken) {
+        final Pair<Object, MddVariable> symbolicRepresentation = this.getSymbolicRepresentation();
+        return new Pair<>(typeToken.cast(symbolicRepresentation.first), symbolicRepresentation.second);
     }
 
-    Object getSymbolicRepresentation();
+    Pair<Object, MddVariable> getSymbolicRepresentation();
 
     static boolean equals(MddSymbolicNode obj1, MddSymbolicNode obj2) {
         return !Objects.equals(obj1.getVariable(), obj2.getVariable()) ? false : Objects.equals(obj1.getSymbolicRepresentation(), obj2.getSymbolicRepresentation());
