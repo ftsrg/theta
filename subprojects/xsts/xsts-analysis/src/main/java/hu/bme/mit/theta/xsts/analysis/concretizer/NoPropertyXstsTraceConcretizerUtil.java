@@ -33,7 +33,6 @@ public final class NoPropertyXstsTraceConcretizerUtil {
                 Bool(true), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
-
         assert valuations.getStates().size() == trace.getStates().size();
 
         final List<XstsState<ExplState>> xstsStates = new ArrayList<>();

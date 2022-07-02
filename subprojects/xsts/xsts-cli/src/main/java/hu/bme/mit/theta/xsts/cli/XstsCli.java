@@ -174,7 +174,7 @@ public class XstsCli {
 						}
 						i++;
 
-						logger.write(Logger.Level.SUBSTEP, "%s%n", concretizedTrace);
+						//logger.write(Logger.Level.SUBSTEP, "%s%n", concretizedTrace);
 						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
 					} catch(IllegalArgumentException e) {
 						logger.write(Logger.Level.SUBSTEP, "Trace is infeasible%n");
