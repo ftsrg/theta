@@ -39,7 +39,7 @@ final public class XstsTracegenBuilder {
     public XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
         final Solver solver2 = solverFactory.createSolver(); // abstraction // TODO handle separate solvers in a nicer way
 
-        final XstsAnalysis<ExplState, ExplPrec> analysis = XstsAnalysis.create(ExplStmtAnalysis.create(solver2, True(),0));
+        final XstsAnalysis<ExplState, ExplPrec> analysis = XstsAnalysis.create(ExplAnalysis.create(solver2, True()));
         final LTS<XstsState<ExplState>, XstsAction> lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()));
 
         final Expr<BoolType> negProp = Not(xsts.getProp());
