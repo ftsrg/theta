@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -17,6 +33,25 @@ import java.util.function.Predicate;
  * @param <T> the type of the transition in the original formalism
  */
 public abstract class PorLts<S extends State, A extends Action, T> implements LTS<S, A> {
+
+	/* CACHE COLLECTIONS */
+
+	/**
+	 * Shared objects (~global variables) used by a transition.
+	 */
+	private final HashMap<T, Set<? extends Decl<? extends Type>>> usedSharedObjects = new HashMap<>();
+
+	/**
+	 * Shared objects (~global variables) that are used by the key transition or by transitions reachable from the
+	 * current state via a given transition.
+	 */
+	private final HashMap<T, Set<? extends Decl<? extends Type>>> influencedSharedObjects = new HashMap<>();
+
+	/**
+	 * Backward transitions in the transition system (a transition of a loop).
+	 */
+	protected final Set<T> backwardTransitions = new HashSet<>();
+
 
 	/**
 	 * Returns the enabled actions in the ARG from the given state filtered with a POR algorithm.
@@ -152,20 +187,6 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	protected abstract Set<T> getSuccessiveTransitions(T transition);
 
 
-	/* CACHE COLLECTIONS */
-
-	/**
-	 * Shared objects (~global variables) used by a transition.
-	 */
-	private final HashMap<T, Set<? extends Decl<? extends Type>>> usedSharedObjects = new HashMap<>();
-
-	/**
-	 * Shared objects (~global variables) that are used by the key transition or by transitions reachable from the
-	 * current state via a given transition.
-	 */
-	private final HashMap<T, Set<? extends Decl<? extends Type>>> influencedSharedObjects = new HashMap<>();
-
-
 	/**
 	 * Returns the shared objects (~global variables) that an action uses (it is present in one of its labels).
 	 *
@@ -239,11 +260,6 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		}
 		return vars;
 	}
-
-	/**
-	 * Backward transitions in the transition system (a transition of a loop).
-	 */
-	protected final Set<T> backwardTransitions = new HashSet<>();
 
 	/**
 	 * Collects backward transitions of the transition system.
