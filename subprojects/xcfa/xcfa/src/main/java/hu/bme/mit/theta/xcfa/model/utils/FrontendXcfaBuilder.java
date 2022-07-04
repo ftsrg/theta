@@ -790,39 +790,30 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addLoc(outerBeforeGuard);
 		propagateMetadata(statement, outerBeforeGuard);
 		for (int i = 0; i < (UNROLL_COUNT == 0 ? 1 : UNROLL_COUNT); ++i) {
-			if (((CCompound) body).getcStatementList().size() == 0) {
-				final AssumeStmt assume = Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
-				propagateMetadata(guard, assume);
-				xcfaEdge = XcfaEdge.of(initLoc, endLoc, List.of(Stmt(assume)));
-				builder.addEdge(xcfaEdge);
-				propagateMetadata(statement, xcfaEdge);
-				return endLoc;
-			} else {
-				XcfaLocation innerLoop = getAnonymousLoc(builder);
-				builder.addLoc(innerLoop);
-				propagateMetadata(statement, innerLoop);
-				XcfaLocation testEndLoc = buildWithoutPostStatement(guard, new ParamPack(builder, initLoc, null, null, returnLoc));
-				if (UNROLL_COUNT > 0) {
-					initLoc = getAnonymousLoc(builder);
-					builder.addLoc(initLoc);
-					propagateMetadata(statement, initLoc);
-				}
-				final AssumeStmt assume = Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
-				propagateMetadata(guard, assume);
-				xcfaEdge = XcfaEdge.of(testEndLoc, innerLoop, List.of(Stmt(assume)));
-				builder.addEdge(xcfaEdge);
-				propagateMetadata(statement, xcfaEdge);
-				final AssumeStmt assume1 = Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
-				propagateMetadata(guard, assume1);
-				xcfaEdge = XcfaEdge.of(testEndLoc, outerBeforeGuard, List.of(Stmt(assume1)));
-				builder.addEdge(xcfaEdge);
-				propagateMetadata(statement, xcfaEdge);
-				XcfaLocation lastGuard = buildPostStatement(guard, new ParamPack(builder, innerLoop, endLoc, initLoc, returnLoc));
-				XcfaLocation lastBody = body.accept(this, new ParamPack(builder, lastGuard, endLoc, initLoc, returnLoc));
-				xcfaEdge = XcfaEdge.of(lastBody, initLoc, List.of());
-				builder.addEdge(xcfaEdge);
-				propagateMetadata(statement, xcfaEdge);
+			XcfaLocation innerLoop = getAnonymousLoc(builder);
+			builder.addLoc(innerLoop);
+			propagateMetadata(statement, innerLoop);
+			XcfaLocation testEndLoc = buildWithoutPostStatement(guard, new ParamPack(builder, initLoc, null, null, returnLoc));
+			if (UNROLL_COUNT > 0) {
+				initLoc = getAnonymousLoc(builder);
+				builder.addLoc(initLoc);
+				propagateMetadata(statement, initLoc);
 			}
+			final AssumeStmt assume = Assume(Neq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
+			propagateMetadata(guard, assume);
+			xcfaEdge = XcfaEdge.of(testEndLoc, innerLoop, List.of(Stmt(assume)));
+			builder.addEdge(xcfaEdge);
+			propagateMetadata(statement, xcfaEdge);
+			final AssumeStmt assume1 = Assume(Eq(guard.getExpression(), CComplexType.getType(guard.getExpression()).getNullValue()));
+			propagateMetadata(guard, assume1);
+			xcfaEdge = XcfaEdge.of(testEndLoc, outerBeforeGuard, List.of(Stmt(assume1)));
+			builder.addEdge(xcfaEdge);
+			propagateMetadata(statement, xcfaEdge);
+			XcfaLocation lastGuard = buildPostStatement(guard, new ParamPack(builder, innerLoop, endLoc, initLoc, returnLoc));
+			XcfaLocation lastBody = body.accept(this, new ParamPack(builder, lastGuard, endLoc, initLoc, returnLoc));
+			xcfaEdge = XcfaEdge.of(lastBody, initLoc, List.of());
+			builder.addEdge(xcfaEdge);
+			propagateMetadata(statement, xcfaEdge);
 		}
 		XcfaLocation outerLastGuard = buildPostStatement(guard, new ParamPack(builder, outerBeforeGuard, null, null, null));
 		xcfaEdge = XcfaEdge.of(outerLastGuard, endLoc, List.of());

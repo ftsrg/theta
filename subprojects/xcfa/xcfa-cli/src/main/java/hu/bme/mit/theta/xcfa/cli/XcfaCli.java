@@ -204,6 +204,9 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
+	@Parameter(names = "--lbe", description = "Large-block encoding level")
+	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
+
 	//////////// SMTLib options ////////////
 
 	@Parameter(names = "--smt-home", description = "The path of the solver registry")
@@ -220,9 +223,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--validate-abstraction-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
 	boolean validateAbstractionSolver = false;
-
-	@Parameter(names = "--lbe", description = "Large-block encoding level")
-	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
@@ -253,7 +253,6 @@ public class XcfaCli {
 		File inputOrModel = input == null ? model : input;
 
 		logger = new ConsoleLogger(logLevel);
-		;
 
 		/// version
 		if (versionInfo) {
@@ -442,7 +441,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home);
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home, algorithm);
 					try {
 						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
@@ -521,7 +520,7 @@ public class XcfaCli {
 				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
-				final LTS lts = algorithm.getLts();
+				final LTS lts = algorithm.getLts(xcfa);
 				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
 						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =

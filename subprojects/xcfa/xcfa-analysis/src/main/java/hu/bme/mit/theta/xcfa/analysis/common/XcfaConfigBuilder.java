@@ -66,11 +66,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewAtomsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewOperandsAutoExpl;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaInitFunc;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaOrd;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaPrecRefiner;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaTransFunc;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.*;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTInitFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTLts;
@@ -101,7 +97,7 @@ public class XcfaConfigBuilder {
 	public enum Algorithm {
 		SINGLETHREAD {
 			@Override
-			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
 				return new XcfaSTLts();
 			}
 
@@ -134,7 +130,7 @@ public class XcfaConfigBuilder {
 
 		INTERLEAVINGS {
 			@Override
-			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts() {
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
 				return new XcfaLts();
 			}
 
@@ -162,9 +158,41 @@ public class XcfaConfigBuilder {
 			public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<XcfaState<S>, A, XcfaPrec<P>> getAnalysis(final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
 				return XcfaAnalysis.create(initLocs, getPartialOrder(analysis.getPartialOrd()), getInitFunc(initLocs, analysis.getInitFunc()), getTransFunc(analysis.getTransFunc()));
 			}
+		},
+
+		INTERLEAVINGS_POR {
+			@Override
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa) {
+				return new XcfaPorLts(xcfa);
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
+				return INTERLEAVINGS.getInitFunc(initLocs, initFunc);
+			}
+
+			@Override
+			public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(TransFunc<S, A, P> transFunc) {
+				return INTERLEAVINGS.getTransFunc(transFunc);
+			}
+
+			@Override
+			public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(RefutationToPrec<P, R> refToPrec) {
+				return INTERLEAVINGS.getPrecRefiner(refToPrec);
+			}
+
+			@Override
+			public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(PartialOrd<S> partialOrd) {
+				return INTERLEAVINGS.getPartialOrder(partialOrd);
+			}
+
+			@Override
+			public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>, ? extends A, ? extends XcfaPrec<P>> getAnalysis(List<XcfaLocation> initLoc, Analysis<S, A, P> analysis) {
+				return INTERLEAVINGS.getAnalysis(initLoc, analysis);
+			}
 		};
 
-		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts();
+		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
 
 		public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
 
@@ -299,7 +327,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final LTS lts = algorithm.getLts();
+		final LTS lts = algorithm.getLts(xcfa);
 		final Abstractor abstractor;
 		final Refiner refiner;
 		final XcfaPrec prec;
