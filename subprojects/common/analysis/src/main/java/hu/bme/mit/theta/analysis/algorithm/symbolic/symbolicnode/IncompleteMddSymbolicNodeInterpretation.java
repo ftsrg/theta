@@ -3,8 +3,6 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 
-import java.util.OptionalInt;
-
 public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
 
     private final MddSymbolicNode node;
@@ -25,7 +23,6 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
 
     @Override
     public boolean isProcedural() {
-
         return true;
     }
 
@@ -45,16 +42,13 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
 
     @Override
     public MddSymbolicNode defaultValue() {
-        // Terminal 0
-        return null;
+        return node.getCacheView().defaultValue();
     }
 
     @Override
     public IntObjCursor<? extends MddSymbolicNode> cursor() {
+        if(node.isComplete()) return node.getCacheView().cursor();
         return new IncompleteMddSymbolicNodeCursor();
-//        // TODO eldönteni hogy jó-e kibontani ilyenkor teljesen
-//        while (!node.isComplete()) traverser.queryEdge();
-//        return node.getCacheView().cursor();
     }
 
     @Override
@@ -95,10 +89,10 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
                 return true;
             }
             else if(!node.isComplete()) {
-                final OptionalInt optionalKey = traverser.queryEdge();
-                if(optionalKey.isPresent()){
+                final MddSymbolicNodeTraverser.QueryResult queryResult = traverser.queryEdge();
+                if(queryResult.getStatus() == MddSymbolicNodeTraverser.QueryResult.Status.SINGLE_EDGE){
                     index++;
-                    key = optionalKey.getAsInt();
+                    key = queryResult.getKey();
                     value = node.getExplicitRepresentation().getCacheView().get(key);
                     return true;
                 }

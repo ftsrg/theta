@@ -1,17 +1,12 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
 import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.theta.common.GrowingIntArray;
 
-import java.util.OptionalInt;
-
 public abstract class MddSymbolicNodeTraverser {
-
-    public abstract boolean isOn(final MddSymbolicNode node);
 
     public abstract MddSymbolicNode getCurrentNode();
 
@@ -19,9 +14,13 @@ public abstract class MddSymbolicNodeTraverser {
 
     public abstract MddSymbolicNode moveDown(int assignment);
 
-    public abstract OptionalInt queryEdge();
+    public abstract QueryResult queryEdge();
 
-    public abstract boolean queryEdge(int assignment);
+    public abstract boolean queryEdge(int assignment); //return node, peakDown
+
+    public abstract MddSymbolicNode peakDown(int assignment);
+
+    // moveDown lemenés nélkül
 
     public static class ExplicitRepresentation {
         private final HashIntObjMap<MddSymbolicNode> cache;
@@ -65,6 +64,33 @@ public abstract class MddSymbolicNodeTraverser {
 
         public int getSize(){
             return edgeOrdering.getSize();
+        }
+    }
+
+    public static class QueryResult{
+        private final Status status;
+        private final int key;
+
+        public QueryResult(int key) {
+            this.status = Status.SINGLE_EDGE;
+            this.key = key;
+        }
+        public QueryResult(Status status) {
+            Preconditions.checkArgument(status != Status.SINGLE_EDGE);
+            this.status = status;
+            this.key = -1;
+        }
+
+        public int getKey() {
+            return key;
+        }
+
+        public Status getStatus() {
+            return status;
+        }
+
+        public enum Status {
+            FAILED, SINGLE_EDGE, DEFAULT_EDGE
         }
     }
 

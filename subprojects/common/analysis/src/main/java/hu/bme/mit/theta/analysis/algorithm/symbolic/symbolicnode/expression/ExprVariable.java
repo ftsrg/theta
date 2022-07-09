@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.solver.Solver;
 
-public class ExpressionVariable{
+public class ExprVariable {
 
     public static IntObjMapView<MddSymbolicNode> getNodeInterpreter(MddSymbolicNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
         if (!node.isOn(variable)) {
@@ -32,7 +32,7 @@ public class ExpressionVariable{
     }
 
     public static MddSymbolicNodeTraverser getNodeTraverser(MddSymbolicNode node, Supplier<Solver> solverSupplier){
-        return new ExpressionNodeTraverser(node, solverSupplier);
+        return new ExprNodeTraverser(node, solverSupplier);
     }
 
 

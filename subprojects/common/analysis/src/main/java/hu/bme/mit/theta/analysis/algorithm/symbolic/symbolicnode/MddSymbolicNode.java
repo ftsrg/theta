@@ -32,11 +32,11 @@ public class MddSymbolicNode implements IMddSymbolicNode {
     }
 
     public MddSymbolicNode(SymbolicRepresentation symbolicRepresentation){
-        this(symbolicRepresentation, symbolicRepresentation.value.second.getLevel());
+        this(symbolicRepresentation, symbolicRepresentation.value.second != null ? symbolicRepresentation.value.second.getLevel() : null);
     }
 
     public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation) {
-        this(new SymbolicRepresentation(symbolicRepresentation), symbolicRepresentation.second.getLevel());
+        this(new SymbolicRepresentation(symbolicRepresentation), symbolicRepresentation.second != null ? symbolicRepresentation.second.getLevel() : null);
     }
 
     public static class SymbolicRepresentation {
@@ -65,6 +65,7 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         @Override
         public int hashCode() {
             return value.hashCode();
+
         }
     }
 
@@ -94,6 +95,11 @@ public class MddSymbolicNode implements IMddSymbolicNode {
     public boolean isBelow(MddVariable variable) {
         Preconditions.checkNotNull(variable, "variable");
         return this.level.isBelow(variable.getLevel());
+    }
+
+    @Override
+    public boolean isTerminal() {
+        return symbolicRepresentation.value.second == null;
     }
 
     @Override

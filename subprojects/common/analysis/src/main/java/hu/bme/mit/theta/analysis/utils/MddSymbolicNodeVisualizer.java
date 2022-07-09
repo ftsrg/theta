@@ -19,6 +19,7 @@ import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 public class MddSymbolicNodeVisualizer {
 
     private static final LineStyle CHILD_EDGE_STYLE = LineStyle.NORMAL;
+    private static final LineStyle DEFAULT_EDGE_STYLE = LineStyle.DOTTED;
     private static final String SYMBOLIC_NODE_LABEL = "";
     private static final String SYMBOLIC_NODE_ID = "symbolicnode";
     private static final String FONT = "courier";
@@ -100,6 +101,16 @@ public class MddSymbolicNodeVisualizer {
                 graph.addEdge(sourceId, targetId, eAttributes);
             }
 
+        }
+
+        if(node.getCacheView().defaultValue() != null){
+            final MddSymbolicNode defaultValue = node.getCacheView().defaultValue();
+            traverse(graph, defaultValue, traversed);
+            final String sourceId = NODE_ID_PREFIX + idFor(node);
+            final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
+            final EdgeAttributes eAttributes = EdgeAttributes.builder()
+                    .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(DEFAULT_EDGE_STYLE).build();
+            graph.addEdge(sourceId, targetId, eAttributes);
         }
     }
 
