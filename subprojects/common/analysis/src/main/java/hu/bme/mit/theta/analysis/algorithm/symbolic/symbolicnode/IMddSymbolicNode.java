@@ -14,9 +14,7 @@ public interface IMddSymbolicNode {
 
     boolean isBelow(MddVariable var1);
 
-    default boolean isTerminal() {
-        return false;
-    }
+    boolean isTerminal();
 
     void acquire();
 
