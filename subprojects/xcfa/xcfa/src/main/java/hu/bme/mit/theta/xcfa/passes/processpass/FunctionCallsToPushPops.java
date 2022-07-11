@@ -52,6 +52,7 @@ public class FunctionCallsToPushPops extends ProcessPass {
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		if (FunctionInlining.inlining != FunctionInlining.InlineFunctions.ON) return builder;
 		if (builder.getProcedures().size() <= 1) return builder;
 		final XcfaProcedure.Builder mainProcedure = builder.getMainProcedure();
 

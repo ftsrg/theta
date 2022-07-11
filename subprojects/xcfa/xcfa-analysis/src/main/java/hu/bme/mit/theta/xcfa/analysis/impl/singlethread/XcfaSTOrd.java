@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -36,10 +37,7 @@ public class XcfaSTOrd<S extends ExprState> implements PartialOrd<XcfaState<S>> 
 
 	@Override
 	public boolean isLeq(final XcfaState<S> state1, final XcfaState<S> state2) {
-		XcfaSTState<S> s1 = (XcfaSTState<S>) state1;
-		XcfaSTState<S> s2 = (XcfaSTState<S>) state2;
-		return state1.getCurrentLoc().equals(state2.getCurrentLoc()) &&
-				s1.getCurrentStack().equals(s2.getCurrentStack()) &&
-				partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
+		return ((XcfaSTState<S>) state1).equalLocations(((XcfaSTState<S>) state2))
+				&& partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
 	}
 }

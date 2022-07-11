@@ -72,6 +72,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -224,6 +225,9 @@ public class XcfaCli {
 	@Parameter(names = "--lbe", description = "Large-block encoding level")
 	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
+	@Parameter(names = "--inline", description = "Turns function inlining on and off")
+	FunctionInlining.InlineFunctions inlining = FunctionInlining.InlineFunctions.OFF;
+
 	//////////// CONFIGURATION OPTIONS END ////////////
 
 	private Logger logger;
@@ -262,6 +266,7 @@ public class XcfaCli {
 		}
 
 		SimpleLbePass.level = lbeLevel;
+		FunctionInlining.inlining = inlining;
 
 		// TODO later we might want to merge these two flags
 		if (witnessOnly) {

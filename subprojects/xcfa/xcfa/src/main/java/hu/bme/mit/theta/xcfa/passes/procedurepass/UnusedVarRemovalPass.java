@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -33,7 +34,8 @@ import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 public class UnusedVarRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		removeUnusedVars(builder, null);
+		if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON)
+			removeUnusedVars(builder, null);
 		return builder;
 	}
 

@@ -23,6 +23,7 @@ public class AssignFunctionParam extends ProcessPass {
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON) return builder;
 		builder = buildProcesses(builder);
 		for (XcfaProcedure.Builder procedure : builder.getProcedures()) {
 			edgesToAdd.clear();

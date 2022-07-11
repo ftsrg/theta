@@ -26,6 +26,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,17 +46,25 @@ public class CallsToHavocs extends ProcedurePass {
 				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) e.get();
 				List<XcfaLabel> collect = new ArrayList<>();
 				for (XcfaLabel stmt : edge.getLabels()) {
-					if (stmt == callLabel && callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
-						for (Expr<?> expr : callLabel.getParams()) {
-							checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
-							VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-							if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
-								final HavocStmt<?> havoc = Havoc(var);
-								FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
-								collect.add(Stmt(havoc));
+					if (stmt == callLabel) {
+						if (callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
+							for (Expr<?> expr : callLabel.getParams()) {
+								checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
+								VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
+								if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
+									final HavocStmt<?> havoc = Havoc(var);
+									FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+									collect.add(Stmt(havoc));
+								}
 							}
+						} else {
+							if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON)
+								throw new UnsupportedOperationException("Non-nondet function call used as nondet!");
+							collect.add(stmt);
 						}
-					} else collect.add(stmt);
+					} else {
+						collect.add(stmt);
+					}
 				}
 				XcfaEdge xcfaEdge;
 				xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);

@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import java.util.*;
 
@@ -44,10 +45,10 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		return new XcfaSTTransFunc<>(transFunc);
 	}
 
-	private P stateVarsIntoPrec(P globalPrec, XcfaSTState<S> state) {
+	private P stackVarsIntoPrec(P globalPrec, XcfaSTStateStack<S> state) {
 		if (globalPrec instanceof ExplPrec) {
 			ExplPrec explPrec = (ExplPrec) globalPrec;
-			for (XcfaSTState.ProcedureLocation procedureLocation : state.getCurrentStack()) {
+			for (XcfaSTStateStack.ProcedureLocation procedureLocation : state.getCurrentStack()) {
 				Set<VarDecl<?>> localVars = new HashSet<>();
 				final Set<VarDecl<?>> precVars = explPrec.getVars();
 				procedureLocation.getUsedVars().forEach((var, localVar) -> {
@@ -62,29 +63,36 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 		return globalPrec;
 	}
 
+	private void handleFunctionPushPop(XcfaSTStateStack<S> state, XcfaSTAction action, XcfaSTStateStack<S> newState) {
+		if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
+			XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
+			Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
+					.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
+			if (calledProcedure.isPresent()) {
+				Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getReverseVars();
+				XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
+				newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
+			}
+		}
+		if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
+			newState.pop();
+		}
+	}
+
 	@Override
 	public Collection<? extends XcfaState<S>> getSuccStates(final XcfaState<S> inState, final A inAction, final XcfaPrec<P> prec) {
 		XcfaSTState<S> state = (XcfaSTState<S>) inState;
 		XcfaSTAction action = (XcfaSTAction) inAction;
 
-		P globalPrec = stateVarsIntoPrec(prec.getGlobalPrec(), state);
+		P globalPrec = FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
+				prec.getGlobalPrec() :
+				stackVarsIntoPrec(prec.getGlobalPrec(), (XcfaSTStateStack<S>) state);
 
 		final Collection<XcfaSTState<S>> newStates = new ArrayList<>();
 		for (final S succState : transFunc.getSuccStates(state.getGlobalState(), inAction, globalPrec)) {
 			final XcfaSTState<S> newState = state.withState(succState).withLocation(action.getTarget());
-			if (action.getLabels().size() > 0 && action.getLabels().get(0) instanceof XcfaLabel.ProcedureCallXcfaLabel) {
-				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) action.getLabels().get(0);
-				Optional<XcfaProcedure> calledProcedure = state.getCurrentLoc().getParent().getParent().getProcedures()
-						.stream().filter(procedure -> callLabel.getProcedure().equals(procedure.getName())).findAny();
-				if (calledProcedure.isPresent()) {
-					Map<VarDecl<?>, VarDecl<?>> reverseVarLut = state.getReverseVars();
-					XcfaLabel.ProcedureCallXcfaLabel originalCallLabel = (XcfaLabel.ProcedureCallXcfaLabel) callLabel.accept(new XcfaLabelVarReplacer(), reverseVarLut);
-					newState.push(calledProcedure.get().getParamInitLoc(originalCallLabel));
-				}
-			}
-			if (newState.getCurrentLoc().isEndLoc() && newState.getCurrentLoc().getParent() != newState.getCurrentLoc().getParent().getParent().getMainProcedure()) {
-				newState.pop();
-			}
+			if (FunctionInlining.inlining != FunctionInlining.InlineFunctions.ON)
+				handleFunctionPushPop((XcfaSTStateStack<S>) state, action, (XcfaSTStateStack<S>) newState);
 			newStates.add(newState);
 		}
 		return newStates;
