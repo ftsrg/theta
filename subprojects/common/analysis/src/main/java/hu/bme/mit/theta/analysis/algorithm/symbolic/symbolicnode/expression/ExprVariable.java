@@ -35,6 +35,7 @@ public class ExprVariable {
         } else {
             final Expr<?> expr = node.getSymbolicRepresentation(Expr.class).first;
             // TODO this check should only be done once per node
+            // TODO this is not the right place for this check
             if(!ExprUtils.getConstants(expr).contains(node.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class))){
                 final MddSymbolicNode childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>(expr,node.getSymbolicRepresentation().second.getLower().orElse(null))));
                 if(node.getCacheView().defaultValue() != null) Preconditions.checkState(node.getCacheView().defaultValue().equals(childNode));
