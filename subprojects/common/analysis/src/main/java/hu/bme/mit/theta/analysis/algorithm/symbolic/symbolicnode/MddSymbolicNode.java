@@ -87,12 +87,14 @@ public class MddSymbolicNode implements IMddSymbolicNode {
 
         public void cacheNode(int key, MddSymbolicNode node){
             Preconditions.checkState(!complete);
+            Preconditions.checkState(defaultValue == null);
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
         }
 
         public void cacheDefault(MddSymbolicNode defaultValue){
             Preconditions.checkState(!complete);
+            Preconditions.checkState(cache.isEmpty());
             this.defaultValue = defaultValue;
         }
 
