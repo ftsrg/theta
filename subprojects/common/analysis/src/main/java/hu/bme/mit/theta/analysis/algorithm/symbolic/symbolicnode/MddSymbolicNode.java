@@ -1,18 +1,21 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import com.google.common.base.Preconditions;
+import com.koloboke.collect.map.hash.HashIntObjMap;
+import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.common.GrowingIntArray;
 
 import java.util.Objects;
 
 public class MddSymbolicNode implements IMddSymbolicNode {
 
     private final SymbolicRepresentation symbolicRepresentation;
-    private final MddSymbolicNodeTraverser.ExplicitRepresentation explicitRepresentation;
+    private final ExplicitRepresentation explicitRepresentation;
 
     // MddNodeból lopva
     private final DdLevel<MddNode> level;
@@ -24,7 +27,7 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         this.level = level;
         this.hashCode = symbolicRepresentation.hashCode();
 
-        this.explicitRepresentation = new MddSymbolicNodeTraverser.ExplicitRepresentation();
+        this.explicitRepresentation = new ExplicitRepresentation();
     }
 
     public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
@@ -66,6 +69,51 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         public int hashCode() {
             return value.hashCode();
 
+        }
+    }
+
+    public static class ExplicitRepresentation {
+        private final HashIntObjMap<MddSymbolicNode> cache;
+        private final GrowingIntArray edgeOrdering;
+        private MddSymbolicNode defaultValue;
+        private boolean complete;
+
+        public ExplicitRepresentation() {
+            this.cache = HashIntObjMaps.newUpdatableMap();
+            this.edgeOrdering = new GrowingIntArray(100, 100);
+            this.defaultValue = null;
+            this.complete = false;
+        }
+
+        public void cacheNode(int key, MddSymbolicNode node){
+            Preconditions.checkState(!complete);
+            this.cache.put(key, node);
+            this.edgeOrdering.add(key);
+        }
+
+        public void cacheDefault(MddSymbolicNode defaultValue){
+            Preconditions.checkState(!complete);
+            this.defaultValue = defaultValue;
+        }
+
+        public void setComplete(){
+            this.complete = true;
+        }
+
+        public IntObjMapView<MddSymbolicNode> getCacheView(){
+            return IntObjMapView.of(cache, defaultValue);
+        }
+
+        public boolean isComplete(){
+            return complete;
+        }
+
+        public int getEdge(int index){
+            return edgeOrdering.get(index);
+        }
+
+        public int getSize(){
+            return edgeOrdering.getSize();
         }
     }
 
@@ -143,7 +191,7 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         return references;
     }
 
-    public MddSymbolicNodeTraverser.ExplicitRepresentation getExplicitRepresentation() {
+    public ExplicitRepresentation getExplicitRepresentation() {
         return explicitRepresentation;
     }
 
