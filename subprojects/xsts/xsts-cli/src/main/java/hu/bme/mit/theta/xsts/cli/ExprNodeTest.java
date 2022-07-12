@@ -13,6 +13,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
@@ -33,9 +34,9 @@ public class ExprNodeTest {
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
-//        Decl<IntType> declX = Decls.Const("x", Int());
-//        Decl<IntType> declY = Decls.Const("y", Int());
-//        Decl<IntType> declZ = Decls.Const("z", Int());
+//        ConstDecl<IntType> declX = Decls.Const("x", Int());
+//        ConstDecl<IntType> declY = Decls.Const("y", Int());
+//        ConstDecl<IntType> declZ = Decls.Const("z", Int());
 //
 //        MddVariable z = varOrder.createOnTop(MddVariableDescriptor.create(declZ, 0));
 //        MddVariable y = varOrder.createOnTop(MddVariableDescriptor.create(declY, 0));
@@ -45,9 +46,9 @@ public class ExprNodeTest {
 //        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
 ////        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
-        Decl<BoolType> declA = Decls.Const("a", Bool());
-        Decl<BoolType> declB = Decls.Const("b", Bool());
-        Decl<IntType> declX = Decls.Const("x", Int());
+        ConstDecl<BoolType> declA = Decls.Const("a", Bool());
+        ConstDecl<BoolType> declB = Decls.Const("b", Bool());
+        ConstDecl<IntType> declX = Decls.Const("x", Int());
 
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
         MddVariable b = varOrder.createOnTop(MddVariableDescriptor.create(declB, 2));
