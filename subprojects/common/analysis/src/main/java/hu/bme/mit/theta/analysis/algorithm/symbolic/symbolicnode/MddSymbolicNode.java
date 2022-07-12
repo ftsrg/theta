@@ -202,6 +202,6 @@ public class MddSymbolicNode implements IMddSymbolicNode {
     }
 
     public boolean isComplete() {
-        return explicitRepresentation.isComplete();
+        return explicitRepresentation.isComplete() || isTerminal();
     }
 }
