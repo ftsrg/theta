@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.LitExprConverter;
 import hu.bme.mit.theta.common.container.Containers;
@@ -24,6 +25,8 @@ public class ValuationCollector {
     }
 
     public static Set<Valuation> collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser){
+        Preconditions.checkState(traverser.getCurrentNode().equals(node));
+
         final Stack<Assignment> assignments = new Stack<>();
         final Set<Valuation> valuations = Containers.createSet();
 
@@ -39,7 +42,11 @@ public class ValuationCollector {
             valuations.add(toValuation(assignments));
         } else {
             if(node.getCacheView().defaultValue() != null){
-                throw new UnsupportedOperationException("Not implemented yet");
+                traverser.moveDown(0); // move down along arbitrary edge
+
+                collect(node.getCacheView().defaultValue(), traverser, assignments, valuations);
+
+                traverser.moveUp();
             } else {
                 while (!node.isComplete()) traverser.queryEdge();
                 for (var cur = node.getCacheView().cursor(); cur.moveNext(); ) {
@@ -54,9 +61,7 @@ public class ValuationCollector {
                     traverser.moveUp();
                 }
             }
-
         }
-
     }
 
     private static Valuation toValuation(Stack<Assignment> assignments){
