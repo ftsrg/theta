@@ -6,9 +6,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.*;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprVariable;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
@@ -56,6 +54,10 @@ public class ExprNodeTest3 {
 
         final Set<Valuation> valuations = ValuationCollector.collect(stateRoot, ExprVariable.getNodeTraverser(stateRoot, Z3SolverFactory.getInstance()::createSolver));
         System.out.println(valuations);
+
+        final TraversalConstraint constraint = new MddSymbolicNodeTraversalConstraint(stateRoot);
+        final Set<Valuation> nextStateValuations = ValuationCollector.collect(actionRoot, ExprVariable.getConstrainedNodeTraverser(actionRoot, Z3SolverFactory.getInstance()::createSolver, constraint));
+        System.out.println(nextStateValuations);
 
         final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest3::nodeToString).visualize(stateRoot);
         try {
