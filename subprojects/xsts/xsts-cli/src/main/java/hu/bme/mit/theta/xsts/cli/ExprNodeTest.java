@@ -57,6 +57,9 @@ public class ExprNodeTest {
 
         var interpreter = ExprVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
 
+        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
+        System.out.println(valuations);
+
         final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
