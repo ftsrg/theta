@@ -8,6 +8,7 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.IncompleteMddSymbolicNodeInterpretation;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.TraversalConstraint;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -51,6 +52,10 @@ public class ExprVariable {
 
     public static MddSymbolicNodeTraverser getNodeTraverser(MddSymbolicNode node, Supplier<Solver> solverSupplier){
         return new ExprNodeTraverser(node, solverSupplier);
+    }
+
+    public static MddSymbolicNodeTraverser getConstrainedNodeTraverser(MddSymbolicNode node, Supplier<Solver> solverSupplier, TraversalConstraint constraint){
+        return new ConstrainedExprNodeTraverser(node, solverSupplier, constraint);
     }
 
 
