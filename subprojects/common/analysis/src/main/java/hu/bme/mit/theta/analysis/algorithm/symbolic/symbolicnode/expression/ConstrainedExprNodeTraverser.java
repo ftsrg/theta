@@ -20,6 +20,10 @@ public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
     final ExprNodeTraverser wrapped;
 
     public ConstrainedExprNodeTraverser(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint) {
+        this.wrapped = new ExprNodeTraverser(rootNode, () -> prepareSolver(rootNode, solverSupplier, constraint));
+    }
+
+    private Solver prepareSolver(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint){
         final Solver solver = solverSupplier.get();
         solver.push();
 
@@ -34,7 +38,7 @@ public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
             nextVariable = variable.getLower();
         }
 
-        wrapped = new ExprNodeTraverser(rootNode, () -> solver);
+        return solver;
     }
 
     @Override
