@@ -94,7 +94,6 @@ public class MddSymbolicNode implements IMddSymbolicNode {
 
         public void cacheDefault(MddSymbolicNode defaultValue){
             Preconditions.checkState(!complete);
-            Preconditions.checkState(cache.isEmpty());
             this.defaultValue = defaultValue;
         }
 
