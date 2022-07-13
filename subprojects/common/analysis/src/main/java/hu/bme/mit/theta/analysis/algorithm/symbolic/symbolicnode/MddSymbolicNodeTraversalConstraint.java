@@ -11,24 +11,21 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 
 public class MddSymbolicNodeTraversalConstraint implements TraversalConstraint{
 
-    private final MddSymbolicNode rootNode;
     private final ObjIntMap<MddVariable> lowerBounds;
     private final ObjIntMap<MddVariable> upperBounds;
     private final ObjSet<MddVariable> hasDefaultValue;
 
     public MddSymbolicNodeTraversalConstraint(MddSymbolicNode rootNode){
-        this.rootNode = Preconditions.checkNotNull(rootNode);
+        Preconditions.checkNotNull(rootNode);
         this.lowerBounds = HashObjIntMaps.newUpdatableMap();
         this.upperBounds = HashObjIntMaps.newUpdatableMap();
         this.hasDefaultValue = HashObjSets.newUpdatableSet();
 
         final Set<MddSymbolicNode> traversed = Containers.createSet();
-
         traverse(rootNode, traversed);
     }
 
