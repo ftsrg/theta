@@ -59,7 +59,7 @@ public class ExprNodeTest3 {
         final Set<Valuation> nextStateValuations = ValuationCollector.collect(actionRoot, ExprVariable.getConstrainedNodeTraverser(actionRoot, Z3SolverFactory.getInstance()::createSolver, constraint));
         System.out.println(nextStateValuations);
 
-        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest3::nodeToString).visualize(stateRoot);
+        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest3::nodeToString).visualize(actionRoot);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {

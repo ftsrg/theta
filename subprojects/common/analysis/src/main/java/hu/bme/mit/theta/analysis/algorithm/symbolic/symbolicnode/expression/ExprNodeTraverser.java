@@ -231,6 +231,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
         if(!node.isTerminal() || !node.isComplete()) checkIfDefault();
     }
 
+    // TODO this is not the right place for this check
     private void checkIfDefault(){
         final Expr<?> expr = currentNode.getSymbolicRepresentation(Expr.class).first;
         if(!ExprUtils.getConstants(expr).contains(currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class))){
