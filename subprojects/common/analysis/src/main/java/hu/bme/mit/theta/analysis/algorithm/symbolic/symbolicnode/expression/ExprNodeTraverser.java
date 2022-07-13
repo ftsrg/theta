@@ -37,9 +37,9 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
         this.solver = solverSupplier.get();
         this.stack = new Stack<>();
 
-        this.currentNode = Preconditions.checkNotNull(rootNode);
+        setCurrentNode(Preconditions.checkNotNull(rootNode));
         solver.add(rootNode.getSymbolicRepresentation(Expr.class).first);
-        pushNegatedAssignments();
+        solver.push();
     }
 
     @Override
@@ -52,8 +52,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
         Preconditions.checkState(stack.size()>0);
         popNegatedAssignments();
         solver.pop(); // pop assignment that brought us here
-        currentNode = stack.pop();
-        pushNegatedAssignments();
+        setCurrentNode(stack.pop());
         return currentNode;
     }
 
@@ -146,8 +145,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
             solver.push();
             solver.add(Eq(currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class).getType())));
             stack.push(currentNode);
-            currentNode = currentNode.getCacheView().get(assignment);
-            pushNegatedAssignments();
+            setCurrentNode(currentNode.getCacheView().get(assignment));
             return currentNode;
         } else return null;
     }
@@ -185,11 +183,11 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
                     literalToCache = literal.get();
                 } else {
                     final int newValue;
-                    if (currentNode.getSymbolicRepresentation().second.isBounded()) {
-                        final IntSetView domain = IntSetView.range(0, currentNode.getSymbolicRepresentation().second.getDomainSize());
-                        final IntSetView remaining = domain.minus(currentNode.getCacheView().keySet());
+                    if (node.getSymbolicRepresentation().second.isBounded()) {
+                        final IntSetView domain = IntSetView.range(0, node.getSymbolicRepresentation().second.getDomainSize());
+                        final IntSetView remaining = domain.minus(node.getCacheView().keySet());
                         if (remaining.isEmpty()) {
-                            currentNode.getExplicitRepresentation().setComplete();
+                            node.getExplicitRepresentation().setComplete();
                             return;
                         } else {
                             final var cur = remaining.cursor();
@@ -197,7 +195,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
                             newValue = cur.elem();
                         }
                     } else {
-                        final IntSetView cachedKeys = currentNode.getCacheView().keySet();
+                        final IntSetView cachedKeys = node.getCacheView().keySet();
                         newValue = cachedKeys.isEmpty() ? 0 : cachedKeys.statistics().highestValue() + 1;
                     }
                     literalToCache = LitExprConverter.toLitExpr(newValue, decl.getType());
@@ -227,4 +225,21 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
         }
     }
 
+    private void setCurrentNode(MddSymbolicNode node){
+        this.currentNode = node;
+        pushNegatedAssignments();
+        if(!node.isTerminal() || !node.isComplete()) checkIfDefault();
+    }
+
+    private void checkIfDefault(){
+        final Expr<?> expr = currentNode.getSymbolicRepresentation(Expr.class).first;
+        if(!ExprUtils.getConstants(expr).contains(currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class))){
+            final MddSymbolicNode childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>(expr,currentNode.getSymbolicRepresentation().second.getLower().orElse(null))));
+            if(currentNode.getCacheView().defaultValue() != null) Preconditions.checkState(currentNode.getCacheView().defaultValue().equals(childNode));
+            else {
+                currentNode.getExplicitRepresentation().cacheDefault(childNode);
+                currentNode.getExplicitRepresentation().setComplete();
+            }
+        }
+    }
 }

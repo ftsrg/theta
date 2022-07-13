@@ -6,11 +6,11 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprVariable;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -26,11 +26,12 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import java.io.FileNotFoundException;
 import java.util.Set;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-public class ExprNodeTest {
+public class ExprNodeTest3 {
 
     public static void main(String[] args){
 
@@ -38,26 +39,25 @@ public class ExprNodeTest {
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
         ConstDecl<IntType> declX = Decls.Const("x", Int());
+        ConstDecl<IntType> declX_prime = Decls.Const("x_prime", Int());
         ConstDecl<IntType> declY = Decls.Const("y", Int());
-        ConstDecl<IntType> declZ = Decls.Const("z", Int());
+        ConstDecl<IntType> declY_prime = Decls.Const("y_prime", Int());
 
-        MddVariable z = varOrder.createOnTop(MddVariableDescriptor.create(declZ, 0));
+        MddVariable y_prime = varOrder.createOnTop(MddVariableDescriptor.create(declY_prime, 0));
         MddVariable y = varOrder.createOnTop(MddVariableDescriptor.create(declY, 0));
+        MddVariable x_prime = varOrder.createOnTop(MddVariableDescriptor.create(declX_prime, 0));
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
-        // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
-//        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
+        Expr<BoolType> state = And(Eq(declX.getRef(), Int(2)), Eq(declY.getRef(), Int(0)));
+        Expr<BoolType> action = And(Eq(declX_prime.getRef(), Add(declX.getRef(), Int(1))),Eq(declY_prime.getRef(), declY.getRef()));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x));
+        MddSymbolicNode stateRoot = new MddSymbolicNode(new Pair<>(state, x));
+        MddSymbolicNode actionRoot = new MddSymbolicNode(new Pair<>(action, x));
 
-        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
+        final Set<Valuation> valuations = ValuationCollector.collect(stateRoot, ExprVariable.getNodeTraverser(stateRoot, Z3SolverFactory.getInstance()::createSolver));
+        System.out.println(valuations);
 
-        while (!rootNode.isComplete()) traverser.queryEdge();
-
-        var interpreter = ExprVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
-
-        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
+        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest3::nodeToString).visualize(stateRoot);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
