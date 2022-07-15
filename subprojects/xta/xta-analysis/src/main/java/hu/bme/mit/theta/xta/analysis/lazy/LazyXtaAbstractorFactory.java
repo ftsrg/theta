@@ -1,5 +1,11 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplAnalysis;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprActionPost;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprAnalysis;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprInvTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprTransFunc;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.*;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -26,6 +32,7 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplTransFunc;
+import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expr.*;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
@@ -88,7 +95,26 @@ public final class LazyXtaAbstractorFactory {
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
             final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
-                    abstractor = new LazyXtaAbstractor<>(system, searchStrategy, lazyStrategy, lazyAnalysis, prec);
+                    abstractor = new LazyAbstractor(
+                    XtaLts.create(system),
+                    searchStrategy,
+                    lazyStrategy,
+                    lazyAnalysis,
+                    prec,
+                    s -> ((XtaState) s).isError(),
+                    new Lens<XtaState<Prod2State<DConcr, CConcr>>, Prod2State<DConcr, CConcr>>() {
+
+                        @Override
+                        public Prod2State<DConcr, CConcr> get(XtaState<Prod2State<DConcr, CConcr>> prod2StateXtaState) {
+                            return prod2StateXtaState.getState();
+                        }
+
+                        @Override
+                        public XtaState<Prod2State<DConcr, CConcr>> set(XtaState<Prod2State<DConcr, CConcr>> prod2StateXtaState, Prod2State<DConcr, CConcr> dConcrCConcrProd2State) {
+                            throw new UnsupportedOperationException();
+                        }
+                    }
+            );
             return abstractor;
         }
 
@@ -153,10 +179,10 @@ public final class LazyXtaAbstractorFactory {
         private Analysis createConcrDataAnalysis() {
             switch (dataStrategy.getConcrDom()) {
                 case EXPL:
-                    return XtaExplAnalysis.create(system);
+                    return ExplAnalysis.create(system.getInitVal(), XtaExplUtils::post);
                 case EXPR:
                     final Solver solver = solverFactory.createSolver();
-                    return XtaExprAnalysis.create(system, solver);
+                    return ExprAnalysis.create(system.getInitVal(), solver);
                 default:
                     throw new AssertionError();
             }
@@ -283,15 +309,15 @@ public final class LazyXtaAbstractorFactory {
         }
 
         private InvTransFunc createDataInvTransFunc() {
-            return XtaExprInvTransFunc.getInstance();
+            return ExprInvTransFunc.create(XtaExplUtils::pre);
         }
 
         private TransFunc createDataAbstrTransFunc(final DataStrategy2.AbstrDom abstrDom) {
             switch (abstrDom) {
                 case EXPL:
-                    return XtaExplTransFunc.create(system);
+                    return ExplTransFunc.create(XtaExplUtils::post);
                 case EXPR:
-                    return XtaExprTransFunc.getInstance();
+                    return ExprTransFunc.create(XtaExprActionPost.create());
                 default:
                     throw new AssertionError();
             }

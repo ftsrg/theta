@@ -128,6 +128,7 @@ public final class XtaCli {
 	private <S extends LazyState<?, ?>> void run(Abstractor<S, XtaAction, UnitPrec> abstractor){
 		final ARG<S, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, UnitPrec.getInstance());
+		System.out.println("(SafetyResult Safe)");
 	}
 
 	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {

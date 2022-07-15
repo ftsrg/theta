@@ -36,6 +36,12 @@ import static com.google.common.base.Preconditions.checkState;
 public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
 	public static final GlobalDeclUsageVisitor instance = new GlobalDeclUsageVisitor();
 
+	public void clear() {
+		globalUsages.clear();
+		usedContexts.clear();
+		current = null;
+	}
+
 	private final Map<String, Set<String>> globalUsages = new LinkedHashMap<>();
 	private final List<Tuple2<String, CParser.ExternalDeclarationContext>> usedContexts = new ArrayList<>();
 	private String current;

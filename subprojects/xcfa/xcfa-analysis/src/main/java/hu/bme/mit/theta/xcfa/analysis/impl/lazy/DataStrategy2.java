@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xta.analysis.lazy;
+package hu.bme.mit.theta.xcfa.analysis.impl.lazy;
 
 import java.util.Collection;
 import java.util.List;

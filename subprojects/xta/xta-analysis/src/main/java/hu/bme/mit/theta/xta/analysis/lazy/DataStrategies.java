@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaState;
-import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.itp.ItpExplState;
 
 final class DataStrategies {
 

@@ -28,6 +28,10 @@ import java.util.Optional;
 
 public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 	public static final TypedefVisitor instance = new TypedefVisitor();
+
+	public void clear() {
+		declarations.clear();
+	}
 	private final List<CDeclaration> declarations = new ArrayList<>();
 
 	public Optional<CComplexType> getType(String id) {
