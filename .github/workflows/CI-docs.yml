@@ -9,7 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    working-directory: doc/wiki
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -19,3 +18,4 @@ jobs:
       - run: pip install python-markdown-math==0.8
       - run: pip install mkdocs==1.3.0
       - run: mkdocs gh-deploy --site-dir wiki
+        working-directory: doc/wiki
