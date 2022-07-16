@@ -12,6 +12,10 @@ import hu.bme.mit.theta.common.GrowingIntArray;
 
 import java.util.Objects;
 
+/**
+ * Represents a decision that is encoded in a symbolic representation.
+ * Contains a cache that grows as the traversers enumerate the explicit representation of the subtree.
+ */
 public class MddSymbolicNode implements IMddSymbolicNode {
 
     private final SymbolicRepresentation symbolicRepresentation;
@@ -42,6 +46,9 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         this(new SymbolicRepresentation(symbolicRepresentation), symbolicRepresentation.second != null ? symbolicRepresentation.second.getLevel() : null);
     }
 
+    /**
+     * This is a wrapped around the symbolic representation that ensures comparability of templates and nodes.
+     */
     public static class SymbolicRepresentation {
         private final Pair<Object, MddVariable> value;
 
@@ -72,6 +79,9 @@ public class MddSymbolicNode implements IMddSymbolicNode {
         }
     }
 
+    /**
+     * This class handles the cache.
+     */
     public static class ExplicitRepresentation {
         private final HashIntObjMap<MddSymbolicNode> cache;
         private final GrowingIntArray edgeOrdering;

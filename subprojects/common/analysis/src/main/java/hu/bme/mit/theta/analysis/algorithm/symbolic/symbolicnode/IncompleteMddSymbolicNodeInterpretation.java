@@ -3,6 +3,10 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 
+/**
+ * Provides an interpretation for nodes that haven't been fully enumerated yet.
+ * Wraps a node and a traverser and makes the traverser enumerate only what is necessary.
+ */
 public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
 
     private final MddSymbolicNode node;
@@ -57,6 +61,9 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
         return -1;
     }
 
+    /**
+     * A cursor implementation for incomplete symbolic nodes.
+     */
     private class IncompleteMddSymbolicNodeCursor implements IntObjCursor<MddSymbolicNode>{
         private int index;
         private int key;
@@ -80,6 +87,10 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
             return value;
         }
 
+        /**
+         * Uses values from the cache as long as possible. Uses the traverser to query edges when all edges from the cache were used.
+         * @return true if the move was successful
+         */
         @Override
         public boolean moveNext() {
             if(index < node.getExplicitRepresentation().getSize() - 1){
