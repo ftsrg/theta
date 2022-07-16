@@ -15,6 +15,9 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+/**
+ * A constrained traverser that implements constrained traversal by "poisoning" the solver of a wrapped {@link ExprNodeTraverser} with the constraints.
+ */
 public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
 
     final ExprNodeTraverser wrapped;

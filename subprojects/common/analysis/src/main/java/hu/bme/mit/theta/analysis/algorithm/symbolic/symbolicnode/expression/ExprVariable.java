@@ -16,6 +16,9 @@ import hu.bme.mit.theta.solver.Solver;
 
 import java.util.function.Supplier;
 
+/**
+ * This class will be a descendant of the {@link MddVariable} class once the 'final' keyword is removed.
+ */
 public class ExprVariable {
 
     public static IntObjMapView<MddSymbolicNode> getNodeInterpreter(MddSymbolicNode node, MddVariable variable, Supplier<Solver> solverSupplier) {

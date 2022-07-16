@@ -13,6 +13,11 @@ import hu.bme.mit.theta.common.container.Containers;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * An MddSymbolicNode-based implementation of a {@link TraversalConstraint}.
+ * For each variable, the lowest and highest values that appear on outgoing edges are collected.
+ * If a variable appears in node with a default value or doesn't appear in the subtree at all, then no bounds are returned.
+ */
 public class MddSymbolicNodeTraversalConstraint implements TraversalConstraint{
 
     private final ObjIntMap<MddVariable> lowerBounds;

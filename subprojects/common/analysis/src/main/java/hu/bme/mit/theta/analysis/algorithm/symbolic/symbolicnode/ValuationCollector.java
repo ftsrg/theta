@@ -12,6 +12,10 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import java.util.Set;
 import java.util.Stack;
 
+/**
+ * A utility class for collecting all vectors from a subtree represented by a symbolic node.
+ * Only works with finite diagrams, but can handle default edges.
+ */
 public class ValuationCollector {
 
     private static class Assignment{
@@ -24,6 +28,12 @@ public class ValuationCollector {
         }
     }
 
+    /**
+     * Collect all vectors from the subtree represented by a symbolic node.
+     * @param node the symbolic node
+     * @param traverser the traverser that will be used to enumerate the subtree. Must start on the node.
+     * @return the set of vectors represented by the node
+     */
     public static Set<Valuation> collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser){
         Preconditions.checkState(traverser.getCurrentNode().equals(node));
 

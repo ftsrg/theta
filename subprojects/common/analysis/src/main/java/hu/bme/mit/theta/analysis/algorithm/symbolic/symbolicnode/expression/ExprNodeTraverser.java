@@ -111,13 +111,14 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
                         final IntSetView remaining = domain.minus(currentNode.getCacheView().keySet());
                         if (remaining.isEmpty()) {
                             currentNode.getExplicitRepresentation().setComplete();
-                            return new QueryResult(QueryResult.Status.FAILED);
+                            return QueryResult.failed();
                         } else {
                             final var cur = remaining.cursor();
                             Preconditions.checkState(cur.moveNext());
                             newValue = cur.elem();
                         }
                     } else {
+                        // only visited once per node, because of the negated assignment that is pushed to the solver
                         final IntSetView cachedKeys = currentNode.getCacheView().keySet();
                         newValue = cachedKeys.isEmpty() ? 0 : cachedKeys.statistics().highestValue() + 1;
                     }
@@ -130,12 +131,12 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
                 solver.add(Neq(decl.getRef(), literal));
                 pushedNegatedAssignments++;
                 cacheModel(modelToCache);
-                return new QueryResult(LitExprConverter.toInt(literal));
+                return QueryResult.singleEdge(LitExprConverter.toInt(literal));
             } else {
                 currentNode.getExplicitRepresentation().setComplete();
             }
         }
-        return new QueryResult(QueryResult.Status.FAILED);
+        return QueryResult.failed();
     }
 
     // TODO összevonni queryChilddal
