@@ -10,6 +10,9 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import java.math.BigInteger;
 
+/**
+ * Util class for converting between integers and {@link LitExpr}
+ */
 public class LitExprConverter {
 
     public static int toInt(LitExpr litExpr) {

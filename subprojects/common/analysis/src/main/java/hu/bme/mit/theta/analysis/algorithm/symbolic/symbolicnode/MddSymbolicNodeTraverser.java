@@ -1,33 +1,72 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
-import com.google.common.base.Preconditions;
+/**
+ * The interface of the 'traverser robots' that are responsible for enumerating a subtree represented by a symbolic mdd node
+ */
 public interface MddSymbolicNodeTraverser {
 
+    /**
+     * Gets the current node.
+     * @return the current node
+     */
     MddSymbolicNode getCurrentNode();
 
+    /**
+     * Return to the node where the last {@link #moveDown(int)}} was issued. Can't move beyond the starting node.
+     * @return the new node
+     */
     MddSymbolicNode moveUp();
 
+    /**
+     * Move down along an edge.
+     * @param assignment the key of the edge
+     * @return the new node
+     */
     MddSymbolicNode moveDown(int assignment);
 
+    /**
+     * Query the next edge that wasn't cached yet. Doesn't guarantee an ordering.
+     * @return the result of the query
+     */
     QueryResult queryEdge();
 
+    /**
+     * Check whether an edge exists without moving down.
+     * @param assignment the key of the edge to check
+     * @return true if the edge exists, false otherwise
+     */
     boolean queryEdge(int assignment); //return node, peakDown
 
+    /**
+     * Return the target of an edge if it exists without moving down along the edge.
+     * @param assignment the key of the edge
+     * @return the target of the edge if exists
+     */
     MddSymbolicNode peakDown(int assignment);
 
+    /**
+     * Represents the result of querying an edge
+     */
     class QueryResult{
         private final Status status;
 
         private final int key;
-        public QueryResult(int key) {
-            this.status = Status.SINGLE_EDGE;
+
+        private QueryResult(int key, Status status) {
+            this.status = status;
             this.key = key;
         }
 
-        public QueryResult(Status status) {
-            Preconditions.checkArgument(status != Status.SINGLE_EDGE);
-            this.status = status;
-            this.key = -1;
+        public static QueryResult singleEdge(int key){
+            return new QueryResult(key, Status.SINGLE_EDGE);
+        }
+
+        public static QueryResult failed(){
+            return new QueryResult(-1, Status.FAILED);
+        }
+
+        public static QueryResult defaultEdge(){
+            return new QueryResult(-1, Status.DEFAULT_EDGE);
         }
 
         public int getKey() {
@@ -37,6 +76,13 @@ public interface MddSymbolicNodeTraverser {
         public Status getStatus() {
             return status;
         }
+
+        /**
+         * The status of the result.
+         * FAILED: no further edges are possible
+         * SINGLE_EDGE: a single edge was found
+         * DEFAULT_EDGE: the node is a level-skip and has a default value
+         */
         public enum Status {
             FAILED, SINGLE_EDGE, DEFAULT_EDGE
         }

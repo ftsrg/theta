@@ -6,6 +6,7 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 
 import java.util.Objects;
 
+// TODO temporary interface, until the interface in delta is updated
 public interface IMddSymbolicNode {
 
     boolean isOn(MddVariable var1);
