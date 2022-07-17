@@ -34,8 +34,7 @@ import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 public class UnusedVarRemovalPass extends ProcedurePass {
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON)
-			removeUnusedVars(builder, null);
+		removeUnusedVars(builder, null);
 		return builder;
 	}
 
@@ -75,7 +74,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			}
 			List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());
 			for (VarDecl<?> varDecl : unused) {
-				builder.getLocalVars().remove(varDecl);
+				builder.removeVar(varDecl);
 			}
 		}
 	}

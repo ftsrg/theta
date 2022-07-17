@@ -48,6 +48,8 @@ public final class Z3SolverFactory implements SolverFactory {
 			case MAC:
 				System.loadLibrary("z3java");
 				break;
+			default:
+				throw new UnsupportedOperationException("Operating system not supported.");
 		}
 	}
 

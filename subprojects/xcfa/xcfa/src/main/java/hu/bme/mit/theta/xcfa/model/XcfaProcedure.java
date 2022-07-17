@@ -82,11 +82,9 @@ public final class XcfaProcedure {
 			varLut.put(varDecl, newVar);
 			return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
 		}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-		altVars = new LinkedHashMap<>();
-		from.altVars.forEach((var, param) -> {
-			VarDecl<?> newVar = varLut.get(var);
-			altVars.put(newVar, XcfaProcedure.getAltVar(newVar));
-		});
+		altVars = localVars.keySet().stream().map(var ->
+			 Map.entry(var, XcfaProcedure.getAltVar(var))
+		).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 		final Map<XcfaLocation, XcfaLocation> locLut = new LinkedHashMap<>();
 		locs = ImmutableList.copyOf(from.locs.stream().map(xcfaLocation -> {
 			final XcfaLocation newLoc = XcfaLocation.copyOf(xcfaLocation);
@@ -357,6 +355,11 @@ public final class XcfaProcedure {
 			checkNotBuilt();
 			localVars.put(var, Optional.ofNullable(initValue));
 			altVars.put(var, XcfaProcedure.getAltVar(var));
+		}
+
+		public void removeVar(final VarDecl<?> var) {
+			localVars.remove(var);
+			altVars.remove(var);
 		}
 
 		// rtype
