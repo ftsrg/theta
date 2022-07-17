@@ -24,8 +24,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -91,16 +89,6 @@ public class StmtAtomCollector {
 		public Void visit(LoopStmt stmt, Set<Expr<BoolType>> atoms) {
 			stmt.getStmt().accept(this, atoms);
 			return null;
-		}
-
-		@Override
-		public <DeclType extends Type> Void visit(PushStmt<DeclType> stmt, Set<Expr<BoolType>> param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> Void visit(PopStmt<DeclType> stmt, Set<Expr<BoolType>> param) {
-			throw new UnsupportedOperationException();
 		}
 
 		public Void visit(IfStmt stmt, Set<Expr<BoolType>> atoms) {

@@ -19,8 +19,27 @@ package hu.bme.mit.theta.xcfa.passes;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.*;
-import hu.bme.mit.theta.xcfa.passes.processpass.*;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.AddAtomicBeginEndsToFunctions;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.AddHavocRange;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToFinalLocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.CallsToHavocs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ConditionalFinalsToAssumes;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.EliminateSelfLoops;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.FpFunctionsToExprs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.InitMemory;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.PorPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.PthreadCallsToThreadStmts;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.ReferenceToMemory;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.RemoveDeadEnds;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
+import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
+import hu.bme.mit.theta.xcfa.passes.processpass.AssignFunctionParam;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
+import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.DemoteThreadLocalGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.RemoveUnusedGlobals;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
@@ -71,7 +90,6 @@ public class XcfaPassManager {
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
 				new FunctionInlining(),
-				new FunctionCallsToPushPops(),
 				new AssignFunctionParam()
 		));
 		xcfaPasses.addAll((List.of(

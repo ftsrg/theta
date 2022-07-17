@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.xcfa.analysis.portfolio.common;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.NotSolvableException;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;

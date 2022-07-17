@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -111,24 +109,6 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 	@Override
 	public List<XcfaLabel> visit(LoopStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
-	}
-
-	@Override
-	public <DeclType extends Type> List<XcfaLabel> visit(PushStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		if (param.containsKey(stmt.getVarDecl())) {
-			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
-			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
-		}
-		return List.of(Stmt(stmt));
-	}
-
-	@Override
-	public <DeclType extends Type> List<XcfaLabel> visit(PopStmt<DeclType> stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
-		if (param.containsKey(stmt.getVarDecl())) {
-			Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>> replacement = param.get(stmt.getVarDecl());
-			return List.of(Stmt(stmt), Stmt(Assign(replacement.get1(), cast(ArrayWriteExpr.of(cast(replacement.get1().getRef(), ArrayType.of(replacement.get1().getType().getIndexType(), replacement.get1().getType().getElemType())), cast(replacement.get2(), replacement.get1().getType().getIndexType()), cast(stmt.getVarDecl().getRef(), replacement.get1().getType().getElemType())), replacement.get1().getType()))));
-		}
-		return List.of(Stmt(stmt));
 	}
 
 	@Override

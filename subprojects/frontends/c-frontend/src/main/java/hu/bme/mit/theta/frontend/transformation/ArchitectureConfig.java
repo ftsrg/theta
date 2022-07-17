@@ -36,6 +36,7 @@ public class ArchitectureConfig {
 	public static Boolean multiThreading = false;
 	public static ArithmeticType arithmetic = ArithmeticType.efficient;
 
+	private ArchitectureConfig(){}
 
 	/**
 	 * ILP32 and LP64 Architecture, see here: https://unix.org/whitepapers/64bit.html

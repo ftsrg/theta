@@ -29,19 +29,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
 	private final Integer process;
+	private final XcfaEdge edge;
 	private final List<XcfaLabel> labels;
 	private final XcfaLocation source;
 	private final XcfaLocation target;
 
-	protected XcfaAction(final Integer process, final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
+	protected XcfaAction(final Integer process, final XcfaEdge edge, final List<XcfaLabel> labels) {
 		this.process = checkNotNull(process);
-		this.source = checkNotNull(source);
-		this.target = checkNotNull(target);
+		this.edge = checkNotNull(edge);
+		this.source = checkNotNull(edge.getSource());
+		this.target = checkNotNull(edge.getTarget());
 		this.labels = checkNotNull(labels);
 	}
 
 	public static XcfaAction create(final Integer process, final XcfaEdge edge) {
-		return new XcfaAction(process, edge.getSource(), edge.getTarget(), edge.getLabels());
+		return new XcfaAction(process, edge, edge.getLabels());
+	}
+
+	public XcfaEdge getEdge() {
+		return edge;
 	}
 
 	public XcfaLocation getSource() {
@@ -75,6 +81,6 @@ public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction
 	}
 
 	public XcfaAction withLabels(final List<XcfaLabel> stmts) {
-		return new XcfaAction(process, source, target, stmts);
+		return new XcfaAction(process, edge, stmts);
 	}
 }

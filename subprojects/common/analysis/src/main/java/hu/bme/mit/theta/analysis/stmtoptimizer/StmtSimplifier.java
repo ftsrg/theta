@@ -28,8 +28,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
-import hu.bme.mit.theta.core.stmt.PopStmt;
-import hu.bme.mit.theta.core.stmt.PushStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -195,16 +193,6 @@ public class StmtSimplifier {
 				return SimplifyResult.of(SequenceStmt.of(stmts), SimplifyStatus.SUCCESS);
 			}
 			throw new IllegalArgumentException(String.format("Couldn't unroll loop statement %s", stmt));
-		}
-
-		@Override
-		public <DeclType extends Type> SimplifyResult visit(PushStmt<DeclType> stmt, MutableValuation param) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <DeclType extends Type> SimplifyResult visit(PopStmt<DeclType> stmt, MutableValuation param) {
-			throw new UnsupportedOperationException();
 		}
 
 		public SimplifyResult visit(IfStmt stmt, MutableValuation valuation) {
