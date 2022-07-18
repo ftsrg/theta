@@ -20,20 +20,19 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
-import java.util.Objects;
+public abstract class XcfaSTState<S extends ExprState> extends XcfaState<S> {
+	protected final S globalState;
 
-public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
-	private final XcfaLocation currentLoc;
-	private final S globalState;
-
-	private XcfaSTState(final XcfaLocation currentLoc, final S globalState) {
-		this.currentLoc = currentLoc;
+	protected XcfaSTState(final S globalState) {
 		this.globalState = globalState;
 	}
 
 	public static <S extends ExprState> XcfaSTState<S> create(final XcfaLocation currentLoc, final S globalState) {
-		return new XcfaSTState<S>(currentLoc, globalState);
+		return FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
+				new XcfaSTStateSimple<>(currentLoc, globalState) :
+				new XcfaSTStateStack<>(currentLoc, globalState);
 	}
 
 	@Override
@@ -52,28 +51,19 @@ public class XcfaSTState<S extends ExprState> extends XcfaState<S> {
 	}
 
 	@Override
-	public XcfaLocation getCurrentLoc() {
-		return currentLoc;
-	}
+	public abstract XcfaLocation getCurrentLoc();
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		XcfaSTState<?> that = (XcfaSTState<?>) o;
-		return Objects.equals(currentLoc, that.currentLoc) && globalState.equals(that.globalState);
+		return globalState.equals(that.globalState) && equalLocations(that);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(currentLoc, globalState);
-	}
+	public abstract boolean equalLocations(XcfaSTState<?> o);
 
-	public XcfaSTState<S> withState(final S succState) {
-		return create(currentLoc, succState);
-	}
+	public abstract XcfaSTState<S> withState(final S succState);
 
-	public XcfaSTState<S> withLocation(final XcfaLocation location) {
-		return create(location, globalState);
-	}
+	public abstract XcfaSTState<S> withLocation(final XcfaLocation location);
 }
