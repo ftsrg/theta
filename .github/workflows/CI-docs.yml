@@ -23,4 +23,4 @@ jobs:
         with:
           branch: gh-pages
           folder: doc/wiki/wiki
-          target_folder: javadoc
+          target_folder: wiki
