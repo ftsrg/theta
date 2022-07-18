@@ -5,23 +5,8 @@ on:
   workflow_call:
 
 jobs:
-  prerequisites:
-    name: Prerequisites
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v4
-        with:
-          cancel_others: true
-          concurrent_skipping: always
-
   # Tests Theta on different Linux versions
   test-linux:
-    needs: [ prerequisites ]
-    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -45,8 +30,6 @@ jobs:
 
   # Tests Theta on different Windows versions
   test-windows:
-    needs: [ prerequisites ]
-    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,8 +57,6 @@ jobs:
 
   # Test the different Theta Docker images
   test-docker:
-    needs: [ prerequisites ]
-    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
