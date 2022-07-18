@@ -86,18 +86,18 @@ jobs:
           { name: theta-xta-cli, test: "subprojects/xta/xta/src/test/resources/csma-2.xta -c LU -s BFS" }
         ]
     runs-on: ubuntu-latest
-    name: Build Docker image ${{ matrix.container }}
+    name: Build Docker image ${{ matrix.container.name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Build and export ${{ matrix.container }}
+      - name: Build and export ${{ matrix.container.name }}
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: docker/${{ matrix.container }}.Dockerfile
-          tags: ${{ matrix.container }}:latest
+          file: docker/${{ matrix.container.name }}.Dockerfile
+          tags: ${{ matrix.container.name }}:latest
       - name: Run test for ${{ matrix.container.name }}
         run: |
           ./docker/run-${{ matrix.container.name }}.sh ${{ matrix.container.test }}
