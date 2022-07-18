@@ -21,10 +21,10 @@ jobs:
     needs: [ prerequisites ]
     if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
     name: CI-build
-    uses: ./.github/workflows/CI/CI-build.yml
+    uses: ./.github/workflows/CI-build.yml
 
   CI-sonar:
     needs: [ prerequisites ]
     if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
     name: CI-sonar
-    uses: ./.github/workflows/CI/CI-sonar.yml
+    uses: ./.github/workflows/CI-sonar.yml
