@@ -18,4 +18,5 @@ runs:
       with:
         context: .
         file: docker/${{ inputs.container-name }}.Dockerfile
+        load: true
         tags: ${{ inputs.container-name }}:${{ inputs.container-version }}
