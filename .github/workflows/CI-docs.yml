@@ -1,0 +1,6 @@
+name: CI-docs
+
+on:
+  workflow_dispatch:
+
+jobs:
