@@ -73,7 +73,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
 			}
 			List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());
 			for (VarDecl<?> varDecl : unused) {
-				builder.getLocalVars().remove(varDecl);
+				builder.removeVar(varDecl);
 			}
 		}
 	}

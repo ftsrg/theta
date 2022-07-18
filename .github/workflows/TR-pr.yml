@@ -1,4 +1,4 @@
-name: TR-master
+name: TR-pr
 
 on:
   pull_request:
