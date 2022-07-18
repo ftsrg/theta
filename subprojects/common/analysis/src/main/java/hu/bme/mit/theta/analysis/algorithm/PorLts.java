@@ -211,7 +211,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param transition whose shared objects are to be returned
 	 * @return the set of directly or indirectly used shared objects
 	 */
-	private Set<? extends Decl<? extends Type>> getCachedUsedSharedObjects(T transition) {
+	protected Set<? extends Decl<? extends Type>> getCachedUsedSharedObjects(T transition) {
 		if (!usedSharedObjects.containsKey(transition)) {
 			Set<? extends Decl<? extends Type>> vars = getUsedSharedObjects(transition);
 			usedSharedObjects.put(transition, vars);

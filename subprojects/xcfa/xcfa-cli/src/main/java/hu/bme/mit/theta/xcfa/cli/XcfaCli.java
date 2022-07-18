@@ -204,6 +204,9 @@ public class XcfaCli {
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
+	@Parameter(names = "--porLevel", description = "Level of dependency applied in POR")
+	XcfaConfigBuilder.PorDependencyLevel porDependencyLevel = XcfaConfigBuilder.PorDependencyLevel.BASIC;
+
 	@Parameter(names = "--lbe", description = "Large-block encoding level")
 	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
@@ -530,7 +533,8 @@ public class XcfaCli {
 			} else {
 				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
 						.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
-						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
+						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl)
+						.porDependencyLevel(porDependencyLevel).build(xcfa);
 			}
 
 		} catch (final Exception ex) {

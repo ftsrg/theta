@@ -88,10 +88,12 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	public Collection<ArgNode<S, A>> expand(final ArgNode<S, A> node, final P prec) {
 		checkNotNull(node);
 		checkNotNull(prec);
-
+		if (!prec.getUsedVars().isEmpty()) {
+			var a = 2;
+		}
 		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
-		final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
+		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, prec);
 		final TransFunc<S, ? super A, ? super P> transFunc = analysis.getTransFunc();
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);
