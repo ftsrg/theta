@@ -1,4 +1,4 @@
-name: CI
+name: CI-sonar
 
 on:
   workflow_dispatch:

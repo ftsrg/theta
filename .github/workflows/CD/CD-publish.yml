@@ -1,0 +1,6 @@
+name: CD-publish
+
+on:
+  workflow_dispatch:
+
+jobs:
