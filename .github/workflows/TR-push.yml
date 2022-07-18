@@ -5,3 +5,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  prerequisites:
+    name: Prerequisites
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v4
+        with:
+          cancel_others: true
+
+  CI-build:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: CI-build
+    uses: ./.github/workflows/CI/CI-build.yml
+
+  CI-sonar:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: CI-sonar
+    uses: ./.github/workflows/CI/CI-sonar.yml

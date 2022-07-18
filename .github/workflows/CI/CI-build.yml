@@ -5,3 +5,39 @@ on:
   workflow_call:
 
 jobs:
+  prerequisites:
+    name: Prerequisites
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v4
+        with:
+          cancel_others: true
+          concurrent_skipping: always
+
+  # Builds Theta
+  build:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 17 ]
+    runs-on: ubuntu-latest
+    name: Build with JDK ${{ matrix.java }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build -x test --no-daemon

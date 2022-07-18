@@ -6,3 +6,66 @@ on:
   workflow_dispatch:
 
 jobs:
+  prerequisites:
+    name: Prerequisites
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v4
+        with:
+          cancel_others: true
+
+  CI-build:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: CI-build
+    uses: ./.github/workflows/CI/CI-build.yml
+
+  CI-sonar:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: CI-sonar
+    uses: ./.github/workflows/CI/CI-sonar.yml
+
+  CI-test:
+    needs: [ CI-build ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: CI-test
+    uses: ./.github/workflows/CI/CI-test.yml
+
+  check-version:
+    needs: [ CI-build ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    name: Check version bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          path: master
+      - uses: actions/checkout@v3
+        with:
+          path: pr
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: |
+          chmod +x master/gradlew
+          chmod +x pr/gradlew
+      - name: Compare versions
+        run: |
+          cd master
+          BASE_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
+          echo "Base version: $BASE_VERSION"
+          cd ../pr
+          PR_VERSION=$(./gradlew properties --no-daemon | grep ^version: | awk -F' ' '{print $2}')
+          echo "PR version: $PR_VERSION"
+          echo "PR is expected to be up-to-date with and not to modify the version number compared to the master branch"
+          [ $BASE_VERSION == $PR_VERSION ]

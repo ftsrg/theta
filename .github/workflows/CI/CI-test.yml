@@ -5,3 +5,99 @@ on:
   workflow_call:
 
 jobs:
+  prerequisites:
+    name: Prerequisites
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v4
+        with:
+          cancel_others: true
+          concurrent_skipping: always
+
+  # Tests Theta on different Linux versions
+  test-linux:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, ubuntu-22.04, ubuntu-20.04 ]
+        java: [ 17 ]
+    runs-on: ${{ matrix.os }}
+    name: Test on ${{ matrix.os }} with JDK ${{ matrix.java }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Test with Gradle
+        run: ./gradlew build --no-daemon
+
+  # Tests Theta on different Windows versions
+  test-windows:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, windows-2022, windows-2019 ]
+        java: [ 17 ]
+    runs-on: ${{ matrix.os }}
+    name: Test on ${{ matrix.os }} with JDK ${{ matrix.java }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - name: Install VC-Redist 2010 and 2012
+        run: |
+          Install-Module -Name VcRedist -Force
+          $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
+          Save-VcRedist -VcList $VcList
+          Install-VcRedist -VcList $VcList -Silent
+      - name: Test with Gradle
+        run: .\gradlew.bat build --no-daemon
+
+  # Test the different Theta Docker images
+  test-docker:
+    needs: [ prerequisites ]
+    if: ${{ needs.prerequisites.outputs.should_skip != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [
+          { name: theta-cfa-cli, test: "subprojects/cfa/cfa/src/test/resources/counter5_true.cfa" },
+          { name: theta-sts-cli, test: "subprojects/sts/sts/src/test/resources/simple1.system" },
+          { name: theta-xsts-cli, test: "subprojects/xsts/xsts-analysis/src/test/resources/model/sequential.xsts --property \"!(x==1)\"" },
+          { name: theta-xta-cli, test: "subprojects/xta/xta/src/test/resources/csma-2.xta -c LU -s BFS" }
+        ]
+    runs-on: ubuntu-latest
+    name: Build Docker image ${{ matrix.container }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build and export ${{ matrix.container }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/${{ matrix.container }}.Dockerfile
+          tags: ${{ matrix.container }}:latest
+      - name: Run test for ${{ matrix.container.name }}
+        run: |
+          ./docker/run-${{ matrix.container.name }}.sh ${{ matrix.container.test }}
