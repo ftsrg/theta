@@ -1,0 +1,7 @@
+name: TR-push
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:

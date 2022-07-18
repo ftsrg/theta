@@ -1,0 +1,6 @@
+name: CI-test
+
+on:
+  workflow_dispatch:
+
+jobs:

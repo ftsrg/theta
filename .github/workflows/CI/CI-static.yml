@@ -1,0 +1,6 @@
+name: CI-static
+
+on:
+  workflow_dispatch:
+
+jobs:

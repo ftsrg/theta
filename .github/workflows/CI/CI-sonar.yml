@@ -1,0 +1,6 @@
+name: CI-sonar
+
+on:
+  workflow_dispatch:
+
+jobs:
