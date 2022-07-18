@@ -1,0 +1,26 @@
+name: "Build Theta on Linux"
+description: "Builds Theta on Linux with the given Java options"
+inputs:
+  java-version:
+    required: false
+    description: "The Java version"
+    default: "17"
+  java-distribution:
+    required: false
+    description: "The Java distribution"
+    default: temurin
+runs:
+  using: composite
+  steps:
+    - name: Set up Java ${{ inputs.java-distribution }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: ${{ inputs.java-version }}
+        cache: gradle
+    - name: Grant execute permission for gradlew
+      shell: bash
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      shell: bash
+      run: ./gradlew build -x test

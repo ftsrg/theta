@@ -1,0 +1,25 @@
+name: "Lint and static analyze using SonarCloud"
+description: "Builds Theta on Linux with the given Java options"
+inputs:
+  github-token:
+    required: true
+    description: "GITHUB_TOKEN"
+  sonar-token:
+    required: true
+    description: "SONAR_TOKEN"
+runs:
+  using: composite
+  steps:
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v1
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+    - name: Test and analyze
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ inputs.SONAR_TOKEN }}
+      run: |
+        ./gradlew test sonarqube --info --no-daemon

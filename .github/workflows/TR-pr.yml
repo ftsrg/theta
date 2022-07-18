@@ -7,14 +7,27 @@ on:
 
 jobs:
   CI-build:
-    name: CI-build
-    uses: ./.github/workflows/CI-build.yml
+    name: Build Theta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build Theta
+        uses: ./.github/actions/build-linux
 
   CI-sonar:
-    name: CI-sonar
-    uses: ./.github/workflows/CI-sonar.yml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    name: Lint and analyze with SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build Theta
+        uses: ./.github/actions/build-linux
+      - name: Lint and analyze with SonarCloud
+        uses: ./.github/actions/sonar
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
 
   CI-test:
     needs: [ CI-build ]

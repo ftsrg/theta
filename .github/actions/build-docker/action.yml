@@ -1,0 +1,21 @@
+name: "Build Theta using Docker"
+description: "Builds Theta using Docker"
+inputs:
+  container-name:
+    required: true
+    description: "The name of the container. Be sure, that there is a matching Dockerfile in the docker folder"
+  container-version:
+    required: false
+    description: "The version to use in the tag"
+    default: latest
+runs:
+  using: composite
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Build and export ${{ inputs.container-name }}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: docker/${{ inputs.container-name }}.Dockerfile
+        tags: ${{ inputs.container-name }}:${{ inputs.container-version }}

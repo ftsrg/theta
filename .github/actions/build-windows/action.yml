@@ -1,0 +1,30 @@
+name: "Build Theta on Windows"
+description: "Builds Theta on Windows with the given Java options"
+inputs:
+  java-version:
+    required: false
+    description: "The Java version"
+    default: "17"
+  java-distribution:
+    required: false
+    description: "The Java distribution"
+    default: temurin
+runs:
+  using: composite
+  steps:
+    - name: Set up Java ${{ inputs.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: gradle
+    - name: Install VC-Redist 2010 and 2012
+      shell: pwsh
+      run: |
+        Install-Module -Name VcRedist -Force
+        $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
+        Save-VcRedist -VcList $VcList
+        Install-VcRedist -VcList $VcList -Silent
+    - name: Build with Gradle
+      shell: pwsh
+      run: .\gradlew.bat build -x test
