@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -231,7 +230,7 @@ public final class XcfaProcedure {
 		if (varLut == null) {
 			varLut = new LinkedHashMap<>();
 			for (VarDecl<?> var : getLocalVarMap().keySet()) {
-				varLut.put(var, Decls.Var(var.getName() + "@" + callCount, var.getType()));
+				varLut.put(var, Var(var.getName() + "@" + callCount, var.getType()));
 			}
 			++callCount;
 			instantiatedVars.put(locationStack, varLut);
@@ -240,7 +239,7 @@ public final class XcfaProcedure {
 	}
 
 	private static VarDecl<?> getAltVar(VarDecl<?> var) {
-		return Decls.Var(var.getName() + "'", var.getType());
+		return Var(var.getName() + "'", var.getType());
 	}
 
 	public static final class Builder {

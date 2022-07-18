@@ -19,7 +19,6 @@ package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
-import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -29,41 +29,6 @@ import java.util.stream.Collectors;
 
 public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
 
-    public static class ProcedureLocation {
-        private final XcfaLocation location;
-        private final Map<VarDecl<?>, VarDecl<?>> varLut;
-
-        ProcedureLocation(XcfaLocation location) {
-            this(location, location.getParent().getInstantiatedVars(new Stack<>()));
-        }
-
-        ProcedureLocation(XcfaLocation location, Map<VarDecl<?>, VarDecl<?>> varLut) {
-            this.location = location;
-            this.varLut = varLut;
-        }
-
-        Map<VarDecl<?>, VarDecl<?>> getUsedVars() {
-            return varLut;
-        }
-
-        XcfaSTStateStack.ProcedureLocation withLocation(XcfaLocation location) {
-            return new XcfaSTStateStack.ProcedureLocation(location, varLut);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            XcfaSTStateStack.ProcedureLocation that = (XcfaSTStateStack.ProcedureLocation) o;
-            return location == that.location && varLut.entrySet().stream().noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(location, varLut);
-        }
-    }
-
     private final Stack<XcfaSTStateStack.ProcedureLocation> locationStack;
 
     protected XcfaSTStateStack(final XcfaLocation currentLoc, final S globalState) {
@@ -154,5 +119,40 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
         XcfaSTStateStack.ProcedureLocation top = state.locationStack.pop();
         state.locationStack.push(top.withLocation(location));
         return state;
+    }
+
+    public static class ProcedureLocation {
+        private final XcfaLocation location;
+        private final Map<VarDecl<?>, VarDecl<?>> varLut;
+
+        ProcedureLocation(XcfaLocation location) {
+            this(location, location.getParent().getInstantiatedVars(new Stack<>()));
+        }
+
+        ProcedureLocation(XcfaLocation location, Map<VarDecl<?>, VarDecl<?>> varLut) {
+            this.location = location;
+            this.varLut = varLut;
+        }
+
+        Map<VarDecl<?>, VarDecl<?>> getUsedVars() {
+            return varLut;
+        }
+
+        XcfaSTStateStack.ProcedureLocation withLocation(XcfaLocation location) {
+            return new XcfaSTStateStack.ProcedureLocation(location, varLut);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            XcfaSTStateStack.ProcedureLocation that = (XcfaSTStateStack.ProcedureLocation) o;
+            return location == that.location && varLut.entrySet().stream().noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(location, varLut);
+        }
     }
 }

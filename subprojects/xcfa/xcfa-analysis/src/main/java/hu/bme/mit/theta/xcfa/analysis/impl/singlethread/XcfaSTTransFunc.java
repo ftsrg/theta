@@ -46,6 +46,7 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 	}
 
 	private P stackVarsIntoPrec(P globalPrec, XcfaSTStateStack<S> state) {
+		P combinedPrec = globalPrec;
 		if (globalPrec instanceof ExplPrec) {
 			ExplPrec explPrec = (ExplPrec) globalPrec;
 			for (XcfaSTStateStack.ProcedureLocation procedureLocation : state.getCurrentStack()) {
@@ -58,9 +59,9 @@ public class XcfaSTTransFunc<S extends ExprState, A extends StmtAction, P extend
 				if (!localVars.isEmpty())
 					explPrec = explPrec.join(ExplPrec.of(localVars));
 			}
-			globalPrec = (P) explPrec;
+			combinedPrec = (P) explPrec;
 		}
-		return globalPrec;
+		return combinedPrec;
 	}
 
 	private void handleFunctionPushPop(XcfaSTStateStack<S> state, XcfaSTAction action, XcfaSTStateStack<S> newState) {

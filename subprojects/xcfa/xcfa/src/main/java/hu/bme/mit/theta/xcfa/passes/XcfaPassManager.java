@@ -122,11 +122,12 @@ public class XcfaPassManager {
 	}
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		XcfaProcedure.Builder runningBuilder = builder;
 		for (ProcedurePass procedurePass : procedurePasses) {
 			if (FunctionInlining.inlining != FunctionInlining.InlineFunctions.ON || !procedurePass.isPostInlining() || ProcedurePass.postInlining)
-				builder = procedurePass.run(builder);
+				runningBuilder = procedurePass.run(runningBuilder);
 		}
-		return builder;
+		return runningBuilder;
 	}
 
 	public static XcfaProcess.Builder run(XcfaProcess.Builder builder) {

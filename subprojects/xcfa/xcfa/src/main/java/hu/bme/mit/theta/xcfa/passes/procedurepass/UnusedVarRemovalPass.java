@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

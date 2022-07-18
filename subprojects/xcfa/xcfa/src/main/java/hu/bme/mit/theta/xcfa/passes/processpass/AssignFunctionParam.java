@@ -40,8 +40,8 @@ public class AssignFunctionParam extends ProcessPass {
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
 		if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON) return builder;
-		builder = buildProcesses(builder);
-		for (XcfaProcedure.Builder procedure : builder.getProcedures()) {
+		XcfaProcess.Builder builtBuilder = buildProcesses(builder);
+		for (XcfaProcedure.Builder procedure : builtBuilder.getProcedures()) {
 			edgesToAdd.clear();
 			edgesToRemove.clear();
 			procedureCalls.clear();
@@ -49,7 +49,7 @@ public class AssignFunctionParam extends ProcessPass {
 				for (XcfaLabel label : edge.getLabels()) {
 					if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
 						XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) label;
-						Optional<XcfaProcedure.Builder> procedureOpt = builder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callLabel.getProcedure())).findAny();
+						Optional<XcfaProcedure.Builder> procedureOpt = builtBuilder.getProcedures().stream().filter(xcfaProcedure -> xcfaProcedure.getName().equals(callLabel.getProcedure())).findAny();
 						procedureOpt.ifPresent(calledProcedure -> {
 							assignParams(procedure, callLabel, calledProcedure);
 							if (calledProcedure.getRetType() != null) {
@@ -65,7 +65,7 @@ public class AssignFunctionParam extends ProcessPass {
 			procedureCalls.forEach((calledProcedure, callLabels) -> callLabels.forEach(calledProcedure::addParamInitLoc));
 		}
 
-		return builder;
+		return builtBuilder;
 	}
 
 	private XcfaProcess.Builder buildProcesses(XcfaProcess.Builder builder) {
