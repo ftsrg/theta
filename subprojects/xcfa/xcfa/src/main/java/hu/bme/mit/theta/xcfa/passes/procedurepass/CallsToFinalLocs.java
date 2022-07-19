@@ -53,20 +53,18 @@ public class CallsToFinalLocs extends ProcedurePass {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
 			if (e.isPresent()) {
-				XcfaEdge xcfaEdge;
 				String procedure = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure();
 				if (errorFunc.contains(procedure)) {
-					xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
+					XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
+					builder.addEdge(xcfaEdge);
+					builder.removeEdge(edge);
+					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+						FrontendMetadata.create(xcfaEdge, s, o);
+					});
 				} else if (abortFunc.contains(procedure)) {
-					xcfaEdge = XcfaEdge.of(edge.getSource(), finalLoc, List.of());
-				} else {
-					continue;
+					ArrayList<XcfaEdge> edgesAfterAbort = new ArrayList<>(edge.getSource().getOutgoingEdges());
+					edgesAfterAbort.forEach(builder::removeEdge);
 				}
-				builder.removeEdge(edge);
-				builder.addEdge(xcfaEdge);
-				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					FrontendMetadata.create(xcfaEdge, s, o);
-				});
 			}
 		}
 

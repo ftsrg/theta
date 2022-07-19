@@ -45,6 +45,7 @@ public final class Z3SolverFactory implements SolverFactory {
 				System.loadLibrary("libz3java");
 				break;
 			case LINUX:
+			case MAC:
 				System.loadLibrary("z3java");
 				break;
 			default:

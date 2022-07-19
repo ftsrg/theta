@@ -15,7 +15,7 @@ For more information about the SMT-LIB compatibility in Theta, take a look at th
 1. First, get the tool.
     * The easiest way is to download a [pre-built release](https://github.com/ftsrg/theta/releases).
     * You can also [build](../../../doc/Build.md) the tool yourself. The runnable jar file will appear under _build/libs/_ with the name _theta-solver-smtlib-cli-\<VERSION\>-all.jar_, you can simply rename it to _theta-solver-smtlib-cli.jar_..
-2. Running the tool requires Java (JRE) 11.
+2. Running the tool requires Java (JRE) 17.
 3. The tool can be executed with `java -jar theta-solver-smtlib-cli.jar [MAIN ARGUMENTS] [COMMAND] [ARGUMENTS]`.
     * If no arguments are given, a help screen is displayed about the arguments and their possible values.
     More information can also be found below.
