@@ -481,7 +481,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home, algorithm);
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home, multithreadedAlgorithm);
 					try {
 						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
