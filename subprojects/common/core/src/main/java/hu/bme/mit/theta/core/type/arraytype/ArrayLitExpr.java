@@ -34,12 +34,13 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 	private ArrayLitExpr(final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
 						 final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
 		this.type = checkNotNull(type);
-		Expr<ElemType> simplifiedElem = ExprSimplifier.simplify(checkNotNull(elseElem), ImmutableValuation.empty());
+		final ExprSimplifier exprSimplifier = ExprSimplifier.create();
+		Expr<ElemType> simplifiedElem = exprSimplifier.simplify(checkNotNull(elseElem), ImmutableValuation.empty());
 		checkState(simplifiedElem instanceof LitExpr, "ArrayLitExprs shall only contain literal values!");
 		this.elseElem = (LitExpr<ElemType>) simplifiedElem;
 		this.elems = checkNotNull(elems).stream().map(elem -> {
-			Expr<IndexType> index = ExprSimplifier.simplify(elem.get1(), ImmutableValuation.empty());
-			Expr<ElemType> element = ExprSimplifier.simplify(elem.get2(), ImmutableValuation.empty());
+			Expr<IndexType> index = exprSimplifier.simplify(elem.get1(), ImmutableValuation.empty());
+			Expr<ElemType> element = exprSimplifier.simplify(elem.get2(), ImmutableValuation.empty());
 			checkState(index instanceof LitExpr && element instanceof LitExpr, "ArrayLitExprs shall only contain literal values");
 			return Tuple2.of((LitExpr<IndexType>)index, (LitExpr<ElemType>)element);
 		}).collect(Collectors.toList());

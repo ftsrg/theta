@@ -47,6 +47,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class ExprUtils {
 
+	private static final ExprSimplifier exprSimplifier = ExprSimplifier.create();
+
 	private ExprUtils() {
 	}
 
@@ -259,7 +261,7 @@ public final class ExprUtils {
 	 * @return Simplified expression
 	 */
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr, final Valuation val) {
-		return ExprSimplifier.simplify(expr, val);
+		return exprSimplifier.simplify(expr, val);
 	}
 
 	/**

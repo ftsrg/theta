@@ -62,15 +62,17 @@ import static java.util.stream.Collectors.toList;
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
-	private final UCSolver solver;
-	private final Expr<BoolType> init;
-	private final Expr<BoolType> target;
+    private final UCSolver solver;
+    private final Expr<BoolType> init;
+    private final Expr<BoolType> target;
+    private final ExprSimplifier exprSimplifier;
 
-	private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
-		this.solver = checkNotNull(solver);
-		this.init = checkNotNull(init);
-		this.target = checkNotNull(target);
-	}
+    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
+        this.solver = checkNotNull(solver);
+        this.init = checkNotNull(init);
+        this.target = checkNotNull(target);
+        this.exprSimplifier = ExprSimplifier.create();
+    }
 
 	public static ExprTraceUCBChecker create(
 			final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
@@ -193,23 +195,23 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 					}
 				}
 
-				/* Add the negated of the above expression as the new predicate */
-				predicates.add(
-						ExprSimplifier.simplify(
-								Not(And(new HashSet<>(predicate))),
-								ImmutableValuation.empty()
-						)
-				);
-			}
-		}
-		return ExprTraceStatus.infeasible(
-				ItpRefutation.sequence(
-						IntStream.range(0, predicates.size())
-								.mapToObj(i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
-								.collect(Collectors.toUnmodifiableList())
-				)
-		);
-	}
+                /* Add the negated of the above expression as the new predicate */
+                predicates.add(
+                    exprSimplifier.simplify(
+                        Not(And(new HashSet<>(predicate))),
+                        ImmutableValuation.empty()
+                    )
+                );
+            }
+        }
+        return ExprTraceStatus.infeasible(
+            ItpRefutation.sequence(
+                IntStream.range(0, predicates.size())
+                    .mapToObj(i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
+                    .collect(Collectors.toUnmodifiableList())
+            )
+        );
+    }
 
 	private List<Expr<BoolType>> calculateWpStates(
 			final Trace<? extends ExprState, ? extends StmtAction> trace,

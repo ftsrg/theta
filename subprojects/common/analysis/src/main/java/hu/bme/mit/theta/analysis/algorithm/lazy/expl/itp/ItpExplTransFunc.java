@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xta.analysis.expl.itp;
+package hu.bme.mit.theta.analysis.algorithm.lazy.expl.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

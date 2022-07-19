@@ -22,7 +22,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-final class BasicExprState implements ExprState {
+public final class BasicExprState implements ExprState {
 
 	private final Expr<BoolType> expr;
 

@@ -83,6 +83,12 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	public static final FunctionVisitor instance = new FunctionVisitor();
 
+	public void clear() {
+		variables.clear();
+		flatVariables.clear();
+		functions.clear();
+	}
+
 	private final Deque<Map<String, VarDecl<?>>> variables;
 	private final List<VarDecl<?>> flatVariables;
 	private final Map<VarDecl<?>, CDeclaration> functions;

@@ -66,6 +66,14 @@ public class PathUtils {
 		return helper.unfold(expr, 0);
 	}
 
+	public static <T extends Type> Expr<T> unfoldReverse(final Expr<T> expr, final VarIndexing indexing) {
+		checkNotNull(expr);
+		checkNotNull(indexing);
+		final VarIndexing primes = countPrimes(expr);
+		final ReverseUnfoldHelper helper = new ReverseUnfoldHelper(indexing, primes);
+		return helper.unfold(expr, 0);
+	}
+
 	/**
 	 * Transform an expression by substituting variables with indexed constants.
 	 *
@@ -207,6 +215,39 @@ public class PathUtils {
 				final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
 				final Expr<T> op = prime.getOp();
 				return unfold(op, offset + 1);
+			}
+
+			return expr.map(op -> unfold(op, offset));
+		}
+	}
+
+	private static final class ReverseUnfoldHelper {
+
+		private final VarIndexing indexing;
+		private final VarIndexing primes;
+
+		private <T extends Type> ReverseUnfoldHelper(final VarIndexing indexing, final VarIndexing primes) {
+			this.indexing = indexing;
+			this.primes = primes;
+		}
+
+		public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
+			if (expr instanceof RefExpr) {
+				final RefExpr<T> ref = (RefExpr<T>) expr;
+				final Decl<T> decl = ref.getDecl();
+				if (decl instanceof VarDecl) {
+					final VarDecl<T> varDecl = (VarDecl<T>) decl;
+					final int index = indexing.get(varDecl) + offset + primes.get(varDecl);
+					final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
+					final RefExpr<T> refExpr = constDecl.getRef();
+					return refExpr;
+				}
+			}
+
+			if (expr instanceof PrimeExpr) {
+				final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
+				final Expr<T> op = prime.getOp();
+				return unfold(op, offset - 1);
 			}
 
 			return expr.map(op -> unfold(op, offset));

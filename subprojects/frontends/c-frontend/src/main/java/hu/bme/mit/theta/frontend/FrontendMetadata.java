@@ -17,6 +17,10 @@
 package hu.bme.mit.theta.frontend;
 
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -62,5 +66,8 @@ public class FrontendMetadata {
 	public static void clear() {
 		lookupKeyValue.clear();
 		lookupOwner.clear();
+		FunctionVisitor.instance.clear();
+		GlobalDeclUsageVisitor.instance.clear();
+		TypedefVisitor.instance.clear();
 	}
 }

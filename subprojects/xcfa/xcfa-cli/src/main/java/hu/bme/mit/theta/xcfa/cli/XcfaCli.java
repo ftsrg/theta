@@ -22,9 +22,18 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
+import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -52,10 +61,9 @@ import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfig;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaConfigBuilder;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaPrec;
-import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
+import hu.bme.mit.theta.xcfa.analysis.common.*;
+import hu.bme.mit.theta.xcfa.analysis.impl.lazy.DataStrategy2;
+import hu.bme.mit.theta.xcfa.analysis.impl.lazy.LazyXcfaAbstractorFactory;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.SequentialPortfolio;
@@ -90,12 +98,17 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XcfaCli {
 	private static final String JAR_NAME = "theta-xcfa-cli.jar";
 	private final String[] args;
+
+	enum Algorithm {
+		CEGAR, LAZY
+	}
 
 	//////////// CONFIGURATION OPTIONS BEGIN ////////////
 
@@ -163,6 +176,31 @@ public class XcfaCli {
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
+	@Parameter(names = "--autoexpl", description = "AutoExpl method to use when Product Abstraction is used")
+	XcfaConfigBuilder.AutoExpl autoExpl = XcfaConfigBuilder.AutoExpl.STATIC;
+
+	//////////// Lazy configuration options ////////////
+
+	@Parameter(names = "--concr-lazy", description = "Concrete domain for lazy abstraction")
+	DataStrategy2.ConcrDom concrDataDom;
+
+	@Parameter(names = "--abstr-lazy", description = "Abstract domain for lazy abstraction")
+	DataStrategy2.AbstrDom abstrDataDom;
+
+	@Parameter(names = "--itp-lazy", description = "Interpolation strategy for lazy abstraction")
+	DataStrategy2.ItpStrategy dataItpStrategy;
+
+	@Parameter(names = "--search-lazy", description = "Search strategy for lazy abstraction")
+	SearchStrategy searchStrategy;
+
+	@Parameter(names = "--meet-lazy", description = "Meet strategy for expressions for lazy abstraction")
+	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
+
+	//////////// Common configuration options ////////////
+
+	@Parameter(names = "--algorithm", description = "Algorithm to use for the verification", required = false)
+	Algorithm algorithm = Algorithm.CEGAR;
+
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks) (only valid together with the -legacy switch)", help = true)
 	boolean headerOnly = false;
 
@@ -171,9 +209,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception (only valid together with the -legacy switch)")
 	boolean stacktrace = false;
-
-	@Parameter(names = "--autoexpl", description = "AutoExpl method to use when Product Abstraction is used")
-	XcfaConfigBuilder.AutoExpl autoExpl = XcfaConfigBuilder.AutoExpl.STATIC;
 
 	//////////// Experimentall BMC options ////////////
 
@@ -202,8 +237,8 @@ public class XcfaCli {
 	@Parameter(names = "--precheck", description = "Perform a pre-check when refining a multithreaded program for possibly higher efficiency", arity = 1)
 	boolean preCheck = true;
 
-	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
-	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
+	@Parameter(names = "--multithreaded-algorithm", description = "Algorithm to use when solving multithreaded programs")
+	XcfaConfigBuilder.Algorithm multithreadedAlgorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
 	@Parameter(names = "--lbe", description = "Large-block encoding level")
 	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
@@ -485,6 +520,13 @@ public class XcfaCli {
 	}
 
 	private void executeSingleConfiguration(XCFA xcfa) throws Exception {
+		switch (algorithm) {
+			case CEGAR -> executeSingleCegarConfiguration(xcfa);
+			case LAZY -> executeSingleLazyConfiguration(xcfa);
+		}
+	}
+
+	private void executeSingleCegarConfiguration(XCFA xcfa) throws Exception {
 		final SolverFactory abstractionSolverFactory;
 		final SolverFactory refinementSolverFactory;
 		if (validateRefinementSolver) {
@@ -507,6 +549,44 @@ public class XcfaCli {
 		}
 	}
 
+	private void executeSingleLazyConfiguration(XCFA xcfa) throws Exception {
+		checkState(concrDataDom != null, "Specify --concr-lazy");
+		checkState(abstrDataDom != null, "Specify --abstr-lazy");
+		checkState(dataItpStrategy != null, "Specify --itp-lazy");
+		checkState(searchStrategy != null, "Specify --search-lazy");
+		checkState(exprMeetStrategy != null, "Specify --meet-lazy");
+
+		final Abstractor<LazyState<XcfaState<ExprState>, XcfaState<ExprState>>, XcfaAction, UnitPrec> lazyAbstractor = LazyXcfaAbstractorFactory.create(
+				xcfa,
+				new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
+				searchStrategy,
+				exprMeetStrategy
+		);
+		final ARG<LazyState<XcfaState<ExprState>, XcfaState<ExprState>>, XcfaAction> arg = lazyAbstractor.createArg();
+		final AbstractorResult status;
+		try {
+			status = lazyAbstractor.check(arg, UnitPrec.getInstance());
+		} catch (final NotSolvableException exception) {
+			System.err.println("Configuration failed (stuck)");
+			System.exit(-30);
+			throw exception;
+		} catch (final Exception ex) {
+			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+		}
+
+		if (status != null && status.isUnsafe()) {
+			final var result = SafetyResult.unsafe(ArgTrace.to(arg.getUnsafeNodes().findFirst().get()).toTrace(), arg);
+
+			OutputHandler.getInstance().writeCounterexamples(result, "Z3");
+			System.out.println(result);
+		} else if (status != null && status.isSafe()) {
+			final var result = SafetyResult.safe(arg);
+			OutputHandler.getInstance().writeDummyCorrectnessWitness();
+			System.out.println(result);
+		}
+	}
+
 	private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa, SolverFactory abstractionSolverFactory, SolverFactory refinementSolverFactory) throws Exception {
 		// set up Arg-Cex check
 		if (noArgCexCheck) {
@@ -525,15 +605,15 @@ public class XcfaCli {
 				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
-				final LTS lts = algorithm.getLts(xcfa);
+				final LTS lts = multithreadedAlgorithm.getLts(xcfa);
 				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
-						algorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
+						multithreadedAlgorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
-						algorithm.getTransFunc(domainAnalysis.getTransFunc());
+						multithreadedAlgorithm.getTransFunc(domainAnalysis.getTransFunc());
 				final IterativeBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = IterativeBmcChecker.create(lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
 				return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
 			} else {
-				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, algorithm)
+				return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory, abstractionSolverFactory, multithreadedAlgorithm)
 						.search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).preCheck(preCheck)
 						.pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel)).autoExpl(autoExpl).build(xcfa);
 			}

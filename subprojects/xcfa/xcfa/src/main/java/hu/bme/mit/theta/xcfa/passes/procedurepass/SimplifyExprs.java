@@ -40,15 +40,17 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.ProcedureCall;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class SimplifyExprs extends ProcedurePass {
+	private final ExprSimplifier exprSimplifier = ExprSimplifier.create();
+
 	@Override
 	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
 		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
 			XcfaEdge newEdge = edge.mapLabels(label -> {
 				if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssignStmt && !(((AssignStmt<?>) label.getStmt()).getVarDecl().getType() instanceof ArrayType)) {
 					VarDecl<?> varDecl = ((AssignStmt<?>) label.getStmt()).getVarDecl();
-					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) label.getStmt()).getExpr(), ImmutableValuation.empty());
+					Expr<?> simplified = exprSimplifier.simplify(((AssignStmt<?>) label.getStmt()).getExpr(), ImmutableValuation.empty());
 					FrontendMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) label.getStmt()).getExpr()));
-					simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
+					simplified = exprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
 					FrontendMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
 					Stmt newStmt = Assign(
 							cast(varDecl, varDecl.getType()),
