@@ -16,7 +16,7 @@ include(
         "sts/sts-analysis",
         "sts/sts-cli",
 
-        "xcfa-old/xcfa",
+        "xcfa/xcfa",
         "xcfa-old/xcfa-analysis",
         "xcfa-old/xcfa-cli",
         "xcfa-old/cat",
