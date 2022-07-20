@@ -59,7 +59,7 @@ public class LitmusTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"/LB.litmus", 2, 2, List.of(4, 6), "/aarch64.cat"},
+                {"/LB.litmus", 2, 2, List.of(10, 6), "/aarch64.cat"},
         });
     }
 
@@ -90,7 +90,7 @@ public class LitmusTest {
         final XcfaProcessMemEventProvider<ExplState> memEventProvider = new XcfaProcessMemEventProvider<>(processes.size());
         final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-        final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplTransFunc.create(solver)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplStmtTransFunc.create(solver, 0)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
         final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(mcmFilename).getFile()));
         final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null,  Set.of(), null)).collect(Collectors.toList());

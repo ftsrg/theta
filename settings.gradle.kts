@@ -16,11 +16,11 @@ include(
         "sts/sts-analysis",
         "sts/sts-cli",
 
-        "xcfa/xcfa",
-        "xcfa/xcfa-analysis",
-        "xcfa/xcfa-cli",
-        "xcfa/cat",
-        "xcfa/litmus-cli",
+        "xcfa-old/xcfa",
+        "xcfa-old/xcfa-analysis",
+        "xcfa-old/xcfa-cli",
+        "xcfa-old/cat",
+        "xcfa-old/litmus-cli",
 
         "xta/xta",
         "xta/xta-analysis",

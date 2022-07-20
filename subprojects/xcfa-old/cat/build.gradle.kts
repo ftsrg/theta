@@ -1,6 +1,7 @@
 plugins {
     id("java-common")
     id("antlr-grammar")
+    id("jacoco-common")
 }
 
 dependencies {

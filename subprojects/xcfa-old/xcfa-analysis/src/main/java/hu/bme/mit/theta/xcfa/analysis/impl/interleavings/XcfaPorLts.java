@@ -94,7 +94,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	protected Set<VarDecl<? extends Type>> getDirectlyUsedSharedObjects(XcfaEdge edge) {
 		Set<VarDecl<?>> vars = new HashSet<>();
 		edge.getLabels().forEach(label -> LabelUtils.getVars(label).forEach(usedVar -> {
-			if (xcfa.getGlobalVars().contains(usedVar)) {
+			if (xcfa.getvars().contains(usedVar)) {
 				vars.add(usedVar);
 			}
 		}));
