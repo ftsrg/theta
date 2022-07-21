@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import java.util.Optional
 
 data class XCFA(
@@ -41,19 +42,27 @@ data class XcfaProcedure(
 
 data class XcfaLocation(
         val name: String,                                               // label of the location
-        val initial: Boolean,                                           // is this the initial location?
-        val final: Boolean,                                             // is this the final location?
-        val error: Boolean                                              // is this the error location?
-)
+        val initial: Boolean = false,                                   // is this the initial location?
+        val final: Boolean = false,                                     // is this the final location?
+        val error: Boolean = false                                      // is this the error location?
+) {
+    companion object {
+        private var cnt: Int = 0;
+        fun uniqueCounter(): Int {
+            return cnt++;
+        }
+    }
+}
 
 data class XcfaEdge(
         val source: XcfaLocation,                                       // source location
         val target: XcfaLocation,                                       // target location
-        val label: XcfaLabel                                            // edge label
+        val label: XcfaLabel = NopLabel                                 // edge label
 )
 
 data class XcfaGlobalVar(
         val wrappedVar: VarDecl<*>,
+        val initValue: LitExpr<*>,
         val threadLocal: Boolean = false
 )
 
