@@ -53,12 +53,12 @@ public final class XcfaLocation {
 
 	private static int counter = 0;
 
-	public static int uniqeCounter() {
+	public static int uniqueCounter() {
 		return counter++;
 	}
 
 	public static XcfaLocation uniqeCopyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = create(from.getName() + uniqeCounter());
+		XcfaLocation xcfaLocation = create(from.getName() + uniqueCounter());
 		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
 			FrontendMetadata.create(xcfaLocation, s, o);
 		});

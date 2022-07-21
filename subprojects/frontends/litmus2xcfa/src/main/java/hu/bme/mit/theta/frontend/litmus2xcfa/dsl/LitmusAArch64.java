@@ -92,7 +92,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             locations.putIfAbsent(id, new LinkedHashMap<>());
             final XcfaProcess.Builder process = XcfaProcess.builder();
             final XcfaProcedure.Builder procedure = XcfaProcedure.builder();
-            final XcfaLocation location = XcfaLocation.create("initial" + XcfaLocation.uniqeCounter());
+            final XcfaLocation location = XcfaLocation.create("initial" + XcfaLocation.uniqueCounter());
             procedure.addLoc(location);
             process.addProcedure(procedure);
             process.setMainProcedure(procedure);
@@ -143,7 +143,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
     }
 
     private XcfaLocation newAnonymousLoc() {
-        return getOrCreateLoc("loc" + XcfaLocation.uniqeCounter());
+        return getOrCreateLoc("loc" + XcfaLocation.uniqueCounter());
     }
 
     private XcfaLocation getOrCreateLoc(final String name) {
@@ -234,7 +234,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         @Override
         public XcfaLabel visitLoad32(LitmusAArch64Parser.Load32Context ctx) {
             final VarDecl<BvType> var = getOrCreateVar(ctx.rD32.getText(), 32);
-            final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.uniqeCounter(), 64);
+            final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.uniqueCounter(), 64);
             StmtXcfaLabel cast = Stmt(Assign(var, Extract(tmp.getRef(), Int(0), Int(32))));
             LoadXcfaLabel<BvType> load = Load(getGlobalFromReg(ctx.address().r.getText()), tmp, true, ctx.loadInstruction().mo);
             return Sequence(List.of(load, cast));
@@ -248,7 +248,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         @Override
         public XcfaLabel visitStore32(LitmusAArch64Parser.Store32Context ctx) {
             final VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
-            final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.uniqeCounter(), 64);
+            final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.uniqueCounter(), 64);
             StmtXcfaLabel cast = Stmt(Assign(tmp, ZExt(var.getRef(), BvType(64))));
             StoreXcfaLabel<BvType> store = Store(getGlobalFromReg(ctx.address().r.getText()), tmp, true, ctx.storeInstruction().mo);
             return Sequence(List.of(cast, store));

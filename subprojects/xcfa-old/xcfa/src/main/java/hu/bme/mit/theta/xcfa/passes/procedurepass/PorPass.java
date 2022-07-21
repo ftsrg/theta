@@ -41,13 +41,13 @@ public class PorPass extends ProcedurePass {
 						removed = true;
 					}
 					if (newLabels.size() > 0) {
-						XcfaLocation tmp = XcfaLocation.create("tmp" + XcfaLocation.uniqeCounter());
+						XcfaLocation tmp = XcfaLocation.create("tmp" + XcfaLocation.uniqueCounter());
 						builder.addLoc(tmp);
 						builder.addEdge(edge.withSource(source).withLabels(newLabels).withTarget(tmp));
 						source = tmp;
 						newLabels.clear();
 					}
-					XcfaLocation tmp = XcfaLocation.create("tmp" + XcfaLocation.uniqeCounter());
+					XcfaLocation tmp = XcfaLocation.create("tmp" + XcfaLocation.uniqueCounter());
 					builder.addLoc(tmp);
 					builder.addEdge(edge.withSource(source).withLabels(List.of(label)).withTarget(tmp));
 					source = tmp;

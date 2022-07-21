@@ -64,5 +64,3 @@ data class SequenceLabel(
 data class NondetLabel(
         val labels: Set<XcfaLabel>
 ) : XcfaLabel()
-
-object NopLabel : XcfaLabel()

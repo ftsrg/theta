@@ -169,7 +169,7 @@ public class FunctionInlining extends ProcessPass {
 			XcfaLocation start = xcfaEdge.getSource();
 			XcfaLocation end = xcfaEdge.getTarget();
 			if (i > 0) {
-				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqeCounter());
+				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqueCounter());
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(loc1, s, o);
 				});
@@ -182,7 +182,7 @@ public class FunctionInlining extends ProcessPass {
 				start = loc1;
 			}
 			if (i < xcfaEdge.getLabels().size() - 1) {
-				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqeCounter());
+				XcfaLocation loc1 = XcfaLocation.create("inline" + XcfaLocation.uniqueCounter());
 				FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
 					FrontendMetadata.create(loc1, s, o);
 				});

@@ -103,7 +103,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 	}
 
 	private XcfaLocation getAnonymousLoc(final XcfaProcedure.Builder builder) {
-		return getLoc(builder, "__loc_" + XcfaLocation.uniqeCounter());
+		return getLoc(builder, "__loc_" + XcfaLocation.uniqueCounter());
 	}
 
 	protected <T> void propagateMetadata(CStatement source, T newOwner) {
@@ -327,7 +327,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, breakLoc, List.of());
-		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqueCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);
@@ -425,7 +425,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		builder.addEdge(edge);
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, continueLoc, List.of());
-		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqueCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);
@@ -591,7 +591,7 @@ public class FrontendXcfaBuilder extends CStatementVisitorBase<FrontendXcfaBuild
 		propagateMetadata(statement, edge);
 		edge = XcfaEdge.of(initLoc, getLoc(builder, statement.getLabel()), List.of());
 		builder.addLoc(getLoc(builder, statement.getLabel()));
-		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqeCounter());
+		XcfaLocation unreachableLoc = XcfaLocation.create("Unreachable" + XcfaLocation.uniqueCounter());
 		builder.addLoc(unreachableLoc);
 		propagateMetadata(statement, unreachableLoc);
 		builder.addEdge(edge);
