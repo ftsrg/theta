@@ -60,8 +60,8 @@ class XcfaProcedureBuilder(
         private val edges: MutableSet<XcfaEdge> = LinkedHashSet()
 ) {
     lateinit var initLoc: XcfaLocation
-    lateinit var finalLoc: Optional<XcfaLocation>
-    lateinit var errorLoc: Optional<XcfaLocation>
+    var finalLoc: Optional<XcfaLocation> = Optional.empty()
+    var errorLoc: Optional<XcfaLocation> = Optional.empty()
     fun getParams() : List<Pair<VarDecl<*>, ParamDirection>> = params
     fun getVars() : Set<VarDecl<*>> = vars
     fun getLocs() : Set<XcfaLocation> = locs

@@ -76,7 +76,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
     }
 
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {
-        val builder = XcfaBuilder(cProgram.id)
+        val builder = XcfaBuilder(cProgram.id ?: "")
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref)
@@ -731,7 +731,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         return endLoc
     }
 
-    private fun buildWithoutPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation? {
+    private fun buildWithoutPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation {
         Preconditions.checkState(cStatement is CCompound, "Currently only CCompounds have pre- and post statements!")
         val statement = cStatement as CCompound
         val builder: XcfaProcedureBuilder = param.builder
@@ -756,9 +756,9 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         }
         if (cStatementList.size == 0) return lastLoc
         val lastStatement = cStatementList[cStatementList.size - 1]
-        lastLoc = if (postStatements == null) ({
+        lastLoc = if (postStatements == null) {
             buildWithoutPostStatement(lastStatement, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
-        })!! else {
+        } else {
             lastStatement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
         }
         return lastLoc
