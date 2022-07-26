@@ -72,9 +72,9 @@ class XcfaCegarTest {
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!)
 
-        System.err.println(xcfa.toDot())
+//        System.err.println(xcfa.toDot())
 
-        val initLocStack: Deque<XcfaLocation> = java.util.ArrayDeque()
+        val initLocStack: Deque<XcfaLocation> = ArrayDeque()
         initLocStack.add(xcfa.initProcedures[0].first.initLoc)
 
         val initState = XcfaState(mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
@@ -111,8 +111,8 @@ class XcfaCegarTest {
 
         val safetyResult = cegarChecker.check(XcfaPrec(ExplPrec.empty()))
 
-        val g = ArgVisualizer.getDefault().visualize(safetyResult.arg)
-        println(GraphvizWriter.getInstance().writeString(g))
+//        val g = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+//        println(GraphvizWriter.getInstance().writeString(g))
 
         Assert.assertTrue(verdict(safetyResult))
     }
