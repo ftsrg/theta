@@ -17,52 +17,113 @@
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import java.util.Optional
+import java.util.StringJoiner
 
-sealed class XcfaLabel
+sealed class XcfaLabel {
+    open fun toStmt(): Stmt = error("Cannot convert label to statement.")
+}
 
 data class InvokeLabel(
         val name: String,
         val params: List<Expr<*>>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toString(): String {
+        val sj = StringJoiner(", ", "(", ")")
+        params.forEach { sj.add(it.toString()) }
+        return "$name$sj"
+    }
+}
 
 data class StartLabel(
         val name: String,
         val params: List<Expr<*>>,
         val pidVar: VarDecl<*>
-) : XcfaLabel()
+) : XcfaLabel(){
+    override fun toString(): String {
+        val sj = StringJoiner(", ", "(", ")")
+        params.forEach { sj.add(it.toString()) }
+        return "$pidVar = start $name$sj"
+    }
+}
 
 data class JoinLabel(
         val pid: Expr<*>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toString(): String {
+        return "join $pid"
+    }
+}
 
 data class StmtLabel(
-        val stmt: hu.bme.mit.theta.core.stmt.Stmt
-) : XcfaLabel()
+        val stmt: Stmt
+) : XcfaLabel() {
+    override fun toStmt() : Stmt = stmt
+    override fun toString(): String {
+        return stmt.toString()
+    }
+}
 
 data class ReadLabel(
         val local: VarDecl<*>,
         val global: VarDecl<*>,
         val labels: Set<String>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toString(): String {
+        return "R[$local <- $global] @$labels"
+    }
+}
 
 data class WriteLabel(
         val local: VarDecl<*>,
         val global: VarDecl<*>,
         val labels: Set<String>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toString(): String {
+        return "W[$global <- $local] @$labels"
+    }
+}
 
 data class FenceLabel(
         val labels: Set<String>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toString(): String {
+        return "F[$labels]"
+    }
+}
 
 data class SequenceLabel(
         val labels: List<XcfaLabel>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toStmt(): Stmt {
+        return SequenceStmt(labels.map { it.toStmt() })
+    }
+
+    override fun toString(): String {
+        return "Sequence($labels)"
+    }
+}
 
 data class NondetLabel(
         val labels: Set<XcfaLabel>
-) : XcfaLabel()
+) : XcfaLabel() {
+    override fun toStmt(): Stmt {
+        return NonDetStmt(labels.map { it.toStmt() })
+    }
+    override fun toString(): String {
+        return "NonDet($labels)"
+    }
+}
 
-object NopLabel : XcfaLabel()
+object NopLabel : XcfaLabel() {
+    override fun toStmt(): Stmt {
+        return Skip()
+    }
+
+    override fun toString(): String {
+        return "Nop"
+    }
+}

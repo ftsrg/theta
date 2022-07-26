@@ -21,14 +21,20 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import java.util.Optional
 
-data class XCFA(
+class XCFA(
         val name: String,
         val vars: Set<XcfaGlobalVar>,                                   // global variables
-        val procedures: Set<XcfaProcedure>,                             // procedure definitions
-        val initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>    // procedure names and parameter assignments
-)
+        procedureBuilders: Set<XcfaProcedureBuilder>,
+        initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>>
+) {
+    val procedures: Set<XcfaProcedure> =                                // procedure definitions
+            procedureBuilders.map { it.build(this) }.toSet()
+    val initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>> =      // procedure names and parameter assignments
+            initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+}
 
 data class XcfaProcedure(
+        val parent: XCFA,                                               // the container
         val name: String,
         val params: List<Pair<VarDecl<*>, ParamDirection>>,             // procedure params
         val vars: Set<VarDecl<*>>,                                      // local variables
@@ -44,8 +50,10 @@ data class XcfaLocation(
         val name: String,                                               // label of the location
         val initial: Boolean = false,                                   // is this the initial location?
         val final: Boolean = false,                                     // is this the final location?
-        val error: Boolean = false                                      // is this the error location?
+        val error: Boolean = false,                                     // is this the error location?
 ) {
+    val incomingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all incoming edges in the current procedure
+    val outgoingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all outgoing edges in the current procedure
     companion object {
         private var cnt: Int = 0;
         fun uniqueCounter(): Int {
@@ -58,7 +66,9 @@ data class XcfaEdge(
         val source: XcfaLocation,                                       // source location
         val target: XcfaLocation,                                       // target location
         val label: XcfaLabel = NopLabel                                 // edge label
-)
+) {
+    fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
+}
 
 data class XcfaGlobalVar(
         val wrappedVar: VarDecl<*>,

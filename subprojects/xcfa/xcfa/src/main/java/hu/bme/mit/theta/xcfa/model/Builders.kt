@@ -18,13 +18,17 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.xcfa.passes.procedure.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.procedure.ErrorLocationPass
+import hu.bme.mit.theta.xcfa.passes.procedure.NormalizePass
 import java.util.Optional
 
 class XcfaBuilder(
         var name: String,
         private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
         private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
-        private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()) {
+        private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
+        val metaData: MutableMap<String, Any> = LinkedHashMap()) {
     fun getVars() : Set<XcfaGlobalVar> = vars
     fun getProcedures() : Set<XcfaProcedureBuilder> = procedures
     fun getInitProcedures() : List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = initProcedures
@@ -33,8 +37,8 @@ class XcfaBuilder(
         return XCFA(
                 name=name,
                 vars=vars,
-                procedures=procedures.map { it.build() }.toSet(),
-                initProcedures=initProcedures.map { Pair(it.first.build(), it.second) }
+                procedureBuilders=procedures,
+                initProcedureBuilders=initProcedures
         )
     }
 
@@ -57,26 +61,35 @@ class XcfaProcedureBuilder(
         private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
         private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
         private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
-        private val edges: MutableSet<XcfaEdge> = LinkedHashSet()
+        private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
+        val metaData: MutableMap<String, Any> = LinkedHashMap()
 ) {
     lateinit var initLoc: XcfaLocation
+        private set
     var finalLoc: Optional<XcfaLocation> = Optional.empty()
+        private set
     var errorLoc: Optional<XcfaLocation> = Optional.empty()
+        private set
     fun getParams() : List<Pair<VarDecl<*>, ParamDirection>> = params
     fun getVars() : Set<VarDecl<*>> = vars
     fun getLocs() : Set<XcfaLocation> = locs
     fun getEdges() : Set<XcfaEdge> = edges
 
-    fun build() : XcfaProcedure {
+    fun build(parent: XCFA) : XcfaProcedure {
+        var that = this
+        that = NormalizePass().run(that)
+        that = DeterministicPass().run(that)
+        that = ErrorLocationPass().run(that)
         return XcfaProcedure(
-                name=name,
-                params=params,
-                vars=vars,
-                locs=locs,
-                edges=edges,
-                initLoc=initLoc,
-                finalLoc=finalLoc,
-                errorLoc=errorLoc
+                parent=parent,
+                name=that.name,
+                params=that.params,
+                vars=that.vars,
+                locs=that.locs,
+                edges=that.edges,
+                initLoc=that.initLoc,
+                finalLoc=that.finalLoc,
+                errorLoc=that.errorLoc
         )
     }
 
@@ -88,11 +101,41 @@ class XcfaProcedureBuilder(
         vars.add(toAdd)
     }
 
+    fun createErrorLoc() {
+        errorLoc = Optional.of(XcfaLocation(name + "_error", error=true))
+        locs.add(errorLoc.get())
+    }
+
+    fun createFinalLoc() {
+        finalLoc = Optional.of(XcfaLocation(name + "_final", final=true))
+        locs.add(finalLoc.get())
+    }
+
+    fun createInitLoc() {
+        initLoc = XcfaLocation(name + "_init", initial=true)
+        locs.add(initLoc)
+    }
+
     fun addEdge(toAdd: XcfaEdge) {
+        addLoc(toAdd.source)
+        addLoc(toAdd.target)
         edges.add(toAdd)
+        toAdd.source.outgoingEdges.add(toAdd)
+        toAdd.target.incomingEdges.add(toAdd)
     }
 
     fun addLoc(toAdd: XcfaLocation) {
-        locs.add(toAdd)
+        if(!locs.contains(toAdd)) {
+            check(!toAdd.error)
+            check(!toAdd.initial)
+            check(!toAdd.final)
+            locs.add(toAdd)
+        }
+    }
+
+    fun removeEdge(toRemove: XcfaEdge) {
+        toRemove.source.outgoingEdges.remove(toRemove)
+        toRemove.target.incomingEdges.remove(toRemove)
+        edges.remove(toRemove)
     }
 }

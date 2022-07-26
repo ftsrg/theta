@@ -127,10 +127,9 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
                 if (varDecl != null) builder.addParam(varDecl, ParamDirection.IN)
             }
         }
-        var init = getAnonymousLoc(builder)
-        builder.addLoc(init)
-        propagateMetadata(function, init)
-        builder.initLoc = init
+        builder.createInitLoc()
+        propagateMetadata(function, builder.initLoc)
+        var init = builder.initLoc
         if (param.size > 0 && builder.name.equals("main")) {
             val endinit = getAnonymousLoc(builder)
             builder.addLoc(endinit)
@@ -140,14 +139,14 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
             propagateMetadata(function, edge)
             init = endinit
         }
-        val ret = getAnonymousLoc(builder)
+        builder.createFinalLoc()
+        val ret = builder.finalLoc.get()
         builder.addLoc(ret)
         propagateMetadata(function, ret)
         val end = compound.accept(this, ParamPack(builder, init, null, null, ret))
         val edge = XcfaEdge(end, ret)
         builder.addEdge(edge)
         propagateMetadata(function, edge)
-        builder.finalLoc = Optional.of(ret)
         return builder
     }
 
