@@ -16,11 +16,15 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedure
 
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
- * Transforms all procedure calls to designated error procedures into edges to error locations.
+ * Transforms all procedure calls into havocs.
  * Requires the ProcedureBuilder be `deterministic`.
  */
 class NondetFunctionPass : ProcedurePass {
@@ -32,8 +36,8 @@ class NondetFunctionPass : ProcedurePass {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
-                        if (builder.errorLoc.isEmpty) builder.createErrorLoc()
-                        builder.addEdge(XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf())))
+                        val invokeLabel = it.label.labels[0] as InvokeLabel
+                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(StmtLabel(HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>))))))
                     } else {
                         builder.addEdge(it)
                     }
@@ -44,6 +48,6 @@ class NondetFunctionPass : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.equals("reach_error")
+        return it is InvokeLabel
     }
 }

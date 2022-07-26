@@ -86,6 +86,7 @@ class XcfaProcedureBuilder(
         that = UnusedLocRemovalPass().run(that)
         that = ErrorLocationPass().run(that)
         if(name == "main") that = InlineProceduresPass().run(that)
+        that = NondetFunctionPass().run(that)
         built = XcfaProcedure(
                 parent=parent,
                 name=that.name,

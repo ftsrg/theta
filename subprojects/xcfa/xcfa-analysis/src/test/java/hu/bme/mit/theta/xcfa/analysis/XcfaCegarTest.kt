@@ -62,6 +62,7 @@ class XcfaCegarTest {
                     arrayOf("/00assignment.c", SafetyResult<*,*>::isUnsafe),
                     arrayOf("/01function.c", SafetyResult<*,*>::isUnsafe),
                     arrayOf("/02functionparam.c", SafetyResult<*,*>::isSafe),
+                    arrayOf("/03nondetfunction.c", SafetyResult<*,*>::isUnsafe),
             )
         }
     }
