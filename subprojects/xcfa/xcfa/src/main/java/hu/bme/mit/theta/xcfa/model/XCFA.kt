@@ -69,6 +69,7 @@ data class XcfaEdge(
 ) {
     fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
     fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
+    fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
 }
 
 data class XcfaGlobalVar(

@@ -46,6 +46,7 @@ class XcfaBuilder(
 
     fun addProcedure(toAdd: XcfaProcedureBuilder) {
         procedures.add(toAdd)
+        toAdd.parent=this
     }
 
     fun addEntryPoint(toAdd: XcfaProcedureBuilder, params: List<Expr<*>>) {
@@ -68,19 +69,24 @@ class XcfaProcedureBuilder(
         private set
     var errorLoc: Optional<XcfaLocation> = Optional.empty()
         private set
+    lateinit var parent: XcfaBuilder
+    private lateinit var built: XcfaProcedure
     fun getParams() : List<Pair<VarDecl<*>, ParamDirection>> = params
     fun getVars() : Set<VarDecl<*>> = vars
     fun getLocs() : Set<XcfaLocation> = locs
     fun getEdges() : Set<XcfaEdge> = edges
 
     fun build(parent: XCFA) : XcfaProcedure {
+        if(this::built.isInitialized) return built;
         var that = this
+        that = AnnotateVarsPass().run(that)
         that = NormalizePass().run(that)
         that = DeterministicPass().run(that)
         that = EmptyEdgeRemovalPass().run(that)
-        that = UnusedLocRemoval().run(that)
+        that = UnusedLocRemovalPass().run(that)
         that = ErrorLocationPass().run(that)
-        return XcfaProcedure(
+        if(name == "main") that = InlineProceduresPass().run(that)
+        built = XcfaProcedure(
                 parent=parent,
                 name=that.name,
                 params=that.params,
@@ -91,10 +97,12 @@ class XcfaProcedureBuilder(
                 finalLoc=that.finalLoc,
                 errorLoc=that.errorLoc
         )
+        return built
     }
 
     fun addParam(toAdd: VarDecl<*>, dir: ParamDirection) {
         params.add(Pair(toAdd, dir))
+        vars.add(toAdd)
     }
 
     fun addVar(toAdd: VarDecl<*>) {
@@ -146,6 +154,16 @@ class XcfaProcedureBuilder(
     fun removeLocs(pred: (XcfaLocation) -> Boolean) {
         while(locs.any(pred)) {
             locs.removeIf(pred)
+            edges.removeIf { pred(it.source) }
         }
+    }
+
+    fun changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>) {
+        val savedVars = ArrayList(vars)
+        vars.clear()
+        savedVars.forEach { vars.add(varLut[it]!!) }
+        val savedParams = ArrayList(params)
+        params.clear()
+        savedParams.forEach { params.add(Pair(varLut[it.first]!!, it.second)) }
     }
 }

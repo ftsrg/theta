@@ -27,13 +27,16 @@ class ErrorLocationPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         for (edge in ArrayList(builder.getEdges())) {
-            builder.removeEdge(edge)
-            edge.splitIf(this::predicate).forEach {
-                if(predicate((it.label as SequenceLabel).labels[0])) {
-                    if(builder.errorLoc.isEmpty) builder.createErrorLoc()
-                    builder.addEdge(XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf(NopLabel))))
-                } else {
-                    builder.addEdge(it)
+            val edges = edge.splitIf(this::predicate)
+            if(edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
+                builder.removeEdge(edge)
+                edges.forEach {
+                    if (predicate((it.label as SequenceLabel).labels[0])) {
+                        if (builder.errorLoc.isEmpty) builder.createErrorLoc()
+                        builder.addEdge(XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf())))
+                    } else {
+                        builder.addEdge(it)
+                    }
                 }
             }
         }

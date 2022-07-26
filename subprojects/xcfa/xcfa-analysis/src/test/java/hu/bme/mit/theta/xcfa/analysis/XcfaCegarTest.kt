@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.Analysis
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
@@ -33,7 +34,6 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -51,12 +51,17 @@ import java.util.*
 class XcfaCegarTest {
     @Parameter(0)
     lateinit var filepath: String
+    @Parameter(1)
+    lateinit var verdict: (SafetyResult<*, *>) -> Boolean
+
     companion object {
         @JvmStatic
         @Parameterized.Parameters
         fun data(): Collection<Array<Any>> {
             return listOf(
-                    arrayOf("/00assignment.c"),
+                    arrayOf("/00assignment.c", SafetyResult<*,*>::isUnsafe),
+                    arrayOf("/01function.c", SafetyResult<*,*>::isUnsafe),
+                    arrayOf("/02functionparam.c", SafetyResult<*,*>::isSafe),
             )
         }
     }
@@ -104,6 +109,10 @@ class XcfaCegarTest {
         val cegarChecker: CegarChecker<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = CegarChecker.create(abstractor, refiner)
 
         val safetyResult = cegarChecker.check(XcfaPrec(ExplPrec.empty()))
-        Assert.assertTrue(safetyResult.isUnsafe)
+
+        val g = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+        println(GraphvizWriter.getInstance().writeString(g))
+
+        Assert.assertTrue(verdict(safetyResult))
     }
 }

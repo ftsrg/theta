@@ -16,10 +16,17 @@
 
 package hu.bme.mit.theta.xcfa.passes.procedure
 
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.model.*
 
 fun label2edge(edge: XcfaEdge, label: XcfaLabel) {
     val source = edge.source
@@ -61,3 +68,31 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     }
     return newEdges
 }
+
+fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
+    when(this) {
+        is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) })
+        is JoinLabel -> JoinLabel(pid.changeVars(varLut))
+        is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet())
+        is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels)
+        is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) })
+        is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut))
+        is StmtLabel -> StmtLabel(stmt.changeVars(varLut))
+        is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels)
+        else -> this
+        }
+
+fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt =
+        when(this) {
+            is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
+            is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
+            is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
+            else -> TODO("Not yet implemented")
+}
+
+fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> =
+        if (this is RefExpr<T>) (decl as VarDecl<T>).changeVars(varLut).ref
+        else this.withOps(this.ops.map { it.changeVars(varLut) })
+
+fun <T : Type> VarDecl<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): VarDecl<T> =
+        (varLut[this] ?: this) as VarDecl<T>

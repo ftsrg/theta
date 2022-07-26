@@ -46,6 +46,7 @@ class NormalizePass : ProcedurePass {
         when(label) {
             is SequenceLabel -> label.labels.forEach {normalize(it, collector)}
             is NondetLabel -> TODO("Not yet implemented")
+            is NopLabel -> { }
             else -> collector.forEach {it.add(label)}
         }
     }
