@@ -18,9 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.xcfa.passes.procedure.DeterministicPass
-import hu.bme.mit.theta.xcfa.passes.procedure.ErrorLocationPass
-import hu.bme.mit.theta.xcfa.passes.procedure.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.procedure.*
 import java.util.Optional
 
 class XcfaBuilder(
@@ -79,6 +77,8 @@ class XcfaProcedureBuilder(
         var that = this
         that = NormalizePass().run(that)
         that = DeterministicPass().run(that)
+        that = EmptyEdgeRemovalPass().run(that)
+        that = UnusedLocRemoval().run(that)
         that = ErrorLocationPass().run(that)
         return XcfaProcedure(
                 parent=parent,
@@ -137,5 +137,15 @@ class XcfaProcedureBuilder(
         toRemove.source.outgoingEdges.remove(toRemove)
         toRemove.target.incomingEdges.remove(toRemove)
         edges.remove(toRemove)
+    }
+
+    fun removeLoc(toRemove: XcfaLocation) {
+        locs.remove(toRemove)
+    }
+
+    fun removeLocs(pred: (XcfaLocation) -> Boolean) {
+        while(locs.any(pred)) {
+            locs.removeIf(pred)
+        }
     }
 }

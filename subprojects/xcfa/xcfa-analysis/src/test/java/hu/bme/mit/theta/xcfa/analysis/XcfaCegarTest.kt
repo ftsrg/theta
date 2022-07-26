@@ -66,6 +66,8 @@ class XcfaCegarTest {
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!)
 
+        System.err.println(xcfa.toDot())
+
         val initLocStack: Deque<XcfaLocation> = java.util.ArrayDeque()
         initLocStack.add(xcfa.initProcedures[0].first.initLoc)
 

@@ -68,6 +68,7 @@ data class XcfaEdge(
         val label: XcfaLabel = NopLabel                                 // edge label
 ) {
     fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
+    fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
 }
 
 data class XcfaGlobalVar(
