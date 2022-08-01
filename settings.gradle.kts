@@ -6,7 +6,7 @@ include(
         "common/core",
 
         "frontends/c-frontend",
-        "frontends/litmus2xcfa",
+//        "frontends/litmus2xcfa",
 
         "cfa/cfa",
         "cfa/cfa-analysis",
@@ -19,10 +19,10 @@ include(
         "xcfa/xcfa",
         "xcfa/c2xcfa",
         "xcfa/xcfa-analysis",
+        "xcfa/xcfa-cli",
 
-        "xcfa-old/xcfa-cli",
-        "xcfa-old/cat",
-        "xcfa-old/litmus-cli",
+//        "xcfa-old/cat",
+//        "xcfa-old/litmus-cli",
 
         "xta/xta",
         "xta/xta-analysis",

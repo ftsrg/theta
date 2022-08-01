@@ -4,18 +4,15 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":theta-xcfa"))
-    implementation(project(":theta-xcfa-analysis"))
-    implementation(project(":theta-solver-z3"))
-    implementation(project(":theta-cfa-analysis"))
-    implementation(project(":theta-cfa"))
     implementation(project(":theta-common"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-c-frontend"))
     implementation(project(":theta-core"))
     implementation(project(":theta-analysis"))
-    implementation(project(":theta-solver-smtlib"))
-    implementation(project(":theta-cfa-cli"))
+    implementation(project(":theta-xcfa"))
+    implementation(project(":theta-xcfa-analysis"))
+    implementation(project(":theta-c2xcfa"))
+    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver"))
+    implementation(project(":theta-c-frontend"))
 }
 
 application {

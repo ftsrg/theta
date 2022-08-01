@@ -7,7 +7,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-xcfa"))
     testImplementation(project(":theta-xcfa-analysis"))
-    testImplementation(project(":theta-cat"))
+//    testImplementation(project(":theta-cat"))
     testImplementation(project(":theta-analysis"))
     testImplementation(project(":theta-solver"))
     testImplementation(project(":theta-solver-z3"))

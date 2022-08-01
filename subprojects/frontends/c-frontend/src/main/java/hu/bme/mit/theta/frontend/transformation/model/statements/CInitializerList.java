@@ -23,7 +23,9 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,9 +63,11 @@ public class CInitializerList extends CStatement {
 			list.add(Tuple2.of(currentValue, expr));
 			currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(ImmutableValuation.empty());
 		}
-		return ArrayInitExpr.of(list,
+		ArrayInitExpr<I, E> aie = ArrayInitExpr.of(list,
 				(Expr<E>) type.getNullValue(),
 				(ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(), type.getSmtType()));
+		FrontendMetadata.create(aie, "cType", new CArray(type.getOrigin(), type));
+		return aie;
 	}
 
 	public void addStatement(CStatement index, CStatement value) {

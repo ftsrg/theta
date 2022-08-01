@@ -197,7 +197,9 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
             builder.addEdge(xcfaEdge)
             propagateMetadata(statement, xcfaEdge)
         } else {
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(TypeUtils.cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type), TypeUtils.cast(rExpression, rExpression.type))))
+            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(
+                    TypeUtils.cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
+                    TypeUtils.cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type))))
             if (CComplexType.getType(lValue) is CPointer && CComplexType.getType(rExpression) is CPointer) {
                 Preconditions.checkState(rExpression is RefExpr<*> || rExpression is Reference<*, *>)
                 if (rExpression is RefExpr<*>) {
