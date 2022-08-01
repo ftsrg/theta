@@ -40,7 +40,7 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
 	private final Expr<DeclType> expr;
 
 	private AssignStmt(final VarDecl<DeclType> varDecl, final Expr<DeclType> expr) {
-		checkArgument(varDecl.getType().equals(expr.getType()));
+		checkArgument(varDecl.getType().equals(expr.getType()), varDecl.getType() + " != " + expr.getType());
 		this.varDecl = checkNotNull(varDecl);
 		this.expr = checkNotNull(expr);
 	}
