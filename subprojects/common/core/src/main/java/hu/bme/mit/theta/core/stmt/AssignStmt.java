@@ -15,13 +15,14 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * Assignment statement of the form VARIABLE := EXPRESSION.
@@ -39,6 +40,7 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
 	private final Expr<DeclType> expr;
 
 	private AssignStmt(final VarDecl<DeclType> varDecl, final Expr<DeclType> expr) {
+		checkArgument(varDecl.getType().equals(expr.getType()));
 		this.varDecl = checkNotNull(varDecl);
 		this.expr = checkNotNull(expr);
 	}
