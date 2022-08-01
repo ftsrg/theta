@@ -57,7 +57,7 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * An ExprTraceChecker that generates new predicates based on the UCB algorithm by
- * Leucker, Martin &amp; Markin, Grigory &amp; Neuhäußer, Martin. (2015). A New Refinement
+ * Leucker, Martin &amp; Markin, Grigory &amp; Neuhausser, Martin. (2015). A New Refinement
  * Strategy for CEGAR-Based Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {

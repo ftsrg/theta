@@ -76,7 +76,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
  * Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
  * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on Foundations
  * of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing Machinery, New York, NY, USA,
- * 487–497. DOI:https://doi.org/10.1145/3106237.3106307
+ * 487-497. DOI:https://doi.org/10.1145/3106237.3106307
  */
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 	private enum AssertionGeneratorMethod {SP, WP}
