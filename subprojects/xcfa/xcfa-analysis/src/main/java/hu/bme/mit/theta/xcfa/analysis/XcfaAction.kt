@@ -37,7 +37,7 @@ class XcfaAction (val pid: Int, edge: XcfaEdge) : StmtAction() {
     }
 
     override fun toString(): String {
-        return "XcfaAction(pid=$pid, source=$source, target=$target, label=$label)"
+        return "$pid: $source -> $target [$label]"
     }
 
 

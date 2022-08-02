@@ -1,5 +1,5 @@
 plugins {
-    id("java-common")
+    id("kotlin-common")
     id("cli-tool")
 }
 

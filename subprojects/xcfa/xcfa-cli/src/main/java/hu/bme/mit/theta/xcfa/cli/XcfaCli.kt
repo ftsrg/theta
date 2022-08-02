@@ -28,12 +28,14 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
 import hu.bme.mit.theta.analysis.expl.ExplTransFunc
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -67,7 +69,7 @@ class XcfaCli(private val args: Array<String>) {
 
         val initState = XcfaState(mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
 
-        val explTransFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver())
+        val explTransFunc = ExplStmtTransFunc.create(Z3SolverFactory.getInstance().createSolver(), 1)
 
         val analysis: Analysis<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = XcfaAnalysis(
                 { s1, s2 -> s1.processes == s2.processes && s1.sGlobal.isLeq(s2.sGlobal)},
@@ -83,19 +85,21 @@ class XcfaCli(private val args: Array<String>) {
                 { s -> s.processes.any { it.value.locs.peek().error }}
         )
 
+        val logger = ConsoleLogger(Logger.Level.INFO)
+
 
         val abstractor: Abstractor<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> =
                 BasicAbstractor.builder(argBuilder).projection { s -> s.processes }
                         .waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())))
-                        .stopCriterion(StopCriterions.firstCex()).logger(NullLogger.getInstance()).build()
+                        .stopCriterion(StopCriterions.firstCex()).logger(logger).build()
 
 
         val precRefiner: PrecRefiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>, ItpRefutation> = XcfaPrecRefiner(ItpRefToExplPrec())
         val refiner: Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> =
                 SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), Z3SolverFactory.getInstance().createItpSolver()),
-                        precRefiner, PruneStrategy.LAZY, NullLogger.getInstance())
+                        precRefiner, PruneStrategy.LAZY, logger)
 
-        val cegarChecker: CegarChecker<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = CegarChecker.create(abstractor, refiner)
+        val cegarChecker: CegarChecker<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = CegarChecker.create(abstractor, refiner, logger)
 
         val safetyResult = cegarChecker.check(XcfaPrec(ExplPrec.empty()))
 

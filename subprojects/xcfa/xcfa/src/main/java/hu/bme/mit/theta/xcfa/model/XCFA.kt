@@ -60,6 +60,10 @@ data class XcfaLocation(
             return cnt++;
         }
     }
+
+    override fun toString(): String {
+        return "$name ${if(initial) "{init}" else ""}${if(final) "{final}" else ""}${if(error) "{error}" else ""}"
+    }
 }
 
 data class XcfaEdge(

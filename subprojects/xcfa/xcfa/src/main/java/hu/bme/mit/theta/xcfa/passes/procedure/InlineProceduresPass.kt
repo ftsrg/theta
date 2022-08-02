@@ -47,6 +47,7 @@ class InlineProceduresPass : ProcedurePass{
                             val invokeLabel: InvokeLabel = it.label.labels[0] as InvokeLabel
                             val procedure = builder.parent.getProcedures().find { p -> p.name == invokeLabel.name }
                             checkNotNull(procedure)
+                            procedure.optimize()
 
                             val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
                             procedure.getLocs().forEach { newLocs.put(it, it.inlinedCopy()) }

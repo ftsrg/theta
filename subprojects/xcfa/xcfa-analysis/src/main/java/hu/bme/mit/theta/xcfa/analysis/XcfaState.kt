@@ -51,6 +51,10 @@ data class XcfaState<S : ExprState>(
     fun withState(s: S): XcfaState<S> {
         return XcfaState(processes, s)
     }
+
+    override fun toString(): String {
+        return "$processes {$sGlobal}"
+    }
 }
 
 data class XcfaProcessState(
@@ -61,5 +65,11 @@ data class XcfaProcessState(
         deque.pop()
         deque.push(l)
         return XcfaProcessState(deque)
+    }
+
+    override fun toString(): String = when(locs.size) {
+        0 -> ""
+        1 -> locs.peek()!!.toString()
+        else -> "${locs.peek()!!} [${locs.size}]"
     }
 }

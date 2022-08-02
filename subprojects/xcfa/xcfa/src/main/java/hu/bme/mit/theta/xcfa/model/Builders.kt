@@ -70,62 +70,76 @@ class XcfaProcedureBuilder(
     var errorLoc: Optional<XcfaLocation> = Optional.empty()
         private set
     lateinit var parent: XcfaBuilder
+    private lateinit var optimized: XcfaProcedureBuilder
     private lateinit var built: XcfaProcedure
-    fun getParams() : List<Pair<VarDecl<*>, ParamDirection>> = params
-    fun getVars() : Set<VarDecl<*>> = vars
-    fun getLocs() : Set<XcfaLocation> = locs
-    fun getEdges() : Set<XcfaEdge> = edges
+    fun getParams() : List<Pair<VarDecl<*>, ParamDirection>> = if(this::optimized.isInitialized) optimized.params else params
+    fun getVars() : Set<VarDecl<*>> = if(this::optimized.isInitialized) optimized.vars else vars
+    fun getLocs() : Set<XcfaLocation> = if(this::optimized.isInitialized) optimized.locs else locs
+    fun getEdges() : Set<XcfaEdge> = if(this::optimized.isInitialized) optimized.edges else edges
+
+    fun optimize() {
+        if (!this::optimized.isInitialized) {
+            var that = this
+            that = AnnotateVarsPass().run(that)
+            that = NormalizePass().run(that)
+            that = DeterministicPass().run(that)
+            that = EmptyEdgeRemovalPass().run(that)
+            that = UnusedLocRemovalPass().run(that)
+            that = ErrorLocationPass().run(that)
+            if(name == "main") that = InlineProceduresPass().run(that)
+            that = NondetFunctionPass().run(that)
+            optimized = that
+        }
+    }
 
     fun build(parent: XCFA) : XcfaProcedure {
         if(this::built.isInitialized) return built;
-        var that = this
-        that = AnnotateVarsPass().run(that)
-        that = NormalizePass().run(that)
-        that = DeterministicPass().run(that)
-        that = EmptyEdgeRemovalPass().run(that)
-        that = UnusedLocRemovalPass().run(that)
-        that = ErrorLocationPass().run(that)
-        if(name == "main") that = InlineProceduresPass().run(that)
-        that = NondetFunctionPass().run(that)
+        if(!this::optimized.isInitialized) optimize()
         built = XcfaProcedure(
                 parent=parent,
-                name=that.name,
-                params=that.params,
-                vars=that.vars,
-                locs=that.locs,
-                edges=that.edges,
-                initLoc=that.initLoc,
-                finalLoc=that.finalLoc,
-                errorLoc=that.errorLoc
+                name=optimized.name,
+                params=optimized.params,
+                vars=optimized.vars,
+                locs=optimized.locs,
+                edges=optimized.edges,
+                initLoc=optimized.initLoc,
+                finalLoc=optimized.finalLoc,
+                errorLoc=optimized.errorLoc
         )
         return built
     }
 
     fun addParam(toAdd: VarDecl<*>, dir: ParamDirection) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         params.add(Pair(toAdd, dir))
         vars.add(toAdd)
     }
 
     fun addVar(toAdd: VarDecl<*>) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         vars.add(toAdd)
     }
 
     fun createErrorLoc() {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         errorLoc = Optional.of(XcfaLocation(name + "_error", error=true))
         locs.add(errorLoc.get())
     }
 
     fun createFinalLoc() {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         finalLoc = Optional.of(XcfaLocation(name + "_final", final=true))
         locs.add(finalLoc.get())
     }
 
     fun createInitLoc() {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         initLoc = XcfaLocation(name + "_init", initial=true)
         locs.add(initLoc)
     }
 
     fun addEdge(toAdd: XcfaEdge) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         addLoc(toAdd.source)
         addLoc(toAdd.target)
         edges.add(toAdd)
@@ -134,6 +148,7 @@ class XcfaProcedureBuilder(
     }
 
     fun addLoc(toAdd: XcfaLocation) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         if(!locs.contains(toAdd)) {
             check(!toAdd.error)
             check(!toAdd.initial)
@@ -143,16 +158,19 @@ class XcfaProcedureBuilder(
     }
 
     fun removeEdge(toRemove: XcfaEdge) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         toRemove.source.outgoingEdges.remove(toRemove)
         toRemove.target.incomingEdges.remove(toRemove)
         edges.remove(toRemove)
     }
 
     fun removeLoc(toRemove: XcfaLocation) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         locs.remove(toRemove)
     }
 
     fun removeLocs(pred: (XcfaLocation) -> Boolean) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         while(locs.any(pred)) {
             locs.removeIf(pred)
             edges.removeIf { pred(it.source) }
@@ -160,6 +178,7 @@ class XcfaProcedureBuilder(
     }
 
     fun changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         val savedVars = ArrayList(vars)
         vars.clear()
         savedVars.forEach { vars.add(varLut[it]!!) }

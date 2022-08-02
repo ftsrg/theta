@@ -103,7 +103,7 @@ data class SequenceLabel(
     }
 
     override fun toString(): String {
-        return "Sequence($labels)"
+        return labels.toString()
     }
 }
 
