@@ -43,6 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.procedure.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
@@ -104,7 +105,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name)
+        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses())
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
         }

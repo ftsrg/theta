@@ -46,7 +46,7 @@ data class XcfaProcedure(
         val errorLoc: Optional<XcfaLocation>                            // error location (optional)
 )
 
-data class XcfaLocation(
+data class XcfaLocation @JvmOverloads constructor(
         val name: String,                                               // label of the location
         val initial: Boolean = false,                                   // is this the initial location?
         val final: Boolean = false,                                     // is this the final location?
@@ -66,7 +66,7 @@ data class XcfaLocation(
     }
 }
 
-data class XcfaEdge(
+data class XcfaEdge @JvmOverloads constructor(
         val source: XcfaLocation,                                       // source location
         val target: XcfaLocation,                                       // target location
         val label: XcfaLabel = NopLabel                                 // edge label
@@ -76,7 +76,7 @@ data class XcfaEdge(
     fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
 }
 
-data class XcfaGlobalVar(
+data class XcfaGlobalVar @JvmOverloads constructor(
         val wrappedVar: VarDecl<*>,
         val initValue: LitExpr<*>,
         val threadLocal: Boolean = false

@@ -55,7 +55,7 @@ class TestFrontendXcfaBuilder {
                     arrayOf("/14ushort.c"),
                     arrayOf("/15addition.c"),
                     arrayOf("/16loop.c"),
-                    arrayOf("/17recursive.c"),
+//                    arrayOf("/17recursive.c"),
                     arrayOf("/18multithread.c"),
                     arrayOf("/19dportest.c"),
                     arrayOf("/20testinline.c"),

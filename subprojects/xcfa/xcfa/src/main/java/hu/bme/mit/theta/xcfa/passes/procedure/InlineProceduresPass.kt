@@ -32,6 +32,8 @@ import kotlin.collections.ArrayList
 class InlineProceduresPass : ProcedurePass{
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
+        check(builder.metaData["inlined"] == null) {"Recursive programs are not supported by inlining." }
+        builder.metaData["inlined"] = Unit
         while(true) {
             var foundOne = false
             for (edge in ArrayList(builder.getEdges())) {
@@ -86,7 +88,6 @@ class InlineProceduresPass : ProcedurePass{
                 }
             }
             if (!foundOne) {
-                builder.metaData["inlined"] = Unit
                 return builder
             }
         }

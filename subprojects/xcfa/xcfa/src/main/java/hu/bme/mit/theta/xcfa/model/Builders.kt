@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.xcfa.passes.procedure.*
 import java.util.Optional
 
-class XcfaBuilder(
+class XcfaBuilder @JvmOverloads constructor(
         var name: String,
         private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
         private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
@@ -55,8 +55,9 @@ class XcfaBuilder(
     }
 }
 
-class XcfaProcedureBuilder(
+class XcfaProcedureBuilder @JvmOverloads constructor(
         var name: String,
+        val manager: ProcedurePassManager,
         private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
         private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
         private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
@@ -80,14 +81,9 @@ class XcfaProcedureBuilder(
     fun optimize() {
         if (!this::optimized.isInitialized) {
             var that = this
-            that = AnnotateVarsPass().run(that)
-            that = NormalizePass().run(that)
-            that = DeterministicPass().run(that)
-            that = EmptyEdgeRemovalPass().run(that)
-            that = UnusedLocRemovalPass().run(that)
-            that = ErrorLocationPass().run(that)
-            if(name == "main") that = InlineProceduresPass().run(that)
-            that = NondetFunctionPass().run(that)
+            for (pass in manager.passes) {
+                that = pass.run(that)
+            }
             optimized = that
         }
     }
