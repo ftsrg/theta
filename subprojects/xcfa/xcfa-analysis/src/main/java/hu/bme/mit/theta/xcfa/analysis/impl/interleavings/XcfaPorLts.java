@@ -35,9 +35,10 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
 	private final XcfaLts simpleXcfaLts = new XcfaLts();
 
-	private final Random random = new Random(0); // TODO remove seed
+	private final Random random = new Random(); // TODO remove seed
 
 	public XcfaPorLts(XCFA xcfa) {
+		System.out.println(xcfa.toDot());
 		this.xcfa = xcfa;
 		collectBackwardTransitions();
 	}
@@ -51,7 +52,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	protected Collection<XcfaAction> getPersistentSetFirstActions(Collection<XcfaAction> allEnabledActions) {
 		var enabledActionsByProcess = allEnabledActions.stream().collect(Collectors.groupingBy(XcfaAction::getProcess));
 		List<Integer> enabledProcesses = new ArrayList<>(enabledActionsByProcess.keySet());
-		Collections.shuffle(enabledProcesses);
+		Collections.shuffle(enabledProcesses, random);
 		Collection<XcfaAction> firstActions = new HashSet<>();
 
 		for (Integer enabledProcess : enabledProcesses) {

@@ -18,7 +18,16 @@ public class XcfaAbstractPorLts extends XcfaPorLts {
 	@Override
 	public <P extends Prec> Collection<XcfaAction> getEnabledActionsFor(XcfaState<?> state, P prec) {
 		precision = prec;
-		return getEnabledActionsFor(state);
+		var result = getEnabledActionsFor(state);
+		if (true || prec.getUsedVars().stream().anyMatch(v -> "x".equals(v.getName()))) {
+			if (state.getEnabledProcesses().stream().map(p -> state.getProcessLocs().get(p)).anyMatch(loc -> "tmp463".equals(loc.getName()))) {
+				var pr = state.getEnabledProcesses().stream().filter(p -> state.getProcessLocs().get(p).getName().equals("tmp463")).findFirst();
+				if (pr.isPresent() && result.stream().anyMatch(a -> a.getProcess().equals(pr.get()))) {
+					int a = 2;
+				}
+			}
+		}
+		return result;
 	}
 
 	private boolean isIgnorable(Decl<? extends Type> varDecl) {

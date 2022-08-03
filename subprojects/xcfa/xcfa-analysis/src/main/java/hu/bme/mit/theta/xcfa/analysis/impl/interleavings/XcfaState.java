@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.analysis.PartialOrd;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -83,10 +84,22 @@ public class XcfaState<S extends ExprState> extends hu.bme.mit.theta.xcfa.analys
 	}
 
 	public static <S extends ExprState> XcfaState<S> create(final Map<XcfaLocation, Boolean> processLocs, final S globalState) {
+		try {
+			if (((ExplState) globalState).getVal().toMap().keySet().stream().anyMatch(k -> "x".equals(k.getName()))) {
+				int a = 2;
+			}
+		} catch (UnsupportedOperationException ignored) {
+		}
 		return new XcfaState<>(processLocs, globalState);
 	}
 
 	protected XcfaState<S> withParams(final Map<Integer, XcfaLocation> processLocs, final Collection<Integer> enabledProcesses, Collection<Integer> oldEnabledProcesses, final Map<VarDecl<?>, Integer> threadLookup, final S globalState, final Map<Integer, Collection<Integer>> waitForEnd, final XcfaAction lastAction) {
+		try {
+			if (((ExplState) globalState).getVal().toMap().keySet().stream().anyMatch(k -> "x".equals(k.getName()))) {
+				int a = 2;
+			}
+		} catch (UnsupportedOperationException ignored) {
+		}
 		return new XcfaState<S>(processLocs, enabledProcesses, oldEnabledProcesses, threadLookup, globalState, waitForEnd, lastAction);
 	}
 
