@@ -88,11 +88,6 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	public Collection<ArgNode<S, A>> expand(final ArgNode<S, A> node, final P prec) {
 		checkNotNull(node);
 		checkNotNull(prec);
-		//DEBUG
-		if (!prec.getUsedVars().isEmpty()) {
-			var a = 2;
-		}
-		//GUBED
 		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
 		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, prec);

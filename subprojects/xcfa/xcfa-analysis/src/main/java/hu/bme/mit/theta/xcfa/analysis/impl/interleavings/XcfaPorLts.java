@@ -35,10 +35,9 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
 	private final XcfaLts simpleXcfaLts = new XcfaLts();
 
-	private final Random random = new Random(); // TODO remove seed
+	private final Random random = new Random();
 
 	public XcfaPorLts(XCFA xcfa) {
-		System.out.println(xcfa.toDot());
 		this.xcfa = xcfa;
 		collectBackwardTransitions();
 	}
