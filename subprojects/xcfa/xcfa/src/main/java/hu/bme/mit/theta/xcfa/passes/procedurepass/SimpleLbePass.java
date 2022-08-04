@@ -20,12 +20,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass.LBELevel.LBE_FULL;
+import static hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass.LBELevel.LBE_LOCAL;
 
 /**
  * This pass simplifies the XCFA by joining certain edges to single edges.
@@ -53,6 +53,11 @@ public class SimpleLbePass extends ProcedurePass {
 		NO_LBE,
 
 		/**
+		 * Applies sequential collapsing on atomic blocks and consecutive local operations.
+		 */
+		LBE_LOCAL,
+
+		/**
 		 * Enables collapsing of sequential edges of a location where the number of incoming edges to the location is
 		 * exactly 1. A new edge is created for every outgoing edge of the location combined with the labels of the
 		 * incoming
@@ -71,6 +76,12 @@ public class SimpleLbePass extends ProcedurePass {
 	 */
 	private final boolean ENABLE_PRINT_TO_DOT = false;
 
+	/**
+	 * Stores whether we are in the atomic collapsing phase.
+	 * <p><b>Warning! Multiple parallel running of this pass instance does not work correctly!</b></p>
+	 */
+	private boolean atomicPhase = false;
+
 	XcfaProcedure.Builder builder;
 
 	/**
@@ -78,6 +89,7 @@ public class SimpleLbePass extends ProcedurePass {
 	 *
 	 * <ol>
 	 *     	<li>Remove outgoing edges of the error location</li>
+	 *     	<li>Collapse atomic blocks sequentially (with LBE_LOCAL as {@link LBELevel} configuration)</li>
 	 * 		<li>Join parallel edges to single edges and collapse snakes (see Definitions at {@link SimpleLbePass})</li>
 	 * 	 	<li>Collapse sequential edges of locations whose incoming degree is 1, join possibly created parallel edges and
 	 * 	 	edge-pairs described in step 2</li>
@@ -92,14 +104,21 @@ public class SimpleLbePass extends ProcedurePass {
 
 		builder = EliminateSelfLoops.instance.run(builder);
 
-		// Step 1
+		// Step 0
 		builder.getErrorLoc().getOutgoingEdges().forEach(builder::removeEdge);
 
+		// Step 1
+		if (level == LBE_LOCAL) {
+			collapseAtomics();
+		}
+
 		// Step 2
-		collapseParallelsAndSnakes(new ArrayList<>(builder.getLocs()));
+		collapseParallelsAndSnakes(new ArrayList<>(builder.getLocs()), false);
 
 		// Step 3
-		removeAllMiddleLocations();
+		if (level != LBE_LOCAL) {
+			removeAllMiddleLocations(new ArrayList<>(builder.getLocs()), false);
+		}
 
 		printToDot("--- AFTER TRANSFORMATION ---");
 
@@ -112,26 +131,81 @@ public class SimpleLbePass extends ProcedurePass {
 	}
 
 	/**
+	 * Collapses atomic blocks sequentially.
+	 */
+	private void collapseAtomics() {
+		atomicPhase = true;
+		List<XcfaLocation> atomicBlockInnerLocations = getAtomicBlockInnerLocations();
+		collapseParallelsAndSnakes(atomicBlockInnerLocations, true);
+		removeAllMiddleLocations(atomicBlockInnerLocations, true);
+		atomicPhase = false;
+	}
+
+	/**
+	 * Returns XCFA locations that are inner locations of any atomic block (after an edge with an AtomicBegin and before
+	 * an edge with an AtomicEnd).
+	 *
+	 * @return the list of locations in an atomic block
+	 */
+	private List<XcfaLocation> getAtomicBlockInnerLocations() {
+		List<XcfaLocation> atomicLocations = new ArrayList<>();
+		List<XcfaLocation> visitedLocations = new ArrayList<>();
+		List<XcfaLocation> locationsToVisit = new ArrayList<>();
+		HashMap<XcfaLocation, Boolean> isAtomic = new HashMap<>();
+		locationsToVisit.add(builder.getInitLoc());
+		isAtomic.put(builder.getInitLoc(), false);
+
+		while (!locationsToVisit.isEmpty()) {
+			XcfaLocation visiting = locationsToVisit.remove(0);
+			if (isAtomic.get(visiting)) atomicLocations.add(visiting);
+			visitedLocations.add(visiting);
+
+			for (XcfaEdge outEdge : visiting.getOutgoingEdges()) {
+				boolean isNextAtomic = isAtomic.get(visiting);
+				if (outEdge.getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.AtomicBeginXcfaLabel)) {
+					isNextAtomic = true;
+				}
+				if (outEdge.getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel)) {
+					isNextAtomic = false;
+				}
+
+				XcfaLocation target = outEdge.getTarget();
+				isAtomic.put(target, isNextAtomic);
+				if (atomicLocations.contains(target) && !isNextAtomic) {
+					atomicLocations.remove(target);
+				}
+				if (!locationsToVisit.contains(target) && !visitedLocations.contains(target)) {
+					locationsToVisit.add(outEdge.getTarget());
+				}
+			}
+		}
+		return atomicLocations;
+	}
+
+	/**
 	 * Collapses parallel edges and snakes with a starting list of locations to check. Possibly created new parallel
 	 * edges and snakes are collapsed too.
 	 *
 	 * @param locationsToVisit The starting list of locations to check.
+	 * @param strict           If true, cascade collapsing is limited to locations in locationsToVisit.
 	 * @return Returns the list of removed locations.
 	 */
-	private List<XcfaLocation> collapseParallelsAndSnakes(List<XcfaLocation> locationsToVisit) {
+	private List<XcfaLocation> collapseParallelsAndSnakes(List<XcfaLocation> locationsToVisit, boolean strict) {
+		List<XcfaLocation> editedLocationsToVisit = new ArrayList<>(locationsToVisit);
 		List<XcfaLocation> removedLocations = new LinkedList<>();
-		while (!locationsToVisit.isEmpty()) {
-			XcfaLocation visiting = locationsToVisit.get(0);
 
-			// Join parallel edges starting from "visiting" location
-			if (level == LBELevel.LBE_FULL) {
-				collapseParallelEdges(visiting, locationsToVisit);
+		while (!editedLocationsToVisit.isEmpty()) {
+			XcfaLocation visiting = editedLocationsToVisit.get(0);
+			if (!strict || locationsToVisit.contains(visiting)) {
+				// Join parallel edges starting from "visiting" location
+				if (level == LBE_FULL) {
+					collapseParallelEdges(visiting, editedLocationsToVisit);
+				}
+
+				// Collapse "visiting" location if it is part of a snake
+				collapsePartOfSnake(visiting, editedLocationsToVisit, removedLocations);
 			}
-
-			// Collapse "visiting" location if it is part of a snake
-			collapsePartOfSnake(visiting, locationsToVisit, removedLocations);
-
-			locationsToVisit.remove(visiting);
+			editedLocationsToVisit.remove(visiting);
 		}
 		return removedLocations;
 	}
@@ -140,23 +214,31 @@ public class SimpleLbePass extends ProcedurePass {
 	 * Removes locations whose incoming degree is 1. A new edge is created for every outgoing edge of the location
 	 * combined with the labels of the incoming edge as a sequence (the labels of the incoming edge will be the first in
 	 * the sequence).
+	 *
+	 * @param locationsToVisit The starting list of locations to check.
+	 * @param strict           If true, cascade collapsing is limited to locations in locationsToVisit.
 	 */
-	private void removeAllMiddleLocations() {
-		List<XcfaLocation> locationsToVisit = new ArrayList<>(builder.getLocs());
-		while (!locationsToVisit.isEmpty()) {
-			XcfaLocation visiting = locationsToVisit.get(0);
+	private void removeAllMiddleLocations(List<XcfaLocation> locationsToVisit, boolean strict) {
+		List<XcfaLocation> editedLocationsToVisit = new ArrayList<>(locationsToVisit);
 
-			if (visiting.getIncomingEdges().size() == 1 && visiting.getOutgoingEdges().size() > 1) {
-				XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
-				removeMiddleLocation(visiting);
+		while (!editedLocationsToVisit.isEmpty()) {
+			XcfaLocation visiting = editedLocationsToVisit.get(0);
 
-				List<XcfaLocation> start = new ArrayList<>();
-				start.add(previousLocation);
-				List<XcfaLocation> locationsToRemove = collapseParallelsAndSnakes(start);
-				locationsToRemove.forEach(locationsToVisit::remove);
+			if (!strict || locationsToVisit.contains(visiting)) {
+				if (visiting.getIncomingEdges().size() == 1 && visiting.getOutgoingEdges().size() > 1) {
+					XcfaLocation previousLocation = visiting.getIncomingEdges().get(0).getSource();
+					boolean removed = removeMiddleLocation(visiting);
+
+					if (removed) {
+						List<XcfaLocation> start = new ArrayList<>();
+						start.add(previousLocation);
+						List<XcfaLocation> locationsToRemove = collapseParallelsAndSnakes(start, strict);
+						locationsToRemove.forEach(editedLocationsToVisit::remove);
+					}
+				}
 			}
 
-			locationsToVisit.remove(visiting);
+			editedLocationsToVisit.remove(visiting);
 		}
 	}
 
@@ -205,8 +287,8 @@ public class SimpleLbePass extends ProcedurePass {
 	private void collapsePartOfSnake(XcfaLocation location, List<XcfaLocation> locationsToVisit, List<XcfaLocation> removedLocations) {
 		if (location.getIncomingEdges().size() == 1 && location.getOutgoingEdges().size() == 1) {
 			XcfaLocation previousLocation = location.getIncomingEdges().get(0).getSource();
-			removeMiddleLocation(location);
-			removedLocations.add(location);
+			boolean removed = removeMiddleLocation(location);
+			if (removed) removedLocations.add(location);
 			if (!locationsToVisit.contains(previousLocation)) {
 				locationsToVisit.add(previousLocation);
 			}
@@ -215,8 +297,8 @@ public class SimpleLbePass extends ProcedurePass {
 
 	/**
 	 * Wraps edge labels to a {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.SequenceLabel} if the edge does not have
-	 * exactly one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the NondetLabel's
-	 * labels are returned to simplify the formula.
+	 * exactly one label. If the labels contain one {@link hu.bme.mit.theta.xcfa.model.XcfaLabel.NondetLabel}, the
+	 * NondetLabel's labels are returned to simplify the formula.
 	 *
 	 * @param edgeLabels the edge labels we would like to add to the NonDetLabel
 	 * @return the list of labels to add to the NonDetLabel
@@ -240,9 +322,13 @@ public class SimpleLbePass extends ProcedurePass {
 	 *
 	 * @param location The location to remove
 	 */
-	private void removeMiddleLocation(XcfaLocation location) {
-		if (location.getIncomingEdges().size() != 1) return;
+	private boolean removeMiddleLocation(XcfaLocation location) {
+		if (location.getIncomingEdges().size() != 1) return false;
 		XcfaEdge inEdge = location.getIncomingEdges().get(0);
+		if (level == LBE_LOCAL && !atomicPhase && location.getOutgoingEdges().stream().anyMatch(this::isNotLocal)) {
+			return false;
+		}
+
 		builder.removeEdge(inEdge);
 		builder.removeLoc(location);
 
@@ -256,6 +342,18 @@ public class SimpleLbePass extends ProcedurePass {
 
 			builder.addEdge(XcfaEdge.of(inEdge.getSource(), outEdge.getTarget(), newLabel));
 		}
+		return true;
+	}
+
+	/**
+	 * Determines whether an edge performs only local operations or not (thread start and join operations are not
+	 * considered local here).
+	 *
+	 * @param edge the edge whose "locality" is to be determined
+	 * @return true, if the edge performs at least one non-local operation
+	 */
+	private boolean isNotLocal(XcfaEdge edge) {
+		return !edge.getLabels().stream().allMatch(label -> !(label instanceof XcfaLabel.StartThreadXcfaLabel || label instanceof XcfaLabel.JoinThreadXcfaLabel) && LabelUtils.getVars(label).stream().allMatch(builder.getLocalVars()::containsKey));
 	}
 
 	/**

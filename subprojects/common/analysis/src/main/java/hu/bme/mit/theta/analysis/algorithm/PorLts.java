@@ -237,10 +237,10 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * Returns shared objects (~global variables) encountered in a search starting from a given transition.
 	 *
 	 * @param startTransition the start point (transition) of the search
-	 * @param visitTransition the predicate that tells whether a transition has to be explored
+	 * @param goFurther the predicate that tells whether more transitions have to be explored through this transition
 	 * @return the set of encountered shared objects
 	 */
-	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> visitTransition) {
+	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> goFurther) {
 		Set<Decl<? extends Type>> vars = new HashSet<>();
 		List<T> exploredTransitions = new ArrayList<>();
 		List<T> transitionsToExplore = new ArrayList<>();
@@ -249,11 +249,13 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		while (!transitionsToExplore.isEmpty()) {
 			T exploring = transitionsToExplore.remove(0);
 			vars.addAll(getDirectlyUsedSharedObjects(exploring));
-			Set<T> successiveTransitions = getSuccessiveTransitions(exploring);
 
-			for (var newTransition : successiveTransitions) {
-				if (!exploredTransitions.contains(newTransition) && visitTransition.test(newTransition)) {
-					transitionsToExplore.add(newTransition);
+			if (goFurther.test(exploring)) {
+				Set<T> successiveTransitions = getSuccessiveTransitions(exploring);
+				for (var newTransition : successiveTransitions) {
+					if (!exploredTransitions.contains(newTransition)) {
+						transitionsToExplore.add(newTransition);
+					}
 				}
 			}
 			exploredTransitions.add(exploring);
