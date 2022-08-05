@@ -21,6 +21,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 
 import java.util.*;
 
@@ -135,51 +136,10 @@ public class SimpleLbePass extends ProcedurePass {
 	 */
 	private void collapseAtomics() {
 		atomicPhase = true;
-		List<XcfaLocation> atomicBlockInnerLocations = getAtomicBlockInnerLocations();
+		List<XcfaLocation> atomicBlockInnerLocations = XcfaUtils.getAtomicBlockInnerLocations(builder);
 		collapseParallelsAndSnakes(atomicBlockInnerLocations, true);
 		removeAllMiddleLocations(atomicBlockInnerLocations, true);
 		atomicPhase = false;
-	}
-
-	/**
-	 * Returns XCFA locations that are inner locations of any atomic block (after an edge with an AtomicBegin and before
-	 * an edge with an AtomicEnd).
-	 *
-	 * @return the list of locations in an atomic block
-	 */
-	private List<XcfaLocation> getAtomicBlockInnerLocations() {
-		List<XcfaLocation> atomicLocations = new ArrayList<>();
-		List<XcfaLocation> visitedLocations = new ArrayList<>();
-		List<XcfaLocation> locationsToVisit = new ArrayList<>();
-		HashMap<XcfaLocation, Boolean> isAtomic = new HashMap<>();
-		locationsToVisit.add(builder.getInitLoc());
-		isAtomic.put(builder.getInitLoc(), false);
-
-		while (!locationsToVisit.isEmpty()) {
-			XcfaLocation visiting = locationsToVisit.remove(0);
-			if (isAtomic.get(visiting)) atomicLocations.add(visiting);
-			visitedLocations.add(visiting);
-
-			for (XcfaEdge outEdge : visiting.getOutgoingEdges()) {
-				boolean isNextAtomic = isAtomic.get(visiting);
-				if (outEdge.getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.AtomicBeginXcfaLabel)) {
-					isNextAtomic = true;
-				}
-				if (outEdge.getLabels().stream().anyMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel)) {
-					isNextAtomic = false;
-				}
-
-				XcfaLocation target = outEdge.getTarget();
-				isAtomic.put(target, isNextAtomic);
-				if (atomicLocations.contains(target) && !isNextAtomic) {
-					atomicLocations.remove(target);
-				}
-				if (!locationsToVisit.contains(target) && !visitedLocations.contains(target)) {
-					locationsToVisit.add(outEdge.getTarget());
-				}
-			}
-		}
-		return atomicLocations;
 	}
 
 	/**

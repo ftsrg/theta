@@ -40,6 +40,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 	private final ExprTraceChecker<R> exprTraceChecker;
 	private final PrecRefiner<S, A, P, R> precRefiner;
 	private final PruneStrategy pruneStrategy;
+	private final NodePruner<S, A> nodePruner;
 	private final Logger logger;
 
 	private MultiExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
@@ -48,6 +49,18 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 		this.precRefiner = checkNotNull(precRefiner);
 		this.pruneStrategy = checkNotNull(pruneStrategy);
+		this.nodePruner = ARG::prune;
+		this.logger = checkNotNull(logger);
+	}
+
+	private MultiExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+								  final PrecRefiner<S, A, P, R> precRefiner,
+								  final PruneStrategy pruneStrategy, final Logger logger,
+								  final NodePruner<S, A> nodePruner) {
+		this.exprTraceChecker = checkNotNull(exprTraceChecker);
+		this.precRefiner = checkNotNull(precRefiner);
+		this.pruneStrategy = checkNotNull(pruneStrategy);
+		this.nodePruner = checkNotNull(nodePruner);
 		this.logger = checkNotNull(logger);
 	}
 
@@ -55,6 +68,12 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
 			final PruneStrategy pruneStrategy, final Logger logger) {
 		return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
+	}
+
+	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> MultiExprTraceRefiner<S, A, P, R> create(
+			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
+			final PruneStrategy pruneStrategy, final Logger logger, final NodePruner<S, A> nodePruner) {
+		return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner);
 	}
 
 	@Override
@@ -125,7 +144,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 					logger.write(Level.SUBSTEP, "|  |  Pruning (lazy)...");
 					for (int i = 0; i < nodesToPrune.size(); ++i) {
 						if (!skip.get(i)) {
-							arg.prune(nodesToPrune.get(i));
+							nodePruner.prune(arg, nodesToPrune.get(i));
 						}
 					}
 					break;

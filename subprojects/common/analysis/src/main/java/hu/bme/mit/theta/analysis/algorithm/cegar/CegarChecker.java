@@ -110,10 +110,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		stopwatch.stop();
 
-		logger.write(Level.MAINSTEP, "Printing ARG..." + System.lineSeparator());
-		Graph g = ArgVisualizer.getDefault().visualize(arg);
-		logger.write(Level.MAINSTEP, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
-
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
 				refinerTime, iteration);

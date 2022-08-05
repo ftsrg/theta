@@ -14,12 +14,15 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
+package hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por;
 
 import hu.bme.mit.theta.analysis.algorithm.PorLts;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
