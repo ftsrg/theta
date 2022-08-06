@@ -12,8 +12,8 @@ import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 import java.util.List;
 
 /**
- * Prunes the given node from the given ARG if it is not inside an atomic block or its closest ancestor node that is not
- * in an atomic block.
+ * Prunes the given node from the given ARG if the action of its incoming edge is not part of an atomic block.
+ * Otherwise, the closest ancestor of the node is pruned for whom the above condition holds.
  *
  * @param <S> {@link XcfaState}
  * @param <A> {@link XcfaAction}

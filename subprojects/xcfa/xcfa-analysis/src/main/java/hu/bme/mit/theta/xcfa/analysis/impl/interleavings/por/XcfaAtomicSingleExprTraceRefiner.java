@@ -9,6 +9,12 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState;
 
+/**
+ * A Refiner implementation that can refine a single trace (of XcfaStates and XcfaActions) by delegating to a
+ * SingleExprTraceChecker. Importantly, when a node is selected to be pruned at the end of the refinement, it is only
+ * pruned if the action of its incoming edge is not part of an atomic block. Otherwise, the closest ancestor of the node
+ * is pruned for whom the above condition holds.
+ */
 public final class XcfaAtomicSingleExprTraceRefiner<S extends XcfaState<?>, A extends XcfaAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
 
