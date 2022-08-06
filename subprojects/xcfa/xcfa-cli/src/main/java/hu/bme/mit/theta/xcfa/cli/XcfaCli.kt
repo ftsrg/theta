@@ -149,7 +149,9 @@ class XcfaCli(private val args: Array<String>) {
         val sw = Stopwatch.createStarted()
         val xcfa = try {
             val stream = FileInputStream(input!!)
-            getXcfaFromC(stream)
+            val xcfaFromC = getXcfaFromC(stream)
+            println("Frontend finished: ${xcfaFromC.name}")
+            xcfaFromC
         } catch (e: Exception) {
             if(stacktrace) e.printStackTrace();
             System.err.println("Frontend failed!")
@@ -171,10 +173,29 @@ class XcfaCli(private val args: Array<String>) {
                 e.printStackTrace()
                 return
             }
-
             val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
             val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
-            configureCegar(xcfa, abstractionSolverFactory, logger, refinementSolverFactory)
+
+            val cegarConfig = XcfaCegarConfig(
+                    abstractorConfig = AbstractorConfig(
+                            abstractionSolverFactory = abstractionSolverFactory,
+                            domain = domain,
+                            maxEnum = maxEnum,
+                            search = search,
+                            initPrec = initPrec,
+                            logger = logger
+                    ),
+                    refinerConfig = RefinerConfig(
+                            refinementSolverFactory = refinementSolverFactory,
+                            refinement = refinement,
+                            exprSplitter = exprSplitter,
+                            pruneStrategy = pruneStrategy,
+                            logger = logger
+                    ),
+                    logger = logger
+            )
+            println("Configuration finished: $cegarConfig")
+            cegarConfig.getCegarChecker(xcfa)
         } catch (e: Exception) {
             if(stacktrace) e.printStackTrace();
             System.err.println("Configuration failed!");
@@ -193,26 +214,6 @@ class XcfaCli(private val args: Array<String>) {
         sw.stop()
         println("walltime: $elapsed ms")
 //        System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s")
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun configureCegar(xcfa: XCFA, abstractionSolverFactory: SolverFactory, logger: ConsoleLogger, refinementSolverFactory: SolverFactory): CegarChecker<ExprState, ExprAction, Prec> {
-        val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
-                xcfa,
-                abstractionSolverFactory.createSolver(),
-                maxEnum,
-                search.getComp(xcfa),
-                refinement.stopCriterion,
-                logger
-        ) as Abstractor<ExprState, ExprAction, Prec>
-
-        val ref: ExprTraceChecker<Refutation> = refinement.refiner(refinementSolverFactory) as ExprTraceChecker<Refutation>
-        val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> = domain.itpPrecRefiner(exprSplitter.exprSplitter) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
-        val refiner: Refiner<ExprState, ExprAction, Prec> = if (refinement == Refinement.MULTI_SEQ)
-            MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger) else
-            SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
-
-        return CegarChecker.create(abstractor, refiner, logger)
     }
 
     private fun getSolver(name: String, validate: Boolean) = if (validate) {
