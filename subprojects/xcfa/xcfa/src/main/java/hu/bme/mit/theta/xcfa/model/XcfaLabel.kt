@@ -17,6 +17,8 @@
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.NonDetStmt
+import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
@@ -61,6 +63,9 @@ data class JoinLabel(
 data class StmtLabel(
         val stmt: Stmt
 ) : XcfaLabel() {
+    init {
+        check(stmt !is NonDetStmt && stmt !is SequenceStmt) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
+    }
     override fun toStmt() : Stmt = stmt
     override fun toString(): String {
         return stmt.toString()

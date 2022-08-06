@@ -74,12 +74,15 @@ public class LitmusTest {
 
     @Test
     public void check() throws IOException {
-        final Solver solver = Z3SolverFactory.getInstance().createSolver();
-        final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
-        final List<Pair<XcfaProcedure, List<Expr<?>>>> processes = xcfa.getInitProcedures();
-        final List<Integer> processIds = new ArrayList<>();
-        for (int i = 0; i < processes.size(); i++) {
-            processIds.add(i*-1 - 1);
+        try (Solver solver = Z3SolverFactory.getInstance().createSolver()) {
+            final XCFA xcfa = LitmusInterpreter.getXcfa(getClass().getResourceAsStream(filepath));
+            final List<Pair<XcfaProcedure, List<Expr<?>>>> processes = xcfa.getInitProcedures();
+            final List<Integer> processIds = new ArrayList<>();
+            for (int i = 0; i < processes.size(); i++) {
+                processIds.add(i * -1 - 1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
 //        final XcfaProcessMemEventProvider<ExplState> memEventProvider = new XcfaProcessMemEventProvider<>(processes.size());

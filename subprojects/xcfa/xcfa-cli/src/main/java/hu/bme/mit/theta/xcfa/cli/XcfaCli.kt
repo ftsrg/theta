@@ -18,38 +18,105 @@ package hu.bme.mit.theta.xcfa.cli
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
-import hu.bme.mit.theta.analysis.Analysis
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
-import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expl.ExplPrec
-import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
-import hu.bme.mit.theta.analysis.expl.ExplTransFunc
-import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
+import hu.bme.mit.theta.common.CliUtils
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
+import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.io.FileInputStream
-import java.util.*
-import java.util.ArrayDeque
+import java.nio.file.Path
+import java.time.Duration
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 class XcfaCli(private val args: Array<String>) {
     //////////// CONFIGURATION OPTIONS BEGIN ////////////
     //////////// input task ////////////
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
+
+    //////////// debug options ////////////
+    @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
+    var stacktrace: Boolean = false
+
+    //////////// output data and statistics ////////////
+    @Parameter(names = ["--version"], description = "Display version", help = true)
+    var versionInfo = false
+
+    @Parameter(names = ["--loglevel"], description = "Detailedness of logging")
+    var logLevel = Logger.Level.MAINSTEP
+
+    @Parameter(names = ["--output-results"], description = "Beside the input file creates a directory <input>-<timestamp>-result, in which it outputs the xcfa (simple and highlighted), cex, witness (graphml and dot) and statistics (txt)", help = true)
+    var outputResults = false
+
+    @Parameter(names = ["--witness-only"], description = "Does not output any other files, just a violation/correctness witness only")
+    var witnessOnly = false
+
+    @Parameter(names = ["--no-analysis"], description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
+    var noAnalysis = false
+
+
+    //////////// abstraction options ////////////
+
+    @Parameter(names = ["--domain"], description = "Abstraction domain")
+    var domain: Domain = Domain.EXPL
+
+    @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+    var abstractionSolver: String = "Z3"
+
+    @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    var validateAbstractionSolver = false
+
+    @Parameter(names = ["--maxenum"], description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
+    var maxEnum: Int = 0
+
+    @Parameter(names = ["--search"], description = "Search strategy")
+    var search: Search = Search.ERR
+
+    @Parameter(names = ["--initprec"], description = "Initial precision")
+    var initPrec: InitPrec = InitPrec.EMPTY
+
+    //////////// refiner options ////////////
+
+    @Parameter(names = ["--refinement"], description = "Refinement strategy")
+    var refinement: Refinement = Refinement.BW_BIN_ITP
+
+    @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
+    var refinementSolver: String = "Z3"
+
+    @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    var validateRefinementSolver = false
+
+    @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
+    var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE
+
+    @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
+    var pruneStrategy = PruneStrategy.LAZY
+
+
+    //////////// SMTLib options ////////////
+    @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
+    var home = SmtLibSolverManager.HOME.toAbsolutePath().toString()
+
+
     private fun run() {
         /// Checking flags
         try {
@@ -60,50 +127,110 @@ class XcfaCli(private val args: Array<String>) {
             ex.usage()
             return
         }
+        /// version
+        if (versionInfo) {
+            CliUtils.printVersion(System.out)
+            return
+        }
 
-        val stream = FileInputStream(input!!)
-        val xcfa = getXcfaFromC(stream)
+        // TODO later we might want to merge these two flags
+//        if (witnessOnly) {
+//            OutputHandler.create(OutputOptions.WITNESS_ONLY, input)
+//        } else if (outputResults) {
+//            OutputHandler.create(OutputOptions.OUTPUT_RESULTS, input)
+//        } else {
+//            OutputHandler.create(OutputOptions.NONE, input)
+//        }
+//        OutputHandler.getInstance().createResultsDirectory()
 
-        val initLocStack: Deque<XcfaLocation> = ArrayDeque()
-        initLocStack.add(xcfa.initProcedures[0].first.initLoc)
+        val logger = ConsoleLogger(logLevel)
 
-        val initState = XcfaState(mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
+        /// Starting frontend
+        val sw = Stopwatch.createStarted()
+        val xcfa = try {
+            val stream = FileInputStream(input!!)
+            getXcfaFromC(stream)
+        } catch (e: Exception) {
+            if(stacktrace) e.printStackTrace();
+            System.err.println("Frontend failed!")
+            exitProcess(-80)
+        }
 
-        val explTransFunc = ExplStmtTransFunc.create(Z3SolverFactory.getInstance().createSolver(), 1)
+//        OutputHandler.getInstance().writeXcfa(xcfa)
+//        OutputHandler.getInstance().writeInputStatistics(xcfa)
+        if(noAnalysis) return
 
-        val analysis: Analysis<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = XcfaAnalysis(
-                { s1, s2 -> s1.processes == s2.processes && s1.sGlobal.isLeq(s2.sGlobal)},
-                { p -> listOf(initState) },
-                { s, a, p ->
-                    val newSt = s.applyLoc(a)
-                    explTransFunc.getSuccStates(newSt.sGlobal, a, p.p).map { newSt.withState(it) }
-                }
-        )
-        val argBuilder: ArgBuilder<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = ArgBuilder.create(
-                { s: XcfaState<ExplState> -> s.processes[0]!!.locs.peek().outgoingEdges.map { XcfaAction(0, it) } },
-                analysis,
-                { s -> s.processes.any { it.value.locs.peek().error }}
-        )
-
-        val logger = ConsoleLogger(Logger.Level.INFO)
-
-
-        val abstractor: Abstractor<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> =
-                BasicAbstractor.builder(argBuilder).projection { s -> s.processes }
-                        .waitlist(PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())))
-                        .stopCriterion(StopCriterions.firstCex()).logger(logger).build()
+//        val initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS)
+//        logger.write(Logger.Level.RESULT, "Time of model transformation: " + initTime.toMillis() + "ms" + System.lineSeparator());
 
 
-        val precRefiner: PrecRefiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>, ItpRefutation> = XcfaPrecRefiner(ItpRefToExplPrec())
-        val refiner: Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> =
-                SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), Z3SolverFactory.getInstance().createItpSolver()),
-                        precRefiner, PruneStrategy.LAZY, logger)
+        val cegarChecker = try{
+            try {
+                registerAllSolverManagers(home, logger)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return
+            }
 
-        val cegarChecker: CegarChecker<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = CegarChecker.create(abstractor, refiner, logger)
+            val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
+            val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
+            configureCegar(xcfa, abstractionSolverFactory, logger, refinementSolverFactory)
+        } catch (e: Exception) {
+            if(stacktrace) e.printStackTrace();
+            System.err.println("Configuration failed!");
+            exitProcess(-81);
+        }
 
-        val safetyResult = cegarChecker.check(XcfaPrec(ExplPrec.empty()))
+        val safetyResult = try {
+            cegarChecker.check(domain.initPrec(xcfa, initPrec))
+        } catch (e: Exception) {
+            if(stacktrace) e.printStackTrace();
+            System.err.println("Analysis failed!");
+            exitProcess(-82);
+        }
 
-        println(safetyResult)
+        val elapsed = sw.elapsed(TimeUnit.MILLISECONDS)
+        sw.stop()
+        println("walltime: $elapsed ms")
+//        System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun configureCegar(xcfa: XCFA, abstractionSolverFactory: SolverFactory, logger: ConsoleLogger, refinementSolverFactory: SolverFactory): CegarChecker<ExprState, ExprAction, Prec> {
+        val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
+                xcfa,
+                abstractionSolverFactory.createSolver(),
+                maxEnum,
+                search.getComp(xcfa),
+                refinement.stopCriterion,
+                logger
+        ) as Abstractor<ExprState, ExprAction, Prec>
+
+        val ref: ExprTraceChecker<Refutation> = refinement.refiner(refinementSolverFactory) as ExprTraceChecker<Refutation>
+        val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> = domain.itpPrecRefiner(exprSplitter.exprSplitter) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+        val refiner: Refiner<ExprState, ExprAction, Prec> = if (refinement == Refinement.MULTI_SEQ)
+            MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger) else
+            SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+
+        return CegarChecker.create(abstractor, refiner, logger)
+    }
+
+    private fun getSolver(name: String, validate: Boolean) = if (validate) {
+        SolverValidatorWrapperFactory.create(name)
+    } else {
+        SolverManager.resolveSolverFactory(name)
+    }
+
+    private fun registerAllSolverManagers(home: String, logger: Logger) {
+//        CpuTimeKeeper.saveSolverTimes()
+        SolverManager.closeAll()
+        // register solver managers
+        SolverManager.registerSolverManager(Z3SolverManager.create())
+        if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+            val homePath = Path.of(home)
+            val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
+            SolverManager.registerSolverManager(smtLibSolverManager)
+        }
     }
 
     companion object {

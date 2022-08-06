@@ -1,0 +1,190 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.xcfa.cli
+
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
+import hu.bme.mit.theta.analysis.expl.ExplPrec
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.pred.*
+import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
+import hu.bme.mit.theta.xcfa.collectAssumes
+import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.model.XCFA
+
+
+enum class Domain(
+        val abstractor: (
+            xcfa: XCFA,
+            solver: Solver,
+            maxEnum: Int,
+            argNodeComparator: ArgNodeComparators.ArgNodeComparator,
+            stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
+            logger: Logger
+        ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
+        val itpPrecRefiner: (exprSplitter: ExprSplitters.ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
+        val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>
+) {
+
+        EXPL(
+            abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f) },
+            itpPrecRefiner = { XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec()) },
+            initPrec = { x, ip -> ip.explPrec(x) }
+        ),
+        PRED_BOOL(
+            abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f) },
+            itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
+                initPrec = { x, ip -> ip.predPrec(x) }
+        ),
+        PRED_CART(
+            abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f) },
+            itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
+                initPrec = { x, ip -> ip.predPrec(x) }
+        ),
+        PRED_SPLIT(
+            abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f) },
+            itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
+                initPrec = { x, ip -> ip.predPrec(x) }
+        ),
+}
+
+enum class Refinement(
+        val refiner: (solverFactory: SolverFactory) -> ExprTraceChecker<out Refutation>,
+        val stopCriterion: StopCriterion<XcfaState<out ExprState>, XcfaAction>
+) {
+    FW_BIN_ITP  (
+            refiner = { s -> ExprTraceFwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    BW_BIN_ITP  (
+            refiner = { s -> ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    SEQ_ITP     (
+            refiner = { s -> ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    MULTI_SEQ   (
+            refiner = { s -> ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = StopCriterions.fullExploration()
+    ),
+    UNSAT_CORE  (
+            refiner = { s -> ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()) },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    UCB         (
+            refiner = { s -> ExprTraceUCBChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()) },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+
+    NWT_SP      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withSP().withoutLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_WP      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withWP().withoutLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_SP_LV   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withSP().withLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_WP_LV   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withWP().withLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_IT_WP   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withWP().withoutLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_IT_SP   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withSP().withoutLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_IT_WP_LV(
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withWP().withLV() },
+            stopCriterion = StopCriterions.firstCex()
+    ),
+    NWT_IT_SP_LV      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withSP().withLV() },
+            stopCriterion = StopCriterions.firstCex()
+    )
+}
+
+
+enum class ExprSplitterOptions(val exprSplitter: ExprSplitter) {
+    WHOLE(ExprSplitters.whole()),
+    CONJUNCTS(ExprSplitters.conjuncts()),
+    ATOMS(ExprSplitters.atoms());
+}
+
+enum class Search {
+    BFS {
+        override fun getComp(cfa: XCFA): ArgNodeComparator {
+            return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
+        }
+    },
+    DFS {
+        override fun getComp(cfa: XCFA): ArgNodeComparator {
+            return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs())
+        }
+    },
+    ERR {
+        override fun getComp(cfa: XCFA): ArgNodeComparator {
+            return XcfaDistToErrComparator(cfa)
+        }
+    };
+
+    abstract fun getComp(cfa: XCFA): ArgNodeComparator
+}
+
+enum class InitPrec(
+        val explPrec: (xcfa: XCFA) -> XcfaPrec<ExplPrec>,
+        val predPrec: (xcfa: XCFA) -> XcfaPrec<PredPrec>,
+    ) {
+    EMPTY(
+            explPrec = {XcfaPrec(ExplPrec.empty())},
+            predPrec = {XcfaPrec(PredPrec.of())}
+    ),
+    ALLVARS(
+            explPrec = {xcfa -> XcfaPrec(ExplPrec.of(xcfa.collectVars()))},
+            predPrec = {error("ALLVARS is not interpreted for the predicate domain.") }
+    ),
+    ALLGLOBALS(
+            explPrec = {xcfa -> XcfaPrec(ExplPrec.of(xcfa.vars.map { it.wrappedVar }))},
+            predPrec = {error("ALLGLOBALS is not interpreted for the predicate domain.") }
+    ),
+    ALLASSUMES(
+            explPrec = {error("ALLVARS is not interpreted for the predicate domain.") },
+            predPrec = {xcfa -> XcfaPrec(PredPrec.of(xcfa.collectAssumes()))},
+    ),
+
+}
