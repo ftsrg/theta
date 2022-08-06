@@ -67,10 +67,7 @@ import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewAtomsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewOperandsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.*;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.XcfaAbstractPorLts;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.XcfaAtomicMultiExprTraceRefiner;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.XcfaAtomicSingleExprTraceRefiner;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.XcfaPorLts;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.*;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTInitFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTLts;
@@ -446,13 +443,13 @@ public class XcfaConfigBuilder {
 
 		if (refinement == Refinement.MULTI_SEQ) {
 			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				refiner = XcfaAtomicMultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
 			} else {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
 		} else {
 			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				refiner = XcfaAtomicSingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
