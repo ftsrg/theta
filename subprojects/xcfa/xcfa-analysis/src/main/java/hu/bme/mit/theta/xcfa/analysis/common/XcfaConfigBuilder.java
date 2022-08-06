@@ -167,6 +167,14 @@ public class XcfaConfigBuilder {
 			}
 
 			@Override
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel) {
+				return switch (porDependencyLevel) {
+					case ABSTRACTION_AWARE -> new XcfaAbstractPorLts(xcfa);
+					default -> new XcfaPorLts(xcfa);
+				};
+			}
+
+			@Override
 			public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
 				return INTERLEAVINGS.getInitFunc(initLocs, initFunc);
 			}
@@ -193,6 +201,10 @@ public class XcfaConfigBuilder {
 		};
 
 		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
+
+		public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel) {
+			return getLts(xcfa);
+		}
 
 		public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
 
@@ -263,6 +275,10 @@ public class XcfaConfigBuilder {
 		}
 	}
 
+	public enum PorDependencyLevel {
+		BASIC, ABSTRACTION_AWARE
+	}
+
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory refinementSolverFactory;
 	private final SolverFactory abstractionSolverFactory;
@@ -276,6 +292,7 @@ public class XcfaConfigBuilder {
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	private PorDependencyLevel porDependencyLevel = PorDependencyLevel.BASIC;
 
 	public XcfaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory refinementSolverFactory, final SolverFactory abstractionSolverFactory, final Algorithm algorithm) {
 		this.domain = domain;
@@ -326,8 +343,13 @@ public class XcfaConfigBuilder {
 		return this;
 	}
 
+	public XcfaConfigBuilder porDependencyLevel(final PorDependencyLevel porDependencyLevel) {
+		this.porDependencyLevel = porDependencyLevel;
+		return this;
+	}
+
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final LTS lts = algorithm.getLts(xcfa);
+		final LTS lts = algorithm.getLts(xcfa, porDependencyLevel);
 		final Abstractor abstractor;
 		final Refiner refiner;
 		final XcfaPrec prec;
