@@ -5,7 +5,6 @@ import Expr;
 stmt:	assignStmt
 	|	havocStmt
 	|	assumeStmt
-	|	returnStmt
 	;
 
 stmtList
@@ -13,17 +12,13 @@ stmtList
 	;
 
 assignStmt
-	:	lhs=ID ASSIGN value=expr
+	:	LPAREN ASSIGN lhs=ID value=expr RPAREN
 	;
 
 havocStmt
-	:	HAVOC lhs=ID
+	:	LPAREN HAVOC lhs=ID RPAREN
 	;
 
 assumeStmt
-	:	ASSUME cond=expr
-	;
-
-returnStmt
-	:	RETURN value=expr
+	:	LPAREN ASSUME cond=expr RPAREN
 	;

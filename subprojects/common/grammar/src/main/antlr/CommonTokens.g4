@@ -347,7 +347,7 @@ DEFAULT
 
 
 ASSIGN
-	:	':='
+	:	'assign'
 	;
 
 HAVOC

@@ -60,6 +60,7 @@ import hu.bme.mit.theta.grammar.dsl.gen.ExprBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser.*
+import hu.bme.mit.theta.grammar.textWithWS
 import hu.bme.mit.theta.grammar.type.TypeWrapper
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -119,7 +120,7 @@ internal class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitFuncLitExpr(ctx: FuncLitExprContext): Expr<out Type> {
             return if (ctx.result != null) {
-                val param = Decls.Param(ctx.param.name.text, TypeWrapper(ctx.param.type().text).instantiate())
+                val param = Decls.Param(ctx.param.name.text, TypeWrapper(ctx.param.type().textWithWS()).instantiate())
                 push(listOf(param))
                 val result = ctx.result.accept<Expr<*>>(this) as Expr<Type>
                 pop()
@@ -134,7 +135,7 @@ internal class ExpressionWrapper(scope: Scope, content: String) {
                 emptyList()
             } else {
                 ctx.decls.stream()
-                        .map { d: DeclContext -> Decls.Param(d.name.getText(), TypeWrapper(d.ttype.text).instantiate()) }.collect(Collectors.toList())
+                        .map { d: DeclContext -> Decls.Param(d.name.getText(), TypeWrapper(d.ttype.textWithWS()).instantiate()) }.collect(Collectors.toList())
             }
         }
 

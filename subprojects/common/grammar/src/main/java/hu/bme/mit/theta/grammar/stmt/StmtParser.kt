@@ -46,6 +46,7 @@ import hu.bme.mit.theta.grammar.dsl.gen.StmtLexer
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser.*
 import hu.bme.mit.theta.grammar.expr.ExpressionWrapper
+import hu.bme.mit.theta.grammar.textWithWS
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
@@ -83,7 +84,7 @@ internal class StatementWrapper(scope: Scope, content: String) {
         }
 
         override fun visitAssumeStmt(ctx: AssumeStmtContext): Stmt {
-            val expression = ExpressionWrapper(scope, ctx.cond.text)
+            val expression = ExpressionWrapper(scope, ctx.cond.textWithWS())
             val expr: Expr<BoolType> = TypeUtils.cast(expression.instantiate(env), BoolExprs.Bool())
             return Stmts.Assume(expr)
         }
@@ -92,7 +93,7 @@ internal class StatementWrapper(scope: Scope, content: String) {
             val lhsId: String = ctx.lhs.getText()
             val lhsSymbol = scope.resolve(lhsId).get()
             val `var` = env.eval(lhsSymbol) as VarDecl<*>
-            val expression = ExpressionWrapper(scope, ctx.value.text)
+            val expression = ExpressionWrapper(scope, ctx.value.textWithWS())
             val expr: Expr<*> = expression.instantiate(env)
             return if (expr.type == `var`.type) {
                 val tVar = `var` as VarDecl<Type>
