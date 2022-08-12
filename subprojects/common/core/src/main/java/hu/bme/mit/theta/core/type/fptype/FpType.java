@@ -2,22 +2,7 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Additive;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

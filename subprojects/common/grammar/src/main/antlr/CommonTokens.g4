@@ -49,7 +49,7 @@ ITE	:	'ite'
 	;
 
 IMPLY
-	:	'imply'
+	:	'=>'
 	;
 
 FORALL
@@ -100,7 +100,7 @@ MINUS
 MUL	:	'*'
 	;
 
-DIV	:	'/'
+DIV	:	'div'
 	;
 
 MOD	:	'mod'
@@ -274,7 +274,7 @@ FPTOFP
     ;
 
 FPSUB
-    :   'fpsub' FP_ROUNDINGMODE?
+    :   'fpsub'
     ;
 
 FPADD
@@ -282,23 +282,38 @@ FPADD
     ;
 
 FPMUL
-    :   'fpmul' FP_ROUNDINGMODE?
+    :   'fpmul'
     ;
 
 FPDIV
-    :   'fpdiv' FP_ROUNDINGMODE?
+    :   'fpdiv' FP_ROUNDINGMODE
     ;
 
 FPPOS
-    :   'fppos' FP_ROUNDINGMODE?
+    :   'fppos'
     ;
 
 FPNEG
-    :   'fpneg' FP_ROUNDINGMODE?
+    :   'fpneg'
     ;
 
 TRUE:	'true'
 	;
+
+READ:   'read'
+    ;
+
+WRITE
+    :   'write'
+    ;
+
+PRIME
+    :   'prime'
+    ;
+
+EXTRACT
+    :   'extract'
+    ;
 
 BV_TYPE_DECL
     :   LBRACK NAT '\'' SIGNEDNESS RBRACK
@@ -313,7 +328,11 @@ FP_TYPE_DECL
     ;
 
 FP_ROUNDINGMODE
-    :   LBRACK [A-Z]* RBRACK
+    :   '[rne]'
+    |   '[rna]'
+    |   '[rtp]'
+    |   '[rtn]'
+    |   '[rtz]'
     ;
 
 FALSE
@@ -348,6 +367,8 @@ RETURN
 
 
 BV  :   NAT '\'b' [0-1]+
+    |   '#b' [0-1]+
+    |   '#x' [0-1]+
     |   NAT '\'d' (PLUS | MINUS)? INT
     |   NAT '\'x' [0-9a-fA-F]+
     ;

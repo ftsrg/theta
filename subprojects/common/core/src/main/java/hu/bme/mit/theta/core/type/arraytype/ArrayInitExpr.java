@@ -52,6 +52,16 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
 		return new ArrayInitExpr<>(elems, elseElem, type);
 	}
 
+	public static <IndexType extends Type, ElemType extends Type> ArrayInitExpr<IndexType, ElemType> create(
+			final List<Tuple2<Expr<? extends Type>, Expr<? extends Type>>> elems,
+		 	final Expr<?> elseElem,
+			final ArrayType<?, ?> type) {
+		final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> typedElems = elems.stream().map(i -> Tuple2.of((Expr<IndexType>) i.get1(), (Expr<ElemType>) i.get2())).collect(Collectors.toList());
+		final Expr<ElemType> typedElseElem = (Expr<ElemType>) elseElem;
+		final ArrayType<IndexType, ElemType> typedType = (ArrayType<IndexType, ElemType>) type;
+		return of(typedElems, typedElseElem, typedType);
+	}
+
 	public List<Tuple2<Expr<IndexType>, Expr<ElemType>>> getElements() { return ImmutableList.copyOf(elems); }
 
 	public Expr<ElemType> getElseElem() { return elseElem; }

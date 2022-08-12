@@ -84,7 +84,7 @@ public final class FpDivExpr extends DivExpr<FpType> {
 
 	@Override
 	public String getOperatorLabel() {
-		return OPERATOR;
+		return OPERATOR + "[" + roundingMode.name().toLowerCase() + "]";
 	}
 }
  

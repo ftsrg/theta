@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.core.type.fptype;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
@@ -246,11 +247,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
 	@Override
 	public String toString() {
-		return
-				(hidden ? "-" : "+") +
-						exponent.toString() +
-						"." +
-						significand.toString();
+		return Utils.lispStringBuilder(hidden ? "#b1" : "#b0").add(exponent.toString()).add(significand.toString()).toString();
 	}
 
 	@Override
