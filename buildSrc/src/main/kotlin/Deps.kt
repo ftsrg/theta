@@ -1,5 +1,6 @@
 object Deps {
     val guava = "com.google.guava:guava:${Versions.guava}"
+    val gson = "com.google.code.gson:gson:${Versions.gson}"
 
     object Antlr {
         val antlr = "org.antlr:antlr4:${Versions.antlr}"
