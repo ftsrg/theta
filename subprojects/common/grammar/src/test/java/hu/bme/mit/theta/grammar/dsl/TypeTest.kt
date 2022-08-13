@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar
+package hu.bme.mit.theta.grammar.dsl
 
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs

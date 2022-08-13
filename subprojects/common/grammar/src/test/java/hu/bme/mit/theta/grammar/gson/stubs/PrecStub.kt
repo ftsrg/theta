@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 import java.util.Set
 
-class PrecStub : Prec {
+object PrecStub : Prec {
     override fun getUsedVars(): Collection<VarDecl<*>> {
         return Set.of()
     }

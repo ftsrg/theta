@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.grammar
+package hu.bme.mit.theta.grammar.dsl
 
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol

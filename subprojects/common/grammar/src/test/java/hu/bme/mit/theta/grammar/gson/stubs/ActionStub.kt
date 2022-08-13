@@ -17,7 +17,7 @@ package hu.bme.mit.theta.grammar.gson.stubs
 
 import hu.bme.mit.theta.analysis.Action
 
-class ActionStub(private val label: String) : Action {
+data class ActionStub(val label: String) : Action {
     override fun toString(): String {
         return label
     }

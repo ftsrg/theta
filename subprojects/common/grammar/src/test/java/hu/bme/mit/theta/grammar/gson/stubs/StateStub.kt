@@ -17,7 +17,7 @@ package hu.bme.mit.theta.grammar.gson.stubs
 
 import hu.bme.mit.theta.analysis.State
 
-class StateStub(private val label: String) : State {
+data class StateStub(val label: String) : State {
     override fun isBottom(): Boolean {
         return false
     }

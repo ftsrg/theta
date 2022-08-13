@@ -18,8 +18,8 @@ package hu.bme.mit.theta.grammar.gson.stubs
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
 
-class PartialOrdStub : PartialOrd<State?> {
-    override fun isLeq(state1: State, state2: State): Boolean {
+object PartialOrdStub : PartialOrd<StateStub> {
+    override fun isLeq(state1: StateStub, state2: StateStub): Boolean {
         return state1 == state2
     }
 }
