@@ -31,6 +31,10 @@ class SimpleScope(
     }
 
     override fun resolve(name: String?): Optional<out Symbol> {
-        return symbolTable[name]
+        val resolved = symbolTable[name]
+        return  if(resolved.isEmpty)
+                    enclosingScope?.resolve(name) ?: Optional.empty()
+                else
+                    resolved
     }
 }
