@@ -15,55 +15,24 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Inf;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
-import java.util.Map;
-import java.util.Set;
+import hu.bme.mit.theta.core.clock.constr.*;
+import hu.bme.mit.theta.core.clock.op.*;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
-
-import hu.bme.mit.theta.core.clock.constr.AndConstr;
-import hu.bme.mit.theta.core.clock.constr.ClockConstr;
-import hu.bme.mit.theta.core.clock.constr.ClockConstrVisitor;
-import hu.bme.mit.theta.core.clock.constr.DiffEqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffGeqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffGtConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffLeqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffLtConstr;
-import hu.bme.mit.theta.core.clock.constr.FalseConstr;
-import hu.bme.mit.theta.core.clock.constr.TrueConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitEqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitGeqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitGtConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
-import hu.bme.mit.theta.core.clock.op.ClockOp;
-import hu.bme.mit.theta.core.clock.op.ClockOpVisitor;
-import hu.bme.mit.theta.core.clock.op.CopyOp;
-import hu.bme.mit.theta.core.clock.op.FreeOp;
-import hu.bme.mit.theta.core.clock.op.GuardOp;
-import hu.bme.mit.theta.core.clock.op.ResetOp;
-import hu.bme.mit.theta.core.clock.op.ShiftOp;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 final class DBM {
 
@@ -571,18 +540,6 @@ final class DBM {
 	}
 
 	////
-
-	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
 
 	@Override
 	public String toString() {
