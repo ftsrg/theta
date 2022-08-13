@@ -13,12 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.expr
+package hu.bme.mit.theta.grammar.dsl.expr
 
 import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Tuple2
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.dsl.BasicScope
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
@@ -33,7 +32,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -61,7 +59,7 @@ import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser.*
 import hu.bme.mit.theta.grammar.textWithWS
-import hu.bme.mit.theta.grammar.type.TypeWrapper
+import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
@@ -70,7 +68,6 @@ import java.util.*
 import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.stream.Collectors
-import java.util.stream.IntStream
 import java.util.stream.Stream
 
 internal class ExpressionWrapper(scope: Scope, content: String) {

@@ -13,9 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.type
+package hu.bme.mit.theta.grammar.dsl.type
 
-import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -28,8 +27,6 @@ import hu.bme.mit.theta.grammar.dsl.gen.*
 import hu.bme.mit.theta.grammar.dsl.gen.TypeParser.*
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
-import java.util.*
-import java.util.regex.Pattern
 
 internal class TypeWrapper(content: String) {
     private val context: TypeContext

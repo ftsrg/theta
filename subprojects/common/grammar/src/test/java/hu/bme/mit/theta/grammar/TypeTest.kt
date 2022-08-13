@@ -17,15 +17,13 @@ package hu.bme.mit.theta.grammar
 
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
-import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
-import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FpType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.Func
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
-import hu.bme.mit.theta.grammar.type.TypeWrapper
+import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

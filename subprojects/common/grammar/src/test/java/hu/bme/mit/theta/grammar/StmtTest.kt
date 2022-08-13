@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.grammar.stmt.StatementWrapper
+import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

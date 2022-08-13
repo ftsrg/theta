@@ -43,7 +43,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.ExprUtils.simplify
-import hu.bme.mit.theta.grammar.expr.ExpressionWrapper
+import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

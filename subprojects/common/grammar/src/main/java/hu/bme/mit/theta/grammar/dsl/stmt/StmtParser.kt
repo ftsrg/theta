@@ -28,7 +28,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.stmt
+package hu.bme.mit.theta.grammar.dsl.stmt
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.dsl.Env
@@ -45,7 +45,7 @@ import hu.bme.mit.theta.grammar.dsl.gen.StmtBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.StmtLexer
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser.*
-import hu.bme.mit.theta.grammar.expr.ExpressionWrapper
+import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.textWithWS
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
