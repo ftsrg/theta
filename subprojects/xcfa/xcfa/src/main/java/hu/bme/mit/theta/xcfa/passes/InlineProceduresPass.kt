@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.passes.procedure
+package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -29,7 +29,7 @@ import kotlin.collections.ArrayList
  * Requires the ProcedureBuilder to be `deterministic`.
  * Sets the `inlined` flag on the ProcedureBuilder.
  */
-class InlineProceduresPass : ProcedurePass{
+class InlineProceduresPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         check(builder.metaData["inlined"] == null) {"Recursive programs are not supported by inlining." }

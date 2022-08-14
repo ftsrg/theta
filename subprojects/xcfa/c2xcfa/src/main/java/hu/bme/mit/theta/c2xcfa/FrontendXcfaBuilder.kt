@@ -43,7 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.procedure.CPasses
+import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors

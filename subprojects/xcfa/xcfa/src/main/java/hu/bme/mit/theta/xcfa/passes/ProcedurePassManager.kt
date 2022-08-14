@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.passes.procedure
+package hu.bme.mit.theta.xcfa.passes
 
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 

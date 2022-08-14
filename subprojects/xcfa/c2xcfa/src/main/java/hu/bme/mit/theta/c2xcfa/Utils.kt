@@ -21,7 +21,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.procedure.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.NormalizePass
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream

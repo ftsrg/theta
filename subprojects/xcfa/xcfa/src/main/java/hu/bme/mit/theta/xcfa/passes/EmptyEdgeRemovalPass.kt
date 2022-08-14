@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.passes.procedure
+package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.model.*
 

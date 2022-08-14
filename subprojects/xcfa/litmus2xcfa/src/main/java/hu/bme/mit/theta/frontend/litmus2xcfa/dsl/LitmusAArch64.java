@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64BaseVisitor;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Parser;
 import hu.bme.mit.theta.xcfa.model.*;
-import hu.bme.mit.theta.xcfa.passes.procedure.LitmusPasses;
+import hu.bme.mit.theta.xcfa.passes.LitmusPasses;
 
 import java.math.BigInteger;
 import java.util.*;
