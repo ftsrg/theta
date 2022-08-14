@@ -230,8 +230,11 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
     private fun <P : Type?, T : Type?> createArrayWriteExpr(lValue: ArrayReadExpr<P, T>, rExpression: Expr<*>, exprs: Stack<Expr<*>>): VarDecl<*> {
         val array = lValue.array
         val index = lValue.index
+        val arrType = CComplexType.getType(array)
+        check(arrType is CArray)
+        arrType.embeddedType.castTo(rExpression)
         val arrayWriteExpr = ArrayWriteExpr.of(array, index, TypeUtils.cast(rExpression, array.type.elemType))
-        FrontendMetadata.create(arrayWriteExpr, "cType", CArray(null, CComplexType.getType(rExpression)))
+        FrontendMetadata.create(arrayWriteExpr, "cType", arrType)
         return if (array is RefExpr<*> && (array as RefExpr<ArrayType<P, T>>).decl is VarDecl<*>) {
             exprs.push(arrayWriteExpr)
             array.decl as VarDecl<*>
