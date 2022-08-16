@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.gen.StmtBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.StmtLexer
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser
@@ -50,7 +51,7 @@ import hu.bme.mit.theta.grammar.textWithWS
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-internal class StatementWrapper(scope: Scope, content: String) {
+class StatementWrapper(content: String, scope: Scope = SimpleScope()) {
     private val scope: Scope
     private val context: StmtContext
 

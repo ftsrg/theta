@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":theta-solver-smtlib"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
+    implementation(project(":theta-grammar"))
 }
 
 application {

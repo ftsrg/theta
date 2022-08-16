@@ -22,7 +22,7 @@ import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
 class SimpleScope(
-            private val symbolTable: SymbolTable,
+            private val symbolTable: SymbolTable = SymbolTable(),
             private val enclosingScope: Scope? = null,
         ) : Scope {
 

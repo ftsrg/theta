@@ -69,7 +69,7 @@ class StmtTest {
         decls.forEach { symbolTable.add(it.key) }
         val env = Env()
         decls.forEach { env.define(it.key, it.value) }
-        val stmt = StatementWrapper(SimpleScope(symbolTable), serialized).instantiate(env)
+        val stmt = StatementWrapper(serialized, SimpleScope(symbolTable)).instantiate(env)
         Assert.assertEquals(memory, stmt)
     }
 
@@ -80,7 +80,7 @@ class StmtTest {
         decls.forEach { symbolTable.add(it.key) }
         val env = Env()
         decls.forEach { env.define(it.key, it.value) }
-        val stmt = StatementWrapper(SimpleScope(symbolTable), memory.toString()).instantiate(env)
+        val stmt = StatementWrapper(memory.toString(), SimpleScope(symbolTable)).instantiate(env)
         Assert.assertEquals(memory, stmt)
     }
 

@@ -28,7 +28,7 @@ import hu.bme.mit.theta.grammar.dsl.gen.TypeParser.*
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-internal class TypeWrapper(content: String) {
+class TypeWrapper(content: String) {
     private val context: TypeContext
 
     init {

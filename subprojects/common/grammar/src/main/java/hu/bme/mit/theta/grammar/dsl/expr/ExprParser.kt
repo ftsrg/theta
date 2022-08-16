@@ -70,7 +70,7 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-internal class ExpressionWrapper(scope: Scope, content: String) {
+class ExpressionWrapper(scope: Scope, content: String) {
     private val scope: Scope
     private val context: ExprContext
 
