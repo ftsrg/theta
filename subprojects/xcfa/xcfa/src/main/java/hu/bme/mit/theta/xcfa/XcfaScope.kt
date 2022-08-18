@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.grammar.dsl
+package hu.bme.mit.theta.xcfa
 
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol
@@ -22,9 +22,9 @@ import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
 class SimpleScope(
-            private val symbolTable: SymbolTable = SymbolTable(),
-            private val enclosingScope: Scope? = null,
-        ) : Scope {
+        private val symbolTable: SymbolTable = SymbolTable(),
+        private val enclosingScope: Scope? = null,
+) : Scope {
 
     override fun enclosingScope(): Optional<out Scope> {
         return Optional.ofNullable(enclosingScope)
@@ -33,8 +33,8 @@ class SimpleScope(
     override fun resolve(name: String?): Optional<out Symbol> {
         val resolved = symbolTable[name]
         return  if(resolved.isEmpty)
-                    enclosingScope?.resolve(name) ?: Optional.empty()
-                else
-                    resolved
+            enclosingScope?.resolve(name) ?: Optional.empty()
+        else
+            resolved
     }
 }
