@@ -219,19 +219,23 @@ class XcfaCli(private val args: Array<String>) {
         }
 
         val elapsed = sw.elapsed(TimeUnit.MILLISECONDS)
-        sw.stop()
+        sw.reset().start()
         println("walltime: $elapsed ms")
 
         val gson = getGson(xcfa)
 
         val argAdapter = ArgAdapter(safetyResult.arg)
         val json = gson.toJson(argAdapter)
-
+        println("serialization: ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+        sw.reset().start()
         val type = object: TypeToken<ArgAdapter<XcfaState<ExplState>, XcfaAction>>() {}.type
         val parsedBack = gson.fromJson<ArgAdapter<XcfaState<ExplState>, XcfaAction>>(json, type)
 
+        println("deserialization: ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
+        sw.stop()
+
         check(argAdapter == parsedBack) {
-            "Could not parse back the same ARG.\noriginal: \n$argAdapter\n=======\nparsed back: \n$parsedBack"
+            "Could not parse back the same ARG.\noriginal: \n$argAdapter\nparsed back: \n$parsedBack"
         }
         check(safetyResult.arg == parsedBack.instantiate(getPartialOrder { s1, s2 -> s1.isLeq(s2) })) { "Could not instantiate the same ARG." }
 

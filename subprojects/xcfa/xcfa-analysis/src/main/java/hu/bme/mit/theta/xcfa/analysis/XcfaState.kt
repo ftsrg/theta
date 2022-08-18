@@ -21,8 +21,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
-import kotlin.collections.ArrayDeque
-import kotlin.collections.LinkedHashMap
 
 data class XcfaState<S : ExprState>(
         val processes: Map<Int, XcfaProcessState>,
@@ -58,10 +56,10 @@ data class XcfaState<S : ExprState>(
 }
 
 data class XcfaProcessState(
-        val locs: Deque<XcfaLocation>
+        val locs: LinkedList<XcfaLocation>
 ) {
     fun withNewLoc(l: XcfaLocation) : XcfaProcessState {
-        val deque: Deque<XcfaLocation> = LinkedList(locs)
+        val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         deque.pop()
         deque.push(l)
         return XcfaProcessState(deque)

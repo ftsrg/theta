@@ -74,7 +74,7 @@ class XcfaCegarTest {
 
 //        System.err.println(xcfa.toDot())
 
-        val initLocStack: Deque<XcfaLocation> = ArrayDeque()
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(xcfa.initProcedures[0].first.initLoc)
 
         val initState = XcfaState(mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())

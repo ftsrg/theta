@@ -174,11 +174,11 @@ falseExpr
 	;
 
 intLitExpr
-	:	oper=(PLUS | MINUS)? value=INT
+	:	value=INT
 	;
 
 ratLitExpr
-	:	oper=(PLUS | MINUS)? num=INT PERCENT denom=INT
+	:	num=INT PERCENT denom=INT
 	;
 
 arrLitExpr

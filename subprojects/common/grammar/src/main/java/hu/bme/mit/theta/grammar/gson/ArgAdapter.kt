@@ -41,8 +41,8 @@ data class ArgAdapter<S: State, A: Action>(
         initNodes.forEach { lut[it.key] = arg.createInitNode(it.value.first, it.value.second) }
         val waitSet = HashSet<Int>(edges.keys)
         while(waitSet.isNotEmpty()) {
-            val entry = waitSet.filter { lut.keys.contains(lut[edges[it]!!.source]?.id) }.firstOrNull()
-            check(entry != null) { "Unreachable node present." }
+            val entry = waitSet.firstOrNull { lut.keys.contains(edges[it]!!.source) }
+            check(entry != null) { "Unreachable node(s) present: $waitSet\nedges: $edges\nlut: $lut" }
             waitSet.remove(entry)
             val edge = edges[entry]!!
             lut[entry] = arg.createSuccNode(lut[edge.source], edge.action, nodes[entry]!!.state, nodes[entry]!!.target)

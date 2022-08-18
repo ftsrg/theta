@@ -25,7 +25,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
 
-class XcfaAction (val pid: Int, edge: XcfaEdge) : StmtAction() {
+data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
     val label: XcfaLabel = edge.label

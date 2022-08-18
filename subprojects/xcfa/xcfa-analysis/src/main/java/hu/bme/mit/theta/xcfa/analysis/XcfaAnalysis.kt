@@ -27,13 +27,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.pred.PredAbstractors
+import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
-import hu.bme.mit.theta.analysis.pred.PredInitFunc
-import hu.bme.mit.theta.analysis.pred.PredOrd
-import hu.bme.mit.theta.analysis.pred.PredPrec
-import hu.bme.mit.theta.analysis.pred.PredState
-import hu.bme.mit.theta.analysis.pred.PredTransFunc
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -41,7 +36,6 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
-import java.util.ArrayDeque
 import java.util.function.Predicate
 
 open class XcfaAnalysis<S: ExprState, P: Prec> (
@@ -91,7 +85,7 @@ fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
 
 private fun getExplXcfaInitFunc(xcfa: XCFA, solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
-        val initLocStack: Deque<XcfaLocation> = ArrayDeque()
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
         Pair(i, XcfaProcessState(initLocStack))
     }.toMap()
@@ -115,7 +109,7 @@ class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int) : XcfaAnalysis<
 
 private fun getPredXcfaInitFunc(xcfa: XCFA, predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
-        val initLocStack: Deque<XcfaLocation> = ArrayDeque()
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
         Pair(i, XcfaProcessState(initLocStack))
     }.toMap()

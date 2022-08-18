@@ -373,7 +373,7 @@ BV  :   NAT '\'b' [0-1]+
     |   NAT '\'x' [0-9a-fA-F]+
     ;
 
-INT	:	NAT
+INT	:	SIGN? NAT
 	;
 
 NAT	:	DIGIT+

@@ -704,7 +704,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         override fun visitRatLitExpr(ctx: RatLitExprContext): RatLitExpr {
-            val num = BigInteger((ctx.oper?.text?:"")+ctx.num.text)
+            val num = BigInteger(ctx.num.text)
             val denom = BigInteger(ctx.denom.getText())
             return RatExprs.Rat(num, denom)
         }
