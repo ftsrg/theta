@@ -5,6 +5,7 @@ apply<KotlinPlatformJvmPlugin>()
 dependencies {
     val implementation: Configuration by configurations
     implementation(Deps.Kotlin.stdlib)
+    implementation(Deps.Kotlin.reflect)
 }
 tasks {
     withType<KotlinCompile>() {
