@@ -16,12 +16,16 @@
 
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.common.dsl.Env
+import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
+import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import java.util.Optional
 import java.util.StringJoiner
 
@@ -38,6 +42,12 @@ data class InvokeLabel(
         params.forEach { sj.add(it.toString()) }
         return "$name$sj"
     }
+    companion object {
+        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+            val (name, params) = Regex("(.*)\\((.*)\\)").matchEntire(s)!!.destructured
+            return InvokeLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) })
+        }
+    }
 }
 
 data class StartLabel(
@@ -50,6 +60,13 @@ data class StartLabel(
         params.forEach { sj.add(it.toString()) }
         return "$pidVar = start $name$sj"
     }
+    companion object {
+        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+            val (pidVarName, name, params) = Regex("(.*) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
+            val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
+            return StartLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar)
+        }
+    }
 }
 
 data class JoinLabel(
@@ -57,6 +74,12 @@ data class JoinLabel(
 ) : XcfaLabel() {
     override fun toString(): String {
         return "join $pid"
+    }
+    companion object {
+        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+            val (exprS) = Regex("join (.*)").matchEntire(s)!!.destructured
+            return JoinLabel(ExpressionWrapper(scope, exprS).instantiate(env))
+        }
     }
 }
 
@@ -69,6 +92,11 @@ data class StmtLabel(
     override fun toStmt() : Stmt = stmt
     override fun toString(): String {
         return stmt.toString()
+    }
+    companion object {
+        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+           return StmtLabel(StatementWrapper(s, scope).instantiate(env))
+        }
     }
 }
 
@@ -108,7 +136,9 @@ data class SequenceLabel(
     }
 
     override fun toString(): String {
-        return labels.toString()
+        val sj = StringJoiner(",","[","]")
+        labels.forEach { sj.add(it.toString()) }
+        return sj.toString()
     }
 }
 

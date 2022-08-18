@@ -11,22 +11,22 @@ exprList
 
 funcLitExpr
 	:	iteExpr
-	|	LPAREN FUNC param=decl result=funcLitExpr RPAREN
+	|	LPAREN FUNC param=decl result=expr RPAREN
 	;
 
 iteExpr
 	:	iffExpr
-	|	LPAREN ITE cond=expr then=expr elze=iteExpr RPAREN
+	|	LPAREN ITE cond=expr then=expr elze=expr RPAREN
 	;
 
 iffExpr
     :   implyExpr
-	|	LPAREN IFF leftOp=implyExpr (rightOp=iffExpr)? RPAREN
+	|	LPAREN IFF leftOp=expr (rightOp=expr)? RPAREN
 	;
 
 implyExpr
     :   quantifiedExpr
-	|	LPAREN IMPLY leftOp=quantifiedExpr (rightOp=implyExpr)? RPAREN
+	|	LPAREN IMPLY leftOp=expr (rightOp=expr)? RPAREN
 	;
 
 quantifiedExpr
@@ -36,121 +36,121 @@ quantifiedExpr
 	;
 
 forallExpr
-	:	LPAREN FORALL LPAREN paramDecls=declList RPAREN op=quantifiedExpr RPAREN
+	:	LPAREN FORALL LPAREN paramDecls=declList RPAREN op=expr RPAREN
 	;
 
 existsExpr
-	:	LPAREN EXISTS LPAREN paramDecls=declList RPAREN op=quantifiedExpr RPAREN
+	:	LPAREN EXISTS LPAREN paramDecls=declList RPAREN op=expr RPAREN
 	;
 
 fpFuncExpr
-    :   leftOp=orExpr
-    |   LPAREN oper=(FPMAX | FPMIN) leftOp=orExpr rightOp=orExpr RPAREN
+    :   orExpr
+    |   LPAREN oper=(FPMAX | FPMIN) leftOp=expr rightOp=expr RPAREN
     ;
 
 orExpr
     :   xorExpr
-	|	LPAREN OR ops+=xorExpr (ops+=xorExpr)* RPAREN
+	|	LPAREN OR ops+=expr (ops+=expr)* RPAREN
 	;
 
 xorExpr
     :   andExpr
-	|	LPAREN XOR leftOp=andExpr rightOp=xorExpr RPAREN
+	|	LPAREN XOR leftOp=expr rightOp=expr RPAREN
 	;
 
 andExpr
     :   notExpr
-	|	LPAREN AND ops+=notExpr (ops+=notExpr)* RPAREN
+	|	LPAREN AND ops+=expr (ops+=expr)* RPAREN
 	;
 
 notExpr
 	:	equalityExpr
-	|	LPAREN NOT op=equalityExpr RPAREN
+	|	LPAREN NOT op=expr RPAREN
 	;
 
 equalityExpr
     :   relationExpr
-	|	LPAREN oper=(EQ | NEQ) leftOp=relationExpr rightOp=relationExpr RPAREN
+	|	LPAREN oper=(EQ | NEQ) leftOp=expr rightOp=expr RPAREN
 	;
 
 relationExpr
     :   bitwiseOrExpr
-	|	LPAREN oper=(LT | LEQ | GT | GEQ | BV_ULT | BV_ULE | BV_UGT | BV_UGE | BV_SLT | BV_SLE | BV_SGT | BV_SGE) leftOp=bitwiseOrExpr rightOp=bitwiseOrExpr RPAREN
+	|	LPAREN oper=(LT | LEQ | GT | GEQ | BV_ULT | BV_ULE | BV_UGT | BV_UGE | BV_SLT | BV_SLE | BV_SGT | BV_SGE) leftOp=expr rightOp=expr RPAREN
 	;
 
 bitwiseOrExpr
     :   bitwiseXorExpr
-    |   LPAREN oper=BV_OR leftOp=bitwiseXorExpr rightOp=bitwiseXorExpr RPAREN
+    |   LPAREN oper=BV_OR leftOp=expr rightOp=expr RPAREN
     ;
 
 bitwiseXorExpr
     :   bitwiseAndExpr
-    |   LPAREN oper=BV_XOR leftOp=bitwiseAndExpr rightOp=bitwiseAndExpr RPAREN
+    |   LPAREN oper=BV_XOR leftOp=expr rightOp=expr RPAREN
     ;
 
 bitwiseAndExpr
     :   bitwiseShiftExpr
-    |   LPAREN oper=BV_AND leftOp=bitwiseShiftExpr rightOp=bitwiseShiftExpr RPAREN
+    |   LPAREN oper=BV_AND leftOp=expr rightOp=expr RPAREN
     ;
 
 bitwiseShiftExpr
     :   additiveExpr
-    |   LPAREN oper=(BV_SHL | BV_ASHR | BV_LSHR | BV_ROL | BV_ROR) leftOp=additiveExpr rightOp=additiveExpr RPAREN
+    |   LPAREN oper=(BV_SHL | BV_ASHR | BV_LSHR | BV_ROL | BV_ROR) leftOp=expr rightOp=expr RPAREN
     ;
 
 additiveExpr
     :   multiplicativeExpr
-	|	LPAREN oper=(PLUS | MINUS | BV_ADD | BV_SUB | FPADD | FPSUB) ops+=multiplicativeExpr (ops+=multiplicativeExpr)* RPAREN
+	|	LPAREN oper=(PLUS | MINUS | BV_ADD | BV_SUB | FPADD | FPSUB) ops+=expr (ops+=expr)* RPAREN
 	;
 
 multiplicativeExpr
     :   bvConcatExpr
-	|	LPAREN oper=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM | FPREM | FPMUL | FPDIV) ops+=bvConcatExpr (ops+=bvConcatExpr)* RPAREN
+	|	LPAREN oper=(MUL | DIV | MOD | REM | BV_MUL | BV_UDIV | BV_SDIV | BV_SMOD | BV_UREM | BV_SREM | FPREM | FPMUL | FPDIV) ops+=expr (ops+=expr)* RPAREN
 	;
 
 bvConcatExpr
     :   bvExtendExpr
-    |   LPAREN oper=BV_CONCAT (ops+=bvExtendExpr)+ RPAREN
+    |   LPAREN oper=BV_CONCAT (ops+=expr)+ RPAREN
     ;
 
 bvExtendExpr
     :   unaryExpr
-    |   LPAREN oper=(BV_ZERO_EXTEND | BV_SIGN_EXTEND) leftOp=unaryExpr rightOp=bvType RPAREN
+    |   LPAREN oper=(BV_ZERO_EXTEND | BV_SIGN_EXTEND) leftOp=expr rightOp=bvType RPAREN
     ;
 
 unaryExpr
 	:	bitwiseNotExpr
-	|	LPAREN oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_NAN | FPROUNDTOINT | FPSQRT | FPTOFP | FPTOBV | FP_FROM_BV | FPNEG | FPPOS ) op=unaryExpr RPAREN
+	|	LPAREN oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_NAN | FPROUNDTOINT | FPSQRT | FPTOFP | FPTOBV | FP_FROM_BV | FPNEG | FPPOS ) op=expr RPAREN
 	;
 
 bitwiseNotExpr
     :   functionCall
-    |   LPAREN BV_NOT op=bitwiseNotExpr RPAREN
+    |   LPAREN BV_NOT op=expr RPAREN
     ;
 
 functionCall
     :   arrayRead
-    |   LPAREN FUNC op=primaryExpr (ops+=primaryExpr)* RPAREN
+    |   LPAREN FUNC op=expr (ops+=expr)* RPAREN
     ;
 
 arrayRead
     :   arrayWrite
-    |   LPAREN READ array=primaryExpr index=primaryExpr RPAREN
+    |   LPAREN READ array=expr index=expr RPAREN
     ;
 
 arrayWrite
     :   primeExpr
-    |   LPAREN WRITE array=primaryExpr index=primaryExpr elem=primaryExpr RPAREN
+    |   LPAREN WRITE array=expr index=expr elem=expr RPAREN
     ;
 
 primeExpr
     :   bvExtract
-    |   LPAREN PRIME op=primaryExpr RPAREN
+    |   LPAREN PRIME op=expr RPAREN
     ;
 
 bvExtract
     :   primaryExpr
-    |   LPAREN EXTRACT op=primaryExpr from=intLitExpr until=intLitExpr RPAREN
+    |   LPAREN EXTRACT op=expr from=expr until=expr RPAREN
     ;
 
 primaryExpr

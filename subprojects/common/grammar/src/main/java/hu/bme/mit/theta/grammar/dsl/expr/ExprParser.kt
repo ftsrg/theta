@@ -195,7 +195,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitOrExpr(ctx: OrExprContext): Expr<out Type> {
             return if (ctx.ops.size > 1) {
                 val opStream: Stream<Expr<BoolType>> = ctx.ops.stream()
-                        .map(Function<XorExprContext, Expr<BoolType>> { op: XorExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
+                        .map({ op: ExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
                 val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
                 BoolExprs.Or(ops)
             } else {
@@ -216,7 +216,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitAndExpr(ctx: AndExprContext): Expr<out Type> {
             return if (ctx.ops.size > 1) {
                 val opStream: Stream<Expr<BoolType>> = ctx.ops.stream()
-                        .map(Function<NotExprContext, Expr<BoolType>> { op: NotExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
+                        .map( { op: ExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
                 val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
                 BoolExprs.And(ops)
             } else {
@@ -345,7 +345,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitAdditiveExpr(ctx: AdditiveExprContext): Expr<out Type> {
             return if (ctx.ops.size > 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: MultiplicativeExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)
@@ -411,7 +411,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitMultiplicativeExpr(ctx: MultiplicativeExprContext): Expr<out Type> {
             return if (ctx.ops.size > 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: BvConcatExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)
@@ -508,7 +508,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitBvConcatExpr(ctx: BvConcatExprContext): Expr<out Type> {
             return if (ctx.ops.size > 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: BvExtendExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)

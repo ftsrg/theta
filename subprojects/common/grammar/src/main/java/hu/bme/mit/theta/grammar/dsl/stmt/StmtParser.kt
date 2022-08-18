@@ -41,17 +41,17 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
-import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.gen.StmtBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.StmtLexer
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser
 import hu.bme.mit.theta.grammar.dsl.gen.StmtParser.*
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.textWithWS
+import org.antlr.v4.runtime.ANTLRErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-class StatementWrapper(content: String, scope: Scope = SimpleScope()) {
+class StatementWrapper(val content: String, scope: Scope) {
     private val scope: Scope
     private val context: StmtContext
 
@@ -64,8 +64,12 @@ class StatementWrapper(content: String, scope: Scope = SimpleScope()) {
 
     fun instantiate(env: Env?): Stmt {
         val visitor = StmtCreatorVisitor(scope, env)
-        val stmt: Stmt = context.accept(visitor)
-        return stmt
+        return try {
+            context.accept(visitor)
+        } catch (e: Exception) {
+            System.err.println("Erroneous input: ${context.textWithWS()}")
+            throw e
+        }
     }
 
     private class StmtCreatorVisitor(scope: Scope?, env: Env?) : StmtBaseVisitor<Stmt>() {

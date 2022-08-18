@@ -16,6 +16,10 @@
 
 package hu.bme.mit.theta.xcfa
 
+import hu.bme.mit.theta.common.dsl.Env
+import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.common.dsl.Symbol
+import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
@@ -33,4 +37,17 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when(this) {
     is NondetLabel -> labels.map { it.collectAssumes() }.flatten()
     is SequenceLabel -> labels.map { it.collectAssumes() }.flatten()
     else -> setOf()
+}
+
+fun XCFA.getSymbols(): Pair<Scope, Env> {
+    val symbolTable = SymbolTable()
+    val scope = XcfaScope(symbolTable)
+    val vars = collectVars()
+    val env = Env()
+    vars.forEach {
+        val symbol = Symbol { it.name.lowercase() }
+        symbolTable.add(symbol)
+        env.define(symbol, it)
+    }
+    return Pair(scope, env)
 }

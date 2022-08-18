@@ -19,26 +19,21 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import com.google.common.base.Stopwatch
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.TypeAdapter
 import com.google.gson.reflect.TypeToken
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonToken
-import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.dsl.Env
-import hu.bme.mit.theta.common.dsl.Symbol
-import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.gson.ArgAdapter
+import hu.bme.mit.theta.grammar.gson.ExplStateAdapter
+import hu.bme.mit.theta.grammar.gson.StringTypeAdapter
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
@@ -47,7 +42,11 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getPartialOrder
-import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.getSymbols
+import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
+import hu.bme.mit.theta.xcfa.gson.xcfaLocationAdapter
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.io.File
 import java.io.FileInputStream
@@ -223,50 +222,32 @@ class XcfaCli(private val args: Array<String>) {
         sw.stop()
         println("walltime: $elapsed ms")
 
+        val gson = getGson(xcfa)
+
         val argAdapter = ArgAdapter(safetyResult.arg)
-
-        val gsonBuilder = GsonBuilder()
-        val locTypeAdapter: TypeAdapter<XcfaLocation> = StringTypeAdapter {
-            val matchResult = Regex("^([^{ }]*) (\\{.*})?$").matchEntire(it)
-            check(matchResult != null)
-            val (name, modifier) = matchResult.destructured
-            XcfaLocation(name, modifier == "{init}", modifier == "{final}", modifier == "{error}")
-        }
-        val symbolTable = SymbolTable()
-        val vars = xcfa.collectVars()
-        symbolTable.addAll(vars.map { Symbol { it.name } })
-        val env = Env()
-        vars.forEach { env.define({ it.name }, it) }
-        val stmtTypeAdapter: TypeAdapter<Stmt> = StringTypeAdapter { StatementWrapper(it, SimpleScope(symbolTable)).instantiate(env) }
-        val stateTypeAdapter: TypeAdapter<ExplState> = StringTypeAdapter { ExplState.top() }
-        gsonBuilder.registerTypeAdapter(XcfaLocation::class.java, locTypeAdapter)
-        gsonBuilder.registerTypeAdapter(Stmt::class.java, stmtTypeAdapter)
-        gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, stateTypeAdapter)
-        val gson = gsonBuilder.create()
-        val type = object: TypeToken<ArgAdapter<XcfaState<ExplState>, XcfaAction>>() {}.type
-
         val json = gson.toJson(argAdapter)
+
+        val type = object: TypeToken<ArgAdapter<XcfaState<ExplState>, XcfaAction>>() {}.type
         val parsedBack = gson.fromJson<ArgAdapter<XcfaState<ExplState>, XcfaAction>>(json, type)
-        check(argAdapter == parsedBack) { "Could not parse back the same ARG." }
+
+        check(argAdapter == parsedBack) {
+            "Could not parse back the same ARG.\noriginal: \n$argAdapter\n=======\nparsed back: \n$parsedBack"
+        }
         check(safetyResult.arg == parsedBack.instantiate(getPartialOrder { s1, s2 -> s1.isLeq(s2) })) { "Could not instantiate the same ARG." }
 
 //        System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s")
     }
 
-    inner class StringTypeAdapter<T>(val fromString: (String) -> T) : TypeAdapter<T>() {
-        override fun write(writer: JsonWriter, value: T) {
-            writer.beginObject().name("content").value(value.toString()).endObject()
-        }
-
-        override fun read(reader: JsonReader): T {
-            reader.beginObject()
-            check(reader.peek() == JsonToken.NAME)
-            check(reader.nextName() == "content")
-            val ret: T = fromString(reader.nextString())
-            reader.endObject()
-            return ret
-        }
-
+    private fun getGson(xcfa: XCFA): Gson {
+        val gsonBuilder = GsonBuilder()
+        val (scope, env) = xcfa.getSymbols()
+        lateinit var gson: Gson
+        gsonBuilder.registerTypeAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
+        gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java, StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
+        gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
+        gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
+        gson = gsonBuilder.create()
+        return gson
     }
 
     private fun getSolver(name: String, validate: Boolean) = if (validate) {

@@ -21,7 +21,7 @@ import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
-class SimpleScope(
+class XcfaScope(
         private val symbolTable: SymbolTable = SymbolTable(),
         private val enclosingScope: Scope? = null,
 ) : Scope {
