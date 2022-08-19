@@ -40,17 +40,22 @@ import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 
+enum class Backend {
+    CEGAR,
+    BMC,
+    LAZY
+}
 
 enum class Domain(
         val abstractor: (
             xcfa: XCFA,
             solver: Solver,
             maxEnum: Int,
-            argNodeComparator: ArgNodeComparators.ArgNodeComparator,
+            argNodeComparator: ArgNodeComparator,
             stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
             logger: Logger
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
-        val itpPrecRefiner: (exprSplitter: ExprSplitters.ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
+        val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
         val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>
 ) {
 
