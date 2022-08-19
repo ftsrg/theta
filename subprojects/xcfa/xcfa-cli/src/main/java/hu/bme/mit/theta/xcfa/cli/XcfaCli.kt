@@ -22,6 +22,7 @@ import com.google.common.base.Stopwatch
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -30,6 +31,11 @@ import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.gson.ArgAdapter
 import hu.bme.mit.theta.grammar.gson.ExplStateAdapter
@@ -61,6 +67,10 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
 
+    //////////// backend options ////////////
+    @Parameter(names = ["--backend"], description = "Backend analysis to use")
+    var backend: Backend = Backend.CEGAR
+
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
     var stacktrace: Boolean = false
@@ -81,54 +91,13 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--no-analysis"], description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
     var noAnalysis = false
 
-
-    //////////// abstraction options ////////////
-
-    @Parameter(names = ["--domain"], description = "Abstraction domain")
-    var domain: Domain = Domain.EXPL
-
-    @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
-    var abstractionSolver: String = "Z3"
-
-    @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-    var validateAbstractionSolver = false
-
-    @Parameter(names = ["--maxenum"], description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
-    var maxEnum: Int = 0
-
-    @Parameter(names = ["--search"], description = "Search strategy")
-    var search: Search = Search.ERR
-
-    @Parameter(names = ["--initprec"], description = "Initial precision")
-    var initPrec: InitPrec = InitPrec.EMPTY
-
-    //////////// refiner options ////////////
-
-    @Parameter(names = ["--refinement"], description = "Refinement strategy")
-    var refinement: Refinement = Refinement.BW_BIN_ITP
-
-    @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
-    var refinementSolver: String = "Z3"
-
-    @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-    var validateRefinementSolver = false
-
-    @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
-    var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE
-
-    @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
-    var pruneStrategy = PruneStrategy.LAZY
-
-
-    //////////// SMTLib options ////////////
-    @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
-    var home = SmtLibSolverManager.HOME.toAbsolutePath().toString()
-
+    /// Potential backends
+    private val cegarConfig = XcfaCegarConfig()
 
     private fun run() {
         /// Checking flags
         try {
-            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(*args)
+            JCommander.newBuilder().addObject(this).addObject(cegarConfig).programName(JAR_NAME).build().parse(*args)
         } catch (ex: ParameterException) {
             println("Invalid parameters, details:")
             println(ex.message)
@@ -140,136 +109,62 @@ class XcfaCli(private val args: Array<String>) {
             CliUtils.printVersion(System.out)
             return
         }
-
-        // TODO later we might want to merge these two flags
-//        if (witnessOnly) {
-//            OutputHandler.create(OutputOptions.WITNESS_ONLY, input)
-//        } else if (outputResults) {
-//            OutputHandler.create(OutputOptions.OUTPUT_RESULTS, input)
-//        } else {
-//            OutputHandler.create(OutputOptions.NONE, input)
-//        }
-//        OutputHandler.getInstance().createResultsDirectory()
-
         val logger = ConsoleLogger(logLevel)
 
         /// Starting frontend
-        val sw = Stopwatch.createStarted()
+        val swFrontend = Stopwatch.createStarted()
         val xcfa = try {
             val stream = FileInputStream(input!!)
             val xcfaFromC = getXcfaFromC(stream)
-            println("Frontend finished: ${xcfaFromC.name}")
+            logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)")
             xcfaFromC
         } catch (e: Exception) {
             if(stacktrace) e.printStackTrace();
             System.err.println("Frontend failed!")
             exitProcess(-80)
         }
+        swFrontend.reset().start()
 
-//        OutputHandler.getInstance().writeXcfa(xcfa)
-//        OutputHandler.getInstance().writeInputStatistics(xcfa)
         if(noAnalysis) return
-
-//        val initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS)
-//        logger.write(Logger.Level.RESULT, "Time of model transformation: " + initTime.toMillis() + "ms" + System.lineSeparator());
-
-
-        val cegarChecker = try{
-            try {
-                registerAllSolverManagers(home, logger)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return
-            }
-            val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
-            val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
-
-            val cegarConfig = XcfaCegarConfig(
-                    abstractorConfig = AbstractorConfig(
-                            abstractionSolverFactory = abstractionSolverFactory,
-                            domain = domain,
-                            maxEnum = maxEnum,
-                            search = search,
-                            initPrec = initPrec,
-                            logger = logger
-                    ),
-                    refinerConfig = RefinerConfig(
-                            refinementSolverFactory = refinementSolverFactory,
-                            refinement = refinement,
-                            exprSplitter = exprSplitter,
-                            pruneStrategy = pruneStrategy,
-                            logger = logger
-                    ),
-                    logger = logger
-            )
-            println("Configuration finished: $cegarConfig")
-            cegarConfig.getCegarChecker(xcfa)
-        } catch (e: Exception) {
-            if(stacktrace) e.printStackTrace();
-            System.err.println("Configuration failed!");
-            exitProcess(-81);
-        }
+        val swBackend = Stopwatch.createStarted()
 
         val safetyResult = try {
-            cegarChecker.check(domain.initPrec(xcfa, initPrec))
+            cegarConfig.check(xcfa, logger)
         } catch (e: Exception) {
-            if(stacktrace) e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Analysis failed!");
             exitProcess(-82);
         }
 
-        val elapsed = sw.elapsed(TimeUnit.MILLISECONDS)
-        sw.reset().start()
-        println("walltime: $elapsed ms")
-
-        val gson = getGson(xcfa)
+        logger.write(Logger.Level.INFO, "walltime: ${swBackend.elapsed(TimeUnit.MILLISECONDS)} ms")
+        swBackend.reset().start()
 
         val argAdapter = ArgAdapter(safetyResult.arg)
+        val gson = getGson(xcfa)
         val json = gson.toJson(argAdapter)
-        println("serialization: ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
-        sw.reset().start()
+        logger.write(Logger.Level.INFO, "serialization: ${swBackend.elapsed(TimeUnit.MILLISECONDS)} ms")
+        swBackend.reset()
+
         val type = object: TypeToken<ArgAdapter<XcfaState<ExplState>, XcfaAction>>() {}.type
         val parsedBack = gson.fromJson<ArgAdapter<XcfaState<ExplState>, XcfaAction>>(json, type)
 
-        println("deserialization: ${sw.elapsed(TimeUnit.MILLISECONDS)} ms")
-        sw.stop()
-
-        check(argAdapter == parsedBack) {
-            "Could not parse back the same ARG.\noriginal: \n$argAdapter\nparsed back: \n$parsedBack"
-        }
-        check(safetyResult.arg == parsedBack.instantiate(getPartialOrder { s1, s2 -> s1.isLeq(s2) })) { "Could not instantiate the same ARG." }
-
-//        System.out.println("cputime: " + CpuTimeKeeper.getCurrentCpuTime() + " s")
+        swFrontend.reset().start()
+        logger.write(Logger.Level.INFO, "deserialization: ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms")
+        swFrontend.reset().start()
+        val parsedBackArg = parsedBack.instantiate(getPartialOrder { s1, s2 -> s1.isLeq(s2) })
+        logger.write(Logger.Level.INFO, "rebuilding: ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms")
     }
 
     private fun getGson(xcfa: XCFA): Gson {
         val gsonBuilder = GsonBuilder()
         val (scope, env) = xcfa.getSymbols()
-        lateinit var gson: Gson
         gsonBuilder.registerTypeAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
         gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java, StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
+        gsonBuilder.registerTypeHierarchyAdapter(Expr::class.java, StringTypeAdapter { ExpressionWrapper(scope, it).instantiate(env) })
+        gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java, StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
         gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
         gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
-        gson = gsonBuilder.create()
-        return gson
-    }
-
-    private fun getSolver(name: String, validate: Boolean) = if (validate) {
-        SolverValidatorWrapperFactory.create(name)
-    } else {
-        SolverManager.resolveSolverFactory(name)
-    }
-
-    private fun registerAllSolverManagers(home: String, logger: Logger) {
-//        CpuTimeKeeper.saveSolverTimes()
-        SolverManager.closeAll()
-        // register solver managers
-        SolverManager.registerSolverManager(Z3SolverManager.create())
-        if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
-            val homePath = Path.of(home)
-            val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
-            SolverManager.registerSolverManager(smtLibSolverManager)
-        }
+        return gsonBuilder.create()
     }
 
     companion object {

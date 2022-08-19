@@ -60,13 +60,10 @@ data class XcfaCegarConfig(
         @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
         var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
         @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
-        var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
-        @Parameter(names = ["--loglevel-cegar"], description = "Detailedness of logging")
-        var logLevel: Logger.Level = Logger.Level.RESULT
+        var pruneStrategy: PruneStrategy = PruneStrategy.LAZY
 ) {
     @Suppress("UNCHECKED_CAST")
-    private fun getCegarChecker(xcfa: XCFA): CegarChecker<ExprState, ExprAction, Prec> {
-        val logger = ConsoleLogger(logLevel)
+    private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
         registerAllSolverManagers(solverHome, logger)
         val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
         val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
@@ -94,8 +91,8 @@ data class XcfaCegarConfig(
 
         return CegarChecker.create(abstractor, refiner, logger)
     }
-    fun check(xcfa: XCFA): SafetyResult<ExprState, ExprAction> =
-            getCegarChecker(xcfa).check(domain.initPrec(xcfa, initPrec))
+    fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
+            getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 }
 
 private fun getSolver(name: String, validate: Boolean) = if (validate) {
