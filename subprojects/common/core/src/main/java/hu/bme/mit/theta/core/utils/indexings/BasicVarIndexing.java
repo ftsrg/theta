@@ -18,11 +18,15 @@ package hu.bme.mit.theta.core.utils.indexings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -302,6 +306,24 @@ public class BasicVarIndexing implements VarIndexing {
 			sj.add(sb);
 		}
 		return sj.toString();
+	}
+
+	public static BasicVarIndexing fromString(String content, Scope scope, Env env) {
+		Pattern pattern = Pattern.compile("IndexMap\\((.*)\\)");
+		Matcher matcher = pattern.matcher(content);
+		matcher.find();
+		String mappings = matcher.group(1);
+		BasicVarIndexingBuilder builder = null;
+		for (String s : mappings.split(", ")) {
+			String[] split = s.split(" -> ");
+			if(split.length == 1) builder = BasicVarIndexing.builder(Integer.parseInt(split[0]));
+			else {
+				 VarDecl<?> var = (VarDecl<?>) env.eval(scope.resolve(split[0]).get());
+				 int index = Integer.parseInt(split[1]);
+				 builder.varToOffset.put(var, index);
+			}
+		}
+		return builder.build();
 	}
 
 	////
