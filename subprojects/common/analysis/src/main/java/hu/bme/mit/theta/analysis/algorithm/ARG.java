@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.toList;
 public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> initNodes;
-	boolean initialized; // Set by ArgBuilder
+	public boolean initialized; // Set by ArgBuilder
 	private int nextId = 0;
 	private final PartialOrd<S> partialOrd;
 
@@ -221,8 +221,7 @@ public final class ARG<S extends State, A extends Action> {
 		if (o == null || getClass() != o.getClass()) return false;
 		ARG<?, ?> arg = (ARG<?, ?>) o;
 		return initialized == arg.initialized &&
-				initNodes.equals(arg.initNodes) &&
-				partialOrd.equals(arg.partialOrd);
+				initNodes.equals(arg.initNodes);
 	}
 
 	@Override
