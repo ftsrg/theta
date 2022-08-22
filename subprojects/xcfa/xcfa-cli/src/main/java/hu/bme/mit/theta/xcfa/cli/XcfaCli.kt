@@ -22,33 +22,26 @@ import com.google.common.base.Stopwatch
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
-import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
-import hu.bme.mit.theta.grammar.gson.ArgAdapter
-import hu.bme.mit.theta.grammar.gson.ExplStateAdapter
-import hu.bme.mit.theta.grammar.gson.StringTypeAdapter
-import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
+import hu.bme.mit.theta.grammar.gson.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getPartialOrder
 import hu.bme.mit.theta.xcfa.getSymbols
+import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
 import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
 import hu.bme.mit.theta.xcfa.gson.xcfaLocationAdapter
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -56,7 +49,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.io.File
 import java.io.FileInputStream
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -128,6 +120,15 @@ class XcfaCli(private val args: Array<String>) {
         if(noAnalysis) return
         val swBackend = Stopwatch.createStarted()
 
+        val frontendGson = getGson(xcfa)
+        val jsonString1 = frontendGson.toJson(xcfa)
+        System.err.println(jsonString1)
+        val parsedBackXcfa: XCFA = frontendGson.fromJson(jsonString1, XCFA::class.java)
+        val jsonString2 = frontendGson.toJson(xcfa)
+        System.err.println(jsonString2)
+        check(xcfa == parsedBackXcfa) { "The parsed back XCFA was not the same as the original." }
+        return
+
         val safetyResult = try {
             cegarConfig.check(xcfa, logger)
         } catch (e: Exception) {
@@ -158,13 +159,19 @@ class XcfaCli(private val args: Array<String>) {
     private fun getGson(xcfa: XCFA): Gson {
         val gsonBuilder = GsonBuilder()
         val (scope, env) = xcfa.getSymbols()
-        gsonBuilder.registerTypeAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
+        lateinit var gson: Gson
+        gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
+        gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
+        gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java, VarDeclAdapter( { gson }, scope, env, true))
         gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java, StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
         gsonBuilder.registerTypeHierarchyAdapter(Expr::class.java, StringTypeAdapter { ExpressionWrapper(scope, it).instantiate(env) })
+        gsonBuilder.registerTypeHierarchyAdapter(Type::class.java, StringTypeAdapter { TypeWrapper(it).instantiate() })
         gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java, StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
         gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
         gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
-        return gsonBuilder.create()
+        gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
+        gson = gsonBuilder.create()
+        return gson
     }
 
     companion object {

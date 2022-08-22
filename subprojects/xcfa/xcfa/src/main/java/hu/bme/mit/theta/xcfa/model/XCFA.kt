@@ -24,17 +24,51 @@ import java.util.Optional
 class XCFA(
         val name: String,
         val vars: Set<XcfaGlobalVar>,                                   // global variables
-        procedureBuilders: Set<XcfaProcedureBuilder>,
-        initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>>
+        procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
+        initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
 ) {
-    val procedures: Set<XcfaProcedure> =                                // procedure definitions
+    var procedures: Set<XcfaProcedure> =                                // procedure definitions
             procedureBuilders.map { it.build(this) }.toSet()
-    val initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>> =      // procedure names and parameter assignments
+        private set
+    var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>> =      // procedure names and parameter assignments
             initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+        private set
+
+    /**
+     * Recreate an existing XCFA by substituting the procedures and initProcedures fields.
+     */
+    fun recreate(procedures: Set<XcfaProcedure>,
+                 initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>
+    ): XCFA {
+        this.procedures = procedures
+        this.initProcedures = initProcedures
+        return this
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as XCFA
+
+        if (name != other.name) return false
+        if (vars != other.vars) return false
+        if (procedures != other.procedures) return false
+        if (initProcedures != other.initProcedures) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + vars.hashCode()
+        result = 31 * result + procedures.hashCode()
+        result = 31 * result + initProcedures.hashCode()
+        return result
+    }
 }
 
 data class XcfaProcedure(
-        val parent: XCFA,                                               // the container
         val name: String,
         val params: List<Pair<VarDecl<*>, ParamDirection>>,             // procedure params
         val vars: Set<VarDecl<*>>,                                      // local variables
@@ -44,7 +78,9 @@ data class XcfaProcedure(
         val initLoc: XcfaLocation,                                      // initial location
         val finalLoc: Optional<XcfaLocation>,                           // final location (optional)
         val errorLoc: Optional<XcfaLocation>                            // error location (optional)
-)
+) {
+    internal lateinit var parent: XCFA
+}
 
 data class XcfaLocation @JvmOverloads constructor(
         val name: String,                                               // label of the location

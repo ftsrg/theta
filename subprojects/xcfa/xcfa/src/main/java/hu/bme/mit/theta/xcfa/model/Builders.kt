@@ -92,7 +92,6 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
         if(this::built.isInitialized) return built;
         if(!this::optimized.isInitialized) optimize()
         built = XcfaProcedure(
-                parent=parent,
                 name=optimized.name,
                 params=optimized.params,
                 vars=optimized.vars,
@@ -102,6 +101,7 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
                 finalLoc=optimized.finalLoc,
                 errorLoc=optimized.errorLoc
         )
+        built.parent = parent
         return built
     }
 
