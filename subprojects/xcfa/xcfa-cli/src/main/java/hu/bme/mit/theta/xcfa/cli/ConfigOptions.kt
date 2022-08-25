@@ -46,6 +46,12 @@ enum class Backend {
     LAZY
 }
 
+enum class Strategy {
+    DIRECT,
+    SERVER,
+    PORTFOLIO
+}
+
 enum class Domain(
         val abstractor: (
             xcfa: XCFA,

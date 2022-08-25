@@ -23,12 +23,14 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.common.dsl.Env
+import hu.bme.mit.theta.common.dsl.MutableScope
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 
-class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env, val throwIfNotInScope: Boolean = false) : TypeAdapter<VarDecl<*>>() {
+class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val env: Env, val throwIfNotInScope: Boolean = false) : TypeAdapter<VarDecl<*>>() {
     private lateinit var gson: Gson
 
     override fun write(writer: JsonWriter, value: VarDecl<*>) {
@@ -62,7 +64,11 @@ class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: En
             return ret
         }
         check(!throwIfNotInScope) { "Variable $name is not known." }
-        return Var(name, type)
+        val newSymbol = Symbol { name.lowercase() }
+        val varDecl = Var(name, type)
+        scope.add(newSymbol)
+        env.define(newSymbol, varDecl)
+        return varDecl
     }
 
     private fun initGson() {

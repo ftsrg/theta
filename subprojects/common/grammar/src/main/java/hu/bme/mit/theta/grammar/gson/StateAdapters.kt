@@ -23,11 +23,51 @@ import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
-import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
+
+//class StateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env): TypeAdapter<State>() {
+//    lateinit var gson: Gson
+//    override fun write(writer: JsonWriter, value: State) {
+//        initGson()
+//        writer.beginObject()
+//        writer.name("type").value(value::class.qualifiedName)
+//        writer.name("value")
+//        when(value) {
+//            is ExplState -> ExplStateAdapter(scope, env).write(writer, value)
+//            else -> TODO("Unknown state type: " + value::class.qualifiedName)
+//        }
+//        writer.endObject()
+//    }
+//
+//    override fun read(reader: JsonReader): State {
+//        initGson()
+//        reader.beginObject()
+//        lateinit var s: State
+//        if (reader.peek() != JsonToken.END_OBJECT) {
+//            lateinit var clazz: KClass<*>
+//            lateinit var value: Any
+//            while (reader.peek() != JsonToken.END_OBJECT) {
+//                when(reader.nextName()) {
+//                    "type" -> clazz = Class.forName(reader.nextString()).kotlin
+//                    "value" -> value = when(clazz) {
+//                        ExplState::class.java -> ExplStateAdapter(scope, env).read(reader)
+//                        else -> TODO("Unknown type " + clazz.qualifiedName)
+//                    }
+//                }
+//            }
+//            s = value as State
+//        }
+//        reader.endObject()
+//        return s
+//    }
+//
+//    private fun initGson() {
+//        if(!this::gson.isInitialized) gson = gsonSupplier()
+//    }
+//}
 
 class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>() {
     override fun write(writer: JsonWriter, value: ExplState) {

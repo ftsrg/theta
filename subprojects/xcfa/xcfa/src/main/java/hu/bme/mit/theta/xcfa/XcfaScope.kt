@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa
 
+import hu.bme.mit.theta.common.dsl.MutableScope
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
@@ -24,7 +25,7 @@ import java.util.*
 class XcfaScope(
         private val symbolTable: SymbolTable = SymbolTable(),
         private val enclosingScope: Scope? = null,
-) : Scope {
+) : MutableScope {
 
     override fun enclosingScope(): Optional<out Scope> {
         return Optional.ofNullable(enclosingScope)
@@ -32,9 +33,17 @@ class XcfaScope(
 
     override fun resolve(name: String?): Optional<out Symbol> {
         val resolved = symbolTable[name]
-        return  if(resolved.isEmpty)
+        return if(resolved.isEmpty)
             enclosingScope?.resolve(name) ?: Optional.empty()
         else
             resolved
+    }
+
+    override fun add(symbol: Symbol) {
+        symbolTable.add(symbol)
+    }
+
+    override fun addAll(symbols: Iterable<Symbol>) {
+        symbolTable.addAll(symbols)
     }
 }

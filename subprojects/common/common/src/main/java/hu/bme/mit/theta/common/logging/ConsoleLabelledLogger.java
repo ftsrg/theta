@@ -13,16 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.gson.stubs
+package hu.bme.mit.theta.common.logging;
 
-import hu.bme.mit.theta.analysis.State
+import java.io.PrintStream;
 
-data class StateStub(val label: String) : State {
-    override fun isBottom(): Boolean {
-        return false
-    }
+public final class ConsoleLabelledLogger implements Logger {
 
-    override fun toString(): String {
-        return label
-    }
+	private static final PrintStream CONSOLE = System.out;
+
+	@Override
+	public Logger write(Level level, String pattern, Object... objects) {
+		CONSOLE.printf(level + "\t{" + pattern.replace("}", "]") + "}", objects);
+		return this;
+	}
 }

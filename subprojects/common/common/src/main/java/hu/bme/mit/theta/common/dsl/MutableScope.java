@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2017 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.gson.stubs
+package hu.bme.mit.theta.common.dsl;
 
-import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.core.decl.VarDecl
-import java.util.Set
+public interface MutableScope extends Scope{
 
-object PrecStub : Prec {
-    override fun getUsedVars(): Collection<VarDecl<*>> {
-        return Set.of()
-    }
+	void add(final Symbol symbol);
+
+	void addAll(final Iterable<? extends Symbol> symbols);
+
 }

@@ -19,34 +19,11 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import com.google.common.base.Stopwatch
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
-import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing
-import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
-import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
-import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
-import hu.bme.mit.theta.grammar.gson.*
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.getPartialOrder
-import hu.bme.mit.theta.xcfa.getSymbols
-import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
-import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
-import hu.bme.mit.theta.xcfa.gson.xcfaLocationAdapter
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.io.File
 import java.io.FileInputStream
 import java.util.concurrent.TimeUnit
@@ -62,6 +39,9 @@ class XcfaCli(private val args: Array<String>) {
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
     var backend: Backend = Backend.CEGAR
+
+    @Parameter(names = ["--strategy"], description = "Execution strategy")
+    var strategy: Strategy = Strategy.SERVER
 
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
@@ -108,7 +88,7 @@ class XcfaCli(private val args: Array<String>) {
         val xcfa = try {
             val stream = FileInputStream(input!!)
             val xcfaFromC = getXcfaFromC(stream)
-            logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)")
+            logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
             xcfaFromC
         } catch (e: Exception) {
             if(stacktrace) e.printStackTrace();
@@ -118,60 +98,21 @@ class XcfaCli(private val args: Array<String>) {
         swFrontend.reset().start()
 
         if(noAnalysis) return
-        val swBackend = Stopwatch.createStarted()
 
-        val frontendGson = getGson(xcfa)
-        val jsonString1 = frontendGson.toJson(xcfa)
-        System.err.println(jsonString1)
-        val parsedBackXcfa: XCFA = frontendGson.fromJson(jsonString1, XCFA::class.java)
-        val jsonString2 = frontendGson.toJson(xcfa)
-        System.err.println(jsonString2)
-        check(xcfa == parsedBackXcfa) { "The parsed back XCFA was not the same as the original." }
-        return
-
-        val safetyResult = try {
-            cegarConfig.check(xcfa, logger)
-        } catch (e: Exception) {
-            e.printStackTrace();
-            System.err.println("Analysis failed!");
-            exitProcess(-82);
-        }
-
-        logger.write(Logger.Level.INFO, "walltime: ${swBackend.elapsed(TimeUnit.MILLISECONDS)} ms")
-        swBackend.reset().start()
-
-        val argAdapter = ArgAdapter(safetyResult.arg)
-        val gson = getGson(xcfa)
-        val json = gson.toJson(argAdapter)
-        logger.write(Logger.Level.INFO, "serialization: ${swBackend.elapsed(TimeUnit.MILLISECONDS)} ms")
-        swBackend.reset()
-
-        val type = object: TypeToken<ArgAdapter<XcfaState<ExplState>, XcfaAction>>() {}.type
-        val parsedBack = gson.fromJson<ArgAdapter<XcfaState<ExplState>, XcfaAction>>(json, type)
-
-        swFrontend.reset().start()
-        logger.write(Logger.Level.INFO, "deserialization: ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms")
-        swFrontend.reset().start()
-        val parsedBackArg = parsedBack.instantiate(getPartialOrder { s1, s2 -> s1.isLeq(s2) })
-        logger.write(Logger.Level.INFO, "rebuilding: ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms")
-    }
-
-    private fun getGson(xcfa: XCFA): Gson {
-        val gsonBuilder = GsonBuilder()
-        val (scope, env) = xcfa.getSymbols()
-        lateinit var gson: Gson
-        gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
-        gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
-        gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java, VarDeclAdapter( { gson }, scope, env, true))
-        gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java, StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
-        gsonBuilder.registerTypeHierarchyAdapter(Expr::class.java, StringTypeAdapter { ExpressionWrapper(scope, it).instantiate(env) })
-        gsonBuilder.registerTypeHierarchyAdapter(Type::class.java, StringTypeAdapter { TypeWrapper(it).instantiate() })
-        gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java, StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
-        gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
-        gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
-        gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
-        gson = gsonBuilder.create()
-        return gson
+        val safetyResult: SafetyResult<*, *> =
+                when (strategy) {
+                    Strategy.DIRECT -> {
+                        cegarConfig.check(xcfa, logger)
+                    }
+                    Strategy.SERVER -> {
+                        val safetyResultSupplier = cegarConfig.checkInProcess(xcfa, logger)
+                        safetyResultSupplier(100_000)
+                    }
+                    else -> {
+                        TODO()
+                    }
+                }
+        logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
     }
 
     companion object {

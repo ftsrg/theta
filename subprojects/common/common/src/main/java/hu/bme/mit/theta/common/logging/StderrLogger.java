@@ -13,13 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.grammar.gson.stubs
+package hu.bme.mit.theta.common.logging;
 
-import hu.bme.mit.theta.analysis.PartialOrd
-import hu.bme.mit.theta.analysis.State
+import java.io.PrintStream;
 
-object PartialOrdStub : PartialOrd<StateStub> {
-    override fun isLeq(state1: StateStub, state2: StateStub): Boolean {
-        return state1 == state2
-    }
+public final class StderrLogger extends BaseLogger {
+
+	private static final PrintStream CONSOLE = System.err;
+
+	public StderrLogger(final Level minLevel) {
+		super(minLevel);
+	}
+
+	@Override
+	protected void writeStr(final String str) {
+		CONSOLE.print(str);
+	}
+
 }

@@ -57,7 +57,7 @@ class XcfaBuilder @JvmOverloads constructor(
 
 class XcfaProcedureBuilder @JvmOverloads constructor(
         var name: String,
-        val manager: ProcedurePassManager,
+        private val manager: ProcedurePassManager,
         private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
         private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
         private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),

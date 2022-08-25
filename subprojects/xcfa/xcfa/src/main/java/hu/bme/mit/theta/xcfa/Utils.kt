@@ -39,7 +39,7 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when(this) {
     else -> setOf()
 }
 
-fun XCFA.getSymbols(): Pair<Scope, Env> {
+fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
     val symbolTable = SymbolTable()
     val scope = XcfaScope(symbolTable)
     val vars = collectVars()

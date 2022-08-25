@@ -178,7 +178,10 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
                                     "label" -> label = gson.fromJson(reader, labelType)
                                 }
                             }
-                            edges.add(XcfaEdge(source, target, label))
+                            val edge = XcfaEdge(source, target, label)
+                            edges.add(edge)
+                            source.outgoingEdges.add(edge)
+                            target.incomingEdges.add(edge)
                             reader.endObject()
                         }
                         reader.endArray()

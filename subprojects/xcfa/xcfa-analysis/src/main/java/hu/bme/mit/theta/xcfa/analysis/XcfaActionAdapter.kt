@@ -14,30 +14,41 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.grammar.gson
+package hu.bme.mit.theta.xcfa.analysis
 
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
-import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.PartialOrd
-import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
-import java.lang.reflect.Type
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import java.util.*
+import kotlin.reflect.KClass
 
-class ArgAdapter<S: State, A: Action>(val gsonSupplier: () -> Gson, private val partialOrd: PartialOrd<S>, private val argType: Type)  : TypeAdapter<ARG<S, A>>() {
+class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>() {
     private lateinit var gson: Gson
-
-    override fun write(writer: JsonWriter, value: ARG<S, A>) {
+    override fun write(writer: JsonWriter, value: XcfaAction) {
         initGson()
-        gson.toJson(gson.toJsonTree(ArgAdapterHelper(value)), writer)
+        writer.beginObject()
+        writer.name("pid").value(value.pid)
+        writer.name("edge")
+        gson.toJson(gson.toJsonTree(value.edge), writer)
+        writer.endObject()
     }
 
-    override fun read(reader: JsonReader): ARG<S, A> {
+    override fun read(reader: JsonReader): XcfaAction {
         initGson()
-        val argAdapterHelper: ArgAdapterHelper<S, A> = gson.fromJson(reader, argType)
-        return argAdapterHelper.instantiate(partialOrd)
+        var pid: Int? = null
+        lateinit var edge: XcfaEdge
+        reader.beginObject()
+        while(reader.peek() != JsonToken.END_OBJECT) {
+            when(reader.nextName()) {
+                "pid" -> pid = reader.nextInt()
+                "edge" -> edge = gson.fromJson(reader, XcfaEdge::class.java)
+            }
+        }
+        reader.endObject()
+        return XcfaAction(pid!!, edge)
     }
 
     private fun initGson() {

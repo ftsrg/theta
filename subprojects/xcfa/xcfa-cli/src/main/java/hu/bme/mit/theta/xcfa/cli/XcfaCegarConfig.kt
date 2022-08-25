@@ -17,24 +17,38 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import com.beust.jcommander.Parameter
+import com.google.gson.reflect.TypeToken
+import com.zaxxer.nuprocess.NuAbstractProcessHandler
+import com.zaxxer.nuprocess.NuProcess
+import com.zaxxer.nuprocess.NuProcessBuilder
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.io.BufferedReader
+import java.io.File
+import java.io.InputStreamReader
+import java.io.PrintWriter
+import java.net.Socket
+import java.nio.ByteBuffer
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+
 
 data class XcfaCegarConfig(
         @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
@@ -93,6 +107,72 @@ data class XcfaCegarConfig(
     }
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
+
+    fun checkInProcess(xcfa: XCFA, logger: Logger): (timeoutMs: Long) -> SafetyResult<*, *> {
+        val pb = NuProcessBuilder(listOf("java", "-cp", File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath, XcfaCegarServer::class.qualifiedName))
+        val processHandler = ProcessHandler(logger)
+        pb.setProcessListener(processHandler)
+        val process: NuProcess = pb.start()
+        pb.environment().putAll(System.getenv())
+        return {timeoutMs ->
+            var connected = false
+            var clientSocket: Socket? = null
+            while(!connected) {
+                try {
+                    clientSocket = Socket("127.0.0.1", 12345)
+                    connected = true
+                    logger.write(Logger.Level.VERBOSE, "Connected!\n")
+                } catch (e: Exception) {
+                    Thread.sleep(100)
+                    logger.write(Logger.Level.VERBOSE, "Connection failed, retrying...\n")
+                }
+            }
+            checkNotNull(clientSocket)
+
+            var safetyString: String?
+            val gson = getGson(xcfa)
+            clientSocket.use {
+                val writer = PrintWriter(clientSocket.getOutputStream(), true)
+                val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
+                writer.println(gson.toJson(this))
+                writer.println(gson.toJson(xcfa))
+                process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+                safetyString = reader.readLine()
+            }
+            val type = object: TypeToken<SafetyResult<XcfaState<ExplState>, XcfaAction>>() {}.type
+            gson.fromJson(safetyString, type)
+        }
+    }
+}
+
+private class ProcessHandler(
+        private val logger: Logger,
+) : NuAbstractProcessHandler() {
+    private var stdoutBuffer = ""
+    override fun onStdout(buffer: ByteBuffer, closed: Boolean) {
+        if (!closed) {
+            val bytes = ByteArray(buffer.remaining())
+            buffer[bytes]
+            val str = bytes.decodeToString()
+            stdoutBuffer += str
+            val matchResults = Regex("([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
+            var length = 0
+            for(matchResult in matchResults) {
+                val (level, message) = matchResult.destructured
+                logger.write(Logger.Level.valueOf(level), message)
+                length+=matchResult.range.count()
+            }
+            stdoutBuffer = stdoutBuffer.substring(length)
+        }
+    }
+
+    override fun onStderr(buffer: ByteBuffer, closed: Boolean) {
+        if (!closed) {
+            val bytes = ByteArray(buffer.remaining())
+            buffer.get(bytes)
+            System.err.print(bytes.decodeToString())
+        }
+    }
 }
 
 private fun getSolver(name: String, validate: Boolean) = if (validate) {

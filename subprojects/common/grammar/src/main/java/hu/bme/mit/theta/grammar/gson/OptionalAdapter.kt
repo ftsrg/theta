@@ -21,40 +21,27 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import java.util.*
 import kotlin.reflect.KClass
 
-class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pair<A, B>>() {
+class OptionalAdapter<A: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Optional<A>>() {
     private lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: Pair<A, B>) {
+    override fun write(writer: JsonWriter, value: Optional<A>) {
         initGson()
         writer.beginObject()
-
-        writer.name("first")
-        writer.beginObject()
-        writer.name("type").value(value.first::class.java.name)
-        writer.name("value")
-        gson.toJson(gson.toJsonTree(value.first), writer)
-        writer.endObject()
-
-        writer.name("second")
-        writer.beginObject()
-        writer.name("type").value(value.second::class.java.name)
-        writer.name("value")
-        gson.toJson(gson.toJsonTree(value.second), writer)
-        writer.endObject()
-
+        if(value.isPresent) {
+            writer.name("type").value(value.get()::class.qualifiedName)
+            writer.name("value")
+            gson.toJson(gson.toJsonTree(value.get()), writer)
+        }
         writer.endObject()
     }
 
-    override fun read(reader: JsonReader): Pair<A, B> {
+    override fun read(reader: JsonReader): Optional<A> {
         initGson()
         reader.beginObject()
-        lateinit var a: A
-        lateinit var b: B
-
-        while (reader.peek() != JsonToken.END_OBJECT) {
-            val nextName = reader.nextName()
-            reader.beginObject()
+        var a: A? = null
+        if (reader.peek() != JsonToken.END_OBJECT) {
             lateinit var clazz: KClass<*>
             lateinit var value: Any
             while (reader.peek() != JsonToken.END_OBJECT) {
@@ -63,15 +50,10 @@ class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pa
                     "value" -> value = gson.fromJson(reader, clazz.java)
                 }
             }
-            reader.endObject()
-            when(nextName) {
-                "first" -> a = value as A
-                "second" -> b = value as B
-            }
+            a = value as A
         }
-
         reader.endObject()
-        return Pair(a, b)
+        return Optional.ofNullable(a)
     }
 
     private fun initGson() {

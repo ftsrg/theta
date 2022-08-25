@@ -23,9 +23,9 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import kotlin.reflect.KClass
 
-class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pair<A, B>>() {
+class TripleAdapter<A: Any, B: Any, C: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Triple<A, B, C>>() {
     private lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: Pair<A, B>) {
+    override fun write(writer: JsonWriter, value: Triple<A, B, C>) {
         initGson()
         writer.beginObject()
 
@@ -43,14 +43,22 @@ class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pa
         gson.toJson(gson.toJsonTree(value.second), writer)
         writer.endObject()
 
+        writer.name("third")
+        writer.beginObject()
+        writer.name("type").value(value.third::class.java.name)
+        writer.name("value")
+        gson.toJson(gson.toJsonTree(value.third), writer)
+        writer.endObject()
+
         writer.endObject()
     }
 
-    override fun read(reader: JsonReader): Pair<A, B> {
+    override fun read(reader: JsonReader): Triple<A, B, C> {
         initGson()
         reader.beginObject()
         lateinit var a: A
         lateinit var b: B
+        lateinit var c: C
 
         while (reader.peek() != JsonToken.END_OBJECT) {
             val nextName = reader.nextName()
@@ -67,11 +75,12 @@ class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pa
             when(nextName) {
                 "first" -> a = value as A
                 "second" -> b = value as B
+                "third" -> c = value as C
             }
         }
 
         reader.endObject()
-        return Pair(a, b)
+        return Triple(a, b, c)
     }
 
     private fun initGson() {
