@@ -17,8 +17,12 @@ grammar XtaDsl;
 
 // S P E C I F I C A T I O N
 
-xta	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl | fProcessDecls+=processDecl)* (fInstantiations+=instantiation)* fSystem=system
+xta	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl | fProcessDecls+=processDecl)* (fInstantiations+=instantiation)* fSystem=system fProperty=property?
 	;
+
+property
+    : PROP LBRAC q=quantifier prop=expression RBRAC
+    ;
 
 iteratorDecl
 	:	fId=ID COLON fType=type
@@ -152,6 +156,9 @@ SYNC:	'sync'
 ASSIGN
 	:	'assign'
 	;
+PROP
+    :   'prop'
+    ;
 
 // T Y P E S
 
@@ -364,6 +371,8 @@ ELSE:	'else'
 RETURN
 	:	'return'
 	;
+
+
 
 // E X P R E S S I O N S
 
@@ -727,6 +736,11 @@ structSelectOp
 	:	DOT fId=ID
 	;
 
+quantifier
+
+    : AG | EF
+    ;
+
 FORALL
 	:	'forall'
 	;
@@ -954,6 +968,13 @@ LARROW
 RARROW
 	:	'->'
 	;
+
+AG
+    : 'A[]'
+    ;
+EF
+    : 'E<>'
+    ;
 
 
 

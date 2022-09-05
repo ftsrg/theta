@@ -50,6 +50,7 @@ public final class XtaState<S extends State> implements ExprState {
 
 	private static final LocKind extractKind(final List<Loc> locs) {
 		boolean urgent = false;
+		boolean error = false;
 		for (final Loc loc : locs) {
 			switch (loc.getKind()) {
 				case COMMITTED:
@@ -59,10 +60,15 @@ public final class XtaState<S extends State> implements ExprState {
 					break;
 				case NORMAL:
 					break;
+				case ERROR:
+					error = true;
+					break;
 				default:
 					throw new AssertionError();
 			}
 		}
+
+		if(error) return LocKind.ERROR;
 		return urgent ? LocKind.URGENT : LocKind.NORMAL;
 	}
 

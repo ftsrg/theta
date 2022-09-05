@@ -10,6 +10,8 @@ chan begin, end, busy;
 chan cd[N];
 
 process Bus() {
+    int k = 0;
+
 	clock x;
 	
 	state
@@ -26,7 +28,7 @@ process Bus() {
 	trans
 		transmit -> transmit { guard j < N-1; sync cd[j]!; assign x = 0, j = j + 1; },
 		transmit -> idle { guard j == N - 1; sync cd[j]!; assign j = 0, x = 0; },
-		idle -> active { sync begin?; assign x = 0; },
+		idle -> active { sync begin?; assign x = 0;},
 		active -> idle { sync end?; assign x = 0; },
 		active -> active { guard x >= SIGMA; sync busy!; },
 		active -> collision { guard x < SIGMA; sync begin?; assign x = 0; },
@@ -55,3 +57,7 @@ process Station(const id_t id) {
 }
 
 system Bus, Station;
+
+prop{
+    E<> Bus_k>3
+}

@@ -96,6 +96,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		defineAllParameters(arguments, env);
 
 		final XtaProcess process = system.createProcess(name);
+		//Local variables are handled like global variables signed with Process symbol
 		createAllLocalVariables(process, env);
 		createAllStates(process, env);
 		createAllTransitions(process, env);

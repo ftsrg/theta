@@ -123,7 +123,7 @@ final class BasicDbm {
 			assert isClosed();
 		}
 	}
-
+	//TODO miért?
 	public void down() {
 		if (isConsistent()) {
 			for (int i = 1; i <= nClocks; i++) {
