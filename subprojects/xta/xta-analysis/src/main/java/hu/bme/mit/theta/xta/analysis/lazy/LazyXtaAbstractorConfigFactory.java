@@ -1,39 +1,35 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplTransFunc;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprActionPost;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprAnalysis;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprInvTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprTransFunc;
+import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.*;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
-import hu.bme.mit.theta.core.utils.Lens;
-import hu.bme.mit.theta.analysis.*;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStrategy;
-import hu.bme.mit.theta.analysis.algorithm.lazy.*;
-import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.common.Tuple3;
+import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
-import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
-import hu.bme.mit.theta.xta.analysis.expl.XtaExplTransFunc;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
-import hu.bme.mit.theta.xta.analysis.expr.*;
+import hu.bme.mit.theta.xta.analysis.expr.XtaExprActionPost;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
@@ -42,23 +38,22 @@ import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class LazyXtaAbstractorFactory {
+public final class LazyXtaAbstractorConfigFactory {
 
     public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
-    Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+    LazyXtaAbstractorConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
     create(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
 
         final Factory<DConcr, CConcr, DAbstr, CAbstr, DPrec, CPrec>
                 factory = new Factory<>(system, dataStrategy, clockStrategy, searchStrategy, meetStrategy);
-        final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
-                abstractor = factory.create();
-        return abstractor;
+        return factory.create();
     }
 
     public static <DConcr extends State, CConcr extends State, DAbstr extends State, CAbstr extends State, DPrec extends Prec, CPrec extends Prec>
-    Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+    LazyXtaAbstractorConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>>
     create(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
         return create(system, dataStrategy, clockStrategy, searchStrategy, ExprMeetStrategy.BASIC);
     }
@@ -82,8 +77,7 @@ public final class LazyXtaAbstractorFactory {
             solverFactory = Z3SolverFactory.getInstance();
         }
 
-        public final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
-        create() {
+        public final LazyXtaAbstractorConfig<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>, Prod2Prec<DPrec, CPrec>> create() {
             final LazyStrategy<Prod2State<DConcr, CConcr>, Prod2State<DAbstr, CAbstr>,
                     LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction>
                     lazyStrategy = createLazyStrategy(system, dataStrategy, clockStrategy);
@@ -94,28 +88,16 @@ public final class LazyXtaAbstractorFactory {
                     lazyAnalysis = createLazyAnalysis(abstrPartialOrd, initAbstractor);
 
             final Prod2Prec<DPrec, CPrec> prec = createConcrPrec();
-            final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, UnitPrec>
+            final Abstractor<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, XtaAction, Prod2Prec<DPrec, CPrec>>
                     abstractor = new LazyAbstractor(
                     XtaLts.create(system),
                     searchStrategy,
                     lazyStrategy,
                     lazyAnalysis,
-                    prec,
                     s -> ((XtaState) s).isError(),
-                    new Lens<XtaState<Prod2State<DConcr, CConcr>>, Prod2State<DConcr, CConcr>>() {
-
-                        @Override
-                        public Prod2State<DConcr, CConcr> get(XtaState<Prod2State<DConcr, CConcr>> prod2StateXtaState) {
-                            return prod2StateXtaState.getState();
-                        }
-
-                        @Override
-                        public XtaState<Prod2State<DConcr, CConcr>> set(XtaState<Prod2State<DConcr, CConcr>> prod2StateXtaState, Prod2State<DConcr, CConcr> dConcrCConcrProd2State) {
-                            throw new UnsupportedOperationException();
-                        }
-                    }
+                    createConcrProd2Lens()
             );
-            return abstractor;
+            return new LazyXtaAbstractorConfig<>(abstractor, prec);
         }
 
         private Prod2Prec<DPrec, CPrec> createConcrPrec() {
@@ -210,7 +192,7 @@ public final class LazyXtaAbstractorFactory {
                     dataLazyStrategy.getProjection().apply(s),
                     clockLazyStrategy.getProjection().apply(s));
             final Lens<LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>>, Prod2State<DConcr, CConcr>>
-                    lens = LazyXtaLensUtils.createConcrProd2Lens();
+                    lens = createConcrProd2Lens();
             return new Prod2LazyStrategy<>(lens, dataLazyStrategy, clockLazyStrategy, projection);
         }
 

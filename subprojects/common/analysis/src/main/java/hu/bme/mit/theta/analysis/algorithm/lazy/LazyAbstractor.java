@@ -9,7 +9,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.core.utils.Lens;
 
@@ -20,58 +19,60 @@ import java.util.function.Predicate;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FSConcr extends State, FSAbstr extends ExprState, A extends Action, P extends Prec>
-        implements Abstractor<LazyState<FSConcr, FSAbstr>, A, UnitPrec> {
+        implements Abstractor<LazyState<FSConcr, FSAbstr>, A, P> {
     private final LTS<FSConcr, A> lts;
     private final SearchStrategy searchStrategy;
     private final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy;
     //private final Function<LazyState<FSConcr, FSAbstr>, ?> projection;
     private final Analysis<LazyState<FSConcr, FSAbstr>, A, P> analysis;
-    private final P prec;
     private final Predicate<FSConcr> isTarget;
-    private final Lens<FSConcr, SConcr> concrStateLens;
+    private final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens;
 
     public LazyAbstractor(final LTS<FSConcr, A> lts,
                           final SearchStrategy searchStrategy,
                           final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy,
                           final LazyAnalysis<FSConcr, FSAbstr, A, P> analysis,
-                          final P prec,
                           final Predicate<FSConcr> isTarget,
-                          final Lens<FSConcr, SConcr> concrStateLens) {
+                          final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens) {
         this.lts = checkNotNull(lts);
         this.searchStrategy = checkNotNull(searchStrategy);
         this.lazyStrategy = checkNotNull(lazyStrategy);
         this.analysis = checkNotNull(analysis);
-        this.prec = checkNotNull(prec);
         this.isTarget = isTarget;
         this.concrStateLens = concrStateLens;
     }
 
     @Override
     public ARG<LazyState<FSConcr, FSAbstr>, A> createArg() {
-        final ARG<LazyState<FSConcr, FSAbstr>, A> arg = ARG.create(analysis.getPartialOrd());
+        return ARG.create(analysis.getPartialOrd());
+    }
+
+    @Override
+    public AbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
+        initializeArg(arg, prec);
+        return new CheckMethod(arg, prec).run();
+    }
+
+    private void initializeArg(final ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
         final Collection<? extends LazyState<FSConcr, FSAbstr>>
-                initStates = analysis.getInitFunc().getInitStates(prec);
+            initStates = analysis.getInitFunc().getInitStates(prec);
         for (final LazyState<FSConcr, FSAbstr> initState : initStates) {
             final boolean target = isTarget.test(initState.getConcrState());
             arg.createInitNode(initState, target);
         }
-        return arg;
-    }
-
-    @Override
-    public AbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, UnitPrec prec) {
-        return new CheckMethod(arg).run();
     }
 
     private final class CheckMethod {
         final ARG<LazyState<FSConcr, FSAbstr>, A> arg;
+        final P prec;
         final LazyStatistics.Builder stats;
         final Partition<ArgNode<LazyState<FSConcr, FSAbstr>, A>, ?> passed;
         final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting;
 
 
-        public CheckMethod(final ARG<LazyState<FSConcr, FSAbstr>, A> arg) {
+        public CheckMethod(final ARG<LazyState<FSConcr, FSAbstr>, A> arg, final P prec) {
             this.arg = arg;
+            this.prec = prec;
             stats = LazyStatistics.builder(arg);
             passed = Partition.of(n -> lazyStrategy.getProjection().apply(n.getState()));
             waiting = searchStrategy.createWaitlist();
@@ -147,7 +148,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                         succStates = analysis.getTransFunc().getSuccStates(state, action, prec);
 
                 for (final LazyState<FSConcr, FSAbstr> succState : succStates) {
-                    if (lazyStrategy.inconsistentState(concrStateLens.get(succState.getConcrState()))) {
+                    if (lazyStrategy.inconsistentState(concrStateLens.get(succState))) {
                         final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
                                 uncoveredNodes = new ArrayList<>();
                         lazyStrategy.disable(node, action, succState, uncoveredNodes);

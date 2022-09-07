@@ -63,7 +63,8 @@ import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xcfa.analysis.common.*;
 import hu.bme.mit.theta.xcfa.analysis.impl.lazy.DataStrategy2;
-import hu.bme.mit.theta.xcfa.analysis.impl.lazy.LazyXcfaAbstractorFactory;
+import hu.bme.mit.theta.xcfa.analysis.impl.lazy.LazyXcfaAbstractorConfig;
+import hu.bme.mit.theta.xcfa.analysis.impl.lazy.LazyXcfaAbstractorConfigFactory;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.ComplexPortfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.Portfolio;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.SequentialPortfolio;
@@ -552,16 +553,15 @@ public class XcfaCli {
 		checkState(searchStrategy != null, "Specify --search-lazy");
 		checkState(exprMeetStrategy != null, "Specify --meet-lazy");
 
-		final Abstractor<LazyState<XcfaState<ExprState>, XcfaState<ExprState>>, XcfaAction, UnitPrec> lazyAbstractor = LazyXcfaAbstractorFactory.create(
+		final LazyXcfaAbstractorConfig<ExprState, ExprState, XcfaAction, UnitPrec> lazyAbstractor = LazyXcfaAbstractorConfigFactory.create(
 				xcfa,
 				new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
 				searchStrategy,
 				exprMeetStrategy
 		);
-		final ARG<LazyState<XcfaState<ExprState>, XcfaState<ExprState>>, XcfaAction> arg = lazyAbstractor.createArg();
 		final AbstractorResult status;
 		try {
-			status = lazyAbstractor.check(arg, UnitPrec.getInstance());
+			status = lazyAbstractor.check();
 		} catch (final NotSolvableException exception) {
 			System.err.println("Configuration failed (stuck)");
 			System.exit(-30);
@@ -571,6 +571,7 @@ public class XcfaCli {
 			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
 		}
 
+		final ARG<LazyState<XcfaState<ExprState>, XcfaState<ExprState>>, XcfaAction> arg = lazyAbstractor.getArg();
 		if (status != null && status.isUnsafe()) {
 			final var result = SafetyResult.unsafe(ArgTrace.to(arg.getUnsafeNodes().findFirst().get()).toTrace(), arg);
 

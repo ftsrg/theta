@@ -1,12 +1,13 @@
 package hu.bme.mit.theta.xcfa.analysis.impl.lazy;
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -59,7 +60,7 @@ public final class LazyXcfaAbstractorTest {
     @Parameter(2)
     public DataStrategy2 dataStrategy;
 
-    private Abstractor<? extends LazyState<?, ?>, XcfaAction, UnitPrec> abstractor;
+    private LazyXcfaAbstractorConfig<ExprState, ExprState, XcfaAction, Prec> abstractor;
 
     @Parameters(name = "model: {0}, safe: {1}, strategy: {2}")
     public static Collection<Object[]> data() {
@@ -90,9 +91,8 @@ public final class LazyXcfaAbstractorTest {
         checkState(program instanceof CProgram, "Parsing did not return a program!");
         final FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
         final XCFA xcfa1 = new FrontendXcfaBuilder().buildXcfa((CProgram) program).build();
-        final XCFA xcfa2 = new FrontendXcfaBuilder().buildXcfa((CProgram) program).build();
 
-        abstractor = LazyXcfaAbstractorFactory.create(xcfa1, dataStrategy, BFS, ExprMeetStrategy.SYNTACTIC);
+        abstractor = LazyXcfaAbstractorConfigFactory.create(xcfa1, dataStrategy, BFS, ExprMeetStrategy.SYNTACTIC);
     }
 
     @Test
@@ -100,10 +100,9 @@ public final class LazyXcfaAbstractorTest {
         test(abstractor);
     }
 
-    private <S extends LazyState<?, ?>> void test(Abstractor<S, XcfaAction, UnitPrec> abstractor) {
+    private void test(LazyXcfaAbstractorConfig<ExprState, ExprState, XcfaAction, Prec> abstractor) {
         // Act
-        final ARG<S, XcfaAction> arg = abstractor.createArg();
-        final AbstractorResult result = abstractor.check(arg, UnitPrec.getInstance());
+        final AbstractorResult result = abstractor.check();
 
         // Assert
         if(safe) {
@@ -113,7 +112,7 @@ public final class LazyXcfaAbstractorTest {
         }
 
         final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstance().createSolver());
-        final boolean argCheckResult = argChecker.isWellLabeled(arg);
+        final boolean argCheckResult = argChecker.isWellLabeled(abstractor.getArg());
         assertTrue(argCheckResult);
     }
 }

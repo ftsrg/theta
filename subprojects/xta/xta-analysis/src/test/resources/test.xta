@@ -1,0 +1,16 @@
+process main() {
+    int d;
+    clock c;
+
+	state s1, s2, error, s4;
+
+	init s1;
+
+	trans
+		s1 -> s1 { guard d < 1; assign c = 0; },
+		s1 -> s2 { guard c > 4; assign d = d + 1; },
+		s2 -> error { guard d < 2; },
+        s2 -> s4 { guard c < 4; };
+}
+
+system main;

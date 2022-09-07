@@ -35,22 +35,21 @@ import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.xcfa.analysis.impl.lazy.XcfaLensUtils.createConcrDataLens;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class LazyXcfaAbstractorFactory {
+public class LazyXcfaAbstractorConfigFactory {
     public static <DConcr extends ExprState, DAbstr extends ExprState, A extends XcfaAction, DPrec extends Prec>
-    Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A, UnitPrec>
+    LazyXcfaAbstractorConfig<DConcr, DAbstr, A, DPrec>
     create(final XCFA program, final DataStrategy2 dataStrategy, final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
 
         final Factory<DConcr, DAbstr, A, DPrec>
                 factory = new Factory<>(program, dataStrategy, searchStrategy, meetStrategy);
-        final Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A, UnitPrec>
-                abstractor = factory.create();
-        return abstractor;
+        return factory.create();
     }
 
-    public static <DConcr extends ExprState, DAbstr extends ExprState, DPrec extends Prec>
-    Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, ? extends XcfaAction, UnitPrec>
+    public static <DConcr extends ExprState, DAbstr extends ExprState, A extends XcfaAction, DPrec extends Prec>
+    LazyXcfaAbstractorConfig<DConcr, DAbstr, A, DPrec>
     create(final XCFA program, final DataStrategy2 dataStrategy, final SearchStrategy searchStrategy) {
         return create(program, dataStrategy, searchStrategy, ExprMeetStrategy.BASIC);
     }
@@ -72,8 +71,7 @@ public class LazyXcfaAbstractorFactory {
             solverFactory = Z3SolverFactory.getInstance();
         }
 
-        public final Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A, UnitPrec>
-        create() {
+        public final LazyXcfaAbstractorConfig<DConcr, DAbstr, A, DPrec> create() {
             final LazyStrategy<DConcr, DAbstr,
                                 LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A>
                     lazyStrategy = createLazyStrategy(program, dataStrategy);
@@ -83,29 +81,17 @@ public class LazyXcfaAbstractorFactory {
             final LazyAnalysis<XcfaState<DConcr>, XcfaState<DAbstr>, A, XcfaPrec<DPrec>>
                     lazyAnalysis = createLazyAnalysis(abstrPartialOrd, initAbstractor);
 
-            final DPrec prec = createConcrPrec();
-            final Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A, UnitPrec>
+            final XcfaPrec<DPrec> prec = XcfaPrec.create(createConcrPrec());
+            final Abstractor<LazyState<XcfaState<DConcr>, XcfaState<DAbstr>>, A, XcfaPrec<DPrec>>
                     abstractor = new LazyAbstractor(
                     new XcfaSTLts(),
                     searchStrategy,
                     lazyStrategy,
                     lazyAnalysis,
-                    XcfaPrec.create(prec),
                     s -> ((XcfaSTState) s).isError(),
-                    new Lens<XcfaState<DConcr>, DConcr>() {
-
-                        @Override
-                        public DConcr get(XcfaState<DConcr> dConcrXcfaState) {
-                            return dConcrXcfaState.getGlobalState();
-                        }
-
-                        @Override
-                        public XcfaState<DConcr> set(XcfaState<DConcr> dConcrXcfaState, DConcr dConcr) {
-                            throw new UnsupportedOperationException();
-                        }
-                    }
+                    createConcrDataLens()
             );
-            return abstractor;
+            return new LazyXcfaAbstractorConfig<>(abstractor, prec);
         }
 
         private DPrec createConcrPrec() {
@@ -205,7 +191,7 @@ public class LazyXcfaAbstractorFactory {
 
         private Lens createDataLens(final DataStrategy2.AbstrDom abstrDom) {
             if (abstrDom == DataStrategy2.AbstrDom.NONE) {
-                return XcfaLensUtils.createConcrDataLens();
+                return createConcrDataLens();
             }
             return XcfaLensUtils.createLazyDataLens();
         }

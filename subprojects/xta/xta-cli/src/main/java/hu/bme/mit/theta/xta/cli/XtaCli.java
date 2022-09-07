@@ -42,6 +42,11 @@ import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 public final class XtaCli {
+
+	public enum Algorithm {
+		LAZY, EXPERIMENTAL_EAGERLAZY
+	}
+
 	private static final String JAR_NAME = "theta-xta.jar";
 	private final String[] args;
 	private final TableWriter writer;
@@ -82,6 +87,9 @@ public final class XtaCli {
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
 
+	@Parameter(names = {"--algorithm"}, description = "The algorithm to use")
+	Algorithm algorithm = Algorithm.LAZY;
+
 	public XtaCli(final String[] args) {
 		this.args = args;
 		this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
@@ -114,7 +122,7 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem system = loadModel();
-			Abstractor<? extends LazyState<?, ?>, XtaAction, UnitPrec> abstractor = LazyXtaAbstractorFactory.create(
+			final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
 					system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
 					clockStrategy, searchStrategy, exprMeetStrategy
 			);
@@ -125,9 +133,8 @@ public final class XtaCli {
 		}
 	}
 
-	private <S extends LazyState<?, ?>> void run(Abstractor<S, XtaAction, UnitPrec> abstractor){
-		final ARG<S, XtaAction> arg = abstractor.createArg();
-		abstractor.check(arg, UnitPrec.getInstance());
+	private <S extends LazyState<?, ?>> void run(final LazyXtaAbstractorConfig<?, ?, ?> abstractor) {
+		abstractor.check();
 		System.out.println("(SafetyResult Safe)");
 	}
 
