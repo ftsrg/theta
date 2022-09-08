@@ -61,6 +61,8 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
@@ -78,7 +80,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -168,9 +170,9 @@ public class XcfaConfigBuilder {
 			}
 
 			@Override
-			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel) {
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel, Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry) {
 				return switch (porDependencyLevel) {
-					case ABSTRACTION_AWARE -> new XcfaAbstractPorLts(xcfa);
+					case ABSTRACTION_AWARE -> new XcfaAbstractPorLts(xcfa, ignoredVariableRegistry);
 					default -> new XcfaPorLts(xcfa);
 				};
 			}
@@ -203,7 +205,7 @@ public class XcfaConfigBuilder {
 
 		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
 
-		public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel) {
+		public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel, Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry) {
 			return getLts(xcfa);
 		}
 
@@ -350,7 +352,8 @@ public class XcfaConfigBuilder {
 	}
 
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final LTS lts = algorithm.getLts(xcfa, porDependencyLevel);
+		final Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry = new HashMap<>();
+		final LTS lts = algorithm.getLts(xcfa, porDependencyLevel, ignoredVariableRegistry);
 		final Abstractor abstractor;
 		final Refiner refiner;
 		final XcfaPrec prec;
@@ -443,18 +446,34 @@ public class XcfaConfigBuilder {
 
 		if (refinement == Refinement.MULTI_SEQ) {
 			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
+				throw new UnsupportedOperationException("MULTI_SEQ refinement is not supported with POR...");
+//				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
 			} else {
 				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
 		} else {
 			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
+				refiner = AbstractPorSingleExprtTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>(), ignoredVariableRegistry);
 			} else {
 				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
 		}
 		final SafetyChecker checker = CegarChecker.create(abstractor, refiner, logger);
+
+//		var includedVars = Arrays.asList(
+//				"__unbuffered_cnt",
+//				"main$tmp_guard0",
+//				"main$tmp_guard1",
+//				"cond",
+//				"y$w_buff0_used",
+//				"y$r_buff0_thd2",
+//				"y$w_buff1_used",
+//				"y$r_buff1_thd2",
+//				"x",
+//				"expression"
+//		);
+//		var vars = XcfaUtils.getVars(xcfa).stream().filter(v -> includedVars.contains(v.getName())).collect(Collectors.toSet());
+//		return XcfaConfig.create(checker, XcfaPrec.create(ExplPrec.of(vars)));
 		return XcfaConfig.create(checker, prec);
 	}
 
