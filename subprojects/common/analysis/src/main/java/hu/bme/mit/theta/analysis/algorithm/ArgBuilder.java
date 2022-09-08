@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
@@ -34,12 +35,12 @@ import hu.bme.mit.theta.analysis.TransFunc;
  */
 public final class ArgBuilder<S extends State, A extends Action, P extends Prec> {
 
-	private final LTS<? super S, ? extends A> lts;
+	private final LTS<? super S, A> lts;
 	private final Analysis<S, ? super A, ? super P> analysis;
 	private final Predicate<? super S> target;
 	private final boolean excludeBottom;
 
-	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+	private ArgBuilder(final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
 					   final Predicate<? super S> target, final boolean excludeBottom) {
 		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
@@ -48,13 +49,13 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+			final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target, final boolean excludeBottom) {
 		return new ArgBuilder<>(lts, analysis, target, excludeBottom);
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+			final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target) {
 		return create(lts, analysis, target, false);
 	}
@@ -90,7 +91,8 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		checkNotNull(prec);
 		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
-		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, prec);
+		final Collection<A> outgoingActions = node.getOutEdges().map(ArgEdge::getAction).collect(Collectors.toSet());
+		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, outgoingActions, prec);
 		final TransFunc<S, ? super A, ? super P> transFunc = analysis.getTransFunc();
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);

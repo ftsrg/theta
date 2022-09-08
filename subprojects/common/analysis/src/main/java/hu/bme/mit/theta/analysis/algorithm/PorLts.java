@@ -82,7 +82,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 *
 	 * @param enabledActions the enabled actions in the present state
 	 * @param firstAction    the action who will be added to the persistent set as the first action
-	 * @return the persistent set of enabled actions
+	 * @return a persistent set of enabled actions
 	 */
 	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, A firstAction) {
 		if (isBackwardAction(firstAction)) {

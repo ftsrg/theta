@@ -19,15 +19,25 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 	}
 
 	@Override
-	public <P extends Prec> Collection<XcfaAction> getEnabledActionsFor(XcfaState<?> state, P prec) {
+	public <P extends Prec> Collection<XcfaAction> getEnabledActionsFor(XcfaState<?> state, Collection<XcfaAction> exploredActions, P prec) {
 		// Collecting enabled actions
 		Collection<XcfaAction> allEnabledActions = getAllEnabledActionsFor(state);
 
-		// Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
+		// Calculating the persistent set starting from every (or some of the) enabled transition or from exploredActions if it is not empty
+		// The minimal persistent set is stored
 		Collection<XcfaAction> minimalPersistentSet = new HashSet<>();
-		Collection<XcfaAction> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
+		final Collection<List<XcfaAction>> persistentSetFirstActions = new HashSet<>() {{
+			if (exploredActions.isEmpty()) {
+				getPersistentSetFirstActions(allEnabledActions).forEach(action -> add(List.of(action)));
+			} else {
+				add(new ArrayList<>(exploredActions));
+			}
+		}};
 		Set<Decl<? extends Type>> finalIgnoredVariables = new HashSet<>();
-		for (XcfaAction firstAction : persistentSetFirstActions) {
+
+		// Calculate persistent sets from all possible starting action set
+		for (List<XcfaAction> firstAction : persistentSetFirstActions) {
+			// Variables that have been ignored (if they would be in the precision, more actions have had to be added to the persistent set)
 			Set<Decl<? extends Type>> ignoredVariables = new HashSet<>();
 			Collection<XcfaAction> persistentSet = calculatePersistentSet(allEnabledActions, firstAction, prec, ignoredVariables);
 			if (minimalPersistentSet.size() == 0 || persistentSet.size() < minimalPersistentSet.size()) {
@@ -46,15 +56,23 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 		return minimalPersistentSet;
 	}
 
-	private Collection<XcfaAction> calculatePersistentSet(Collection<XcfaAction> enabledActions, XcfaAction firstAction, Prec prec, Set<Decl<? extends Type>> ignoredVariables) {
-		if (isBackwardAction(firstAction)) {
+	/**
+	 * Calculates a persistent set of enabled actions starting from a set of particular actions.
+	 *
+	 * @param enabledActions the enabled actions in the present state
+	 * @param firstActions the actions that will be added to the persistent set as the first actions
+	 * @param prec the precision of the current abstraction
+	 * @param ignoredVariables variables that have been ignored (if they would be in the precision, more actions have had to be added to the persistent set)
+	 * @return a persistent set of enabled actions in the current abstraction
+	 */
+	private Collection<XcfaAction> calculatePersistentSet(Collection<XcfaAction> enabledActions, List<XcfaAction> firstActions, Prec prec, Set<Decl<? extends Type>> ignoredVariables) {
+		if (firstActions.size() == 1 && isBackwardAction(firstActions.get(0))) {
 			return new HashSet<>(enabledActions);
 		}
 
-		Set<XcfaAction> persistentSet = new HashSet<>();
+		Set<XcfaAction> persistentSet = new HashSet<>(firstActions);
 		Set<XcfaAction> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
-		persistentSet.add(firstAction);
-		otherActions.remove(firstAction);
+		firstActions.forEach(otherActions::remove);
 		Map<XcfaAction, Set<Decl<? extends Type>>> ignoredVariablesByAction = new HashMap<>();
 		otherActions.forEach(action -> ignoredVariablesByAction.put(action, new HashSet<>()));
 
@@ -75,7 +93,7 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 					actionsToRemove.add(action);
 					addedNewAction = true;
 				} else {
-					ignoredVariablesByAction.get(action).addAll(potentialIgnoredVariables);
+					ignoredVariablesByAction.get(action).addAll(potentialIgnoredVariables); // the action is not added to the persistent set because we ignore variables in potentialIgnoredVariables
 				}
 			}
 			actionsToRemove.forEach(otherActions::remove);
@@ -99,7 +117,7 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 		Set<? extends Decl<? extends Type>> influencedSharedObjects = getInfluencedSharedObjects(getTransitionOf(action));
 		for (Decl<? extends Type> varDecl : influencedSharedObjects) {
 			if (usedByPersistentSetAction.contains(varDecl)) {
-				if (isIgnorable(varDecl, prec)) {
+				if (isIgnorable(varDecl, prec)) { // the actions would be dependent, but we may have a chance to ignore it in the current abstraction
 					ignoredVariables.add(varDecl);
 					continue;
 				}

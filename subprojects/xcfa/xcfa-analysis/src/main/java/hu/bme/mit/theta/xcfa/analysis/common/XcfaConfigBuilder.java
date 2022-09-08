@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.expr.refinement.AbstractPorRefiner;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
@@ -444,36 +445,27 @@ public class XcfaConfigBuilder {
 						domain + " domain does not support " + refinement + " refinement.");
 		}
 
+		final Refiner coreRefiner;
 		if (refinement == Refinement.MULTI_SEQ) {
-			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				throw new UnsupportedOperationException("MULTI_SEQ refinement is not supported with POR...");
-//				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
+			if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+				coreRefiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
 			} else {
-				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+				coreRefiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
 		} else {
-			if (algorithm == Algorithm.INTERLEAVINGS_POR) {
-				refiner = AbstractPorSingleExprtTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>(), ignoredVariableRegistry);
+			if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+				coreRefiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
 			} else {
-				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+				coreRefiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
 			}
 		}
-		final SafetyChecker checker = CegarChecker.create(abstractor, refiner, logger);
+		if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+			refiner = AbstractPorRefiner.create(coreRefiner, pruneStrategy, ignoredVariableRegistry);
+		} else {
+			refiner = coreRefiner;
+		}
 
-//		var includedVars = Arrays.asList(
-//				"__unbuffered_cnt",
-//				"main$tmp_guard0",
-//				"main$tmp_guard1",
-//				"cond",
-//				"y$w_buff0_used",
-//				"y$r_buff0_thd2",
-//				"y$w_buff1_used",
-//				"y$r_buff1_thd2",
-//				"x",
-//				"expression"
-//		);
-//		var vars = XcfaUtils.getVars(xcfa).stream().filter(v -> includedVars.contains(v.getName())).collect(Collectors.toSet());
-//		return XcfaConfig.create(checker, XcfaPrec.create(ExplPrec.of(vars)));
+		final SafetyChecker checker = CegarChecker.create(abstractor, refiner, logger);
 		return XcfaConfig.create(checker, prec);
 	}
 

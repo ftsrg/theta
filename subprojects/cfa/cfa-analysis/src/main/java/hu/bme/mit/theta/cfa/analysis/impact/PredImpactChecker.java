@@ -46,7 +46,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 
 	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
-	private PredImpactChecker(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
+	private PredImpactChecker(final LTS<? super CfaState<PredState>, CfaAction> lts, final Loc initLoc,
 							  final Predicate<? super Loc> targetLocs,
 							  final Solver abstractionSolver, final ItpSolver refinementSolver) {
 		checkNotNull(lts);
@@ -75,7 +75,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 		checker = ImpactChecker.create(argBuilder, refiner, CfaState::getLoc);
 	}
 
-	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts,
+	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, CfaAction> lts,
 										   final Loc initLoc, final Predicate<? super Loc> targetLocs,
 										   final Solver abstractionSolver, final ItpSolver refinementSolver) {
 		return new PredImpactChecker(lts, initLoc, targetLocs, abstractionSolver, refinementSolver);
