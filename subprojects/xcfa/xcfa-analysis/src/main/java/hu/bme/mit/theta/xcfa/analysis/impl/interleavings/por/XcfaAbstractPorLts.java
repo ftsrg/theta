@@ -53,6 +53,7 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 			ignoredVariableRegistry.get(ignoredVariable).add(state);
 		});
 
+		minimalPersistentSet.removeAll(exploredActions);
 		return minimalPersistentSet;
 	}
 

@@ -91,8 +91,8 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		checkNotNull(prec);
 		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
-		final Collection<A> outgoingActions = node.getOutEdges().map(ArgEdge::getAction).collect(Collectors.toSet());
-		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, outgoingActions, prec);
+		final Collection<A> exploredActions = node.getOutEdges().map(ArgEdge::getAction).collect(Collectors.toSet());
+		final Collection<? extends A> actions = lts.getEnabledActionsFor(state, exploredActions, prec);
 		final TransFunc<S, ? super A, ? super P> transFunc = analysis.getTransFunc();
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);
