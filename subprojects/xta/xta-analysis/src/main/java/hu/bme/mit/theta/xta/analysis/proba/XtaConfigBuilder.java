@@ -194,7 +194,7 @@ public class XtaConfigBuilder {
                     throw new UnsupportedOperationException(domain + " domain is not supported.");
             }
             final Analysis<Prod2State<PredState, ZoneState>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> prod2Analysis = Prod2Analysis.create(
-                    PredAnalysis.create(analysisSolver, predAbstractor, True()),
+                    PredAnalysis.create(analysisSolver, predAbstractor, xta.getInitVal().toExpr()),
                     XtaZoneAnalysis.getInstance()
             );
             //miért nem kell xtaprec-be becsomagolni

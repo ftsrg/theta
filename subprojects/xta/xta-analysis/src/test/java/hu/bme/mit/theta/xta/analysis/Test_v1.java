@@ -5,6 +5,8 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
@@ -38,18 +40,18 @@ public class Test_v1 {
     }
 
     public void check() throws Exception {
-        domain = XtaConfigBuilder.Domain.PRED_BOOL;
-        refinement = XtaConfigBuilder.Refinement.FW_BIN_ITP;
+        domain = XtaConfigBuilder.Domain.PRED_CART;
+        refinement = XtaConfigBuilder.Refinement.SEQ_ITP;
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-            SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, NullLogger.getInstance()));
+            SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, new ConsoleLogger(Logger.Level.DETAIL)));
         }
 
         final SolverFactory solverFactory;
 
         solverFactory = SolverManager.resolveSolverFactory("Z3");
 
-        final InputStream inputStream = getClass().getResourceAsStream("/csma-2.xta");
+        final InputStream inputStream = getClass().getResourceAsStream("/mytest.xta");
         XtaSystem system = XtaDslManager.createSystem(inputStream);
 
         XtaConfig<? extends State, ? extends Action, ? extends Prec> config =

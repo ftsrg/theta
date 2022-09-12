@@ -49,10 +49,12 @@ final class XtaSpecification implements Scope {
 
 	private final XtaSystem system;
 
+
 	private XtaSpecification(final XtaContext context) {
 		checkNotNull(context);
 		this.context = context;
 		symbolTable = new SymbolTable();
+
 
 		variables = new ArrayList<>();
 		types = new ArrayList<>();
@@ -95,7 +97,9 @@ final class XtaSpecification implements Scope {
 
 				for (final List<Expr<?>> argumentList : argumentLists) {
 					final String name = createName(processSymbol, argumentList);
-					processSymbol.instantiate(system, name, argumentList, env);
+					//local variables need to be added to the symbolictable
+					processSymbol.instantiate(system, name, argumentList, env, symbolTable);
+
 				}
 			} else if (symbol instanceof XtaInstantiationSymbol) {
 				final XtaInstantiationSymbol instantiationSymbol = (XtaInstantiationSymbol) symbol;
@@ -109,7 +113,7 @@ final class XtaSpecification implements Scope {
 						final XtaProcessSymbol processSymbol = (XtaProcessSymbol) someSymbol;
 						final String name = instantiationSymbol.getName();
 						final List<Expr<?>> argumentList = instantiationSymbol.getArgumentList(env);
-						processSymbol.instantiate(system, name, argumentList, env);
+						processSymbol.instantiate(system, name, argumentList, env, symbolTable);
 					} else {
 						throw new RuntimeException("Symbol \"" + procName + "\" is not a template.");
 					}
@@ -130,6 +134,8 @@ final class XtaSpecification implements Scope {
 		}
 		return system;
 	}
+
+
 
 	private Expr<BoolType> negProp() {
 		//TODO negation
@@ -237,7 +243,7 @@ final class XtaSpecification implements Scope {
 	private void declare(final ProcessDeclContext context) {
 		final XtaProcessSymbol processSymbol = new XtaProcessSymbol(this, context);
 
-		declareAllVariables(context.fProcessBody.fVariableDecls, processSymbol.getName());
+		//declareAllVariables(context.fProcessBody.fVariableDecls, processSymbol.getName());
 		symbolTable.add(processSymbol);
 	}
 
@@ -269,6 +275,8 @@ final class XtaSpecification implements Scope {
 	public Optional<Symbol> resolve(final String name) {
 		return symbolTable.get(name);
 	}
+
+
 
 	////
 

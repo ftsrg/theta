@@ -1,0 +1,35 @@
+clock x;
+clock y;
+
+int a = 0;
+bool b = false;
+process P1(){
+
+
+    state
+        idle,
+        A { y < 5 },
+        B,
+        C;
+
+    commit idle;
+
+    init
+        idle;
+
+
+    trans
+        idle -> A {},
+        A -> A {guard x == 1; assign a = a + 1, x = 0, b = true;},
+        A -> B {guard a == 4;},
+        A -> C {guard a == 3;};
+
+}
+
+
+
+system P1;
+
+prop{
+    E<> P1_B && a==4
+}

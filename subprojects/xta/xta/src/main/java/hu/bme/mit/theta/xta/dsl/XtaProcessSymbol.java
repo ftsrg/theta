@@ -20,9 +20,12 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaProcess;
@@ -42,8 +45,12 @@ import static java.util.stream.Collectors.toList;
 
 final class XtaProcessSymbol implements Symbol, Scope {
 
+
+	private SymbolTable system_symbolTable;
+
 	private final XtaSpecification scope;
 	private final SymbolTable symbolTable;
+
 
 	private final String name;
 	private final String initState;
@@ -57,7 +64,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
 		this.scope = checkNotNull(scope);
 		symbolTable = new SymbolTable();
-
+		//this.system_symbolTable = _system_symbolictable;
 		name = context.fId.getText();
 		initState = context.fProcessBody.fInit.fId.getText();
 		parameters = new ArrayList<>();
@@ -88,11 +95,11 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
 	////
 
-	public XtaProcess instantiate(final XtaSystem system, final String name, final List<? extends Expr<?>> arguments, final Env env) {
+	public XtaProcess instantiate(final XtaSystem system, final String name, final List<? extends Expr<?>> arguments, final Env env, final SymbolTable _system_symboltable) {
 		checkArgument(arguments.size() == parameters.size());
 		checkArgument(argumentTypesMatch(arguments));
-
 		env.push();
+		system_symbolTable = _system_symboltable;
 		defineAllParameters(arguments, env);
 
 		final XtaProcess process = system.createProcess(name);
@@ -119,33 +126,68 @@ final class XtaProcessSymbol implements Symbol, Scope {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
+
+
                 final InstantiateResult instantiateResult = variable.instantiate(process.getName() + "_", env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
+					env.define_in_parent(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
                     final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
+					env.define_in_parent(variable, varDecl);
                     process.getSystem().addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
                     final VarDecl<?> varDecl = instantiateResult.asDataVariable().getVarDecl();
                     final LitExpr<?> initValue = instantiateResult.asDataVariable().getInitValue();
                     env.define(variable, varDecl);
+					env.define_in_parent(variable, varDecl);
                     process.getSystem().addDataVar(varDecl, initValue);
                 } else {
                     throw new AssertionError();
                 }
+				variable.setName(process.getName() + "_" + variable.getName());
+				if(!system_symbolTable.get(variable.getName()).isPresent()){
+					system_symbolTable.add(variable);
+
+				}
+
             }
+
         }
 	}
 
+	/*private void addSymboltoGlobalScope(XtaProcess process, XtaVariableSymbol var, VarDecl<?> decl){
+		if(!system_symbolTable.get(var.getName()).isPresent()){
+			var.setName(process.getName() + "_" + var.getName());
+			system_symbolTable.add(var);
+		}
+	}*/
+
 	private void createAllStates(final XtaProcess process, final Env env) {
+
 		for (final XtaStateSymbol state : states) {
+			boolean initloc = false;
 			final Loc loc = state.instantiate(process, env);
 			if (state.getName().equals(initState)) {
 				process.setInitLoc(loc);
+				initloc = true;
 			}
 			env.define(state, loc);
+			if(!system_symbolTable.get(state.getName()).isPresent()){
+				state.setName(process.getName() + "_" + state.getName());
+				system_symbolTable.add(state);
+				env.define_in_parent(state, loc);
+				String varname = "__" +  loc.getName();
+				XtaVariableSymbol variableSymbol = XtaVariableSymbol.forcedCreate(varname);
+				system_symbolTable.add(variableSymbol);
+
+				VarDecl varDecl = Decls.Var(varname, BoolType.getInstance());
+				env.define_in_parent(variableSymbol, varDecl);
+				final LitExpr<BoolType> initValue = BoolLitExpr.of(initloc);
+				process.getSystem().addDataVar(varDecl, initValue);
+			}
 		}
 	}
 
@@ -201,6 +243,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext, variableIdContext);
 			variables.add(variableSymbol);
 			symbolTable.add(variableSymbol);
+			//system_symbolTable.add(variableSymbol);
 		}
 	}
 

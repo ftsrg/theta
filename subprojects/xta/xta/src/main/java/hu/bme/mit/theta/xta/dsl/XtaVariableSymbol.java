@@ -67,6 +67,16 @@ final class XtaVariableSymbol implements Symbol {
 		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
 				: null;
 	}
+	private XtaVariableSymbol(String _name){
+		name = _name;
+		constant = false;
+		broadcast = false;
+		type = null;
+		initialiser = null;
+	}
+	public static XtaVariableSymbol forcedCreate(String name){
+		return new XtaVariableSymbol(name);
+	}
 	public void setGlobal(){
 		global = true;
 	}

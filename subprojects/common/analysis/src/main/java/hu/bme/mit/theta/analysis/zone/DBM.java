@@ -572,17 +572,17 @@ final class DBM {
 
 	////
 
-	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
+//	@Override
+//	public int hashCode() {
+//		// TODO Auto-generated method stub
+//		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+//	}
+//
+//	@Override
+//	public boolean equals(final Object obj) {
+//		// TODO Auto-generated method stub
+//		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+//	}
 
 	@Override
 	public String toString() {

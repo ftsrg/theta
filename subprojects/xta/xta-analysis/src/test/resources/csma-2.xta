@@ -56,8 +56,10 @@ process Station(const id_t id) {
 		retry -> retry { guard x <= 2 * SIGMA; sync cd[id]?; assign x = 0; };
 }
 
+Bus1=Bus();
+
 system Bus, Station;
 
 prop{
-    E<> Bus_k>3
+    E<> Bus_k > 0
 }
