@@ -122,6 +122,14 @@ final class XtaExpression {
             final Symbol symbol = optSymbol.get();
 
             if (env.isDefined(symbol)) {
+                if(symbol instanceof XtaStateSymbol){
+                    Optional<? extends Symbol> statevar = scope.resolve("__"+symbol.getName());
+                    if(statevar.isEmpty()) throw new NoSuchElementException("Identifier '" + name + "' not found");
+                    if(env.isDefined(statevar.get())){
+                        final Decl<?> decl = (Decl<?>) env.eval(statevar.get());
+                        return decl.getRef();
+                    }
+                }
                 // A variable, synchronization label, or a constant already defined
                 final Object value = env.eval(symbol);
                 if (value instanceof Decl<?>) {

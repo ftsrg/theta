@@ -19,8 +19,10 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -97,9 +99,25 @@ public final class XtaProcess {
                            final Optional<Sync> sync, final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
+        if(!name.equals("ErrorProc") && !target.getKind().equals(LocKind.ERROR)) {
+            int count = 0;
+            for (VarDecl<?> var : system.getDataVars()) {
+                if (!target.equals(source) || count == 2) {
+                    if (var.getName().contains(target.name)) {
+                        updates.add(AssignStmt.create(var, BoolLitExpr.of(true)));
+                        count++;
+                    }
+                    if (var.getName().contains(source.name)) {
+                        updates.add(AssignStmt.create(var, BoolLitExpr.of(false)));
+                        count++;
+                    }
+                } else break;
+            }
+        }
         final Edge edge = new Edge(source, target, guards, sync, updates);
         source.outEdges.add(edge);
         target.inEdges.add(edge);
+
         return edge;
     }
 
@@ -171,7 +189,7 @@ public final class XtaProcess {
     ////
 
     public enum LocKind {
-        NORMAL, URGENT, COMMITTED;
+        NORMAL, URGENT, COMMITTED, ERROR;
     }
 
     public final class Loc {

@@ -45,7 +45,7 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
 		checkNotNull(prec);
 		final List<Loc> initLocs = system.getInitLocs();
 		final Collection<? extends S> initStates = initFunc.getInitStates(prec);
-		return XtaState.collectionOf(initLocs, initStates);
+		return XtaState.collectionOf(initLocs, initStates, system.getInitVal());
 	}
 
 }

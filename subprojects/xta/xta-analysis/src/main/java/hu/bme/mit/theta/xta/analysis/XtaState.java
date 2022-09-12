@@ -26,8 +26,12 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 
@@ -39,10 +43,12 @@ public final class XtaState<S extends State> implements ExprState {
 	private final S state;
 	private final boolean committed;
 	private final boolean urgent;
+	private final Valuation additionalValueConstraints;
 
-	private XtaState(final List<Loc> locs, final S state) {
+	private XtaState(final List<Loc> locs, final S state, Valuation additionalValueConstraints) {
 		this.locs = ImmutableList.copyOf(checkNotNull(locs));
 		this.state = checkNotNull(state);
+		this.additionalValueConstraints = additionalValueConstraints;
 		final LocKind locKind = extractKind(locs);
 		committed = locKind == LocKind.COMMITTED;
 		urgent = locKind != LocKind.NORMAL;
@@ -50,6 +56,7 @@ public final class XtaState<S extends State> implements ExprState {
 
 	private static final LocKind extractKind(final List<Loc> locs) {
 		boolean urgent = false;
+		boolean error = false;
 		for (final Loc loc : locs) {
 			switch (loc.getKind()) {
 				case COMMITTED:
@@ -59,22 +66,37 @@ public final class XtaState<S extends State> implements ExprState {
 					break;
 				case NORMAL:
 					break;
+				case ERROR:
+					error = true;
+					break;
 				default:
 					throw new AssertionError();
 			}
 		}
+
+		if(error) return LocKind.ERROR;
 		return urgent ? LocKind.URGENT : LocKind.NORMAL;
 	}
 
 	public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
-		return new XtaState<>(locs, state);
+		return new XtaState<>(locs, state, ImmutableValuation.empty());
+	}
+
+	public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state, Valuation valuation) {
+		return new XtaState<>(locs, state, valuation);
 	}
 
 	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
 																		 final Collection<? extends S> states) {
+		return collectionOf(locs, states, ImmutableValuation.empty());
+	}
+
+	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
+																		 final Collection<? extends S> states,
+																		 final Valuation valuation) {
 		final Collection<XtaState<S>> result = new ArrayList<>();
 		for (final S state : states) {
-			final XtaState<S> initXtaState = XtaState.of(locs, state);
+			final XtaState<S> initXtaState = XtaState.of(locs, state, valuation);
 			result.add(initXtaState);
 		}
 		return result;
@@ -109,7 +131,7 @@ public final class XtaState<S extends State> implements ExprState {
 	public Expr<BoolType> toExpr() {
 		if (state instanceof ExprState) {
 			final ExprState exprState = (ExprState) state;
-			return exprState.toExpr();
+			return SmartBoolExprs.And(exprState.toExpr(), additionalValueConstraints.toExpr());
 		} else {
 			throw new UnsupportedOperationException();
 		}
