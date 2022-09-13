@@ -1,0 +1,175 @@
+package hu.bme.mit.theta.analysis.algorithm.tracegen;
+
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.Collectors.toList;
+
+class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
+    private static final int HASH_SEED = 7453;
+    private volatile int hashCode = 0;
+
+    private final List<ArgNode<S, A>> nodes;
+    private final List<ArgEdge<S, A>> edges;
+    private final Collection<State> states;
+
+    private AdvancedArgTrace(final ArgNode<S, A> node) {
+        // adding items to first index will lead to O(N^2) performance
+        final List<ArgNode<S, A>> nodeList = new ArrayList<>();
+        final List<ArgEdge<S, A>> edgeList = new ArrayList<>();
+
+        ArgNode<S, A> running = node;
+        nodeList.add(running);
+
+        while (running.getInEdge().isPresent()) {
+            final ArgEdge<S, A> inEdge = running.getInEdge().get();
+            running = inEdge.getSource();
+            edgeList.add(inEdge);
+            nodeList.add(running);
+        }
+
+        // create the correct order by reversing O(N)
+        Collections.reverse(nodeList);
+        Collections.reverse(edgeList);
+
+        this.nodes = Collections.unmodifiableList(nodeList);
+        this.edges = Collections.unmodifiableList(edgeList);
+        states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
+    }
+
+    private AdvancedArgTrace(List<ArgNode<S, A>> nodeList, List<ArgEdge<S, A>> edgeList) {
+        this.nodes = Collections.unmodifiableList(nodeList);
+        this.edges = Collections.unmodifiableList(edgeList);
+        states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
+    }
+
+    ////
+
+    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> to(final ArgNode<S, A> node) {
+        checkNotNull(node);
+        return new AdvancedArgTrace<>(node);
+    }
+
+    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> fromTo(final ArgNode<S, A> fromNode, final ArgNode<S, A> toNode) {
+        checkNotNull(fromNode);
+        checkNotNull(toNode);
+        AdvancedArgTrace<S, A> differenceTrace = new AdvancedArgTrace<>(fromNode);
+        AdvancedArgTrace<S, A> fullTrace = new AdvancedArgTrace<>(toNode);
+        return substituteTrace(fullTrace, differenceTrace);
+    }
+
+    /**
+     * Substitutes the differenceTrace from the fullTrace, where the differenceTrace should be the beginning of
+     * the full trace
+     */
+    private static <A extends Action, S extends State> AdvancedArgTrace<S, A> substituteTrace(AdvancedArgTrace<S, A> fullTrace, AdvancedArgTrace<S, A> differenceTrace) {
+        List<ArgNode<S, A>> fullNodes = fullTrace.nodes;
+        List<ArgNode<S, A>> differenceNodes = differenceTrace.nodes;
+
+        List<ArgNode<S, A>> remainingNodes = new ArrayList<>();
+        remainingNodes.addAll(fullNodes);
+        remainingNodes.removeIf(saArgNode -> !(saArgNode.equals(differenceNodes.get(differenceNodes.size()-1)))
+                && differenceNodes.contains(saArgNode));
+
+        List<ArgEdge<S, A>> fullEdges = fullTrace.edges;
+        List<ArgEdge<S, A>> differenceEdges = differenceTrace.edges;
+
+        List<ArgEdge<S, A>> remainingEdges = new ArrayList<>();
+        remainingEdges.addAll(fullEdges);
+        remainingEdges.removeIf(saArgEdge -> differenceEdges.contains(saArgEdge));
+
+        return new AdvancedArgTrace<>(remainingNodes, remainingEdges);
+    }
+
+    private static <A extends Action, S extends State> AdvancedArgTrace<S, A> concatenateTrace(AdvancedArgTrace<S, A> part1, AdvancedArgTrace<S, A> part2) {
+        // TODO check if part 1 end is same as part 2 start
+        checkState(part1.nodes.get(part1.nodes.size()-1).equals(part2.nodes.get(0)));
+
+        List<ArgNode<S, A>> concatenatedNodes = new ArrayList<>();
+        concatenatedNodes.addAll(part1.nodes);
+        for (int i = 1; i < part2.nodes.size(); i++) {
+            concatenatedNodes.add(part2.nodes.get(i));
+        }
+
+        List<ArgEdge<S, A>> concatenatedEdges = new ArrayList<>();
+        concatenatedEdges.addAll(part1.edges);
+        concatenatedEdges.addAll(part2.edges);
+
+        return new AdvancedArgTrace<>(concatenatedNodes, concatenatedEdges);
+    }
+
+    ////
+
+    /**
+     * Gets the length of the trace, i.e., the number of edges.
+     */
+    public int length() {
+        return edges.size();
+    }
+
+    public ArgNode<S, A> node(final int index) {
+        return nodes.get(index);
+    }
+
+    public ArgEdge<S, A> edge(final int index) {
+        return edges.get(index);
+    }
+
+    public List<ArgNode<S, A>> nodes() {
+        return nodes;
+    }
+
+    public List<ArgEdge<S, A>> edges() {
+        return edges;
+    }
+
+    ////
+
+    /**
+     * Converts the ArgTrace to a Trace by extracting states and actions from
+     * nodes and edges respectively.
+     */
+    public Trace<S, A> toTrace() {
+        final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());
+        final List<A> actions = edges.stream().map(ArgEdge::getAction).collect(toList());
+        return Trace.of(states, actions);
+    }
+
+    ////
+
+    @Override
+    public Iterator<ArgNode<S, A>> iterator() {
+        return nodes.iterator();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AdvancedArgTrace<?, ?> argTrace = (AdvancedArgTrace<?, ?>) o;
+        return states.equals(argTrace.states); // && edges.equals(argTrace.edges);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + states.hashCode();
+            result = 31 * result + edges.hashCode();
+            hashCode = result;
+        }
+        return result;
+        // return Objects.hash(states, edges);
+    }
+    ////
+
+}
