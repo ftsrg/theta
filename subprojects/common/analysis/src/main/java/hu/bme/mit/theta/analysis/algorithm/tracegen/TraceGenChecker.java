@@ -20,7 +20,6 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
 
     private TraceGenChecker(final Logger logger,
                             final Abstractor<S, A, P> abstractor) {
-
         this.logger = logger;
         this.abstractor = abstractor;
     }
@@ -71,7 +70,44 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
             }
         });
 
+        // filter 2, optional, to get full traces even where there is coverage
+        boolean getFullTraces = true; // TODO make this a configuration option
+        List<ArgNode<S, A>> coveredEndNodes = new ArrayList<>();
+        if(getFullTraces) {
+            for (ArgNode<S, A> node : filteredEndNodes) {
+                if(node.isCovered()) {
+                    // and covered-by edge is a cross-edge:
+                    ArgNode<S, A> coveringNode = node.getCoveringNode().get();
+                    Optional<ArgNode<S, A>> parentNode = node.getParent();
+                    boolean crossEdge = true;
+                    while(parentNode.isPresent()) {
+                        if(parentNode.equals(coveringNode)) {
+                            // not a cross edge
+                            crossEdge = false;
+                            break;
+                        }
+                        parentNode = parentNode.get().getParent();
+                    }
+
+                    if(crossEdge) {
+                        coveredEndNodes.add(node);
+                    }
+                }
+            }
+            filteredEndNodes.removeAll(coveredEndNodes);
+        }
+
         traces = filteredEndNodes.stream().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
+
+        if(getFullTraces) {
+            // TODO add full traces back based on coveredEndNodes
+            for (ArgNode<S, A> coveredNode : coveredEndNodes) {
+                ArgNode<S, A> coveringNode = coveredNode.getCoveringNode().get();
+                AdvancedArgTrace<S, A> part1 = AdvancedArgTrace.to(coveredNode);
+                AdvancedArgTrace<S, A> part2 = AdvancedArgTrace.fromTo(coveringNode, );
+                // TODO missing edge
+            }
+        }
 
         return SafetyResult.unsafe(this.traces.get(0), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder
     }
