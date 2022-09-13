@@ -2,17 +2,18 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.java.mdd.MddNode;
 
 /**
  * Provides an interpretation for nodes that haven't been fully enumerated yet.
  * Wraps a node and a traverser and makes the traverser enumerate only what is necessary.
  */
-public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
+public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddNode> {
 
-    private final MddSymbolicNode node;
+    private final MddSymbolicNodeImpl node;
     private final MddSymbolicNodeTraverser traverser;
 
-    public IncompleteMddSymbolicNodeInterpretation(MddSymbolicNode node, MddSymbolicNodeTraverser traverser) {
+    public IncompleteMddSymbolicNodeInterpretation(MddSymbolicNodeImpl node, MddSymbolicNodeTraverser traverser) {
         this.node = node;
         this.traverser = traverser;
     }
@@ -38,19 +39,19 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     }
 
     @Override
-    public MddSymbolicNode get(int key) {
+    public MddNode get(int key) {
         traverser.queryEdge(key);
         // Traverser is responsible for caching
         return node.getCacheView().get(key);
     }
 
     @Override
-    public MddSymbolicNode defaultValue() {
+    public MddNode defaultValue() {
         return node.getCacheView().defaultValue();
     }
 
     @Override
-    public IntObjCursor<? extends MddSymbolicNode> cursor() {
+    public IntObjCursor<? extends MddNode> cursor() {
         if(node.isComplete()) return node.getCacheView().cursor();
         return new IncompleteMddSymbolicNodeCursor();
     }
@@ -64,10 +65,10 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     /**
      * A cursor implementation for incomplete symbolic nodes.
      */
-    private class IncompleteMddSymbolicNodeCursor implements IntObjCursor<MddSymbolicNode>{
+    private class IncompleteMddSymbolicNodeCursor implements IntObjCursor<MddNode>{
         private int index;
         private int key;
-        private MddSymbolicNode value;
+        private MddNode value;
 
         private IncompleteMddSymbolicNodeCursor(){
             this.index = -1;
@@ -82,7 +83,7 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
         }
 
         @Override
-        public MddSymbolicNode value() {
+        public MddNode value() {
             if(index < 0) throw new IllegalStateException("Cursor is not initialized");
             return value;
         }
