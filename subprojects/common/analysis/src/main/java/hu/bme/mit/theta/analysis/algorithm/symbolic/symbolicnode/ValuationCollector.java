@@ -34,7 +34,7 @@ public class ValuationCollector {
      * @param traverser the traverser that will be used to enumerate the subtree. Must start on the node.
      * @return the set of vectors represented by the node
      */
-    public static Set<Valuation> collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser){
+    public static Set<Valuation> collect(MddSymbolicNodeImpl node, MddSymbolicNodeTraverser traverser){
         Preconditions.checkState(traverser.getCurrentNode().equals(node));
 
         final Stack<Assignment> assignments = new Stack<>();
@@ -45,7 +45,7 @@ public class ValuationCollector {
         return valuations;
     }
 
-    public static void collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser, Stack<Assignment> assignments, Set<Valuation> valuations){
+    public static void collect(MddSymbolicNodeImpl node, MddSymbolicNodeTraverser traverser, Stack<Assignment> assignments, Set<Valuation> valuations){
         final MddVariable variable = node.getSymbolicRepresentation().second;
 
         if(node.isTerminal()){
@@ -54,7 +54,7 @@ public class ValuationCollector {
             if(node.getCacheView().defaultValue() != null){
                 traverser.moveDown(0); // move down along arbitrary edge
 
-                collect(node.getCacheView().defaultValue(), traverser, assignments, valuations);
+                collect((MddSymbolicNodeImpl) node.getCacheView().defaultValue(), traverser, assignments, valuations);
 
                 traverser.moveUp();
             } else {
@@ -65,7 +65,7 @@ public class ValuationCollector {
                     assignments.push(new Assignment(variable.getTraceInfo(ConstDecl.class), LitExprConverter.toLitExpr(cur.key(), variable.getTraceInfo(ConstDecl.class).getType())));
                     traverser.moveDown(cur.key());
 
-                    collect(cur.value(), traverser, assignments, valuations);
+                    collect((MddSymbolicNodeImpl) cur.value(), traverser, assignments, valuations);
 
                     assignments.pop();
                     traverser.moveUp();

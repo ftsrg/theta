@@ -9,7 +9,7 @@ import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprVariable;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeImpl;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -49,9 +49,9 @@ public class ExprNodeTest {
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x));
+        MddSymbolicNodeImpl rootNode = new MddSymbolicNodeImpl(new Pair<>(expr, x));
 
-        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
+        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode);
 
         while (!rootNode.isComplete()) traverser.queryEdge();
 
@@ -69,7 +69,7 @@ public class ExprNodeTest {
 
     }
 
-    private static String nodeToString(MddSymbolicNode node){
+    private static String nodeToString(MddSymbolicNodeImpl node){
         final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
         return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
     }

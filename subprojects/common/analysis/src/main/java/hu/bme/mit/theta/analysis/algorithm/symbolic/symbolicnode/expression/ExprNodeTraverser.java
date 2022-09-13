@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeImpl;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -25,15 +25,15 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 
 public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
 
-    private MddSymbolicNode currentNode;
+    private MddSymbolicNodeImpl currentNode;
 
     private final Solver solver;
 
-    private final Stack<MddSymbolicNode> stack;
+    private final Stack<MddSymbolicNodeImpl> stack;
     private int pushedNegatedAssignments = 0;
 
 
-    public ExprNodeTraverser(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier) {
+    public ExprNodeTraverser(MddSymbolicNodeImpl rootNode, Supplier<Solver> solverSupplier) {
         this.solver = solverSupplier.get();
         this.stack = new Stack<>();
 
@@ -43,12 +43,12 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     @Override
-    public MddSymbolicNode getCurrentNode(){
+    public MddSymbolicNodeImpl getCurrentNode(){
         return currentNode;
     }
 
     @Override
-    public MddSymbolicNode moveUp(){
+    public MddSymbolicNodeImpl moveUp(){
         Preconditions.checkState(stack.size()>0);
         popNegatedAssignments();
         solver.pop(); // pop assignment that brought us here
@@ -81,9 +81,9 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     @Override
-    public MddSymbolicNode peakDown(int assignment) {
+    public MddSymbolicNodeImpl peakDown(int assignment) {
         queryEdge(assignment);
-        return currentNode.getCacheView().get(assignment);
+        return (MddSymbolicNodeImpl) currentNode.getCacheView().get(assignment);
     }
 
     @Override
@@ -140,13 +140,13 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     // TODO összevonni queryChilddal
-    public MddSymbolicNode moveDown(int assignment){
+    public MddSymbolicNodeImpl moveDown(int assignment){
         if(queryEdge(assignment)){
             popNegatedAssignments();
             solver.push();
             solver.add(Eq(currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class).getRef(), LitExprConverter.toLitExpr(assignment, currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class).getType())));
             stack.push(currentNode);
-            setCurrentNode(currentNode.getCacheView().get(assignment));
+            setCurrentNode((MddSymbolicNodeImpl) currentNode.getCacheView().get(assignment));
             return currentNode;
         } else return null;
     }
@@ -165,7 +165,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     private void cacheModel(Valuation valuation){
-        MddSymbolicNode node = currentNode;
+        MddSymbolicNodeImpl node = currentNode;
         Expr<?> expr = node.getSymbolicRepresentation(Expr.class).first;
         MddVariable variable = node.getSymbolicRepresentation().second;
 
@@ -175,9 +175,9 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
             final ConstDecl<?> decl = variable.getTraceInfo(ConstDecl.class);
             final Optional<? extends LitExpr<?>> literal = valuation.eval(decl);
 
-            final MddSymbolicNode childNode;
+            final MddSymbolicNodeImpl childNode;
             if(node.getCacheView().defaultValue() != null) {
-                childNode = node.getCacheView().defaultValue();
+                childNode = (MddSymbolicNodeImpl) node.getCacheView().defaultValue();
             } else {
                 final LitExpr<?> literalToCache;
                 if(literal.isPresent()){
@@ -207,7 +207,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
                 expr = ExprUtils.simplify(expr, val);
 
                 if(node.getCacheView().containsKey(LitExprConverter.toInt(literalToCache))){
-                    childNode = node.getCacheView().get(LitExprConverter.toInt(literalToCache));
+                    childNode = (MddSymbolicNodeImpl) node.getCacheView().get(LitExprConverter.toInt(literalToCache));
                     assert lower.isEmpty() || childNode.isOn(lower.get());
                 } else {
 
@@ -216,7 +216,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
 //                        final MddSymbolicNode.SymbolicRepresentation symbolicRepresentation = MddSymbolicNode.SymbolicRepresentation.of(new Pair<>((Expr<BoolType>) expr,lower.get()));
 //                        childNode = level.checkIn(symbolicRepresentation, sr -> new MddSymbolicNode((MddSymbolicNode.SymbolicRepresentation) sr));
 
-                    childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>(expr,lower.orElse(null))));
+                    childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNodeImpl(new Pair<>(expr,lower.orElse(null))));
                     node.getExplicitRepresentation().cacheNode(LitExprConverter.toInt(literalToCache),childNode);
                 }
             }
@@ -226,7 +226,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
         }
     }
 
-    private void setCurrentNode(MddSymbolicNode node){
+    private void setCurrentNode(MddSymbolicNodeImpl node){
         this.currentNode = node;
         pushNegatedAssignments();
         if(!node.isTerminal() || !node.isComplete()) checkIfDefault();
@@ -236,7 +236,7 @@ public class ExprNodeTraverser implements MddSymbolicNodeTraverser {
     private void checkIfDefault(){
         final Expr<?> expr = currentNode.getSymbolicRepresentation(Expr.class).first;
         if(!ExprUtils.getConstants(expr).contains(currentNode.getSymbolicRepresentation().second.getTraceInfo(ConstDecl.class))){
-            final MddSymbolicNode childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNode(new Pair<>(expr,currentNode.getSymbolicRepresentation().second.getLower().orElse(null))));
+            final MddSymbolicNodeImpl childNode = ExprNodeUtils.uniqueTable.checkIn(new MddSymbolicNodeImpl(new Pair<>(expr,currentNode.getSymbolicRepresentation().second.getLower().orElse(null))));
             if(currentNode.getCacheView().defaultValue() != null) Preconditions.checkState(currentNode.getCacheView().defaultValue().equals(childNode));
             else {
                 currentNode.getExplicitRepresentation().cacheDefault(childNode);
