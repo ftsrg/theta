@@ -6,7 +6,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeImpl;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
@@ -47,7 +47,7 @@ public class ExprNodeTest2 {
 
         Expr<BoolType> expr = And(Or(declA.getRef(),Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, a));
+        MddSymbolicNodeImpl rootNode = new MddSymbolicNodeImpl(new Pair<>(expr, a));
 
         MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
 
@@ -86,7 +86,7 @@ public class ExprNodeTest2 {
 
     }
 
-    private static String nodeToString(MddSymbolicNode node){
+    private static String nodeToString(MddSymbolicNodeImpl node){
         final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
         return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
     }
