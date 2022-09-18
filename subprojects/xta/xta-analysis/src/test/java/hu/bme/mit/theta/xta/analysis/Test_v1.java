@@ -7,18 +7,20 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.proba.XtaConfig;
-import hu.bme.mit.theta.xta.analysis.proba.XtaConfigBuilder;
+import hu.bme.mit.theta.xta.analysis.config.XtaConfig;
+import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import org.junit.Test;
+
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
 
 public class Test_v1 {
     public  String solver;
@@ -51,8 +53,11 @@ public class Test_v1 {
 
         solverFactory = SolverManager.resolveSolverFactory("Z3");
 
-        final InputStream inputStream = getClass().getResourceAsStream("/mytest.xta");
-        XtaSystem system = XtaDslManager.createSystem(inputStream);
+        XtaSystem system;
+        try( InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/mytest.xta"), new FileInputStream("src/test/resources/property/mytest.prop"))){
+            system = XtaDslManager.createSystem(inputStream);
+        }
+
 
         XtaConfig<? extends State, ? extends Action, ? extends Prec> config =
                 new XtaConfigBuilder(domain, refinement, /*solverFactory*/ Z3SolverFactory.getInstance()).build(system, null);

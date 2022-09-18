@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xta.analysis.proba;
+package hu.bme.mit.theta.xta.analysis.prec;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class GlobalXtaPrec <P extends Prec> implements XtaPrec<P>{
+public class GlobalXtaPrec <P extends Prec> implements XtaPrec<P> {
 
 
     private final P prec;

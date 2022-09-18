@@ -30,6 +30,3 @@ process P1(){
 
 system P1;
 
-prop{
-    E<> P1_B && a==4
-}
