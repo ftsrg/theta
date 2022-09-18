@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -89,23 +90,6 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
         return new AdvancedArgTrace<>(remainingNodes, remainingEdges);
     }
 
-    private static <A extends Action, S extends State> AdvancedArgTrace<S, A> concatenateTrace(AdvancedArgTrace<S, A> part1, AdvancedArgTrace<S, A> part2) {
-        // TODO check if part 1 end is same as part 2 start
-        checkState(part1.nodes.get(part1.nodes.size()-1).equals(part2.nodes.get(0)));
-
-        List<ArgNode<S, A>> concatenatedNodes = new ArrayList<>();
-        concatenatedNodes.addAll(part1.nodes);
-        for (int i = 1; i < part2.nodes.size(); i++) {
-            concatenatedNodes.add(part2.nodes.get(i));
-        }
-
-        List<ArgEdge<S, A>> concatenatedEdges = new ArrayList<>();
-        concatenatedEdges.addAll(part1.edges);
-        concatenatedEdges.addAll(part2.edges);
-
-        return new AdvancedArgTrace<>(concatenatedNodes, concatenatedEdges);
-    }
-
     ////
 
     /**
@@ -170,6 +154,7 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
         return result;
         // return Objects.hash(states, edges);
     }
+
     ////
 
 }

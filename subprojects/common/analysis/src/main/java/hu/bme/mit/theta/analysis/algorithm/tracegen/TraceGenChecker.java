@@ -6,6 +6,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -29,10 +30,10 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         return new TraceGenChecker<S,A,P>(logger, abstractor);
     }
 
-    private List<Trace<S,A>> traces = new ArrayList<>();
+    private List<Tuple2<Trace<S,A>, ArgNode<S,A>>> traces = new ArrayList<>();
 
     public List<Trace<S, A>> getTraces() {
-        return traces;
+        return traces.stream().map(tuple2 -> tuple2.get1()).toList();
     }
 
     @Override
@@ -70,46 +71,84 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
             }
         });
 
+        List<ArgTrace<S, A>> argTraces = new ArrayList<>(filteredEndNodes.stream().map(ArgTrace::to).toList());
+        traces.addAll(argTraces.stream().map(argTrace -> Tuple2.of(argTrace.toTrace(), argTrace.node(argTrace.nodes().size()-1))).toList());
+
         // filter 2, optional, to get full traces even where there is coverage
         boolean getFullTraces = true; // TODO make this a configuration option
-        List<ArgNode<S, A>> coveredEndNodes = new ArrayList<>();
         if(getFullTraces) {
-            for (ArgNode<S, A> node : filteredEndNodes) {
-                if(node.isCovered()) {
-                    // and covered-by edge is a cross-edge:
-                    ArgNode<S, A> coveringNode = node.getCoveringNode().get();
-                    Optional<ArgNode<S, A>> parentNode = node.getParent();
-                    boolean crossEdge = true;
-                    while(parentNode.isPresent()) {
-                        if(parentNode.equals(coveringNode)) {
-                            // not a cross edge
-                            crossEdge = false;
-                            break;
-                        }
-                        parentNode = parentNode.get().getParent();
-                    }
+            List<ArgNode<S, A>> remainingCoveredEndNodes;
+            List<ArgNode<S, A>> coveredEndNodes = computeCoveredEndNodes(filteredEndNodes);
+            while(!coveredEndNodes.isEmpty()) {
+                remainingCoveredEndNodes = new ArrayList<>();
+                for (ArgNode<S, A> coveredNode : coveredEndNodes) {
+                    ArgNode<S, A> coveringNode = coveredNode.getCoveringNode().get();
+                    AdvancedArgTrace<S, A> part1 = AdvancedArgTrace.to(coveredNode);
 
-                    if(crossEdge) {
-                        coveredEndNodes.add(node);
+                    for (ArgTrace<S, A> existingTrace : argTraces) {
+                        if (existingTrace.nodes().contains(coveringNode)) {
+                            // removing partial trace from traces (longer traces will be added instead)
+                            List<Tuple2<Trace<S, A>, ArgNode<S, A>>> tracesToRemove = traces.stream().filter(tuple2 -> tuple2.get2().equals(coveredNode)).toList();
+                            if (!tracesToRemove.isEmpty()) { // TODO I am not sure if this will cause any bugs, but I do not see a better solution for now
+                                traces.removeAll(tracesToRemove);
+                            } else {
+                                System.err.println("Partial traces not in list, might have been removed already earlier");
+                            }
+
+                            // Getting the separate halves of new trace
+                            AdvancedArgTrace<S, A> part2 = AdvancedArgTrace.fromTo(coveringNode, existingTrace.node(existingTrace.nodes().size() - 1));
+                            ArgNode<S, A> part2EndNode = part2.node(part2.nodes().size() - 1);
+
+                            ArgNode<S, A> endNode = part2.nodes().get(part2.nodes().size() - 1);
+                            if (coveredEndNodes.contains(endNode)) {
+                                remainingCoveredEndNodes.add(endNode);
+                            }
+                            Trace<S, A> part1Trace = part1.toTrace();
+                            Trace<S, A> part2Trace = part2.toTrace();
+
+                            // Concatenating states
+                            ArrayList<S> lengthenedTraceStates = new ArrayList<>(part1Trace.getStates());
+                            lengthenedTraceStates.remove(lengthenedTraceStates.size() - 1);
+                            lengthenedTraceStates.addAll(part2Trace.getStates());
+
+                            // Concatenating actions
+                            List<A> lengthenedTraceActions = new ArrayList<>(part1Trace.getActions());
+                            lengthenedTraceActions.addAll(part2Trace.getActions());
+
+                            Trace<S, A> lengthenedTrace = Trace.of(lengthenedTraceStates, lengthenedTraceActions);
+                            traces.add(Tuple2.of(lengthenedTrace, part2EndNode));
+                        }
                     }
                 }
-            }
-            filteredEndNodes.removeAll(coveredEndNodes);
-        }
-
-        traces = filteredEndNodes.stream().map(ArgTrace::to).map(ArgTrace::toTrace).toList();
-
-        if(getFullTraces) {
-            // TODO add full traces back based on coveredEndNodes
-            for (ArgNode<S, A> coveredNode : coveredEndNodes) {
-                ArgNode<S, A> coveringNode = coveredNode.getCoveringNode().get();
-                AdvancedArgTrace<S, A> part1 = AdvancedArgTrace.to(coveredNode);
-                AdvancedArgTrace<S, A> part2 = AdvancedArgTrace.fromTo(coveringNode, );
-                // TODO missing edge
+                coveredEndNodes = remainingCoveredEndNodes;
             }
         }
+        return SafetyResult.unsafe(this.traces.stream().map(Tuple2::get1).toList().get(0), ARG.create((state1, state2) -> false)); // TODO this is only a placeholder
+    }
 
-        return SafetyResult.unsafe(this.traces.get(0), ARG.create((state1, state2) -> false)); // TODO: this is only a placeholder
+    private List<ArgNode<S, A>> computeCoveredEndNodes(List<ArgNode<S, A>> filteredEndNodes) {
+        List<ArgNode<S, A>> coveredEndNodes = new ArrayList<>();
+        for (ArgNode<S, A> node : filteredEndNodes) {
+            if(node.isCovered()) {
+                // and covered-by edge is a cross-edge:
+                ArgNode<S, A> coveringNode = node.getCoveringNode().get();
+                Optional<ArgNode<S, A>> parentNode = node.getParent();
+                boolean crossEdge = true;
+                while(parentNode.isPresent()) {
+                    if(parentNode.get().equals(coveringNode)) {
+                        // not a cross edge
+                        crossEdge = false;
+                        break;
+                    }
+                    parentNode = parentNode.get().getParent();
+                }
+
+                if(crossEdge) {
+                    coveredEndNodes.add(node);
+                }
+            }
+        }
+        return coveredEndNodes;
     }
 
     private void removeBackwardsCoveredBy(ArgNode<S, A> node, List<ArgNode<S,A>> badNodes) {
