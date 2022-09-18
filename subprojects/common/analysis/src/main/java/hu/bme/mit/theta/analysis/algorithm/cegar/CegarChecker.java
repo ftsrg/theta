@@ -85,9 +85,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
 			if (abstractorResult.isUnsafe()) {
-//				logger.write(Level.MAINSTEP, "Printing ARG..." + System.lineSeparator());
-//				Graph g = ArgVisualizer.getDefault().visualize(arg);
-//				logger.write(Level.MAINSTEP, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
 
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
@@ -115,10 +112,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		stopwatch.stop();
 
-//		logger.write(Level.MAINSTEP, "ARG size: %d%n", arg.size());
-//		if(abstractorResult.isSafe()) {
-//			int a = 1;
-//		}
+		logger.write(Level.MAINSTEP, "ARG size: %d%n", arg.size());
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
 				refinerTime, iteration);

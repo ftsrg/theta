@@ -51,15 +51,15 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	}
 
 	@Override
-	protected Collection<XcfaAction> getPersistentSetFirstActions(Collection<XcfaAction> allEnabledActions) {
+	protected Collection<Collection<XcfaAction>> getPersistentSetFirstActions(Collection<XcfaAction> allEnabledActions) {
 		var enabledActionsByProcess = allEnabledActions.stream().collect(Collectors.groupingBy(XcfaAction::getProcess));
 		List<Integer> enabledProcesses = new ArrayList<>(enabledActionsByProcess.keySet());
 		Collections.shuffle(enabledProcesses, random);
-		Collection<XcfaAction> firstActions = new HashSet<>();
+		Collection<Collection<XcfaAction>> firstActions = new HashSet<>();
 
 		for (Integer enabledProcess : enabledProcesses) {
 			var actionsByProcess = enabledActionsByProcess.get(enabledProcess);
-			firstActions.add(actionsByProcess.get(random.nextInt(actionsByProcess.size())));
+			firstActions.add(actionsByProcess);
 		}
 		return firstActions;
 	}

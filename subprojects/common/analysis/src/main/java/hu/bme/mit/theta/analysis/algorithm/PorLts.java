@@ -66,9 +66,9 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 
 		// Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
 		Collection<A> minimalPersistentSet = new HashSet<>();
-		Collection<A> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
-		for (A firstAction : persistentSetFirstActions) {
-			Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstAction);
+		Collection<Collection<A>> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
+		for (Collection<A> firstActions : persistentSetFirstActions) {
+			Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstActions);
 			if (minimalPersistentSet.size() == 0 || persistentSet.size() < minimalPersistentSet.size()) {
 				minimalPersistentSet = persistentSet;
 			}
@@ -81,18 +81,17 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * Calculates a persistent set of enabled actions starting from a particular action.
 	 *
 	 * @param enabledActions the enabled actions in the present state
-	 * @param firstAction    the action who will be added to the persistent set as the first action
+	 * @param firstActions   the actions that will be added to the persistent set as the first actions
 	 * @return a persistent set of enabled actions
 	 */
-	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, A firstAction) {
-		if (isBackwardAction(firstAction)) {
+	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, Collection<A> firstActions) {
+		if (firstActions.stream().anyMatch(this::isBackwardAction)) {
 			return new HashSet<>(enabledActions);
 		}
 
-		Set<A> persistentSet = new HashSet<>();
+		Set<A> persistentSet = new HashSet<>(firstActions);
 		Set<A> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
-		persistentSet.add(firstAction);
-		otherActions.remove(firstAction);
+		firstActions.forEach(otherActions::remove);
 
 		boolean addedNewAction = true;
 		while (addedNewAction) {
@@ -132,8 +131,8 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param allEnabledActions all the enabled actions in the present state
 	 * @return the actions from where persistent sets will be calculated
 	 */
-	protected Collection<A> getPersistentSetFirstActions(Collection<A> allEnabledActions) {
-		return allEnabledActions;
+	protected Collection<Collection<A>> getPersistentSetFirstActions(Collection<A> allEnabledActions) {
+		return List.of(allEnabledActions);
 	}
 
 	/**
