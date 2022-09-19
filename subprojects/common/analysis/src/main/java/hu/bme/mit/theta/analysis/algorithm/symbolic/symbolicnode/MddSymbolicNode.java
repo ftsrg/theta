@@ -16,7 +16,7 @@ import java.util.Objects;
  * Represents a decision that is encoded in a symbolic representation.
  * Contains a cache that grows as the traversers enumerate the explicit representation of the subtree.
  */
-public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymbolicNode {
+public class MddSymbolicNode implements IMddSymbolicNode {
 
     private final SymbolicRepresentation symbolicRepresentation;
     private final ExplicitRepresentation explicitRepresentation;
@@ -26,7 +26,7 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
     private final int hashCode;
     private int references = 0;
 
-    public MddSymbolicNodeImpl(SymbolicRepresentation symbolicRepresentation, DdLevel<MddNode> level) {
+    public MddSymbolicNode(SymbolicRepresentation symbolicRepresentation, DdLevel<MddNode> level) {
         this.symbolicRepresentation = symbolicRepresentation;
         this.level = level;
         this.hashCode = symbolicRepresentation.hashCode();
@@ -34,20 +34,20 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
         this.explicitRepresentation = new ExplicitRepresentation();
     }
 
-    public MddSymbolicNodeImpl(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation, DdLevel<MddNode> level) {
         this(new SymbolicRepresentation(symbolicRepresentation), level);
     }
 
-    public MddSymbolicNodeImpl(SymbolicRepresentation symbolicRepresentation){
+    public MddSymbolicNode(SymbolicRepresentation symbolicRepresentation){
         this(symbolicRepresentation, symbolicRepresentation.value.second != null ? symbolicRepresentation.value.second.getLevel() : null);
     }
 
-    public MddSymbolicNodeImpl(Pair<Object, MddVariable> symbolicRepresentation) {
+    public MddSymbolicNode(Pair<Object, MddVariable> symbolicRepresentation) {
         this(new SymbolicRepresentation(symbolicRepresentation), symbolicRepresentation.second != null ? symbolicRepresentation.second.getLevel() : null);
     }
 
     /**
-     * This is a wrapper around the symbolic representation that ensures comparability of templates and nodes.
+     * This is a wrapped around the symbolic representation that ensures comparability of templates and nodes.
      */
     public static class SymbolicRepresentation {
         private final Pair<Object, MddVariable> value;
@@ -66,8 +66,8 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
             if (that instanceof SymbolicRepresentation) {
                 return Objects.equals(value, ((SymbolicRepresentation) that).value);
             }
-            if (that instanceof MddSymbolicNodeImpl) {
-                return Objects.equals(value, ((MddSymbolicNodeImpl) that).symbolicRepresentation.value);
+            if (that instanceof MddSymbolicNode) {
+                return Objects.equals(value, ((MddSymbolicNode) that).symbolicRepresentation.value);
             }
             return false;
         }
@@ -83,9 +83,9 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
      * This class handles the cache.
      */
     public static class ExplicitRepresentation {
-        private final HashIntObjMap<MddNode> cache;
+        private final HashIntObjMap<MddSymbolicNode> cache;
         private final GrowingIntArray edgeOrdering;
-        private MddSymbolicNodeImpl defaultValue;
+        private MddSymbolicNode defaultValue;
         private boolean complete;
 
         public ExplicitRepresentation() {
@@ -95,14 +95,14 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
             this.complete = false;
         }
 
-        public void cacheNode(int key, MddNode node){
+        public void cacheNode(int key, MddSymbolicNode node){
             Preconditions.checkState(!complete);
             Preconditions.checkState(defaultValue == null);
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
         }
 
-        public void cacheDefault(MddSymbolicNodeImpl defaultValue){
+        public void cacheDefault(MddSymbolicNode defaultValue){
             Preconditions.checkState(!complete);
             this.defaultValue = defaultValue;
         }
@@ -111,7 +111,7 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
             this.complete = true;
         }
 
-        public IntObjMapView<MddNode> getCacheView(){
+        public IntObjMapView<MddSymbolicNode> getCacheView(){
             return IntObjMapView.of(cache, defaultValue);
         }
 
@@ -206,7 +206,7 @@ public class MddSymbolicNodeImpl implements hu.bme.mit.delta.java.mdd.MddSymboli
         return explicitRepresentation;
     }
 
-    public IntObjMapView<MddNode> getCacheView() {
+    public IntObjMapView<MddSymbolicNode> getCacheView() {
         return explicitRepresentation.getCacheView();
     }
 

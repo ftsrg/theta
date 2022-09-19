@@ -24,18 +24,18 @@ public class MddSymbolicNodeTraversalConstraint implements TraversalConstraint{
     private final ObjIntMap<MddVariable> upperBounds;
     private final ObjSet<MddVariable> hasDefaultValue;
 
-    public MddSymbolicNodeTraversalConstraint(MddSymbolicNodeImpl rootNode){
+    public MddSymbolicNodeTraversalConstraint(MddSymbolicNode rootNode){
         Preconditions.checkNotNull(rootNode);
         this.lowerBounds = HashObjIntMaps.newUpdatableMap();
         this.upperBounds = HashObjIntMaps.newUpdatableMap();
         this.hasDefaultValue = HashObjSets.newUpdatableSet();
 
-        final Set<MddSymbolicNodeImpl> traversed = Containers.createSet();
+        final Set<MddSymbolicNode> traversed = Containers.createSet();
         traverse(rootNode, traversed);
     }
 
-    private void traverse(final MddSymbolicNodeImpl node,
-                          final Set<MddSymbolicNodeImpl> traversed) {
+    private void traverse(final MddSymbolicNode node,
+                          final Set<MddSymbolicNode> traversed) {
         if (traversed.contains(node) || node.isTerminal()) {
             return;
         } else {
@@ -46,7 +46,7 @@ public class MddSymbolicNodeTraversalConstraint implements TraversalConstraint{
         final MddVariable variable = node.getSymbolicRepresentation().second;
 
         if(node.getCacheView().defaultValue() != null){
-            final MddSymbolicNodeImpl defaultValue = (MddSymbolicNodeImpl) node.getCacheView().defaultValue();
+            final MddSymbolicNode defaultValue = node.getCacheView().defaultValue();
             traverse(defaultValue, traversed);
             hasDefaultValue.add(variable);
         } else {
@@ -58,7 +58,7 @@ public class MddSymbolicNodeTraversalConstraint implements TraversalConstraint{
 
             for(var cur = node.getCacheView().cursor(); cur.moveNext();){
                 if(cur.value() != null){
-                    traverse((MddSymbolicNodeImpl) cur.value(), traversed);
+                    traverse(cur.value(), traversed);
                 }
             }
         }
