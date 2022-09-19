@@ -103,8 +103,8 @@ public class XstsCli {
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
-	@Parameter(names = "--stop-if-stuck")
-	boolean stopIfStuck = false;
+	@Parameter(names = "--no-stuck-check")
+	boolean noStuckCheck = false;
 
 	private Logger logger;
 
@@ -204,7 +204,7 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		// set up stopping analysis if it is stuck on same ARGs and precisions
-		if (!stopIfStuck) {
+		if (noStuckCheck) {
 			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
 		} else {
 			ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
