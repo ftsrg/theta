@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.utils;
 
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeImpl;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -27,12 +27,12 @@ public class MddSymbolicNodeVisualizer {
     private static final Color FILL_COLOR = Color.WHITE;
     private static final Color LINE_COLOR = Color.BLACK;
 
-    private final Function<MddSymbolicNodeImpl, String> nodeToString;
+    private final Function<MddSymbolicNode, String> nodeToString;
 
-    private static final Map<MddSymbolicNodeImpl, Long> registry = new IdentityHashMap<>();
+    private static final Map<MddSymbolicNode, Long> registry = new IdentityHashMap<>();
     private static long nextId = 0;
 
-    public static long idFor(MddSymbolicNodeImpl n) {
+    public static long idFor(MddSymbolicNode n) {
         Long l = registry.get(n);
         if (l == null)
             registry.put(n, l = nextId++);
@@ -47,12 +47,12 @@ public class MddSymbolicNodeVisualizer {
         static final MddSymbolicNodeVisualizer INSTANCE = new MddSymbolicNodeVisualizer(n -> "");
     }
 
-    public MddSymbolicNodeVisualizer(final Function<MddSymbolicNodeImpl, String> nodeToString) {
+    public MddSymbolicNodeVisualizer(final Function<MddSymbolicNode, String> nodeToString) {
         this.nodeToString = nodeToString;
     }
 
     public static MddSymbolicNodeVisualizer create(
-            final Function<MddSymbolicNodeImpl, String> nodeToString) {
+            final Function<MddSymbolicNode, String> nodeToString) {
         return new MddSymbolicNodeVisualizer(nodeToString);
     }
 
@@ -64,18 +64,18 @@ public class MddSymbolicNodeVisualizer {
         return LazyHolderStructureOnly.INSTANCE;
     }
 
-    public Graph visualize(final MddSymbolicNodeImpl rootNode) {
+    public Graph visualize(final MddSymbolicNode rootNode) {
         final Graph graph = new Graph(SYMBOLIC_NODE_ID, SYMBOLIC_NODE_LABEL);
 
-        final Set<MddSymbolicNodeImpl> traversed = Containers.createSet();
+        final Set<MddSymbolicNode> traversed = Containers.createSet();
 
         traverse(graph, rootNode, traversed);
 
         return graph;
     }
 
-    private void traverse(final Graph graph, final MddSymbolicNodeImpl node,
-                          final Set<MddSymbolicNodeImpl> traversed) {
+    private void traverse(final Graph graph, final MddSymbolicNode node,
+                          final Set<MddSymbolicNode> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -104,7 +104,7 @@ public class MddSymbolicNodeVisualizer {
         }
 
         if(node.getCacheView().defaultValue() != null){
-            final MddSymbolicNodeImpl defaultValue = node.getCacheView().defaultValue();
+            final MddSymbolicNode defaultValue = node.getCacheView().defaultValue();
             traverse(graph, defaultValue, traversed);
             final String sourceId = NODE_ID_PREFIX + idFor(node);
             final String targetId = NODE_ID_PREFIX + idFor(defaultValue);

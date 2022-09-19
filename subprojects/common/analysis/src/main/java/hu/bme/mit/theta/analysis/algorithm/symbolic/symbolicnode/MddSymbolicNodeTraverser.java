@@ -9,20 +9,20 @@ public interface MddSymbolicNodeTraverser {
      * Gets the current node.
      * @return the current node
      */
-    MddSymbolicNodeImpl getCurrentNode();
+    MddSymbolicNode getCurrentNode();
 
     /**
      * Return to the node where the last {@link #moveDown(int)}} was issued. Can't move beyond the starting node.
      * @return the new node
      */
-    MddSymbolicNodeImpl moveUp();
+    MddSymbolicNode moveUp();
 
     /**
      * Move down along an edge.
      * @param assignment the key of the edge
      * @return the new node
      */
-    MddSymbolicNodeImpl moveDown(int assignment);
+    MddSymbolicNode moveDown(int assignment);
 
     /**
      * Query the next edge that wasn't cached yet. Doesn't guarantee an ordering.
@@ -42,7 +42,7 @@ public interface MddSymbolicNodeTraverser {
      * @param assignment the key of the edge
      * @return the target of the edge if exists
      */
-    MddSymbolicNodeImpl peakDown(int assignment);
+    MddSymbolicNode peakDown(int assignment);
 
     /**
      * Represents the result of querying an edge

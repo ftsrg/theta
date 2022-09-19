@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeImpl;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.TraversalConstraint;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -22,11 +22,11 @@ public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
 
     final ExprNodeTraverser wrapped;
 
-    public ConstrainedExprNodeTraverser(MddSymbolicNodeImpl rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint) {
+    public ConstrainedExprNodeTraverser(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint) {
         this.wrapped = new ExprNodeTraverser(rootNode, () -> prepareSolver(rootNode, solverSupplier, constraint));
     }
 
-    private Solver prepareSolver(MddSymbolicNodeImpl rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint){
+    private Solver prepareSolver(MddSymbolicNode rootNode, Supplier<Solver> solverSupplier, TraversalConstraint constraint){
         final Solver solver = solverSupplier.get();
         solver.push();
 
@@ -45,17 +45,17 @@ public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     @Override
-    public MddSymbolicNodeImpl getCurrentNode() {
+    public MddSymbolicNode getCurrentNode() {
         return wrapped.getCurrentNode();
     }
 
     @Override
-    public MddSymbolicNodeImpl moveUp() {
+    public MddSymbolicNode moveUp() {
         return wrapped.moveUp();
     }
 
     @Override
-    public MddSymbolicNodeImpl moveDown(int assignment) {
+    public MddSymbolicNode moveDown(int assignment) {
         return wrapped.moveDown(assignment);
     }
 
@@ -70,7 +70,7 @@ public class ConstrainedExprNodeTraverser implements MddSymbolicNodeTraverser {
     }
 
     @Override
-    public MddSymbolicNodeImpl peakDown(int assignment) {
+    public MddSymbolicNode peakDown(int assignment) {
         return wrapped.peakDown(assignment);
     }
 }

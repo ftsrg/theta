@@ -49,8 +49,8 @@ public class ExprNodeTest3 {
         Expr<BoolType> state = And(Eq(declX.getRef(), Int(2)), Eq(declY.getRef(), Int(0)));
         Expr<BoolType> action = And(Eq(declX_prime.getRef(), Add(declX.getRef(), Int(1))),Eq(declY_prime.getRef(), declY.getRef()));
 
-        MddSymbolicNodeImpl stateRoot = new MddSymbolicNodeImpl(new Pair<>(state, x));
-        MddSymbolicNodeImpl actionRoot = new MddSymbolicNodeImpl(new Pair<>(action, x));
+        MddSymbolicNode stateRoot = new MddSymbolicNode(new Pair<>(state, x));
+        MddSymbolicNode actionRoot = new MddSymbolicNode(new Pair<>(action, x));
 
         final Set<Valuation> valuations = ValuationCollector.collect(stateRoot, ExprVariable.getNodeTraverser(stateRoot, Z3SolverFactory.getInstance()::createSolver));
         System.out.println(valuations);
@@ -68,7 +68,7 @@ public class ExprNodeTest3 {
 
     }
 
-    private static String nodeToString(MddSymbolicNodeImpl node){
+    private static String nodeToString(MddSymbolicNode node){
         final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
         return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
     }
