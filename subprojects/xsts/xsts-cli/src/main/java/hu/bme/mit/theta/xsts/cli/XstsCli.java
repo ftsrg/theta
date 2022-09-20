@@ -143,6 +143,9 @@ public class XstsCli {
 	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
 	boolean tracegen = false;
 
+	@Parameter(names = "--get-full-traces", description = "Generates more, but longer and maximal traces")
+	boolean getFullTraces = false;
+
 	private Logger logger;
 
 	public XstsCli(final String[] args) {
@@ -181,7 +184,7 @@ public class XstsCli {
 			final XSTS xsts = loadModel();
 
 			if(tracegen) {
-				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).build(xsts);
+				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).setGetFullTraces(getFullTraces).build(xsts);
 				tracegenConfig.check();
 				List<? extends Trace<? extends State, ? extends Action>> traces = tracegenConfig.getTraces();
 				final File modelFile = new File(model);
