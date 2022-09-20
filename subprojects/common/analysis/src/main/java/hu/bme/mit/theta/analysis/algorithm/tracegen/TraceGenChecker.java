@@ -17,17 +17,18 @@ import java.util.stream.Stream;
 
 public class TraceGenChecker <S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
     private final Logger logger;
+    private boolean getFullTraces = false;
     private final Abstractor<S, A, P> abstractor;
 
     private TraceGenChecker(final Logger logger,
-                            final Abstractor<S, A, P> abstractor) {
+                            final Abstractor<S, A, P> abstractor, boolean getFullTraces) {
         this.logger = logger;
         this.abstractor = abstractor;
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> TraceGenChecker<S,A,P> create(final Logger logger,
-                                                                                                     final Abstractor<S,A,P> abstractor) {
-        return new TraceGenChecker<S,A,P>(logger, abstractor);
+                                                                                                     final Abstractor<S,A,P> abstractor, boolean getFullTraces) {
+        return new TraceGenChecker<S,A,P>(logger, abstractor, getFullTraces);
     }
 
     private List<Tuple2<Trace<S,A>, ArgNode<S,A>>> traces = new ArrayList<>();
@@ -75,7 +76,6 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         traces.addAll(argTraces.stream().map(argTrace -> Tuple2.of(argTrace.toTrace(), argTrace.node(argTrace.nodes().size()-1))).toList());
 
         // filter 2, optional, to get full traces even where there is coverage
-        boolean getFullTraces = true; // TODO make this a configuration option
         if(getFullTraces) {
             List<ArgNode<S, A>> remainingCoveredEndNodes;
             List<ArgNode<S, A>> coveredEndNodes = computeCoveredEndNodes(filteredEndNodes);

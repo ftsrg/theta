@@ -26,6 +26,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 final public class XstsTracegenBuilder {
     private final SolverFactory solverFactory;
     private Logger logger = NullLogger.getInstance();
+    private boolean getFullTraces = false;
 
     public XstsTracegenBuilder(final SolverFactory solverFactory) {
         this.solverFactory = solverFactory;
@@ -33,6 +34,11 @@ final public class XstsTracegenBuilder {
 
     public XstsTracegenBuilder logger(final Logger logger) {
         this.logger = logger;
+        return this;
+    }
+
+    public XstsTracegenBuilder setGetFullTraces(boolean getFullTraces) {
+        this.getFullTraces = getFullTraces;
         return this;
     }
 
@@ -51,7 +57,7 @@ final public class XstsTracegenBuilder {
                 .stopCriterion(StopCriterions.fullExploration())
                 .logger(logger).build();
 
-        TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor);
+        TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
         return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
     }
 }
