@@ -59,7 +59,3 @@ process Station(const id_t id) {
 Bus1=Bus();
 
 system Bus, Station;
-
-prop{
-    E<> Bus_k > 0
-}

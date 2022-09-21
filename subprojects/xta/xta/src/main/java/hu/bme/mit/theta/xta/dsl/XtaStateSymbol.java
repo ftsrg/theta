@@ -87,8 +87,14 @@ final class XtaStateSymbol implements Symbol {
 	}
 
 
-	public void setName(String _name){
-		name = _name;
+	public XtaStateSymbol copyAndChangeName(String _name){
+		XtaStateSymbol res = new XtaStateSymbol(this);
+		res.name= _name;
+		return res;
+	}
+	private XtaStateSymbol(XtaStateSymbol _state){
+		kind = _state.kind;
+		expression = _state.expression;
 	}
 
 }

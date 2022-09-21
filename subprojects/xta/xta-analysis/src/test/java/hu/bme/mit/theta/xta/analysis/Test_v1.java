@@ -54,7 +54,7 @@ public class Test_v1 {
         solverFactory = SolverManager.resolveSolverFactory("Z3");
 
         XtaSystem system;
-        try( InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/mytest.xta"), new FileInputStream("src/test/resources/property/mytest.prop"))){
+        try( InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/AndOr.xta"), new FileInputStream("src/test/resources/property/AndOr.prop"))){
             system = XtaDslManager.createSystem(inputStream);
         }
 

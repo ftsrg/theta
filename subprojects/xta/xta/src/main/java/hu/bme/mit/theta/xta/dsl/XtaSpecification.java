@@ -128,6 +128,7 @@ final class XtaSpecification implements Scope {
 			if(context.fProperty.q.children.get(0).toString().equals("A[]")) {
 				prop = BoolExprs.Not(prop);
 			}
+			//if(context.fProperty.neg != null) prop = BoolExprs.Not(prop);
 
 
 			system.setProp(prop);

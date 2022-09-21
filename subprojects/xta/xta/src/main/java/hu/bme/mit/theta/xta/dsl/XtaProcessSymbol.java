@@ -147,12 +147,12 @@ final class XtaProcessSymbol implements Symbol, Scope {
                 } else {
                     throw new AssertionError();
                 }
+				String backupname = variable.getName();
 				variable.setName(process.getName() + "_" + variable.getName());
 				if(!system_symbolTable.get(variable.getName()).isPresent()){
 					system_symbolTable.add(variable);
-
 				}
-
+				variable.setName(backupname);
             }
 
         }
@@ -174,11 +174,11 @@ final class XtaProcessSymbol implements Symbol, Scope {
 				process.setInitLoc(loc);
 				initloc = true;
 			}
+			XtaStateSymbol temp = state.copyAndChangeName(loc.getName());
 			env.define(state, loc);
-			if(!system_symbolTable.get(state.getName()).isPresent()){
-				state.setName(process.getName() + "_" + state.getName());
-				system_symbolTable.add(state);
-				env.define_in_parent(state, loc);
+			if(!system_symbolTable.get(temp.getName()).isPresent()){
+				env.define_in_parent(temp, loc);
+				system_symbolTable.add(temp);
 				String varname = "__" +  loc.getName();
 				XtaVariableSymbol variableSymbol = XtaVariableSymbol.forcedCreate(varname);
 				system_symbolTable.add(variableSymbol);
