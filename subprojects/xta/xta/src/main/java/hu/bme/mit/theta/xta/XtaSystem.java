@@ -19,10 +19,13 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
+import java.lang.management.LockInfo;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -38,6 +41,9 @@ public final class XtaSystem {
 	private final List<XtaProcess> unmodProcesses;
 	private final Collection<VarDecl<?>> unmodDataVars;
 	private final Collection<VarDecl<RatType>> unmodClockVars;
+
+
+	private Expr<BoolType> prop;
 
 	private XtaSystem() {
 		processes = new ArrayList<>();
@@ -95,5 +101,37 @@ public final class XtaSystem {
 		final XtaProcess process = XtaProcess.create(this, name);
 		processes.add(process);
 		return process;
+	}
+
+	public Expr<BoolType> getProp(){
+		return prop;
+	}
+
+
+
+	public void setProp(final Expr<BoolType> _prop){
+
+		prop = _prop;
+		//ErrorProcess
+		XtaProcess process = createProcess("ErrorProc");
+		final Collection<Expr<BoolType>> invars = Collections.emptySet();
+		Loc initloc = process.createLoc("InitLoc", XtaProcess.LocKind.NORMAL, invars);
+		process.setInitLoc(initloc);
+		Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+		final Collection<Expr<BoolType>> guards = Set.of(prop);
+		process.createEdge(initloc, errorLoc, guards, Optional.empty(), Collections.emptyList());
+
+		//Edges to ErrorLocations from COMMITTED locations
+
+		for (XtaProcess proc: processes) {
+			if (!proc.getName().equals("ErrorProc")) {
+				Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
+				for (Loc loc:proc.getLocs() ) {
+					if(loc.getKind().equals(XtaProcess.LocKind.COMMITTED))
+						proc.createEdge(loc, own_errorLoc, guards, Optional.empty(),Collections.emptyList());
+				}
+			}
+
+		}
 	}
 }

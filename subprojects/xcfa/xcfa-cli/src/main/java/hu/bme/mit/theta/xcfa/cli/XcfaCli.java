@@ -27,19 +27,17 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.bmc.IterativeBmcChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
+import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.cfa.CFA;
@@ -48,6 +46,7 @@ import hu.bme.mit.theta.cfa.cli.CfaCli;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -72,15 +71,11 @@ import hu.bme.mit.theta.xcfa.analysis.portfolio.common.CpuTimeKeeper;
 import hu.bme.mit.theta.xcfa.analysis.portfolio.common.PortfolioTimeoutException;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputHandler;
 import hu.bme.mit.theta.xcfa.analysis.utils.OutputOptions;
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -98,7 +93,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -240,6 +234,12 @@ public class XcfaCli {
 	@Parameter(names = "--multithreaded-algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm multithreadedAlgorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
+	@Parameter(names = "--lbe", description = "Large-block encoding level")
+	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
+
+	@Parameter(names = "--inline", description = "Turns function inlining on and off")
+	FunctionInlining.InlineFunctions inlining = FunctionInlining.InlineFunctions.OFF;
+
 	//////////// SMTLib options ////////////
 
 	@Parameter(names = "--smt-home", description = "The path of the solver registry")
@@ -256,9 +256,6 @@ public class XcfaCli {
 
 	@Parameter(names = "--validate-abstraction-solver", description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
 	boolean validateAbstractionSolver = false;
-
-	@Parameter(names = "--lbe", description = "Large-block encoding level")
-	SimpleLbePass.LBELevel lbeLevel = SimpleLbePass.LBELevel.NO_LBE;
 
 	//////////// CONFIGURATION OPTIONS END ////////////
 
@@ -289,7 +286,6 @@ public class XcfaCli {
 		File inputOrModel = input == null ? model : input;
 
 		logger = new ConsoleLogger(logLevel);
-		;
 
 		/// version
 		if (versionInfo) {
@@ -298,6 +294,7 @@ public class XcfaCli {
 		}
 
 		SimpleLbePass.level = lbeLevel;
+		FunctionInlining.inlining = inlining;
 
 		// TODO later we might want to merge these two flags
 		if (witnessOnly) {
@@ -478,7 +475,7 @@ public class XcfaCli {
 					}
 					break;
 				case COMPLEX:
-					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home);
+					ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel, this.input.getName(), home, multithreadedAlgorithm);
 					try {
 						complexPortfolio.executeAnalysis(xcfa, initTime);
 					} catch (PortfolioTimeoutException pte) {
@@ -602,7 +599,7 @@ public class XcfaCli {
 				final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
 				final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(), maxEnum);
-				final LTS lts = multithreadedAlgorithm.getLts();
+				final LTS lts = multithreadedAlgorithm.getLts(xcfa);
 				final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
 						multithreadedAlgorithm.getInitFunc(xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc()).collect(Collectors.toList()), domainAnalysis.getInitFunc());
 				final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =

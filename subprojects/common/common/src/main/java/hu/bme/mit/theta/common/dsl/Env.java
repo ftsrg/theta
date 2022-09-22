@@ -51,6 +51,7 @@ public final class Env {
 	public void define(final Symbol symbol, final Object value) {
 		checkNotNull(symbol);
 		checkNotNull(value);
+
 		currentFrame.define(symbol, value);
 	}
 
@@ -74,6 +75,12 @@ public final class Env {
 		return value;
 	}
 
+	public void define_in_parent(final Symbol symbol, final Object value){
+		checkNotNull(symbol);
+		checkNotNull(value);
+		currentFrame.parent.define(symbol, value);
+	}
+
 	private static final class Frame {
 		private final Frame parent;
 		private final Map<Symbol, Object> symbolToValue;
@@ -84,8 +91,9 @@ public final class Env {
 		}
 
 		public void define(final Symbol symbol, final Object value) {
-			checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
-			symbolToValue.put(symbol, value);
+			//checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
+			if(eval(symbol) == null)
+				symbolToValue.put(symbol, value);
 		}
 
 		public Object eval(final Symbol symbol) {

@@ -51,11 +51,20 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getNonModifiedVars;
 
 public class FunctionInlining extends ProcessPass {
+
+	public static InlineFunctions inlining = InlineFunctions.OFF;
+
+	public enum InlineFunctions {
+		OFF,
+		ON
+	}
+
 	private final List<String> nopFuncs = List.of("reach_error", "abort");
 	private final Set<Tuple2<XcfaLabel, XcfaEdge>> alreadyHandled = new LinkedHashSet<>();
 
 	@Override
 	public XcfaProcess.Builder run(XcfaProcess.Builder builder) {
+		if (inlining != InlineFunctions.ON) return builder;
 		ProcedurePass.postInlining = true;
 		XcfaProcess.Builder newBuilder = XcfaProcess.builder();
 		newBuilder.setName(builder.getName());

@@ -50,13 +50,13 @@ public class ComplexPortfolio extends AbstractPortfolio {
 	private XcfaConfigBuilder.Search search = null;
 	private XcfaConfigBuilder.Algorithm algorithm = null;
 
-	public ComplexPortfolio(Logger.Level logLevel, String modelName, String smtlibhome) throws Exception {
+	public ComplexPortfolio(Logger.Level logLevel, String modelName, String smtlibhome, XcfaConfigBuilder.Algorithm algorithm) throws Exception {
 		super(logLevel, modelName, smtlibhome); // registers solver factories
 		if (ArchitectureConfig.multiThreading) {
-			algorithm = XcfaConfigBuilder.Algorithm.INTERLEAVINGS;
+			this.algorithm = algorithm;
 			search = XcfaConfigBuilder.Search.BFS;
 		} else {
-			algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
+			this.algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 			search = XcfaConfigBuilder.Search.ERR;
 		}
 	}

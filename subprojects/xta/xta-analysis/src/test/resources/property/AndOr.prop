@@ -1,0 +1,3 @@
+prop{
+    A[] not ( andGate_consistent and orGate_consistent and a==false and b==true and t==true and x==true)
+}

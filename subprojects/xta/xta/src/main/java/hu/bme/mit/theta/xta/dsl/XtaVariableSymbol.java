@@ -46,12 +46,15 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 final class XtaVariableSymbol implements Symbol {
 
-	private final String name;
+	//private final String name;
+	private String name;
 	private final boolean constant;
 	private final boolean broadcast;
+	private boolean global;
 
 	private final XtaType type;
 	private final XtaInitialiser initialiser;
+
 
 	public XtaVariableSymbol(final Scope scope, final TypeContext typeContext,
 							 final VariableIdContext variableIdcontext) {
@@ -63,6 +66,22 @@ final class XtaVariableSymbol implements Symbol {
 		type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
 		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
 				: null;
+	}
+	private XtaVariableSymbol(String _name){
+		name = _name;
+		constant = false;
+		broadcast = false;
+		type = null;
+		initialiser = null;
+	}
+	public static XtaVariableSymbol forcedCreate(String name){
+		return new XtaVariableSymbol(name);
+	}
+	public void setGlobal(){
+		global = true;
+	}
+	public boolean isGlobal(){
+		return global;
 	}
 
 	@Override
@@ -333,6 +352,9 @@ final class XtaVariableSymbol implements Symbol {
 		public Label getLabel() {
 			return label;
 		}
+	}
+	public void setName(String name){
+		this.name = name;
 	}
 
 }

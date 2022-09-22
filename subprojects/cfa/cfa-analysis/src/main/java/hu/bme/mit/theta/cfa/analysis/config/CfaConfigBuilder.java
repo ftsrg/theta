@@ -240,6 +240,7 @@ public class CfaConfigBuilder {
 
 	public CfaConfigBuilder precGranularity(final PrecGranularity precGranularity) {
 		this.precGranularity = precGranularity;
+
 		return this;
 	}
 

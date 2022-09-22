@@ -37,7 +37,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.UrgentContext;
 
 final class XtaStateSymbol implements Symbol {
 
-	private final String name;
+	private String name;
 	private final LocKind kind;
 	private final XtaExpression expression;
 
@@ -45,7 +45,7 @@ final class XtaStateSymbol implements Symbol {
 						  final CommitContext commit) {
 		checkNotNull(context);
 		name = context.fId.getText();
-		kind = isCommited(name, commit) ? LocKind.COMMITTED : isUrgent(name, urgent) ? LocKind.URGENT : isError(name) ? LocKind.ERROR : LocKind.NORMAL;
+		kind = isCommited(name, commit) ? LocKind.COMMITTED : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
 		expression = context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
 	}
 
@@ -66,10 +66,6 @@ final class XtaStateSymbol implements Symbol {
 		}
 	}
 
-	private static boolean isError(final String name) {
-		return name.equals("error");
-	}
-
 	@Override
 	public String getName() {
 		return name;
@@ -88,6 +84,17 @@ final class XtaStateSymbol implements Symbol {
 
 		final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);
 		return loc;
+	}
+
+
+	public XtaStateSymbol copyAndChangeName(String _name){
+		XtaStateSymbol res = new XtaStateSymbol(this);
+		res.name= _name;
+		return res;
+	}
+	private XtaStateSymbol(XtaStateSymbol _state){
+		kind = _state.kind;
+		expression = _state.expression;
 	}
 
 }

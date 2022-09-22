@@ -45,12 +45,12 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
-	private static final String MODEL_CSMA = "/csma-2.xta";
-	private static final String MODEL_FDDI = "/fddi-2.xta";
-	private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
-	private static final String MODEL_LYNCH = "/lynch-2-16.xta";
-	private static final String MODEL_ENGINE = "/engine-classic.xta";
-	private static final String MODEL_BROADCAST = "/broadcast.xta";
+	private static final String MODEL_CSMA = "/model/csma-2.xta";
+	private static final String MODEL_FDDI = "/model/fddi-2.xta";
+	private static final String MODEL_FISCHER = "/model/fischer-2-32-64.xta";
+	private static final String MODEL_LYNCH = "/model/lynch-2-16.xta";
+	private static final String MODEL_ENGINE = "/model/engine-classic.xta";
+	private static final String MODEL_BROADCAST = "/model/broadcast.xta";
 
 	private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI, MODEL_FISCHER,
 			MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
