@@ -83,10 +83,11 @@ public final class CombinedLazyCegarXtaCheckerTest {
 		}
 		return result;*/
 		return List.<Object[]>of(
-			new Object[]{"/model/AndOr.xta", "/property/AndOr.prop", null, null, true}/*,
-			//new Object[]{"/model/bangOlufsen.xta", "/property/bangOlufsen.prop", null, null, true},
+			new Object[]{"/model/AndOr.xta", "/property/AndOr.prop", null, null, true},
+			// Extremely long
+			// new Object[]{"/model/bangOlufsen.xta", "/property/bangOlufsen.prop", null, null, true},
 			new Object[]{"/model/fischer-2-32-64.xta", "/property/fischer-2-32-64.prop", null, null, true},
-			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, null, true}*/
+			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, null, true}
 		);
 	}
 
