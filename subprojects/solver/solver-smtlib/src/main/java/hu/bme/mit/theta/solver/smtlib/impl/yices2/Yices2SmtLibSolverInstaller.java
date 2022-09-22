@@ -27,6 +27,12 @@ public class Yices2SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         super(logger);
 
         versions = new ArrayList<>();
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("2.6.4"))
+            .addString(LINUX, X64, "x86_64-pc-linux-gnu")
+            .addString(MAC, X64, "x86_64-apple-darwin20.6.0")
+            .addString(WINDOWS, X64, "x86_64-pc-mingw32-static-gmp")
+            .build()
+        );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("2.6.2"))
             .addString(LINUX, X64, "x86_64-pc-linux-gnu-static-gmp")
             .addString(MAC, X64, "x86_64-apple-darwin18.7.0-static-gmp")
@@ -107,7 +113,7 @@ public class Yices2SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-            "2.6.2", "2.6.1", "2.6.0"
+            "2.6.4", "2.6.2", "2.6.1", "2.6.0"
         );
     }
 

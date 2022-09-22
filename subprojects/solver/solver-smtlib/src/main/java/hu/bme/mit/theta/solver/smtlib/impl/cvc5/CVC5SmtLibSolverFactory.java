@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.solver.smtlib.impl.cvc4;
+package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
@@ -23,17 +23,17 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-public class CVC4SmtLibSolverFactory extends GenericSmtLibSolverFactory {
-	private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {
-		super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.CVC4));
+public class CVC5SmtLibSolverFactory extends GenericSmtLibSolverFactory {
+	private CVC5SmtLibSolverFactory(Path solverPath, String[] args) {
+		super(solverPath, args);
 	}
 
-	public static CVC4SmtLibSolverFactory create(Path solverPath, String[] args) {
-		return new CVC4SmtLibSolverFactory(solverPath, args);
+	public static CVC5SmtLibSolverFactory create(Path solverPath, String[] args) {
+		return new CVC5SmtLibSolverFactory(solverPath, args);
 	}
 
 	@Override
 	public ItpSolver createItpSolver() {
-		throw new UnsupportedOperationException("CVC4 does not support interpolation");
+		throw new UnsupportedOperationException("CVC5 does not support interpolation");
 	}
 }

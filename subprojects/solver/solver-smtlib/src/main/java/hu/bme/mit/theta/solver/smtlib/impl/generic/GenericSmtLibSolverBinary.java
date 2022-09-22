@@ -25,10 +25,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -38,17 +35,17 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 	private final ProcessHandler processHandler;
 
 	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args) {
-		this(solverPath, args, false);
+		this(solverPath, args, EnumSet.noneOf(Solver.class));
 	}
 
-	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args, final boolean isCvc4) {
+	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args, final EnumSet<Solver> solverOverride) {
 		final var processCmd = new ArrayList<String>();
 		processCmd.add(solverPath.toAbsolutePath().toString());
 		processCmd.addAll(Arrays.asList(args));
 
 		final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 
-		processHandler = new ProcessHandler(isCvc4);
+		processHandler = new ProcessHandler(solverOverride);
 		solverProcessBuilder.setProcessListener(processHandler);
 
 		solverProcess = solverProcessBuilder.start();
@@ -77,15 +74,21 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 		solverProcess.destroy(true);
 	}
 
+	public enum Solver {
+		CVC4, PRINCESS
+	}
+
 	private static final class ProcessHandler extends NuAbstractProcessHandler {
 		private final Queue<String> inputQueue = new LinkedList<>();
 
 		private final Queue<String> outputQueue = new LinkedList<>();
 		private ReadProcessor readProcessor = null;
 		private final boolean isCvc4;
+		private final boolean isPrincess;
 
-		public ProcessHandler(final boolean isCvc4) {
-			this.isCvc4 = isCvc4;
+		public ProcessHandler(final EnumSet<Solver> solverOverride) {
+			this.isCvc4 = solverOverride.contains(Solver.CVC4);
+			this.isPrincess = solverOverride.contains(Solver.PRINCESS);
 		}
 
 		public synchronized void write(final String input) {
@@ -117,7 +120,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
 		@Override
 		public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
-			onInput(buffer);
+			if(!isPrincess) onInput(buffer);
 		}
 
 		private int isFp = 0;

@@ -40,6 +40,9 @@ public class SmtLibSolverFPTest {
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
 
+    private static final String SOLVER = "cvc5";
+    private static final String VERSION = "1.0.2";
+
     @Parameterized.Parameter(0)
     public Class<?> exprType;
 
@@ -56,7 +59,7 @@ public class SmtLibSolverFPTest {
 
             solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
             try {
-                solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+                solverManager.install(SOLVER, VERSION, VERSION, null, false);
                 solverInstalled = true;
             } catch (SmtLibSolverInstallerException e) {
             }
@@ -65,7 +68,7 @@ public class SmtLibSolverFPTest {
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
+        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
@@ -94,7 +97,7 @@ public class SmtLibSolverFPTest {
         );
 
         // Equality check
-        try(final Solver solver = solverManager.getSolverFactory("z3", "latest").createSolver()) {
+        try(final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
             solver.push();
 
             if (expected instanceof FpLitExpr && actual.getType() instanceof FpType) {

@@ -63,6 +63,8 @@ public final class SmtLibItpSolverTest {
 	private static boolean solverInstalled = false;
 	private static SmtLibSolverManager solverManager;
 	private static SolverFactory solverFactory;
+	private static final String SOLVER = "mathsat";
+	private static final String VERSION = "5.6.8";
 
 	@BeforeClass
 	public static void init() throws SmtLibSolverInstallerException, IOException {
@@ -71,18 +73,19 @@ public final class SmtLibItpSolverTest {
 
 			solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
 			try {
-				solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+				solverManager.install(SOLVER, VERSION, VERSION, null, false);
 				solverInstalled = true;
 			} catch (SmtLibSolverInstallerException e) {
+				e.printStackTrace();
 			}
 
-			solverFactory = solverManager.getSolverFactory("z3", "4.5.0");
+			solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
 		}
 	}
 
 	@AfterClass
 	public static void destroy() throws SmtLibSolverInstallerException {
-		if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
+		if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
 	}
 
 	ItpSolver solver;

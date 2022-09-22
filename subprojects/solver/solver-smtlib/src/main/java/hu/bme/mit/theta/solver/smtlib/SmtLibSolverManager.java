@@ -10,6 +10,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.cvc5.CVC5SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.yices2.Yices2SmtLibSolverInstaller;
@@ -54,6 +55,7 @@ public final class SmtLibSolverManager extends SolverManager {
     static {
         registerInstaller("z3", Z3SmtLibSolverInstaller.class);
         registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
+        registerInstaller("cvc5", CVC5SmtLibSolverInstaller.class);
         registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
         registerInstaller("yices2", Yices2SmtLibSolverInstaller.class);
         registerInstaller("boolector", BoolectorSmtLibSolverInstaller.class);
