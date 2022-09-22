@@ -47,6 +47,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -439,25 +441,23 @@ final class XtaExpression {
         @Override
         public Expr<?> visitTextAndExpression(final TextAndExpressionContext ctx) {
             if (ctx.fOps.size() == 1) {
-                return visitChildren(ctx);
+                return checkNotNull(visitChildren(ctx));
             } else {
                 final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
                         .map(op -> cast(op.accept(this), Bool()));
-                final List<Expr<BoolType>> ops = opStream.collect(toList());
-                final Expr<BoolType> opsHead = ops.get(0);
-                final List<Expr<BoolType>> opsTail =ops.subList(1, ops.size());
-                return createAndExpression(opsHead, opsTail);
+                final Collection<Expr<BoolType>> ops = opStream.collect(toList());
+                return And(ops);
             }
         }
 
-        private Expr<?> createAndExpression(Expr<BoolType> opsHead, List<Expr<BoolType>> opsTail) {
+        private Expr<BoolType> createAndExpression(Expr<BoolType> opsHead, List<Expr<BoolType>> opsTail) {
             if (opsTail.isEmpty()){
                 return opsHead;
             }else{
                 final Expr<BoolType> newOpsHead = opsTail.get(0);
                 final List<Expr<BoolType>> newOpsTail = opsTail.subList(1, opsTail.size());
 
-                return And(opsHead,createImplyExpression(newOpsHead, newOpsTail));
+                return And(opsHead,createAndExpression(newOpsHead, newOpsTail));
             }
         }
 
@@ -471,19 +471,19 @@ final class XtaExpression {
                 final List<Expr<BoolType>> ops = opStream.collect(toList());
                 final Expr<BoolType> opsHead = ops.get(0);
                 final List<Expr<BoolType>> opsTail =ops.subList(1, ops.size());
-                return createImplyExpression(opsHead, opsTail);
+                return createImplyExpression(opsHead, opsTail, BoolExprs::Imply);
             }
         }
 
 
-        private Expr<BoolType> createImplyExpression(Expr<BoolType> opsHead, List<Expr<BoolType>> opsTail) {
+        private Expr<BoolType> createImplyExpression(Expr<BoolType> opsHead, List<Expr<BoolType>> opsTail, BiFunction<Expr<BoolType>, Expr<BoolType>, Expr<BoolType>> f) {
             if (opsTail.isEmpty()){
                 return opsHead;
             }else{
                 final Expr<BoolType> newOpsHead = opsTail.get(0);
                 final List<Expr<BoolType>> newOpsTail = opsTail.subList(1, opsTail.size());
 
-                return Imply(opsHead,createImplyExpression(newOpsHead, newOpsTail));
+                return f.apply(opsHead,createImplyExpression(newOpsHead, newOpsTail, f));
             }
         }
 
