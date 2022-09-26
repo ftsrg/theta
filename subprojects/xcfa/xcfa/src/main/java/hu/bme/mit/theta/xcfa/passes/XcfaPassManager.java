@@ -56,7 +56,7 @@ public class XcfaPassManager {
 
 	static {
 		procedurePasses.addAll(List.of(
-				new EliminateSelfLoops(),
+/*				new EliminateSelfLoops(),
 				new PthreadCallsToThreadStmts(),
 				new VerifierFunctionsToLabels(),
 				new AddAtomicBeginEndsToFunctions(),
@@ -85,16 +85,16 @@ public class XcfaPassManager {
 //				new GlobalVarsToStoreLoad(),
 				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
-				new RemoveDeadEnds()
+				new RemoveDeadEnds()*/
 		));
 		processPasses.addAll(List.of(
-				new AnalyzeCallGraph(),
+/*				new AnalyzeCallGraph(),
 				new FunctionInlining(),
-				new AssignFunctionParam()
+				new AssignFunctionParam()*/
 		));
 		xcfaPasses.addAll((List.of(
-				new RemoveUnusedGlobals(),
-				new DemoteThreadLocalGlobals())));
+/*				new RemoveUnusedGlobals(),
+				new DemoteThreadLocalGlobals()*/)));
 	}
 
 	public static void addProcedurePass(ProcedurePass pass) {
