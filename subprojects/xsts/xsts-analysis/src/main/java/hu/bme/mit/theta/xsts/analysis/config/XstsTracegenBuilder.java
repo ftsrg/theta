@@ -11,12 +11,16 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec;
+import hu.bme.mit.theta.xsts.analysis.initprec.XstsCtrlInitPrec;
+import hu.bme.mit.theta.xsts.analysis.initprec.XstsPropInitPrec;
 
 import java.util.function.Predicate;
 
@@ -58,6 +62,7 @@ final public class XstsTracegenBuilder {
                 .logger(logger).build();
 
         TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
-        return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
+
+        return XstsTracegenConfig.create(tracegenChecker, new XstsCtrlInitPrec().createExpl(xsts));
     }
 }
