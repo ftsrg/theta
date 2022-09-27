@@ -72,20 +72,14 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
      * the full trace
      */
     private static <A extends Action, S extends State> AdvancedArgTrace<S, A> substituteTrace(AdvancedArgTrace<S, A> fullTrace, AdvancedArgTrace<S, A> differenceTrace) {
-        List<ArgNode<S, A>> fullNodes = fullTrace.nodes;
         List<ArgNode<S, A>> differenceNodes = differenceTrace.nodes;
 
-        List<ArgNode<S, A>> remainingNodes = new ArrayList<>();
-        remainingNodes.addAll(fullNodes);
+        List<ArgNode<S, A>> remainingNodes = new ArrayList<>(fullTrace.nodes);
         remainingNodes.removeIf(saArgNode -> !(saArgNode.equals(differenceNodes.get(differenceNodes.size()-1)))
                 && differenceNodes.contains(saArgNode));
 
-        List<ArgEdge<S, A>> fullEdges = fullTrace.edges;
-        List<ArgEdge<S, A>> differenceEdges = differenceTrace.edges;
-
-        List<ArgEdge<S, A>> remainingEdges = new ArrayList<>();
-        remainingEdges.addAll(fullEdges);
-        remainingEdges.removeIf(saArgEdge -> differenceEdges.contains(saArgEdge));
+        List<ArgEdge<S, A>> remainingEdges = new ArrayList<>(fullTrace.edges);
+        remainingEdges.removeIf(differenceTrace.edges::contains);
 
         return new AdvancedArgTrace<>(remainingNodes, remainingEdges);
     }
@@ -154,7 +148,4 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
         return result;
         // return Objects.hash(states, edges);
     }
-
-    ////
-
 }
