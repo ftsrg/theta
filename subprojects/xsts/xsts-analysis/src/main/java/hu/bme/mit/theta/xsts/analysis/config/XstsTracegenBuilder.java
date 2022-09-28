@@ -63,6 +63,6 @@ final public class XstsTracegenBuilder {
 
         TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
 
-        return XstsTracegenConfig.create(tracegenChecker, new XstsCtrlInitPrec().createExpl(xsts));
+        return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
     }
 }
