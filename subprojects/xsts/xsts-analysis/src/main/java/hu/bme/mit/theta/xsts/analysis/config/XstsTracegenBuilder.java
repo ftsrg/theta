@@ -10,20 +10,24 @@ import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec;
-import hu.bme.mit.theta.xsts.analysis.initprec.XstsCtrlInitPrec;
-import hu.bme.mit.theta.xsts.analysis.initprec.XstsPropInitPrec;
+import hu.bme.mit.theta.xsts.analysis.initprec.XstsVarListInitPrec;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
 import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -31,6 +35,7 @@ final public class XstsTracegenBuilder {
     private final SolverFactory solverFactory;
     private Logger logger = NullLogger.getInstance();
     private boolean getFullTraces = false;
+    private File varFile = null;
 
     public XstsTracegenBuilder(final SolverFactory solverFactory) {
         this.solverFactory = solverFactory;
@@ -44,6 +49,10 @@ final public class XstsTracegenBuilder {
     public XstsTracegenBuilder setGetFullTraces(boolean getFullTraces) {
         this.getFullTraces = getFullTraces;
         return this;
+    }
+
+    public void setVarFile(String filename) {
+        this.varFile = new File(filename);
     }
 
     public XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
@@ -63,6 +72,27 @@ final public class XstsTracegenBuilder {
 
         TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
 
-        return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
+        // TODO add vars to it from flag
+        if(varFile==null) {
+            return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
+        } else {
+            try(Scanner scanner = new Scanner(varFile)) {
+                Set<String> varNamesToAdd = new HashSet<>();
+                Set<VarDecl<?>> varsToAdd = new HashSet<>();
+                while(scanner.hasNext()) {
+                    varNamesToAdd.add(scanner.nextLine());
+                }
+                Collection<VarDecl<?>> vars = xsts.getVars();
+                for (VarDecl<?> var : vars) {
+                    if(varNamesToAdd.contains(var.getName())) {
+                        varsToAdd.add(var);
+                    }
+                }
+                checkState(varNamesToAdd.size()==varsToAdd.size());
+                return XstsTracegenConfig.create(tracegenChecker, new XstsVarListInitPrec(varsToAdd).createExpl(xsts));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
