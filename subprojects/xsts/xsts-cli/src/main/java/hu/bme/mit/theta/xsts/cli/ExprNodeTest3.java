@@ -52,12 +52,12 @@ public class ExprNodeTest3 {
         MddSymbolicNode stateRoot = new MddSymbolicNode(new Pair<>(state, x));
         MddSymbolicNode actionRoot = new MddSymbolicNode(new Pair<>(action, x));
 
-        final Set<Valuation> valuations = ValuationCollector.collect(stateRoot, ExprVariable.getNodeTraverser(stateRoot, Z3SolverFactory.getInstance()::createSolver));
-        System.out.println(valuations);
-
-        final TraversalConstraint constraint = new MddSymbolicNodeTraversalConstraint(stateRoot);
-        final Set<Valuation> nextStateValuations = ValuationCollector.collect(actionRoot, ExprVariable.getConstrainedNodeTraverser(actionRoot, Z3SolverFactory.getInstance()::createSolver, constraint));
-        System.out.println(nextStateValuations);
+//        final Set<Valuation> valuations = ValuationCollector.collect(stateRoot, ExprVariable.getNodeTraverser(stateRoot, Z3SolverFactory.getInstance()::createSolver));
+//        System.out.println(valuations);
+//
+//        final TraversalConstraint constraint = new MddSymbolicNodeTraversalConstraint(stateRoot);
+//        final Set<Valuation> nextStateValuations = ValuationCollector.collect(actionRoot, ExprVariable.getConstrainedNodeTraverser(actionRoot, Z3SolverFactory.getInstance()::createSolver, constraint));
+//        System.out.println(nextStateValuations);
 
         final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest3::nodeToString).visualize(actionRoot);
         try {
