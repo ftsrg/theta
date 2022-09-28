@@ -6,11 +6,12 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeInterpretation;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.TraverserValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -51,13 +52,29 @@ public class ExprNodeTest {
 
         MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x));
 
-        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
-
-        while (!rootNode.isComplete()) traverser.queryEdge();
-
         var interpreter = ExprVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
 
-        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
+        var recursiveCursor = interpreter.cursor();
+        recursiveCursor.moveNext();
+        recursiveCursor.moveNext();
+        recursiveCursor.moveNext();
+
+        try(var childCursor = recursiveCursor.valueCursor()){
+            childCursor.moveNext();
+            childCursor.moveNext();
+        }
+
+        recursiveCursor.moveNext();
+
+        try(var childCursor2 = recursiveCursor.valueCursor()) {
+            childCursor2.moveNext();
+            childCursor2.moveNext();
+        }
+
+        recursiveCursor.moveNext();
+        recursiveCursor.moveNext();
+
+        final Set<Valuation> valuations = MddValuationCollector.collect((MddSymbolicNodeInterpretation) interpreter);
         System.out.println(valuations);
 
         final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
