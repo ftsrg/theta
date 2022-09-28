@@ -50,7 +50,6 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
 
         // leaves
         List<ArgNode<S, A>> endNodes = arg.getNodes().filter(ArgNode::isLeaf).toList();
-        // TODO might be worth it to create a "mutable ARG" where I can actually remove bad nodes instead - worth to think about
         // leaves, but bad nodes are properly filtered, see bad nodes above
         List<ArgNode<S, A>> filteredEndNodes = filterEndNodes(endNodes, badNodes);
 

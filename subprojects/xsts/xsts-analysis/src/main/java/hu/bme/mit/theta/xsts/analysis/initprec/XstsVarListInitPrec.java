@@ -3,13 +3,22 @@ package hu.bme.mit.theta.xsts.analysis.initprec;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xsts.XSTS;
 import jdk.jshell.spi.ExecutionControl;
 
+import java.util.Set;
+
 public class XstsVarListInitPrec implements XstsInitPrec {
+    Set<VarDecl<?>> vars;
+
+    public XstsVarListInitPrec(Set<VarDecl<?>> vars) {
+        this.vars = vars;
+    }
+
     @Override
     public ExplPrec createExpl(XSTS xsts) {
-        return null;
+        return ExplPrec.of(vars);
     }
 
     @Override
