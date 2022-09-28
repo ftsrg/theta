@@ -1,20 +1,23 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
-import hu.bme.mit.delta.collections.IntObjMapView;
 
 /**
  * Provides an interpretation for nodes that haven't been fully enumerated yet.
  * Wraps a node and a traverser and makes the traverser enumerate only what is necessary.
  */
-public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<MddSymbolicNode> {
+public class MddSymbolicNodeInterpretation implements RecursiveIntObjMapView<MddSymbolicNode> {
 
     private final MddSymbolicNode node;
     private final MddSymbolicNodeTraverser traverser;
 
-    public IncompleteMddSymbolicNodeInterpretation(MddSymbolicNode node, MddSymbolicNodeTraverser traverser) {
+    public MddSymbolicNodeInterpretation(MddSymbolicNode node, MddSymbolicNodeTraverser traverser) {
         this.node = node;
         this.traverser = traverser;
+    }
+
+    public MddSymbolicNode getNode() {
+        return node;
     }
 
     @Override
@@ -50,9 +53,9 @@ public class IncompleteMddSymbolicNodeInterpretation implements IntObjMapView<Md
     }
 
     @Override
-    public IntObjCursor<? extends MddSymbolicNode> cursor() {
-        if(node.isComplete()) return node.getCacheView().cursor();
-        return new IncompleteMddSymbolicNodeCursor();
+    public RecursiveCursor<? extends MddSymbolicNode> cursor() {
+        //TODO if(node.isComplete()) return new DefaultRecursiveCursorImpl<>(node.getCacheView().cursor());
+        return new MddSymbolicNodeRecursiveCursor(null, traverser);
     }
 
     @Override

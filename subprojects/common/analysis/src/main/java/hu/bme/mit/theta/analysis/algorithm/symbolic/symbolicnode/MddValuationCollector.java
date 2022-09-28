@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
-import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.LitExprConverter;
 import hu.bme.mit.theta.common.container.Containers;
@@ -16,7 +15,7 @@ import java.util.Stack;
  * A utility class for collecting all vectors from a subtree represented by a symbolic node.
  * Only works with finite diagrams, but can handle default edges.
  */
-public class ValuationCollector {
+public class MddValuationCollector {
 
     private static class Assignment{
         final ConstDecl<?> decl;
@@ -30,45 +29,45 @@ public class ValuationCollector {
 
     /**
      * Collect all vectors from the subtree represented by a symbolic node.
-     * @param node the symbolic node
-     * @param traverser the traverser that will be used to enumerate the subtree. Must start on the node.
+     * @param interpretation intrerpretation of the node
      * @return the set of vectors represented by the node
      */
-    public static Set<Valuation> collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser){
-        Preconditions.checkState(traverser.getCurrentNode().equals(node));
-
+    public static Set<Valuation> collect(MddSymbolicNodeInterpretation interpretation){
         final Stack<Assignment> assignments = new Stack<>();
         final Set<Valuation> valuations = Containers.createSet();
 
-        collect(node, traverser, assignments, valuations);
+        try(var cursor = interpretation.cursor()){
+            collect(interpretation.getNode(), cursor, assignments, valuations);
+        }
 
         return valuations;
     }
 
-    public static void collect(MddSymbolicNode node, MddSymbolicNodeTraverser traverser, Stack<Assignment> assignments, Set<Valuation> valuations){
+    public static void collect(MddSymbolicNode node, RecursiveCursor<? extends MddSymbolicNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations){
         final MddVariable variable = node.getSymbolicRepresentation().second;
 
         if(node.isTerminal()){
             valuations.add(toValuation(assignments));
         } else {
             if(node.getCacheView().defaultValue() != null){
-                traverser.moveDown(0); // move down along arbitrary edge
+                cursor.moveNext();
 
-                collect(node.getCacheView().defaultValue(), traverser, assignments, valuations);
+                try(var valueCursor = cursor.valueCursor()){
+                    collect(node.getCacheView().defaultValue(), valueCursor, assignments, valuations);
+                }
 
-                traverser.moveUp();
             } else {
-                while (!node.isComplete()) traverser.queryEdge();
-                for (var cur = node.getCacheView().cursor(); cur.moveNext(); ) {
-                    assert cur.value() != null;
+                while (cursor.moveNext()) {
+                    assert cursor.value() != null;
 
-                    assignments.push(new Assignment(variable.getTraceInfo(ConstDecl.class), LitExprConverter.toLitExpr(cur.key(), variable.getTraceInfo(ConstDecl.class).getType())));
-                    traverser.moveDown(cur.key());
+                    assignments.push(new Assignment(variable.getTraceInfo(ConstDecl.class), LitExprConverter.toLitExpr(cursor.key(), variable.getTraceInfo(ConstDecl.class).getType())));
 
-                    collect(cur.value(), traverser, assignments, valuations);
+                    try(var valueCursor = cursor.valueCursor()){
+                        collect(cursor.value(), valueCursor, assignments, valuations);
+                    }
 
                     assignments.pop();
-                    traverser.moveUp();
+
                 }
             }
         }

@@ -7,24 +7,18 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNodeTraverser;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.ValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprVariable;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.io.FileNotFoundException;
-import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -49,33 +43,33 @@ public class ExprNodeTest2 {
 
         MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, a));
 
-        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
-
-        while (!rootNode.isComplete()) traverser.queryEdge();
-
-        var node2 = traverser.moveDown(0);
-
-        while(!node2.isComplete()) traverser.queryEdge();
-
-        var node3 = traverser.moveDown(0);
-
-        while(!node3.isComplete()) traverser.queryEdge();
-
-        traverser.moveUp();
-        traverser.moveUp();
-
-        var node4 = traverser.moveDown(1);
-
-        while(!node4.isComplete()) traverser.queryEdge();
-
-        var node5 = traverser.moveDown(1);
-
-        while(!node5.isComplete()) traverser.queryEdge();
-
-        var interpreter = ExprVariable.getNodeInterpreter(rootNode, a, Z3SolverFactory.getInstance()::createSolver);
-
-        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
-        System.out.println(valuations);
+//        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
+//
+//        while (!rootNode.isComplete()) traverser.queryEdge();
+//
+//        var node2 = traverser.moveDown(0);
+//
+//        while(!node2.isComplete()) traverser.queryEdge();
+//
+//        var node3 = traverser.moveDown(0);
+//
+//        while(!node3.isComplete()) traverser.queryEdge();
+//
+//        traverser.moveUp();
+//        traverser.moveUp();
+//
+//        var node4 = traverser.moveDown(1);
+//
+//        while(!node4.isComplete()) traverser.queryEdge();
+//
+//        var node5 = traverser.moveDown(1);
+//
+//        while(!node5.isComplete()) traverser.queryEdge();
+//
+//        var interpreter = ExprVariable.getNodeInterpreter(rootNode, a, Z3SolverFactory.getInstance()::createSolver);
+//
+//        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
+//        System.out.println(valuations);
 
         final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest2::nodeToString).visualize(rootNode);
         try {
