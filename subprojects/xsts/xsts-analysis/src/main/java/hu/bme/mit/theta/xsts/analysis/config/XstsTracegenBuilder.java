@@ -33,12 +33,14 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 final public class XstsTracegenBuilder {
     private final SolverFactory solverFactory;
+    private final boolean transitionCoverage;
     private Logger logger = NullLogger.getInstance();
     private boolean getFullTraces = false;
     private File varFile = null;
 
-    public XstsTracegenBuilder(final SolverFactory solverFactory) {
+    public XstsTracegenBuilder(final SolverFactory solverFactory, boolean transitionCoverage) {
         this.solverFactory = solverFactory;
+        this.transitionCoverage = transitionCoverage;
     }
 
     public XstsTracegenBuilder logger(final Logger logger) {
@@ -51,8 +53,11 @@ final public class XstsTracegenBuilder {
         return this;
     }
 
-    public void setVarFile(String filename) {
-        this.varFile = new File(filename);
+    public XstsTracegenBuilder setVarFile(String filename) {
+        if(filename!=null) {
+            this.varFile = new File(filename);
+        }
+        return this;
     }
 
     public XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
@@ -72,7 +77,6 @@ final public class XstsTracegenBuilder {
 
         TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
 
-        // TODO add vars to it from flag
         if(varFile==null) {
             return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));
         } else {
@@ -80,7 +84,7 @@ final public class XstsTracegenBuilder {
                 Set<String> varNamesToAdd = new HashSet<>();
                 Set<VarDecl<?>> varsToAdd = new HashSet<>();
                 while(scanner.hasNext()) {
-                    varNamesToAdd.add(scanner.nextLine());
+                    varNamesToAdd.add(scanner.nextLine().trim());
                 }
                 Collection<VarDecl<?>> vars = xsts.getVars();
                 for (VarDecl<?> var : vars) {
@@ -89,7 +93,7 @@ final public class XstsTracegenBuilder {
                     }
                 }
                 checkState(varNamesToAdd.size()==varsToAdd.size());
-                return XstsTracegenConfig.create(tracegenChecker, new XstsVarListInitPrec(varsToAdd).createExpl(xsts));
+                return XstsTracegenConfig.create(tracegenChecker, new XstsVarListInitPrec(varsToAdd).setTransitionCoverage(transitionCoverage).createExpl(xsts));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
