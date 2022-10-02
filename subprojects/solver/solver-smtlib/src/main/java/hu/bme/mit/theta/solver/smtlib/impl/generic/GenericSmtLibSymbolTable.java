@@ -22,6 +22,13 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         constToDeclaration = Maps.synchronizedBiMap(HashBiMap.create());
     }
 
+    public GenericSmtLibSymbolTable(GenericSmtLibSymbolTable table) {
+        constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
+        constToSymbol.putAll(table.constToSymbol);
+        constToDeclaration = Maps.synchronizedBiMap(HashBiMap.create());
+        constToDeclaration.putAll(table.constToDeclaration);
+    }
+
     @Override
     public boolean definesConst(final ConstDecl<?> constDecl) {
         return constToSymbol.containsKey(constDecl);
