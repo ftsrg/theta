@@ -42,7 +42,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
-import hu.bme.mit.theta.xsts.analysis.concretizer.NoPropertyXstsTraceConcretizerUtil;
+import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -60,8 +60,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class XstsCli {
 
@@ -146,6 +144,12 @@ public class XstsCli {
 	@Parameter(names = "--get-full-traces", description = "Generates more, but longer and maximal traces")
 	boolean getFullTraces = false;
 
+	@Parameter(names = "--variable-list", description = "A list of variable names (one in each line) to be included when generating traces")
+	String varFile = null;
+
+	@Parameter(names = "--no-transition-coverage", description = "Generates more, but longer and maximal traces")
+	boolean noTransitionCoverage = false;
+
 	private Logger logger;
 
 	public XstsCli(final String[] args) {
@@ -184,7 +188,7 @@ public class XstsCli {
 			final XSTS xsts = loadModel();
 
 			if(tracegen) {
-				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance()).logger(logger).setGetFullTraces(getFullTraces).build(xsts);
+				XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setGetFullTraces(getFullTraces).setVarFile(varFile).build(xsts);
 				tracegenConfig.check();
 				List<? extends Trace<? extends State, ? extends Action>> traces = tracegenConfig.getTraces();
 				final File modelFile = new File(model);
@@ -199,7 +203,7 @@ public class XstsCli {
 
 				for (Trace<? extends State, ? extends Action> trace : traces) {
 					try {
-						XstsStateSequence concretizedTrace = NoPropertyXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);// TODO something nicer for concretization
+						XstsStateSequence concretizedTrace = TraceGenerationXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);
 
 						final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
 						logger.write(Logger.Level.MAINSTEP, "Writing trace into file: %s%n", traceFile.getPath());
@@ -209,7 +213,7 @@ public class XstsCli {
 						i++;
 
 						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
-					} catch(IllegalArgumentException e) {
+					} catch(IllegalArgumentException | ClassCastException e) {
 						logger.write(Logger.Level.SUBSTEP, "Trace is infeasible%n");
 					}
 				}
@@ -263,7 +267,7 @@ public class XstsCli {
 				propStream = new ByteArrayInputStream(("prop {\n" +
 						"\ttrue\n" +
 						"}\n").getBytes());
-			} // TODO temporary
+			}
 			else if (property.endsWith(".prop")) propStream = new FileInputStream(property);
 			else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
 

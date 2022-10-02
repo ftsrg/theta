@@ -62,7 +62,7 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
             traces = new ArrayList<>(argTraces.stream().map(ArgTrace::toTrace).toList());
         }
 
-        checkState(traces.size()>0, "Generated 0 traces, which should be impossible");
+        checkState(traces.size()>0, "Generated 0 traces, variable configuration is probably insufficient");
         return SafetyResult.unsafe(this.traces.get(0), ARG.create((state1, state2) -> false)); // this is only a placeholder
     }
 

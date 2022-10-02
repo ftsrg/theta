@@ -18,11 +18,10 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-public final class NoPropertyXstsTraceConcretizerUtil {
+public final class TraceGenerationXstsTraceConcretizerUtil {
 
-    private NoPropertyXstsTraceConcretizerUtil() {
+    private TraceGenerationXstsTraceConcretizerUtil() {
     }
 
     public static XstsStateSequence concretize(
@@ -32,14 +31,17 @@ public final class NoPropertyXstsTraceConcretizerUtil {
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
                 Bool(true), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
-        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
-        assert valuations.getStates().size() == trace.getStates().size();
+        if(status.isFeasible()) {
+            final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+            assert valuations.getStates().size() == trace.getStates().size();
+            final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
+            for (int i = 0; i < trace.getStates().size(); ++i) {
+                xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
+            }
 
-        final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
-        for (int i = 0; i < trace.getStates().size(); ++i) {
-            xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
+            return XstsStateSequence.of(xstsStates, xsts);
+        } else {
+            return null;
         }
-
-        return XstsStateSequence.of(xstsStates, xsts);
     }
 }

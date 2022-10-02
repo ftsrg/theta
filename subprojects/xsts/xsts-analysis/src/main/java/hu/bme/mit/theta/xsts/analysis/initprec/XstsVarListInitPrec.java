@@ -11,13 +11,27 @@ import java.util.Set;
 
 public class XstsVarListInitPrec implements XstsInitPrec {
     Set<VarDecl<?>> vars;
+    boolean transitionCoverage = true;
 
     public XstsVarListInitPrec(Set<VarDecl<?>> vars) {
         this.vars = vars;
     }
 
+    public XstsVarListInitPrec setTransitionCoverage(boolean transitionCoverage) {
+        this.transitionCoverage = transitionCoverage;
+        return this;
+    }
+
     @Override
     public ExplPrec createExpl(XSTS xsts) {
+        vars.addAll(xsts.getCtrlVars());
+        if(transitionCoverage) {
+            for (VarDecl<?> var : xsts.getVars()) {
+                if(var.getName().startsWith("__id_")) {
+                    vars.add(var);
+                }
+            }
+        }
         return ExplPrec.of(vars);
     }
 
