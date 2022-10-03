@@ -157,14 +157,13 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
                     // we can lengthen the new trace more
                     // and it can even branch, so we might add several new traces actually
                     //for (ArgTrace<S, A> existingTrace : argTraces) {
-                    for (List<AdvancedArgTrace<S, A>> existingTrace : newTraces) {
+                    for (ArgTrace<S, A> existingTrace : argTraces) {
                         // if (existingTrace.nodes().contains(coveringNode)) {
-                        List<ArgNode<S, A>> etNodes = existingTrace.stream().map(argNodes -> argNodes.nodes()).flatMap(List::stream)
-                                .collect(Collectors.toList());
-                        if (etNodes.contains(coveringNode)) {
+                        //List<ArgNode<S, A>> etNodes = existingTrace.stream().map(AdvancedArgTrace::nodes).flatMap(List::stream).toList();
+                        if (existingTrace.nodes().contains(coveringNode)) {
                                 tracesChanged = true;
                             // getting a new part for the trace
-                            AdvancedArgTrace<S, A> newPart = AdvancedArgTrace.fromTo(coveringNode, etNodes.get(etNodes.size() - 1));
+                            AdvancedArgTrace<S, A> newPart = AdvancedArgTrace.fromTo(coveringNode, existingTrace.node(existingTrace.nodes().size() - 1));
                             ArrayList<AdvancedArgTrace<S, A>> changedTrace = new ArrayList<>(newTrace);
                             changedTrace.add(newPart);
 
