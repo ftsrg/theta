@@ -11,6 +11,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -117,9 +118,10 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
     private List<Trace<S, A>> modifyToFullTraces(List<ArgNode<S, A>> filteredEndNodes, List<ArgTrace<S, A>> argTraces) {
         List<ArgNode<S, A>> crossCoveredEndNodes = computeCrossCoveredEndNodes(filteredEndNodes);
         // new traces
-        List<List<AdvancedArgTrace<S,A>>> newTraces = new ArrayList<>();
+        List<List<AdvancedArgTrace<S,A>>> newTraces = new ArrayList<>(); // T'
 
         // first iteration on the covered end nodes
+        /*
         for (ArgNode<S, A> coveredNode : crossCoveredEndNodes) {
             ArgNode<S, A> coveringNode = coveredNode.getCoveringNode().get(); // coveredNode list only has covered nodes
             AdvancedArgTrace<S, A> part1 = AdvancedArgTrace.to(coveredNode);
@@ -131,6 +133,12 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
                 }
             }
         }
+        */
+        for (ArgTrace<S, A> argTrace : argTraces) {
+            //if(!crossCoveredEndNodes.contains(argTrace.node(argTrace.nodes().size()-1))) {
+                newTraces.add(List.of(AdvancedArgTrace.to(argTrace.node(argTrace.nodes().size()-1))));
+            //}
+        }
 
         // now we iterate over the new traces until all of them are maximal
         // TODO - lengthening the traces this way is far from being the most efficient, it can easily blow up
@@ -141,18 +149,22 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         boolean tracesChanged = true;
         while(tracesChanged) {
             tracesChanged = false;
-            List<List<AdvancedArgTrace<S, A>>> changedTraces = new ArrayList<>();
+            List<List<AdvancedArgTrace<S, A>>> changedTraces = new ArrayList<>(); // T''
             for (List<AdvancedArgTrace<S, A>> newTrace : newTraces) {
                 ArgNode<S, A> lastNode = getLastNode(newTrace);
                 if(crossCoveredEndNodes.contains(lastNode)) { // isCovered() check present
                     ArgNode<S, A> coveringNode = lastNode.getCoveringNode().get();
                     // we can lengthen the new trace more
                     // and it can even branch, so we might add several new traces actually
-                    for (ArgTrace<S, A> existingTrace : argTraces) {
-                        if (existingTrace.nodes().contains(coveringNode)) {
-                            tracesChanged = true;
+                    //for (ArgTrace<S, A> existingTrace : argTraces) {
+                    for (List<AdvancedArgTrace<S, A>> existingTrace : newTraces) {
+                        // if (existingTrace.nodes().contains(coveringNode)) {
+                        List<ArgNode<S, A>> etNodes = existingTrace.stream().map(argNodes -> argNodes.nodes()).flatMap(List::stream)
+                                .collect(Collectors.toList());
+                        if (etNodes.contains(coveringNode)) {
+                                tracesChanged = true;
                             // getting a new part for the trace
-                            AdvancedArgTrace<S, A> newPart = AdvancedArgTrace.fromTo(coveringNode, existingTrace.node(existingTrace.nodes().size() - 1));
+                            AdvancedArgTrace<S, A> newPart = AdvancedArgTrace.fromTo(coveringNode, etNodes.get(etNodes.size() - 1));
                             ArrayList<AdvancedArgTrace<S, A>> changedTrace = new ArrayList<>(newTrace);
                             changedTrace.add(newPart);
 
@@ -170,18 +182,20 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
             }
         }
 
-        List<Trace<S,A>> result = new ArrayList<>();
+        List<Trace<S,A>> result = new ArrayList<>(); // TODO should be a Set(?)
         // concatenating lengthened maximal traces and converting them to state-action traces to add them to the result list
         for (List<AdvancedArgTrace<S, A>> newTrace : newTraces) {
             result.add(concatenateTraces(newTrace));
         }
 
         // adding traces that did not have to be lengthened to the resulting state-action trace list
+        /*
         for (ArgTrace<S, A> argTrace : argTraces) {
             if(!crossCoveredEndNodes.contains(argTrace.node(argTrace.nodes().size()-1))) {
                 result.add(argTrace.toTrace());
             }
         }
+        */
         return result;
     }
 
