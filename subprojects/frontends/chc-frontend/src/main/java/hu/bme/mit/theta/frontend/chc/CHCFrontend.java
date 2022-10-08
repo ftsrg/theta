@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
@@ -54,7 +55,7 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
     private final XcfaLocation initLocation = XcfaLocation.create("Init");
     private final XcfaLocation errorLocation = XcfaLocation.create("Err");
     private final Map<String, UPred> locations = new HashMap<>();
-    private final boolean underscoreVars = false;
+    private final boolean underscoreVars = true;
 
     public CHCFrontend() {
         locations.put(initLocation.getName(), new UPred(initLocation, new ArrayList<>()));
@@ -103,6 +104,7 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
         }
         XcfaLocation location = XcfaLocation.create(name);
         locations.put(name, new UPred(location, vars));
+        locations.put(ctx.symbol().getText(), new UPred(location, vars));
         builder.addLoc(location);
         return super.visitFun_decl(ctx);
     }
@@ -113,7 +115,6 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
         List<XcfaLabel> labels = new ArrayList<>();
 
         if (ctx.chc_tail() != null) {
-            System.out.println("induction");
             from = getTailFrom(ctx.chc_tail());
             to = getHeadTo(ctx.chc_head());
             Map<String, VarDecl<?>> vars = createVars(ctx.var_decl());
@@ -121,7 +122,6 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
             labels.addAll(getTailLabels(ctx.chc_tail(), vars));
             labels.addAll(getTargetAssignments(ctx.chc_head(), vars));
         } else {
-            System.out.println("fact");
             String locName;
             if (ctx.chc_head() != null) {
                 locName = ctx.chc_head().u_pred_atom().u_predicate().getText();
@@ -138,7 +138,6 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
 
     @Override
     public Object visitChc_query(CHCParser.Chc_queryContext ctx) {
-        System.out.println("query");
         XcfaLocation from = getTailFrom(ctx.chc_tail());
         Map<String, VarDecl<?>> vars = createVars(ctx.var_decl());
         List<XcfaLabel> labels = new ArrayList<>();
@@ -154,7 +153,7 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
         tail.i_formula().forEach(i_formula -> {
             Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), BoolExprs.Bool(), smtLibModel);
             List<ConstDecl<?>> exprVars = new ArrayList<>();
-            ExprUtils.collectConstants(expr, exprVars); // could also need to collect vars, dunno
+            ExprUtils.collectConstants(expr, exprVars);
             Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();
             for (Decl<?> var : exprVars) {
                 if (localVars.containsKey(var.getName())) {
@@ -172,6 +171,7 @@ public class CHCFrontend extends CHCBaseVisitor<Object> {
         UPred from = locations.get(getTailFrom(tail).getName()); // TODO handle non-linear CHCs
         tail.u_pred_atom().forEach(u_pred -> {
             List<? extends VarDecl<?>> params = u_pred.symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
+            localVars.values().forEach(var -> { if (!params.contains(var)) labels.add(XcfaLabel.Stmt(HavocStmt.of(var))); });
             labels.addAll(getParamAssignments(params, from.vars));
         });
         return labels;

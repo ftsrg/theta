@@ -42,6 +42,7 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.frontend.chc.CHCFrontend;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
@@ -202,6 +203,9 @@ public class XcfaCli {
 	@Parameter(names = "--precheck", description = "Perform a pre-check when refining a multithreaded program for possibly higher efficiency", arity = 1)
 	boolean preCheck = true;
 
+	@Parameter(names = "--chc", description = "Parses the input as a Constrained Horn Clause in the CHC-comp format.")
+	boolean chc = false;
+
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
@@ -288,17 +292,22 @@ public class XcfaCli {
 		if (input != null) {
 			try {
 				final CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
-				final CLexer lexer = new CLexer(input);
-				final CommonTokenStream tokens = new CommonTokenStream(lexer);
-				final CParser parser = new CParser(tokens);
-				final CParser.CompilationUnitContext context = parser.compilationUnit();
+				if (chc) {
+					CHCFrontend chcFrontend = new CHCFrontend();
+					xcfaBuilder = chcFrontend.buildXcfa(input);
+				} else {
+					final CLexer lexer = new CLexer(input);
+					final CommonTokenStream tokens = new CommonTokenStream(lexer);
+					final CParser parser = new CParser(tokens);
+					final CParser.CompilationUnitContext context = parser.compilationUnit();
 
-				CStatement program = context.accept(FunctionVisitor.instance);
-				checkState(program instanceof CProgram, "Parsing did not return a program!");
+					CStatement program = context.accept(FunctionVisitor.instance);
+					checkState(program instanceof CProgram, "Parsing did not return a program!");
 
-				FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
+					FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 
-				xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
+					xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("Frontend failed!");

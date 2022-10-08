@@ -819,7 +819,7 @@ chc_head: u_pred_atom; // where all argument variables in the atom are DISTINCT
 
 chc_tail
     : u_pred_atom
-    | ParOpen PS_And u_pred_atom+ i_formula* ParClose
+    | ParOpen PS_And u_pred_atom+? i_formula* ParClose
     | i_formula
     ;
 
@@ -832,7 +832,10 @@ u_pred_atom
 chc_query: ParOpen GRW_Forall ParOpen var_decl+ ParClose ParOpen Arrow chc_tail PS_False ParClose ParClose;
 
 // uninterpreted predicate (i.e., Boolean function)
-u_predicate: UndefinedSymbol;
+u_predicate
+    : UndefinedSymbol
+    | QuotedSymbol
+    ;
 
 // an SMT-LIB formula over variables, and interpreted functions and predicate
 i_formula: term;
