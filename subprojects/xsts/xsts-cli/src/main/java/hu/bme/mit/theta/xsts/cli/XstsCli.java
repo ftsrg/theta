@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.*;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -170,22 +171,17 @@ public class XstsCli {
 
 				int i = 0;
 
-				for (Trace<? extends State, ? extends Action> trace : traces) {
-					XstsStateSequence concretizedTrace = TraceGenerationXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);
+				Set<XstsStateSequence> concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet((List<Trace<XstsState<?>, XstsAction>>) traces, Z3SolverFactory.getInstance(), xsts);
 
-					if(concretizedTrace!=null) { // it was feasible
-						final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
-						logger.write(Logger.Level.MAINSTEP, "Writing trace into file: %s%n", traceFile.getPath());
-						try (PrintWriter printWriter = new PrintWriter(traceFile)) {
-							printWriter.write(concretizedTrace.toString());
-						}
-						i++;
-
-						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
-					} else {
-						logger.write(Logger.Level.SUBSTEP, "Trace was fully infeasible.%n");
+				for (XstsStateSequence trace : concretizedTraces) {
+					final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
+					logger.write(Logger.Level.MAINSTEP, "Writing trace into file: %s%n", traceFile.getPath());
+					try (PrintWriter printWriter = new PrintWriter(traceFile)) {
+						printWriter.write(trace.toString());
 					}
+					i++;
 
+					logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
 				}
 
 				sw.stop();
