@@ -25,23 +25,31 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
     }
 
     public static XstsStateSequence concretize(
-            final Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
+        Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
 
         final VarFilter varFilter = VarFilter.of(xsts);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
                 Bool(true), solverFactory.createItpSolver());
-        final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
-        if(status.isFeasible()) {
-            final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
-            assert valuations.getStates().size() == trace.getStates().size();
-            final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
-            for (int i = 0; i < trace.getStates().size(); ++i) {
-                xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
-            }
 
-            return XstsStateSequence.of(xstsStates, xsts);
-        } else {
+        ExprTraceStatus<ItpRefutation> status = checker.check(trace);
+        while(status.isInfeasible() && trace.length()>0) {
+            List<XstsState<?>> newStates = new ArrayList<>(trace.getStates());
+            newStates.remove(trace.getStates().size() - 1);
+            List<XstsAction> newActions = new ArrayList<>(trace.getActions());
+            newActions.remove(trace.getActions().size()-1);
+            trace = Trace.of(newStates, newActions); // remove last state
+            status = checker.check(trace);
+        }
+        if(trace.length()==0) {
             return null;
         }
+        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        assert valuations.getStates().size() == trace.getStates().size();
+        final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
+        for (int i = 0; i < trace.getStates().size(); ++i) {
+            xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
+        }
+
+        return XstsStateSequence.of(xstsStates, xsts);
     }
 }

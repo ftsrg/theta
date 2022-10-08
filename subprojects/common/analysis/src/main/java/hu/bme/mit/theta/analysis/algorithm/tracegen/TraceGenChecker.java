@@ -119,25 +119,8 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         List<ArgNode<S, A>> crossCoveredEndNodes = computeCrossCoveredEndNodes(filteredEndNodes);
         // new traces
         List<List<AdvancedArgTrace<S,A>>> newTraces = new ArrayList<>(); // T'
-
-        // first iteration on the covered end nodes
-        /*
-        for (ArgNode<S, A> coveredNode : crossCoveredEndNodes) {
-            ArgNode<S, A> coveringNode = coveredNode.getCoveringNode().get(); // coveredNode list only has covered nodes
-            AdvancedArgTrace<S, A> part1 = AdvancedArgTrace.to(coveredNode);
-            for (ArgTrace<S, A> existingTrace : argTraces) {
-                if (existingTrace.nodes().contains(coveringNode)) {
-                    // Getting the separate halves of new trace
-                    AdvancedArgTrace<S, A> part2 = AdvancedArgTrace.fromTo(coveringNode, existingTrace.node(existingTrace.nodes().size() - 1));
-                    newTraces.add(List.of(part1,part2)); // in this iteration all of these are only 2 parts, but later on it might become more
-                }
-            }
-        }
-        */
         for (ArgTrace<S, A> argTrace : argTraces) {
-            //if(!crossCoveredEndNodes.contains(argTrace.node(argTrace.nodes().size()-1))) {
-                newTraces.add(List.of(AdvancedArgTrace.to(argTrace.node(argTrace.nodes().size()-1))));
-            //}
+            newTraces.add(List.of(AdvancedArgTrace.to(argTrace.node(argTrace.nodes().size()-1))));
         }
 
         // now we iterate over the new traces until all of them are maximal
@@ -156,21 +139,22 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
                     ArgNode<S, A> coveringNode = lastNode.getCoveringNode().get();
                     // we can lengthen the new trace more
                     // and it can even branch, so we might add several new traces actually
-                    //for (ArgTrace<S, A> existingTrace : argTraces) {
+                    // for (ArgTrace<S, A> existingTrace : argTraces) {
                     for (ArgTrace<S, A> existingTrace : argTraces) {
-                        // if (existingTrace.nodes().contains(coveringNode)) {
-                        //List<ArgNode<S, A>> etNodes = existingTrace.stream().map(AdvancedArgTrace::nodes).flatMap(List::stream).toList();
                         if (existingTrace.nodes().contains(coveringNode)) {
-                                tracesChanged = true;
                             // getting a new part for the trace
                             AdvancedArgTrace<S, A> newPart = AdvancedArgTrace.fromTo(coveringNode, existingTrace.node(existingTrace.nodes().size() - 1));
-                            ArrayList<AdvancedArgTrace<S, A>> changedTrace = new ArrayList<>(newTrace);
-                            changedTrace.add(newPart);
-
-                            changedTraces.add(changedTrace);
+                            ArgNode<S, A> newPartLastNode = newPart.node(newPart.nodes().size() - 1);
+                            if(newPartLastNode.isCovered() && !crossCoveredEndNodes.contains(newPartLastNode)) {
+                                tracesChanged = false;
+                            } else {
+                                tracesChanged = true;
+                                ArrayList<AdvancedArgTrace<S, A>> changedTrace = new ArrayList<>(newTrace);
+                                changedTrace.add(newPart);
+                                changedTraces.add(changedTrace);
+                            }
                         }
                     }
-                    checkState(tracesChanged, "There should be at least one lengthened trace added here");
                 } else {
                     changedTraces.add(newTrace);
                 }

@@ -171,9 +171,9 @@ public class XstsCli {
 				int i = 0;
 
 				for (Trace<? extends State, ? extends Action> trace : traces) {
-					try {
-						XstsStateSequence concretizedTrace = TraceGenerationXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);
+					XstsStateSequence concretizedTrace = TraceGenerationXstsTraceConcretizerUtil.concretize((Trace<XstsState<?>, XstsAction>) trace, Z3SolverFactory.getInstance(), xsts);
 
+					if(concretizedTrace!=null) { // it was feasible
 						final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
 						logger.write(Logger.Level.MAINSTEP, "Writing trace into file: %s%n", traceFile.getPath());
 						try (PrintWriter printWriter = new PrintWriter(traceFile)) {
@@ -182,9 +182,10 @@ public class XstsCli {
 						i++;
 
 						logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
-					} catch(IllegalArgumentException | ClassCastException e) {
-						logger.write(Logger.Level.SUBSTEP, "Trace is infeasible%n");
+					} else {
+						logger.write(Logger.Level.SUBSTEP, "Trace was fully infeasible.%n");
 					}
+
 				}
 
 				sw.stop();
