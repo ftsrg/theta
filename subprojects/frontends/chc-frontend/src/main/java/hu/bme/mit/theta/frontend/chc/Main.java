@@ -24,7 +24,9 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        CHCFrontend frontend = new CHCFrontend();
+        ChcFrontend.chcTransformation = ChcFrontend.ChcTransformation.FORWARD;
+        ChcUtils.setCharStream(charStream);
+        ChcFrontend frontend = new ChcFrontend();
         XCFA.Builder builder = frontend.buildXcfa(charStream);
         XCFA xcfa = builder.build();
         System.out.println(xcfa.toDot());
