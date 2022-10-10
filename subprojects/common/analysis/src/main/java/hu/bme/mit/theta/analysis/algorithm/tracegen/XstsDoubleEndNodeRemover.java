@@ -45,7 +45,7 @@ public class XstsDoubleEndNodeRemover<S extends ExprState, A extends StmtAction>
                 ArgNode<S, A> grandParent = node.getParent().get().getParent().get();
                 if(!(node.isCovered() && node.getCoveringNode().get()==grandParent)) return false;
 
-                String state = node.getState().toString();
+                String state = node.getParent().get().getState().toString();
                 BufferedReader bufReader = new BufferedReader(new StringReader(state));
                 String line=null;
                 try {
