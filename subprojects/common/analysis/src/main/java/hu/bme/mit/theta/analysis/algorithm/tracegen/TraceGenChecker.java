@@ -11,7 +11,6 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -47,7 +46,7 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         // bad node: XSTS specific thing, that the last state (last_env nodes) doubles up and the leaf is covered by the
         // last_env before which is superfluous.
         // Possible side effect if not handled: possibly a "non-existing leaf" and superfluous traces or just traces that are 1 longer than they should be
-        List<ArgNode<S, A>> badNodes = XstsDoubleEndNodeRemover.collectBadNodes(arg);
+        List<ArgNode<S, A>> badNodes = XstsDoubleEndNodeRemover.collectBadLeaves(arg);
 
         // leaves
         List<ArgNode<S, A>> endNodes = arg.getNodes().filter(ArgNode::isLeaf).toList();
@@ -64,7 +63,6 @@ public class TraceGenChecker <S extends ExprState, A extends StmtAction, P exten
         }
 
         checkState(traces.size()>0, "Generated 0 traces, variable configuration is probably insufficient");
-        traces = traces.stream().map(XstsDoubleEndNodeRemover::filterSuperfluousEndNode).toList();
         return SafetyResult.unsafe(this.traces.get(0), ARG.create((state1, state2) -> false)); // this is only a placeholder
     }
 

@@ -7,34 +7,58 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 
 import java.io.BufferedReader;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 public class XstsDoubleEndNodeRemover<S extends ExprState, A extends StmtAction> {
-    static <S extends ExprState, A extends StmtAction> List<ArgNode<S,A>> collectBadNodes(ARG<S,A> arg) {
-        // TODO XSTS SPECIFIC for now! collecting nodes that look like there should be traces to it, but there isn't
-        // this is due to the trans-env-trans-env nature of XSTS (there are nodes without outgoing edges that are covered that are not deadlock states in reality)
+    static <S extends ExprState, A extends StmtAction> List<ArgNode<S,A>> collectBadLeaves(ARG<S,A> arg) {
+        // TODO XSTS SPECIFIC for now! collecting nodes that look like there should be traces to it, but shouldn't ("not firing anything" nodes)
         XstsDoubleEndNodeRemover<S, A> instance = new XstsDoubleEndNodeRemover<S, A>();
         List<ArgNode<S, A>> badNodes = new ArrayList<>();
-        arg.getInitNodes().forEach(node -> instance.removeBackwardsCoveredBy(node, badNodes, false));
+        arg.getNodes().filter(ArgNode::isLeaf).forEach(node -> {
+            if(instance.isBadLeaf(node)) { badNodes.add(node); }
+        } );
         return badNodes;
     }
 
-    private void removeBackwardsCoveredBy(ArgNode<S, A> node, List<ArgNode<S,A>> badNodes, boolean isLastInternal) {
-        // parent & grandparent check: because in a really small model/small trace (3-4 nodes) there is no (grand)parent, but those are not bad nodes then
-        if(isLastInternal && node.isLeaf() && node.getParent().isPresent() && node.getParent().get().getParent().isPresent()) {
+    private boolean isLastInternal(ArgNode<S, A> node) {
+        return node.getState().toString().contains("last_internal");
+    }
+
+    private boolean isBadLeaf(ArgNode<S, A> node) {
+        if(isLastInternal(node)) {
+            if(node.getParent().isEmpty()) return false;
             ArgNode<S, A> parent = node.getParent().get();
+            if(parent.getParent().isEmpty()) return false;
             ArgNode<S, A> grandParent = node.getParent().get().getParent().get();
             if(node.isCovered() && parent.getParent().get() == node.getCoveringNode().get()) { // node is covered and parent is checked above
-                // bad node, needs to be removed
-                badNodes.add(node);
+                // bad node
+                return true;
+            } else {
+                return false;
             }
-        }
-        else {
-            node.children().forEach(child -> removeBackwardsCoveredBy(child, badNodes, !isLastInternal));
+        } else {
+            boolean transitionFired = false;
+            if(node.getParent().isPresent() && node.getParent().get().getParent().isPresent()) {
+                ArgNode<S, A> grandParent = node.getParent().get().getParent().get();
+                if(!(node.isCovered() && node.getCoveringNode().get()==grandParent)) return false;
+
+                String state = node.getState().toString();
+                BufferedReader bufReader = new BufferedReader(new StringReader(state));
+                String line=null;
+                try {
+                    while( (line=bufReader.readLine()) != null ) {
+                        if(line.trim().matches("^\\(__id_.*__.*\strue\\)*$")) transitionFired=true;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return !transitionFired; // if no transition was fired (and state not changed), this is a superfluous node
+            } else {
+                return false;
+            }
         }
     }
 
