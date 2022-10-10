@@ -31,7 +31,6 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
 
         for (Trace<XstsState<?>, XstsAction> abstractTrace : abstractTraces) {
             ExprTraceStatus<ItpRefutation> status = checker.check(abstractTrace);
-            /*
             if(status.isInfeasible()) {
                 int pruneIndex = status.asInfeasible().getRefutation().getPruneIndex();
                 if(pruneIndex>0) {
@@ -40,7 +39,6 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
                 }
             }
 
-             */
             if(status.isFeasible()) {
                 final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
                 assert valuations.getStates().size() == abstractTrace.getStates().size();
@@ -54,22 +52,24 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
                 tracePairs.put(abstractTrace, concretizedTrace);
             }
         }
-/*
-// TODO fix
-        // if trace was shortened, it might match with another one, in this case, do not add it again        HashMap<Trace<XstsState<?>, XstsAction>, XstsStateSequence> filteredTracePairs = new HashMap<>();
+
+        // if trace was shortened, it might match with another one, in this case, do not add it again
+        HashMap<Trace<XstsState<?>, XstsAction>, XstsStateSequence> filteredTracePairs = new HashMap<>();
         tracePairs.keySet().stream().filter(trace -> {
             for (Trace<XstsState<?>, XstsAction> otherTrace : tracePairs.keySet()) {
-                if(trace.getStates().size()<otherTrace.getStates().size()) {
-                    if(otherTrace.toString().contains(trace.toString())) {
+                if(trace.getStates().size() < otherTrace.getStates().size()) {
+                    String traceString = trace.toString();
+                    String traceStringWithoutClosingParentheses = traceString.substring(0, traceString.length()-1);
+                    if(otherTrace.toString().contains(traceStringWithoutClosingParentheses)) {
                         return false;
                     }
                 }
             }
             return true;
         }).forEach(key -> filteredTracePairs.put(key, tracePairs.get(key)));
-*/
-//        return new HashSet<XstsStateSequence>(filteredTracePairs.values());
-        return new HashSet<XstsStateSequence>(tracePairs.values());
+
+        return new HashSet<XstsStateSequence>(filteredTracePairs.values());
+//        return new HashSet<XstsStateSequence>(tracePairs.values());
     }
 
     private static Trace<XstsState<?>, XstsAction> shortenTrace(Trace<XstsState<?>, XstsAction> abstractTrace, int pruneIndex) {
