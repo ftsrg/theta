@@ -13,10 +13,7 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -30,10 +27,11 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
         final VarFilter varFilter = VarFilter.of(xsts);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
                 Bool(true), solverFactory.createItpSolver());
-        Set<XstsStateSequence> concretizedTraces = new HashSet<>();
+        HashMap<Trace<XstsState<?>, XstsAction>, XstsStateSequence> tracePairs = new HashMap<>();
 
         for (Trace<XstsState<?>, XstsAction> abstractTrace : abstractTraces) {
             ExprTraceStatus<ItpRefutation> status = checker.check(abstractTrace);
+            /*
             if(status.isInfeasible()) {
                 int pruneIndex = status.asInfeasible().getRefutation().getPruneIndex();
                 if(pruneIndex>0) {
@@ -41,6 +39,8 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
                     status = checker.check(abstractTrace);
                 }
             }
+
+             */
             if(status.isFeasible()) {
                 final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
                 assert valuations.getStates().size() == abstractTrace.getStates().size();
@@ -50,13 +50,26 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
                 }
 
                 XstsStateSequence concretizedTrace = XstsStateSequence.of(xstsStates, xsts);
-                // if trace was shortened, it might match with another one, in this case, do not add it again
-                if(concretizedTraces.stream().noneMatch(xstsStateSequence -> xstsStateSequence.toString().equals(concretizedTrace.toString()))) {
-                    concretizedTraces.add(concretizedTrace);
-                }
+
+                tracePairs.put(abstractTrace, concretizedTrace);
             }
         }
-        return concretizedTraces;
+/*
+// TODO fix
+        // if trace was shortened, it might match with another one, in this case, do not add it again        HashMap<Trace<XstsState<?>, XstsAction>, XstsStateSequence> filteredTracePairs = new HashMap<>();
+        tracePairs.keySet().stream().filter(trace -> {
+            for (Trace<XstsState<?>, XstsAction> otherTrace : tracePairs.keySet()) {
+                if(trace.getStates().size()<otherTrace.getStates().size()) {
+                    if(otherTrace.toString().contains(trace.toString())) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }).forEach(key -> filteredTracePairs.put(key, tracePairs.get(key)));
+*/
+//        return new HashSet<XstsStateSequence>(filteredTracePairs.values());
+        return new HashSet<XstsStateSequence>(tracePairs.values());
     }
 
     private static Trace<XstsState<?>, XstsAction> shortenTrace(Trace<XstsState<?>, XstsAction> abstractTrace, int pruneIndex) {
