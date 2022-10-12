@@ -88,9 +88,9 @@ public class XcfaPassManager {
 				new RemoveDeadEnds()*/
 		));
 		processPasses.addAll(List.of(
-/*				new AnalyzeCallGraph(),
+				new AnalyzeCallGraph(),
 				new FunctionInlining(),
-				new AssignFunctionParam()*/
+				new AssignFunctionParam()
 		));
 		xcfaPasses.addAll((List.of(
 /*				new RemoveUnusedGlobals(),

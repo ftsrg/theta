@@ -13,7 +13,8 @@ public class Main {
             "chc-LIA-Lin_000.smt2",
             "chc-LIA-Lin_001.smt2",
             "chc-LIA-Lin_002.smt2",
-            "chc-LIA-NonLin_000.smt2"
+            "chc-LIA-NonLin_000.smt2",
+            "chc-LIA-NonLin_001.smt2"
     );
 
     public static void main(String[] args) {
@@ -24,7 +25,7 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        ChcFrontend.chcTransformation = ChcFrontend.ChcTransformation.FORWARD;
+        ChcFrontend.chcTransformation = ChcFrontend.ChcTransformation.BACKWARD;
         ChcUtils.setCharStream(charStream);
         ChcFrontend frontend = new ChcFrontend();
         XCFA.Builder builder = frontend.buildXcfa(charStream);

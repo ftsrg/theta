@@ -288,9 +288,13 @@ fragment Digit
     : [0-9]
     ;
 
-fragment Sym
+fragment Letter
     : 'a'..'z'
     | 'A' .. 'Z'
+    ;
+
+fragment Sym
+    : Letter
     | '+'
     | '='
     | '/'
@@ -478,6 +482,11 @@ PK_Version
     : ':version'
     ;
 
+Name
+    : (Letter|Digit) (Digit | Sym)*
+    | '|' (Letter|Digit) (Digit | Sym)* '|'
+    ;
+
 UndefinedSymbol:
     Sym (Digit | Sym)*;
 
@@ -515,6 +524,7 @@ generalReservedWord
 simpleSymbol
     : predefSymbol
     | UndefinedSymbol
+    | Name
     ;
 
 quotedSymbol
@@ -819,7 +829,7 @@ chc_head: u_pred_atom; // where all argument variables in the atom are DISTINCT
 
 chc_tail
     : u_pred_atom
-    | ParOpen PS_And u_pred_atom+? i_formula* ParClose
+    | ParOpen PS_And u_pred_atom+ i_formula* ParClose
     | i_formula
     ;
 
@@ -832,10 +842,7 @@ u_pred_atom
 chc_query: ParOpen GRW_Forall ParOpen var_decl+ ParClose ParOpen Arrow chc_tail PS_False ParClose ParClose;
 
 // uninterpreted predicate (i.e., Boolean function)
-u_predicate
-    : UndefinedSymbol
-    | QuotedSymbol
-    ;
+u_predicate: Name;
 
 // an SMT-LIB formula over variables, and interpreted functions and predicate
 i_formula: term;

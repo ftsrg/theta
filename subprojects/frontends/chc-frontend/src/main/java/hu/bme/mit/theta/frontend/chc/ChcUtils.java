@@ -7,7 +7,6 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -48,7 +47,7 @@ public class ChcUtils {
     private static final SmtLibModel smtLibModel = null; // TODO unnecessary
     private static CharStream charStream;
 
-    public static List<XcfaLabel> getTailLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
+    public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         tail.i_formula().forEach(i_formula -> {
             Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), BoolExprs.Bool(), smtLibModel);
@@ -63,14 +62,6 @@ public class ChcUtils {
             Expr<BoolType> replacedExpr = XcfaLabelVarReplacer.replaceVars(expr, varsToLocal);
             labels.add(XcfaLabel.Stmt(AssumeStmt.of(replacedExpr)));
         });
-        return labels;
-    }
-
-    public static List<XcfaLabel> getParamAssignments(List<? extends VarDecl<?>> lhs, List<? extends VarDecl<?>> rhs) {
-        List<XcfaLabel> labels = new ArrayList<>();
-        for (int i = 0; i < lhs.size(); ++i) {
-            labels.add(XcfaLabel.Stmt(AssignStmt.create(lhs.get(i), rhs.get(i).getRef())));
-        }
         return labels;
     }
 
