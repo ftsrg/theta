@@ -95,7 +95,6 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
             }
         }
         infeasibles.add(Tuple2.of(prunedStates, refutation));
-        System.out.println(refutation.get(refutation.getPruneIndex()));
     }
 
     private static void createReport(Collection<Trace<XstsState<ExplState>, XstsAction>> traces) {
@@ -125,6 +124,8 @@ public final class TraceGenerationXstsTraceConcretizerUtil {
         // allapot fedest pontosan nezzuk, transition fedest csak annyira, hogy serulhetett-e
         if(foundInfeasible) {
             reportBuilder.append("There were infeasible traces found; transition coverage might be incomplete\n");
+        } else {
+            reportBuilder.append("Trace coverage is complete\n");
         }
 
         if(stateRefutations.isEmpty()) {
