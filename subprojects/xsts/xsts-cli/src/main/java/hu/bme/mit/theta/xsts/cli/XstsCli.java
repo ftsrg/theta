@@ -9,6 +9,8 @@ import com.google.common.io.MoreFiles;
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -20,6 +22,7 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
@@ -171,7 +174,7 @@ public class XstsCli {
 
 				int i = 0;
 
-				Set<XstsStateSequence> concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet((List<Trace<XstsState<?>, XstsAction>>) traces, Z3SolverFactory.getInstance(), xsts);
+				Set<XstsStateSequence> concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet((List<Trace<XstsState<ExplState>, XstsAction>>) traces, Z3SolverFactory.getInstance(), xsts);
 
 				for (XstsStateSequence trace : concretizedTraces) {
 					final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");
@@ -182,6 +185,11 @@ public class XstsCli {
 					i++;
 
 					logger.write(Logger.Level.SUBSTEP, "---------------------------%n");
+				}
+				final File reportFile = new File(File.separator + tracePath + File.separator + "report.txt");
+				logger.write(Logger.Level.MAINSTEP, "Writing report into file: %s%n", reportFile.getPath());
+				try (PrintWriter printWriter = new PrintWriter(reportFile)) {
+					printWriter.write(TraceGenerationXstsTraceConcretizerUtil.getReport());
 				}
 
 				sw.stop();
