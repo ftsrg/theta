@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
@@ -130,7 +131,9 @@ data class XcfaCegarConfig(
             checkNotNull(clientSocket)
 
             var safetyString: String?
-            val gson = getGson(xcfa)
+
+            registerAllSolverManagers(solverHome, logger)
+            val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})
             clientSocket.use {
                 val writer = PrintWriter(clientSocket.getOutputStream(), true)
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
@@ -139,7 +142,13 @@ data class XcfaCegarConfig(
                 process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
                 safetyString = reader.readLine()
             }
-            val type = object: TypeToken<SafetyResult<XcfaState<ExplState>, XcfaAction>>() {}.type
+            val type =
+                    if(domain == Domain.EXPL)
+                        object: TypeToken<SafetyResult<XcfaState<ExplState>, XcfaAction>>() {}.type
+                    else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT)
+                        object: TypeToken<SafetyResult<XcfaState<PredState>, XcfaAction>>() {}.type
+                    else
+                        error("Domain ${domain} is not implemented in the GSON parser.")
             gson.fromJson(safetyString, type)
         }
     }
@@ -159,7 +168,8 @@ private class ProcessHandler(
             var length = 0
             for(matchResult in matchResults) {
                 val (level, message) = matchResult.destructured
-                logger.write(Logger.Level.valueOf(level), message)
+                val logLevel = try{ Logger.Level.valueOf(level) } catch (_: Exception) { Logger.Level.VERBOSE }
+                logger.write(logLevel, message)
                 length+=matchResult.range.count()
             }
             stdoutBuffer = stdoutBuffer.substring(length)

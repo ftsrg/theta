@@ -16,59 +16,22 @@
 
 package hu.bme.mit.theta.grammar.gson
 
+import com.google.gson.Gson
 import com.google.gson.TypeAdapter
+import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
-
-//class StateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env): TypeAdapter<State>() {
-//    lateinit var gson: Gson
-//    override fun write(writer: JsonWriter, value: State) {
-//        initGson()
-//        writer.beginObject()
-//        writer.name("type").value(value::class.qualifiedName)
-//        writer.name("value")
-//        when(value) {
-//            is ExplState -> ExplStateAdapter(scope, env).write(writer, value)
-//            else -> TODO("Unknown state type: " + value::class.qualifiedName)
-//        }
-//        writer.endObject()
-//    }
-//
-//    override fun read(reader: JsonReader): State {
-//        initGson()
-//        reader.beginObject()
-//        lateinit var s: State
-//        if (reader.peek() != JsonToken.END_OBJECT) {
-//            lateinit var clazz: KClass<*>
-//            lateinit var value: Any
-//            while (reader.peek() != JsonToken.END_OBJECT) {
-//                when(reader.nextName()) {
-//                    "type" -> clazz = Class.forName(reader.nextString()).kotlin
-//                    "value" -> value = when(clazz) {
-//                        ExplState::class.java -> ExplStateAdapter(scope, env).read(reader)
-//                        else -> TODO("Unknown type " + clazz.qualifiedName)
-//                    }
-//                }
-//            }
-//            s = value as State
-//        }
-//        reader.endObject()
-//        return s
-//    }
-//
-//    private fun initGson() {
-//        if(!this::gson.isInitialized) gson = gsonSupplier()
-//    }
-//}
-
 class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>() {
     override fun write(writer: JsonWriter, value: ExplState) {
         writer.beginObject()
@@ -100,6 +63,35 @@ class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>()
         reader.endArray()
         reader.endObject()
         return ret!!
+    }
+
+}
+class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env): TypeAdapter<PredState>() {
+    lateinit var gson: Gson
+    override fun write(writer: JsonWriter, value: PredState) {
+        initGson()
+        writer.beginObject()
+        writer.name("bottom").value(value.isBottom)
+        writer.name("preds")
+        gson.toJson(gson.toJsonTree(value.preds), writer)
+        writer.endObject()
+    }
+
+    override fun read(reader: JsonReader): PredState {
+        initGson()
+        var ret: PredState? = null
+        reader.beginObject()
+        check(reader.nextName() == "bottom")
+        if(reader.nextBoolean()) ret = PredState.bottom()
+        check(reader.nextName() == "preds")
+        val preds = gson.fromJson<Set<Expr<BoolType>>>(reader, object: TypeToken<Set<Expr<BoolType>>>(){}.type)
+        if(ret == null) ret = PredState.of(preds)
+        reader.endObject()
+        return ret!!
+    }
+
+    private fun initGson() {
+        if(!this::gson.isInitialized) gson = gsonSupplier()
     }
 
 }

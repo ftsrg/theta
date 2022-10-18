@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.cli
 
+import com.google.gson.reflect.TypeToken
+import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator
@@ -39,6 +41,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.lang.reflect.Type
 
 enum class Backend {
     CEGAR,
@@ -62,28 +65,38 @@ enum class Domain(
             logger: Logger
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
         val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
-        val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>
+        val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
+        val partialOrd: (Solver) -> PartialOrd<out XcfaState<out ExprState>>,
+        val stateType: Type
 ) {
 
         EXPL(
             abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f) },
             itpPrecRefiner = { XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec()) },
-            initPrec = { x, ip -> ip.explPrec(x) }
+            initPrec = { x, ip -> ip.explPrec(x) },
+            partialOrd = { getPartialOrder<ExplState> {s1, s2 -> s1.isLeq(s2)} },
+            stateType = TypeToken.get(ExplState::class.java).type
         ),
         PRED_BOOL(
             abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
-                initPrec = { x, ip -> ip.predPrec(x) }
+            initPrec = { x, ip -> ip.predPrec(x) },
+            partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+            stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_CART(
             abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
-                initPrec = { x, ip -> ip.predPrec(x) }
+            initPrec = { x, ip -> ip.predPrec(x) },
+            partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+            stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_SPLIT(
             abstractor = { a, b, c, d, e, f -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
-                initPrec = { x, ip -> ip.predPrec(x) }
+            initPrec = { x, ip -> ip.predPrec(x) },
+            partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+            stateType = TypeToken.get(PredState::class.java).type
         ),
 }
 

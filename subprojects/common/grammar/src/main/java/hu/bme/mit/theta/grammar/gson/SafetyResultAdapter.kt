@@ -18,7 +18,6 @@ package hu.bme.mit.theta.grammar.gson
 
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
-import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
@@ -31,13 +30,16 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics
 import java.lang.reflect.Type
 import java.util.*
 
-class SafetyResultAdapter<S: State, A: Action>(
+class SafetyResultAdapter(
         val gsonSupplier: () -> Gson,
-        private val argType: Type
-)  : TypeAdapter<SafetyResult<S, A>>() {
+        private val argTypeSupplier: () -> Type,
+        private val traceTypeSupplier: () -> Type,
+)  : TypeAdapter<SafetyResult<out State, out Action>>() {
     private lateinit var gson: Gson
+    private lateinit var argType: Type
+    private lateinit var traceType: Type
 
-    override fun write(writer: JsonWriter, value: SafetyResult<S, A>) {
+    override fun write(writer: JsonWriter, value: SafetyResult<out State, out Action>) {
         initGson()
         writer.beginObject()
         writer.name("arg")
@@ -56,19 +58,20 @@ class SafetyResultAdapter<S: State, A: Action>(
         writer.endObject()
     }
 
-    override fun read(reader: JsonReader): SafetyResult<S, A> {
+    override fun read(reader: JsonReader): SafetyResult<State, Action> {
         initGson()
-        lateinit var arg: ARG<S, A>
+        initTypes()
+        lateinit var arg: ARG<State, Action>
         lateinit var stats: Optional<Statistics>
         var safe: Boolean? = null
-        lateinit var trace: Trace<S, A>
+        lateinit var trace: Trace<State, Action>
         reader.beginObject()
         while(reader.peek() != JsonToken.END_OBJECT) {
             when(reader.nextName()) {
                 "arg" -> arg = gson.fromJson(reader, argType)
                 "stats" -> stats = gson.fromJson(reader, Optional::class.java)
                 "safe" -> safe = reader.nextBoolean()
-                "trace" -> trace = gson.fromJson(reader, object: TypeToken<Trace<S, A>>(){}.type)
+                "trace" -> trace = gson.fromJson(reader, traceType)
             }
         }
         reader.endObject()
@@ -80,5 +83,9 @@ class SafetyResultAdapter<S: State, A: Action>(
 
     private fun initGson() {
         if(!this::gson.isInitialized) gson = gsonSupplier()
+    }
+    private fun initTypes() {
+        if(!this::traceType.isInitialized) traceType = traceTypeSupplier()
+        if(!this::argType.isInitialized) argType = argTypeSupplier()
     }
 }

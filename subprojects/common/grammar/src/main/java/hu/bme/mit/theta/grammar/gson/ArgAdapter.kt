@@ -26,17 +26,21 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ARG
 import java.lang.reflect.Type
 
-class ArgAdapter<S: State, A: Action>(val gsonSupplier: () -> Gson, private val partialOrd: PartialOrd<S>, private val argType: Type)  : TypeAdapter<ARG<S, A>>() {
+class ArgAdapter(val gsonSupplier: () -> Gson, private val partialOrdSupplier: () -> PartialOrd<out State>, private val argTypeSupplier: () -> Type)  : TypeAdapter<ARG<*, *>>() {
     private lateinit var gson: Gson
+    private lateinit var partialOrd: PartialOrd<State>
+    private lateinit var argType: Type
 
-    override fun write(writer: JsonWriter, value: ARG<S, A>) {
+    override fun write(writer: JsonWriter, value: ARG<*, *>) {
         initGson()
         gson.toJson(gson.toJsonTree(ArgAdapterHelper(value)), writer)
     }
 
-    override fun read(reader: JsonReader): ARG<S, A> {
+    override fun read(reader: JsonReader): ARG<*, *> {
         initGson()
-        val argAdapterHelper: ArgAdapterHelper<S, A> = gson.fromJson(reader, argType)
+        if(!this::partialOrd.isInitialized) partialOrd = partialOrdSupplier() as PartialOrd<State>
+        if(!this::argType.isInitialized) argType = argTypeSupplier()
+        val argAdapterHelper: ArgAdapterHelper<State, Action> = gson.fromJson(reader, argType)
         return argAdapterHelper.instantiate(partialOrd)
     }
 

@@ -19,9 +19,11 @@ package hu.bme.mit.theta.xcfa.cli
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -34,11 +36,11 @@ import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import hu.bme.mit.theta.grammar.gson.*
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.getPartialOrder
 import hu.bme.mit.theta.xcfa.getSymbols
 import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
 import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
@@ -48,16 +50,39 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
 
-internal fun getGson(xcfa: XCFA): Gson {
+private fun argAdapterHelper(stateType: java.lang.reflect.Type): java.lang.reflect.Type =
+        TypeToken.getParameterized(
+                TypeToken.get(ArgAdapterHelper::class.java).type,
+                TypeToken.getParameterized(TypeToken.get(XcfaState::class.java).type, stateType).type,
+                TypeToken.get(XcfaAction::class.java).type,
+        ).type
+private fun argHelper(stateType: java.lang.reflect.Type): java.lang.reflect.Type =
+        TypeToken.getParameterized(
+                TypeToken.get(ARG::class.java).type,
+                TypeToken.getParameterized(TypeToken.get(XcfaState::class.java).type, stateType).type,
+                TypeToken.get(XcfaAction::class.java).type,
+        ).type
+
+private fun traceHelper(stateType: java.lang.reflect.Type): java.lang.reflect.Type =
+        TypeToken.getParameterized(
+                TypeToken.get(Trace::class.java).type,
+                TypeToken.getParameterized(TypeToken.get(XcfaState::class.java).type, stateType).type,
+                TypeToken.get(XcfaAction::class.java).type,
+        ).type
+
+
+@JvmOverloads
+internal fun getGson(xcfa: XCFA, domain: ()->Domain = {error("Domain needs to be specified.")} ,solver: ()->Solver = {error("Solver is necessary.")}): Gson {
     val (scope, env) = xcfa.getSymbols()
-    return getGson(scope, env, false)
+    return getGson(scope, env, false, domain, solver)
 }
 
-internal fun getGson() : Gson {
-    return getGson(XcfaScope(SymbolTable()), Env(), true)
+@JvmOverloads
+internal fun getGson(domain: ()->Domain = {error("Domain needs to be specified.")} ,solver: ()->Solver = {error("Solver is necessary.")}) : Gson {
+    return getGson(XcfaScope(SymbolTable()), Env(), true, domain, solver)
 }
 
-private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean) : Gson {
+private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: ()->Domain, solver: ()->Solver) : Gson {
     val gsonBuilder = GsonBuilder()
     lateinit var gson: Gson
     gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, StringTypeAdapter(xcfaLocationAdapter))
@@ -68,12 +93,13 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean) : Gson {
     gsonBuilder.registerTypeHierarchyAdapter(Type::class.java, StringTypeAdapter { TypeWrapper(it).instantiate() })
     gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java, StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
     gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
+    gsonBuilder.registerTypeHierarchyAdapter(PredState::class.java, PredStateAdapter({gson}, scope, env))
     gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
     gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(XcfaAction::class.java, XcfaActionAdapter { gson })
-    gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java, ArgAdapter<XcfaState<ExplState>, XcfaAction>( { gson }, getPartialOrder { s1, s2 -> s1.isLeq(s2) }, object: TypeToken<ArgAdapterHelper<XcfaState<ExplState>, XcfaAction>>(){}.type))
-    gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java, SafetyResultAdapter<XcfaState<ExplState>, XcfaAction>({ gson }, object: TypeToken<ARG<XcfaState<ExplState>, XcfaAction>>(){}.type))
+    gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java, ArgAdapter( { gson }, { domain().partialOrd(solver()) }, { argAdapterHelper(domain().stateType) }))
+    gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java, SafetyResultAdapter({ gson }, {argHelper(domain().stateType)}, {traceHelper(domain().stateType)}))
     gson = gsonBuilder.create()
     return gson
 }
