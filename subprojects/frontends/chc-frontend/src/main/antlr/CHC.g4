@@ -291,6 +291,7 @@ fragment Digit
 fragment Letter
     : 'a'..'z'
     | 'A' .. 'Z'
+    | '_'
     ;
 
 fragment Sym
@@ -304,7 +305,6 @@ fragment Sym
     | '!'
     | '$'
     | '-'
-    | '_'
     | '~'
     | '&'
     | '^'
@@ -482,10 +482,8 @@ PK_Version
     : ':version'
     ;
 
-Name
-    : (Letter|Digit) (Digit | Sym)*
-    | '|' (Letter|Digit) (Digit | Sym)* '|'
-    ;
+Name:
+    (Letter|Digit) (Digit | Sym)*;
 
 UndefinedSymbol:
     Sym (Digit | Sym)*;
@@ -842,7 +840,10 @@ u_pred_atom
 chc_query: ParOpen GRW_Forall ParOpen var_decl+ ParClose ParOpen Arrow chc_tail PS_False ParClose ParClose;
 
 // uninterpreted predicate (i.e., Boolean function)
-u_predicate: Name;
+u_predicate
+    : Name
+    | QuotedSymbol
+    ;
 
 // an SMT-LIB formula over variables, and interpreted functions and predicate
 i_formula: term;
