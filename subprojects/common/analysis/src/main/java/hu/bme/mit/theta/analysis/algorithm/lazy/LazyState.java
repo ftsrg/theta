@@ -83,6 +83,33 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
             return abstrState.toExpr();
         }
 
+        private static final int HASH_SEED = 1389;
+        private volatile int hashCode = 0;
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + concrState.hashCode();
+                result = 31 * result + abstrState.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof NonBottom) {
+                final NonBottom<?, ?> that = (NonBottom<?, ?>) obj;
+                return this.concrState.equals(that.concrState) && this.abstrState.equals(that.abstrState);
+            } else {
+                return false;
+            }
+        }
+
         @Override
         public String toString() {
             return Utils.lispStringBuilder(LazyState.class.getSimpleName()).aligned()
@@ -129,6 +156,32 @@ public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> 
         @Override
         public Expr<BoolType> toExpr() {
             return False();
+        }
+
+        private static final int HASH_SEED = 9418;
+        private volatile int hashCode = 0;
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + state.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof Bottom) {
+                final Bottom<?, ?> that = (Bottom<?, ?>) obj;
+                return this.state.equals(that.state);
+            } else {
+                return false;
+            }
         }
 
         @Override

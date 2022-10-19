@@ -7,6 +7,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -15,6 +17,7 @@ import hu.bme.mit.theta.core.utils.Lens;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,17 +52,21 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
 
     @Override
     public AbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
-        initializeArg(arg, prec);
-        return new CheckMethod(arg, prec).run();
-    }
-
-    private void initializeArg(final ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
-        final Collection<? extends LazyState<FSConcr, FSAbstr>>
-            initStates = analysis.getInitFunc().getInitStates(prec);
-        for (final LazyState<FSConcr, FSAbstr> initState : initStates) {
-            final boolean target = isTarget.test(initState.getConcrState());
-            arg.createInitNode(initState, target);
+        Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting = searchStrategy.createWaitlist();
+        if (arg.getNodes().findAny().isEmpty()) {
+            final Collection<? extends LazyState<FSConcr, FSAbstr>>
+                    initStates = analysis.getInitFunc().getInitStates(prec);
+            for (final LazyState<FSConcr, FSAbstr> initState : initStates) {
+                final boolean target = isTarget.test(initState.getConcrState());
+                arg.createInitNode(initState, target);
+            }
+            waiting.addAll(arg.getInitNodes());
+        } else {
+            Stream<ArgNode<LazyState<FSConcr, FSAbstr>, A>> incompleteNodes = arg.getIncompleteNodes();
+            waiting.addAll(incompleteNodes);
         }
+        ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<>(arg, prec));
+        return new CheckMethod(arg, waiting, prec).run();
     }
 
     private final class CheckMethod {
@@ -69,13 +76,14 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
         final Partition<ArgNode<LazyState<FSConcr, FSAbstr>, A>, ?> passed;
         final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting;
 
-
-        public CheckMethod(final ARG<LazyState<FSConcr, FSAbstr>, A> arg, final P prec) {
+        public CheckMethod(final ARG<LazyState<FSConcr, FSAbstr>, A> arg,
+                           final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting,
+                           final P prec) {
             this.arg = arg;
             this.prec = prec;
             stats = LazyStatistics.builder(arg);
             passed = Partition.of(n -> lazyStrategy.getProjection().apply(n.getState()));
-            waiting = searchStrategy.createWaitlist();
+            this.waiting = waiting;
         }
 
         public AbstractorResult run() {
@@ -85,7 +93,6 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                 return stop(AbstractorResult.unsafe());
             }
 
-            waiting.addAll(arg.getInitNodes());
             while (!waiting.isEmpty()) {
                 final ArgNode<LazyState<FSConcr, FSAbstr>, A> v = waiting.remove();
                 assert v.isFeasible();
@@ -97,6 +104,7 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                         return stop(AbstractorResult.unsafe());
                     }
                 }
+                ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<>(arg, prec));
             }
             return stop(AbstractorResult.safe());
         }
@@ -148,23 +156,27 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
                         succStates = analysis.getTransFunc().getSuccStates(state, action, prec);
 
                 for (final LazyState<FSConcr, FSAbstr> succState : succStates) {
-                    if (lazyStrategy.inconsistentState(concrStateLens.get(succState))) {
-                        final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
-                                uncoveredNodes = new ArrayList<>();
-                        lazyStrategy.disable(node, action, succState, uncoveredNodes);
-                        waiting.addAll(uncoveredNodes);
-                    } else {
-                        final boolean target = isTarget.test(succState.getConcrState());
-                        final ArgNode<LazyState<FSConcr, FSAbstr>, A>
-                                succNode = arg.createSuccNode(node, action, succState, target);
-                        if (target) {
-                            stats.stopExpanding();
-                            return AbstractorResult.unsafe();
+                    if (node.getSuccNodes().noneMatch(n -> n.getInEdge().get().getAction().equals(action)
+                            && n.getState().equals(succState))) {
+                        if (lazyStrategy.inconsistentState(concrStateLens.get(succState))) {
+                            final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
+                                    uncoveredNodes = new ArrayList<>();
+                            lazyStrategy.disable(node, action, succState, uncoveredNodes);
+                            waiting.addAll(uncoveredNodes);
+                        } else {
+                            final boolean target = isTarget.test(succState.getConcrState());
+                            final ArgNode<LazyState<FSConcr, FSAbstr>, A>
+                                    succNode = arg.createSuccNode(node, action, succState, target);
+                            if (target) {
+                                stats.stopExpanding();
+                                return AbstractorResult.unsafe();
+                            }
+                            waiting.add(succNode);
                         }
-                        waiting.add(succNode);
                     }
                 }
             }
+            node.expanded = true;
             passed.add(node);
             stats.stopExpanding();
             return AbstractorResult.safe();

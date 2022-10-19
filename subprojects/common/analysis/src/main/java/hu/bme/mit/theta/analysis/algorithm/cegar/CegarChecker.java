@@ -82,7 +82,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
 			if (abstractorResult.isUnsafe()) {
-				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
+				// ArgCexCheckHandler.instance.checkAndStop(arg, prec);
 
 				P lastPrec = prec;
 				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");

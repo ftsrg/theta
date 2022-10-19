@@ -47,7 +47,8 @@ public final class ArgNode<S extends State, A extends Action> {
 	Optional<ArgNode<S, A>> coveringNode; // Set by ARG
 	final Collection<ArgNode<S, A>> coveredNodes;
 
-	boolean expanded; // Set by ArgBuilder
+	//TODO remove public modifier
+	public boolean expanded; // Set by ArgBuilder
 
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth, final boolean target) {
 		this.arg = arg;

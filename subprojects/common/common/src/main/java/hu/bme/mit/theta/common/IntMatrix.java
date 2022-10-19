@@ -116,16 +116,30 @@ public final class IntMatrix {
 
 	////
 
+	private static final int HASH_SEED = 6978;
+	private volatile int hashCode = 0;
+
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + Arrays.hashCode(matrix);
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof IntMatrix) {
+			final IntMatrix that = (IntMatrix) obj;
+			return Arrays.equals(this.matrix, that.matrix);
+		} else {
+			return false;
+		}
 	}
 
 	@Override

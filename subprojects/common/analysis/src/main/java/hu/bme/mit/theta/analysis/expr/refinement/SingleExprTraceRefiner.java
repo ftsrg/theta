@@ -67,7 +67,24 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		assert !arg.isSafe() : "ARG must be unsafe";
 
 		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
-		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
+		final ArgTrace<S, A> cexToConcretize;
+		switch (pruneStrategy) {
+			case LAZY:
+				if (optionalNewCex.isPresent()) {
+					cexToConcretize = optionalNewCex.get();
+				} else {
+					logger.write(Level.SUBSTEP, "|  |  No new CEX, pruning whole ARG");
+					arg.pruneAll();
+					return RefinerResult.spurious(prec);
+				}
+				break;
+			case FULL:
+				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
+				cexToConcretize = optionalNewCex.get();
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported pruning strategy");
+		}
 
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());

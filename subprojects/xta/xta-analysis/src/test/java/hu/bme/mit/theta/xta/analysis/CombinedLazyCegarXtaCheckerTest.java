@@ -87,7 +87,9 @@ public final class CombinedLazyCegarXtaCheckerTest {
 			// Extremely long
 			// new Object[]{"/model/bangOlufsen.xta", "/property/bangOlufsen.prop", null, null, true},
 			new Object[]{"/model/fischer-2-32-64.xta", "/property/fischer-2-32-64.prop", null, null, true},
-			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, null, true}
+			new Object[]{"/model/mytest.xta", "/property/mytest.prop", null, null, true},
+			new Object[]{"/model/lazy-pruning-example.xta", "/property/p-errorloc.prop", null, null, true},
+			new Object[]{"/model/lazy-pruning-example-2.xta", "/property/p-errorloc.prop", null, null, true}
 		);
 	}
 

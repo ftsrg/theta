@@ -572,17 +572,31 @@ final class DBM {
 
 	////
 
-//	@Override
-//	public int hashCode() {
-//		// TODO Auto-generated method stub
-//		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-//	}
-//
-//	@Override
-//	public boolean equals(final Object obj) {
-//		// TODO Auto-generated method stub
-//		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-//	}
+	private static final int HASH_SEED = 7851;
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + dbm.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof DBM) {
+			final DBM that = (DBM) obj;
+			return this.dbm.equals(that.dbm);
+		} else {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {
