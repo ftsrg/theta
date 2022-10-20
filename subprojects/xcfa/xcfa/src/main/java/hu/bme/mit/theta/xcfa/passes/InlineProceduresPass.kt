@@ -18,16 +18,14 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
-import kotlin.collections.ArrayList
 
 /**
  * Inlines all procedure invocations in the current procedure.
  * Requires the ProcedureBuilder to be `deterministic`.
- * Sets the `inlined` flag on the ProcedureBuilder.
+ * Sets the `inlined` flag on the ProcedureBuilder if successful.
  */
 class InlineProceduresPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {

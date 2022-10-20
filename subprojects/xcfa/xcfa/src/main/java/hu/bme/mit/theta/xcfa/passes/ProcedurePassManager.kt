@@ -19,13 +19,19 @@ package hu.bme.mit.theta.xcfa.passes
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
 class CPasses : ProcedurePassManager(listOf(
+        // formatting
         AnnotateVarsPass(),
         NormalizePass(),
         DeterministicPass(),
+        // removing redundant elements
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
+        // handling intrinsics
         ErrorLocationPass(),
+        SvCompIntrinsicsPass(),
+        // trying to inline procedures
         InlineProceduresPass(),
+        // handling remaining function calls
         NondetFunctionPass()
 ))
 
