@@ -29,6 +29,7 @@ class CPasses : ProcedurePassManager(listOf(
         // handling intrinsics
         ErrorLocationPass(),
         SvCompIntrinsicsPass(),
+        FpFunctionsToExprsPass(),
         // trying to inline procedures
         InlineProceduresPass(),
         // handling remaining function calls
