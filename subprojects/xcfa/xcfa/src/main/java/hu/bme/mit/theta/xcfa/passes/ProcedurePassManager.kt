@@ -28,8 +28,10 @@ class CPasses : ProcedurePassManager(listOf(
         UnusedLocRemovalPass(),
         // handling intrinsics
         ErrorLocationPass(),
+        FinalLocationPass(),
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(),
+        PthreadFunctionsPass(),
         // trying to inline procedures
         InlineProceduresPass(),
         // handling remaining function calls
