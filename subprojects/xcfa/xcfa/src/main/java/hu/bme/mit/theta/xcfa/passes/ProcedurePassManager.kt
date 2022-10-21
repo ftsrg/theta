@@ -34,6 +34,8 @@ class CPasses : ProcedurePassManager(listOf(
         PthreadFunctionsPass(),
         // trying to inline procedures
         InlineProceduresPass(),
+        EliminateSelfLoops(),
+        LbePass(),
         // handling remaining function calls
         NondetFunctionPass()
 ))
