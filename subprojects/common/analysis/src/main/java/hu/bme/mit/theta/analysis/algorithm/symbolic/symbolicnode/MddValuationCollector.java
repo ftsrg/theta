@@ -1,9 +1,11 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -18,10 +20,10 @@ import java.util.Stack;
 public class MddValuationCollector {
 
     private static class Assignment{
-        final ConstDecl<?> decl;
+        final VarDecl<?> decl;
         final LitExpr<?> value;
 
-        private Assignment(ConstDecl<?> decl, LitExpr<?> value) {
+        private Assignment(VarDecl<?> decl, LitExpr<?> value) {
             this.decl = decl;
             this.value = value;
         }
@@ -32,35 +34,36 @@ public class MddValuationCollector {
      * @param interpretation intrerpretation of the node
      * @return the set of vectors represented by the node
      */
-    public static Set<Valuation> collect(MddSymbolicNodeInterpretation interpretation){
+    public static Set<Valuation> collect(MddNode node){
         final Stack<Assignment> assignments = new Stack<>();
         final Set<Valuation> valuations = Containers.createSet();
 
-        try(var cursor = interpretation.cursor()){
-            collect(interpretation.getNode(), cursor, assignments, valuations);
+        try(var cursor = node.cursor()){
+            collect(node, cursor, assignments, valuations);
         }
 
         return valuations;
     }
 
-    public static void collect(MddSymbolicNode node, RecursiveCursor<? extends MddSymbolicNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations){
-        final MddVariable variable = node.getSymbolicRepresentation().second;
-
+    public static void collect(MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations){
         if(node.isTerminal()){
             valuations.add(toValuation(assignments));
         } else {
-            if(node.getCacheView().defaultValue() != null){
+            if(node.defaultValue() != null){
                 cursor.moveNext();
 
                 try(var valueCursor = cursor.valueCursor()){
-                    collect(node.getCacheView().defaultValue(), valueCursor, assignments, valuations);
+                    collect(node.defaultValue(), valueCursor, assignments, valuations);
                 }
 
             } else {
                 while (cursor.moveNext()) {
                     assert cursor.value() != null;
 
-                    assignments.push(new Assignment(variable.getTraceInfo(ConstDecl.class), LitExprConverter.toLitExpr(cursor.key(), variable.getTraceInfo(ConstDecl.class).getType())));
+                    if(node.getRepresentation() instanceof MddExpressionRepresentation){
+                        final MddExpressionRepresentation representation = (MddExpressionRepresentation) node.getRepresentation();
+                        assignments.push(new Assignment(representation.getDecl(), LitExprConverter.toLitExpr(cursor.key(), representation.getDecl().getType())));
+                    }
 
                     try(var valueCursor = cursor.valueCursor()){
                         collect(cursor.value(), valueCursor, assignments, valuations);
