@@ -6,7 +6,6 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;

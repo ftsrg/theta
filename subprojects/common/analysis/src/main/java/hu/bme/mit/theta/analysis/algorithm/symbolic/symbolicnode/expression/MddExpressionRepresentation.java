@@ -59,6 +59,18 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return representation;
     }
 
+    public Expr<BoolType> getExpr() {
+        return expr;
+    }
+
+    public VarDecl<?> getDecl() {
+        return decl;
+    }
+
+    public MddVariable getMddVariable() {
+        return mddVariable;
+    }
+
     private Traverser getLazyTraverser() {
         if (lazyTraverser == null) lazyTraverser = new Traverser(this, solverSupplier);
         return lazyTraverser;

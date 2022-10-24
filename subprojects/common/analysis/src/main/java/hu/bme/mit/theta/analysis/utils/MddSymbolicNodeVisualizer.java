@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.utils;
 
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddSymbolicNode;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
