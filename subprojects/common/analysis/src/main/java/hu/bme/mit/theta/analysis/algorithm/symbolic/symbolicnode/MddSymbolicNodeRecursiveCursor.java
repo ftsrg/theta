@@ -2,18 +2,18 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode;
 
 import com.google.common.base.Preconditions;
 
-import java.io.IOException;
-
 public class MddSymbolicNodeRecursiveCursor implements RecursiveCursor<MddSymbolicNode> {
 
-    private final MddSymbolicNodeRecursiveCursor parent;
     private final MddSymbolicNodeTraverser traverser;
+
+    private final MddSymbolicNodeRecursiveCursor parent;
     private boolean blocked = false;
     private boolean closed = false;
 
     private int index;
     private int key;
     private MddSymbolicNode value;
+    private boolean initialized = false;
 
     public MddSymbolicNodeRecursiveCursor(final MddSymbolicNodeRecursiveCursor parent,
                                           final MddSymbolicNodeTraverser traverser) {
@@ -33,6 +33,7 @@ public class MddSymbolicNodeRecursiveCursor implements RecursiveCursor<MddSymbol
         if(node.getExplicitRepresentation().getCacheView().containsKey(key) || !node.isComplete() && traverser.queryEdge(key)){
             this.key = key;
             this.value = node.getExplicitRepresentation().getCacheView().get(key);
+            this.initialized = true;
             return true;
         }
         return false;
@@ -48,19 +49,19 @@ public class MddSymbolicNodeRecursiveCursor implements RecursiveCursor<MddSymbol
 
     @Override
     public int key() {
-        if(index < 0) throw new IllegalStateException("Cursor is not initialized");
+        Preconditions.checkState(initialized, "Cursor is not initialized");
         return key;
     }
 
     @Override
     public MddSymbolicNode value() {
-        if(index < 0) throw new IllegalStateException("Cursor is not initialized");
+        Preconditions.checkState(initialized, "Cursor is not initialized");
         return value;
     }
 
     @Override
     public boolean moveNext() {
-        Preconditions.checkState(!blocked, "Cursor can't be moved until its children are disposed of");
+        Preconditions.checkState(!blocked, "Cursor can't be moved until its children are not closed");
         Preconditions.checkState(!closed, "Cursor can't be moved if it was closed");
 
         var node = traverser.getCurrentNode();
@@ -68,6 +69,7 @@ public class MddSymbolicNodeRecursiveCursor implements RecursiveCursor<MddSymbol
             index++;
             key = node.getExplicitRepresentation().getEdge(index);
             value = node.getExplicitRepresentation().getCacheView().get(key);
+            initialized = true;
             return true;
         }
         else if(!node.isComplete()) {
@@ -76,6 +78,7 @@ public class MddSymbolicNodeRecursiveCursor implements RecursiveCursor<MddSymbol
                 index++;
                 key = queryResult.getKey();
                 value = node.getExplicitRepresentation().getCacheView().get(key);
+                initialized = true;
                 return true;
             }
         }

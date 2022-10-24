@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.*;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -18,7 +20,7 @@ import java.util.function.Supplier;
  */
 public class ExprVariable {
 
-    public static RecursiveIntObjMapView<MddSymbolicNode> getNodeInterpreter(MddSymbolicNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
+    public static RecursiveIntObjMapView<MddSymbolicNode> getNodeInterpreter(MddNode node, MddVariable variable, Supplier<Solver> solverSupplier) {
         if (!node.isOn(variable)) {
             if (!node.isBelow(variable)) {
                 throw new AssertionError();
@@ -26,7 +28,7 @@ public class ExprVariable {
 
             IntObjMapView<MddSymbolicNode> nodeInterpreter = IntObjMapView.empty(node);
             if (variable.isBounded()) {
-                nodeInterpreter = ((IntObjMapView)nodeInterpreter).trim(IntSetView.range(0, variable.getDomainSize()));
+                nodeInterpreter = nodeInterpreter.trim(IntSetView.range(0, variable.getDomainSize()));
             }
             return new DefaultRecursiveIntObjMapViewImpl<>(nodeInterpreter);
         }

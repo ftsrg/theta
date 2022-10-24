@@ -5,12 +5,16 @@ import com.koloboke.collect.map.hash.HashIntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.DdLevel;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.common.GrowingIntArray;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Represents a decision that is encoded in a symbolic representation.
