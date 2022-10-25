@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 
 import java.util.*;
 
@@ -148,7 +149,7 @@ public final class XtaProcess {
             } else if (!dataExpr && clockExpr) {
                 guard = Guard.clockGuard(expr);
             } else {
-                throw new UnsupportedOperationException();
+                throw new MixedDataTimeNotSupportedException(expr.toString());
             }
             builder.add(guard);
         }

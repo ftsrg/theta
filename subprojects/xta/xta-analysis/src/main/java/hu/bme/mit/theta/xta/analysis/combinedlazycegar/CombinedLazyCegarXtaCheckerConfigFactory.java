@@ -47,6 +47,10 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         this(system, NullLogger.getInstance(), Z3SolverFactory.getInstance());
     }
 
+    public static CombinedLazyCegarXtaCheckerConfigFactory create(final XtaSystem system, final Logger logger, final SolverFactory solverFactory) {
+        return new CombinedLazyCegarXtaCheckerConfigFactory(system, logger, solverFactory);
+    }
+
     public static CombinedLazyCegarXtaCheckerConfigFactory create(final XtaSystem system) {
         return new CombinedLazyCegarXtaCheckerConfigFactory(system);
     }

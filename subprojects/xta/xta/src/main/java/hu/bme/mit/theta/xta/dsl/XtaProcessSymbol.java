@@ -73,7 +73,9 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		transitions = context.fProcessBody.fTransitions.fTransitions.stream().map(t -> new XtaTransition(this, t))
 				.collect(toList());
 
-		declareAllParameters(context.fParameterList.fParameterDecls);
+		if (context.fParameterList != null) {
+			declareAllParameters(context.fParameterList.fParameterDecls);
+		}
 		declareAllTypes(context.fProcessBody.fTypeDecls);
 		declareAllVariables(context.fProcessBody.fVariableDecls);
 		declareAllFunctions(context.fProcessBody.fFunctionDecls);

@@ -32,14 +32,21 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
+import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfigFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import hu.bme.mit.theta.xta.utils.CTLOperatorNotSupportedException;
+import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 
 public final class XtaCli {
 
@@ -57,20 +64,20 @@ public final class XtaCli {
 	@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
 	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
 
-	@Parameter(names = {"--discreteabstr", "-da"}, description = "Abstract domain for discrete variables", required = true)
-	DataStrategy2.AbstrDom abstrDataDom;
+	@Parameter(names = {"--discreteabstr", "-da"}, description = "Abstract domain for discrete variables", required = false)
+	DataStrategy2.AbstrDom abstrDataDom = DataStrategy2.AbstrDom.EXPL;
 
-	@Parameter(names = {"--discreteitp", "-di"}, description = "Interpolation strategy for discrete variables", required = true)
-	DataStrategy2.ItpStrategy dataItpStrategy;
+	@Parameter(names = {"--discreteitp", "-di"}, description = "Interpolation strategy for discrete variables", required = false)
+	DataStrategy2.ItpStrategy dataItpStrategy = DataStrategy2.ItpStrategy.BIN_BW;
 
 	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
 	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
 
-	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = true)
-	ClockStrategy clockStrategy;
+	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
+	ClockStrategy clockStrategy = ClockStrategy.BWITP;
 
-	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = true)
-	SearchStrategy searchStrategy;
+	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = false)
+	SearchStrategy searchStrategy = SearchStrategy.BFS;
 
 	@Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
@@ -83,6 +90,9 @@ public final class XtaCli {
 
 	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
 	boolean stacktrace = false;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.MAINSTEP;
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
@@ -122,20 +132,47 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem system = loadModel();
-			final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
-					system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
-					clockStrategy, searchStrategy, exprMeetStrategy
-			);
-			run(abstractor);
+			switch (algorithm) {
+				case LAZY -> runLazy(system);
+				case EXPERIMENTAL_EAGERLAZY -> runCombined(system);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 			System.exit(1);
 		}
 	}
 
-	private <S extends LazyState<?, ?>> void run(final LazyXtaAbstractorConfig<?, ?, ?> abstractor) {
-		abstractor.check();
-		System.out.println("(SafetyResult Safe)");
+	private void runLazy(final XtaSystem system) {
+		final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
+			system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
+			clockStrategy, searchStrategy, exprMeetStrategy
+		);
+		final var result = abstractor.check();
+		resultPrinter(result.isSafe(), result.isUnsafe(), system);
+	}
+
+	private void runCombined(final XtaSystem system) {
+		final var config = CombinedLazyCegarXtaCheckerConfigFactory.create(system, NullLogger.getInstance(), Z3SolverFactory.getInstance()).build();
+		final var result = config.check();
+		resultPrinter(result.isSafe(), result.isUnsafe(), system);
+	}
+
+	private void resultPrinter(final boolean isSafe, final boolean isUnsafe, final XtaSystem system) {
+		if (isSafe) {
+			switch (system.getPropertyKind()) {
+				case AG -> System.out.println("(SafetyResult Safe)");
+				case EF -> System.out.println("(SafetyResult Unsafe)");
+				default -> throw new UnsupportedOperationException();
+			}
+		} else if (isUnsafe) {
+			switch (system.getPropertyKind()) {
+				case AG -> System.out.println("(SafetyResult Unsafe)");
+				case EF -> System.out.println("(SafetyResult Safe)");
+				default -> throw new UnsupportedOperationException();
+			}
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
@@ -152,9 +189,17 @@ public final class XtaCli {
 			try (InputStream inputStream = new FileInputStream(model)) {
 				return XtaDslManager.createSystem(inputStream);
 			}
+		} catch (CTLOperatorNotSupportedException ex) {
+			ex.printStackTrace();
+			System.exit(11);
+		} catch (MixedDataTimeNotSupportedException ex) {
+			ex.printStackTrace();
+			System.exit(12);
 		} catch (Exception ex) {
-			throw new Exception("Could not parse XTA: " + ex.getMessage(), ex);
+			ex.printStackTrace();
+			System.exit(10);
 		}
+		throw new AssertionError();
 	}
 
 	private void printResult(final SafetyResult<?, ?> result) {

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
@@ -38,6 +39,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.Sync;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.GuardContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SelectContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TransitionContext;
@@ -49,7 +52,7 @@ final class XtaTransition implements Scope {
 	private final String sourceState;
 	private final String targetState;
 	private final List<XtaIteratorSymbol> selections;
-	private final Optional<XtaExpression> guard;
+	private final List<XtaExpression> guards;
 	private final Optional<XtaSync> sync;
 	private final List<XtaUpdate> updates;
 
@@ -62,19 +65,25 @@ final class XtaTransition implements Scope {
 		targetState = context.fTargetId.getText();
 
 		selections = new ArrayList<>();
-		guard = extractGuard(context);
+		guards = new ArrayList<>();
 		sync = extractSync(context);
 		updates = extractUpdates(context);
 
 		declareAllSelections(context.fTransitionBody.fSelect);
+		extractGuards(context.fTransitionBody.fGuard);
 	}
 
 	private Optional<XtaSync> extractSync(final TransitionContext context) {
 		return Optional.ofNullable(context.fTransitionBody.fSync).map(s -> new XtaSync(this, s));
 	}
 
-	private Optional<XtaExpression> extractGuard(final TransitionContext context) {
-		return Optional.ofNullable(context.fTransitionBody.fGuard).map(g -> new XtaExpression(this, g.fExpression));
+	private void extractGuards(final GuardContext context) {
+		if (context != null) {
+			if (context.fExpressions != null) {
+				context.fExpressions.forEach(e -> guards.add(new XtaExpression(this, e)));
+
+			}
+		}
 	}
 
 	private List<XtaUpdate> extractUpdates(final TransitionContext context) {
@@ -110,15 +119,12 @@ final class XtaTransition implements Scope {
 		final Loc source = (Loc) env.eval(sourceSymbol);
 		final Loc target = (Loc) env.eval(targetSymbol);
 
-		final Collection<Expr<BoolType>> guards;
-		if (guard.isPresent()) {
-			final Expr<?> expr = guard.get().instantiate(env);
+		final Collection<Expr<BoolType>> guards = this.guards.stream().flatMap(guard -> {
+			final Expr<?> expr = guard.instantiate(env);
 			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
 			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
-			guards = conjuncts.stream().map(e -> e).collect(toList());
-		} else {
-			guards = emptySet();
-		}
+			return conjuncts.stream();
+		}).collect(Collectors.toSet());
 
 		final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env)).collect(toList());
 		final Optional<Sync> label = sync.map(s -> s.instantiate(env));

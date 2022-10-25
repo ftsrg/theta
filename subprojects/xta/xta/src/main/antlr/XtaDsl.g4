@@ -53,7 +53,7 @@ functionDecl
 	;
 
 processDecl
-	:	PROCESS	fId=ID fParameterList=parameterList LBRAC fProcessBody=processBody RBRAC
+	:	PROCESS	fId=ID fParameterList=parameterList? LBRAC fProcessBody=processBody RBRAC
 	;
 
 processBody
@@ -105,7 +105,7 @@ select
 	;
 
 guard
-	:	GUARD fExpression=expression SEMICOLON
+	:	GUARD fExpressions+=expression (COMMA fExpressions+=expression)* SEMICOLON
 	;
 
 sync:	SYNC fExpression=expression (fEmit=EXCL | fRecv=QUEST) SEMICOLON
@@ -738,7 +738,7 @@ structSelectOp
 
 quantifier
 
-    : AG | EF
+    : AG | EF | AF | EG
     ;
 
 FORALL
@@ -971,6 +971,13 @@ RARROW
 
 AG
     : 'A[]'
+    ;
+
+AF
+    : 'A<>'
+    ;
+EG
+    : 'E[]'
     ;
 EF
     : 'E<>'

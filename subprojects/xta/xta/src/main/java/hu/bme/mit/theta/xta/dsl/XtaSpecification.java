@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
+import hu.bme.mit.theta.xta.utils.CTLOperatorNotSupportedException;
 import org.antlr.v4.runtime.Token;
 
 import java.util.*;
@@ -127,11 +128,13 @@ final class XtaSpecification implements Scope {
 
 			if(context.fProperty.q.children.get(0).toString().equals("A[]")) {
 				prop = BoolExprs.Not(prop);
+				system.setProp(prop, XtaSystem.PropertyKind.AG);
+			} else if (context.fProperty.q.children.get(0).toString().equals("E<>")) {
+				system.setProp(prop, XtaSystem.PropertyKind.EF);
+			} else {
+				throw new CTLOperatorNotSupportedException(context.fProperty.q.children.get(0).toString());
 			}
 			//if(context.fProperty.neg != null) prop = BoolExprs.Not(prop);
-
-
-			system.setProp(prop);
 		}
 		return system;
 	}
@@ -276,7 +279,6 @@ final class XtaSpecification implements Scope {
 	public Optional<Symbol> resolve(final String name) {
 		return symbolTable.get(name);
 	}
-
 
 
 	////
