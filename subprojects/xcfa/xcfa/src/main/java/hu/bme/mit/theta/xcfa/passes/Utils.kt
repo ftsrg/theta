@@ -24,8 +24,9 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 
 fun label2edge(edge: XcfaEdge, label: XcfaLabel) {
@@ -92,7 +93,13 @@ fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt =
 
 fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> =
         if (this is RefExpr<T>) (decl as VarDecl<T>).changeVars(varLut).ref
-        else this.withOps(this.ops.map { it.changeVars(varLut) })
+        else {
+            val ret = this.withOps(this.ops.map { it.changeVars(varLut) })
+            if(FrontendMetadata.getMetadataValue(this, "cType").isPresent) {
+                FrontendMetadata.create(ret, "cType", CComplexType.getType(this))
+            }
+            ret
+        }
 
 fun <T : Type> VarDecl<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): VarDecl<T> =
         (varLut[this] ?: this) as VarDecl<T>

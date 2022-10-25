@@ -16,31 +16,24 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.frontend.FrontendMetadata
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 /**
- * Annotate each variable with its scope (procedure)
- * Sets the `annotated` flag on the ProcedureBuilder
+ * Remove unused variables from the program.
+ * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
  */
-class AnnotateVarsPass : ProcedurePass {
+class UnusedVarPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val varLut = LinkedHashMap<VarDecl<*>, VarDecl<*>>()
-        builder.getVars().forEach {
-            val newvar = Var(builder.name + "::" + it.name, it.type)
-            varLut[it] = newvar
-            FrontendMetadata.create(newvar.ref, "cType", CComplexType.getType(it.ref))
-        }
-        builder.changeVars(varLut)
+        checkNotNull(builder.metaData["deterministic"])
 
-        for (edge in ArrayList(builder.getEdges())) {
-            builder.removeEdge(edge)
-            builder.addEdge(edge.withLabel(edge.label.changeVars(varLut)))
-        }
-        builder.metaData["annotated"] = Unit
+        val usedVars = LinkedHashSet<VarDecl<*>>()
+        builder.getEdges().forEach { usedVars.addAll(it.label.collectVars()) }
+
+        val list = builder.getVars().filter { !usedVars.contains(it) }.toList()
+        list.forEach { builder.removeVar(it) }
+
         return builder
     }
 }

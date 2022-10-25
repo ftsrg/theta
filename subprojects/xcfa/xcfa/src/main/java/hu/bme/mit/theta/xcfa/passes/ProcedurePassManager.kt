@@ -26,6 +26,9 @@ class CPasses : ProcedurePassManager(listOf(
         // removing redundant elements
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
+        // optimizing
+        SimplifyExprsPass(),
+        UnusedVarPass(),
         // handling intrinsics
         ErrorLocationPass(),
         FinalLocationPass(),
@@ -34,10 +37,12 @@ class CPasses : ProcedurePassManager(listOf(
         PthreadFunctionsPass(),
         // trying to inline procedures
         InlineProceduresPass(),
+        RemoveDeadEnds(),
         EliminateSelfLoops(),
         LbePass(),
         // handling remaining function calls
-        NondetFunctionPass()
+        NondetFunctionPass(),
+        HavocPromotionAndRange(),
 ))
 
 class LitmusPasses : ProcedurePassManager(emptyList())

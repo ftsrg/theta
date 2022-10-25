@@ -19,7 +19,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import java.util.Optional
+import java.util.*
 
 class XcfaBuilder @JvmOverloads constructor(
         var name: String,
@@ -114,6 +114,11 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
     fun addVar(toAdd: VarDecl<*>) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         vars.add(toAdd)
+    }
+
+    fun removeVar(toRemove: VarDecl<*>) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
+        vars.remove(toRemove)
     }
 
     fun createErrorLoc() {

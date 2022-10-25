@@ -16,14 +16,16 @@
 
 package hu.bme.mit.theta.xcfa
 
+import com.google.common.collect.Sets
 import hu.bme.mit.theta.common.dsl.Env
-import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> = vars.map { it.wrappedVar }.union(procedures.map { it.vars }.flatten())
@@ -37,6 +39,17 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when(this) {
     is NondetLabel -> labels.map { it.collectAssumes() }.flatten()
     is SequenceLabel -> labels.map { it.collectAssumes() }.flatten()
     else -> setOf()
+}
+fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when(this) {
+    is StmtLabel -> StmtUtils.getVars(stmt)
+    is NondetLabel -> labels.map { it.collectVars() }.flatten()
+    is SequenceLabel -> labels.map { it.collectVars() }.flatten()
+    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
+    is JoinLabel -> ExprUtils.getVars(pid)
+    is ReadLabel -> setOf(global, local)
+    is StartLabel ->  Sets.union(params.map { ExprUtils.getVars(it) }.flatten().toSet(), setOf(pidVar))
+    is WriteLabel -> setOf(global, local)
+    else -> emptySet()
 }
 
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {

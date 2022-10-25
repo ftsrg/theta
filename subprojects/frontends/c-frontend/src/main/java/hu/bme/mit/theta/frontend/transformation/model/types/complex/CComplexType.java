@@ -132,7 +132,7 @@ public abstract class CComplexType {
 			return (CComplexType) cTypeOptional.get();
 		} else if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
 			return ((CSimpleType) cTypeOptional.get()).getActualType();
-		} else throw new RuntimeException("Type not known!");
+		} else throw new RuntimeException("Type not known for expression: " + expr);
 	}
 
 
