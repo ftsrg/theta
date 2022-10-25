@@ -67,8 +67,8 @@ public class ExprNodeTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-//        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
-//        System.out.println(valuations);
+        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
+        System.out.println(valuations);
 
         final Graph graph = new MddNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
         try {
