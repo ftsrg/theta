@@ -24,11 +24,12 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaSystem;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
-public final class XtaAnalysis<S extends State, P extends Prec> implements Analysis<XtaState<S>, XtaAction, P> {
+public final class XtaAnalysis<S extends State, P extends Prec> implements Analysis<XtaState<S>, XtaAction, XtaPrec<P>> {
 	private final PartialOrd<XtaState<S>> partialOrd;
-	private final InitFunc<XtaState<S>, P> initFunc;
-	private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
+	private final InitFunc<XtaState<S>, XtaPrec<P>> initFunc;
+	private final TransFunc<XtaState<S>, XtaAction, XtaPrec<P>> transFunc;
 
 	private XtaAnalysis(final XtaSystem system, final Analysis<S, ? super XtaAction, ? super P> analysis) {
 		checkNotNull(system);
@@ -49,12 +50,12 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements Analy
 	}
 
 	@Override
-	public InitFunc<XtaState<S>, P> getInitFunc() {
+	public InitFunc<XtaState<S>, XtaPrec<P>> getInitFunc() {
 		return initFunc;
 	}
 
 	@Override
-	public TransFunc<XtaState<S>, XtaAction, P> getTransFunc() {
+	public TransFunc<XtaState<S>, XtaAction, XtaPrec<P>> getTransFunc() {
 		return transFunc;
 	}
 

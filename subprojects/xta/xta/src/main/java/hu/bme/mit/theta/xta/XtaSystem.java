@@ -124,6 +124,9 @@ public final class XtaSystem {
 		//Edges to ErrorLocations from COMMITTED locations
 
 		for (XtaProcess proc: processes) {
+			///////////////////////////////
+			proc.createActiveClockMap();
+			//////////////////////////
 			if (!proc.getName().equals("ErrorProc")) {
 				Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
 				for (Loc loc:proc.getLocs() ) {

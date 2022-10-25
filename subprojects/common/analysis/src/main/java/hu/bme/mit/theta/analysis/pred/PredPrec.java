@@ -125,4 +125,18 @@ public final class PredPrec implements Prec {
 	public Collection<VarDecl<?>> getUsedVars() {
 		return predToNegMap.keySet().stream().map(ExprUtils::getVars).reduce((vars1, vars2) -> Streams.concat(vars1.stream(), vars2.stream()).collect(Collectors.toSet())).orElse(Set.of());
 	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(this == other){
+			return this;
+		}
+		if(other instanceof PredPrec other1){
+
+			return join(other1);
+		}
+		else{
+			throw new IllegalArgumentException();
+		}
+	}
 }

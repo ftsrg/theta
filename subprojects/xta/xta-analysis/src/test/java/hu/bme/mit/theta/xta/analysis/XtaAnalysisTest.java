@@ -20,7 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xta.XtaProcess;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -72,16 +77,31 @@ public final class XtaAnalysisTest {
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
 		final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-		final Analysis<XtaState<UnitState>, XtaAction, UnitPrec> analysis = XtaAnalysis.create(system,
+		final Analysis<XtaState<UnitState>, XtaAction, XtaPrec<UnitPrec>> analysis = XtaAnalysis.create(system,
 				UnitAnalysis.getInstance());
-		final ArgBuilder<XtaState<UnitState>, XtaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
+		final ArgBuilder<XtaState<UnitState>, XtaAction, XtaPrec<UnitPrec>> argBuilder = ArgBuilder.create(lts, analysis,
 				s -> false);
 
-		final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(argBuilder)
+		final Abstractor<XtaState<UnitState>, XtaAction, XtaPrec<UnitPrec>> abstractor = BasicAbstractor.builder(argBuilder)
 				.projection(s -> s.getLocs()).build();
 
 		final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
-		abstractor.check(arg, UnitPrec.getInstance());
+		abstractor.check(arg, new XtaPrec<UnitPrec>() {
+			@Override
+			public UnitPrec getPrec(Collection<XtaProcess.Loc> loc) {
+				return UnitPrec.getInstance();
+			}
+
+			@Override
+			public Collection<VarDecl<?>> getUsedVars() {
+				return Set.of();
+			}
+
+			@Override
+			public Prec join(Prec other) {
+				return null;
+			}
+		});
 
 		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
 	}

@@ -6,9 +6,12 @@ import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,7 +36,7 @@ public class ItpRefToProd2PredZonePrec implements RefutationToPrec<Prod2Prec<Pre
 
         final var predSelectedExprs = exprSplitter.apply(refExpr).stream()
                 .collect(Collectors.toSet());
-        return Prod2Prec.of(PredPrec.of(predSelectedExprs), zonePrec);
+        return Prod2Prec.of(PredPrec.of(predSelectedExprs), ZonePrec.of(Collections.emptyList()));
     }
 
     @Override
@@ -43,6 +46,6 @@ public class ItpRefToProd2PredZonePrec implements RefutationToPrec<Prod2Prec<Pre
         final var filteredPreds = joinedPred.getPreds().stream()
                 .collect(Collectors.toList());
         final PredPrec filteredPred = PredPrec.of(filteredPreds);
-        return Prod2Prec.of(filteredPred, zonePrec);
+        return Prod2Prec.of(filteredPred, ZonePrec.of(Collections.emptyList()));
     }
 }

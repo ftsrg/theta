@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.prod4;
 
 import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
@@ -97,5 +98,15 @@ public final class Prod4Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec, 
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() {
 		return Streams.concat(prec1.getUsedVars().stream(), prec2.getUsedVars().stream(), prec3.getUsedVars().stream(), prec4.getUsedVars().stream()).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(other instanceof Prod4Prec<?, ?,?,?> other1){
+			return Prod4Prec.of(prec1.join(other1.prec1), prec2.join(other1.prec2), prec2.join(other1.prec3), prec4.join(other1.prec4));
+		}
+		else{
+			throw  new IllegalArgumentException("Only the same precision types can be joined");
+		}
 	}
 }

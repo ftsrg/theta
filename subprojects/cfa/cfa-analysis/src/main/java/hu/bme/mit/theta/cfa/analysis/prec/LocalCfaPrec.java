@@ -136,4 +136,17 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 	public Collection<VarDecl<?>> getUsedVars() {
 		return mapping.values().stream().map(Prec::getUsedVars).reduce((varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream()).collect(Collectors.toSet())).orElse(Set.of());
 	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(other instanceof LocalCfaPrec<?> other1){
+			for(Map.Entry<Loc, P> entry: mapping.entrySet()){
+				entry.getValue().join((P) other1.mapping.get(entry.getKey()));
+			}
+			return this;
+		}
+		else{
+			throw  new IllegalArgumentException("Only the same precision types can be joined");
+		}
+	}
 }

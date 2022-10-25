@@ -25,8 +25,9 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
-final class XtaTransFunc<S extends State, P extends Prec> implements TransFunc<XtaState<S>, XtaAction, P> {
+final class XtaTransFunc<S extends State, P extends Prec> implements TransFunc<XtaState<S>, XtaAction, XtaPrec<P>> {
 
 	private final TransFunc<S, ? super XtaAction, ? super P> transFunc;
 
@@ -39,7 +40,7 @@ final class XtaTransFunc<S extends State, P extends Prec> implements TransFunc<X
 		return new XtaTransFunc<>(transferFunc);
 	}
 
-	@Override
+	/*@Override
 	public Collection<XtaState<S>> getSuccStates(final XtaState<S> state, final XtaAction action, final P prec) {
 		checkNotNull(state);
 		checkNotNull(action);
@@ -49,6 +50,18 @@ final class XtaTransFunc<S extends State, P extends Prec> implements TransFunc<X
 		final S subState = state.getState();
 		final Collection<? extends S> succSubStates = transFunc.getSuccStates(subState, action, prec);
 		return XtaState.collectionOf(succLocs, succSubStates);
-	}
+	}*/
 
+	@Override
+	public Collection<? extends XtaState<S>> getSuccStates(XtaState<S> state, XtaAction action, XtaPrec<P> prec) {
+		checkNotNull(state);
+		checkNotNull(action);
+		checkNotNull(prec);
+		checkArgument(state.getLocs().equals(action.getSourceLocs()), "Location mismatch");
+		final List<Loc> succLocs = action.getTargetLocs();
+		final S subState = state.getState();
+		final P subPrec = prec.getPrec(succLocs);
+		final Collection<? extends S> succSubStates = transFunc.getSuccStates(subState, action, subPrec);
+		return XtaState.collectionOf(succLocs, succSubStates);
+	}
 }

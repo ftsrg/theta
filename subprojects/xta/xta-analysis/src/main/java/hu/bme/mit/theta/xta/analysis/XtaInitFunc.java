@@ -25,8 +25,9 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
-final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, P> {
+final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, XtaPrec<P>> {
 	private final XtaSystem system;
 	private final InitFunc<S, ? super P> initFunc;
 
@@ -40,12 +41,18 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
 		return new XtaInitFunc<>(system, initFunc);
 	}
 
-	@Override
-	public Collection<XtaState<S>> getInitStates(final P prec) {
+	/*@Override
+	public Collection<XtaState<S>> getInitStates(final XtaPrec<P> prec) {
 		checkNotNull(prec);
 		final List<Loc> initLocs = system.getInitLocs();
-		final Collection<? extends S> initStates = initFunc.getInitStates(prec);
+		final Collection<? extends S> initStates = initFunc.getInitStates(prec.getPrec(initLocs));
+		return XtaState.collectionOf(initLocs, initStates, system.getInitVal());
+	}*/
+
+	@Override
+	public Collection<? extends XtaState<S>> getInitStates(XtaPrec<P> prec) {
+		final List<Loc> initLocs = system.getInitLocs();
+		final Collection<? extends S> initStates = initFunc.getInitStates(prec.getPrec(initLocs));
 		return XtaState.collectionOf(initLocs, initStates, system.getInitVal());
 	}
-
 }

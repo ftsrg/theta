@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-analysis"))
+
+    implementation(project(":theta-solver-smtlib"))
 }
 
 application {

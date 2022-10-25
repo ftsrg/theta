@@ -92,6 +92,17 @@ public final class XcfaSTPrec<P extends Prec> implements Prec {
 	}
 
 	@Override
+	public Prec join(Prec other) {
+		if(other instanceof XcfaSTPrec<?> other1){
+
+			return globalPrec.join(other1.globalPrec);
+		}
+		else{
+			throw new IllegalArgumentException();
+		}
+	}
+
+	@Override
 	public String toString() {
 		return globalPrec.toString();
 	}

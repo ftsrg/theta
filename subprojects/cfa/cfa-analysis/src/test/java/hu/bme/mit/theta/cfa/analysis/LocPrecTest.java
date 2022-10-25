@@ -38,6 +38,11 @@ public class LocPrecTest {
 		public Collection<VarDecl<?>> getUsedVars() {
 			return Set.of();
 		}
+
+		@Override
+		public Prec join(Prec other) {
+			throw new UnsupportedOperationException("Not implemented yet");
+		}
 	}
 
 	@Test

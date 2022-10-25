@@ -22,6 +22,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xta.XtaProcess;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -82,19 +86,36 @@ public final class XtaZoneAnalysisTest {
 				.create(explAnalysis, zoneAnalysis);
 		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
 				.create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
-		final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
+		final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, XtaPrec<ZonePrec>> analysis = XtaAnalysis
 				.create(system, mappedAnalysis);
 
 		final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-		final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> argBuilder = ArgBuilder
+		final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, XtaPrec<ZonePrec>> argBuilder = ArgBuilder
 				.create(lts, analysis, s -> false);
 
-		final Abstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicAbstractor
+		final Abstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, XtaPrec<ZonePrec>> abstractor = BasicAbstractor
 				.builder(argBuilder).projection(s -> s.getLocs()).build();
 
 		final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createArg();
-		abstractor.check(arg, prec);
+		abstractor.check(arg, new XtaPrec<ZonePrec>() {
+
+
+			@Override
+			public ZonePrec getPrec(Collection<XtaProcess.Loc> loc) {
+				return prec;
+			}
+
+			@Override
+			public Collection<VarDecl<?>> getUsedVars() {
+				return prec.getUsedVars();
+			}
+
+			@Override
+			public Prec join(Prec other) {
+				return null;
+			}
+		});
 
 		System.out.println(arg.getNodes().collect(Collectors.toSet()));
 

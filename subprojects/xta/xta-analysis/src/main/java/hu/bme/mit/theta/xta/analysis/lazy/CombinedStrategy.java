@@ -34,6 +34,8 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
+import hu.bme.mit.theta.xta.analysis.prec.GlobalXtaPrec;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
 final class CombinedStrategy<S1 extends State, S2 extends State>
 		implements AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, XtaState<Prod2State<S1, S2>>> {
@@ -101,9 +103,9 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 		final Analysis<S2, XtaAction, UnitPrec> analysis2 = strategy2.getAnalysis();
 		final Analysis<Prod2State<S1, S2>, XtaAction, Prod2Prec<UnitPrec, UnitPrec>> prodAnalysis = Prod2Analysis
 				.create(analysis1, analysis2);
-		final Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, Prod2Prec<UnitPrec, UnitPrec>> xtaAnalysis = XtaAnalysis
+		final Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, XtaPrec<Prod2Prec<UnitPrec, UnitPrec>>> xtaAnalysis = XtaAnalysis
 				.create(system, prodAnalysis);
-		final Prod2Prec<UnitPrec, UnitPrec> prec = Prod2Prec.of(UnitPrec.getInstance(), UnitPrec.getInstance());
+		final XtaPrec<Prod2Prec<UnitPrec, UnitPrec>> prec = GlobalXtaPrec.create(Prod2Prec.of(UnitPrec.getInstance(), UnitPrec.getInstance()));
 		final Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, UnitPrec> analysis = PrecMappingAnalysis
 				.create(xtaAnalysis, p -> prec);
 		return analysis;

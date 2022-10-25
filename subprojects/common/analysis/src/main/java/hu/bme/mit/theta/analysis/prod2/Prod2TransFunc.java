@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
-final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
+public final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
 		implements TransFunc<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> {
 
 	private final TransFunc<S1, ? super A, P1> transFunc1;
@@ -34,9 +34,9 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 	private final PreStrengtheningOperator<S1, S2> preStrenghteningOperator;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	private Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
-						   final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
-						   final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+	public Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
+						  final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
+						  final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transFunc1 = checkNotNull(transFunc1);
 		this.transFunc2 = checkNotNull(transFunc2);
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);

@@ -24,13 +24,17 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class XtaProcess {
     private final String name;
@@ -42,6 +46,8 @@ public final class XtaProcess {
     private final Collection<Loc> unmodLocs;
     private final Collection<Edge> unmodEdges;
 
+    private final HashMap<Loc, HashSet<VarDecl<RatType>>> activeClockMap;
+
     ////
 
     private XtaProcess(final XtaSystem system, final String name) {
@@ -52,6 +58,10 @@ public final class XtaProcess {
 
         unmodLocs = Collections.unmodifiableCollection(locs);
         unmodEdges = Collections.unmodifiableCollection(edges);
+        activeClockMap = new HashMap<Loc, HashSet<VarDecl<RatType>>>();
+    }
+    public HashMap<Loc, HashSet<VarDecl<RatType>>> getActiveClockMap(){
+        return activeClockMap;
     }
 
     static XtaProcess create(final XtaSystem system, final String name) {
@@ -186,6 +196,45 @@ public final class XtaProcess {
         return builder.build();
     }
 
+    public void createActiveClockMap(){
+        //1st iter
+        for(Loc l: locs){
+            HashSet<VarDecl<RatType>> clocks = new HashSet<VarDecl<RatType>>();
+            List<Collection<VarDecl<RatType>>> temp = l.getInvars().stream().map(invar -> invar.asClockGuard().getClockConstr().getVars()).collect(Collectors.toList());
+            if(!temp.isEmpty())
+                for(Collection<VarDecl<RatType>> t: temp) clocks.addAll(t);
+            temp.clear();
+            for(Edge e: l.outEdges){
+                temp = e.getGuards().stream().filter(g ->g.isClockGuard()).map(g -> g.asClockGuard().getClockConstr().getVars()).collect(Collectors.toList());
+                if(!temp.isEmpty())
+                    for(Collection<VarDecl<RatType>> t: temp) clocks.addAll(t);
+                temp.clear();
+            }
+            activeClockMap.put(l, clocks);
+        }
+        boolean done = false;
+
+        while(!done){
+            HashMap<Loc, HashSet<VarDecl<RatType>>> old_activeClockMap =  new HashMap<Loc, HashSet<VarDecl<RatType>>>();
+            for(Loc l: locs){
+                HashSet<VarDecl<RatType>> old_val = new HashSet<VarDecl<RatType>>(activeClockMap.get(l));
+                old_activeClockMap.put(l, old_val);
+                for (Edge e: l.outEdges){
+                    activeClockMap.get(l).addAll(activeClockMap.get(e.target));
+                    List<Collection<VarDecl<RatType>>>  temp = e.updates.stream().filter(u -> u.isClockUpdate()).map(u -> u.asClockUpdate().getClockOp().getVars()).collect(Collectors.toList());
+                    ArrayList<VarDecl<RatType>> temp1 = new ArrayList<VarDecl<RatType>>();
+                    for(Collection<VarDecl<RatType>> t: temp) temp1.addAll(t);
+                    for(VarDecl<RatType> t: temp1){
+                        if(activeClockMap.get(l).contains(t))
+                            activeClockMap.get(l).remove(t);
+                    }
+                }
+
+            }
+            if (activeClockMap.equals(old_activeClockMap)) done = true;
+        }
+    }
+
     ////
 
     public enum LocKind {
@@ -277,5 +326,7 @@ public final class XtaProcess {
             return updates;
         }
     }
+
+
 
 }

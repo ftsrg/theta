@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.expl;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -112,5 +113,19 @@ public final class ExplPrec implements Prec {
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() {
 		return vars;
+	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(this == other){
+			return this;
+		}
+		if(other instanceof ExplPrec other1){
+
+			return join(other1);
+		}
+		else{
+			throw new IllegalArgumentException();
+		}
 	}
 }

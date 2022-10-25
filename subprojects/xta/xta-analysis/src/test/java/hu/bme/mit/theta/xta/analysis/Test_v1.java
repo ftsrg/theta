@@ -1,9 +1,19 @@
 package hu.bme.mit.theta.xta.analysis;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.pred.PredAnalysis;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
+import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
+import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -15,6 +25,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.config.XtaConfig;
 import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder;
+import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import org.junit.Test;
 
@@ -42,7 +53,7 @@ public class Test_v1 {
     }
 
     public void check() throws Exception {
-        domain = XtaConfigBuilder.Domain.PRED_CART;
+        domain = XtaConfigBuilder.Domain.EXPL;
         refinement = XtaConfigBuilder.Refinement.SEQ_ITP;
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
@@ -54,14 +65,17 @@ public class Test_v1 {
         solverFactory = SolverManager.resolveSolverFactory("Z3");
 
         XtaSystem system;
-        try( InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/AndOr.xta"), new FileInputStream("src/test/resources/property/AndOr.prop"))){
+        try( InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/mytest.xta"), new FileInputStream("src/test/resources/property/mytest.prop"))){
             system = XtaDslManager.createSystem(inputStream);
         }
 
-
+        XtaConfigBuilder builder =  new XtaConfigBuilder(domain, refinement, /*solverFactory*/ Z3SolverFactory.getInstance());
+        builder.precGranularity(XtaConfigBuilder.PrecGranularity.GLOBAL);
+        builder.initPrec(XtaConfigBuilder.InitPrec.EMPTY);
         XtaConfig<? extends State, ? extends Action, ? extends Prec> config =
-                new XtaConfigBuilder(domain, refinement, /*solverFactory*/ Z3SolverFactory.getInstance()).build(system, null);
+                builder.build(system);
         SafetyResult<? extends State, ? extends Action> result = config.check();
         System.out.println("Safe? : " + result.isSafe());
+
     }
 }

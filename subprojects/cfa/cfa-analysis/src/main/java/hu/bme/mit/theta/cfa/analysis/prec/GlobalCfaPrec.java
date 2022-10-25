@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.cfa.analysis.prec;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.common.Utils;
@@ -86,5 +88,17 @@ public final class GlobalCfaPrec<P extends Prec> implements CfaPrec<P> {
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() {
 		return prec.getUsedVars();
+	}
+
+	@Override
+	public Prec join(Prec other) {
+
+		if(other instanceof GlobalCfaPrec<?> other1){
+
+			return prec.join(other1.prec);
+		}
+		else{
+			throw new IllegalArgumentException();
+		}
 	}
 }

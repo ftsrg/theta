@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.common;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -90,4 +91,15 @@ public final class XcfaPrec<P extends Prec> implements Prec {
 	public Collection<VarDecl<?>> getUsedVars() {
 		return globalPrec.getUsedVars();
 	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(other instanceof XcfaPrec<?> other1){
+			return globalPrec.join(other1.globalPrec);
+		}
+		else{
+			throw  new IllegalArgumentException("Only the same precision types can be joined");
+		}
+	}
+
 }

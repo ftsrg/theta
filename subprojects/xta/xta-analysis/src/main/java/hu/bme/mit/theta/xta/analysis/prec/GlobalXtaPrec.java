@@ -1,9 +1,12 @@
+
 package hu.bme.mit.theta.xta.analysis.prec;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xta.XtaProcess;
+import hu.bme.mit.theta.xta.analysis.XtaState;
 
 import java.util.Collection;
 
@@ -31,7 +34,7 @@ public class GlobalXtaPrec <P extends Prec> implements XtaPrec<P> {
         if (this.prec.equals(refinedPrec)) {
             return this;
         } else {
-            return create(refinedPrec);
+            return create((P) prec.join(refinedPrec));
         }
     }
 
@@ -63,7 +66,19 @@ public class GlobalXtaPrec <P extends Prec> implements XtaPrec<P> {
     }
 
     @Override
-    public P getPrec(XtaProcess.Loc loc) {
-        return null;
+    public Prec join(Prec other) {
+        if(other instanceof GlobalXtaPrec<?> other1){
+            return prec.join(other1);
+        }
+        else{
+            throw  new IllegalArgumentException("Only the same precision types can be joined");
+        }
+    }
+
+
+
+    @Override
+    public P getPrec(Collection<XtaProcess.Loc> loc) {
+        return prec;
     }
 }

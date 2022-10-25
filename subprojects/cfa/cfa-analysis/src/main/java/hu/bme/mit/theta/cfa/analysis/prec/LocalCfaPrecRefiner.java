@@ -70,7 +70,6 @@ public final class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P 
 			final P newPrecForLoc = refToPrec.toPrec(refutation, i);
 			runningPrecs.put(loc, refToPrec.join(precForLoc, newPrecForLoc));
 		}
-
 		return genPrec.refine(runningPrecs);
 	}
 

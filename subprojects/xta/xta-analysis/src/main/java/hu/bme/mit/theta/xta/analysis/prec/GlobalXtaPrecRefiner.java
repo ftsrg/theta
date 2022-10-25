@@ -40,6 +40,7 @@ public class GlobalXtaPrecRefiner<S extends ExprState, A extends Action, P exten
             final P precFromRef = refToPrec.toPrec(refutation, i);
             runningPrec = refToPrec.join(runningPrec, precFromRef);
         }
+
         return constPrec.refine(runningPrec);
     }
 

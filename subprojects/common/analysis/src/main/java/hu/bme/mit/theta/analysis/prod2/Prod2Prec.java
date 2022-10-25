@@ -80,6 +80,17 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
 
 	@Override
 	public Collection<VarDecl<?>> getUsedVars() {
+
 		return Streams.concat(prec1.getUsedVars().stream(), prec2.getUsedVars().stream()).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Prec join(Prec other) {
+		if(other instanceof Prod2Prec<?, ?> other1){
+			return Prod2Prec.of(prec1.join(other1.prec1), prec2.join(other1.prec2));
+		}
+		else{
+			throw  new IllegalArgumentException("Only the same precision types can be joined");
+		}
 	}
 }
