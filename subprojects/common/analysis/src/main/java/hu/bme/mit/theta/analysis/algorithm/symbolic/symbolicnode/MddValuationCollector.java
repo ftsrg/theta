@@ -5,6 +5,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.LitExprConverter;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -20,10 +21,10 @@ import java.util.Stack;
 public class MddValuationCollector {
 
     private static class Assignment{
-        final VarDecl<?> decl;
+        final Decl<?> decl;
         final LitExpr<?> value;
 
-        private Assignment(VarDecl<?> decl, LitExpr<?> value) {
+        private Assignment(Decl<?> decl, LitExpr<?> value) {
             this.decl = decl;
             this.value = value;
         }

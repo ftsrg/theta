@@ -1,13 +1,12 @@
 package hu.bme.mit.theta.xsts.cli;
 
 import hu.bme.mit.delta.Pair;
-import hu.bme.mit.delta.java.mdd.JavaMddFactory;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.delta.java.mdd.MddVariableOrder;
+import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -16,6 +15,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.io.FileNotFoundException;
 
@@ -25,7 +25,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class ExprNodeTest2 {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -38,9 +38,29 @@ public class ExprNodeTest2 {
         MddVariable b = varOrder.createOnTop(MddVariableDescriptor.create(declB, 2));
         MddVariable a = varOrder.createOnTop(MddVariableDescriptor.create(declA, 2));
 
-        Expr<BoolType> expr = And(Or(declA.getRef(),Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
+        Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, a));
+        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+
+        for (var c = rootNode.cursor(); c.moveNext(); ){}
+
+        var node2 = rootNode.get(0);
+
+        for (var c = node2.cursor(); c.moveNext(); ){}
+
+        var node3 = node2.get(0);
+
+        for (var c = node3.cursor(); c.moveNext(); ){}
+
+        var node4 = rootNode.get(1);
+
+        for (var c = node4.cursor(); c.moveNext(); ){}
+
+//        var node5 = node4.get(1);
+//
+//        for (var c = node5.cursor(); c.moveNext(); ){}
+
+
 
 //        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
 //
@@ -70,7 +90,7 @@ public class ExprNodeTest2 {
 //        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
 //        System.out.println(valuations);
 
-        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest2::nodeToString).visualize(rootNode);
+        final Graph graph = new MddNodeVisualizer(ExprNodeTest2::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
@@ -79,9 +99,8 @@ public class ExprNodeTest2 {
 
     }
 
-    private static String nodeToString(MddSymbolicNode node){
-        final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
-        return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
+    private static String nodeToString(MddNode node){
+        return node.isTerminal() ? "Terminal" : node.getRepresentation().toString();
     }
 
 }

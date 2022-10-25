@@ -4,6 +4,7 @@ import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 
 import java.util.function.Consumer;
@@ -118,7 +119,7 @@ public final class RelationalProductProvider implements MddTransformationProvide
 			template = templateBuilder.buildAndReset();
 		}
 		
-		ret = variable.checkInNode(template);
+		ret = variable.checkInNode(MddStructuralTemplate.of(template));
 		
 		cache.getCache().addToCache(lhs, nextState, ret);
 		
