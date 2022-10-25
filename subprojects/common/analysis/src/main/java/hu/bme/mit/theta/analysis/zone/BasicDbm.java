@@ -335,16 +335,30 @@ final class BasicDbm {
 
 	////
 
+	private static final int HASH_SEED = 3684;
+	private volatile int hashCode = 0;
+
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + matrix.hashCode();
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof BasicDbm) {
+			final BasicDbm that = (BasicDbm) obj;
+			return this.matrix.equals(that.matrix);
+		} else {
+			return false;
+		}
 	}
 
 	@Override

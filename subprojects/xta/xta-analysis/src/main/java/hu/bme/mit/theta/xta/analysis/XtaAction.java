@@ -180,6 +180,36 @@ public abstract class XtaAction extends StmtAction {
 			return result;
 		}
 
+		private static final int HASH_SEED = 1519;
+		private volatile int hashCode = 0;
+
+		@Override
+		public int hashCode() {
+			int result = hashCode;
+			if (result == 0) {
+				result = HASH_SEED;
+				result = 31 * result + getClockVars().hashCode();
+				result = 31 * result + getSourceLocs().hashCode();
+				result = 31 * result + edge.hashCode();
+				hashCode = result;
+			}
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof BasicXtaAction) {
+				final BasicXtaAction that = (BasicXtaAction) obj;
+				return this.getClockVars().equals(that.getClockVars())
+						&& this.getSourceLocs().equals(that.getSourceLocs())
+						&& this.edge.equals(that.edge);
+			} else {
+				return false;
+			}
+		}
+
 		@Override
 		public String toString() {
 			return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(edge.getGuards())
@@ -275,6 +305,38 @@ public abstract class XtaAction extends StmtAction {
 				stmts = result;
 			}
 			return result;
+		}
+
+		private static final int HASH_SEED = 2737;
+		private volatile int hashCode = 0;
+
+		@Override
+		public int hashCode() {
+			int result = hashCode;
+			if (result == 0) {
+				result = HASH_SEED;
+				result = 31 * result + getClockVars().hashCode();
+				result = 31 * result + getSourceLocs().hashCode();
+				result = 31 * result + emitEdge.hashCode();
+				result = 31 * result + recvEdge.hashCode();
+				hashCode = result;
+			}
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof BinaryXtaAction) {
+				final BinaryXtaAction that = (BinaryXtaAction) obj;
+				return this.getClockVars().equals(that.getClockVars())
+						&& this.getSourceLocs().equals(that.getSourceLocs())
+						&& this.emitEdge.equals(that.emitEdge)
+						&& this.recvEdge.equals(that.recvEdge);
+			} else {
+				return false;
+			}
 		}
 
 		@Override
@@ -425,6 +487,38 @@ public abstract class XtaAction extends StmtAction {
 				stmts = result;
 			}
 			return result;
+		}
+
+		private static final int HASH_SEED = 3778;
+		private volatile int hashCode = 0;
+
+		@Override
+		public int hashCode() {
+			int result = hashCode;
+			if (result == 0) {
+				result = HASH_SEED;
+				result = 31 * result + getClockVars().hashCode();
+				result = 31 * result + getSourceLocs().hashCode();
+				result = 31 * result + emitEdge.hashCode();
+				result = 31 * result + recvEdges.hashCode();
+				hashCode = result;
+			}
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof BroadcastXtaAction) {
+				final BroadcastXtaAction that = (BroadcastXtaAction) obj;
+				return this.getClockVars().equals(that.getClockVars())
+						&& this.getSourceLocs().equals(that.getSourceLocs())
+						&& this.emitEdge.equals(that.emitEdge)
+						&& this.recvEdges.equals(that.recvEdges);
+			} else {
+				return false;
+			}
 		}
 
 		@Override

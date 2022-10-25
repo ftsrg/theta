@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
@@ -64,6 +65,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
             lazyStrategy.getInitAbstractor()
         );
 
+        ArgCexCheckHandler.instance.setArgCexCheck(true, false);
         final var prec = createConcrPrec();
 
         final var cegarChecker = CegarChecker.create(
@@ -81,7 +83,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                     createConcrProd2Lens(),
                     system),
                 new CombinedLazyCegarXtaPrecRefiner<>(new ItpRefToExplPrec()),
-                PruneStrategy.FULL,
+                PruneStrategy.LAZY,
                 logger
             ),
             logger
@@ -116,9 +118,10 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private Analysis<ExplState, XtaAction, ExplPrec> createConcrDataAnalysis(final SolverFactory solverFactory) {
         return CombinedLazyCegarXtaAnalysis.create(
-            ExplAnalysis.create(
+            ExplStmtAnalysis.create(
                 solverFactory.createSolver(),
                 system.getInitVal().toExpr()
+                ,1
             )
         );
     }
