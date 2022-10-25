@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2022 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.type.Expr;
@@ -103,6 +119,10 @@ public final class FpExprs {
 		return FpEqExpr.of(leftOp, rightOp);
 	}
 
+	public static FpAssignExpr FpAssign(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+		return FpAssignExpr.of(leftOp, rightOp);
+	}
+
 	public static FpNeqExpr Neq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
 		return FpNeqExpr.of(leftOp, rightOp);
 	}
@@ -125,6 +145,10 @@ public final class FpExprs {
 
 	public static FpIsNanExpr IsNan(final Expr<FpType> op) {
 		return FpIsNanExpr.of(op);
+	}
+
+	public static FpIsInfiniteExpr IsInfinite(final Expr<FpType> op) {
+		return FpIsInfiniteExpr.of(op);
 	}
 
 	public static FpRoundToIntegralExpr RoundToIntegral(final FpRoundingMode roundingMode, final Expr<FpType> op) {

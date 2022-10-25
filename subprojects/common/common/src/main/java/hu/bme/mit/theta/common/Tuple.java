@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkPositionIndex;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkPositionIndex;
 
 public abstract class Tuple implements Iterable<Object> {
 
@@ -42,7 +42,7 @@ public abstract class Tuple implements Iterable<Object> {
 		return elems.get(n);
 	}
 
-	public final List<Object> toList() {
+	public final List<?> toList() {
 		return elems;
 	}
 

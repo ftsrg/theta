@@ -1,0 +1,3 @@
+grammar Cat;
+
+mcm :   'MCM';

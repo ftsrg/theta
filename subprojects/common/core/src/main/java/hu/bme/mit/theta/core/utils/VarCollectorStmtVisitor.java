@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,21 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
+import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
+
+import java.util.Collection;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
@@ -84,13 +94,12 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getFrom(),vars);
-		ExprUtils.collectVars(stmt.getTo(),vars);
+		ExprUtils.collectVars(stmt.getFrom(), vars);
+		ExprUtils.collectVars(stmt.getTo(), vars);
 		vars.add(stmt.getLoopVariable());
-		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(),vars);
+		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(), vars);
 	}
 
-	@Override
 	public Void visit(IfStmt stmt, Collection<VarDecl<?>> vars) {
 		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);

@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 /**
  * Base class for writing graphs.
  */
-abstract class AbstractGraphWriter implements GraphWriter {
+public abstract class AbstractGraphWriter implements GraphWriter {
 
 	@Override
 	public abstract String writeString(Graph graph);

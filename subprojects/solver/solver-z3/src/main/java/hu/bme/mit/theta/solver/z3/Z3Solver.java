@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,10 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import hu.bme.mit.theta.common.container.Containers;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
-
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Status;
-
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -47,6 +36,16 @@ import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 final class Z3Solver implements UCSolver, Solver {
 
@@ -228,7 +227,7 @@ final class Z3Solver implements UCSolver, Solver {
 
 	@Override
 	public void close() {
-		z3Context.close();
+		z3Context.interrupt();
 	}
 
 	////

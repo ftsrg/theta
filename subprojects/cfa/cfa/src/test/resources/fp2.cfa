@@ -1,8 +1,8 @@
 main process cfa {
-	var f2 : fp[2:3]
-	var f3 : fp[2:3]
-	var f4 : fp[2:3]
-	var f5 : fp[2:3]
+	var f2 : fp[2,3]
+	var f3 : fp[2,3]
+	var f4 : fp[2,3]
+	var f5 : fp[2,3]
 
     init loc L1
     loc L2
