@@ -1,14 +1,11 @@
 package hu.bme.mit.theta.xsts.cli;
 
-import hu.bme.mit.delta.Pair;
-import hu.bme.mit.delta.java.mdd.JavaMddFactory;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.delta.java.mdd.MddVariableOrder;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.utils.MddSymbolicNodeVisualizer;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -46,9 +43,9 @@ public class ExprNodeTest {
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
-        MddSymbolicNode rootNode = new MddSymbolicNode(new Pair<>(expr, x));
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
 
-        var interpreter = ExprVariable.getNodeInterpreter(rootNode, x, Z3SolverFactory.getInstance()::createSolver);
+        var interpreter = x.getNodeInterpreter(rootNode);
 
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
@@ -70,10 +67,10 @@ public class ExprNodeTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-        final Set<Valuation> valuations = MddValuationCollector.collect((MddSymbolicNodeInterpretation) interpreter);
-        System.out.println(valuations);
+//        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
+//        System.out.println(valuations);
 
-        final Graph graph = new MddSymbolicNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
+        final Graph graph = new MddNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
@@ -82,9 +79,8 @@ public class ExprNodeTest {
 
     }
 
-    private static String nodeToString(MddSymbolicNode node){
-        final var symbolicRepresentation = node.getSymbolicRepresentation(Expr.class);
-        return symbolicRepresentation.first.toString() + (symbolicRepresentation.second == null?"":", "+symbolicRepresentation.second.getTraceInfo(Decl.class).getName());
+    private static String nodeToString(MddNode node){
+        return node.isTerminal() ? "Terminal" : node.getRepresentation().toString();
     }
 
 }
