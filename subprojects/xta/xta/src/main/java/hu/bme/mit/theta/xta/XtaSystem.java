@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
 import java.lang.management.LockInfo;
@@ -44,6 +45,7 @@ public final class XtaSystem {
 
 
 	private Expr<BoolType> prop;
+	private PropertyKind propertyKind = PropertyKind.NONE;
 
 	private XtaSystem() {
 		processes = new ArrayList<>();
@@ -107,18 +109,21 @@ public final class XtaSystem {
 		return prop;
 	}
 
+	public PropertyKind getPropertyKind() {
+		return propertyKind;
+	}
 
-
-	public void setProp(final Expr<BoolType> _prop){
+	public void setProp(final Expr<BoolType> _prop, final PropertyKind _propertyKind){
 
 		prop = _prop;
+		propertyKind = _propertyKind;
 		//ErrorProcess
 		XtaProcess process = createProcess("ErrorProc");
 		final Collection<Expr<BoolType>> invars = Collections.emptySet();
 		Loc initloc = process.createLoc("InitLoc", XtaProcess.LocKind.NORMAL, invars);
 		process.setInitLoc(initloc);
 		Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
-		final Collection<Expr<BoolType>> guards = Set.of(prop);
+		final Collection<Expr<BoolType>> guards = ExprUtils.getConjuncts(ExprUtils.simplify(prop));
 		process.createEdge(initloc, errorLoc, guards, Optional.empty(), Collections.emptyList());
 
 		//Edges to ErrorLocations from COMMITTED locations
@@ -136,5 +141,9 @@ public final class XtaSystem {
 			}
 
 		}
+	}
+
+	public enum PropertyKind {
+		AG, AF, EG, EF, NONE
 	}
 }
