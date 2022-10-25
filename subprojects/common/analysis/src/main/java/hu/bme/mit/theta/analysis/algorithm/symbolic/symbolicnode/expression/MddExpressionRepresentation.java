@@ -458,6 +458,40 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.value = null;
         }
 
+        private static class Terminal implements RecursiveIntObjCursor<MddNode> {
+
+            private final Cursor parent;
+
+            private Terminal(final Cursor parent) {
+                this.parent = parent;
+            }
+
+            @Override
+            public boolean moveTo(int i) {
+                return false;
+            }
+
+            @Override
+            public void close() {
+                parent.unblock();
+            }
+
+            @Override
+            public int key() {
+                return 0;
+            }
+
+            @Override
+            public MddNode value() {
+                return null;
+            }
+
+            @Override
+            public boolean moveNext() {
+                return false;
+            }
+        }
+
         @Override
         public boolean moveTo(int key) {
             Preconditions.checkState(!blocked, "Cursor can't be moved until its children are disposed of");
@@ -477,8 +511,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public RecursiveIntObjCursor<MddNode> valueCursor() {
             this.blocked = true;
-            this.traverser.moveDown(key);
-            return new Cursor(this, traverser);
+            final MddNode childNode = this.traverser.peakDown(key);
+            if(childNode.isTerminal()) {
+                return new Terminal(this);
+            } else {
+                this.traverser.moveDown(key);
+                return new Cursor(this, traverser);
+            }
         }
 
         @Override
