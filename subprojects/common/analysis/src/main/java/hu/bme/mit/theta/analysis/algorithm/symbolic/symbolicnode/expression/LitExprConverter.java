@@ -30,8 +30,7 @@ public class LitExprConverter {
             return IntLitExpr.of(BigInteger.valueOf(integer));
         }
         if (type instanceof BoolType) {
-            Preconditions.checkArgument(integer == 0 || integer == 1);
-            return BoolLitExpr.of(integer == 1);
+            return BoolLitExpr.of(integer != 0);
         }
         throw new UnsupportedOperationException("Unsupported type");
     }
