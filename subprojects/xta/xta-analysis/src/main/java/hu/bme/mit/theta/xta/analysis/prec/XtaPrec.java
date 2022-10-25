@@ -7,5 +7,5 @@ import hu.bme.mit.theta.xta.analysis.XtaState;
 import java.util.Collection;
 
 public interface XtaPrec <P extends Prec> extends Prec{
-    P getPrec(final XtaProcess.Loc loc);
+    P getPrec(final Collection<XtaProcess.Loc> loc);
 }

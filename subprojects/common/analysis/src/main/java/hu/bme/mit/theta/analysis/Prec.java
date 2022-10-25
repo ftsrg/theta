@@ -25,5 +25,6 @@ import java.util.Collection;
 public interface Prec {
 
 	Collection<VarDecl<?>> getUsedVars();
+	Prec join(Prec other);
 
 }
