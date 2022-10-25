@@ -4,6 +4,7 @@ import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
@@ -28,13 +29,13 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 @SuppressWarnings("UnstableApiUsage")
 public class CombinedLazyCegarXtaTransFunc<S extends State, P extends Prec> implements TransFunc<S, XtaAction, P> {
 
-    private final TransFunc<S, ? super StmtAction, P> transFunc;
+    private final TransFunc<S, ? super ExprAction, P> transFunc;
 
-    private CombinedLazyCegarXtaTransFunc(final TransFunc<S, ? super StmtAction, P> transFunc) {
+    private CombinedLazyCegarXtaTransFunc(final TransFunc<S, ? super ExprAction, P> transFunc) {
         this.transFunc = checkNotNull(transFunc);
     }
 
-    public static <S extends State, P extends Prec> CombinedLazyCegarXtaTransFunc<S, P> create(final TransFunc<S, ? super StmtAction, P> transFunc) {
+    public static <S extends State, P extends Prec> CombinedLazyCegarXtaTransFunc<S, P> create(final TransFunc<S, ? super ExprAction, P> transFunc) {
         return new CombinedLazyCegarXtaTransFunc<>(transFunc);
     }
 

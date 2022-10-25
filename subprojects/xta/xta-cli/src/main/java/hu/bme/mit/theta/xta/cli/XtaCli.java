@@ -27,11 +27,14 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprMeetStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -51,15 +54,22 @@ import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 public final class XtaCli {
 
 	public enum Algorithm {
-		LAZY, EXPERIMENTAL_EAGERLAZY
+		LAZY, EXPERIMENTAL_COMBINED
 	}
 
 	private static final String JAR_NAME = "theta-xta.jar";
 	private final String[] args;
 	private final TableWriter writer;
 
+	/// Main parameters
+
 	@Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
 	String model;
+
+	@Parameter(names = {"--algorithm"}, description = "The algorithm to use")
+	Algorithm algorithm = Algorithm.LAZY;
+
+	/// Lazy algorithm parameters
 
 	@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
 	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
@@ -73,11 +83,35 @@ public final class XtaCli {
 	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
 	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
 
+	/// Combined algorithm parameters
+
+	@Parameter(names = {"--combined-dataDomain"}, description = "Abstract domain for data")
+	CombinedLazyCegarXtaCheckerConfigFactory.DataDomain dataDomain = CombinedLazyCegarXtaCheckerConfigFactory.DataDomain.EXPL;
+
+	@Parameter(names = "--combined-predsplit", description = "Predicate splitting (for predicate abstraction)")
+	CombinedLazyCegarXtaCheckerConfigFactory.PredSplit predSplit = CombinedLazyCegarXtaCheckerConfigFactory.PredSplit.WHOLE;
+
+	@Parameter(names = "--combined-maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 10;
+
+	@Parameter(names = {"--combined-dataRefinement"}, description = "Data refinement strategy")
+	CombinedLazyCegarXtaCheckerConfigFactory.DataRefinement dataRefinement = CombinedLazyCegarXtaCheckerConfigFactory.DataRefinement.SEQ_ITP;
+
+	@Parameter(names = {"--combined-pruneStrategy"}, description = "Strategy for pruning the ARG after refinement")
+	PruneStrategy pruneStrategy = PruneStrategy.FULL;
+
+	@Parameter(names = "--combined-noArgCexCheck")
+	boolean noArgCexCheck = false;
+
+	/// Common algorithm parameters
+
 	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
 	ClockStrategy clockStrategy = ClockStrategy.BWITP;
 
 	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = false)
 	SearchStrategy searchStrategy = SearchStrategy.BFS;
+
+	/// Common parameters
 
 	@Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
@@ -92,13 +126,10 @@ public final class XtaCli {
 	boolean stacktrace = false;
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.MAINSTEP;
+	Logger.Level logLevel = Logger.Level.VERBOSE;
 
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
-
-	@Parameter(names = {"--algorithm"}, description = "The algorithm to use")
-	Algorithm algorithm = Algorithm.LAZY;
 
 	public XtaCli(final String[] args) {
 		this.args = args;
@@ -134,7 +165,7 @@ public final class XtaCli {
 			final XtaSystem system = loadModel();
 			switch (algorithm) {
 				case LAZY -> runLazy(system);
-				case EXPERIMENTAL_EAGERLAZY -> runCombined(system);
+				case EXPERIMENTAL_COMBINED -> runCombined(system);
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -152,9 +183,34 @@ public final class XtaCli {
 	}
 
 	private void runCombined(final XtaSystem system) {
-		final var config = CombinedLazyCegarXtaCheckerConfigFactory.create(system, NullLogger.getInstance(), Z3SolverFactory.getInstance()).build();
-		final var result = config.check();
-		resultPrinter(result.isSafe(), result.isUnsafe(), system);
+		// set up Arg-Cex check
+		if (noArgCexCheck) {
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+		} else {
+			if (dataRefinement.equals(CombinedLazyCegarXtaCheckerConfigFactory.DataRefinement.MULTI_SEQ)) {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+			} else {
+				ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+			}
+		}
+
+		final var config = CombinedLazyCegarXtaCheckerConfigFactory
+			.create(system, NullLogger.getInstance(), Z3SolverFactory.getInstance())
+			.dataDomain(dataDomain)
+			.maxEnum(maxEnum)
+			.predSplit(predSplit)
+			.dataRefinement(dataRefinement)
+			.clockStrategy(clockStrategy)
+			.searchStragegy(searchStrategy)
+			.pruneStrategy(pruneStrategy)
+			.build();
+		try {
+			final var result = config.check();
+			resultPrinter(result.isSafe(), result.isUnsafe(), system);
+		} catch (NotSolvableException ex) {
+			ex.printStackTrace();
+			System.exit(9);
+		}
 	}
 
 	private void resultPrinter(final boolean isSafe, final boolean isUnsafe, final XtaSystem system) {

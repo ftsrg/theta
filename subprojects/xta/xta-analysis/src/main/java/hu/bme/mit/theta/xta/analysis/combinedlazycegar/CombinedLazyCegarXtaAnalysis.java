@@ -1,21 +1,22 @@
 package hu.bme.mit.theta.xta.analysis.combinedlazycegar;
 
 import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 public class CombinedLazyCegarXtaAnalysis<S extends State, P extends Prec> implements Analysis<S, XtaAction, P> {
 
-    private final Analysis<S, ? super StmtAction, P> analysis;
+    private final Analysis<S, ? super ExprAction, P> analysis;
 
     private final TransFunc<S, XtaAction, P> transFunc;
 
-    private CombinedLazyCegarXtaAnalysis(final Analysis<S, ? super StmtAction, P> analysis) {
+    private CombinedLazyCegarXtaAnalysis(final Analysis<S, ? super ExprAction, P> analysis) {
         this.analysis = analysis;
         this.transFunc = CombinedLazyCegarXtaTransFunc.create(analysis.getTransFunc());
     }
 
-    public static <S extends State, P extends Prec> CombinedLazyCegarXtaAnalysis<S, P> create(final Analysis<S, ? super StmtAction, P> analysis) {
+    public static <S extends State, P extends Prec> CombinedLazyCegarXtaAnalysis<S, P> create(final Analysis<S, ? super ExprAction, P> analysis) {
         return new CombinedLazyCegarXtaAnalysis<>(analysis);
     }
 
