@@ -4,6 +4,7 @@ import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -12,12 +13,14 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.io.FileNotFoundException;
+import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -87,8 +90,8 @@ public class ExprNodeTest2 {
 //
 //        var interpreter = ExprVariable.getNodeInterpreter(rootNode, a, Z3SolverFactory.getInstance()::createSolver);
 //
-//        final Set<Valuation> valuations = ValuationCollector.collect(rootNode, ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver));
-//        System.out.println(valuations);
+        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
+        System.out.println(valuations);
 
         final Graph graph = new MddNodeVisualizer(ExprNodeTest2::nodeToString).visualize(rootNode);
         try {
