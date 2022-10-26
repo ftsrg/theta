@@ -103,7 +103,7 @@ public class ExprNodeTest2 {
     }
 
     private static String nodeToString(MddNode node){
-        return node.isTerminal() ? "Terminal" : node.getRepresentation().toString();
+        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
 }

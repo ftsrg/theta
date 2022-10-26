@@ -21,10 +21,10 @@ import java.io.FileNotFoundException;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-public class ExprNodeTest {
+public class ExprNodeTest5 {
 
     public static void main(String[] args){
 
@@ -35,12 +35,11 @@ public class ExprNodeTest {
         ConstDecl<IntType> declY = Decls.Const("y", Int());
         ConstDecl<IntType> declZ = Decls.Const("z", Int());
 
-        MddVariable z = varOrder.createOnTop(MddVariableDescriptor.create(declZ, 0));
         MddVariable y = varOrder.createOnTop(MddVariableDescriptor.create(declY, 0));
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
-        // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
+        // x >= 2 && y = x + 1 && x <= 6 && z = y + 2
+        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
@@ -70,7 +69,7 @@ public class ExprNodeTest {
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
         System.out.println(valuations);
 
-        final Graph graph = new MddNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
+        final Graph graph = new MddNodeVisualizer(ExprNodeTest5::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
