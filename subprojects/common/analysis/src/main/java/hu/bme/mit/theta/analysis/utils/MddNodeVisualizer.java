@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.utils;
 
+import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
@@ -70,12 +71,12 @@ public class MddNodeVisualizer {
 
         final Set<MddNode> traversed = Containers.createSet();
 
-        traverse(graph, rootNode, traversed);
+        traverse(graph, rootNode, rootNode.cursor(), traversed);
 
         return graph;
     }
 
-    private void traverse(final Graph graph, final MddNode node,
+    private void traverse(final Graph graph, final MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor,
                           final Set<MddNode> traversed) {
         if (traversed.contains(node)) {
             return;
@@ -96,19 +97,23 @@ public class MddNodeVisualizer {
 
         if(node.defaultValue() != null){
             final MddNode defaultValue = node.defaultValue();
-            traverse(graph, defaultValue, traversed);
+            try(var valueCursor = cursor.valueCursor()){
+                traverse(graph, defaultValue, valueCursor, traversed);
+            }
             final String sourceId = NODE_ID_PREFIX + idFor(node);
             final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
             final EdgeAttributes eAttributes = EdgeAttributes.builder()
                     .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(DEFAULT_EDGE_STYLE).build();
             graph.addEdge(sourceId, targetId, eAttributes);
         } else {
-            for(var cur = node.cursor(); cur.moveNext();){
-                if(cur.value() != null){
-                    traverse(graph, cur.value(), traversed);
+            while(cursor.moveNext()){
+                if(cursor.value() != null){
+                    try(var valueCursor = cursor.valueCursor()){
+                        traverse(graph, cursor.value(), valueCursor, traversed);
+                    }
                     final String sourceId = NODE_ID_PREFIX + idFor(node);
-                    final String targetId = NODE_ID_PREFIX + idFor(cur.value());
-                    final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cur.key()+"")
+                    final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
+                    final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cursor.key()+"")
                             .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(CHILD_EDGE_STYLE).build();
                     graph.addEdge(sourceId, targetId, eAttributes);
                 }
