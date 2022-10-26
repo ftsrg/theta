@@ -174,7 +174,8 @@ public class XcfaConfigBuilder {
 			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel, Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry) {
 				return switch (porDependencyLevel) {
 					case ABSTRACTION_AWARE -> new XcfaAbstractPorLts(xcfa, ignoredVariableRegistry);
-					default -> new XcfaPorLts(xcfa);
+					case BASIC -> new XcfaPorLts(xcfa);
+					default -> new XcfaLts();
 				};
 			}
 
@@ -280,7 +281,7 @@ public class XcfaConfigBuilder {
 	}
 
 	public enum PorDependencyLevel {
-		BASIC, ABSTRACTION_AWARE
+		NO_POR, BASIC, ABSTRACTION_AWARE
 	}
 
 	private Logger logger = NullLogger.getInstance();

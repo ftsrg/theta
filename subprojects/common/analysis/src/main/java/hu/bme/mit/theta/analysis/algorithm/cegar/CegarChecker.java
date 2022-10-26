@@ -20,16 +20,14 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.PorLogger;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.concurrent.TimeUnit;
 
@@ -76,6 +74,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		int iteration = 0;
 		do {
 			++iteration;
+			PorLogger.exploredActions.add(0);
+			PorLogger.preservedStates.add(arg.size());
 
 			logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
 			logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
@@ -83,10 +83,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
+			PorLogger.exploredStates.add(arg.size());
 
 			if (abstractorResult.isUnsafe()) {
-
-
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
 
 				P lastPrec = prec;
@@ -112,7 +111,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		stopwatch.stop();
 
-		logger.write(Level.MAINSTEP, "ARG size: %d%n", arg.size());
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
 				refinerTime, iteration);
@@ -128,6 +126,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		assert cegarResult != null;
 		logger.write(Level.RESULT, "%s%n", cegarResult);
 		logger.write(Level.INFO, "%s%n", stats);
+
+		System.err.println("[EXPLORED STATES] " + PorLogger.exploredStates);
+		System.err.println("[EXPLORED ACTIONS] " + PorLogger.exploredActions);
+		System.err.println("[PRESERVED STATES] " + PorLogger.preservedStates);
+
 		return cegarResult;
 	}
 
