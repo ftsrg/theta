@@ -15,7 +15,7 @@ import java.math.BigInteger;
  */
 public class LitExprConverter {
 
-    public static int toInt(LitExpr litExpr) {
+    public static int toInt(LitExpr<?> litExpr) {
         if (litExpr instanceof IntLitExpr) {
             return ((IntLitExpr) litExpr).getValue().intValue();
         }
@@ -25,7 +25,7 @@ public class LitExprConverter {
         throw new UnsupportedOperationException("Unsupported type");
     }
 
-    public static LitExpr toLitExpr(int integer, Type type) {
+    public static LitExpr<?> toLitExpr(int integer, Type type) {
         if (type instanceof IntType) {
             return IntLitExpr.of(BigInteger.valueOf(integer));
         }

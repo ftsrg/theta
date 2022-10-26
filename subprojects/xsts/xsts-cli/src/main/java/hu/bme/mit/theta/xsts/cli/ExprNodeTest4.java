@@ -21,10 +21,10 @@ import java.io.FileNotFoundException;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-public class ExprNodeTest {
+public class ExprNodeTest4 {
 
     public static void main(String[] args){
 
@@ -39,8 +39,8 @@ public class ExprNodeTest {
         MddVariable y = varOrder.createOnTop(MddVariableDescriptor.create(declY, 0));
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
-        // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
+        // y >= 2 && z = y + 1 && y <= 6
+        Expr<BoolType> expr = And(Geq(declY.getRef(),Int(2)), Eq(declZ.getRef(),Add(declY.getRef(),Int(1))),Leq(declY.getRef(), Int(6)));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
@@ -49,28 +49,18 @@ public class ExprNodeTest {
 
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
-        recursiveCursor.moveNext();
-        recursiveCursor.moveNext();
 
         try(var childCursor = recursiveCursor.valueCursor()){
             childCursor.moveNext();
             childCursor.moveNext();
+            childCursor.moveNext();
+            childCursor.moveNext();
         }
-
-        recursiveCursor.moveNext();
-
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
-            childCursor2.moveNext();
-            childCursor2.moveNext();
-        }
-
-        recursiveCursor.moveNext();
-        recursiveCursor.moveNext();
 
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
         System.out.println(valuations);
 
-        final Graph graph = new MddNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
+        final Graph graph = new MddNodeVisualizer(ExprNodeTest4::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
