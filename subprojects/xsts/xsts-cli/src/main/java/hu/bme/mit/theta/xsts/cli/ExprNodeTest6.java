@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xsts.cli;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -11,20 +10,18 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import java.io.FileNotFoundException;
-import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-public class ExprNodeTest {
+public class ExprNodeTest6 {
 
     public static void main(String[] args){
 
@@ -40,7 +37,7 @@ public class ExprNodeTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
+        Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(),declZ.getRef()), Eq(declZ.getRef(), Int(2))));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
@@ -52,25 +49,10 @@ public class ExprNodeTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
-            childCursor.moveNext();
-            childCursor.moveNext();
-        }
+//        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
+//        System.out.println(valuations);
 
-        recursiveCursor.moveNext();
-
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
-            childCursor2.moveNext();
-            childCursor2.moveNext();
-        }
-
-        recursiveCursor.moveNext();
-        recursiveCursor.moveNext();
-
-        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
-        System.out.println(valuations);
-
-        final Graph graph = new MddNodeVisualizer(ExprNodeTest::nodeToString).visualize(rootNode);
+        final Graph graph = new MddNodeVisualizer(ExprNodeTest6::nodeToString).visualize(rootNode);
         try {
             GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
         } catch (FileNotFoundException e) {
