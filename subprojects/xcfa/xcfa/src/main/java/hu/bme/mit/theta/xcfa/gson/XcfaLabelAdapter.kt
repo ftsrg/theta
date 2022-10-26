@@ -25,12 +25,8 @@ import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import kotlin.reflect.KClass
-import kotlin.reflect.KVariance
 import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.createType
 import kotlin.reflect.full.functions
-import kotlin.reflect.full.staticFunctions
 
 class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>() {
     override fun write(writer: JsonWriter, value: XcfaLabel) {
@@ -70,7 +66,13 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>()
             val content = reader.nextString()
             val constructor = clazz.companionObject?.functions?.find { it.name == "fromString" }
             checkNotNull(constructor) { "${clazz.simpleName} has no fromString() method." }
-            val obj = constructor.call(clazz.companionObject!!.objectInstance, content, scope, env)
+            val obj =
+            try{
+                constructor.call(clazz.companionObject!!.objectInstance, content, scope, env)
+            } catch(e: Exception){
+                System.err.println("Could not parse $content\nscope: ${scope}\nenv: $env")
+                error(e)
+            }
             check(obj is XcfaLabel)
             reader.endObject()
             return obj

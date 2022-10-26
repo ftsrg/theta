@@ -149,7 +149,14 @@ data class XcfaCegarConfig(
                         object: TypeToken<SafetyResult<XcfaState<PredState>, XcfaAction>>() {}.type
                     else
                         error("Domain ${domain} is not implemented in the GSON parser.")
-            gson.fromJson(safetyString, type)
+            try{
+                gson.fromJson(safetyString, type)
+            } catch(e: Exception) {
+                val tempFile = File.createTempFile("safetyresult", ".json")
+                tempFile.writeText(safetyString!!)
+                System.err.println("Erroneous SafetyResult, see file ${tempFile.absolutePath}")
+                error(e)
+            }
         }
     }
 }

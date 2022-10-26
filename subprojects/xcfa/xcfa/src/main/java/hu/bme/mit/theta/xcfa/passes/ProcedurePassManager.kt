@@ -28,7 +28,6 @@ class CPasses : ProcedurePassManager(listOf(
         UnusedLocRemovalPass(),
         // optimizing
         SimplifyExprsPass(),
-        UnusedVarPass(),
         // handling intrinsics
         ErrorLocationPass(),
         FinalLocationPass(),
@@ -43,6 +42,8 @@ class CPasses : ProcedurePassManager(listOf(
         // handling remaining function calls
         NondetFunctionPass(),
         HavocPromotionAndRange(),
+        // Final cleanup
+        UnusedVarPass(),
 ))
 
 class LitmusPasses : ProcedurePassManager(emptyList())

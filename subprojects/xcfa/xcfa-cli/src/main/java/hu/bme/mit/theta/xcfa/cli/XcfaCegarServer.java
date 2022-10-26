@@ -63,9 +63,31 @@ class XcfaCegarServer {
                     final String xcfaStr = in.readLine();
                     final Gson gson = getGson();
 
-                    XCFA xcfa = gson.fromJson(xcfaStr, XCFA.class);
+                    XCFA xcfa;
+                    try{
+                        xcfa = gson.fromJson(xcfaStr, XCFA.class);
+                    } catch(Exception e) {
+                        File tempFile = File.createTempFile("xcfa", ".json");
+                        try(BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                            bw.write(xcfaStr);
+                        }
+                        System.err.println("Erroneous XCFA, see file " + tempFile.getAbsolutePath());
+                        throw e;
+                    }
+
                     logger.write(Logger.Level.INFO, "Parsed xcfa.\n");
-                    XcfaCegarConfig xcfaCegarConfig = gson.fromJson(configStr, XcfaCegarConfig.class);
+                    XcfaCegarConfig xcfaCegarConfig;
+                    try{
+                        xcfaCegarConfig = gson.fromJson(configStr, XcfaCegarConfig.class);
+                    } catch(Exception e) {
+                        File tempFile = File.createTempFile("config", ".json");
+                        try(BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                            bw.write(configStr);
+                        }
+                        System.err.println("Erroneous config, see file " + tempFile.getAbsolutePath());
+                        throw e;
+                    }
+
                     logger.write(Logger.Level.INFO, "Parsed config.\n");
 
                     SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);

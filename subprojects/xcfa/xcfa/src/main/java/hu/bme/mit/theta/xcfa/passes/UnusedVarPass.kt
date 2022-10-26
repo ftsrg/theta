@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import com.google.common.collect.Sets
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
@@ -31,8 +32,16 @@ class UnusedVarPass : ProcedurePass {
         val usedVars = LinkedHashSet<VarDecl<*>>()
         builder.getEdges().forEach { usedVars.addAll(it.label.collectVars()) }
 
+        val allVars = Sets.union(builder.getVars(), builder.parent.getVars().map { it.wrappedVar }.toSet())
+        val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
+        if(!varsAndParams.containsAll(usedVars)) {
+            System.err.println("Warning: There are some used variables not present as declarations: \n${usedVars.filter { !varsAndParams.contains(it) }}")
+        }
+
         val list = builder.getVars().filter { !usedVars.contains(it) }.toList()
-        list.forEach { builder.removeVar(it) }
+        list.forEach {
+            builder.removeVar(it)
+        }
 
         return builder
     }

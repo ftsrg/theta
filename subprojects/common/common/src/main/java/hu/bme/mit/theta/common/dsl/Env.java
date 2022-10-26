@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
-
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.common.Utils;
+import static com.google.common.base.Preconditions.*;
+import static java.util.stream.Collectors.toList;
 
 public final class Env {
 
@@ -59,6 +58,17 @@ public final class Env {
 		final Object value = currentFrame.eval(symbol);
 		checkArgument(symbol != null, "Symbol " + symbol.getName() + " is undefined");
 		return value;
+	}
+
+	@Override
+	public String toString() {
+		StringJoiner sj = new StringJoiner("\n", "Env( ", " )");
+		Frame frame = currentFrame;
+		while(frame != null) {
+			sj.add(frame.toString());
+			frame = frame.parent;
+		}
+		return sj.toString();
 	}
 
 	public <S extends Symbol, V extends Object> Object compute(final S symbol,

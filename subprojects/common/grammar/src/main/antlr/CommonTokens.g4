@@ -238,7 +238,7 @@ FP_ABS
     ;
 
 FP_FROM_BV
-    :   'fpfrombv' FP_TYPE_DECL (LBRACK SIGNEDNESS RBRACK) FP_ROUNDINGMODE?
+    :   'fpfrombv' FP_TYPE_DECL (LBRACK ('u' | 's') RBRACK) FP_ROUNDINGMODE?
     ;
 
 FP_IS_NAN
@@ -316,11 +316,7 @@ EXTRACT
     ;
 
 BV_TYPE_DECL
-    :   LBRACK NAT '\'' SIGNEDNESS RBRACK
-    ;
-
-SIGNEDNESS
-    :   ('u' | 's')
+    :   LBRACK NAT '\'' ('u' | 's') RBRACK
     ;
 
 FP_TYPE_DECL

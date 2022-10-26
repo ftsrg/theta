@@ -46,4 +46,8 @@ class XcfaScope(
     override fun addAll(symbols: Iterable<Symbol>) {
         symbolTable.addAll(symbols)
     }
+
+    override fun toString(): String {
+        return "Scope{\nenclosingScope: ${enclosingScope}\nsymbolTable: $symbolTable }"
+    }
 }

@@ -51,6 +51,8 @@ class InlineProceduresPass : ProcedurePass {
 
                             val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
                             procedure.getLocs().forEach { newLocs.put(it, it.inlinedCopy()) }
+                            procedure.getVars().forEach { builder.addVar(it) }
+                            procedure.getParams().forEach { builder.addVar(it.first) }
                             procedure.getEdges().forEach { builder.addEdge(it.withSource(newLocs.get(it.source)!!).withTarget(newLocs.get(it.target)!!)) }
 
                             val inStmts: MutableList<XcfaLabel> = ArrayList()

@@ -25,13 +25,11 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
+import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
@@ -47,15 +45,6 @@ import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
-import kotlin.collections.ArrayList
-import kotlin.collections.Collection
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
-import kotlin.collections.List
-import kotlin.collections.MutableCollection
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
-import kotlin.collections.listOf
 import kotlin.collections.set
 
 class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
@@ -93,19 +82,19 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
             }
         }
         for (function in cProgram.functions) {
-            val toAdd: XcfaProcedureBuilder = handleFunction(function, initStmtList)
-            builder.addProcedure(toAdd)
+            val toAdd: XcfaProcedureBuilder = handleFunction(function, initStmtList, builder)
             if (toAdd.name.equals("main")) builder.addEntryPoint(toAdd, listOf())
         }
         return builder
     }
 
-    private fun handleFunction(function: CFunction, param: List<XcfaLabel>): XcfaProcedureBuilder {
+    private fun handleFunction(function: CFunction, param: List<XcfaLabel>, xcfaBuilder: XcfaBuilder): XcfaProcedureBuilder {
         locationLut.clear()
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
         val builder = XcfaProcedureBuilder(funcDecl.name, CPasses())
+        xcfaBuilder.addProcedure(builder)
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
         }
@@ -184,6 +173,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
             val ptrType = CComplexType.getUnsignedLong().smtType
             if (!memoryMaps.containsKey(type)) {
                 val toAdd = Decls.Var<ArrayType<*, *>>("memory_$type", ArrayType.of(ptrType, type))
+                builder.parent.addVar(XcfaGlobalVar(toAdd, ArrayLitExpr.of(emptyList(), cast(CComplexType.getType(op).nullValue, type), ArrayType.of(ptrType, type)) ))
                 memoryMaps[type] = toAdd
                 FrontendMetadata.create(toAdd, "defaultElement", CComplexType.getType(op).nullValue)
             }
