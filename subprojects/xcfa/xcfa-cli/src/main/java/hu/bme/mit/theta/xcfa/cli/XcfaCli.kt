@@ -74,7 +74,7 @@ class XcfaCli(private val args: Array<String>) {
             println("Invalid parameters, details:")
             println(ex.message)
             ex.usage()
-            return
+            exitProcess(ExitCodes.INVALID_PARAM.code)
         }
         /// version
         if (versionInfo) {
@@ -93,7 +93,7 @@ class XcfaCli(private val args: Array<String>) {
         } catch (e: Exception) {
             if(stacktrace) e.printStackTrace();
             System.err.println("Frontend failed!")
-            exitProcess(-80)
+            exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
         swFrontend.reset().start()
 

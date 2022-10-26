@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -70,23 +71,23 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	protected final List<CStatement> preStatements = new ArrayList<>();
 	protected final List<CStatement> postStatements = new ArrayList<>();
-	protected final Deque<Map<String, VarDecl<?>>> variables;
+	protected final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
 	protected final Map<VarDecl<?>, CDeclaration> functions;
 
-	public ExpressionVisitor(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
+	public ExpressionVisitor(Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		this.variables = variables;
 		this.functions = functions;
 	}
 
 
-	public static ExpressionVisitor create(Deque<Map<String, VarDecl<?>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
+	public static ExpressionVisitor create(Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, Map<VarDecl<?>, CDeclaration> functions) {
 		return new ExpressionVisitor(variables, functions);
 	}
 
 	protected VarDecl<?> getVar(String name) {
-		for (Map<String, VarDecl<?>> variableList : variables) {
-			if (variableList.containsKey(name)) {
-				VarDecl<?> varDecl = variableList.get(name);
+		for (Tuple2<String, Map<String, VarDecl<?>>> variableList : variables) {
+			if (variableList.get2().containsKey(name)) {
+				VarDecl<?> varDecl = variableList.get2().get(name);
 				if (functions.containsKey(varDecl)) {
 					FrontendMetadata.create(name, "shouldInline", false);
 				}

@@ -20,7 +20,7 @@ open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
 class CPasses : ProcedurePassManager(listOf(
         // formatting
-        AnnotateVarsPass(),
+//        AnnotateVarsPass(),
         NormalizePass(),
         DeterministicPass(),
         // removing redundant elements

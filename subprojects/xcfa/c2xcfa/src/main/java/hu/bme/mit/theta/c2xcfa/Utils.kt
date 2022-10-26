@@ -21,7 +21,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.NormalizePass
+import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream
@@ -31,6 +31,7 @@ fun getXcfaFromC(stream: InputStream): XCFA {
     val lexer = CLexer(input)
     val tokens = CommonTokenStream(lexer)
     val parser = CParser(tokens)
+    parser.errorHandler = BailErrorStrategy()
     val context = parser.compilationUnit()
 
     val program = context.accept(FunctionVisitor.instance)

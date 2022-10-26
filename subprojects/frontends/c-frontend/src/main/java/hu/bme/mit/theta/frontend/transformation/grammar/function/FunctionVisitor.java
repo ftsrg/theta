@@ -62,14 +62,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -89,7 +82,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		functions.clear();
 	}
 
-	private final Deque<Map<String, VarDecl<?>>> variables;
+	private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+	private int anonCnt = 0;
 	private final List<VarDecl<?>> flatVariables;
 	private final Map<VarDecl<?>, CDeclaration> functions;
 
@@ -100,18 +94,29 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		return vars;
 	}
 
+	private String getName(final String name) {
+		final StringJoiner sj = new StringJoiner("_");
+		for (Iterator<Tuple2<String, Map<String, VarDecl<?>>>> iterator = variables.descendingIterator(); iterator.hasNext(); ) {
+			Tuple2<String, Map<String, VarDecl<?>>> variable = iterator.next();
+			if(!variable.get1().equals(""))
+				sj.add(variable.get1());
+		}
+		sj.add(name);
+		return sj.toString();
+	}
+
 	private void createVars(String name, CDeclaration declaration, CComplexType type, List<VarDecl<?>> vars) {
 		if (type instanceof CStruct) {
 			((CStruct) type).getFields().forEach((s, type1) -> {
 				createVars(name + "." + s, declaration, type1, vars);
 			});
 		}
-		VarDecl<?> varDecl = Var(name, type.getSmtType());
-		Map<String, VarDecl<?>> peek = variables.peek();
-		if (peek.containsKey(name)) {
+		Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
+		VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
+		if (peek.get2().containsKey(name)) {
 			System.err.println("WARNING: Variable already exists: " + name);
 		}
-		peek.put(name, varDecl);
+		peek.get2().put(name, varDecl);
 		flatVariables.add(varDecl);
 		FrontendMetadata.create(varDecl.getRef(), "cType", type);
 		declaration.addVarDecl(varDecl);
@@ -119,7 +124,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	public FunctionVisitor() {
 		variables = new ArrayDeque<>();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("", new LinkedHashMap<>()));
 		flatVariables = new ArrayList<>();
 		functions = new LinkedHashMap<>();
 	}
@@ -127,7 +132,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
 		variables.clear();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("", new LinkedHashMap<>()));
 		flatVariables.clear();
 		functions.clear();
 
@@ -190,7 +195,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 				} else {
 					CSimpleType returnType = declaration.getType();
 					declaration.setType(returnType);
-					if (!variables.peek().containsKey(declaration.getName())) {
+					if (!variables.peek().get2().containsKey(declaration.getName())) {
 						FrontendMetadata.create(declaration.getName(), "cType", returnType.getActualType());
 						createVars(declaration);
 						for (VarDecl<?> varDecl : declaration.getVarDecls()) {
@@ -210,14 +215,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		if (returnType.isTypedef()) return new CCompound();
 		CDeclaration funcDecl = ctx.declarator().accept(DeclarationVisitor.instance);
 		funcDecl.setType(returnType);
-		if (!variables.peek().containsKey(funcDecl.getName())) {
+		if (!variables.peek().get2().containsKey(funcDecl.getName())) {
 			FrontendMetadata.create(funcDecl.getName(), "cType", returnType.getActualType());
 			createVars(funcDecl);
 			for (VarDecl<?> varDecl : funcDecl.getVarDecls()) {
 				functions.put(varDecl, funcDecl);
 			}
 		}
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
 		flatVariables.clear();
 		for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
 			if (functionParam.getName() != null)
@@ -242,7 +247,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitBlockItemList(CParser.BlockItemListContext ctx) {
 		CCompound compound = new CCompound();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
 		for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
 			compound.getcStatementList().add(blockItemContext.accept(this));
 		}
@@ -300,7 +305,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
 		CStmtCounter.incrementBranches();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("if" + anonCnt++, new LinkedHashMap<>()));
 		CIf cIf = new CIf(
 				ctx.expression().accept(this),
 				ctx.statement(0).accept(this),
@@ -312,7 +317,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("switch" + anonCnt++, new LinkedHashMap<>()));
 		CSwitch cSwitch = new CSwitch(
 				ctx.expression().accept(this),
 				ctx.statement().accept(this));
@@ -324,7 +329,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
 		CStmtCounter.incrementWhileLoops();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
 		CWhile cWhile = new CWhile(
 				ctx.statement().accept(this),
 				ctx.expression().accept(this));
@@ -335,7 +340,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
 	@Override
 	public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
 		CDoWhile cDoWhile = new CDoWhile(
 				ctx.statement().accept(this),
 				ctx.expression().accept(this));
@@ -347,7 +352,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
 		CStmtCounter.incrementForLoops();
-		variables.push(new LinkedHashMap<>());
+		variables.push(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
 		CStatement init = ctx.forCondition().forInit().accept(this);
 		CStatement test = ctx.forCondition().forTest().accept(this);
 		CStatement incr = ctx.forCondition().forIncr().accept(this);
