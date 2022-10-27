@@ -27,6 +27,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.system.exitProcess
 
 
@@ -97,16 +98,25 @@ class XcfaCli(private val args: Array<String>) {
         }
         swFrontend.reset().start()
 
-        if(noAnalysis) return
+        if(noAnalysis) {
+            println("ParsingResult Success")
+            return
+        }
 
         val safetyResult: SafetyResult<*, *> =
                 when (strategy) {
                     Strategy.DIRECT -> {
-                        cegarConfig.check(xcfa, logger)
+                        exitOnError { cegarConfig.check(xcfa, logger) }
                     }
                     Strategy.SERVER -> {
                         val safetyResultSupplier = cegarConfig.checkInProcess(xcfa, logger)
-                        safetyResultSupplier(100_000)
+                        try {
+                            safetyResultSupplier(900_000)
+                        } catch(e: TimeoutException) {
+                            exitProcess(ExitCodes.TIMEOUT.code)
+                        } catch(e: ErrorCodeException) {
+                            exitProcess(e.code)
+                        }
                     }
                     else -> {
                         TODO()

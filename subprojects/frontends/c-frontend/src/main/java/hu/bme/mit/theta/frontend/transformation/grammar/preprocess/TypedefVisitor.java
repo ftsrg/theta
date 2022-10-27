@@ -21,6 +21,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +41,32 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 
 	@Override
 	public List<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
+		List<CDeclaration> ret = new ArrayList<>();
 		if (ctx.declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
-			throw new UnsupportedOperationException("Not yet implemented (local typedef)");
+			List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+			ret.addAll(declarations);
+			return ret;
 		} else return null;
+	}
+
+	@Override
+	public List<CDeclaration> visitBlockItemList(CParser.BlockItemListContext ctx) {
+		List<CDeclaration> ret = new ArrayList<>();
+		for (ParseTree child : ctx.children) {
+			List<CDeclaration> list = child.accept(this);
+			if(list != null) ret.addAll(list);
+		}
+		return ret;
+	}
+
+	@Override
+	public List<CDeclaration> visitCompoundStatement(CParser.CompoundStatementContext ctx) {
+		List<CDeclaration> ret = new ArrayList<>();
+		for (ParseTree child : ctx.children) {
+			List<CDeclaration> list = child.accept(this);
+			if(list != null) ret.addAll(list);
+		}
+		return ret;
 	}
 
 	@Override

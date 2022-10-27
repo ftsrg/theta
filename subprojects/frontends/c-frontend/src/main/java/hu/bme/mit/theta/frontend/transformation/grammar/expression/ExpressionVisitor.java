@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
@@ -55,10 +56,7 @@ import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -399,15 +397,37 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 	}
 
 	@Override
-	public Expr<?> visitUnaryExpression(CParser.UnaryExpressionContext ctx) {
-		if (ctx.unaryExpressionSizeOrAlignOf() != null) {
-			System.err.println("WARNING: Sizeof and alignof are not yet implemented, using a literal 0 instead.");
+	public Expr<?> visitUnaryExpressionSizeOrAlignOf(CParser.UnaryExpressionSizeOrAlignOfContext ctx) {
+		if(ctx.Alignof() != null) {
+			System.err.println("WARNING: alignof is not yet implemented, using a literal 0 instead.");
 			CComplexType signedInt = CComplexType.getSignedInt();
 			LitExpr<?> zero = signedInt.getNullValue();
 			FrontendMetadata.create(zero, "cType", signedInt);
 			return zero;
+		} else {
+			Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.typeName().getText());
+			if (type.isPresent()) {
+				LitExpr<?> value = CComplexType.getSignedInt().getValue("" + ArchitectureConfig.architecture.getBitWidth(type.get().getTypeName()));
+				return value;
+			} else {
+				System.err.println("WARNING: sizeof got unknown type, using a literal 0 instead.");
+				CComplexType signedInt = CComplexType.getSignedInt();
+				LitExpr<?> zero = signedInt.getNullValue();
+				FrontendMetadata.create(zero, "cType", signedInt);
+				return zero;
+			}
 		}
-		Expr<?> ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
+
+	}
+
+	@Override
+	public Expr<?> visitUnaryExpression(CParser.UnaryExpressionContext ctx) {
+		Expr<?> ret;
+		if (ctx.unaryExpressionSizeOrAlignOf() != null) {
+			ret=ctx.unaryExpressionSizeOrAlignOf().accept(this);
+		} else {
+			ret = ctx.unaryExpressionCast() == null ? ctx.postfixExpression().accept(this) : ctx.unaryExpressionCast().accept(this);
+		}
 		int increment = ctx.unaryExpressionIncrement().size() - ctx.unaryExpressionDecrement().size();
 		if (increment != 0) {
 			Expr<?> expr = ret;

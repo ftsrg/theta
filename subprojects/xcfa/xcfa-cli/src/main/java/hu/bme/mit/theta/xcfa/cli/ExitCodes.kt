@@ -16,12 +16,48 @@
 
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.common.exception.NotSolvableException
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
+import kotlin.system.exitProcess
+
 enum class ExitCodes(val code: Int) {
     GENERIC_ERROR(1),
-    FRONTEND_FAILED(201),
-    VERIFICATION_STUCK(202),
-    OUT_OF_MEMORY(203),
-    INVALID_PARAM(204),
-    TIMEOUT(205),
-    SERVER_ERROR(205),
+    OUT_OF_MEMORY(200),
+    TIMEOUT(201),
+    SERVER_ERROR(202),
+
+    FRONTEND_FAILED(210),
+    INVALID_PARAM(211),
+
+    VERIFICATION_STUCK(220),
+    SOLVER_ERROR(221),
+}
+
+class ErrorCodeException(val code: Int) : Exception()
+
+fun <T> exitOnError(body: () -> T): T {
+    try{
+        return body();
+    } catch (e: RuntimeException) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.SERVER_ERROR.code);
+    } catch(e: SmtLibSolverException) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.SOLVER_ERROR.code);
+    } catch(e: ClassCastException) {
+        e.printStackTrace();
+        if (e.message?.contains("com.microsoft.z3") == true)
+            exitProcess(ExitCodes.SOLVER_ERROR.code);
+        else
+            exitProcess(ExitCodes.GENERIC_ERROR.code);
+    } catch(e: NotSolvableException) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.VERIFICATION_STUCK.code);
+    } catch(e: OutOfMemoryError) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.OUT_OF_MEMORY.code);
+    } catch(e: Exception) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.GENERIC_ERROR.code);
+    }
 }

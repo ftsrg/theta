@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -49,6 +50,7 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 
 data class XcfaCegarConfig(
@@ -75,7 +77,9 @@ data class XcfaCegarConfig(
         @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
         var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
         @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
-        var pruneStrategy: PruneStrategy = PruneStrategy.LAZY
+        var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
+        @Parameter(names = ["--no-cex-check"])
+        var noCexCheck: Boolean = false
 ) {
     @Suppress("UNCHECKED_CAST")
     private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
@@ -103,6 +107,13 @@ data class XcfaCegarConfig(
                     MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
                 else
                     SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+
+        // set up stopping analysis if it is stuck on same ARGs and precisions
+        if (noCexCheck) {
+            ArgCexCheckHandler.instance.setArgCexCheck(false, false)
+        } else {
+            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement == Refinement.MULTI_SEQ)
+        }
 
         return CegarChecker.create(abstractor, refiner, logger)
     }
@@ -139,7 +150,12 @@ data class XcfaCegarConfig(
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
                 writer.println(gson.toJson(this))
                 writer.println(gson.toJson(xcfa))
-                process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+                val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+                if(retCode == Int.MIN_VALUE) {
+                    throw TimeoutException()
+                } else if (retCode != 0) {
+                    throw ErrorCodeException(retCode)
+                }
                 safetyString = reader.readLine()
             }
             val type =

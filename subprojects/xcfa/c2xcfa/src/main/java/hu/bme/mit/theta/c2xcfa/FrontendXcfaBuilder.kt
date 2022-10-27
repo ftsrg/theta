@@ -27,6 +27,8 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -463,18 +465,18 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         propagateMetadata(statement, xcfaEdge)
         val lastInit = if (init == null) initLoc else init.accept(this, ParamPack(builder, initLoc, null, null, returnLoc))
         val lastTest = if (guard == null) lastInit else buildWithoutPostStatement(guard, ParamPack(builder, lastInit!!, null, null, returnLoc))
-        val assume = Stmts.Assume(AbstractExprs.Neq(guard!!.expression, CComplexType.getType(guard.expression).nullValue))
-        propagateMetadata(guard, assume)
+        val assume = Stmts.Assume(if(guard == null) True() else AbstractExprs.Neq(guard!!.expression, CComplexType.getType(guard.expression).nullValue))
+        if(guard != null) propagateMetadata(guard, assume) else propagateMetadata(statement, assume)
         check(lastTest != null)
         xcfaEdge = XcfaEdge(lastTest, endInit, StmtLabel(assume))
         builder.addEdge(xcfaEdge)
         propagateMetadata(statement, xcfaEdge)
-        val assume1 = Stmts.Assume(AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression).nullValue))
-        propagateMetadata(guard, assume1)
+        val assume1 = Stmts.Assume(if(guard == null) False() else AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression).nullValue))
+        if(guard != null) propagateMetadata(guard, assume1)  else propagateMetadata(statement, assume1)
         xcfaEdge = XcfaEdge(lastTest, outerLastTest, StmtLabel(assume1))
         builder.addEdge(xcfaEdge)
         propagateMetadata(statement, xcfaEdge)
-        val innerLastGuard = buildPostStatement(guard, ParamPack(builder, endInit, endLoc, startIncrement, returnLoc))
+        val innerLastGuard = if(guard == null) endInit else buildPostStatement(guard, ParamPack(builder, endInit, endLoc, startIncrement, returnLoc))
         val lastBody = if (body == null) innerLastGuard else body.accept(this, ParamPack(builder, innerLastGuard, endLoc, startIncrement, returnLoc))
         xcfaEdge = XcfaEdge(lastBody, startIncrement)
         builder.addEdge(xcfaEdge)
@@ -489,7 +491,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
             builder.addEdge(xcfaEdge)
             propagateMetadata(statement, xcfaEdge)
         }
-        val outerLastGuard = buildPostStatement(guard, ParamPack(builder, outerLastTest, endLoc, startIncrement, returnLoc))
+        val outerLastGuard =  if(guard == null) outerLastTest else buildPostStatement(guard, ParamPack(builder, outerLastTest, endLoc, startIncrement, returnLoc))
         xcfaEdge = XcfaEdge(outerLastGuard, endLoc)
         builder.addEdge(xcfaEdge)
         propagateMetadata(statement, xcfaEdge)

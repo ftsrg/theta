@@ -31,6 +31,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import static hu.bme.mit.theta.xcfa.cli.ExitCodesKt.exitOnError;
 import static hu.bme.mit.theta.xcfa.cli.GsonUtilsKt.getGson;
 
 class XcfaCegarServer {
@@ -47,60 +48,62 @@ class XcfaCegarServer {
             System.out.println("Invalid parameters, details:");
             System.out.println(ex.getMessage());
             ex.usage();
-            System.exit(-1);
+            System.exit(ExitCodes.INVALID_PARAM.getCode());
         }
 
         final Logger logger = new ConsoleLabelledLogger();
         logger.write(Logger.Level.INFO, "Server started on port " + port + ".\n");
 
-        try(final ServerSocket socket = new ServerSocket(port)) {
-            do {
-                try(final Socket clientSocket = socket.accept()) {
-                    final PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                    final BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        exitOnError( () -> {
+            try (final ServerSocket socket = new ServerSocket(port)) {
+                do {
+                    try (final Socket clientSocket = socket.accept()) {
+                        final PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                        final BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-                    final String configStr = in.readLine();
-                    final String xcfaStr = in.readLine();
-                    final Gson gson = getGson();
+                        final String configStr = in.readLine();
+                        final String xcfaStr = in.readLine();
+                        final Gson gson = getGson();
 
-                    XCFA xcfa;
-                    try{
-                        xcfa = gson.fromJson(xcfaStr, XCFA.class);
-                    } catch(Exception e) {
-                        File tempFile = File.createTempFile("xcfa", ".json");
-                        try(BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
-                            bw.write(xcfaStr);
+                        XCFA xcfa;
+                        try {
+                            xcfa = gson.fromJson(xcfaStr, XCFA.class);
+                        } catch (Exception e) {
+                            File tempFile = File.createTempFile("xcfa", ".json");
+                            try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                                bw.write(xcfaStr);
+                            }
+                            System.err.println("Erroneous XCFA, see file " + tempFile.getAbsolutePath());
+                            throw e;
                         }
-                        System.err.println("Erroneous XCFA, see file " + tempFile.getAbsolutePath());
-                        throw e;
-                    }
 
-                    logger.write(Logger.Level.INFO, "Parsed xcfa.\n");
-                    XcfaCegarConfig xcfaCegarConfig;
-                    try{
-                        xcfaCegarConfig = gson.fromJson(configStr, XcfaCegarConfig.class);
-                    } catch(Exception e) {
-                        File tempFile = File.createTempFile("config", ".json");
-                        try(BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
-                            bw.write(configStr);
+                        logger.write(Logger.Level.INFO, "Parsed xcfa.\n");
+                        XcfaCegarConfig xcfaCegarConfig;
+                        try {
+                            xcfaCegarConfig = gson.fromJson(configStr, XcfaCegarConfig.class);
+                        } catch (Exception e) {
+                            File tempFile = File.createTempFile("config", ".json");
+                            try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                                bw.write(configStr);
+                            }
+                            System.err.println("Erroneous config, see file " + tempFile.getAbsolutePath());
+                            throw e;
                         }
-                        System.err.println("Erroneous config, see file " + tempFile.getAbsolutePath());
-                        throw e;
+
+                        logger.write(Logger.Level.INFO, "Parsed config.\n");
+
+                        SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
+                        logger.write(Logger.Level.INFO, "Safety check done.\n");
+                        String s = gson.toJson(check);
+                        out.println(s);
+                        logger.write(Logger.Level.INFO, "Server exiting.\n");
                     }
-
-                    logger.write(Logger.Level.INFO, "Parsed config.\n");
-
-                    SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
-                    logger.write(Logger.Level.INFO, "Safety check done.\n");
-                    String s = gson.toJson(check);
-                    out.println(s);
-                    logger.write(Logger.Level.INFO, "Server exiting.\n");
-                }
-            } while(!oneshot);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
+                } while (!oneshot);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
     }
 
     public static void main(String[] args) throws FileNotFoundException {
