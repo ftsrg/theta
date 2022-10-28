@@ -36,7 +36,7 @@ import static hu.bme.mit.theta.xcfa.cli.GsonUtilsKt.getGson;
 
 class XcfaCegarServer {
     @Parameter(names = "--port", description = "Port number for server to use")
-    int port = 12345;
+    int port = 0;
 
     @Parameter(names = "--oneshot", description = "Exit after the first check()")
     boolean oneshot = true;
@@ -56,6 +56,7 @@ class XcfaCegarServer {
 
         exitOnError( () -> {
             try (final ServerSocket socket = new ServerSocket(port)) {
+                System.out.println("Port=(" + socket.getLocalPort() + ")");
                 do {
                     try (final Socket clientSocket = socket.accept()) {
                         final PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);

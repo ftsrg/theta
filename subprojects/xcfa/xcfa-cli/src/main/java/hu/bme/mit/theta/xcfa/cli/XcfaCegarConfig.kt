@@ -121,7 +121,12 @@ data class XcfaCegarConfig(
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 
     fun checkInProcess(xcfa: XCFA, logger: Logger): (timeoutMs: Long) -> SafetyResult<*, *> {
-        val pb = NuProcessBuilder(listOf("java", "-cp", File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath, XcfaCegarServer::class.qualifiedName))
+        val pb = NuProcessBuilder(listOf(
+                "java",
+                "-cp",
+                File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+                XcfaCegarServer::class.qualifiedName
+                ))
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()
@@ -131,12 +136,12 @@ data class XcfaCegarConfig(
             var clientSocket: Socket? = null
             while(!connected) {
                 try {
-                    clientSocket = Socket("127.0.0.1", 12345)
+                    clientSocket = Socket("127.0.0.1", processHandler.port)
                     connected = true
                     logger.write(Logger.Level.VERBOSE, "Connected!\n")
                 } catch (e: Exception) {
                     Thread.sleep(100)
-                    logger.write(Logger.Level.VERBOSE, "Connection failed, retrying...\n")
+                    logger.write(Logger.Level.VERBOSE, "Connection failed (using port ${processHandler.port}), retrying...\n")
                 }
             }
             checkNotNull(clientSocket)
@@ -170,8 +175,8 @@ data class XcfaCegarConfig(
             } catch(e: Exception) {
                 val tempFile = File.createTempFile("safetyresult", ".json")
                 tempFile.writeText(safetyString!!)
-                System.err.println("Erroneous SafetyResult, see file ${tempFile.absolutePath}")
-                error(e)
+                e.printStackTrace()
+                error("Erroneous SafetyResult, see file ${tempFile.absolutePath}")
             }
         }
     }
@@ -181,11 +186,20 @@ private class ProcessHandler(
         private val logger: Logger,
 ) : NuAbstractProcessHandler() {
     private var stdoutBuffer = ""
+    var port: Int = -1
     override fun onStdout(buffer: ByteBuffer, closed: Boolean) {
         if (!closed) {
             val bytes = ByteArray(buffer.remaining())
             buffer[bytes]
             val str = bytes.decodeToString()
+            if(port == -1) {
+                val portMatch = Regex("Port=\\(([0-9]*)\\)").find(str)
+                if(portMatch != null) {
+                    if(portMatch.groupValues.size == 2) {
+                        port = Integer.parseInt(portMatch.groupValues[1])
+                    }
+                }
+            }
             stdoutBuffer += str
             val matchResults = Regex("([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
             var length = 0

@@ -55,6 +55,10 @@ enum class Strategy {
     PORTFOLIO
 }
 
+enum class Portfolio {
+    COMPLEX
+}
+
 enum class Domain(
         val abstractor: (
             xcfa: XCFA,

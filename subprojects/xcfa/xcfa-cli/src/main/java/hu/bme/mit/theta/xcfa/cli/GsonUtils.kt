@@ -98,6 +98,7 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: ()->D
     gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(XcfaAction::class.java, XcfaActionAdapter { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(Trace::class.java, TraceAdapter( { gson }, { TypeToken.getParameterized(TypeToken.get(XcfaState::class.java).type, domain().stateType).type }, TypeToken.get(XcfaAction::class.java).type))
     gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java, ArgAdapter( { gson }, { domain().partialOrd(solver()) }, { argAdapterHelper(domain().stateType) }))
     gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java, SafetyResultAdapter({ gson }, {argHelper(domain().stateType)}, {traceHelper(domain().stateType)}))
     gson = gsonBuilder.create()

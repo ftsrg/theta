@@ -24,6 +24,8 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
 import java.io.File
 import java.io.FileInputStream
 import java.util.concurrent.TimeUnit
@@ -42,11 +44,25 @@ class XcfaCli(private val args: Array<String>) {
     var backend: Backend = Backend.CEGAR
 
     @Parameter(names = ["--strategy"], description = "Execution strategy")
-    var strategy: Strategy = Strategy.SERVER
+    var strategy: Strategy = Strategy.PORTFOLIO
+
+    @Parameter(names = ["--portfolio"], description = "Portfolio type (only valid with --strategy PORTFOLIO)")
+    var portfolio: Portfolio = Portfolio.COMPLEX
+
+    @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
+    var timeoutMs: Long = 0
 
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"], description = "Print full stack trace in case of exception")
     var stacktrace: Boolean = false
+
+    @Parameter(names = ["--no-analysis"], description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
+    var noAnalysis = false
+
+    @Parameter(names = ["--print-config"], description = "Print the config to a JSON file (takes a filename as argument)")
+    var printConfigFile: String? = null
+
+
 
     //////////// output data and statistics ////////////
     @Parameter(names = ["--version"], description = "Display version", help = true)
@@ -61,8 +77,6 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--witness-only"], description = "Does not output any other files, just a violation/correctness witness only")
     var witnessOnly = false
 
-    @Parameter(names = ["--no-analysis"], description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
-    var noAnalysis = false
 
     /// Potential backends
     private val cegarConfig = XcfaCegarConfig()
@@ -83,6 +97,11 @@ class XcfaCli(private val args: Array<String>) {
             return
         }
         val logger = ConsoleLogger(logLevel)
+
+        if(printConfigFile != null) {
+            val file = File(printConfigFile!!)
+            file.writeText(getGson().toJson(cegarConfig))
+        }
 
         /// Starting frontend
         val swFrontend = Stopwatch.createStarted()
@@ -111,15 +130,79 @@ class XcfaCli(private val args: Array<String>) {
                     Strategy.SERVER -> {
                         val safetyResultSupplier = cegarConfig.checkInProcess(xcfa, logger)
                         try {
-                            safetyResultSupplier(900_000)
+                            safetyResultSupplier(timeoutMs)
                         } catch(e: TimeoutException) {
                             exitProcess(ExitCodes.TIMEOUT.code)
                         } catch(e: ErrorCodeException) {
                             exitProcess(e.code)
                         }
                     }
-                    else -> {
-                        TODO()
+                    Strategy.PORTFOLIO -> {
+                        // TODO: change this placeholder
+                        val config1 = XcfaCegarConfig(
+                                solverHome = cegarConfig.solverHome,
+                                maxEnum= 1,
+                                domain = Domain.EXPL,
+                                refinement = Refinement.SEQ_ITP
+                        )
+                        val config2 = XcfaCegarConfig(
+                                solverHome = cegarConfig.solverHome,
+                                maxEnum= 1,
+                                domain = Domain.PRED_CART,
+                                refinement = Refinement.BW_BIN_ITP
+                        )
+                        val bvConfig = XcfaCegarConfig(
+                                solverHome = cegarConfig.solverHome,
+                                abstractionSolver = "mathsat:5.6.6",
+                                refinementSolver = "mathsat:5.6.6",
+                                maxEnum = 1,
+                                domain = Domain.EXPL,
+                                refinement = Refinement.SEQ_ITP
+                        )
+                        val fpConfig = XcfaCegarConfig(
+                                solverHome = cegarConfig.solverHome,
+                                abstractionSolver = "mathsat:fp",
+                                validateAbstractionSolver = true,
+                                refinementSolver = "mathsat:fp",
+                                validateRefinementSolver = true,
+                                maxEnum = 1,
+                                domain = Domain.EXPL,
+                                refinement = Refinement.SEQ_ITP
+                        )
+
+                        when(BitwiseChecker.getBitwiseOption()) {
+                            BitwiseOption.INTEGER ->
+                                try {
+                                    config1.checkInProcess(xcfa, logger).invoke(60_000)
+                                } catch(e1: Exception) {
+                                    try {
+                                        config2.checkInProcess(xcfa, logger).invoke(0)
+                                    } catch (e2: Exception) {
+                                        System.err.println("All configs failed.")
+                                        e1.printStackTrace()
+                                        System.err.println("====")
+                                        e2.printStackTrace()
+                                        exitProcess(ExitCodes.GENERIC_ERROR.code)
+                                    }
+                                }
+                            BitwiseOption.BITWISE ->
+                                try {
+                                    bvConfig.checkInProcess(xcfa, logger).invoke(0)
+                                } catch (e2: Exception) {
+                                    System.err.println("All configs failed.")
+                                    e2.printStackTrace()
+                                    exitProcess(ExitCodes.GENERIC_ERROR.code)
+                                }
+                            BitwiseOption.BITWISE_FLOAT ->
+                                try {
+                                    fpConfig.checkInProcess(xcfa, logger).invoke(0)
+                                } catch (e2: Exception) {
+                                    System.err.println("All configs failed.")
+                                    e2.printStackTrace()
+                                    exitProcess(ExitCodes.GENERIC_ERROR.code)
+                                }
+                            else -> error("Unknown bv task type")
+                        }
                     }
                 }
         logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
