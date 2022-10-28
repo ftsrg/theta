@@ -19,15 +19,28 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
-import java.io.File
-import java.io.FileInputStream
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.utils.WitnessWriter
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaTraceToWitness
+import java.io.*
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.system.exitProcess
@@ -205,6 +218,73 @@ class XcfaCli(private val args: Array<String>) {
                         }
                     }
                 }
+        if(safetyResult.isUnsafe) {
+            val workdir: Path = FileSystems.getDefault().getPath("").toAbsolutePath()
+            val witnessfile: File = File(workdir.toString() + File.separator + "witness.graphml")
+            val cexSolverFactory = SolverManager.resolveSolverFactory(cegarConfig.refinementSolver)
+            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(safetyResult.asUnsafe().getTrace() as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
+            val witnessGraph: Graph = XcfaTraceToWitness.buildWitness(xcfa, concrTrace)
+            val ww = WitnessWriter.createViolationWitnessWriter(input?.absolutePath, "CHECK( init(main()), LTL(G ! call(reach_error())) )", false)
+            try {
+                ww.writeFile(witnessGraph, witnessfile.getAbsolutePath())
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+            }
+        } else if (safetyResult.isSafe) {
+            val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
+            val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
+
+            val taskHash = WitnessWriter.createTaskHash(input?.getAbsolutePath())
+            val dummyWitness = StringBuilder()
+            dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
+                    "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
+                    "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>").append(System.lineSeparator()).append(
+                    "<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator()).append(
+                    "<default>false</default>").append(System.lineSeparator()).append(
+                    "</key>").append(System.lineSeparator()).append(
+                    "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">").append(System.lineSeparator()).append(
+                    "<default>false</default>").append(System.lineSeparator()).append(
+                    "</key>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>").append(System.lineSeparator()).append(
+                    "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>").append(System.lineSeparator()).append(
+                    "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
+                    "<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator()).append(
+                    "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
+                    "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>").append(System.lineSeparator()).append(
+                    "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
+                    "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
+                    "<data key=\"programhash\">")
+            dummyWitness.append(taskHash)
+            dummyWitness.append("</data>").append(System.lineSeparator()).append(
+                    "<data key=\"creationtime\">")
+
+            val tz: TimeZone = TimeZone.getTimeZone("UTC")
+            val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
+
+            df.setTimeZone(tz)
+            val ISOdate: String = df.format(Date())
+
+            dummyWitness.append(ISOdate)
+            dummyWitness.append("</data>").append(System.lineSeparator()).append(
+                    "<data key=\"programfile\">")
+            dummyWitness.append(input?.getName())
+            dummyWitness.append("</data>").append(System.lineSeparator()).append(
+                    "<node id=\"N0\">").append(System.lineSeparator()).append(
+                    "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
+                    "</node>").append(System.lineSeparator()).append(
+                    "</graph>").append(System.lineSeparator()).append(
+                    "</graphml>")
+
+            try {
+                BufferedWriter(FileWriter(witnessfile)).use { bw -> bw.write(dummyWitness.toString()) }
+            } catch (ioe: IOException) {
+                ioe.printStackTrace()
+            }
+        }
         logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
     }
 
