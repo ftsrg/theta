@@ -38,9 +38,11 @@ class CPasses : ProcedurePassManager(listOf(
         InlineProceduresPass(),
         RemoveDeadEnds(),
         EliminateSelfLoops(),
-        LbePass(),
         // handling remaining function calls
         NondetFunctionPass(),
+        LbePass(),
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(),
         // Final cleanup
         UnusedVarPass(),

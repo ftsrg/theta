@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
+import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -27,18 +29,18 @@ import hu.bme.mit.theta.xcfa.model.*
  * This pass simplifies assignments from havoc'd intermediate variables.
  * It determines intermediate variables based on their usage patterns:
  *      `havoc x; y := x` matches when y is not used in other contexts.
- * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
+ * Requires the ProcedureBuilder to be `deterministic` and `seqLbe` (@see DeterministicPass, @see LbePass)
  */
 
 class HavocPromotionAndRange : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
 
-        val varEdgeLut = LinkedHashMap<VarDecl<*>, MutableList<XcfaEdge>>()
-        builder.getEdges().forEach { it.label.collectVars().forEach { v ->
-            varEdgeLut.putIfAbsent(v, ArrayList())
-            varEdgeLut[v]!!.add(it)
-        } }
+//        val varEdgeLut = LinkedHashMap<VarDecl<*>, MutableList<XcfaEdge>>()
+//        builder.getEdges().forEach { it.label.collectVars().forEach { v ->
+//            varEdgeLut.putIfAbsent(v, ArrayList())
+//            varEdgeLut[v]!!.add(it)
+//        } }
 
 
         val edges = LinkedHashSet(builder.getEdges())
@@ -47,8 +49,8 @@ class HavocPromotionAndRange : ProcedurePass {
                     .mapIndexed { index, it -> Pair(index, it) }
                     .filter {
                         it.second is StmtLabel &&
-                        (it.second as StmtLabel).stmt is HavocStmt<*> &&
-                        varEdgeLut[((it.second as StmtLabel).stmt as HavocStmt<*>).varDecl]!!.size == 1
+                        (it.second as StmtLabel).stmt is HavocStmt<*> //&&
+//                        varEdgeLut[((it.second as StmtLabel).stmt as HavocStmt<*>).varDecl]!!.size == 1
                     }
             if(candidates.isNotEmpty()) {
                 val labelEdgeLut = LinkedHashMap<VarDecl<*>, MutableList<XcfaLabel>>()
@@ -63,7 +65,6 @@ class HavocPromotionAndRange : ProcedurePass {
                         labels[0] == edge.label.labels[it.first] &&
                         labels[1] == edge.label.labels[it.first + 1] &&
                         labels[1] is StmtLabel && (labels[1] as StmtLabel).stmt is AssignStmt<*> &&
-                                ((labels[1] as StmtLabel).stmt as AssignStmt<*>).varDecl == v &&
                                 ((labels[1] as StmtLabel).stmt as AssignStmt<*>).expr == v.ref }
                 val indices = candidates.map(Pair<Int, XcfaLabel>::first)
                 if(indices.isNotEmpty()) {
@@ -71,10 +72,16 @@ class HavocPromotionAndRange : ProcedurePass {
                     val newLabels = ArrayList<XcfaLabel>()
                     var offset = 0;
                     for ((index, label) in edge.label.labels.withIndex()) {
-                        if(index < indices[offset] + offset) newLabels.add(label)
-                        else if (index == indices[offset] + offset) {
-                            newLabels.add(StmtLabel(Havoc(((edge.label.labels[index+1] as StmtLabel).stmt as AssignStmt<*>).varDecl)))
-                        } else if (index == indices[offset] + offset + 1) {
+                        if(indices.size <= offset || index < indices[offset]) newLabels.add(label)
+                        else if (index == indices[offset]) {
+                            val varDecl = ((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).varDecl
+                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr)
+                            val havoc = Havoc(varDecl)
+                            val metadataValue = FrontendMetadata.getMetadataValue((edge.label.labels[index] as StmtLabel).stmt, "sourceStatement")
+                            if(metadataValue.isPresent) FrontendMetadata.create(havoc, "sourceStatement", metadataValue.get())
+                            newLabels.add(StmtLabel(havoc))
+                            newLabels.add(StmtLabel(type.limit(varDecl.ref)))
+                        } else if (index == indices[offset] + 1) {
                             offset++
                         } else {
                             error("Should not be here")

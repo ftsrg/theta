@@ -19,9 +19,8 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.xcfa.model.*
-import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * Transforms all procedure calls into havocs.
@@ -37,7 +36,10 @@ class NondetFunctionPass : ProcedurePass {
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(StmtLabel(HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>))))))
+                        val havoc = HavocStmt.of((invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
+                        val metadataValue = FrontendMetadata.getMetadataValue(invokeLabel, "sourceStatement")
+                        if(metadataValue.isPresent) FrontendMetadata.create(havoc, "sourceStatement", metadataValue.get())
+                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(StmtLabel(havoc)))))
                     } else {
                         builder.addEdge(it)
                     }

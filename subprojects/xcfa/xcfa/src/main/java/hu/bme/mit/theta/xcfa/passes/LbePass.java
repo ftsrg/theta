@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes;
 
 import hu.bme.mit.theta.xcfa.model.*;
+import kotlin.Unit;
 
 import java.util.*;
 
@@ -81,7 +82,7 @@ public class LbePass implements ProcedurePass {
 	 */
 	@Override
 	public XcfaProcedureBuilder run(XcfaProcedureBuilder builder) {
-		if (level == LBELevel.NO_LBE) return builder;
+		if (level == LBELevel.NO_LBE || builder.getErrorLoc().isEmpty()) return builder;
 		checkNotNull(builder.getMetaData().get("deterministic"));
 		checkNotNull(builder.getMetaData().get("noSelfLoops"));
 
@@ -100,6 +101,8 @@ public class LbePass implements ProcedurePass {
 		removeAllMiddleLocations();
 
 		printToDot("--- AFTER TRANSFORMATION ---");
+
+		if(level == LBELevel.LBE_SEQ || level == LBELevel.LBE_FULL) builder.getMetaData().put("seqLbe", Unit.INSTANCE);
 
 		return builder;
 	}

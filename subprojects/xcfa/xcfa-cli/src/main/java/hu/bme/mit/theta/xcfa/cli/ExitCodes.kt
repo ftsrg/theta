@@ -25,6 +25,7 @@ enum class ExitCodes(val code: Int) {
     OUT_OF_MEMORY(200),
     TIMEOUT(201),
     SERVER_ERROR(202),
+    PORTFOLIO_ERROR(203),
 
     FRONTEND_FAILED(210),
     INVALID_PARAM(211),

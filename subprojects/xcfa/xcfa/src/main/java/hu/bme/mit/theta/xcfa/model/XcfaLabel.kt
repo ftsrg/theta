@@ -26,11 +26,10 @@ import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
-import java.util.Optional
-import java.util.StringJoiner
+import java.util.*
 
 sealed class XcfaLabel {
-    open fun toStmt(): Stmt = error("Cannot convert label to statement.")
+    open fun toStmt(): Stmt = error("Cannot convert label $this to statement.")
 }
 
 data class InvokeLabel(

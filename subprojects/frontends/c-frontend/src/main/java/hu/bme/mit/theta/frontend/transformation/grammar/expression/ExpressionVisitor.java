@@ -407,7 +407,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 		} else {
 			Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.typeName().getText());
 			if (type.isPresent()) {
-				LitExpr<?> value = CComplexType.getSignedInt().getValue("" + ArchitectureConfig.architecture.getBitWidth(type.get().getTypeName()));
+				LitExpr<?> value = CComplexType.getSignedInt().getValue("" + ArchitectureConfig.architecture.getBitWidth(type.get().getTypeName()) / 8);
 				return value;
 			} else {
 				System.err.println("WARNING: sizeof got unknown type, using a literal 0 instead.");

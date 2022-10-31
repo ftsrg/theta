@@ -32,13 +32,8 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
-import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverManager
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -48,14 +43,11 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.Socket
 import java.nio.ByteBuffer
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 
 data class XcfaCegarConfig(
-        @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
-        var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString(),
         @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
         var abstractionSolver: String = "Z3",
         @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
@@ -79,11 +71,10 @@ data class XcfaCegarConfig(
         @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
         var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
         @Parameter(names = ["--no-cex-check"])
-        var noCexCheck: Boolean = false
+        var noCexCheck: Boolean = false,
 ) {
     @Suppress("UNCHECKED_CAST")
     private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
-        registerAllSolverManagers(solverHome, logger)
         val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
         val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
 
@@ -120,12 +111,14 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 
-    fun checkInProcess(xcfa: XCFA, logger: Logger): (timeoutMs: Long) -> SafetyResult<*, *> {
+    fun checkInProcess(xcfa: XCFA, smtHome: String, logger: Logger): (timeoutMs: Long) -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
                 "java",
                 "-cp",
                 File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
-                XcfaCegarServer::class.qualifiedName
+                XcfaCegarServer::class.qualifiedName,
+                "--smt-home",
+                smtHome
                 ))
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
@@ -148,7 +141,6 @@ data class XcfaCegarConfig(
 
             var safetyString: String?
 
-            registerAllSolverManagers(solverHome, logger)
             val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})
             clientSocket.use {
                 val writer = PrintWriter(clientSocket.getOutputStream(), true)
@@ -219,23 +211,5 @@ private class ProcessHandler(
             buffer.get(bytes)
             System.err.print(bytes.decodeToString())
         }
-    }
-}
-
-private fun getSolver(name: String, validate: Boolean) = if (validate) {
-    SolverValidatorWrapperFactory.create(name)
-} else {
-    SolverManager.resolveSolverFactory(name)
-}
-
-private fun registerAllSolverManagers(home: String, logger: Logger) {
-//        CpuTimeKeeper.saveSolverTimes()
-    SolverManager.closeAll()
-    // register solver managers
-    SolverManager.registerSolverManager(Z3SolverManager.create())
-    if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
-        val homePath = Path.of(home)
-        val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
-        SolverManager.registerSolverManager(smtLibSolverManager)
     }
 }

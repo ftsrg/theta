@@ -83,12 +83,16 @@ fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
         else -> this
         }
 
-fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt =
-        when(this) {
-            is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
-            is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
-            is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
-            else -> TODO("Not yet implemented")
+fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt {
+    val stmt = when (this) {
+        is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
+        is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
+        is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
+        else -> TODO("Not yet implemented")
+    }
+    val metadataValue = FrontendMetadata.getMetadataValue(this, "sourceStatement")
+    if(metadataValue.isPresent) FrontendMetadata.create(stmt, "sourceStatement", metadataValue.get())
+    return stmt
 }
 
 fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> =

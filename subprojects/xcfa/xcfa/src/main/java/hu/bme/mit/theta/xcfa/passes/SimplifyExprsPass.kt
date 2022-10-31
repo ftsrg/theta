@@ -40,7 +40,7 @@ class SimplifyExprsPass : ProcedurePass {
         checkNotNull(builder.metaData["deterministic"])
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
-            (edge.label as SequenceLabel).labels.map { if(it is StmtLabel) when(it.stmt) {
+            val newLabels = (edge.label as SequenceLabel).labels.map { if(it is StmtLabel) when(it.stmt) {
                 is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
                         FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
@@ -56,6 +56,10 @@ class SimplifyExprsPass : ProcedurePass {
                 }
                 else -> it
             } else it  }
+            if(newLabels != edge.label.labels) {
+                builder.removeEdge(edge)
+                builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
+            }
         }
         builder.metaData["simplifiedExprs"] = Unit
         return builder

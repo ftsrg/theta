@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLabelledLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.*;
@@ -41,6 +42,9 @@ class XcfaCegarServer {
     @Parameter(names = "--oneshot", description = "Exit after the first check()")
     boolean oneshot = true;
 
+    @Parameter(names = "--smt-home", description = "The path of the solver registry")
+    String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
+
     private void run(String[] args) {
         try {
             JCommander.newBuilder().addObject(this).build().parse(args);
@@ -55,6 +59,7 @@ class XcfaCegarServer {
         logger.write(Logger.Level.INFO, "Server started on port " + port + ".\n");
 
         exitOnError( () -> {
+            SolverRegistrationKt.registerAllSolverManagers(solverHome, logger);
             try (final ServerSocket socket = new ServerSocket(port)) {
                 System.out.println("Port=(" + socket.getLocalPort() + ")");
                 do {

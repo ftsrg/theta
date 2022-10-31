@@ -25,6 +25,7 @@ import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -34,7 +35,6 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
-import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -50,40 +50,38 @@ public final class XcfaTraceToWitness {
     private XcfaTraceToWitness() {
     }
 
-    public static Graph buildWitness(final XCFA xcfa,
+    public static Graph buildWitness(
             final Trace<XcfaState<ExplState>, XcfaAction> trace) {
         concreteTrace = trace;
         witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
         // add edges
-        addEdges(xcfa);
+        addEdges();
         return witnessGraph;
     }
 
     /**
      * Adds edges to the witness graph based on the concrete trace and the explicit states
      */
-    private static void addEdges(XCFA xcfa) {
+    private static void addEdges() {
         addEntryNode();
 
         for (int i = 0; i < concreteTrace.getActions().size(); i++) {
-            List<Stmt> stmtList = concreteTrace.getAction(i).getStmts();
+            List<Stmt> stmtList = flattenSequence(concreteTrace.getAction(i).getStmts());
             List<String> edgesFromAction = new ArrayList<>();
             for (Stmt stmt : stmtList) {
                 Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i + 1).getSGlobal().getVal());
                 optionalLabel.ifPresent(edgesFromAction::add);
             }
 
-            int finalI = i;
-            if (xcfa.getProcedures().stream().anyMatch(it -> it.getErrorLoc().isPresent() && it.getErrorLoc().get().equals(concreteTrace.getAction(finalI).getTarget())) && edgesFromAction.size() == 0) {
+            if (concreteTrace.getAction(i).getTarget().getError() && edgesFromAction.size() == 0) {
                 addViolationNode();
                 addWitnessEdge("");
             }
             // otherwise:
             for (int j = 0; j < edgesFromAction.size(); j++) {
                 // if it is the last edge before reaching the violation node
-                int finalI1 = i;
-                if (xcfa.getProcedures().stream().anyMatch(it -> it.getErrorLoc().isPresent() && it.getErrorLoc().get().equals(concreteTrace.getAction(finalI1).getTarget())) && j + 1 == edgesFromAction.size()) {
+                if (concreteTrace.getAction(i).getTarget().getError() && j + 1 == edgesFromAction.size()) {
                     addViolationNode();
                 } else { // else the next node should be a normal one
                     addNextWitnessNode("");
@@ -93,6 +91,23 @@ public final class XcfaTraceToWitness {
             }
         }
 
+    }
+
+    private static List<Stmt> flattenSequence(List<Stmt> stmts) {
+        Stmt head = stmts.get(0);
+        List<Stmt> newHead = new ArrayList<>();
+        if(head instanceof SequenceStmt) {
+            for (Stmt stmt : ((SequenceStmt) head).getStmts()) {
+                newHead.addAll(flattenSequence(List.of(stmt)));
+            }
+        } else {
+            newHead.add(head);
+        }
+        List<Stmt> tail = stmts.subList(1, stmts.size());
+        if (tail.size() != 0) {
+            newHead.addAll(flattenSequence(tail));
+        }
+        return newHead;
     }
 
     private static Optional<String> makeEdgeLabelFromStatement(Stmt stmt, Valuation nextVal) {

@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-grammar"))
     implementation("com.zaxxer:nuprocess:2.0.2")
+    runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.7.10")
 }
 
 application {
