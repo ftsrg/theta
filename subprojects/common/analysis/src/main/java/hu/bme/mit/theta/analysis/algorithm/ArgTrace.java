@@ -68,6 +68,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 	private ArgTrace(List<ArgNode<S, A>> nodes, List<ArgEdge<S, A>> edges){
 		this.nodes = nodes;
 		this.edges = edges;
+		states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
 	}
 
 	////
