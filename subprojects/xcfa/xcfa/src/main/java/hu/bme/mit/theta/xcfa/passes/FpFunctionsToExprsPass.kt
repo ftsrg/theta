@@ -86,7 +86,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
                     FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleCeil(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -96,7 +96,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
                     FpRoundToIntegralExpr.of(FpRoundingMode.RTP, callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleIsinf(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -108,7 +108,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
                     TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
                     TypeUtils.cast(AbstractExprs.Ite<Type>(FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>), type.unitValue, type.nullValue), type.smtType))
             FrontendMetadata.create(assign.expr, "cType", type)
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleIsfinite(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -120,7 +120,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
                     TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
                     TypeUtils.cast(AbstractExprs.Ite<Type>(BoolExprs.Not(FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>)), type.unitValue, type.nullValue), type.smtType))
             FrontendMetadata.create(assign.expr, "cType", type)
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleIsnormal(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -140,7 +140,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
                     TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
                     TypeUtils.cast(AbstractExprs.Ite<Type>(FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>), type.unitValue, type.nullValue), type.smtType))
             FrontendMetadata.create(assign.expr, "cType", type)
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleRound(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -149,7 +149,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpRoundToIntegralExpr.of(FpRoundingMode.RNA, callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleSqrt(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -158,7 +158,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpSqrtExpr.of(FpRoundingMode.RNE, callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleFmod(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -171,7 +171,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpMinExpr.of(callStmt.params[1] as Expr<FpType?>, callStmt.params[2] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleFmax(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -180,7 +180,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpMaxExpr.of(callStmt.params[1] as Expr<FpType?>, callStmt.params[2] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleFloor(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -189,7 +189,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpRoundToIntegralExpr.of(FpRoundingMode.RTN, callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
         private fun handleFabs(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -198,7 +198,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpAbsExpr.of(callStmt.params[1] as Expr<FpType?>))
             FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
-            return StmtLabel(assign)
+            return StmtLabel(assign, metadata = callStmt.metadata)
         }
     }
 }

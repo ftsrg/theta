@@ -19,7 +19,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import java.util.Optional
+import java.util.*
 
 class XCFA(
         val name: String,
@@ -87,6 +87,7 @@ data class XcfaLocation @JvmOverloads constructor(
         val initial: Boolean = false,                                   // is this the initial location?
         val final: Boolean = false,                                     // is this the final location?
         val error: Boolean = false,                                     // is this the error location?
+        val metadata: MetaData = EmptyMetaData,
 ) {
     val incomingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all incoming edges in the current procedure
     val outgoingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all outgoing edges in the current procedure
@@ -105,7 +106,8 @@ data class XcfaLocation @JvmOverloads constructor(
 data class XcfaEdge @JvmOverloads constructor(
         val source: XcfaLocation,                                       // source location
         val target: XcfaLocation,                                       // target location
-        val label: XcfaLabel = NopLabel                                 // edge label
+        val label: XcfaLabel = NopLabel,                                // edge label
+        val metadata: MetaData = EmptyMetaData,
 ) {
     fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
     fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)

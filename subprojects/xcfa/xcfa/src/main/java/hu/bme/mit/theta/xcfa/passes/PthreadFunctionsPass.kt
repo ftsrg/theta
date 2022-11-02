@@ -44,7 +44,7 @@ class PthreadFunctionsPass : ProcedurePass {
                                 val handle = invokeLabel.params[1]
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                JoinLabel(handle)
+                                JoinLabel(handle, metadata = invokeLabel.metadata)
                             }
                             "pthread_create" -> {
                                 val handle = invokeLabel.params[1] as Reference<*,*>
@@ -55,7 +55,7 @@ class PthreadFunctionsPass : ProcedurePass {
 
                                 val param = invokeLabel.params[4]
 
-                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle.op as RefExpr<out Type>).decl as VarDecl<*>)
+                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle.op as RefExpr<out Type>).decl as VarDecl<*>,  metadata = invokeLabel.metadata)
                             }
                             else -> error("Unknown pthread function ${invokeLabel.name}")
                         }

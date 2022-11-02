@@ -60,12 +60,12 @@ class InlineProceduresPass : ProcedurePass {
                             for ((i, param) in procedure.getParams().withIndex()) {
                                 if (param.second != ParamDirection.OUT) {
                                     val stmt = AssignStmt.of(cast(param.first, param.first.type), cast(invokeLabel.params[i], param.first.type))
-                                    inStmts.add(StmtLabel(stmt))
+                                    inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }
 
                                 if (param.second != ParamDirection.IN) {
                                     val stmt = AssignStmt.of(cast((invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>, param.first.type), cast(param.first.ref, param.first.type))
-                                    outStmts.add(StmtLabel(stmt))
+                                    outStmts.add(StmtLabel(stmt,  metadata = invokeLabel.metadata))
                                 }
                             }
 

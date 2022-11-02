@@ -172,12 +172,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		int colNumberStop = stopLines == 0 ? stop.getCharPositionInLine() + stopText.length() - 1 : stopTextLines[stopLines].length();
 		int offsetStart = start.getStartIndex();
 		int offsetEnd = stop.getStopIndex();
-		FrontendMetadata.create(statement, "lineNumberStart", lineNumberStart);
-		FrontendMetadata.create(statement, "colNumberStart", colNumberStart);
-		FrontendMetadata.create(statement, "lineNumberStop", lineNumberStop);
-		FrontendMetadata.create(statement, "colNumberStop", colNumberStop);
-		FrontendMetadata.create(statement, "offsetStart", offsetStart);
-		FrontendMetadata.create(statement, "offsetEnd", offsetEnd);
+		statement.setLineNumberStart(lineNumberStart);
+		statement.setLineNumberStop(lineNumberStop);
+		statement.setColNumberStart(colNumberStart);
+		statement.setColNumberStop(colNumberStop);
+		statement.setOffsetStart(offsetStart);
+		statement.setOffsetEnd(offsetEnd);
+		statement.setSourceText(ctx.getText());
 	}
 
 

@@ -29,6 +29,14 @@ public abstract class CStatement {
 	protected CStatement preStatements;
 	protected CStatement postStatements;
 
+	private int lineNumberStart;
+	private int colNumberStart;
+	private int lineNumberStop;
+	private int colNumberStop;
+	private int offsetStart;
+	private int offsetEnd;
+	private String sourceText;
+
 	public String getId() {
 		return id;
 	}
@@ -66,4 +74,60 @@ public abstract class CStatement {
 	}
 
 	public abstract <P, R> R accept(CStatementVisitor<P, R> visitor, P param);
+
+	public int getLineNumberStart() {
+		return lineNumberStart;
+	}
+
+	public void setLineNumberStart(int lineNumberStart) {
+		this.lineNumberStart = lineNumberStart;
+	}
+
+	public int getColNumberStart() {
+		return colNumberStart;
+	}
+
+	public void setColNumberStart(int colNumberStart) {
+		this.colNumberStart = colNumberStart;
+	}
+
+	public int getLineNumberStop() {
+		return lineNumberStop;
+	}
+
+	public void setLineNumberStop(int lineNumberStop) {
+		this.lineNumberStop = lineNumberStop;
+	}
+
+	public int getColNumberStop() {
+		return colNumberStop;
+	}
+
+	public void setColNumberStop(int colNumberStop) {
+		this.colNumberStop = colNumberStop;
+	}
+
+	public int getOffsetStart() {
+		return offsetStart;
+	}
+
+	public void setOffsetStart(int offsetStart) {
+		this.offsetStart = offsetStart;
+	}
+
+	public int getOffsetEnd() {
+		return offsetEnd;
+	}
+
+	public void setOffsetEnd(int offsetEnd) {
+		this.offsetEnd = offsetEnd;
+	}
+
+	public String getSourceText() {
+		return sourceText;
+	}
+
+	public void setSourceText(String sourceText) {
+		this.sourceText = sourceText;
+	}
 }

@@ -44,7 +44,7 @@ class SimplifyExprsPass : ProcedurePass {
                 is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
                         FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
-                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type), cast(simplified, it.stmt.varDecl.type)))
+                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type), cast(simplified, it.stmt.varDecl.type)),  metadata = it.metadata)
                     }
                 is AssumeStmt -> {
                     val simplified = simplify(it.stmt.cond)
@@ -52,7 +52,7 @@ class SimplifyExprsPass : ProcedurePass {
                         FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.cond))
                     }
                     FrontendMetadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                    StmtLabel(Assume(simplified))
+                    StmtLabel(Assume(simplified), metadata = it.metadata)
                 }
                 else -> it
             } else it  }

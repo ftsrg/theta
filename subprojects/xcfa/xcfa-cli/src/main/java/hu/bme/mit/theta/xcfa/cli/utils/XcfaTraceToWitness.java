@@ -19,28 +19,30 @@ package hu.bme.mit.theta.xcfa.cli.utils;
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.c2xcfa.CMetaData;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.SequenceLabel;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+
+import static hu.bme.mit.theta.c2xcfa.CMetaDataKt.getCMetaData;
 
 public final class XcfaTraceToWitness {
     private static Trace<XcfaState<ExplState>, XcfaAction> concreteTrace;
@@ -67,10 +69,10 @@ public final class XcfaTraceToWitness {
         addEntryNode();
 
         for (int i = 0; i < concreteTrace.getActions().size(); i++) {
-            List<Stmt> stmtList = flattenSequence(concreteTrace.getAction(i).getStmts());
+            List<XcfaLabel> labelList = ((SequenceLabel)concreteTrace.getAction(i).getLabel()).getLabels();
             List<String> edgesFromAction = new ArrayList<>();
-            for (Stmt stmt : stmtList) {
-                Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt, concreteTrace.getState(i + 1).getSGlobal().getVal());
+            for (XcfaLabel label : labelList) {
+                Optional<String> optionalLabel = makeEdgeLabelFromStatement(label, concreteTrace.getState(i + 1).getSGlobal().getVal());
                 optionalLabel.ifPresent(edgesFromAction::add);
             }
 
@@ -93,77 +95,50 @@ public final class XcfaTraceToWitness {
 
     }
 
-    private static List<Stmt> flattenSequence(List<Stmt> stmts) {
-        Stmt head = stmts.get(0);
-        List<Stmt> newHead = new ArrayList<>();
-        if(head instanceof SequenceStmt) {
-            for (Stmt stmt : ((SequenceStmt) head).getStmts()) {
-                newHead.addAll(flattenSequence(List.of(stmt)));
-            }
-        } else {
-            newHead.add(head);
-        }
-        List<Stmt> tail = stmts.subList(1, stmts.size());
-        if (tail.size() != 0) {
-            newHead.addAll(flattenSequence(tail));
-        }
-        return newHead;
-    }
-
-    private static Optional<String> makeEdgeLabelFromStatement(Stmt stmt, Valuation nextVal) {
-        if (!(stmt instanceof HavocStmt || stmt instanceof AssumeStmt)) {
+    private static Optional<String> makeEdgeLabelFromStatement(XcfaLabel label, Valuation nextVal) {
+        if (!(label instanceof StmtLabel) || !(((StmtLabel) label).getStmt() instanceof HavocStmt || ((StmtLabel) label).getStmt() instanceof AssumeStmt)) {
             return Optional.empty();
         }
 
-        final Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(stmt, "sourceStatement");
-        if (sourceStatement.isEmpty()) {
+        Optional<CMetaData> metadataOpt = Optional.ofNullable(getCMetaData(label));
+
+        if (metadataOpt.isEmpty()) {
             return Optional.empty();
         }
 
-        Map<String, ?> metadata = FrontendMetadata.lookupMetadata(sourceStatement.get());
+        CMetaData metaData = metadataOpt.get();
+
         StringBuilder edgeLabel = new StringBuilder();
 
-        Object lineNumberStartO = metadata.get("lineNumberStart");
-        if (lineNumberStartO instanceof Integer) {
-            Integer startLineNumber = (Integer) lineNumberStartO;
-            if (startLineNumber != -1) {
-                edgeLabel.append("<data key=\"startline\">").append(startLineNumber).append("</data>").append(System.lineSeparator());
-            }
+        if (metaData.getLineNumberStart() != -1) {
+            edgeLabel.append("<data key=\"startline\">").append(metaData.getLineNumberStart()).append("</data>").append(System.lineSeparator());
         }
 
-        Object lineNumberStopO = metadata.get("lineNumberStop");
-        if (lineNumberStartO instanceof Integer) {
-            Integer endLineNumber = (Integer) lineNumberStopO;
-            if (endLineNumber != -1) {
-                edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>").append(System.lineSeparator());
-            }
+        if (metaData.getLineNumberStop() != -1) {
+            edgeLabel.append("<data key=\"endline\">").append(metaData.getLineNumberStop()).append("</data>").append(System.lineSeparator());
         }
 
-        Object offsetStartO = metadata.get("offsetStart");
-        if (offsetStartO instanceof Integer) {
-            Integer offsetStartNumber = (Integer) offsetStartO;
-            if (offsetStartNumber != -1) {
-                edgeLabel.append("<data key=\"startoffset\">").append(offsetStartNumber).append("</data>").append(System.lineSeparator());
-            }
+        if (metaData.getOffsetStart() != -1) {
+            edgeLabel.append("<data key=\"startoffset\">").append(metaData.getOffsetStart()).append("</data>").append(System.lineSeparator());
         }
 
-        if (stmt instanceof HavocStmt) {
-            Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) stmt).getVarDecl());
-            Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
-            if (value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement").isPresent()) {
+        if (((StmtLabel) label).getStmt() instanceof HavocStmt) {
+            Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) ((StmtLabel) label).getStmt()).getVarDecl());
+            String varName = ((HavocStmt<?>) ((StmtLabel) label).getStmt()).getVarDecl().getName();
+            if (value.isPresent() && getCMetaData(label) != null) {
                 edgeLabel.append("<data key=\"assumption\">");
                 edgeLabel.append(varName).append(" == ").append(printLit(value.get())).append(";");
                 edgeLabel.append("</data>").append(System.lineSeparator());
             }
-        } else if (stmt instanceof AssumeStmt) {
-            if (((AssumeStmt) stmt).getCond() instanceof EqExpr) {
+        } else if (((StmtLabel) label).getStmt() instanceof AssumeStmt) { // TODO: make this work with expression simplification
+            if (((AssumeStmt) ((StmtLabel) label).getStmt()).getCond() instanceof EqExpr) {
                 edgeLabel.append("<data key=\"control\">condition-").append("false").append("</data>").append(System.lineSeparator());
-            } else if (((AssumeStmt) stmt).getCond() instanceof NeqExpr) {
+            } else if (((AssumeStmt) ((StmtLabel) label).getStmt()).getCond() instanceof NeqExpr) {
                 edgeLabel.append("<data key=\"control\">condition-").append("true").append("</data>").append(System.lineSeparator());
             }
         }
         // not an official witness data key, so no validator will use it, but it helps readability
-        edgeLabel.append("<data key=\"stmt\">").append(escapeXml(stmt.toString())).append("</data>");
+        edgeLabel.append("<data key=\"stmt\">").append(escapeXml(label.toString())).append("</data>");
         return Optional.of(edgeLabel.toString());
     }
 

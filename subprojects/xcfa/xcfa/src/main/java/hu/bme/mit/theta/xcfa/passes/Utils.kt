@@ -72,14 +72,14 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 
 fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
     when(this) {
-        is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) })
-        is JoinLabel -> JoinLabel(pid.changeVars(varLut))
-        is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet())
-        is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels)
-        is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) })
-        is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut))
-        is StmtLabel -> StmtLabel(stmt.changeVars(varLut))
-        is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels)
+        is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
+        is JoinLabel -> JoinLabel(pid.changeVars(varLut), metadata = metadata)
+        is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet(), metadata = metadata)
+        is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
+        is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) }, metadata = metadata)
+        is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut), metadata = metadata)
+        is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
+        is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
         else -> this
         }
 

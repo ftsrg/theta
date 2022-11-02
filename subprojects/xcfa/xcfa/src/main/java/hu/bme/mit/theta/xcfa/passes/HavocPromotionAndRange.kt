@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
-import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.*
@@ -77,10 +76,8 @@ class HavocPromotionAndRange : ProcedurePass {
                             val varDecl = ((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).varDecl
                             val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr)
                             val havoc = Havoc(varDecl)
-                            val metadataValue = FrontendMetadata.getMetadataValue((edge.label.labels[index] as StmtLabel).stmt, "sourceStatement")
-                            if(metadataValue.isPresent) FrontendMetadata.create(havoc, "sourceStatement", metadataValue.get())
-                            newLabels.add(StmtLabel(havoc))
-                            newLabels.add(StmtLabel(type.limit(varDecl.ref)))
+                            newLabels.add(StmtLabel(havoc, metadata=edge.label.labels[index].metadata))
+                            newLabels.add(StmtLabel(type.limit(varDecl.ref), metadata = EmptyMetaData))
                         } else if (index == indices[offset] + 1) {
                             offset++
                         } else {

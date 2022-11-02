@@ -28,23 +28,24 @@ import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import java.util.*
 
-sealed class XcfaLabel {
+sealed class XcfaLabel(open val metadata: MetaData) {
     open fun toStmt(): Stmt = error("Cannot convert label $this to statement.")
 }
 
 data class InvokeLabel(
         val name: String,
-        val params: List<Expr<*>>
-) : XcfaLabel() {
+        val params: List<Expr<*>>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata) {
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
         params.forEach { sj.add(it.toString()) }
         return "$name$sj"
     }
     companion object {
-        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (name, params) = Regex("(.*)\\((.*)\\)").matchEntire(s)!!.destructured
-            return InvokeLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) })
+            return InvokeLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, metadata=metadata)
         }
     }
 }
@@ -52,49 +53,60 @@ data class InvokeLabel(
 data class StartLabel(
         val name: String,
         val params: List<Expr<*>>,
-        val pidVar: VarDecl<*>
-) : XcfaLabel(){
+        val pidVar: VarDecl<*>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
         params.forEach { sj.add(it.toString()) }
         return "$pidVar = start $name$sj"
     }
     companion object {
-        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (pidVarName, name, params) = Regex("(.*) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
-            return StartLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar)
+            return StartLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar, metadata=metadata)
         }
     }
 }
 
 data class JoinLabel(
-        val pid: Expr<*>
-) : XcfaLabel() {
+        val pid: Expr<*>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         return "join $pid"
     }
     companion object {
-        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
+         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (exprS) = Regex("join (.*)").matchEntire(s)!!.destructured
-            return JoinLabel(ExpressionWrapper(scope, exprS).instantiate(env))
+            return JoinLabel(ExpressionWrapper(scope, exprS).instantiate(env), metadata=metadata)
         }
     }
 }
 
+enum class ChoiceType{
+    NONE,
+    MAIN_PATH,
+    ALTERNATIVE_PATH
+}
+
 data class StmtLabel(
-        val stmt: Stmt
-) : XcfaLabel() {
+        val stmt: Stmt,
+        val choiceType: ChoiceType = ChoiceType.NONE,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     init {
         check(stmt !is NonDetStmt && stmt !is SequenceStmt) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
     }
     override fun toStmt() : Stmt = stmt
     override fun toString(): String {
-        return stmt.toString()
+        return "($stmt)[choiceType=$choiceType]"
     }
     companion object {
-        fun fromString(s: String, scope: Scope, env: Env): XcfaLabel {
-           return StmtLabel(StatementWrapper(s, scope).instantiate(env))
+        fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+           val (stmt, choiceTypeStr) = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)!!.destructured
+           return StmtLabel(StatementWrapper(stmt, scope).instantiate(env), choiceType=ChoiceType.valueOf(choiceTypeStr), metadata=metadata)
         }
     }
 }
@@ -102,8 +114,9 @@ data class StmtLabel(
 data class ReadLabel(
         val local: VarDecl<*>,
         val global: VarDecl<*>,
-        val labels: Set<String>
-) : XcfaLabel() {
+        val labels: Set<String>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         return "R[$local <- $global] @$labels"
     }
@@ -112,24 +125,27 @@ data class ReadLabel(
 data class WriteLabel(
         val local: VarDecl<*>,
         val global: VarDecl<*>,
-        val labels: Set<String>
-) : XcfaLabel() {
+        val labels: Set<String>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         return "W[$global <- $local] @$labels"
     }
 }
 
 data class FenceLabel(
-        val labels: Set<String>
-) : XcfaLabel() {
+        val labels: Set<String>,
+        override val metadata: MetaData
+) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         return "F[$labels]"
     }
 }
 
 data class SequenceLabel(
-        val labels: List<XcfaLabel>
-) : XcfaLabel() {
+        val labels: List<XcfaLabel>,
+        override val metadata: MetaData = EmptyMetaData
+) : XcfaLabel(metadata=metadata){
     override fun toStmt(): Stmt {
         return SequenceStmt(labels.map { it.toStmt() })
     }
@@ -142,8 +158,9 @@ data class SequenceLabel(
 }
 
 data class NondetLabel(
-        val labels: Set<XcfaLabel>
-) : XcfaLabel() {
+        val labels: Set<XcfaLabel>,
+        override val metadata: MetaData = EmptyMetaData
+) : XcfaLabel(metadata=metadata){
     override fun toStmt(): Stmt {
         return NonDetStmt(labels.map { it.toStmt() })
     }
@@ -152,7 +169,7 @@ data class NondetLabel(
     }
 }
 
-object NopLabel : XcfaLabel() {
+object NopLabel : XcfaLabel(metadata=EmptyMetaData) {
     override fun toStmt(): Stmt {
         return Skip()
     }
