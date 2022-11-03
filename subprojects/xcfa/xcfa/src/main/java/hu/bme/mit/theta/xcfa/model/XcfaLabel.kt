@@ -101,12 +101,20 @@ data class StmtLabel(
     }
     override fun toStmt() : Stmt = stmt
     override fun toString(): String {
-        return "($stmt)[choiceType=$choiceType]"
+        if(choiceType != ChoiceType.NONE)
+            return "($stmt)[choiceType=$choiceType]"
+        else
+            return stmt.toString()
     }
     companion object {
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-           val (stmt, choiceTypeStr) = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)!!.destructured
-           return StmtLabel(StatementWrapper(stmt, scope).instantiate(env), choiceType=ChoiceType.valueOf(choiceTypeStr), metadata=metadata)
+            val matchResult = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)
+            if(matchResult != null) {
+                val (stmt, choiceTypeStr) = matchResult.destructured
+                return StmtLabel(StatementWrapper(stmt, scope).instantiate(env), choiceType = ChoiceType.valueOf(choiceTypeStr), metadata = metadata)
+            } else {
+                return StmtLabel(StatementWrapper(s, scope).instantiate(env), choiceType = ChoiceType.NONE, metadata = metadata)
+            }
         }
     }
 }

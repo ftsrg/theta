@@ -91,7 +91,7 @@ class XcfaCli(private val args: Array<String>) {
     var logLevel = Logger.Level.MAINSTEP
 
     @Parameter(names = ["--output-results"], description = "Creates a directory, in which it outputs the xcfa, cex and witness")
-    var outputResults = true
+    var outputResults = false
 
     @Parameter(names = ["--output-directory"], description = "Specify the directory where the result files are stored")
     var resultFolder: File = File("results-${Date()}")
@@ -142,15 +142,19 @@ class XcfaCli(private val args: Array<String>) {
         }
         swFrontend.reset().start()
 
+        val gsonForOutput = getGson()
+
         if (outputResults) {
             if (!svcomp) {
                 resultFolder.mkdirs()
+
+                logger.write(Logger.Level.INFO, "Writing results to directory ${resultFolder.absolutePath}")
 
                 val xcfaDotFile = File(resultFolder, "xcfa.dot")
                 xcfaDotFile.writeText(xcfa.toDot())
 
                 val xcfaJsonFile = File(resultFolder, "xcfa.json")
-                val uglyJson = getGson().toJson(xcfa)
+                val uglyJson = gsonForOutput.toJson(xcfa)
                 val create = GsonBuilder().setPrettyPrinting().create()
                 xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
             }
@@ -206,7 +210,6 @@ class XcfaCli(private val args: Array<String>) {
                 }
         if (outputResults) {
             if (!svcomp) {
-                resultFolder = File("${input?.path}-${Date()}-results")
                 resultFolder.mkdirs()
 
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")

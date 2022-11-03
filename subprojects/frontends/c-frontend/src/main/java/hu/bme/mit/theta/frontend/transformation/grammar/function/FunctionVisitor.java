@@ -35,26 +35,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssume;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CBreak;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCase;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CContinue;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDecls;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDefault;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFor;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFunction;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CGoto;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CRet;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
+import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -66,6 +47,7 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as Programs, Functions,
@@ -95,7 +77,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	}
 
 	private String getName(final String name) {
-		final StringJoiner sj = new StringJoiner("_");
+		final StringJoiner sj = new StringJoiner("::");
 		for (Iterator<Tuple2<String, Map<String, VarDecl<?>>>> iterator = variables.descendingIterator(); iterator.hasNext(); ) {
 			Tuple2<String, Map<String, VarDecl<?>>> variable = iterator.next();
 			if(!variable.get1().equals(""))
@@ -178,7 +160,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		statement.setColNumberStop(colNumberStop);
 		statement.setOffsetStart(offsetStart);
 		statement.setOffsetEnd(offsetEnd);
-		statement.setSourceText(ctx.getText());
+		statement.setSourceText(textWithWS(ctx));
 	}
 
 
@@ -248,11 +230,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 	@Override
 	public CStatement visitBlockItemList(CParser.BlockItemListContext ctx) {
 		CCompound compound = new CCompound();
-		variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
+		if(ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
+			variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
 		for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
 			compound.getcStatementList().add(blockItemContext.accept(this));
 		}
-		variables.pop();
+		if(ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
+			variables.pop();
 		recordMetadata(ctx, compound);
 		return compound;
 	}
@@ -349,13 +333,26 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		variables.pop();
 		return cDoWhile;
 	}
-
 	@Override
 	public CStatement visitForStatement(CParser.ForStatementContext ctx) {
 		CStmtCounter.incrementForLoops();
 		variables.push(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
 		CStatement init = ctx.forCondition().forInit().accept(this);
 		CStatement test = ctx.forCondition().forTest().accept(this);
+		if(test == null) {
+			CCompound newCCompound1 = new CCompound();
+			CCompound newCCompound2 = new CCompound();
+			CCompound newCCompound3 = new CCompound();
+			CCompound newCCompound4 = new CCompound();
+			newCCompound1.getcStatementList().add(newCCompound2);
+			Expr<?> one = CComplexType.getSignedInt().getUnitValue();
+			FrontendMetadata.create(one, "cType", CComplexType.getSignedInt());
+			newCCompound2.getcStatementList().add(new CExpr(one));
+			newCCompound2.setPreStatements(newCCompound3);
+			newCCompound2.setPostStatements(newCCompound4);
+			test = newCCompound1;
+			recordMetadata(ctx.forCondition(), test);
+		}
 		CStatement incr = ctx.forCondition().forIncr().accept(this);
 		CFor cFor = new CFor(
 				ctx.statement().accept(this),

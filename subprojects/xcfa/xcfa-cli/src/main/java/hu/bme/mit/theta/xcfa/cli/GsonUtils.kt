@@ -42,9 +42,11 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.getSymbols
+import hu.bme.mit.theta.xcfa.gson.MetaDataAdapter
 import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
 import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
 import hu.bme.mit.theta.xcfa.gson.xcfaLocationAdapter
+import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
@@ -94,7 +96,8 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: ()->D
     gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java, StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
     gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
     gsonBuilder.registerTypeHierarchyAdapter(PredState::class.java, PredStateAdapter({gson}, scope, env))
-    gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env))
+    gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java, XcfaLabelAdapter(scope, env, { gson }))
+    gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())
     gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(XcfaAction::class.java, XcfaActionAdapter { gson })

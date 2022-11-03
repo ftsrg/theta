@@ -16,22 +16,29 @@
 
 package hu.bme.mit.theta.xcfa.gson
 
+import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.functions
 
-class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>() {
+class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> Gson): TypeAdapter<XcfaLabel>() {
+    private lateinit var gson: Gson
+
     override fun write(writer: JsonWriter, value: XcfaLabel) {
+        initGson()
         writer.beginObject()
         writer.name("type").value(value.javaClass.name)
+        writer.name("metadata")
+        gson.toJson(gson.toJsonTree(value.metadata), writer)
         if(value is SequenceLabel || value is NondetLabel) {
             writer.name("labels")
             writer.beginArray()
@@ -45,10 +52,13 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>()
     }
 
     override fun read(reader: JsonReader): XcfaLabel {
+        initGson()
         reader.beginObject()
         check(reader.nextName() == "type")
         val typeName = reader.nextString()
         val clazz = Class.forName(typeName).kotlin
+        check(reader.nextName() == "metadata")
+        val metadata: MetaData = gson.fromJson(reader, MetaData::class.java)
         if(clazz == SequenceLabel::class || clazz == NondetLabel::class) {
             check(reader.nextName() == "labels")
             reader.beginArray()
@@ -58,9 +68,9 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>()
             }
             reader.endArray()
             reader.endObject()
-            val constr = clazz.constructors.find { it.parameters.size == 1 }
+            val constr = clazz.constructors.find { it.parameters.size == 2 }
             checkNotNull(constr)
-            return constr.call(labels) as XcfaLabel
+            return constr.call(labels, metadata) as XcfaLabel
         } else {
             check(reader.nextName() == "content")
             val content = reader.nextString()
@@ -68,7 +78,7 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>()
             checkNotNull(constructor) { "${clazz.simpleName} has no fromString() method." }
             val obj =
             try{
-                constructor.call(clazz.companionObject!!.objectInstance, content, scope, env)
+                constructor.call(clazz.companionObject!!.objectInstance, content, scope, env, metadata)
             } catch(e: Exception){
                 System.err.println("Could not parse $content\nscope: ${scope}\nenv: $env")
                 error(e)
@@ -77,5 +87,9 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env): TypeAdapter<XcfaLabel>()
             reader.endObject()
             return obj
         }
+    }
+
+    private fun initGson() {
+        if(!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

@@ -29,13 +29,13 @@ public abstract class CStatement {
 	protected CStatement preStatements;
 	protected CStatement postStatements;
 
-	private int lineNumberStart;
-	private int colNumberStart;
-	private int lineNumberStop;
-	private int colNumberStop;
-	private int offsetStart;
-	private int offsetEnd;
-	private String sourceText;
+	private int lineNumberStart = -1;
+	private int colNumberStart = -1;
+	private int lineNumberStop = -1;
+	private int colNumberStop = -1;
+	private int offsetStart = -1;
+	private int offsetEnd = -1;
+	private String sourceText = "";
 
 	public String getId() {
 		return id;

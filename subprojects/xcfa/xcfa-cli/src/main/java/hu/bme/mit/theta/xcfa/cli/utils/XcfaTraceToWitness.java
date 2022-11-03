@@ -27,12 +27,11 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.ChoiceType;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -125,20 +124,21 @@ public final class XcfaTraceToWitness {
         if (((StmtLabel) label).getStmt() instanceof HavocStmt) {
             Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) ((StmtLabel) label).getStmt()).getVarDecl());
             String varName = ((HavocStmt<?>) ((StmtLabel) label).getStmt()).getVarDecl().getName();
-            if (value.isPresent() && getCMetaData(label) != null) {
+            if (value.isPresent()) {
                 edgeLabel.append("<data key=\"assumption\">");
                 edgeLabel.append(varName).append(" == ").append(printLit(value.get())).append(";");
                 edgeLabel.append("</data>").append(System.lineSeparator());
             }
-        } else if (((StmtLabel) label).getStmt() instanceof AssumeStmt) { // TODO: make this work with expression simplification
-            if (((AssumeStmt) ((StmtLabel) label).getStmt()).getCond() instanceof EqExpr) {
+        } else if (((StmtLabel) label).getStmt() instanceof AssumeStmt) {
+            if (((StmtLabel) label).getChoiceType() == ChoiceType.ALTERNATIVE_PATH) {
                 edgeLabel.append("<data key=\"control\">condition-").append("false").append("</data>").append(System.lineSeparator());
-            } else if (((AssumeStmt) ((StmtLabel) label).getStmt()).getCond() instanceof NeqExpr) {
+            } else if (((StmtLabel) label).getChoiceType() == ChoiceType.MAIN_PATH) {
                 edgeLabel.append("<data key=\"control\">condition-").append("true").append("</data>").append(System.lineSeparator());
             }
         }
         // not an official witness data key, so no validator will use it, but it helps readability
-        edgeLabel.append("<data key=\"stmt\">").append(escapeXml(label.toString())).append("</data>");
+        edgeLabel.append("<data key=\"stmt\">").append(escapeXml(label.toString())).append("</data>").append(System.lineSeparator());
+        edgeLabel.append("<data key=\"source\">").append(escapeXml(metaData.getSourceText())).append("</data>");
         return Optional.of(edgeLabel.toString());
     }
 
