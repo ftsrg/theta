@@ -72,6 +72,8 @@ data class XcfaCegarConfig(
         var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
         @Parameter(names = ["--no-cex-check"])
         var noCexCheck: Boolean = false,
+        @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
+        var timeoutMs: Long = 0
 ) {
     @Suppress("UNCHECKED_CAST")
     private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
@@ -111,7 +113,7 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 
-    fun checkInProcess(xcfa: XCFA, smtHome: String, logger: Logger): (timeoutMs: Long) -> SafetyResult<*, *> {
+    fun checkInProcess(xcfa: XCFA, smtHome: String, logger: Logger): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
                 "java",
                 "-cp",
@@ -124,7 +126,7 @@ data class XcfaCegarConfig(
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()
         pb.environment().putAll(System.getenv())
-        return {timeoutMs ->
+        return {
             var connected = false
             var clientSocket: Socket? = null
             while(!connected) {

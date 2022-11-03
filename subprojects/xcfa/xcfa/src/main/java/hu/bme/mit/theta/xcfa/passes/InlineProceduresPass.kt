@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -59,12 +60,13 @@ class InlineProceduresPass : ProcedurePass {
                             val outStmts: MutableList<XcfaLabel> = ArrayList()
                             for ((i, param) in procedure.getParams().withIndex()) {
                                 if (param.second != ParamDirection.OUT) {
-                                    val stmt = AssignStmt.of(cast(param.first, param.first.type), cast(invokeLabel.params[i], param.first.type))
+                                    val stmt = AssignStmt.of(cast(param.first, param.first.type), cast(CComplexType.getType(param.first.ref).castTo(invokeLabel.params[i]), param.first.type))
                                     inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }
 
                                 if (param.second != ParamDirection.IN) {
-                                    val stmt = AssignStmt.of(cast((invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>, param.first.type), cast(param.first.ref, param.first.type))
+                                    val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
+                                    val stmt = AssignStmt.of(cast(varDecl, param.first.type), cast(CComplexType.getType(varDecl.ref).castTo(param.first.ref), param.first.type))
                                     outStmts.add(StmtLabel(stmt,  metadata = invokeLabel.metadata))
                                 }
                             }

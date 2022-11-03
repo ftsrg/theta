@@ -46,6 +46,16 @@ import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
+import kotlin.collections.ArrayList
+import kotlin.collections.Collection
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.LinkedHashSet
+import kotlin.collections.List
+import kotlin.collections.MutableCollection
+import kotlin.collections.MutableList
+import kotlin.collections.MutableMap
+import kotlin.collections.emptyList
+import kotlin.collections.listOf
 import kotlin.collections.set
 
 class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
@@ -169,7 +179,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         if (lValue is ArrayReadExpr<*, *>) {
             val exprs = Stack<Expr<*>>()
             val toAdd = createArrayWriteExpr(lValue as ArrayReadExpr<*, out Type>, rExpression, exprs)
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)), metadata = EmptyMetaData), metadata=getMetadata(statement))
+            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)), metadata = getMetadata(statement)), metadata=getMetadata(statement))
             builder.addEdge(xcfaEdge)
         } else if (lValue is Dereference<*, *>) {
             val op = lValue.op
@@ -188,12 +198,12 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
                     cast(lValue.op, ptrType),
                     cast(rExpression, type))
             FrontendMetadata.create(write, "cType", CArray(null, CComplexType.getType(lValue.op)))
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write), metadata = EmptyMetaData), metadata=getMetadata(statement))
+            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write), metadata = getMetadata(statement)), metadata=getMetadata(statement))
             builder.addEdge(xcfaEdge)
         } else {
             xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(
                     cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-                    cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type)), metadata = EmptyMetaData), metadata=getMetadata(statement))
+                    cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type)), metadata = getMetadata(statement)), metadata=getMetadata(statement))
             if (CComplexType.getType(lValue) is CPointer && CComplexType.getType(rExpression) is CPointer) {
                 Preconditions.checkState(rExpression is RefExpr<*> || rExpression is Reference<*, *>)
                 if (rExpression is RefExpr<*>) {
@@ -559,7 +569,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         builder.addLoc(endLoc)
         val key: VarDecl<*> = builder.getParams()[0].first
         check(returnLoc != null)
-        val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type), cast(CComplexType.getType(key.ref).castTo(expr.expression), key.type)), metadata = EmptyMetaData), metadata = getMetadata(statement))
+        val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type), cast(CComplexType.getType(key.ref).castTo(expr.expression), key.type)), metadata = getMetadata(statement)), metadata = getMetadata(statement))
         builder.addEdge(edge)
         return endLoc
     }

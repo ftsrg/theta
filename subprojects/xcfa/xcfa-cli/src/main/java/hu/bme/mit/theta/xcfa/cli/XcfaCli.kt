@@ -66,9 +66,6 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--portfolio"], description = "Portfolio type (only valid with --strategy PORTFOLIO)")
     var portfolio: Portfolio = Portfolio.COMPLEX
 
-    @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
-    var timeoutMs: Long = 0
-
     @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
     var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString()
 
@@ -118,7 +115,6 @@ class XcfaCli(private val args: Array<String>) {
             ex.usage()
             exitProcess(ExitCodes.INVALID_PARAM.code)
         }
-        println("Remaning: $remainingFlags")
         /// version
         if (versionInfo) {
             CliUtils.printVersion(System.out)
@@ -144,7 +140,7 @@ class XcfaCli(private val args: Array<String>) {
 
         val gsonForOutput = getGson()
 
-        if (outputResults) {
+        if (svcomp || outputResults) {
             if (!svcomp) {
                 resultFolder.mkdirs()
 
@@ -175,7 +171,7 @@ class XcfaCli(private val args: Array<String>) {
                     Strategy.SERVER -> {
                         val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, logger)
                         try {
-                            safetyResultSupplier(timeoutMs)
+                            safetyResultSupplier()
                         } catch (e: TimeoutException) {
                             exitProcess(ExitCodes.TIMEOUT.code)
                         } catch (e: ErrorCodeException) {
@@ -190,6 +186,7 @@ class XcfaCli(private val args: Array<String>) {
                             val bindings: Bindings = SimpleBindings()
                             bindings["xcfa"] = xcfa
                             bindings["logger"] = logger
+                            bindings["smtHome"] = solverHome
                             bindings["bvType"] = BitwiseChecker.getBitwiseOption()
                             val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor), bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 
@@ -208,7 +205,7 @@ class XcfaCli(private val args: Array<String>) {
                         }
                     }
                 }
-        if (outputResults) {
+        if (svcomp || outputResults) {
             if (!svcomp) {
                 resultFolder.mkdirs()
 

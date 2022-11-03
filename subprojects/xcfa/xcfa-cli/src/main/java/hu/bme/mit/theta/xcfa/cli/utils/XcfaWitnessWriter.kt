@@ -18,11 +18,16 @@ package hu.bme.mit.theta.xcfa.cli.utils
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import java.io.*
+import hu.bme.mit.theta.xcfa.cli.witnesses.Witness
+import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesses.traceToWitness
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.text.DateFormat
@@ -39,13 +44,19 @@ class XcfaWitnessWriter {
             val workdir: Path = FileSystems.getDefault().getPath("").toAbsolutePath()
             val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
-            val witnessGraph: Graph = XcfaTraceToWitness.buildWitness(concrTrace)
-            val ww = WitnessWriter.createViolationWitnessWriter(inputFile.absolutePath, "CHECK( init(main()), LTL(G ! call(reach_error())) )", false)
-            try {
-                ww.writeFile(witnessGraph, witnessfile.absolutePath)
-            } catch (e: FileNotFoundException) {
-                e.printStackTrace()
-            }
+
+            val witnessTrace = traceToWitness(trace = concrTrace)
+            val witness = Witness(witnessTrace, inputFile)
+            val xml = witness.toPrettyXml()
+            witnessfile.writeText(xml)
+
+//            val witnessGraph: Graph = XcfaTraceToWitness.buildWitness(concrTrace)
+//            val ww = WitnessWriter.createViolationWitnessWriter(inputFile.absolutePath, "CHECK( init(main()), LTL(G ! call(reach_error())) )", false)
+//            try {
+//                ww.writeFile(witnessGraph, witnessfile.absolutePath)
+//            } catch (e: FileNotFoundException) {
+//                e.printStackTrace()
+//            }
         } else if (safetyResult.isSafe) {
             val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
             val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")

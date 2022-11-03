@@ -476,7 +476,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 				checkState(accept.getType() instanceof BvType);
 				accept = smallestCommonType.castTo(accept);
 				//noinspection unchecked
-				Expr<?> expr = BvExprs.Neg((Expr<BvType>) accept);
+				Expr<?> expr = BvExprs.Not((Expr<BvType>) accept);
 				FrontendMetadata.create(expr, "cType", smallestCommonType);
 				expr = smallestCommonType.castTo(expr);
 				FrontendMetadata.create(expr, "cType", smallestCommonType);

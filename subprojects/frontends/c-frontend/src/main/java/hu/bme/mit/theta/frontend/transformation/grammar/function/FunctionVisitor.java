@@ -101,6 +101,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		peek.get2().put(name, varDecl);
 		flatVariables.add(varDecl);
 		FrontendMetadata.create(varDecl.getRef(), "cType", type);
+		FrontendMetadata.create(varDecl, "cName", name);
 		declaration.addVarDecl(varDecl);
 	}
 
