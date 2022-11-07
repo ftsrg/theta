@@ -169,7 +169,7 @@ class XcfaCli(private val args: Array<String>) {
                     }
 
                     Strategy.SERVER -> {
-                        val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, logger)
+                        val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, false, input!!.absolutePath, logger)
                         try {
                             safetyResultSupplier()
                         } catch (e: TimeoutException) {
@@ -185,6 +185,7 @@ class XcfaCli(private val args: Array<String>) {
                         try {
                             val bindings: Bindings = SimpleBindings()
                             bindings["xcfa"] = xcfa
+                            bindings["cFileName"] = input!!.absolutePath
                             bindings["logger"] = logger
                             bindings["smtHome"] = solverHome
                             bindings["bvType"] = BitwiseChecker.getBitwiseOption()

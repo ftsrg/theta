@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.cli
 
+import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import kotlin.system.exitProcess
@@ -39,10 +40,10 @@ class ErrorCodeException(val code: Int) : Exception()
 fun <T> exitOnError(body: () -> T): T {
     try{
         return body();
-    } catch (e: RuntimeException) {
+    }  catch(e: SmtLibSolverException) {
         e.printStackTrace();
-        exitProcess(ExitCodes.SERVER_ERROR.code);
-    } catch(e: SmtLibSolverException) {
+        exitProcess(ExitCodes.SOLVER_ERROR.code);
+    } catch(e: Z3Exception) {
         e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
     } catch(e: ClassCastException) {
@@ -57,6 +58,9 @@ fun <T> exitOnError(body: () -> T): T {
     } catch(e: OutOfMemoryError) {
         e.printStackTrace();
         exitProcess(ExitCodes.OUT_OF_MEMORY.code);
+    } catch (e: RuntimeException) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.SERVER_ERROR.code);
     } catch(e: Exception) {
         e.printStackTrace();
         exitProcess(ExitCodes.GENERIC_ERROR.code);

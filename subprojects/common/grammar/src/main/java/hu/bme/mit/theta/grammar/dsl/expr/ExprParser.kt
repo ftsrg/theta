@@ -58,8 +58,9 @@ import hu.bme.mit.theta.grammar.dsl.gen.ExprBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser.*
-import hu.bme.mit.theta.grammar.textWithWS
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
+import hu.bme.mit.theta.grammar.textWithWS
+import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
@@ -78,6 +79,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         this.scope = Preconditions.checkNotNull(scope)
         val lexer = ExprLexer(CharStreams.fromString(content.lowercase()))
         val parser = ExprParser(CommonTokenStream(lexer))
+        parser.errorHandler = BailErrorStrategy()
         this.context = Preconditions.checkNotNull<ExprContext>(parser.expr())
     }
 
@@ -287,11 +289,12 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         ////
         override fun visitBitwiseOrExpr(ctx: BitwiseOrExprContext): Expr<out Type> {
-            return if (ctx.rightOp != null) {
-                val leftOp = TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this))
-                val rightOp = TypeUtils.castBv(ctx.rightOp.accept<Expr<*>>(this))
-                when (ctx.oper.getType()) {
-                    BV_OR -> BvExprs.Or(java.util.List.of(leftOp, rightOp))
+            return if (ctx.oper != null) {
+                val opStream: Stream<Expr<(BvType)>> = ctx.ops.stream()
+                        .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
+                val ops: MutableList<Expr<BvType>> = opStream.collect(Collectors.toList())
+                when (ctx.oper.type) {
+                    BV_OR -> BvExprs.Or(ops)
                     else -> throw ParseException(ctx, "Unknown operator")
                 }
             } else {
@@ -313,11 +316,12 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         override fun visitBitwiseAndExpr(ctx: BitwiseAndExprContext): Expr<out Type> {
-            return if (ctx.rightOp != null) {
-                val leftOp = TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this))
-                val rightOp = TypeUtils.castBv(ctx.rightOp.accept<Expr<*>>(this))
-                when (ctx.oper.getType()) {
-                    BV_AND -> BvExprs.And(java.util.List.of(leftOp, rightOp))
+            return if (ctx.oper != null) {
+                val opStream: Stream<Expr<(BvType)>> = ctx.ops.stream()
+                        .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
+                val ops: MutableList<Expr<BvType>> = opStream.collect(Collectors.toList())
+                when (ctx.oper.type) {
+                    BV_AND -> BvExprs.And(ops)
                     else -> throw ParseException(ctx, "Unknown operator")
                 }
             } else {

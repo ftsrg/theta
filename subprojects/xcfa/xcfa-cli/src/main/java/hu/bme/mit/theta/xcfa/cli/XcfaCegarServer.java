@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLabelledLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.*;
@@ -34,6 +35,7 @@ import java.net.Socket;
 
 import static hu.bme.mit.theta.xcfa.cli.ExitCodesKt.exitOnError;
 import static hu.bme.mit.theta.xcfa.cli.GsonUtilsKt.getGson;
+import static hu.bme.mit.theta.xcfa.cli.SolverRegistrationKt.getSolver;
 
 class XcfaCegarServer {
     @Parameter(names = "--port", description = "Port number for server to use")
@@ -44,6 +46,12 @@ class XcfaCegarServer {
 
     @Parameter(names = "--smt-home", description = "The path of the solver registry")
     String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
+
+    @Parameter(names = "--return-safety-result", description = "If set, give back the safety result instead of writing witnesses directly.", arity = 1)
+    boolean returnSafetyResult = false;
+
+    @Parameter(names = "--input", description = "Original source file (required for witness writing)")
+    String inputFileName;
 
     private void run(String[] args) {
         try {
@@ -100,8 +108,12 @@ class XcfaCegarServer {
 
                         SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
                         logger.write(Logger.Level.INFO, "Safety check done.\n");
-                        String s = gson.toJson(check);
-                        out.println(s);
+                        if(returnSafetyResult) {
+                            String s = gson.toJson(check);
+                            out.println(s);
+                        } else {
+                            new XcfaWitnessWriter().writeWitness(check, new File(inputFileName), getSolver(xcfaCegarConfig.getRefinementSolver(), xcfaCegarConfig.getValidateRefinementSolver()));
+                        }
                         logger.write(Logger.Level.INFO, "Server exiting.\n");
                     }
                 } while (!oneshot);

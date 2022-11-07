@@ -80,7 +80,7 @@ relationExpr
 
 bitwiseOrExpr
     :   bitwiseXorExpr
-    |   LPAREN oper=BV_OR leftOp=expr rightOp=expr RPAREN
+    |   LPAREN oper=BV_OR ops+=expr (ops+=expr)* RPAREN
     ;
 
 bitwiseXorExpr
@@ -90,7 +90,7 @@ bitwiseXorExpr
 
 bitwiseAndExpr
     :   bitwiseShiftExpr
-    |   LPAREN oper=BV_AND leftOp=expr rightOp=expr RPAREN
+    |   LPAREN oper=BV_AND ops+=expr (ops+=expr)* RPAREN
     ;
 
 bitwiseShiftExpr

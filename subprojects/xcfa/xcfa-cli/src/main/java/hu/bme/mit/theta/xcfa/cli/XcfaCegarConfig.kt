@@ -45,6 +45,7 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.system.exitProcess
 
 
 data class XcfaCegarConfig(
@@ -113,14 +114,18 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 
-    fun checkInProcess(xcfa: XCFA, smtHome: String, logger: Logger): () -> SafetyResult<*, *> {
+    fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
                 "java",
                 "-cp",
                 File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
                 XcfaCegarServer::class.qualifiedName,
                 "--smt-home",
-                smtHome
+                smtHome,
+                "--return-safety-result",
+                "" + !writeWitness,
+                "--input",
+                sourceFileName
                 ))
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
@@ -151,11 +156,27 @@ data class XcfaCegarConfig(
                 writer.println(gson.toJson(xcfa))
                 val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
                 if(retCode == Int.MIN_VALUE) {
-                    throw TimeoutException()
+                    if(!processHandler.writingSafetyResult) {
+                        process.destroy(true)
+                        throw TimeoutException()
+                    } else {
+                        logger.write(Logger.Level.RESULT, "Config timed out but started writing result: $this")
+                        val retCode = process.waitFor(0, TimeUnit.MILLISECONDS)
+                        if (retCode != 0) {
+                            throw ErrorCodeException(retCode)
+                        }
+                    }
                 } else if (retCode != 0) {
                     throw ErrorCodeException(retCode)
                 }
-                safetyString = reader.readLine()
+
+                if(writeWitness) {
+                    logger.write(Logger.Level.RESULT, "Config successful, exiting: $this")
+                    exitProcess(0)
+                } else {
+                    logger.write(Logger.Level.RESULT, "Config successful, reading back result: $this")
+                    safetyString = reader.readLine()
+                }
             }
             val type =
                     if(domain == Domain.EXPL)
@@ -163,7 +184,7 @@ data class XcfaCegarConfig(
                     else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT)
                         object: TypeToken<SafetyResult<XcfaState<PredState>, XcfaAction>>() {}.type
                     else
-                        error("Domain ${domain} is not implemented in the GSON parser.")
+                        error("Domain $domain is not implemented in the GSON parser.")
             try{
                 gson.fromJson(safetyString, type)
             } catch(e: Exception) {
@@ -180,6 +201,7 @@ private class ProcessHandler(
         private val logger: Logger,
 ) : NuAbstractProcessHandler() {
     private var stdoutBuffer = ""
+    internal var writingSafetyResult = false
     var port: Int = -1
     override fun onStdout(buffer: ByteBuffer, closed: Boolean) {
         if (!closed) {
@@ -201,6 +223,7 @@ private class ProcessHandler(
                 val (level, message) = matchResult.destructured
                 val logLevel = try{ Logger.Level.valueOf(level) } catch (_: Exception) { Logger.Level.VERBOSE }
                 logger.write(logLevel, message)
+                if(message.contains("(SafetyResult")) writingSafetyResult = true
                 length+=matchResult.range.count()
             }
             stdoutBuffer = stdoutBuffer.substring(length)
