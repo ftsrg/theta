@@ -54,7 +54,6 @@ public final class Z3SolverFactory implements SolverFactory {
 
 	@Override
 	public Solver createSolver() {
-		System.out.println("Created solver instance");
 		final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
