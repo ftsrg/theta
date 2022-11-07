@@ -63,8 +63,8 @@ public final class SmtLibItpSolverTest {
 	private static boolean solverInstalled = false;
 	private static SmtLibSolverManager solverManager;
 	private static SolverFactory solverFactory;
-	private static final String SOLVER = "mathsat";
-	private static final String VERSION = "5.6.8";
+	private static final String SOLVER = "z3";
+	private static final String VERSION = "4.5.0";
 
 	@BeforeClass
 	public static void init() throws SmtLibSolverInstallerException, IOException {

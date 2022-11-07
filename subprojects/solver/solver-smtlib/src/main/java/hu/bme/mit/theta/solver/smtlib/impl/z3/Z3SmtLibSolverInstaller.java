@@ -35,7 +35,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             .addString(MAC, X64, "x64-osx-10.16")
             .build()
         );
-        versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.12"))
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.11"))
             .addString(LINUX, X64, "x64-glibc-2.31")
             .addString(WINDOWS, X64, "x64-win")
             .addString(WINDOWS, X86, "x86-win")
@@ -149,7 +149,15 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName());
-        return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0);
+        if(SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0) {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.OLD);
+        }
+        else if(SemVer.of(version).compareTo(SemVer.of("4.8.8")) >= 0) {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.NEW);
+        }
+        else {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.NONE);
+        }
     }
 
     @Override
