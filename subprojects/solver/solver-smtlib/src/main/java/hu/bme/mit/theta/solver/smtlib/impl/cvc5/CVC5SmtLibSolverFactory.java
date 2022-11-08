@@ -17,8 +17,8 @@
 package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.*;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -34,6 +34,14 @@ public class CVC5SmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
 	@Override
 	public ItpSolver createItpSolver() {
-		throw new UnsupportedOperationException("CVC5 does not support interpolation");
+		final var symbolTable = new GenericSmtLibSymbolTable();
+		final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+		final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
+
+		return new CVC5SmtLibItpSolver(
+			symbolTable, transformationManager, termTransformer, solverBinary,
+			() -> new GenericSmtLibSolverBinary(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
+		);
 	}
 }

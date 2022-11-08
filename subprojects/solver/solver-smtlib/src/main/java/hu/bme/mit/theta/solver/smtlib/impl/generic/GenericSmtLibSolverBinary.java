@@ -106,7 +106,9 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 		@Override
 		public synchronized boolean onStdinReady(final ByteBuffer buffer) {
 			while (!inputQueue.isEmpty()) {
-				buffer.put(inputQueue.remove().getBytes(StandardCharsets.US_ASCII));
+				final var output = inputQueue.remove();
+				//System.out.println(output);
+				buffer.put(output.getBytes());
 				buffer.put("\n".getBytes(StandardCharsets.US_ASCII));
 			}
 			buffer.flip();
@@ -129,6 +131,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 			final var buf = new byte[buffer.remaining()];
 			buffer.get(buf);
 			final var input = new String(buf, StandardCharsets.US_ASCII);
+			//System.out.println(input);
 
 
 			for (var c : input.toCharArray()) {
