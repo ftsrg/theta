@@ -120,19 +120,20 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         vars.remove(toRemove)
     }
-
+    @JvmOverloads
     fun createErrorLoc(metaData: MetaData = EmptyMetaData) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         errorLoc = Optional.of(XcfaLocation(name + "_error", error=true, metadata = metaData))
         locs.add(errorLoc.get())
     }
-
+    @JvmOverloads
     fun createFinalLoc(metaData: MetaData = EmptyMetaData) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         finalLoc = Optional.of(XcfaLocation(name + "_final", final=true, metadata = metaData))
         locs.add(finalLoc.get())
     }
 
+    @JvmOverloads
     fun createInitLoc(metaData: MetaData = EmptyMetaData) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         initLoc = XcfaLocation(name + "_init", initial=true, metadata = metaData)

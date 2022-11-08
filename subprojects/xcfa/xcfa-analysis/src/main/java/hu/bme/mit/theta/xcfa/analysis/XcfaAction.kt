@@ -16,14 +16,9 @@
 
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.xcfa.model.NopLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import java.util.*
+import hu.bme.mit.theta.xcfa.model.*
 
 data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
     val source: XcfaLocation = edge.source
@@ -38,6 +33,10 @@ data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
 
     override fun toString(): String {
         return "$pid: $source -> $target [$label]"
+    }
+
+    fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
+        return XcfaAction(pid, source, target, sequenceLabel)
     }
 
 

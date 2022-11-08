@@ -14,29 +14,29 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por;
+package hu.bme.mit.theta.xcfa.analysis.por;
 
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.PorLts;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaAction;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaLts;
-import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState;
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.utils.LabelUtils;
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static hu.bme.mit.theta.xcfa.UtilsKt.collectVars;
+import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
+import static hu.bme.mit.theta.xcfa.analysis.XcfaAnalysisKt.getXcfaLts;
 
 public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
 	private final XCFA xcfa;
 
-	private final XcfaLts simpleXcfaLts = new XcfaLts();
+	private final LTS<XcfaState<?>, XcfaAction> simpleXcfaLts = getXcfaLts();
 
 	private final Random random = new Random();
 
@@ -52,7 +52,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
 	@Override
 	protected Collection<Collection<XcfaAction>> getPersistentSetFirstActions(Collection<XcfaAction> allEnabledActions) {
-		var enabledActionsByProcess = allEnabledActions.stream().collect(Collectors.groupingBy(XcfaAction::getProcess));
+		var enabledActionsByProcess = allEnabledActions.stream().collect(Collectors.groupingBy(XcfaAction::getPid));
 		List<Integer> enabledProcesses = new ArrayList<>(enabledActionsByProcess.keySet());
 		Collections.shuffle(enabledProcesses, random);
 		Collection<Collection<XcfaAction>> firstActions = new HashSet<>();
@@ -66,7 +66,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
 	@Override
 	protected boolean canEnOrDisableEachOther(XcfaAction action1, XcfaAction action2) {
-		return action1.getProcess().equals(action2.getProcess());
+		return action1.getPid() == action2.getPid();
 	}
 
 	@Override
@@ -77,12 +77,12 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	@Override
 	protected Set<XcfaEdge> getSuccessiveTransitions(XcfaEdge edge) {
 		var outgoingEdges = new HashSet<>(edge.getTarget().getOutgoingEdges());
-		List<XcfaLabel.StartThreadXcfaLabel> startThreads = edge.getLabels().stream()
-				.filter(label -> label instanceof XcfaLabel.StartThreadXcfaLabel)
-				.map(label -> (XcfaLabel.StartThreadXcfaLabel) label).collect(Collectors.toList());
+		List<StartLabel> startThreads = getFlatLabels(edge).stream()
+				.filter(label -> label instanceof StartLabel)
+				.map(label -> (StartLabel) label).toList();
 		if (startThreads.size() > 0) { // for start thread labels, the thread procedure must be explored, too!
 			startThreads.forEach(startThread ->
-					outgoingEdges.addAll(startThread.getProcess().getMainProcedure().getInitLoc().getOutgoingEdges()));
+					outgoingEdges.addAll(xcfa.getProcedures().stream().filter(it -> it.getName().equals(startThread.getName())).findFirst().get().getInitLoc().getOutgoingEdges()));
 		}
 		return outgoingEdges;
 	}
@@ -96,8 +96,8 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	@Override
 	protected Set<VarDecl<? extends Type>> getDirectlyUsedSharedObjects(XcfaEdge edge) {
 		Set<VarDecl<?>> vars = new HashSet<>();
-		edge.getLabels().forEach(label -> LabelUtils.getVars(label).forEach(usedVar -> {
-			if (xcfa.getvars().contains(usedVar)) {
+		getFlatLabels(edge).forEach(label -> collectVars(label).forEach(usedVar -> {
+			if (xcfa.getVars().stream().map(XcfaGlobalVar::getWrappedVar).anyMatch(it -> it.equals(usedVar))) {
 				vars.add(usedVar);
 			}
 		}));
@@ -114,9 +114,9 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	@Override
 	protected Set<? extends Decl<? extends Type>> getUsedSharedObjects(XcfaEdge edge) {
 		Set<? extends Decl<? extends Type>> vars;
-		var labels = edge.getLabels();
-		if (labels.stream().anyMatch(label -> label instanceof XcfaLabel.AtomicBeginXcfaLabel)) {
-			vars = getSharedObjectsWithBFS(edge, xcfaEdge -> xcfaEdge.getLabels().stream().noneMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel));
+		var labels = getFlatLabels(edge);
+		if (labels.stream().anyMatch(label -> label instanceof FenceLabel && ((FenceLabel) label).getLabels().contains("ATOMIC_BEGIN"))) {
+			vars = getSharedObjectsWithBFS(edge, xcfaEdge -> getFlatLabels(xcfaEdge).stream().noneMatch(label -> label instanceof FenceLabel && ((FenceLabel) label).getLabels().contains("ATOMIC_END")));
 		} else {
 			vars = getDirectlyUsedSharedObjects(edge);
 		}
@@ -128,23 +128,21 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	 */
 	@Override
 	protected void collectBackwardTransitions() {
-		for (var process : xcfa.getProcesses()) {
-			for (var procedure : process.getProcedures()) {
-				// DFS for every procedure of the XCFA to discover backward edges
-				Set<XcfaLocation> visitedLocations = new HashSet<>();
-				Stack<XcfaLocation> stack = new Stack<>();
+		for (var procedure : xcfa.getProcedures()) {
+			// DFS for every procedure of the XCFA to discover backward edges
+			Set<XcfaLocation> visitedLocations = new HashSet<>();
+			Stack<XcfaLocation> stack = new Stack<>();
 
-				stack.push(procedure.getInitLoc()); // start from the initial location of the procedure
-				while (!stack.isEmpty()) {
-					XcfaLocation visiting = stack.pop();
-					visitedLocations.add(visiting);
-					for (var outgoingEdge : visiting.getOutgoingEdges()) {
-						var target = outgoingEdge.getTarget();
-						if (visitedLocations.contains(target)) { // backward edge
-							backwardTransitions.add(outgoingEdge);
-						} else {
-							stack.push(target);
-						}
+			stack.push(procedure.getInitLoc()); // start from the initial location of the procedure
+			while (!stack.isEmpty()) {
+				XcfaLocation visiting = stack.pop();
+				visitedLocations.add(visiting);
+				for (var outgoingEdge : visiting.getOutgoingEdges()) {
+					var target = outgoingEdge.getTarget();
+					if (visitedLocations.contains(target)) { // backward edge
+						backwardTransitions.add(outgoingEdge);
+					} else {
+						stack.push(target);
 					}
 				}
 			}

@@ -73,7 +73,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
     when(this) {
         is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
-        is JoinLabel -> JoinLabel(pid.changeVars(varLut), metadata = metadata)
+        is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
         is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet(), metadata = metadata)
         is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
         is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) }, metadata = metadata)

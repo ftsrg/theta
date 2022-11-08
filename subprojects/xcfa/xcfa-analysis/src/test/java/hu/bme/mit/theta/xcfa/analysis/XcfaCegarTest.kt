@@ -30,15 +30,12 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ExplTransFunc
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.refinement.*
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.toDot
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,7 +74,7 @@ class XcfaCegarTest {
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(xcfa.initProcedures[0].first.initLoc)
 
-        val initState = XcfaState(mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
+        val initState = XcfaState(xcfa, mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
 
         val explTransFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver())
 
@@ -85,12 +82,12 @@ class XcfaCegarTest {
                 { s1, s2 -> s1.processes == s2.processes && s1.sGlobal.isLeq(s2.sGlobal)},
                 { p -> listOf(initState) },
                 { s, a, p ->
-                    val newSt = s.applyLoc(a)
-                    explTransFunc.getSuccStates(newSt.sGlobal, a, p.p).map { newSt.withState(it) }
+                    val (newSt, newA) = s.apply(a)
+                    explTransFunc.getSuccStates(newSt.sGlobal, newA, p.p).map { newSt.withState(it) }
                 }
         )
         val argBuilder: ArgBuilder<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>> = ArgBuilder.create(
-                { s: XcfaState<ExplState> -> s.processes[0]!!.locs.peek().outgoingEdges.map { XcfaAction(0, it) } },
+                { s: XcfaState<ExplState> -> s.processes[0]?.locs?.peek()?.outgoingEdges?.map { XcfaAction(0, it) } ?: listOf() },
                 analysis,
                 { s -> s.processes.any { it.value.locs.peek().error }}
         )

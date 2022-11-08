@@ -29,7 +29,7 @@ import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
-    open fun toStmt(): Stmt = error("Cannot convert label $this to statement.")
+    open fun toStmt(): Stmt = Skip()
 }
 
 data class InvokeLabel(
@@ -71,16 +71,17 @@ data class StartLabel(
 }
 
 data class JoinLabel(
-        val pid: Expr<*>,
+        val pidVar: VarDecl<*>,
         override val metadata: MetaData
 ) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
-        return "join $pid"
+        return "join $pidVar"
     }
     companion object {
          fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (exprS) = Regex("join (.*)").matchEntire(s)!!.destructured
-            return JoinLabel(ExpressionWrapper(scope, exprS).instantiate(env), metadata=metadata)
+            val (pidVarName) = Regex("join (.*)").matchEntire(s)!!.destructured
+            val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
+            return JoinLabel(pidVar, metadata=metadata)
         }
     }
 }
@@ -91,7 +92,7 @@ enum class ChoiceType{
     ALTERNATIVE_PATH
 }
 
-data class StmtLabel(
+data class StmtLabel @JvmOverloads constructor(
         val stmt: Stmt,
         val choiceType: ChoiceType = ChoiceType.NONE,
         override val metadata: MetaData
@@ -130,7 +131,7 @@ data class ReadLabel(
     }
 }
 
-data class WriteLabel(
+data class WriteLabel constructor(
         val local: VarDecl<*>,
         val global: VarDecl<*>,
         val labels: Set<String>,
@@ -150,7 +151,7 @@ data class FenceLabel(
     }
 }
 
-data class SequenceLabel(
+data class SequenceLabel @JvmOverloads constructor(
         val labels: List<XcfaLabel>,
         override val metadata: MetaData = EmptyMetaData
 ) : XcfaLabel(metadata=metadata){
@@ -165,7 +166,7 @@ data class SequenceLabel(
     }
 }
 
-data class NondetLabel(
+data class NondetLabel @JvmOverloads constructor(
         val labels: Set<XcfaLabel>,
         override val metadata: MetaData = EmptyMetaData
 ) : XcfaLabel(metadata=metadata){

@@ -33,6 +33,8 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -61,6 +63,8 @@ data class XcfaCegarConfig(
         var search: Search = Search.ERR,
         @Parameter(names = ["--initprec"], description = "Initial precision")
         var initPrec: InitPrec = InitPrec.EMPTY,
+        @Parameter(names = ["--por-level"], description = "POR dependency level")
+        var porLevel: POR = POR.NOPOR,
         @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
         var refinementSolver: String = "Z3",
         @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
@@ -81,13 +85,16 @@ data class XcfaCegarConfig(
         val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
         val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
 
+        val ignoredVarRegistry: Map<Decl<out Type>, Set<XcfaState<*>>> = LinkedHashMap()
+
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
                 xcfa,
                 abstractionSolverFactory.createSolver(),
                 maxEnum,
                 search.getComp(xcfa),
                 refinement.stopCriterion,
-                logger
+                logger,
+                porLevel.ltsSupplier(xcfa, ignoredVarRegistry)
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
@@ -96,11 +103,18 @@ data class XcfaCegarConfig(
         val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
                 domain.itpPrecRefiner(exprSplitter.exprSplitter)
                         as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+        val atomicNodePruner: NodePruner<ExprState, ExprAction> = domain.nodePruner as NodePruner<ExprState, ExprAction>
         val refiner: Refiner<ExprState, ExprAction, Prec> =
                 if (refinement == Refinement.MULTI_SEQ)
-                    MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+                    if(porLevel == POR.AAPOR)
+                        MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
+                    else
+                        MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
                 else
-                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+                    if(porLevel == POR.AAPOR)
+                        SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
+                    else
+                        SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
         // set up stopping analysis if it is stuck on same ARGs and precisions
         if (noCexCheck) {
@@ -109,7 +123,10 @@ data class XcfaCegarConfig(
             ArgCexCheckHandler.instance.setArgCexCheck(true, refinement == Refinement.MULTI_SEQ)
         }
 
-        return CegarChecker.create(abstractor, refiner, logger)
+        return if(porLevel == POR.AAPOR)
+            CegarChecker.create(abstractor, AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
+        else
+            CegarChecker.create(abstractor, refiner, logger)
     }
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))

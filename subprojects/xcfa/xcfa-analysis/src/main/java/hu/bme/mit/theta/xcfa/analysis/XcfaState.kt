@@ -17,37 +17,116 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 
-data class XcfaState<S : ExprState>(
+data class XcfaState<S : ExprState> @JvmOverloads constructor(
+        val xcfa: XCFA?,
         val processes: Map<Int, XcfaProcessState>,
-        val sGlobal: S
+        val sGlobal: S,
+        val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
+        val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
+        val bottom: Boolean = false
 ): ExprState {
     override fun isBottom(): Boolean {
-        return sGlobal.isBottom
+        return bottom || sGlobal.isBottom
     }
 
     override fun toExpr(): Expr<BoolType> {
         return sGlobal.toExpr()
     }
 
-    fun applyLoc(a: XcfaAction) : XcfaState<S>{
+    fun apply(a: XcfaAction) : Pair<XcfaState<S>, XcfaAction>{
+        val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
+
         val processState = processes[a.pid]
         checkNotNull(processState)
         check(processState.locs.peek() == a.source)
-        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap()
-        for ((i, st) in processes) {
-            if(i == a.pid) newProcesses[i] = st.withNewLoc(a.target)
-            else newProcesses[i] = st
+        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        newProcesses[a.pid] = checkNotNull(processes[a.pid]?.withNewLoc(a.target))
+        if(processes != newProcesses) {
+            changes.add { state -> state.withProcesses(newProcesses) }
         }
-        return XcfaState(newProcesses, sGlobal)
+
+        val newLabels = a.edge.getFlatLabels().filter {
+            when(it) {
+                is FenceLabel -> it.labels.forEach { label ->
+                    when(label) {
+                        "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
+                        "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
+                        in Regex("mutex_lock\\((.*)\\)") -> changes.add { state -> state.enterMutex( label.substring("mutex_lock".length + 1, label.length-1), a.pid)}
+                        in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state -> state.exitMutex( label.substring("mutex_unlock".length + 1, label.length-1), a.pid )}
+                    }
+                }.let { false }
+                is InvokeLabel -> error("Function invocations not yet supported")
+                is JoinLabel -> {
+                    changes.add { state -> state.enterMutex(it.pidVar.name, a.pid) }
+                    changes.add { state -> state.exitMutex(it.pidVar.name, a.pid) }
+                }
+                is NondetLabel -> true
+                NopLabel -> false
+                is ReadLabel -> error("Read/Write labels not yet supported")
+                is SequenceLabel -> true
+                is StartLabel ->  changes.add { state -> state.start(it) }.let { false }
+                is StmtLabel -> true
+                is WriteLabel -> error("Read/Write labels not yet supported")
+            }
+        }
+
+        if(a.target.final) {
+            if(checkNotNull(newProcesses[a.pid]).locs.size == 1) {
+                changes.add { state -> state.endProcess(a.pid) }
+            }
+        }
+
+        return Pair(changes.fold(this) { current, change -> change(current) }, a.withLabel(SequenceLabel(newLabels)))
+    }
+
+    private fun start(startLabel: StartLabel): XcfaState<S> {
+        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+
+        val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
+        val pid = newProcesses.size
+        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)))
+        val newMutexes = LinkedHashMap(mutexes)
+        newMutexes["$pid"] = pid
+
+        return copy(processes=newProcesses, mutexes=newMutexes)
+    }
+
+    private fun endProcess(pid: Int): XcfaState<S> {
+        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        newProcesses.remove(pid)
+        val newMutexes = LinkedHashMap(mutexes)
+        newMutexes.remove("$pid")
+        return copy(processes=newProcesses)
+    }
+
+    private fun enterMutex(key: String, pid: Int): XcfaState<S> {
+        if(mutexes.keys.any { Regex(it).matches(key) }) return copy(bottom = true)
+
+        val newMutexes = LinkedHashMap(mutexes)
+        newMutexes[key] = pid
+        return copy(mutexes = newMutexes)
+    }
+
+    private fun exitMutex(key: String, pid: Int): XcfaState<S> {
+        val newMutexes = LinkedHashMap(mutexes)
+        newMutexes.remove(key, pid)
+        return copy(mutexes = newMutexes)
+    }
+
+
+    private fun withProcesses(nP: Map<Int, XcfaProcessState>): XcfaState<S> {
+        return copy(processes=nP)
     }
 
     fun withState(s: S): XcfaState<S> {
-        return XcfaState(processes, s)
+        return copy(sGlobal=s)
     }
 
     override fun toString(): String {
@@ -71,3 +150,5 @@ data class XcfaProcessState(
         else -> "${locs.peek()!!} [${locs.size}]"
     }
 }
+
+operator fun Regex.contains(text: CharSequence): Boolean = this.matches(text)

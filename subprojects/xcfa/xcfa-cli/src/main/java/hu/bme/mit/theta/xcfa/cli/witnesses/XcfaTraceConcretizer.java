@@ -62,7 +62,7 @@ public class XcfaTraceConcretizer {
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
-            cfaStates.add(new XcfaState<>(sbeTrace.getState(i).getProcesses(), ExplState.of(valuations.getState(i))));
+            cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(valuations.getState(i))));
         }
 
         return Trace.of(cfaStates, sbeTrace.getActions());

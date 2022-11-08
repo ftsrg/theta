@@ -15,12 +15,6 @@
  */
 package hu.bme.mit.theta.cfa.analysis.impact;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static java.util.Collections.emptySet;
-
-import java.util.function.Predicate;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
@@ -42,11 +36,17 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 
+import java.util.function.Predicate;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static java.util.Collections.emptySet;
+
 public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
 
 	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
-	private PredImpactChecker(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
+	private PredImpactChecker(final LTS<? super CfaState<PredState>, CfaAction> lts, final Loc initLoc,
 							  final Predicate<? super Loc> targetLocs,
 							  final Solver abstractionSolver, final ItpSolver refinementSolver) {
 		checkNotNull(lts);
@@ -75,7 +75,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 		checker = ImpactChecker.create(argBuilder, refiner, CfaState::getLoc);
 	}
 
-	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts,
+	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, CfaAction> lts,
 										   final Loc initLoc, final Predicate<? super Loc> targetLocs,
 										   final Solver abstractionSolver, final ItpSolver refinementSolver) {
 		return new PredImpactChecker(lts, initLoc, targetLocs, abstractionSolver, refinementSolver);

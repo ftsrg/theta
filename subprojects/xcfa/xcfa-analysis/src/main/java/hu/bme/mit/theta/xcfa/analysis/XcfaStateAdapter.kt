@@ -18,53 +18,53 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
-import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.VarDecl
+import java.lang.reflect.Type
 
-class XcfaStateAdapter<S: ExprState>(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaState<S>>() {
+class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) : TypeAdapter<XcfaState<*>>() {
     private lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: XcfaState<S>) {
+    private lateinit var stateType: Type
+    override fun write(writer: JsonWriter, value: XcfaState<*>) {
         initGson()
         writer.beginObject()
         writer.name("processes")
         gson.toJson(gson.toJsonTree(value.processes), writer)
         writer.name("sGlobal")
-        writer.beginObject()
-        writer.name("type").value(value.sGlobal::class.java.name)
-        writer.name("value")
         gson.toJson(gson.toJsonTree(value.sGlobal), writer)
-        writer.endObject()
+        writer.name("mutexes")
+        gson.toJson(gson.toJsonTree(value.mutexes), writer)
+        writer.name("threadLookup")
+        gson.toJson(gson.toJsonTree(value.threadLookup), writer)
+        writer.name("bottom")
+        gson.toJson(gson.toJsonTree(value.bottom), writer)
         writer.endObject()
     }
 
-    override fun read(reader: JsonReader): XcfaState<S> {
+    override fun read(reader: JsonReader): XcfaState<*> {
         initGson()
-        lateinit var processes: Map<Int, XcfaProcessState>
-        lateinit var sGlobal: S
+        if(!this::stateType.isInitialized) stateType = stateTypeSupplier()
         reader.beginObject()
-        while(reader.peek() != JsonToken.END_OBJECT) {
-            when(reader.nextName()) {
-                "processes" -> processes = gson.fromJson(reader, object: TypeToken<Map<Int,XcfaProcessState>>(){}.type)
-                "sGlobal" -> sGlobal = run {
-                    reader.beginObject()
-                    lateinit var clazz: Class<*>
-                    lateinit var value: Any
-                    while(reader.peek() != JsonToken.END_OBJECT) {
-                        when(reader.nextName()) {
-                            "type" -> clazz = Class.forName(reader.nextString())
-                            "value" -> value = gson.fromJson(reader, clazz)
-                        }
-                    }
-                    reader.endObject()
-                    value as S
-                }
-            }
-        }
+        check(reader.nextName() == "processes")
+        val processes: Map<Int, XcfaProcessState> = gson.fromJson(reader, Map::class.java)
+        check(reader.nextName() == "sGlobal")
+        val sGlobal: ExprState = gson.fromJson(reader, stateType)
+        check(reader.nextName() == "mutexes")
+        val mutexes:  Map<String, Int> = gson.fromJson(reader, Map::class.java)
+        check(reader.nextName() == "threadLookup")
+        val threadLookup:  Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
+        check(reader.nextName() == "bottom")
+        val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
+
         reader.endObject()
-        return XcfaState(processes, sGlobal)
+        return XcfaState(xcfa = null,
+                processes = processes,
+                sGlobal = sGlobal,
+                mutexes = mutexes,
+                threadLookup = threadLookup,
+                bottom = bottom)
     }
 
     private fun initGson() {

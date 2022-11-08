@@ -166,6 +166,13 @@ public final class ARG<S extends State, A extends Action> {
 		this.initialized = false;
 	}
 
+	/**
+	 * Marks the node for reexpanding without pruning it.
+	 */
+	public void markForReExpansion(final ArgNode<S, A> node) {
+		node.expanded = false;
+	}
+
 	public void minimize() {
 		initNodes.forEach(this::minimizeSubTree);
 	}

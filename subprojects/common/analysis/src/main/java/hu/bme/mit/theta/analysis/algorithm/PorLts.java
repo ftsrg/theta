@@ -66,9 +66,9 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 
 		// Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
 		Collection<A> minimalPersistentSet = new HashSet<>();
-		Collection<A> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
-		for (A firstAction : persistentSetFirstActions) {
-			Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstAction);
+		Collection<Collection<A>> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
+		for (Collection<A> firstActions : persistentSetFirstActions) {
+			Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstActions);
 			if (minimalPersistentSet.size() == 0 || persistentSet.size() < minimalPersistentSet.size()) {
 				minimalPersistentSet = persistentSet;
 			}
@@ -81,18 +81,17 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * Calculates a persistent set of enabled actions starting from a particular action.
 	 *
 	 * @param enabledActions the enabled actions in the present state
-	 * @param firstAction    the action who will be added to the persistent set as the first action
-	 * @return the persistent set of enabled actions
+	 * @param firstActions   the actions that will be added to the persistent set as the first actions
+	 * @return a persistent set of enabled actions
 	 */
-	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, A firstAction) {
-		if (isBackwardAction(firstAction)) {
+	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, Collection<A> firstActions) {
+		if (firstActions.stream().anyMatch(this::isBackwardAction)) {
 			return new HashSet<>(enabledActions);
 		}
 
-		Set<A> persistentSet = new HashSet<>();
+		Set<A> persistentSet = new HashSet<>(firstActions);
 		Set<A> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
-		persistentSet.add(firstAction);
-		otherActions.remove(firstAction);
+		firstActions.forEach(otherActions::remove);
 
 		boolean addedNewAction = true;
 		while (addedNewAction) {
@@ -132,8 +131,8 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param allEnabledActions all the enabled actions in the present state
 	 * @return the actions from where persistent sets will be calculated
 	 */
-	protected Collection<A> getPersistentSetFirstActions(Collection<A> allEnabledActions) {
-		return allEnabledActions;
+	protected Collection<Collection<A>> getPersistentSetFirstActions(Collection<A> allEnabledActions) {
+		return List.of(allEnabledActions);
 	}
 
 	/**
@@ -211,7 +210,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param transition whose shared objects are to be returned
 	 * @return the set of directly or indirectly used shared objects
 	 */
-	private Set<? extends Decl<? extends Type>> getCachedUsedSharedObjects(T transition) {
+	protected Set<? extends Decl<? extends Type>> getCachedUsedSharedObjects(T transition) {
 		if (!usedSharedObjects.containsKey(transition)) {
 			Set<? extends Decl<? extends Type>> vars = getUsedSharedObjects(transition);
 			usedSharedObjects.put(transition, vars);
@@ -237,10 +236,10 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * Returns shared objects (~global variables) encountered in a search starting from a given transition.
 	 *
 	 * @param startTransition the start point (transition) of the search
-	 * @param visitTransition the predicate that tells whether a transition has to be explored
+	 * @param goFurther the predicate that tells whether more transitions have to be explored through this transition
 	 * @return the set of encountered shared objects
 	 */
-	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> visitTransition) {
+	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> goFurther) {
 		Set<Decl<? extends Type>> vars = new HashSet<>();
 		List<T> exploredTransitions = new ArrayList<>();
 		List<T> transitionsToExplore = new ArrayList<>();
@@ -249,11 +248,13 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		while (!transitionsToExplore.isEmpty()) {
 			T exploring = transitionsToExplore.remove(0);
 			vars.addAll(getDirectlyUsedSharedObjects(exploring));
-			Set<T> successiveTransitions = getSuccessiveTransitions(exploring);
 
-			for (var newTransition : successiveTransitions) {
-				if (!exploredTransitions.contains(newTransition) && visitTransition.test(newTransition)) {
-					transitionsToExplore.add(newTransition);
+			if (goFurther.test(exploring)) {
+				Set<T> successiveTransitions = getSuccessiveTransitions(exploring);
+				for (var newTransition : successiveTransitions) {
+					if (!exploredTransitions.contains(newTransition)) {
+						transitionsToExplore.add(newTransition);
+					}
 				}
 			}
 			exploredTransitions.add(exploring);

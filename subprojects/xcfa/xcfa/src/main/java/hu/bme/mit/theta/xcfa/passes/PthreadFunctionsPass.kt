@@ -41,21 +41,23 @@ class PthreadFunctionsPass : ProcedurePass {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val fence = when(invokeLabel.name) {
                             "pthread_join" -> {
-                                val handle = invokeLabel.params[1]
+                                var handle = invokeLabel.params[1]
+                                while(handle is Reference<*, *>) handle = handle.op
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                JoinLabel(handle, metadata = invokeLabel.metadata)
+                                JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata = invokeLabel.metadata)
                             }
                             "pthread_create" -> {
-                                val handle = invokeLabel.params[1] as Reference<*,*>
-                                check(handle.op is RefExpr && (handle.op as RefExpr<out Type>).decl is VarDecl)
+                                var handle = invokeLabel.params[1]
+                                while(handle is Reference<*, *>) handle = handle.op
+                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 val funcptr = invokeLabel.params[3]
                                 check(funcptr is RefExpr && (funcptr as RefExpr<out Type>).decl is VarDecl)
 
                                 val param = invokeLabel.params[4]
 
-                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle.op as RefExpr<out Type>).decl as VarDecl<*>,  metadata = invokeLabel.metadata)
+                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle as RefExpr<out Type>).decl as VarDecl<*>,  metadata = invokeLabel.metadata)
                             }
                             else -> error("Unknown pthread function ${invokeLabel.name}")
                         }

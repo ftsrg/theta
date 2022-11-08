@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.expr.refinement.AbstractPorRefiner;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
@@ -61,12 +62,15 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaGlobalStaticAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewAtomsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.common.autoexpl.XcfaNewOperandsAutoExpl;
 import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.*;
+import hu.bme.mit.theta.xcfa.analysis.impl.interleavings.por.*;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaDistToErrComparator;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTInitFunc;
 import hu.bme.mit.theta.xcfa.analysis.impl.singlethread.XcfaSTLts;
@@ -77,7 +81,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.utils.XcfaUtils;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -167,6 +171,15 @@ public class XcfaConfigBuilder {
 			}
 
 			@Override
+			public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel, Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry) {
+				return switch (porDependencyLevel) {
+					case ABSTRACTION_AWARE -> new XcfaAbstractPorLts(xcfa, ignoredVariableRegistry);
+					case BASIC -> new XcfaPorLts(xcfa);
+					default -> new XcfaLts();
+				};
+			}
+
+			@Override
 			public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
 				return INTERLEAVINGS.getInitFunc(initLocs, initFunc);
 			}
@@ -193,6 +206,10 @@ public class XcfaConfigBuilder {
 		};
 
 		public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
+
+		public LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa, PorDependencyLevel porDependencyLevel, Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry) {
+			return getLts(xcfa);
+		}
 
 		public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
 
@@ -263,6 +280,10 @@ public class XcfaConfigBuilder {
 		}
 	}
 
+	public enum PorDependencyLevel {
+		NO_POR, BASIC, ABSTRACTION_AWARE
+	}
+
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory refinementSolverFactory;
 	private final SolverFactory abstractionSolverFactory;
@@ -276,6 +297,7 @@ public class XcfaConfigBuilder {
 	private InitPrec initPrec = InitPrec.EMPTY;
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	private PorDependencyLevel porDependencyLevel = PorDependencyLevel.BASIC;
 
 	public XcfaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory refinementSolverFactory, final SolverFactory abstractionSolverFactory, final Algorithm algorithm) {
 		this.domain = domain;
@@ -326,8 +348,14 @@ public class XcfaConfigBuilder {
 		return this;
 	}
 
+	public XcfaConfigBuilder porDependencyLevel(final PorDependencyLevel porDependencyLevel) {
+		this.porDependencyLevel = porDependencyLevel;
+		return this;
+	}
+
 	public XcfaConfig<? extends State, ? extends Action, ? extends Prec> build(final XCFA xcfa) {
-		final LTS lts = algorithm.getLts(xcfa);
+		final Map<Decl<? extends Type>, Set<hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaState<?>>> ignoredVariableRegistry = new HashMap<>();
+		final LTS lts = algorithm.getLts(xcfa, porDependencyLevel, ignoredVariableRegistry);
 		final Abstractor abstractor;
 		final Refiner refiner;
 		final XcfaPrec prec;
@@ -418,13 +446,26 @@ public class XcfaConfigBuilder {
 						domain + " domain does not support " + refinement + " refinement.");
 		}
 
+		final Refiner coreRefiner;
 		if (refinement == Refinement.MULTI_SEQ) {
-			refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-					precRefiner, pruneStrategy, logger);
+			if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+				coreRefiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
+			} else {
+				coreRefiner = MultiExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+			}
 		} else {
-			refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-					precRefiner, pruneStrategy, logger);
+			if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+				coreRefiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger, new AtomicNodePruner<>());
+			} else {
+				coreRefiner = SingleExprTraceRefiner.create(exprTraceChecker, precRefiner, pruneStrategy, logger);
+			}
 		}
+		if (algorithm == Algorithm.INTERLEAVINGS_POR && porDependencyLevel == PorDependencyLevel.ABSTRACTION_AWARE) {
+			refiner = AbstractPorRefiner.create(coreRefiner, pruneStrategy, ignoredVariableRegistry);
+		} else {
+			refiner = coreRefiner;
+		}
+
 		final SafetyChecker checker = CegarChecker.create(abstractor, refiner, logger);
 		return XcfaConfig.create(checker, prec);
 	}

@@ -62,9 +62,12 @@ fun getXcfaErrorPredicate() =
 fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
         PartialOrd<XcfaState<S>>{s1, s2 -> s1.processes == s2.processes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)}
 
-private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(analysis: Analysis<S, XcfaAction, P>): ArgBuilder<S, XcfaAction, P> =
+private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(
+        analysis: Analysis<S, XcfaAction, P>,
+        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>)
+: ArgBuilder<S, XcfaAction, P> =
         ArgBuilder.create(
-                getXcfaLts(),
+                ltsSupplier(),
                 analysis,
                 getXcfaErrorPredicate()
         )
@@ -73,9 +76,10 @@ fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
         analysis: Analysis<S, XcfaAction, P>,
         argNodeComparator: ArgNodeComparators.ArgNodeComparator,
         stopCriterion: StopCriterion<*, *>,
-        logger: Logger
+        logger: Logger,
+        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-        BasicAbstractor.builder(getXcfaArgBuilder(analysis))
+        BasicAbstractor.builder(getXcfaArgBuilder(analysis, ltsSupplier))
                 .waitlist(PriorityWaitlist.create(argNodeComparator))
                 .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger).build() // TODO: can we do this nicely?
 
@@ -89,13 +93,13 @@ private fun getExplXcfaInitFunc(xcfa: XCFA, solver: Solver): (XcfaPrec<ExplPrec>
         initLocStack.add(it.first.initLoc)
         Pair(i, XcfaProcessState(initLocStack))
     }.toMap()
-    return { p -> ExplInitFunc.create(solver, True()).getInitStates(p.p).map { XcfaState(processInitState, it) } }
+    return { p -> ExplInitFunc.create(solver, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
 }
 private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
     return { s, a, p ->
-        val newSt = s.applyLoc(a)
-        explTransFunc.getSuccStates(newSt.sGlobal, a, p.p).map { newSt.withState(it) }
+        val (newSt, newAct) = s.apply(a)
+        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p).map { newSt.withState(it) }
     }
 }
 
@@ -113,13 +117,13 @@ private fun getPredXcfaInitFunc(xcfa: XCFA, predAbstractor: PredAbstractor): (Xc
         initLocStack.add(it.first.initLoc)
         Pair(i, XcfaProcessState(initLocStack))
     }.toMap()
-    return { p -> PredInitFunc.create(predAbstractor, True()).getInitStates(p.p).map { XcfaState(processInitState, it) } }
+    return { p -> PredInitFunc.create(predAbstractor, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
 }
 private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor): (XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
     val predTransFunc = PredTransFunc.create<XcfaAction>(predAbstractor)
     return { s, a, p ->
-        val newSt = s.applyLoc(a)
-        predTransFunc.getSuccStates(newSt.sGlobal, a, p.p).map { newSt.withState(it) }
+        val (newSt, newAct) = s.apply(a)
+        predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p).map { newSt.withState(it) }
     }
 }
 

@@ -41,6 +41,7 @@ import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.XcfaStateAdapter
 import hu.bme.mit.theta.xcfa.getSymbols
 import hu.bme.mit.theta.xcfa.gson.MetaDataAdapter
 import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
@@ -100,6 +101,7 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: ()->D
     gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())
     gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(XcfaState::class.java, XcfaStateAdapter({ gson }) { domain().stateType })
     gsonBuilder.registerTypeHierarchyAdapter(XcfaAction::class.java, XcfaActionAdapter { gson })
     gsonBuilder.registerTypeHierarchyAdapter(Trace::class.java, TraceAdapter( { gson }, { TypeToken.getParameterized(TypeToken.get(XcfaState::class.java).type, domain().stateType).type }, TypeToken.get(XcfaAction::class.java).type))
     gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java, ArgAdapter( { gson }, { domain().partialOrd(solver()) }, { argAdapterHelper(domain().stateType) }))
