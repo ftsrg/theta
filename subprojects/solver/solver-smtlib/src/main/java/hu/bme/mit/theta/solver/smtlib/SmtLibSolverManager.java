@@ -3,40 +3,28 @@ package hu.bme.mit.theta.solver.smtlib;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverBase;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.smtlib.impl.bitwuzla.BitwuzlaSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.impl.cvc5.CVC5SmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.impl.yices2.Yices2SmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.cvc5.CVC5SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.mathsat.MathSATSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.z3.Z3SmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 public final class SmtLibSolverManager extends SolverManager {
     public static final Path HOME = Path.of(System.getProperty("user.home"), ".theta");
@@ -58,7 +46,6 @@ public final class SmtLibSolverManager extends SolverManager {
         registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
         registerInstaller("cvc5", CVC5SmtLibSolverInstaller.class);
         registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
-        registerInstaller("yices2", Yices2SmtLibSolverInstaller.class);
         registerInstaller("boolector", BoolectorSmtLibSolverInstaller.class);
         registerInstaller("bitwuzla", BitwuzlaSmtLibSolverInstaller.class);
         registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
