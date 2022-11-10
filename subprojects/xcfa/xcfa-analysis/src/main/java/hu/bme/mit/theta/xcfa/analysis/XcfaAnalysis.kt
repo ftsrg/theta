@@ -52,7 +52,7 @@ open class XcfaAnalysis<S: ExprState, P: Prec> (
 
 fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
             s -> s.processes.map {
-                proc -> proc.value.locs.peek().outgoingEdges.map { XcfaAction(proc.key, it) }
+                proc -> proc.value.locs.peek().outgoingEdges.map { XcfaAction(proc.key, it) }.filter { !s.apply(it).first.bottom }
             }.flatten()
         }
 

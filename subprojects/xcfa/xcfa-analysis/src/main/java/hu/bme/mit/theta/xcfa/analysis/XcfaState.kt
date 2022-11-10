@@ -106,7 +106,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(processes=newProcesses)
     }
 
-    private fun enterMutex(key: String, pid: Int): XcfaState<S> {
+    fun enterMutex(key: String, pid: Int): XcfaState<S> {
         if(mutexes.keys.any { Regex(it).matches(key) }) return copy(bottom = true)
 
         val newMutexes = LinkedHashMap(mutexes)
@@ -114,7 +114,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(mutexes = newMutexes)
     }
 
-    private fun exitMutex(key: String, pid: Int): XcfaState<S> {
+    fun exitMutex(key: String, pid: Int): XcfaState<S> {
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes.remove(key, pid)
         return copy(mutexes = newMutexes)
