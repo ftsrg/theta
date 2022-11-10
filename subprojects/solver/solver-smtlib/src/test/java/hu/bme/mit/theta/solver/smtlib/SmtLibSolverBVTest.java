@@ -28,10 +28,10 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
-    private static final String SOLVER = "z3";
-    private static final String VERSION = "4.5.0";
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
+    private static final String SOLVER = "z3";
+    private static final String VERSION = "4.11.2";
 
     @Parameterized.Parameter(0)
     public Class<?> exprType;
