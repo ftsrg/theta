@@ -25,7 +25,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 
 data class XcfaState<S : ExprState> @JvmOverloads constructor(
-        val xcfa: XCFA?,
+        val xcfa: XCFA?, // TODO: remove this
         val processes: Map<Int, XcfaProcessState>,
         val sGlobal: S,
         val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
