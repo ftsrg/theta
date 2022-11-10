@@ -53,7 +53,7 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
 
-    @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_SEQ, LBE_FULL)")
+    @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LBELevel = LbePass.LBELevel.LBE_SEQ
 
     //////////// backend options ////////////

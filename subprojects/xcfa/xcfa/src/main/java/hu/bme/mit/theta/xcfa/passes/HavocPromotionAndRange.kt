@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.*
+import java.util.*
 
 /**
  * This pass simplifies assignments from havoc'd intermediate variables.
@@ -74,10 +75,10 @@ class HavocPromotionAndRange : ProcedurePass {
                         if(indices.size <= offset || index < indices[offset]) newLabels.add(label)
                         else if (index == indices[offset]) {
                             val varDecl = ((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).varDecl
-                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr)
+//                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr)
                             val havoc = Havoc(varDecl)
                             newLabels.add(StmtLabel(havoc, metadata=edge.label.labels[index].metadata))
-                            newLabels.add(StmtLabel(type.limit(varDecl.ref), metadata = EmptyMetaData))
+//                            newLabels.add(StmtLabel(type.limit(varDecl.ref), metadata = EmptyMetaData))
                         } else if (index == indices[offset] + 1) {
                             offset++
                         } else {
@@ -88,6 +89,21 @@ class HavocPromotionAndRange : ProcedurePass {
                 }
             }
         }
+        val newEdges = LinkedHashSet(builder.getEdges())
+        for (edge in newEdges) {
+            if((edge.label as SequenceLabel).labels.any { it is StmtLabel && it.stmt is HavocStmt<*> }) {
+                builder.removeEdge(edge)
+                val list: MutableList<XcfaLabel> = LinkedList(edge.label.labels)
+                val reversed = list.withIndex().filter { it.value is StmtLabel && (it.value as StmtLabel).stmt is HavocStmt<*> }.reversed()
+                for ((index, value) in reversed) {
+                    val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
+                    val type = CComplexType.getType(varDecl.ref)
+                    list.add(index+1, StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                }
+                builder.addEdge(edge.withLabel(SequenceLabel(list)))
+            }
+        }
+
         return builder
     }
 }

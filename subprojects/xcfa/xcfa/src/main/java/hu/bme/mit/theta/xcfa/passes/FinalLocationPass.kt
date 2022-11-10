@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -32,7 +34,7 @@ class FinalLocationPass : ProcedurePass {
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         if (builder.finalLoc.isEmpty) builder.createFinalLoc()
-                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(listOf())))
+                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(listOf(StmtLabel(Stmts.Assume(BoolExprs.False()), metadata=it.metadata)), metadata=it.metadata)))
                     } else {
                         builder.addEdge(it)
                     }
