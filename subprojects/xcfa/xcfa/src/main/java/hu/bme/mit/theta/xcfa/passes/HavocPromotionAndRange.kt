@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
@@ -98,7 +99,9 @@ class HavocPromotionAndRange : ProcedurePass {
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
                     val type = CComplexType.getType(varDecl.ref)
-                    list.add(index+1, StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                    if(type !is CVoid) {
+                        list.add(index + 1, StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                    }
                 }
                 builder.addEdge(edge.withLabel(SequenceLabel(list)))
             }
