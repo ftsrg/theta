@@ -10,3 +10,7 @@ Contributors:
 * [Milán Mondok](https://github.com/mondokm)
 * [Dániel Szekeres](https://github.com/szdan97)
 * [László Radnai](https://github.com/radl97)
+* [Zsófia Ádám](https://github.com/AdamZsofi)
+* [Vince Molnár](https://github.com/vincemolnar)
+* [Márk Somorjai](https://github.com/s0mark)
+* [Csanád Telbisz](https://github.com/csanadtelbisz)

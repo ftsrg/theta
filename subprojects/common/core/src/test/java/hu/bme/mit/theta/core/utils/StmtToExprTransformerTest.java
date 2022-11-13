@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import java.util.Arrays;
-import java.util.Collection;
-
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,13 +31,16 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
+import java.util.Collection;
 
-import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 @RunWith(Parameterized.class)
 public class StmtToExprTransformerTest {
@@ -82,7 +81,7 @@ public class StmtToExprTransformerTest {
 	public void test() {
 		VarPoolUtil.returnInt(TEMP0);
 
-		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexing.all(0));
+		final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
 		final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
 		Assert.assertEquals(expectedExprs, actualExprs);
 	}

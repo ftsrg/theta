@@ -5,6 +5,8 @@ include(
         "common/common",
         "common/core",
 
+        "frontends/c-frontend",
+
         "cfa/cfa",
         "cfa/cfa-analysis",
         "cfa/cfa-cli",
@@ -12,6 +14,11 @@ include(
         "sts/sts",
         "sts/sts-analysis",
         "sts/sts-cli",
+
+        "xcfa/xcfa",
+        "xcfa/xcfa-analysis",
+        "xcfa/xcfa-cli",
+        "xcfa/cat",
 
         "xta/xta",
         "xta/xta-analysis",
