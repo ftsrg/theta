@@ -6,6 +6,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
 import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -199,7 +200,7 @@ public class XstsCli {
 				final String tracePath = modelFile.getParent() + File.separator + "traces";
 				final File traceDir = new File(tracePath);
 				if(traceDir.exists()) {
-					MoreFiles.deleteRecursively(traceDir.toPath());
+					MoreFiles.deleteRecursively(traceDir.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
 				}
 				traceDir.mkdir();
 
