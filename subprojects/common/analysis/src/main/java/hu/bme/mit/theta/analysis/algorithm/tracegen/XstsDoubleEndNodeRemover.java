@@ -50,7 +50,7 @@ public class XstsDoubleEndNodeRemover<S extends ExprState, A extends StmtAction>
                 String line=null;
                 try {
                     while( (line=bufReader.readLine()) != null ) {
-                        if(line.trim().matches("^\\(__id_.*__.*\strue\\)*$")) transitionFired=true;
+                        if(line.trim().matches("^.*\\(__id_.*__.*\strue\\).*$")) transitionFired=true;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
