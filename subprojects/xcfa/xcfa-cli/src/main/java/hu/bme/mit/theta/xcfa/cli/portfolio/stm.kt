@@ -16,26 +16,48 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-abstract class Node {
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig
+
+abstract class Node(val name: String) {
     val outEdges: MutableSet<Edge> = LinkedHashSet()
     var parent: STM? = null
 
     abstract fun execute(): Pair<Any, Any>
+    abstract fun visualize(): String
 }
 
-data class HierarchicalNode(val innerSTM: STM): Node() {
+class HierarchicalNode(name: String, private val innerSTM: STM): Node(name) {
     override fun execute(): Pair<Any, Any> = innerSTM.execute()
+    override fun visualize(): String = """state $name {
+${innerSTM.visualize()}
+}""".trimIndent()
 }
 
-data class ConfigNode(val config: (inProcess:Boolean) -> Any, val inProcess: Boolean) : Node() {
+class ConfigNode(name: String, private val config: XcfaCegarConfig, private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>, private val inProcess: Boolean) : Node(name) {
     override fun execute(): Pair<Any, Any> =
-            Pair(config, config(inProcess))
+            Pair(config, check(inProcess, config))
+
+    override fun visualize(): String = config.visualize(inProcess).lines().map { "state $name: $it" }.reduce {a, b -> "$a\n$b"}
 }
 
-data class Edge(val source: Node, val target: Node, val trigger: (Exception) -> Boolean, val guard: (Node, Edge)->Boolean) {
+data class Edge(val source: Node,
+                val target: Node,
+                val trigger: (Exception) -> Boolean,
+                val guard: (Node, Edge) -> Boolean = {_, _ -> true}) {
     init {
         source.outEdges.add(this)
     }
+
+    fun visualize(): String = """${source.name} --> ${target.name} : $trigger """
+
+}
+
+class ExceptionTrigger(private val exceptions: Set<Exception>): (Exception) -> Boolean {
+    constructor(vararg exceptions: Exception) : this(exceptions.toSet())
+    override fun invoke(e: Exception): Boolean = exceptions.contains(e)
+
+    override fun toString(): String = exceptions.toString()
 }
 
 data class STM(val initNode: Node, val edges: Set<Edge>) {
@@ -46,6 +68,15 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
             it.parent = this
         }
     }
+
+    private fun visualizeNodes(): String = edges.map { listOf(it.source, it.target) }.flatten().toSet().map { it.visualize() }.reduce { a, b -> "$a\n$b"}
+
+    fun visualize() : String = """
+${visualizeNodes()}
+
+[*] --> ${initNode.name}
+${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
+""".trimMargin()
 
     fun execute(): Pair<Any, Any> {
         var currentNode: Node = initNode
@@ -63,3 +94,9 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
         }
     }
 }
+
+fun XcfaCegarConfig.visualize(inProcess: Boolean): String =
+  """solvers: $abstractionSolver, $refinementSolver
+    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
+    |refinement: $refinement, pruneStrategy: $pruneStrategy
+    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()

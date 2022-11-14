@@ -35,7 +35,7 @@ enum class ExitCodes(val code: Int) {
     SOLVER_ERROR(221),
 }
 
-class ErrorCodeException(val code: Int) : Exception()
+data class ErrorCodeException(val code: Int) : Exception()
 
 fun <T> exitOnError(body: () -> T): T {
     try{
