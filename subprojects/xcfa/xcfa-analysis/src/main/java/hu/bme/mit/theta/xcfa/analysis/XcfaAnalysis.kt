@@ -31,10 +31,12 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import java.util.function.Predicate
 
@@ -56,20 +58,52 @@ fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
             }.flatten()
         }
 
-fun getXcfaErrorPredicate() =
+enum class ErrorDetection {
+    ERROR_LOCATION,
+    DATA_RACE
+}
+
+fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<out ExprState>> = when(errorDetection) {
+    ErrorDetection.ERROR_LOCATION ->
         Predicate<XcfaState<out ExprState>>{ s -> s.processes.any { it.value.locs.peek().error }}
+    ErrorDetection.DATA_RACE -> {
+        val getGlobalVars = { xcfa: XCFA, label: XcfaLabel ->
+            val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
+            label.collectVars().filter { labelVar -> globalVars.any { it == labelVar } }.toSet()
+        }
+        Predicate<XcfaState<out ExprState>> { s ->
+            val xcfa = s.xcfa!!
+            for (process1 in s.processes)
+                for (process2 in s.processes)
+                    if (process1.key != process2.key)
+                        for (edge1 in process1.value.locs.peek().outgoingEdges)
+                            for (edge2 in process2.value.locs.peek().outgoingEdges)
+                                for (label1 in edge1.getFlatLabels())
+                                    for (label2 in edge2.getFlatLabels())
+                                        if(label1 is WriteLabel || label2 is WriteLabel) {
+                                            val globalVars1 = getGlobalVars(xcfa, label1)
+                                            val globalVars2 = getGlobalVars(xcfa, label2)
+                                            if((globalVars1 intersect globalVars2).isNotEmpty()) {
+                                                return@Predicate true
+                                            }
+                                        }
+            false
+        }
+    }
+}
 
 fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
         PartialOrd<XcfaState<S>>{s1, s2 -> s1.processes == s2.processes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)}
 
 private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(
         analysis: Analysis<S, XcfaAction, P>,
-        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>)
+        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+        errorDetection: ErrorDetection)
 : ArgBuilder<S, XcfaAction, P> =
         ArgBuilder.create(
                 ltsSupplier(),
                 analysis,
-                getXcfaErrorPredicate()
+                getXcfaErrorPredicate(errorDetection)
         )
 
 fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
@@ -77,9 +111,10 @@ fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
         argNodeComparator: ArgNodeComparators.ArgNodeComparator,
         stopCriterion: StopCriterion<*, *>,
         logger: Logger,
-        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>
+        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+        errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-        BasicAbstractor.builder(getXcfaArgBuilder(analysis, ltsSupplier))
+        BasicAbstractor.builder(getXcfaArgBuilder(analysis, ltsSupplier, errorDetection))
                 .waitlist(PriorityWaitlist.create(argNodeComparator))
                 .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger).build() // TODO: can we do this nicely?
 
