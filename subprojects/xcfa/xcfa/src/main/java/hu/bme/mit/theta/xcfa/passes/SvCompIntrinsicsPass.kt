@@ -56,7 +56,7 @@ class SvCompIntrinsicsPass : ProcedurePass {
                         val fence = when(invokeLabel.name) {
                             "__VERIFIER_atomic_begin" -> FenceLabel(setOf("ATOMIC_BEGIN"),  metadata = invokeLabel.metadata)
                             "__VERIFIER_atomic_end" -> FenceLabel(setOf("ATOMIC_END"),  metadata = invokeLabel.metadata)
-                            else -> error("Unknown intrinsic ${invokeLabel.name}")
+                            else -> invokeLabel
                         }
                         labels.add(fence)
                     } else {

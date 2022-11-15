@@ -59,6 +59,20 @@ class PthreadFunctionsPass : ProcedurePass {
 
                                 StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle as RefExpr<out Type>).decl as VarDecl<*>,  metadata = invokeLabel.metadata)
                             }
+                            "pthread_mutex_lock" -> {
+                                var handle = invokeLabel.params[1]
+                                while(handle is Reference<*, *>) handle = handle.op
+                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+
+                                FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata = invokeLabel.metadata)
+                            }
+                            "pthread_mutex_unlock" -> {
+                                var handle = invokeLabel.params[1]
+                                while(handle is Reference<*, *>) handle = handle.op
+                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+
+                                FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata = invokeLabel.metadata)
+                            }
                             else -> error("Unknown pthread function ${invokeLabel.name}")
                         }
                         labels.add(fence)

@@ -42,6 +42,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
     fun apply(a: XcfaAction) : Pair<XcfaState<S>, XcfaAction>{
         val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
+        changes.add { it.enterMutex("", a.pid) }
 
         val processState = processes[a.pid]
         checkNotNull(processState)
@@ -52,12 +53,14 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
             changes.add { state -> state.withProcesses(newProcesses) }
         }
 
+        var atomicBlock = false
+
         val newLabels = a.edge.getFlatLabels().filter {
             when(it) {
                 is FenceLabel -> it.labels.forEach { label ->
                     when(label) {
-                        "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
-                        "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
+                        "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }.also { atomicBlock = true }
+                        "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }.also { atomicBlock = false }
                         in Regex("mutex_lock\\((.*)\\)") -> changes.add { state -> state.enterMutex( label.substring("mutex_lock".length + 1, label.length-1), a.pid)}
                         in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state -> state.exitMutex( label.substring("mutex_unlock".length + 1, label.length-1), a.pid )}
                     }
@@ -83,6 +86,9 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
             }
         }
 
+        if(!atomicBlock)
+            changes.add { it.exitMutex("", a.pid) }
+
         return Pair(changes.fold(this) { current, change -> change(current) }, a.withLabel(SequenceLabel(newLabels)))
     }
 
@@ -107,7 +113,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     fun enterMutex(key: String, pid: Int): XcfaState<S> {
-        if(mutexes.keys.any { Regex(it).matches(key) }) return copy(bottom = true)
+        if(mutexes.keys.any { it == key && mutexes[it] != pid }) return copy(bottom = true)
 
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes[key] = pid
