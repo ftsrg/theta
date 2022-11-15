@@ -40,10 +40,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public final class Z3SmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
+public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
     private boolean topMostContainsAssertions = false;
 
-    public Z3SmtLibItpSolver(
+    public Z3OldSmtLibItpSolver(
         final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
         final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {

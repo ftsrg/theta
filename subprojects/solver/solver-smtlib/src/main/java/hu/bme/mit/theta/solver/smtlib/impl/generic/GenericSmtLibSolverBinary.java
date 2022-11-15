@@ -25,12 +25,10 @@ import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Math.min;
 
 public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
@@ -38,17 +36,17 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 	private final ProcessHandler processHandler;
 
 	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args) {
-		this(solverPath, args, false);
+		this(solverPath, args, EnumSet.noneOf(Solver.class));
 	}
 
-	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args, final boolean isCvc4) {
+	public GenericSmtLibSolverBinary(final Path solverPath, final String[] args, final EnumSet<Solver> solverOverride) {
 		final var processCmd = new ArrayList<String>();
 		processCmd.add(solverPath.toAbsolutePath().toString());
 		processCmd.addAll(Arrays.asList(args));
 
 		final var solverProcessBuilder = new NuProcessBuilder(processCmd);
 
-		processHandler = new ProcessHandler(isCvc4);
+		processHandler = new ProcessHandler(solverOverride);
 		solverProcessBuilder.setProcessListener(processHandler);
 
 		solverProcess = solverProcessBuilder.start();
@@ -77,15 +75,22 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 		solverProcess.destroy(true);
 	}
 
+	public enum Solver {
+		CVC4, PRINCESS
+	}
+
 	private static final class ProcessHandler extends NuAbstractProcessHandler {
 		private final Queue<String> inputQueue = new LinkedList<>();
+		private int headDoneIndex = 0;
 
 		private final Queue<String> outputQueue = new LinkedList<>();
 		private ReadProcessor readProcessor = null;
 		private final boolean isCvc4;
+		private final boolean isPrincess;
 
-		public ProcessHandler(final boolean isCvc4) {
-			this.isCvc4 = isCvc4;
+		public ProcessHandler(final EnumSet<Solver> solverOverride) {
+			this.isCvc4 = solverOverride.contains(Solver.CVC4);
+			this.isPrincess = solverOverride.contains(Solver.PRINCESS);
 		}
 
 		public synchronized void write(final String input) {
@@ -102,12 +107,21 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
 		@Override
 		public synchronized boolean onStdinReady(final ByteBuffer buffer) {
-			while (!inputQueue.isEmpty()) {
-				buffer.put(inputQueue.remove().getBytes(StandardCharsets.US_ASCII));
-				buffer.put("\n".getBytes(StandardCharsets.US_ASCII));
+			if (!inputQueue.isEmpty()) {
+				final var output = inputQueue.peek();
+				final var eol = "\n".getBytes(StandardCharsets.US_ASCII);
+				final var cutoff = min(buffer.remaining() - eol.length, output.length() - headDoneIndex);
+				buffer.put(output.substring(headDoneIndex, headDoneIndex + cutoff).getBytes(StandardCharsets.US_ASCII));
+				if(headDoneIndex + cutoff < output.length()) {
+					headDoneIndex = headDoneIndex + cutoff;
+				} else {
+					inputQueue.remove();
+					headDoneIndex = 0;
+					buffer.put(eol);
+				}
 			}
 			buffer.flip();
-			return false;
+			return !inputQueue.isEmpty();
 		}
 
 		@Override
@@ -117,7 +131,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
 		@Override
 		public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
-			onInput(buffer);
+			if(!isPrincess) onInput(buffer);
 		}
 
 		private int isFp = 0;
@@ -126,6 +140,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 			final var buf = new byte[buffer.remaining()];
 			buffer.get(buf);
 			final var input = new String(buf, StandardCharsets.US_ASCII);
+			//System.out.println(input);
 
 
 			for (var c : input.toCharArray()) {
