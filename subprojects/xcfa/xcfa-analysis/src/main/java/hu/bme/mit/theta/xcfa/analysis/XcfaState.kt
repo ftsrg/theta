@@ -42,7 +42,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
     fun apply(a: XcfaAction) : Pair<XcfaState<S>, XcfaAction>{
         val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-        changes.add { it.enterMutex("", a.pid) }
+        if(mutexes[""] != null && mutexes[""] != a.pid) return Pair(copy(bottom=true), a.withLabel(SequenceLabel(listOf(NopLabel))))
 
         val processState = processes[a.pid]
         checkNotNull(processState)
@@ -53,14 +53,13 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
             changes.add { state -> state.withProcesses(newProcesses) }
         }
 
-        var atomicBlock = false
 
         val newLabels = a.edge.getFlatLabels().filter {
             when(it) {
                 is FenceLabel -> it.labels.forEach { label ->
                     when(label) {
-                        "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }.also { atomicBlock = true }
-                        "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }.also { atomicBlock = false }
+                        "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
+                        "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
                         in Regex("mutex_lock\\((.*)\\)") -> changes.add { state -> state.enterMutex( label.substring("mutex_lock".length + 1, label.length-1), a.pid)}
                         in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state -> state.exitMutex( label.substring("mutex_unlock".length + 1, label.length-1), a.pid )}
                     }
@@ -85,9 +84,6 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 changes.add { state -> state.endProcess(a.pid) }
             }
         }
-
-        if(!atomicBlock)
-            changes.add { it.exitMutex("", a.pid) }
 
         return Pair(changes.fold(this) { current, change -> change(current) }, a.withLabel(SequenceLabel(newLabels)))
     }
