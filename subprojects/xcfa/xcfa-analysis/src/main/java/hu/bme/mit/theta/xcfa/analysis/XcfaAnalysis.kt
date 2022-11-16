@@ -31,10 +31,11 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
@@ -71,22 +72,25 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
             val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
             label.collectVars().filter { labelVar -> globalVars.any { it == labelVar } }.toSet()
         }
+        val writes: XcfaLabel.(VarDecl<*>) -> Boolean = { varDecl: VarDecl<*> -> //TODO: change this if read-writes are used instead of assignments
+            this is StmtLabel &&
+            this.stmt is AssignStmt<*> &&
+            (this.stmt as AssignStmt<*>).varDecl == varDecl
+        }
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
             for (process1 in s.processes)
                 for (process2 in s.processes)
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
-                            for (edge2 in process2.value.locs.peek().outgoingEdges)
-                                for (label1 in edge1.getFlatLabels())
-                                    for (label2 in edge2.getFlatLabels())
-                                        if(label1 is WriteLabel || label2 is WriteLabel) {
-                                            val globalVars1 = getGlobalVars(xcfa, label1)
-                                            val globalVars2 = getGlobalVars(xcfa, label2)
-                                            if((globalVars1 intersect globalVars2).isNotEmpty()) {
-                                                return@Predicate true
-                                            }
-                                        }
+                            for (edge2 in process2.value.locs.peek().outgoingEdges) {
+                                val globalVars1 = getGlobalVars(xcfa, edge1.label)
+                                val globalVars2 = getGlobalVars(xcfa, edge2.label)
+                                val intersection = globalVars1 intersect globalVars2
+                                if (intersection.any { edge1.label.writes(it) || edge1.label.writes(it) }) {
+                                    return@Predicate true
+                                }
+                            }
             false
         }
     }

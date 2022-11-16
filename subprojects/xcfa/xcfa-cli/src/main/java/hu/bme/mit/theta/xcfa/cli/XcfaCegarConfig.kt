@@ -36,6 +36,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -51,6 +52,8 @@ import kotlin.system.exitProcess
 
 
 data class XcfaCegarConfig(
+        @Parameter(names = ["--error-detection"], description = "What kinds of errors to check for (ERROR_LOCATION or DATA_RACE)")
+        var errorDetectionType: ErrorDetection = ErrorDetection.ERROR_LOCATION,
         @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
         var abstractionSolver: String = "Z3",
         @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
@@ -94,7 +97,8 @@ data class XcfaCegarConfig(
                 search.getComp(xcfa),
                 refinement.stopCriterion,
                 logger,
-                porLevel.ltsSupplier(xcfa, ignoredVarRegistry)
+                porLevel.ltsSupplier(xcfa, ignoredVarRegistry),
+                errorDetectionType
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =

@@ -80,7 +80,8 @@ enum class Domain(
             argNodeComparator: ArgNodeComparator,
             stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
             logger: Logger,
-            ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>
+            ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+            errorDetectionType: ErrorDetection
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
         val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
         val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
@@ -90,7 +91,7 @@ enum class Domain(
 ) {
 
         EXPL(
-            abstractor = { a, b, c, d, e, f, g -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f, g, ErrorDetection.ERROR_LOCATION) },
+            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f, g, h) },
             itpPrecRefiner = { XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec()) },
             initPrec = { x, ip -> ip.explPrec(x) },
             partialOrd = { getPartialOrder<ExplState> {s1, s2 -> s1.isLeq(s2)} },
@@ -98,7 +99,7 @@ enum class Domain(
             stateType = TypeToken.get(ExplState::class.java).type
         ),
         PRED_BOOL(
-            abstractor = { a, b, c, d, e, f, g -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f, g, ErrorDetection.ERROR_LOCATION) },
+            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -106,7 +107,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_CART(
-            abstractor = { a, b, c, d, e, f, g -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f, g, ErrorDetection.ERROR_LOCATION) },
+            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -114,7 +115,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_SPLIT(
-            abstractor = { a, b, c, d, e, f, g -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f, g, ErrorDetection.ERROR_LOCATION) },
+            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },

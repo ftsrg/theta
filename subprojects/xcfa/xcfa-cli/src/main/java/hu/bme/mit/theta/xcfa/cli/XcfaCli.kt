@@ -131,10 +131,11 @@ class XcfaCli(private val args: Array<String>) {
             val stream = FileInputStream(input!!)
             val xcfaFromC = getXcfaFromC(stream)
             logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+            logger.write(Logger.Level.RESULT, "Arithmetic: ${BitwiseChecker.getBitwiseOption()}\n")
             xcfaFromC
         } catch (e: Exception) {
             if (stacktrace) e.printStackTrace();
-            logger.write(Logger.Level.RESULT, "Frontend failed!")
+            logger.write(Logger.Level.RESULT, "Frontend failed!\n")
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
         swFrontend.reset().start()
