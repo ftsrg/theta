@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
@@ -213,6 +214,12 @@ class XcfaCli(private val args: Array<String>) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
                 val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
+
+                if(safetyResult.isUnsafe) {
+                    val traceFile = File(resultFolder, "trace.dot")
+                    val traceG: Graph = TraceVisualizer.getDefault().visualize(safetyResult.asUnsafe().trace)
+                    traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+                }
 
             } else {
                 XcfaWitnessWriter().writeWitness(safetyResult, input!!, getSolver(concretizerSolver, validateConcretizerSolver))

@@ -17,10 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -70,6 +67,14 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     return newEdges
 }
 
+fun Stmt.flatten(): List<Stmt> {
+    return when (this) {
+        is SequenceStmt -> stmts.map {it.flatten()}.flatten()
+        is NonDetStmt -> error("Not possible")
+        else -> listOf(this)
+    }
+}
+
 fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
     when(this) {
         is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
@@ -88,6 +93,8 @@ fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt {
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
+        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut) })
+        is SkipStmt -> this
         else -> TODO("Not yet implemented")
     }
     val metadataValue = FrontendMetadata.getMetadataValue(this, "sourceStatement")

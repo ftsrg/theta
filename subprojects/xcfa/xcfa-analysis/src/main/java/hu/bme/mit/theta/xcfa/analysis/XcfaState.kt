@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -30,7 +31,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val sGlobal: S,
         val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
         val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
-        val bottom: Boolean = false
+        val bottom: Boolean = false,
 ): ExprState {
     override fun isBottom(): Boolean {
         return bottom || sGlobal.isBottom
@@ -92,8 +93,9 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
 
         val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
+
         val pid = newProcesses.size
-        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)))
+        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), LinkedList(listOf(procedure.vars.associateWith { Var("T${pid}::${it.name}", it.type)  })))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
@@ -137,13 +139,14 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 }
 
 data class XcfaProcessState(
-        val locs: LinkedList<XcfaLocation>
+        val locs: LinkedList<XcfaLocation>,
+        val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(listOf(emptyMap()))
 ) {
     fun withNewLoc(l: XcfaLocation) : XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         deque.pop()
         deque.push(l)
-        return XcfaProcessState(deque)
+        return copy(locs = deque)
     }
 
     override fun toString(): String = when(locs.size) {

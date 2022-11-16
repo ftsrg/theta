@@ -31,12 +31,12 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 import java.util.function.Predicate
 
@@ -54,7 +54,7 @@ open class XcfaAnalysis<S: ExprState, P: Prec> (
 
 fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
             s -> s.processes.map {
-                proc -> proc.value.locs.peek().outgoingEdges.map { XcfaAction(proc.key, it) }.filter { !s.apply(it).first.bottom }
+                proc -> proc.value.locs.peek().outgoingEdges.map { XcfaAction(proc.key, it.withLabel(it.label.changeVars(proc.value.varLookup.peek()))) }.filter { !s.apply(it).first.bottom }
             }.flatten()
         }
 

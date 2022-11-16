@@ -19,16 +19,18 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.flatten
 
 data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
-    val label: XcfaLabel = edge.label
+    val label: XcfaLabel = edge.label//.changeVars(edge.label.collectVars().filter { it.name.contains("::")  }.associateWith { Var("T${pid}::${it.name}", it.type) })
+    private val stmts: List<Stmt> = label.toStmt().flatten()
 
     constructor(pid: Int, source: XcfaLocation, target: XcfaLocation, label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))
 
     override fun getStmts(): List<Stmt> {
-        return listOf(label.toStmt())
+        return stmts
     }
 
     override fun toString(): String {
