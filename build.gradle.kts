@@ -7,7 +7,7 @@ plugins {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "blagazsolt_TestRepo"
+    property "sonar.projectKey", "blagazsolt_theta"
     property "sonar.organization", "blagazsolt"
     property "sonar.host.url", "https://sonarcloud.io"
   }
