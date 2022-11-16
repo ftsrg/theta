@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Math.min;
 
 public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
@@ -80,6 +81,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
 	private static final class ProcessHandler extends NuAbstractProcessHandler {
 		private final Queue<String> inputQueue = new LinkedList<>();
+		private int headDoneIndex = 0;
 
 		private final Queue<String> outputQueue = new LinkedList<>();
 		private ReadProcessor readProcessor = null;
@@ -105,14 +107,21 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
 		@Override
 		public synchronized boolean onStdinReady(final ByteBuffer buffer) {
-			while (!inputQueue.isEmpty()) {
-				final var output = inputQueue.remove();
-				//System.out.println(output);
-				buffer.put(output.getBytes());
-				buffer.put("\n".getBytes(StandardCharsets.US_ASCII));
+			if (!inputQueue.isEmpty()) {
+				final var output = inputQueue.peek();
+				final var eol = "\n".getBytes(StandardCharsets.US_ASCII);
+				final var cutoff = min(buffer.remaining() - eol.length, output.length() - headDoneIndex);
+				buffer.put(output.substring(headDoneIndex, headDoneIndex + cutoff).getBytes(StandardCharsets.US_ASCII));
+				if(headDoneIndex + cutoff < output.length()) {
+					headDoneIndex = headDoneIndex + cutoff;
+				} else {
+					inputQueue.remove();
+					headDoneIndex = 0;
+					buffer.put(eol);
+				}
 			}
 			buffer.flip();
-			return false;
+			return !inputQueue.isEmpty();
 		}
 
 		@Override
