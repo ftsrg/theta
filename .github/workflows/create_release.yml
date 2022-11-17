@@ -20,8 +20,8 @@ jobs:
       - run: 'echo "${{steps.build.outputs.build}}"'
       - uses: actions/upload-artifact@v3
         with:
-          name: ProjlabWithGradle
-          path: build/libs/*-all.jar
+          name: ThetaJars
+          path: subprojects/**/*-all.jar
   publish:
     name: Publish Release
     needs: gradle
@@ -37,7 +37,7 @@ jobs:
       - run: 'echo "${{steps.value.outputs.version}}"'
       - uses: actions/download-artifact@v3
         with:
-          name: ProjlabWithGradle
+          name: ThetaJars
           path: jar/
       - name: Display structure of downloaded files
         run: ls -R
