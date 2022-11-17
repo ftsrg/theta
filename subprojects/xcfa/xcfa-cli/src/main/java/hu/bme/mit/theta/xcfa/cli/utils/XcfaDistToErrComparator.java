@@ -71,7 +71,8 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 	}
 
 	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-		checkArgument(node.getState() instanceof XcfaState && ((XcfaState) node.getState()).getProcesses().size() == 1, "XcfaState expected with a single process.");
+		checkArgument(node.getState() instanceof XcfaState && ((XcfaState) node.getState()).getProcesses().size() <= 1, "XcfaState expected with a single process.");
+		if(((XcfaState) node.getState()).getProcesses().size() == 0) return Integer.MAX_VALUE;
 		final XcfaState<?> state = (XcfaState<?>) node.getState();
 		final int distanceToError = getDistanceToError(state.getProcesses().get(0).component1().peek());
 		if (distanceToError == Integer.MAX_VALUE) {
