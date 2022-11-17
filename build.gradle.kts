@@ -2,14 +2,14 @@ plugins {
     base
     id("jacoco-common")
     id("io.freefair.aggregate-javadoc") version "5.2"
-    id "org.sonarqube" version "3.5.0.2730"
+    id("org.sonarqube") version "3.5.0.2730"
 }
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "blagazsolt_theta"
-    property "sonar.organization", "blagazsolt"
-    property "sonar.host.url", "https://sonarcloud.io"
+    property ("sonar.projectKey", "blagazsolt_theta")
+    property ("sonar.organization", "blagazsolt")
+    property ("sonar.host.url", "https://sonarcloud.io")
   }
 }
 
