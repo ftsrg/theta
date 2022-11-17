@@ -65,7 +65,8 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                         in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state -> state.exitMutex( label.substring("mutex_unlock".length + 1, label.length-1), a.pid )}
                     }
                 }.let { false }
-                is InvokeLabel -> error("Function invocations not yet supported")
+                is InvokeLabel -> changes.add { state -> state.invokeFunction(a.pid, it) }
+                is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }
                 is JoinLabel -> {
                     changes.add { state -> state.enterMutex(it.pidVar.name, a.pid) }
                     changes.add { state -> state.exitMutex(it.pidVar.name, a.pid) }
@@ -95,7 +96,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
 
         val pid = newProcesses.size
-        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), LinkedList(listOf(procedure.vars.associateWith { Var("T${pid}::${it.name}", it.type)  })))
+        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid", varLookup = LinkedList(listOf(XcfaProcessState.createLookup(procedure, "T$pid", ""))))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
@@ -108,6 +109,18 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes.remove("$pid")
         return copy(processes=newProcesses)
+    }
+
+    private fun invokeFunction(pid: Int, label: InvokeLabel): XcfaState<S> {
+        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(xcfa?.procedures?.find { it.name == label.name } ?: error("No such method ${label.name}.")))
+        return copy(processes = newProcesses)
+    }
+
+    private fun returnFromFunction(pid: Int): XcfaState<S> {
+        val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        newProcesses[pid] = checkNotNull(processes[pid]?.exitFunction())
+        return copy(processes = newProcesses)
     }
 
     fun enterMutex(key: String, pid: Int): XcfaState<S> {
@@ -140,7 +153,8 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
 data class XcfaProcessState(
         val locs: LinkedList<XcfaLocation>,
-        val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(listOf(emptyMap()))
+        val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
+        val prefix: String = ""
 ) {
     fun withNewLoc(l: XcfaLocation) : XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
@@ -153,6 +167,35 @@ data class XcfaProcessState(
         0 -> ""
         1 -> locs.peek()!!.toString()
         else -> "${locs.peek()!!} [${locs.size}]"
+    }
+
+    fun enterFunction(xcfaProcedure: XcfaProcedure): XcfaProcessState {
+        val deque: LinkedList<XcfaLocation> = LinkedList(locs)
+        val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
+        deque.push(xcfaProcedure.initLoc)
+        varLookup.push(createLookup(xcfaProcedure, prefix, "P${locs.size}"))
+        return copy(locs = deque, varLookup = varLookup)
+    }
+
+    fun exitFunction(): XcfaProcessState {
+        val deque: LinkedList<XcfaLocation> = LinkedList(locs)
+        val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
+        deque.pop()
+        varLookup.pop()
+        return copy(locs = deque, varLookup = varLookup)
+    }
+
+    companion object {
+        fun createLookup(proc: XcfaProcedure, threadPrefix: String, procPrefix: String): Map<VarDecl<*>, VarDecl<*>> =
+            listOf(proc.params.map { it.first }, proc.vars).flatten().associateWith {
+                val sj = StringJoiner("::")
+                if(threadPrefix != "") sj.add(threadPrefix)
+                if(procPrefix != "") sj.add(procPrefix)
+                sj.add(it.name)
+                val name = sj.toString()
+                if(name != it.name) Var(sj.toString(), it.type)
+                else it
+            }.filter { it.key != it.value }
     }
 }
 

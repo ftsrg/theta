@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -130,7 +131,7 @@ private fun getExplXcfaInitFunc(xcfa: XCFA, solver: Solver): (XcfaPrec<ExplPrec>
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
-        Pair(i, XcfaProcessState(initLocStack))
+        Pair(i, XcfaProcessState(initLocStack, varLookup = LinkedList(listOf(createLookup(it.first, "", "")))))
     }.toMap()
     return { p -> ExplInitFunc.create(solver, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
 }
@@ -154,7 +155,7 @@ private fun getPredXcfaInitFunc(xcfa: XCFA, predAbstractor: PredAbstractor): (Xc
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
-        Pair(i, XcfaProcessState(initLocStack))
+        Pair(i, XcfaProcessState(initLocStack, varLookup = LinkedList(listOf(createLookup(it.first, "", "")))))
     }.toMap()
     return { p -> PredInitFunc.create(predAbstractor, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
 }

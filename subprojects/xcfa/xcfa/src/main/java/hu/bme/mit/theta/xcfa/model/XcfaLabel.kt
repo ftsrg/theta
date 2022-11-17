@@ -50,6 +50,8 @@ data class InvokeLabel(
     }
 }
 
+object ReturnLabel: XcfaLabel(metadata = EmptyMetaData)
+
 data class StartLabel(
         val name: String,
         val params: List<Expr<*>>,
