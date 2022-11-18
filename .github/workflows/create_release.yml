@@ -18,6 +18,8 @@ jobs:
         with:
           arguments: build
       - run: 'echo "${{steps.build.outputs.build}}"'
+      - run: 'echo "${{ls subprojects/**/*-all.jar }}"'
+      - run: 'echo "${{find /subprojects/ -name \*-all.jar}}"'
       - uses: actions/upload-artifact@v3
         with:
           name: ThetaJars
