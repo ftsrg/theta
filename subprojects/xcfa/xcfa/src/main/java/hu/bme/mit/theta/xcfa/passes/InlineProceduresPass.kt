@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class InlineProceduresPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        if(!builder.canInline()) return builder
         checkNotNull(builder.metaData["deterministic"])
         check(builder.metaData["inlined"] == null) {"Recursive programs are not supported by inlining." }
         builder.metaData["inlined"] = Unit

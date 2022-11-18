@@ -50,7 +50,15 @@ data class InvokeLabel(
     }
 }
 
-object ReturnLabel: XcfaLabel(metadata = EmptyMetaData)
+data class ReturnLabel(val enclosedLabel: XcfaLabel): XcfaLabel(metadata = enclosedLabel.metadata){
+    override fun toStmt(): Stmt {
+        return enclosedLabel.toStmt()
+    }
+
+    override fun toString(): String {
+        return "Return ($enclosedLabel)"
+    }
+}
 
 data class StartLabel(
         val name: String,

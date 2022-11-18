@@ -47,6 +47,6 @@ class NondetFunctionPass : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel
+        return it is InvokeLabel && it.name.startsWith("__VERIFIER_nondet")
     }
 }

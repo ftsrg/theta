@@ -24,7 +24,9 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import java.util.*
 
 fun label2edge(edge: XcfaEdge, label: XcfaLabel) {
     val source = edge.source
@@ -76,17 +78,19 @@ fun Stmt.flatten(): List<Stmt> {
 }
 
 fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
-    when(this) {
-        is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
-        is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
-        is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet(), metadata = metadata)
-        is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-        is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) }, metadata = metadata)
-        is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut), metadata = metadata)
-        is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
-        is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-        else -> this
-        }
+        if(varLut.isNotEmpty())
+            when(this) {
+                is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
+                is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
+                is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet(), metadata = metadata)
+                is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
+                is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) }, metadata = metadata)
+                is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut), metadata = metadata)
+                is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
+                is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
+                else -> this
+            }
+        else this
 
 fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt {
     val stmt = when (this) {
@@ -114,3 +118,20 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> 
 
 fun <T : Type> VarDecl<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): VarDecl<T> =
         (varLut[this] ?: this) as VarDecl<T>
+
+fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
+private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
+    if(metaData["recursive"] != null) return false
+    if(metaData["canInline"] != null) return true
+
+    tally.push(name)
+    val recursive = getEdges()
+            .asSequence()
+            .map { it.getFlatLabels() }.flatten()
+            .filterIsInstance<InvokeLabel>()
+            .mapNotNull { parent.getProcedures().find { proc -> proc.name == it.name } }
+            .any {tally.contains(it.name) || !it.canInline(tally) }
+    tally.pop()
+    metaData[if(recursive) "recursive" else "canInline"] = Unit
+    return !recursive
+}
