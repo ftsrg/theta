@@ -32,11 +32,10 @@ import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
@@ -69,28 +68,46 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
     ErrorDetection.ERROR_LOCATION ->
         Predicate<XcfaState<out ExprState>>{ s -> s.processes.any { it.value.locs.peek().error }}
     ErrorDetection.DATA_RACE -> {
-        val getGlobalVars = { xcfa: XCFA, label: XcfaLabel ->
-            val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
-            label.collectVars().filter { labelVar -> globalVars.any { it == labelVar } }.toSet()
+        val collectGlobalVars: XcfaLabel.(List<VarDecl<*>>) -> Map<VarDecl<*>, Boolean> = { globalVars ->
+            collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
         }
-        val writes: XcfaLabel.(VarDecl<*>) -> Boolean = { varDecl: VarDecl<*> -> //TODO: change this if read-writes are used instead of assignments
-            this is StmtLabel &&
-            this.stmt is AssignStmt<*> &&
-            (this.stmt as AssignStmt<*>).varDecl == varDecl
+        val getGlobalVars = { xcfa: XCFA, edge: XcfaEdge ->
+            val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
+            var label = edge.label
+            if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
+            if (label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")) {
+                val vars = mutableMapOf<VarDecl<*>, Boolean>() // true, if write
+                val processed = mutableSetOf<XcfaEdge>()
+                val unprocessed = mutableListOf(edge)
+                while (unprocessed.isNotEmpty()) {
+                    val e = unprocessed.removeFirst()
+                    val eLabel = e.label
+                    if (!(eLabel is FenceLabel && eLabel.labels.contains("ATOMIC_END"))) {
+                        eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
+                            vars[varDecl] = isWrite || (vars[varDecl] ?: false)
+                        }
+                        processed.add(e)
+                        unprocessed.addAll(e.target.outgoingEdges subtract processed)
+                    }
+                }
+                vars
+            } else {
+                label.collectGlobalVars(globalVars)
+            }
         }
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
+            if (s.mutexes.containsKey("")) return@Predicate false
             for (process1 in s.processes)
                 for (process2 in s.processes)
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
-                                val globalVars1 = getGlobalVars(xcfa, edge1.label)
-                                val globalVars2 = getGlobalVars(xcfa, edge2.label)
-                                val intersection = globalVars1 intersect globalVars2
-                                if (intersection.any { edge1.label.writes(it) || edge1.label.writes(it) }) {
+                                val globalVars1 = getGlobalVars(xcfa, edge1)
+                                val globalVars2 = getGlobalVars(xcfa, edge2)
+                                val intersection = globalVars1.keys intersect globalVars2.keys
+                                if (intersection.any { globalVars1[it] == true || globalVars2[it] == true })
                                     return@Predicate true
-                                }
                             }
             false
         }

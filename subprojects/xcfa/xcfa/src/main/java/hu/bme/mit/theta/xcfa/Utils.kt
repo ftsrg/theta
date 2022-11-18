@@ -21,7 +21,9 @@ import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -51,6 +53,32 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when(this) {
     is StartLabel ->  Sets.union(params.map { ExprUtils.getVars(it) }.flatten().toSet(), setOf(pidVar))
     is WriteLabel -> setOf(global, local)
     else -> emptySet()
+}
+
+/**
+ * Returns the list of accessed variables by the label.
+ * The variable is associated with true if the variable is written and false otherwise.
+ */
+fun XcfaLabel.collectVarsWithAccessType(): Map<VarDecl<*>, Boolean> = when(this) {
+    is StmtLabel -> {
+        when(stmt) {
+            is HavocStmt<*> -> mapOf(stmt.varDecl to true)
+            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { false } + mapOf(stmt.varDecl to true)
+            else -> StmtUtils.getVars(stmt).associateWith { false }
+        }
+    }
+    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.fold(mapOf()) { acc, next ->
+        (acc.keys + next.keys).associateWith { acc[it]==true || next[it]==true }
+    }
+    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.fold(mapOf()) { acc, next ->
+        (acc.keys + next.keys).associateWith { acc[it]==true || next[it]==true }
+    }
+    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { false }
+    is JoinLabel -> mapOf(pidVar to false)
+    is ReadLabel -> mapOf(global to false, local to false)
+    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { false } + mapOf(pidVar to false)
+    is WriteLabel -> mapOf(global to true, local to true)
+    else -> emptyMap()
 }
 
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
