@@ -35,7 +35,7 @@ class TypeWrapper(content: String) {
     private val context: TypeContext
 
     init {
-        val lexer = TypeLexer(CharStreams.fromString(content.lowercase()))
+        val lexer = TypeLexer(CharStreams.fromString(content))
         val parser = TypeParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = parser.type()

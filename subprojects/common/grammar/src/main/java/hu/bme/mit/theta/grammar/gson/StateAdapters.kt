@@ -54,7 +54,7 @@ class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>()
         while(reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
             val name = reader.nextName()
-            val variable: VarDecl<*> = env.eval(scope.resolve(name.lowercase()).orElseThrow()) as VarDecl<*>
+            val variable: VarDecl<*> = env.eval(scope.resolve(name).orElseThrow()) as VarDecl<*>
             val value = ExpressionWrapper(scope, reader.nextString()).instantiate(env) as LitExpr<*>
             mutableValuation.put(variable, value)
             reader.endObject()

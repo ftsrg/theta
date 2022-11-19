@@ -4,30 +4,30 @@ lexer grammar CommonTokens;
 
 
 BOOLTYPE
-	:	'bool'
+	:	'bool' | 'Bool' | 'BOOL'
 	;
 
 INTTYPE
-	:	'int'
+	:	'int' | 'Int' | 'INT'
 	;
 
 RATTYPE
-	:	'rat'
+	:	'rat' | 'Rat' | 'RAT'
 	;
 
 BVTYPE
-    :   'bv'
+    :   'bv' | 'Bv' | 'BV'
     ;
 
 FPTYPE
-    :   'fp'
+    :   'fp' | 'Fp' | 'FP'
     ;
 
-FUNC:   'func'
+FUNC:   'func' | 'Func' | 'FUNC'
     ;
 
 ARRAY
-    :   'array'
+    :   'array' | 'Array' | 'ARRAY'
     ;
 
 // E X P R E S S I O N S

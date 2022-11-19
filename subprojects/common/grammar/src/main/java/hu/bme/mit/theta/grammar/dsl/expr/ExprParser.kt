@@ -77,7 +77,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
     init {
         this.scope = Preconditions.checkNotNull(scope)
-        val lexer = ExprLexer(CharStreams.fromString(content.lowercase()))
+        val lexer = ExprLexer(CharStreams.fromString(content))
         val parser = ExprParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = Preconditions.checkNotNull<ExprContext>(parser.expr())

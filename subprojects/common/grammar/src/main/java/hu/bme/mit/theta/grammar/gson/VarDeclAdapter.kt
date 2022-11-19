@@ -24,7 +24,6 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.MutableScope
-import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -57,14 +56,14 @@ class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val 
             }
         }
         reader.endObject()
-        val symbol = scope.resolve(name.lowercase())
+        val symbol = scope.resolve(name)
         if(symbol.isPresent) {
             val ret: VarDecl<*> = env.eval(symbol.get()) as VarDecl<*>
             check(ret.type==type)
             return ret
         }
         check(!throwIfNotInScope) { "Variable $name is not known." }
-        val newSymbol = Symbol { name.lowercase() }
+        val newSymbol = Symbol { name }
         val varDecl = Var(name, type)
         scope.add(newSymbol)
         env.define(newSymbol, varDecl)

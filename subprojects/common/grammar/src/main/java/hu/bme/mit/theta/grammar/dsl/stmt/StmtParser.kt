@@ -42,7 +42,7 @@ class StatementWrapper(val content: String, scope: Scope) {
 
     init {
         this.scope = Preconditions.checkNotNull(scope)
-        val lexer = StmtLexer(CharStreams.fromString(content.lowercase()))
+        val lexer = StmtLexer(CharStreams.fromString(content))
         val parser = StmtParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = Preconditions.checkNotNull<StmtContext>(parser.stmt())
