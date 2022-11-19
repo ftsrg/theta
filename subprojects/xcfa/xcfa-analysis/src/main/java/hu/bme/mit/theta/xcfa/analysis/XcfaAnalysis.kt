@@ -112,7 +112,8 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                 val unprocessed = mutableListOf(edge)
                 while (unprocessed.isNotEmpty()) {
                     val e = unprocessed.removeFirst()
-                    val eLabel = e.label
+                    var eLabel = e.label
+                    if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
                     if (!(eLabel is FenceLabel && eLabel.labels.contains("ATOMIC_END"))) {
                         eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
                             vars[varDecl] = isWrite || (vars[varDecl] ?: false)
