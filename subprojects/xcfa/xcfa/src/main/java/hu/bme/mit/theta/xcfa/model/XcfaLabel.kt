@@ -73,7 +73,7 @@ data class StartLabel(
     }
     companion object {
          fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (pidVarName, name, params) = Regex("(.*) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
+            val (pidVarName, pidVarType, name, params) = Regex("\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
             return StartLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar, metadata=metadata)
         }
@@ -89,7 +89,7 @@ data class JoinLabel(
     }
     companion object {
          fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (pidVarName) = Regex("join (.*)").matchEntire(s)!!.destructured
+            val (pidVarName, pidVarType) = Regex("join \\(var (.*) (.*)\\)").matchEntire(s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
             return JoinLabel(pidVar, metadata=metadata)
         }
@@ -157,7 +157,14 @@ data class FenceLabel(
         override val metadata: MetaData
 ) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
-        return "F[$labels]"
+        return "F[${labels.joinToString(";")}]"
+    }
+
+    companion object {
+        fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+            val (labelList) = Regex("F\\[(.*)]").matchEntire(s)!!.destructured
+            return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
+        }
     }
 }
 
