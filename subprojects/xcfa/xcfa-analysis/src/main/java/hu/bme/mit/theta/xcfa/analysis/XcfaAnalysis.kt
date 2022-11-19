@@ -86,8 +86,8 @@ fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
                                 } else
                                     XcfaAction(proc.key, edge.withLabel(newLabel))
                             }
-                        }.filter { !s.apply(it).first.bottom }
-            }.flatten()
+                        }
+            }.flatten().filter { !s.apply(it).first.bottom }
         }
 
 enum class ErrorDetection {
@@ -121,9 +121,9 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                         unprocessed.addAll(e.target.outgoingEdges subtract processed)
                     }
                 }
-                vars
+                Pair(vars, true)
             } else {
-                label.collectGlobalVars(globalVars)
+                Pair(label.collectGlobalVars(globalVars), false)
             }
         }
         Predicate<XcfaState<out ExprState>> { s ->
@@ -136,9 +136,11 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
                                 val globalVars1 = getGlobalVars(xcfa, edge1)
                                 val globalVars2 = getGlobalVars(xcfa, edge2)
-                                val intersection = globalVars1.keys intersect globalVars2.keys
-                                if (intersection.any { globalVars1[it] == true || globalVars2[it] == true })
-                                    return@Predicate true
+                                if(!globalVars1.second || !globalVars2.second) {
+                                    val intersection = globalVars1.first.keys intersect globalVars2.first.keys
+                                    if (intersection.any { globalVars1.first[it] == true || globalVars2.first[it] == true })
+                                        return@Predicate true
+                                }
                             }
             false
         }
