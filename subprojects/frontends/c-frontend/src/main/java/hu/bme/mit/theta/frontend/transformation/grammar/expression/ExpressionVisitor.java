@@ -517,6 +517,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 			CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
 			List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(FunctionVisitor.instance)).collect(Collectors.toList());
 			CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments);
+			if(ctx.primaryExpression().getText().contains("pthread")) ArchitectureConfig.multiThreading = true;
 			preStatements.add(cCall);
 			FunctionVisitor.instance.recordMetadata(ctx, cCall);
 			return cCall.getRet().getRef();

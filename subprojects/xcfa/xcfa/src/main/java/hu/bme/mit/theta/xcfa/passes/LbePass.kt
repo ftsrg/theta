@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -90,6 +91,11 @@ class LbePass : ProcedurePass {
      */
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (level == LBELevel.NO_LBE || builder.errorLoc.isEmpty) return builder
+
+        if (level == LBELevel.LBE_SEQ || level == LBELevel.LBE_FULL && ArchitectureConfig.multiThreading) {
+            level = LBELevel.LBE_LOCAL
+        }
+
         Preconditions.checkNotNull(builder.metaData["deterministic"])
         Preconditions.checkNotNull(builder.metaData["noSelfLoops"])
         this.builder = builder

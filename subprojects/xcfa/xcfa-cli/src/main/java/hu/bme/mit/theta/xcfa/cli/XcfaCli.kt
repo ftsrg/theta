@@ -32,6 +32,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -216,7 +217,9 @@ class XcfaCli(private val args: Array<String>) {
                             bindings["cFileName"] = input!!.absolutePath
                             bindings["logger"] = logger
                             bindings["smtHome"] = solverHome
-                            bindings["bvType"] = BitwiseChecker.getBitwiseOption()
+                            bindings["traits"] = VerificationTraits(
+                                    multithreaded = ArchitectureConfig.multiThreading,
+                                    arithmetic = BitwiseChecker.getBitwiseOption(),)
                             val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor), bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 
                             concretizerSolver = portfolioResult.first.refinementSolver
