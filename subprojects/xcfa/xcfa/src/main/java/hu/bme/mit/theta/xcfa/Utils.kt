@@ -87,7 +87,7 @@ fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
     val vars = collectVars()
     val env = Env()
     vars.forEach {
-        val symbol = Symbol { it.name.lowercase() }
+        val symbol = Symbol { it.name }
         symbolTable.add(symbol)
         env.define(symbol, it)
     }

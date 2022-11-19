@@ -97,6 +97,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 		VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
 		if (peek.get2().containsKey(name)) {
 			System.err.println("WARNING: Variable already exists: " + name);
+			varDecl = peek.get2().get(name);
 		}
 		peek.get2().put(name, varDecl);
 		flatVariables.add(varDecl);

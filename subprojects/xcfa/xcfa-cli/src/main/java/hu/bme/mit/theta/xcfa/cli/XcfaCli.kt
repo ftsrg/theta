@@ -176,7 +176,7 @@ class XcfaCli(private val args: Array<String>) {
                     }
 
                     Strategy.SERVER -> {
-                        val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, false, input!!.absolutePath, logger)
+                        val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, true, input!!.absolutePath, logger)
                         try {
                             safetyResultSupplier()
                         } catch (e: TimeoutException) {
