@@ -208,7 +208,14 @@ class XcfaCli(private val args: Array<String>) {
                     }
 
                     Strategy.PORTFOLIO -> {
-                        val portfolioDescriptor = File(portfolio.name.lowercase() + ".kts")
+                        var portfolioDescriptor = File(portfolio.name.lowercase() + ".kts")
+                        if(!portfolioDescriptor.exists()) {
+                            portfolioDescriptor = File(File(XcfaCli::class.java.protectionDomain.codeSource.location.path).parent, portfolio.name.lowercase() + ".kts")
+                            if(!portfolioDescriptor.exists()) {
+                                logger.write(Logger.Level.RESULT, "Portfolio file not found: ${portfolioDescriptor.absolutePath}\n")
+                                exitProcess(ExitCodes.PORTFOLIO_ERROR.code)
+                            }
+                        }
                         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
                         try {
                             val bindings: Bindings = SimpleBindings()
@@ -219,7 +226,8 @@ class XcfaCli(private val args: Array<String>) {
                             bindings["smtHome"] = solverHome
                             bindings["traits"] = VerificationTraits(
                                     multithreaded = ArchitectureConfig.multiThreading,
-                                    arithmetic = BitwiseChecker.getBitwiseOption(),)
+                                    arithmetic = BitwiseChecker.getBitwiseOption(),
+                            )
                             val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor), bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 
                             concretizerSolver = portfolioResult.first.refinementSolver
