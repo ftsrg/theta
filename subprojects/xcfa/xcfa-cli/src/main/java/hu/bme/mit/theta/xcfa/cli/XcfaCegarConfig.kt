@@ -47,7 +47,6 @@ import java.io.PrintWriter
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import kotlin.system.exitProcess
 
 
@@ -179,7 +178,7 @@ data class XcfaCegarConfig(
                 if(retCode == Int.MIN_VALUE) {
                     if(!processHandler.writingSafetyResult) {
                         process.destroy(true)
-                        throw TimeoutException()
+                        throw ErrorCodeException(ExitCodes.TIMEOUT.code)
                     } else {
                         logger.write(Logger.Level.RESULT, "Config timed out but started writing result: $this")
                         val retCode = process.waitFor(0, TimeUnit.MILLISECONDS)

@@ -47,7 +47,6 @@ import java.io.FileInputStream
 import java.io.FileReader
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import javax.script.Bindings
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -200,8 +199,6 @@ class XcfaCli(private val args: Array<String>) {
                         val safetyResultSupplier = parseConfigFromCli().checkInProcess(xcfa, solverHome, true, input!!.absolutePath, logger)
                         try {
                             safetyResultSupplier()
-                        } catch (e: TimeoutException) {
-                            exitProcess(ExitCodes.TIMEOUT.code)
                         } catch (e: ErrorCodeException) {
                             exitProcess(e.code)
                         }
@@ -234,8 +231,6 @@ class XcfaCli(private val args: Array<String>) {
                             validateConcretizerSolver = portfolioResult.first.validateRefinementSolver
 
                             portfolioResult.second
-                        } catch (e: TimeoutException) {
-                            exitProcess(ExitCodes.TIMEOUT.code)
                         } catch (e: ErrorCodeException) {
                             exitProcess(e.code)
                         } catch (e: Exception) {

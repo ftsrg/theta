@@ -35,8 +35,10 @@ ${innerSTM.visualize()}
 }
 
 class ConfigNode(name: String, private val config: XcfaCegarConfig, private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>, private val inProcess: Boolean) : Node(name) {
-    override fun execute(): Pair<Any, Any> =
-            Pair(config, check(inProcess, config))
+    override fun execute(): Pair<Any, Any> {
+        println("Current configuration: $config (inProcess=$inProcess)")
+        return Pair(config, check(inProcess, config))
+    }
 
     override fun visualize(): String = config.visualize(inProcess).lines().map { "state $name: $it" }.reduce {a, b -> "$a\n$b"}
 }
@@ -64,7 +66,7 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
     init{
         val nodes = edges.map { listOf(it.source, it.target) }.flatten().toSet()
         nodes.forEach {
-            check(it.parent == null || it.parent === this) {"Edges not to behave encapsulated (offender: $it)"}
+            check(it.parent == null || it.parent === this) {"Edges to behave encapsulated (offender: $it)"}
             it.parent = this
         }
     }
@@ -88,6 +90,7 @@ ${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
                 if (edge != null) {
                     currentNode = edge.target
                 } else {
+                    println("Could not handle trigger $e (Available triggers: ${currentNode.outEdges.map { it.trigger }.toList()})")
                     throw e
                 }
             }
