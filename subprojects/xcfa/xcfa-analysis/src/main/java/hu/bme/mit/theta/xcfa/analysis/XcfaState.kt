@@ -82,8 +82,8 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 }
                 is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
                 is JoinLabel -> {
-                    changes.add { state -> state.enterMutex(it.pidVar.name, a.pid) }
-                    changes.add { state -> state.exitMutex(it.pidVar.name, a.pid) }
+                    changes.add { state -> state.enterMutex("${threadLookup[it.pidVar]}", a.pid) }
+                    changes.add { state -> state.exitMutex("${threadLookup[it.pidVar]}", a.pid) }
                     false
                 }
                 is NondetLabel -> true
@@ -103,15 +103,17 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
     private fun start(startLabel: StartLabel): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
         val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
 
         val pid = nameCnt++
+        newThreadLookup[startLabel.pidVar] = pid
         newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid", varLookup = LinkedList(listOf(XcfaProcessState.createLookup(procedure, "T$pid", ""))))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
-        return copy(processes=newProcesses, mutexes=newMutexes)
+        return copy(processes=newProcesses, threadLookup=newThreadLookup, mutexes=newMutexes)
     }
 
     private fun endProcess(pid: Int): XcfaState<S> {
@@ -158,7 +160,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        return "$processes {$sGlobal}"
+        return "$processes {$sGlobal, mutex=$mutexes${if(bottom) ", bottom" else ""}}"
     }
 }
 data class XcfaProcessState(
@@ -178,8 +180,8 @@ data class XcfaProcessState(
 
     override fun toString(): String = when(locs.size) {
         0 -> ""
-        1 -> locs.peek()!!.toString()
-        else -> "${locs.peek()!!} [${locs.size}]"
+        1 -> locs.peek()!!.toString() + " initialized=$paramsInitialized"
+        else -> "${locs.peek()!!} [${locs.size}], initilized=$paramsInitialized"
     }
 
     fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaProcessState {

@@ -86,8 +86,8 @@ fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
                                     XcfaAction(proc.key, edge.withLabel(newNewLabel))
                                 } else
                                     XcfaAction(proc.key, edge.withLabel(newLabel))
-                            }.filter { !s.apply(it).first.bottom }
-                        }
+                            }
+                        }.filter { !s.apply(it).first.bottom }
             }.flatten()
         }
 
@@ -129,7 +129,7 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
 }
 
 fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
-        PartialOrd<XcfaState<S>>{s1, s2 -> s1.processes == s2.processes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)}
+        PartialOrd<XcfaState<S>>{s1, s2 -> s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)}
 
 private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(
         analysis: Analysis<S, XcfaAction, P>,
