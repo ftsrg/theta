@@ -135,6 +135,7 @@ class XcfaCli(private val args: Array<String>) {
                         remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                         ErrorDetection.DATA_RACE
                     } else {
+                        remainingFlags.add(ErrorDetection.NO_ERROR.toString())
                         System.err.println("Unknown property $property, using full state space exploration (no refinement)")
                         ErrorDetection.NO_ERROR
                     }
