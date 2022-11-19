@@ -92,7 +92,8 @@ fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
 
 enum class ErrorDetection {
     ERROR_LOCATION,
-    DATA_RACE
+    DATA_RACE,
+    NO_ERROR
 }
 
 fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<out ExprState>> = when(errorDetection) {
@@ -146,6 +147,8 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
             false
         }
     }
+
+    ErrorDetection.NO_ERROR -> Predicate<XcfaState<out ExprState>>{ false }
 }
 
 fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =

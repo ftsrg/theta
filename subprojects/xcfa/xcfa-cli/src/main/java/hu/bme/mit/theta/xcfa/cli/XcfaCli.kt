@@ -134,7 +134,10 @@ class XcfaCli(private val args: Array<String>) {
                     } else if (property!!.name.endsWith("no-data-race.prp")) {
                         remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                         ErrorDetection.DATA_RACE
-                    } else error("Property file not yet supported: ${property!!.absolutePath}")
+                    } else {
+                        System.err.println("Unknown property $property, using full state space exploration (no refinement)")
+                        ErrorDetection.NO_ERROR
+                    }
                 } else ErrorDetection.ERROR_LOCATION
 
         /// version
