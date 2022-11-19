@@ -19,11 +19,17 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
+
+private var nameCnt = 0
 
 data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val xcfa: XCFA?, // TODO: remove this
@@ -65,11 +71,20 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                         in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state -> state.exitMutex( label.substring("mutex_unlock".length + 1, label.length-1), a.pid )}
                     }
                 }.let { false }
-                is InvokeLabel -> changes.add { state -> state.invokeFunction(a.pid, it) }
-                is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }
+                is InvokeLabel -> {
+                    val proc = xcfa?.procedures?.find {proc -> proc.name == it.name } ?: error("No such method ${it.name}.")
+                    val returnStmt = SequenceLabel(
+                            proc.params.withIndex().
+                            filter { it.value.second != ParamDirection.IN }.
+                            map { iVal -> StmtLabel(Assign(cast((it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>, iVal.value.first.type), cast(iVal.value.first.ref, iVal.value.first.type)), metadata = it.metadata) } )
+                    changes.add { state -> state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap()) }
+                    false
+                }
+                is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
                 is JoinLabel -> {
-                    changes.add { state -> state.enterMutex(it.pidVar.name, a.pid) }
-                    changes.add { state -> state.exitMutex(it.pidVar.name, a.pid) }
+                    changes.add { state -> state.enterMutex("${threadLookup[it.pidVar]}", a.pid) }
+                    changes.add { state -> state.exitMutex("${threadLookup[it.pidVar]}", a.pid) }
+                    false
                 }
                 is NondetLabel -> true
                 NopLabel -> false
@@ -81,26 +96,24 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
             }
         }
 
-        if(a.target.final) {
-            if(checkNotNull(newProcesses[a.pid]).locs.size == 1) {
-                changes.add { state -> state.endProcess(a.pid) }
-            }
-        }
+        changes.add { state -> if(checkNotNull(state.processes[a.pid]).locs.isEmpty()) state.endProcess(a.pid) else state }
 
         return Pair(changes.fold(this) { current, change -> change(current) }, a.withLabel(SequenceLabel(newLabels)))
     }
 
     private fun start(startLabel: StartLabel): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
+        val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
         val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
 
-        val pid = newProcesses.size
+        val pid = nameCnt++
+        newThreadLookup[startLabel.pidVar] = pid
         newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid", varLookup = LinkedList(listOf(XcfaProcessState.createLookup(procedure, "T$pid", ""))))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
-        return copy(processes=newProcesses, mutexes=newMutexes)
+        return copy(processes=newProcesses, threadLookup=newThreadLookup, mutexes=newMutexes)
     }
 
     private fun endProcess(pid: Int): XcfaState<S> {
@@ -111,9 +124,9 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(processes=newProcesses)
     }
 
-    private fun invokeFunction(pid: Int, label: InvokeLabel): XcfaState<S> {
+    private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(xcfa?.procedures?.find { it.name == label.name } ?: error("No such method ${label.name}.")))
+        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList))
         return copy(processes = newProcesses)
     }
 
@@ -147,42 +160,74 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        return "$processes {$sGlobal}"
+        return "$processes {$sGlobal, mutex=$mutexes${if(bottom) ", bottom" else ""}}"
     }
 }
-
 data class XcfaProcessState(
         val locs: LinkedList<XcfaLocation>,
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
+        val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
+        val paramStmts : LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(listOf(Pair(NopLabel, NopLabel))),
+        val paramsInitialized: Boolean = false,
         val prefix: String = ""
 ) {
     fun withNewLoc(l: XcfaLocation) : XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         deque.pop()
         deque.push(l)
-        return copy(locs = deque)
+        return copy(locs = deque, paramsInitialized = true)
     }
 
     override fun toString(): String = when(locs.size) {
         0 -> ""
-        1 -> locs.peek()!!.toString()
-        else -> "${locs.peek()!!} [${locs.size}]"
+        1 -> locs.peek()!!.toString() + " initialized=$paramsInitialized"
+        else -> "${locs.peek()!!} [${locs.size}], initilized=$paramsInitialized"
     }
 
-    fun enterFunction(xcfaProcedure: XcfaProcedure): XcfaProcessState {
+    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
+        val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
+        val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
         deque.push(xcfaProcedure.initLoc)
-        varLookup.push(createLookup(xcfaProcedure, prefix, "P${locs.size}"))
-        return copy(locs = deque, varLookup = varLookup)
+        val lookup = createLookup(xcfaProcedure, prefix, "P${nameCnt++}")
+        varLookup.push(lookup)
+        returnStmts.push(returnStmt)
+        paramStmts.push(Pair(
+                /* init */   SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map { StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type), cast(it.key.ref, it.key.type)), metadata=EmptyMetaData) }),
+                /* deinit */ SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map { StmtLabel(Assign(cast(it.key, it.key.type), cast(it.key.changeVars(lookup).ref, it.key.type)), metadata=EmptyMetaData) }),
+        ))
+        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts, paramsInitialized = false)
     }
 
     fun exitFunction(): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
+        val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
+        val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
         deque.pop()
         varLookup.pop()
-        return copy(locs = deque, varLookup = varLookup)
+        returnStmts.pop()
+        paramStmts.pop()
+        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as XcfaProcessState
+
+        if (locs != other.locs) return false
+        if (paramsInitialized != other.paramsInitialized) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = locs.hashCode()
+        result = 31 * result + paramsInitialized.hashCode()
+        return result
     }
 
     companion object {
@@ -197,6 +242,8 @@ data class XcfaProcessState(
                 else it
             }.filter { it.key != it.value }
     }
+
+
 }
 
 operator fun Regex.contains(text: CharSequence): Boolean = this.matches(text)

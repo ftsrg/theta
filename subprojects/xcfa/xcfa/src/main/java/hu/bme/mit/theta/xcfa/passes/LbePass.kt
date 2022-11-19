@@ -264,8 +264,12 @@ class LbePass : ProcedurePass {
     private fun removeMiddleLocation(location: XcfaLocation): Boolean {
         if (location.incomingEdges.size != 1) return false
         val inEdge: XcfaEdge = location.incomingEdges.first()
-        if (level == LBELevel.LBE_LOCAL && !atomicPhase && location.outgoingEdges.stream().anyMatch { edge: XcfaEdge -> isNotLocal(edge) }) {
-            return false
+        if (
+                    location.incomingEdges.stream().anyMatch { edge -> edge.getFlatLabels().any {it is InvokeLabel} }
+                ||  location.outgoingEdges.stream().anyMatch { edge -> edge.getFlatLabels().any {it is InvokeLabel} }
+                ||  (level == LBELevel.LBE_LOCAL && !atomicPhase && location.outgoingEdges.stream().anyMatch { edge: XcfaEdge -> isNotLocal(edge) })
+            ) {
+                return false
         }
         builder.removeEdge(inEdge)
         builder.removeLoc(location)

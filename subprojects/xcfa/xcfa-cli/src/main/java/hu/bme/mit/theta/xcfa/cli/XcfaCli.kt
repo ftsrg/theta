@@ -21,7 +21,9 @@ import com.beust.jcommander.ParameterException
 import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -32,7 +34,10 @@ import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
+import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import java.io.File
@@ -217,8 +222,10 @@ class XcfaCli(private val args: Array<String>) {
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
 
                 if(safetyResult.isUnsafe) {
+                    val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, getSolver(concretizerSolver, validateConcretizerSolver))
+
                     val traceFile = File(resultFolder, "trace.dot")
-                    val traceG: Graph = TraceVisualizer.getDefault().visualize(safetyResult.asUnsafe().trace)
+                    val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
                 }
 

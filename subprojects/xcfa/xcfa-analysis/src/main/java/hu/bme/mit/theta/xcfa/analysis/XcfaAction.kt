@@ -24,7 +24,7 @@ import hu.bme.mit.theta.xcfa.passes.flatten
 data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
-    val label: XcfaLabel = edge.label//.changeVars(edge.label.collectVars().filter { it.name.contains("::")  }.associateWith { Var("T${pid}::${it.name}", it.type) })
+    val label: XcfaLabel = edge.label
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
     constructor(pid: Int, source: XcfaLocation, target: XcfaLocation, label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))

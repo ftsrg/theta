@@ -17,13 +17,16 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import com.google.common.base.Preconditions
-import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
+import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.xcfa.passes.changeVars
 
 class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: RefutationToPrec<P, R>) :
         PrecRefiner<XcfaState<S>, XcfaAction, XcfaPrec<P>, R> {
@@ -35,7 +38,8 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: Refut
         Preconditions.checkNotNull<R>(refutation)
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
-            val precFromRef = refToPrec.toPrec(refutation, i)
+            val reverseLookup = trace.states[i].processes.values.map { it.varLookup.map { it.map { Pair(it.value, it.key) } }.flatten() }.flatten().toMap()
+            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         return prec.refine(runningPrec)
@@ -45,3 +49,21 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: Refut
         return javaClass.simpleName
     }
 }
+
+fun <P: Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
+    if(lookup.isEmpty()) this
+    else
+        when(this) {
+            is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
+            is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
+            else -> error("Precision type ${this.javaClass} not supported.")
+        }
+
+fun <P: Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
+        if(lookups.isEmpty()) this
+        else
+            when(this) {
+                is ExplPrec -> ExplPrec.of(vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+                is PredPrec -> PredPrec.of(preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+                else -> error("Precision type ${this.javaClass} not supported.")
+            }
