@@ -34,6 +34,7 @@ import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
@@ -58,6 +59,9 @@ class XcfaCli(private val args: Array<String>) {
     //////////// input task ////////////
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
+
+    @Parameter(names = ["--property"], description = "Path of the property file")
+    var property: File? = null
 
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LBELevel = LbePass.LBELevel.LBE_SEQ
@@ -109,7 +113,7 @@ class XcfaCli(private val args: Array<String>) {
     var validateConcretizerSolver: Boolean = false
 
     @Parameter
-    var remainingFlags: List<String> = ArrayList()
+    var remainingFlags: MutableList<String> = ArrayList()
 
     private fun run() {
         /// Checking flags
@@ -121,6 +125,18 @@ class XcfaCli(private val args: Array<String>) {
             ex.usage()
             exitProcess(ExitCodes.INVALID_PARAM.code)
         }
+        val explicitProperty: ErrorDetection =
+                if(property != null) {
+                    remainingFlags.add("--error-detection")
+                    if(property!!.name.endsWith("unreach-call.prp")) {
+                        remainingFlags.add(ErrorDetection.ERROR_LOCATION.toString())
+                        ErrorDetection.ERROR_LOCATION
+                    } else if (property!!.name.endsWith("no-data-race.prp")) {
+                        remainingFlags.add(ErrorDetection.DATA_RACE.toString())
+                        ErrorDetection.DATA_RACE
+                    } else error("Property file not yet supported: ${property!!.absolutePath}")
+                } else ErrorDetection.ERROR_LOCATION
+
         /// version
         if (versionInfo) {
             CliUtils.printVersion(System.out)
@@ -192,6 +208,7 @@ class XcfaCli(private val args: Array<String>) {
                         try {
                             val bindings: Bindings = SimpleBindings()
                             bindings["xcfa"] = xcfa
+                            bindings["property"] = explicitProperty
                             bindings["cFileName"] = input!!.absolutePath
                             bindings["logger"] = logger
                             bindings["smtHome"] = solverHome
