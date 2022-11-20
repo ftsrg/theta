@@ -133,6 +133,10 @@ class XcfaCli(private val args: Array<String>) {
                         ErrorDetection.ERROR_LOCATION
                     } else if (property!!.name.endsWith("no-data-race.prp")) {
                         remainingFlags.add(ErrorDetection.DATA_RACE.toString())
+                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                            System.err.println("Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
+                            lbeLevel = LbePass.LBELevel.NO_LBE
+                        }
                         ErrorDetection.DATA_RACE
                     } else {
                         remainingFlags.add(ErrorDetection.NO_ERROR.toString())
