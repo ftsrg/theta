@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.grammar.ThrowingErrorListener
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.gen.StmtBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.StmtLexer
@@ -43,6 +44,7 @@ class StatementWrapper(val content: String, scope: Scope) {
     init {
         this.scope = Preconditions.checkNotNull(scope)
         val lexer = StmtLexer(CharStreams.fromString(content))
+        lexer.addErrorListener(ThrowingErrorListener)
         val parser = StmtParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = Preconditions.checkNotNull<StmtContext>(parser.stmt())

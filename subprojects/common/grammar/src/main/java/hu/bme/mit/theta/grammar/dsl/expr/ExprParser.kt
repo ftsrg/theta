@@ -54,6 +54,7 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.grammar.ThrowingErrorListener
 import hu.bme.mit.theta.grammar.dsl.gen.ExprBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
 import hu.bme.mit.theta.grammar.dsl.gen.ExprParser
@@ -78,6 +79,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
     init {
         this.scope = Preconditions.checkNotNull(scope)
         val lexer = ExprLexer(CharStreams.fromString(content))
+        lexer.addErrorListener(ThrowingErrorListener)
         val parser = ExprParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = Preconditions.checkNotNull<ExprContext>(parser.expr())

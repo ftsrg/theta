@@ -16,12 +16,23 @@
 
 package hu.bme.mit.theta.grammar
 
+import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.misc.Interval
+import org.antlr.v4.runtime.misc.ParseCancellationException
 
 fun ParserRuleContext.textWithWS(): String {
     val a: Int = start.startIndex
     val b: Int = stop.stopIndex
     val interval = Interval(a, b)
     return start.inputStream.getText(interval)
+}
+
+object ThrowingErrorListener : BaseErrorListener() {
+    @Throws(ParseCancellationException::class)
+    override fun syntaxError(recognizer: Recognizer<*, *>?, offendingSymbol: Any?, line: Int, charPositionInLine: Int, msg: String, e: RecognitionException?) {
+        throw ParseCancellationException("line $line:$charPositionInLine $msg")
+    }
 }

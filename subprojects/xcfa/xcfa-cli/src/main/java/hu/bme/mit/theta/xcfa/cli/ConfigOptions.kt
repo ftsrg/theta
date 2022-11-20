@@ -65,6 +65,7 @@ enum class POR(val ltsSupplier:
 enum class Strategy {
     DIRECT,
     SERVER,
+    SERVER_DEBUG,
     PORTFOLIO
 }
 

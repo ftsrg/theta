@@ -53,6 +53,15 @@ class XcfaCegarServer {
     @Parameter(names = "--input", description = "Original source file (required for witness writing)")
     String inputFileName;
 
+    @Parameter(names = "--config", description = "Config string (will try to read from stdin when not given)")
+    String configStr;
+
+    @Parameter(names = "--xcfa", description = "XCFA string (will try to read from stdin when not given)")
+    String xcfaStr;
+
+    @Parameter(names = "--debug", description = "Debug mode (will not create a socket)")
+    Boolean debug = false;
+
     private void run(String[] args) {
         try {
             JCommander.newBuilder().addObject(this).build().parse(args);
@@ -71,12 +80,12 @@ class XcfaCegarServer {
             try (final ServerSocket socket = new ServerSocket(port)) {
                 System.out.println("Port=(" + socket.getLocalPort() + ")");
                 do {
-                    try (final Socket clientSocket = socket.accept()) {
-                        final PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                        final BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    try (final Socket clientSocket = debug ? null : socket.accept()) {
+                        final PrintWriter out = new PrintWriter(debug ? System.out : clientSocket.getOutputStream(), true);
+                        final BufferedReader in = new BufferedReader(new InputStreamReader(debug ? System.in : clientSocket.getInputStream()));
 
-                        final String configStr = in.readLine();
-                        final String xcfaStr = in.readLine();
+                        final String configStr = this.configStr == null ? in.readLine() : this.configStr;
+                        final String xcfaStr = this.xcfaStr == null ? in.readLine() : this.xcfaStr;
                         final Gson gson = getGson();
 
                         XCFA xcfa;

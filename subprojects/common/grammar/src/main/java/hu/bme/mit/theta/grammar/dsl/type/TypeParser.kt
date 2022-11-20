@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.Func
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.rattype.RatExprs
+import hu.bme.mit.theta.grammar.ThrowingErrorListener
 import hu.bme.mit.theta.grammar.dsl.gen.TypeBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.TypeLexer
 import hu.bme.mit.theta.grammar.dsl.gen.TypeParser
@@ -36,6 +37,7 @@ class TypeWrapper(content: String) {
 
     init {
         val lexer = TypeLexer(CharStreams.fromString(content))
+        lexer.addErrorListener(ThrowingErrorListener)
         val parser = TypeParser(CommonTokenStream(lexer))
         parser.errorHandler = BailErrorStrategy()
         this.context = parser.type()

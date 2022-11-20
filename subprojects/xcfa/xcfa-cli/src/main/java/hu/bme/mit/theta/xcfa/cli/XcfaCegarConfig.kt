@@ -134,6 +134,23 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
             getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
 
+    fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
+        val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})
+        XcfaCegarServer.main(arrayOf("--smt-home",
+                smtHome,
+                "--return-safety-result",
+                "" + !writeWitness,
+                "--input",
+                sourceFileName,
+                "--config",
+                gson.toJson(this),
+                "--xcfa",
+                gson.toJson(xcfa),
+                "--debug"
+        ))
+        error("Done debugging")
+    }
+
     fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
                 "java",

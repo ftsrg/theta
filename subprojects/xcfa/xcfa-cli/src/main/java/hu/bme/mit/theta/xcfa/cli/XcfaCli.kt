@@ -204,6 +204,15 @@ class XcfaCli(private val args: Array<String>) {
                         }
                     }
 
+                    Strategy.SERVER_DEBUG -> {
+                        val safetyResultSupplier = parseConfigFromCli().checkInProcessDebug(xcfa, solverHome, true, input!!.absolutePath, logger)
+                        try {
+                            safetyResultSupplier()
+                        } catch (e: ErrorCodeException) {
+                            exitProcess(e.code)
+                        }
+                    }
+
                     Strategy.PORTFOLIO -> {
                         var portfolioDescriptor = File(portfolio.name.lowercase() + ".kts")
                         if(!portfolioDescriptor.exists()) {
