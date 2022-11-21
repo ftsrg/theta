@@ -54,12 +54,21 @@ data class Edge(val source: Node,
     fun visualize(): String = """${source.name} --> ${target.name} : $trigger """
 
 }
-
-class ExceptionTrigger(private val exceptions: Set<Exception>): (Exception) -> Boolean {
+// if the exceptions set is empty, it catches all exceptions
+class ExceptionTrigger(
+        val exceptions: Set<Exception> = emptySet(),
+        val fallthroughExceptions: Set<Exception> = emptySet(),
+): (Exception) -> Boolean {
     constructor(vararg exceptions: Exception) : this(exceptions.toSet())
-    override fun invoke(e: Exception): Boolean = exceptions.contains(e)
+    override fun invoke(e: Exception): Boolean =
+            if(exceptions.isNotEmpty())
+                exceptions.contains(e) && !fallthroughExceptions.contains(e)
+            else
+                !fallthroughExceptions.contains(e)
 
-    override fun toString(): String = exceptions.toString()
+    override fun toString(): String =
+            (if (exceptions.isNotEmpty())            exceptions.toString()          else "*") +
+            (if (fallthroughExceptions.isNotEmpty()) ", not $fallthroughExceptions" else "")
 }
 
 data class STM(val initNode: Node, val edges: Set<Edge>) {
