@@ -20,15 +20,16 @@ package hu.bme.mit.theta.c2xcfa
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FrontendMetadata
@@ -40,6 +41,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
@@ -58,7 +60,7 @@ import kotlin.collections.emptyList
 import kotlin.collections.listOf
 import kotlin.collections.set
 
-class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
+class FrontendXcfaBuilder(val checkOverflow: Boolean = false) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
     private fun getLoc(builder: XcfaProcedureBuilder, name: String?, metadata: MetaData): XcfaLocation {
         if (name == null) return getAnonymousLoc(builder, metadata=metadata)
@@ -116,7 +118,7 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses())
+        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow))
         xcfaBuilder.addProcedure(builder)
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
@@ -176,11 +178,10 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         Preconditions.checkState(lValue is Dereference<*, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>, "lValue must be a variable, pointer dereference or an array element!")
         val rExpression = statement.getrExpression()
-        if (lValue is ArrayReadExpr<*, *>) {
+        val label: StmtLabel = if (lValue is ArrayReadExpr<*, *>) {
             val exprs = Stack<Expr<*>>()
             val toAdd = createArrayWriteExpr(lValue as ArrayReadExpr<*, out Type>, rExpression, exprs)
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)), metadata = getMetadata(statement)), metadata=getMetadata(statement))
-            builder.addEdge(xcfaEdge)
+            StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)), metadata = getMetadata(statement))
         } else if (lValue is Dereference<*, *>) {
             val op = lValue.op
             val type = op.type
@@ -198,12 +199,11 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
                     cast(lValue.op, ptrType),
                     cast(rExpression, type))
             FrontendMetadata.create(write, "cType", CArray(null, CComplexType.getType(lValue.op)))
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write), metadata = getMetadata(statement)), metadata=getMetadata(statement))
-            builder.addEdge(xcfaEdge)
+            StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write), metadata = getMetadata(statement))
         } else {
-            xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(Stmts.Assign(
+            val label = StmtLabel(Stmts.Assign(
                     cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-                    cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type)), metadata = getMetadata(statement)), metadata=getMetadata(statement))
+                    cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type)), metadata = getMetadata(statement))
             if (CComplexType.getType(lValue) is CPointer && CComplexType.getType(rExpression) is CPointer) {
                 Preconditions.checkState(rExpression is RefExpr<*> || rExpression is Reference<*, *>)
                 if (rExpression is RefExpr<*>) {
@@ -224,6 +224,28 @@ class FrontendXcfaBuilder : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack,
                     FrontendMetadata.create(lValue, "pointsTo", pointsTo.get())
                 }
             }
+            label
+        }
+
+        val lhs = (label.stmt as AssignStmt<*>).varDecl
+        val type: CComplexType? = try {
+            CComplexType.getType(lhs.ref)
+        } catch (_: Exception) { null }
+
+        if(!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
+            xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
+            builder.addEdge(xcfaEdge)
+        } else {
+            val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
+            val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
+            xcfaEdge = XcfaEdge(initLoc, middleLoc1, label, metadata = getMetadata(statement))
+            builder.addEdge(xcfaEdge)
+
+            xcfaEdge = XcfaEdge(middleLoc1, location, StmtLabel(type.limit(lhs.ref), metadata = getMetadata(statement)), metadata = getMetadata(statement))
+            builder.addEdge(xcfaEdge)
+            xcfaEdge = XcfaEdge(middleLoc1, middleLoc2, StmtLabel(Assume(Not(type.limit(lhs.ref).cond)), metadata = getMetadata(statement)), metadata = getMetadata(statement))
+            builder.addEdge(xcfaEdge)
+            xcfaEdge = XcfaEdge(middleLoc2, location, InvokeLabel("overflow", listOf(), metadata = getMetadata(statement)), metadata = getMetadata(statement))
             builder.addEdge(xcfaEdge)
         }
         return location

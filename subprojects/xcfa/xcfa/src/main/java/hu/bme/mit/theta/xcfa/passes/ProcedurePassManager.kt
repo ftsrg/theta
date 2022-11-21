@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
-class CPasses : ProcedurePassManager(listOf(
+class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
         // formatting
         NormalizePass(),
         DeterministicPass(),
@@ -28,8 +28,8 @@ class CPasses : ProcedurePassManager(listOf(
         // optimizing
         SimplifyExprsPass(),
         // handling intrinsics
-        ErrorLocationPass(),
-        FinalLocationPass(),
+        ErrorLocationPass(checkOverflow),
+        FinalLocationPass(checkOverflow),
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(),
         PthreadFunctionsPass(),

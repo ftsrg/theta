@@ -82,7 +82,7 @@ public class XcfaCliParseTest {
 
 		CStatement program = context.accept(FunctionVisitor.instance);
 		checkState(program instanceof CProgram, "Parsing did not return a program!");
-		FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
+		FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder(false);
 		XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program).build();
 	}
 }

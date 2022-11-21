@@ -26,7 +26,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream
 
-fun getXcfaFromC(stream: InputStream): XCFA {
+fun getXcfaFromC(stream: InputStream, checkOverflow: Boolean): XCFA {
     val input = CharStreams.fromStream(stream)
     val lexer = CLexer(input)
     val tokens = CommonTokenStream(lexer)
@@ -37,7 +37,7 @@ fun getXcfaFromC(stream: InputStream): XCFA {
     val program = context.accept(FunctionVisitor.instance)
     check(program is CProgram)
 
-    val frontendXcfaBuilder = FrontendXcfaBuilder()
+    val frontendXcfaBuilder = FrontendXcfaBuilder(checkOverflow)
     val builder = frontendXcfaBuilder.buildXcfa(program)
     return builder.build()
 }

@@ -16,13 +16,7 @@
 
 package hu.bme.mit.theta.c2xcfa
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
-import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -73,6 +67,6 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!)
+        getXcfaFromC(stream!!, explicitProperty == hu.bme.mit.theta.xcfa.analysis.ErrorDetection.OVERFLOW)
     }
 }

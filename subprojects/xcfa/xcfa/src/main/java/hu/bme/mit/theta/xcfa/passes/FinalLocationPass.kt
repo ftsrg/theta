@@ -24,7 +24,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * Transforms all procedure calls to designated `abort` procedures into edges to final locations.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class FinalLocationPass : ProcedurePass {
+class FinalLocationPass(val checkOverflow: Boolean) : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         for (edge in ArrayList(builder.getEdges())) {
@@ -45,6 +45,11 @@ class FinalLocationPass : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && setOf("abort", "exit").contains(it.name)
+        val set =
+                if(checkOverflow)
+                    setOf("abort", "exit", "reach_error")
+                else
+                    setOf("abort", "exit")
+        return it is InvokeLabel && set.contains(it.name)
     }
 }

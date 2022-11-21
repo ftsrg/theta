@@ -138,6 +138,13 @@ class XcfaCli(private val args: Array<String>) {
                             lbeLevel = LbePass.LBELevel.NO_LBE
                         }
                         ErrorDetection.DATA_RACE
+                    } else if (property!!.name.endsWith("no-overflow.prp")) {
+                        remainingFlags.add(ErrorDetection.OVERFLOW.toString())
+                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                            System.err.println("Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
+                            lbeLevel = LbePass.LBELevel.NO_LBE
+                        }
+                        ErrorDetection.OVERFLOW
                     } else {
                         remainingFlags.add(ErrorDetection.NO_ERROR.toString())
                         System.err.println("Unknown property $property, using full state space exploration (no refinement)")
@@ -158,7 +165,7 @@ class XcfaCli(private val args: Array<String>) {
 
         val xcfa = try {
             val stream = FileInputStream(input!!)
-            val xcfaFromC = getXcfaFromC(stream)
+            val xcfaFromC = getXcfaFromC(stream, explicitProperty == ErrorDetection.OVERFLOW)
             logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
             logger.write(Logger.Level.RESULT, "Arithmetic: ${BitwiseChecker.getBitwiseOption()}\n")
             xcfaFromC
