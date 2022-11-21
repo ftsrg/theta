@@ -1977,6 +1977,7 @@ public final class ExprSimplifier {
 	}
 
 	private Expr<FpType> simplifyFpDiv(final FpDivExpr expr, final Valuation val) {
+		if(true)return expr; // Rationale: https://github.com/ftsrg/theta/issues/180
 		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
 		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
