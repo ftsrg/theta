@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.cli
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
+import hu.bme.mit.theta.solver.validator.SolverValidationException
 import kotlin.system.exitProcess
 
 enum class ExitCodes(val code: Int) {
@@ -40,7 +41,10 @@ data class ErrorCodeException(val code: Int) : Exception()
 fun <T> exitOnError(body: () -> T): T {
     try{
         return body();
-    }  catch(e: SmtLibSolverException) {
+    } catch(e: SmtLibSolverException) {
+        e.printStackTrace();
+        exitProcess(ExitCodes.SOLVER_ERROR.code);
+    } catch(e: SolverValidationException) {
         e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
     } catch(e: Z3Exception) {

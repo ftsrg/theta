@@ -46,7 +46,7 @@ public class SolverValidatorWrapper implements Solver {
 			final Valuation model = solver.getModel();
 			for (Expr<BoolType> assertion : solver.getAssertions()) {
 				if (!assertion.eval(model).equals(True())) {
-					throw new RuntimeException("Solver problem: " + assertion + " not True over {" + model + "}");
+					throw new SolverValidationException("Solver problem: " + assertion + " not True over {" + model + "}");
 				}
 			}
 		}

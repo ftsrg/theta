@@ -58,8 +58,9 @@ data class Edge(val source: Node,
 class ExceptionTrigger(
         val exceptions: Set<Exception> = emptySet(),
         val fallthroughExceptions: Set<Exception> = emptySet(),
+        val label: String? = null
 ): (Exception) -> Boolean {
-    constructor(vararg exceptions: Exception) : this(exceptions.toSet())
+    constructor(vararg exceptions: Exception, label: String? = null) : this(exceptions.toSet(), label=label)
     override fun invoke(e: Exception): Boolean =
             if(exceptions.isNotEmpty())
                 exceptions.contains(e) && !fallthroughExceptions.contains(e)
@@ -67,8 +68,8 @@ class ExceptionTrigger(
                 !fallthroughExceptions.contains(e)
 
     override fun toString(): String =
-            (if (exceptions.isNotEmpty())            exceptions.toString()          else "*") +
-            (if (fallthroughExceptions.isNotEmpty()) ", not $fallthroughExceptions" else "")
+            label ?: ((if (exceptions.isNotEmpty()) exceptions.toString() else "*") +
+                      (if (fallthroughExceptions.isNotEmpty()) ", not $fallthroughExceptions" else ""))
 }
 
 data class STM(val initNode: Node, val edges: Set<Edge>) {
@@ -95,6 +96,7 @@ ${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
             try {
                 return currentNode.execute()
             } catch (e: Exception) {
+                println("Caught exception: $e")
                 val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
                 if (edge != null) {
                     currentNode = edge.target
