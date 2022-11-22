@@ -54,8 +54,8 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 		this.xcfa = xcfa;
 		Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
 		Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
-		checkState(errorLocOpt.isPresent());
-		this.errLoc = errorLocOpt.get();
+//		checkState(errorLocOpt.isPresent());
+		this.errLoc = errorLocOpt.orElse(null);
 		this.errorWeight = errorWeight;
 		this.depthWeight = depthWeight;
 		distancesToError = null;
@@ -82,7 +82,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 	}
 
 	private int getDistanceToError(final XcfaLocation loc) {
-		if (distancesToError == null) {
+		if (distancesToError == null && errLoc != null) {
 			distancesToError = calculateDistancesToError(xcfa, errLoc);
 		} else if (errLoc == null) {
 			return Integer.MAX_VALUE;
