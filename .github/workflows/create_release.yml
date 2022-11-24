@@ -16,7 +16,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         id: build
         with:
-          arguments: build
+          arguments: build --scan
       - run: 'echo "${{steps.build.outputs.build}}"'
       - uses: actions/upload-artifact@v3
         with:
@@ -42,11 +42,11 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
         working-directory: jar/
-      - run: for i in jar/*; do mv $i $(echo $i | cut -d'-' -f1 | awk ' { print $1".jar" } '); done
+      - run: for i in jar/**/*; do mv $i $(echo $i | cut -d'-' -f1 | awk ' { print $1".jar" } '); done
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: jar/*.jar
+          files: jar/**/*.jar
           body: "Auto-generated release"
           name: ${{steps.value.outputs.version}}
           tag_name: ${{steps.value.outputs.version}}
