@@ -16,7 +16,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         id: build
         with:
-          arguments: build
+          arguments: build --scan
       - run: 'echo "${{steps.build.outputs.build}}"'
       - uses: actions/upload-artifact@v3
         with:
