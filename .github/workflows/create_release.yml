@@ -42,8 +42,8 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find jar
-      - run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename $i | cut -d'-' -f1-3 | awk ' { print $1".jar" } '); done
-      - run: for i in $(find jar -name "*-all.jar"); do echo $i jar/$(basename $i | cut -d'-' -f1-3 | awk ' { print $1".jar" } '); done
+      - run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename $i | echo ${proba%-${{steps.value.outputs.version}}-all.jar}.jar); done
+      - run: for i in $(find jar -name "*-all.jar"); do echo $i jar/$(basename $i | echo ${proba%-${{steps.value.outputs.version}}-all.jar}.jar); done
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
