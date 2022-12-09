@@ -18,7 +18,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
@@ -44,13 +43,12 @@ public class ChcUtils {
     private static GenericSmtLibSymbolTable symbolTable;
     private static final SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
     private static SmtLibTermTransformer termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
-    private static final SmtLibModel smtLibModel = null; // TODO unnecessary
     private static CharStream charStream;
 
     public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         tail.i_formula().forEach(i_formula -> {
-            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), BoolExprs.Bool(), smtLibModel);
+            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), BoolExprs.Bool(), null); // null as SmtLibModel, because it is unused
             List<ConstDecl<?>> exprVars = new ArrayList<>();
             ExprUtils.collectConstants(expr, exprVars);
             Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();

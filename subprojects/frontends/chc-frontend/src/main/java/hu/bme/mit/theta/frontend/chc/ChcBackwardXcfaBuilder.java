@@ -64,8 +64,8 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl());
             int i = 0;
             for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> param : procedure.getParams().entrySet()) {
-                if (param.getValue() == XcfaProcedure.Direction.OUT) continue;
-                vars.put(ctx.chc_head().u_pred_atom().symbol(i++).getText(), param.getKey());
+                if (param.getValue() != XcfaProcedure.Direction.OUT)
+                    vars.put(ctx.chc_head().u_pred_atom().symbol(i++).getText(), param.getKey());
             }
             XcfaLocation middle = createLocation(procedure);
             XcfaEdge edge = XcfaEdge.of(procedure.getInitLoc(), middle, getTailConditionLabels(ctx.chc_tail(), vars));

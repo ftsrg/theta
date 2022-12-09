@@ -46,10 +46,14 @@ public class SimplifyExprs extends ProcedurePass {
 			XcfaEdge newEdge = edge.mapLabels(label -> {
 				if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssignStmt && !(((AssignStmt<?>) label.getStmt()).getVarDecl().getType() instanceof ArrayType)) {
 					VarDecl<?> varDecl = ((AssignStmt<?>) label.getStmt()).getVarDecl();
-					Expr<?> simplified = ExprSimplifier.simplify(((AssignStmt<?>) label.getStmt()).getExpr(), ImmutableValuation.empty());
-					FrontendMetadata.create(simplified, "cType", CComplexType.getType(((AssignStmt<?>) label.getStmt()).getExpr()));
-					simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
-					FrontendMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
+					Expr<?> expr = ((AssignStmt<?>) label.getStmt()).getExpr();
+					Expr<?> simplified = ExprSimplifier.simplify(expr, ImmutableValuation.empty());
+					if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent())
+						FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
+					if (FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent()) {
+						simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
+						FrontendMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
+					}
 					Stmt newStmt = Assign(
 							cast(varDecl, varDecl.getType()),
 							cast(simplified, varDecl.getType()));
@@ -57,7 +61,8 @@ public class SimplifyExprs extends ProcedurePass {
 				} else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
 					List<Expr<?>> newExprs = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map((Expr<?> expr) -> {
 						final Expr<?> simplified = ExprUtils.simplify(expr);
-						FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
+						if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent())
+							FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
 						return simplified;
 					}).collect(Collectors.toList());
 					return ProcedureCall(newExprs, ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());

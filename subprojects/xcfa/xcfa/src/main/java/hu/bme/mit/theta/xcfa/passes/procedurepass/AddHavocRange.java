@@ -49,8 +49,10 @@ public class AddHavocRange extends ProcedurePass {
 						if (stmt == e.get()) {
 							VarDecl<?> var = ((HavocStmt) e.get().getStmt()).getVarDecl();
 							collect.add(stmt);
-							Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).limit(var.getRef());
-							collect.add(Stmt(wraparoundAssumption));
+							if (FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent()) {
+								Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).limit(var.getRef());
+								collect.add(Stmt(wraparoundAssumption));
+							}
 						} else collect.add(stmt);
 					}
 					alreadyAssumed.add((HavocStmt<?>) e.get().getStmt());
