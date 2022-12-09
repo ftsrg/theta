@@ -10,7 +10,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
@@ -48,7 +47,7 @@ public class ChcUtils {
     public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         tail.i_formula().forEach(i_formula -> {
-            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), BoolExprs.Bool(), null); // null as SmtLibModel, because it is unused
+            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), Bool(), null); // null as SmtLibModel, because it is unused
             List<ConstDecl<?>> exprVars = new ArrayList<>();
             ExprUtils.collectConstants(expr, exprVars);
             Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();

@@ -47,7 +47,7 @@ public class AddHavocRange extends ProcedurePass {
 					List<XcfaLabel> collect = new ArrayList<>();
 					for (XcfaLabel stmt : edge.getLabels()) {
 						if (stmt == e.get()) {
-							VarDecl<?> var = ((HavocStmt) e.get().getStmt()).getVarDecl();
+							VarDecl<?> var = ((HavocStmt<?>) e.get().getStmt()).getVarDecl();
 							collect.add(stmt);
 							if (FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent()) {
 								Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).limit(var.getRef());

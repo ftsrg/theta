@@ -76,7 +76,8 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
 
     @Override
     public Object visitChc_assert(CHCParser.Chc_assertContext ctx) {
-        XcfaLocation from, to;
+        XcfaLocation from;
+        XcfaLocation to;
         List<XcfaLabel> labels = new ArrayList<>();
 
         if (ctx.chc_tail() != null) {

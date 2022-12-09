@@ -93,8 +93,8 @@ public class XcfaPassManager {
 				new AssignFunctionParam()
 		));
 		xcfaPasses.addAll((List.of(
-/*				new RemoveUnusedGlobals(),
-				new DemoteThreadLocalGlobals()*/)));
+				new RemoveUnusedGlobals(),
+				new DemoteThreadLocalGlobals())));
 	}
 
 	public static void addProcedurePass(ProcedurePass pass) {
