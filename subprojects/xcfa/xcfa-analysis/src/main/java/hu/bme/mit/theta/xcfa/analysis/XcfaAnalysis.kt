@@ -56,39 +56,46 @@ open class XcfaAnalysis<S: ExprState, P: Prec> (
 
 /// Common
 
-fun getXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
-            s -> s.processes.map {
-                proc -> if (proc.value.locs.peek().final) {
-                            listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
-                                    proc.value.paramStmts.peek().second,
-                                    ReturnLabel(proc.value.returnStmts.peek()),
-                            )))))
-                        } else if (!proc.value.paramsInitialized) {
-                            listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), proc.value.paramStmts.peek().first)))
-                        } else {
-                            proc.value.locs.peek().outgoingEdges.map { edge ->
-                                val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
-                                val flatLabels = newLabel.getFlatLabels()
-                                if(flatLabels.any {it is InvokeLabel}) {
-                                    val newNewLabel = SequenceLabel(flatLabels.map { label ->
-                                        if (label is InvokeLabel) {
-                                            val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                                                    ?: error("No such method ${label.name}.")
-                                            SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                                StmtLabel(
-                                                        Stmts.Assign(
-                                                                TypeUtils.cast(iVal.value.first, iVal.value.first.type),
-                                                                TypeUtils.cast(label.params[iVal.index], iVal.value.first.type)), metadata = label.metadata)
-                                            }, listOf(label)).flatten())
-                                        } else label
-                                    })
-                                    XcfaAction(proc.key, edge.withLabel(newNewLabel))
-                                } else
-                                    XcfaAction(proc.key, edge.withLabel(newLabel))
-                            }
+fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
+    s -> s.processes.map {
+            proc -> if (proc.value.locs.peek().final) {
+                        listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
+                            proc.value.paramStmts.peek().second,
+                            ReturnLabel(proc.value.returnStmts.peek()),
+                        )))))
+                    } else if (!proc.value.paramsInitialized) {
+                        listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), proc.value.paramStmts.peek().first)))
+                    } else {
+                        proc.value.locs.peek().outgoingEdges.map { edge ->
+                            val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
+                            val flatLabels = newLabel.getFlatLabels()
+                            if(flatLabels.any {it is InvokeLabel}) {
+                                val newNewLabel = SequenceLabel(flatLabels.map { label ->
+                                    if (label is InvokeLabel) {
+                                        val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                                            ?: error("No such method ${label.name}.")
+                                        SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                            StmtLabel(
+                                                Stmts.Assign(
+                                                    TypeUtils.cast(iVal.value.first, iVal.value.first.type),
+                                                    TypeUtils.cast(label.params[iVal.index], iVal.value.first.type)), metadata = label.metadata)
+                                        }, listOf(label)).flatten())
+                                    } else label
+                                })
+                                XcfaAction(proc.key, edge.withLabel(newNewLabel))
+                            } else
+                                XcfaAction(proc.key, edge.withLabel(newLabel))
                         }
-            }.flatten().filter { !s.apply(it).first.bottom }
-        }
+                    }
+    }.flatten().toSet()
+}
+
+fun getXcfaLts(): LTS<XcfaState<out ExprState>, XcfaAction> {
+    val lts = getCoreXcfaLts()
+    return LTS<XcfaState<out ExprState>, XcfaAction> { s ->
+        lts.getEnabledActionsFor(s).filter { !s.apply(it).first.bottom }.toSet()
+    }
+}
 
 enum class ErrorDetection {
     ERROR_LOCATION,

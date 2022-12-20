@@ -46,7 +46,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 	}
 
 	@Override
-	protected Collection<XcfaAction> getAllEnabledActionsFor(XcfaState<?> state) {
+	protected Set<XcfaAction> getAllEnabledActionsFor(XcfaState<?> state) {
 		return simpleXcfaLts.getEnabledActionsFor(state);
 	}
 

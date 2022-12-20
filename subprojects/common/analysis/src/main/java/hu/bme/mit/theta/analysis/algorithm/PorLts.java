@@ -50,7 +50,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	/**
 	 * Backward transitions in the transition system (a transition of a loop).
 	 */
-	protected final Set<T> backwardTransitions = new HashSet<>();
+	protected final Set<T> backwardTransitions = new LinkedHashSet<>();
 
 
 	/**
@@ -60,15 +60,15 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @return the enabled actions
 	 */
 	@Override
-	public Collection<A> getEnabledActionsFor(S state) {
+	public Set<A> getEnabledActionsFor(S state) {
 		// Collecting enabled actions
 		Collection<A> allEnabledActions = getAllEnabledActionsFor(state);
 
 		// Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
-		Collection<A> minimalPersistentSet = new HashSet<>();
+		Set<A> minimalPersistentSet = new LinkedHashSet<>();
 		Collection<Collection<A>> persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions);
 		for (Collection<A> firstActions : persistentSetFirstActions) {
-			Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstActions);
+			Set<A> persistentSet = calculatePersistentSet(allEnabledActions, firstActions);
 			if (minimalPersistentSet.size() == 0 || persistentSet.size() < minimalPersistentSet.size()) {
 				minimalPersistentSet = persistentSet;
 			}
@@ -84,25 +84,25 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param firstActions   the actions that will be added to the persistent set as the first actions
 	 * @return a persistent set of enabled actions
 	 */
-	protected Collection<A> calculatePersistentSet(Collection<A> enabledActions, Collection<A> firstActions) {
+	protected Set<A> calculatePersistentSet(Collection<A> enabledActions, Collection<A> firstActions) {
 		if (firstActions.stream().anyMatch(this::isBackwardAction)) {
-			return new HashSet<>(enabledActions);
+			return new LinkedHashSet<>(enabledActions);
 		}
 
-		Set<A> persistentSet = new HashSet<>(firstActions);
-		Set<A> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
+		Set<A> persistentSet = new LinkedHashSet<>(firstActions);
+		Set<A> otherActions = new LinkedHashSet<>(enabledActions); // actions not in the persistent set
 		firstActions.forEach(otherActions::remove);
 
 		boolean addedNewAction = true;
 		while (addedNewAction) {
 			addedNewAction = false;
-			Set<A> actionsToRemove = new HashSet<>();
+			Set<A> actionsToRemove = new LinkedHashSet<>();
 			for (A action : otherActions) {
 				// for every action that is not in the persistent set it is checked whether it should be added to the persistent set
 				// (because it is dependent with an action already in the persistent set)
 				if (persistentSet.stream().anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {
 					if (isBackwardAction(action)) {
-						return new HashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
+						return new LinkedHashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
 					}
 
 					persistentSet.add(action);
@@ -122,7 +122,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param state the state whose enabled actions are to be returned
 	 * @return the enabled actions in the state
 	 */
-	protected abstract Collection<A> getAllEnabledActionsFor(S state);
+	protected abstract Set<A> getAllEnabledActionsFor(S state);
 
 	/**
 	 * Returns the actions from where persistent sets will be calculated (a subset of the given enabled actions).
@@ -240,7 +240,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @return the set of encountered shared objects
 	 */
 	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> goFurther) {
-		Set<Decl<? extends Type>> vars = new HashSet<>();
+		Set<Decl<? extends Type>> vars = new LinkedHashSet<>();
 		List<T> exploredTransitions = new ArrayList<>();
 		List<T> transitionsToExplore = new ArrayList<>();
 		transitionsToExplore.add(startTransition);

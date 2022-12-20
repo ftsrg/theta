@@ -23,12 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class XcfaAbstractPorLts extends XcfaPorLts {
 
@@ -40,27 +35,27 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 	}
 
 	@Override
-	public <P extends Prec> Collection<XcfaAction> getEnabledActionsFor(XcfaState<?> state, Collection<XcfaAction> exploredActions, P prec) {
+	public <P extends Prec> Set<XcfaAction> getEnabledActionsFor(XcfaState<?> state, Collection<XcfaAction> exploredActions, P prec) {
 		// Collecting enabled actions
 		Collection<XcfaAction> allEnabledActions = getAllEnabledActionsFor(state);
 
 		// Calculating the persistent set starting from every (or some of the) enabled transition or from exploredActions if it is not empty
 		// The minimal persistent set is stored
-		Collection<XcfaAction> minimalPersistentSet = new HashSet<>();
-		final Collection<Collection<XcfaAction>> persistentSetFirstActions = new HashSet<>() {{
+		Set<XcfaAction> minimalPersistentSet = new LinkedHashSet<>();
+		final Collection<Collection<XcfaAction>> persistentSetFirstActions = new LinkedHashSet<>() {{
 			if (exploredActions.isEmpty()) {
 				addAll(getPersistentSetFirstActions(allEnabledActions));
 			} else {
 				add(new ArrayList<>(exploredActions));
 			}
 		}};
-		Set<Decl<? extends Type>> finalIgnoredVariables = new HashSet<>();
+		Set<Decl<? extends Type>> finalIgnoredVariables = new LinkedHashSet<>();
 
 		// Calculate persistent sets from all possible starting action set
 		for (Collection<XcfaAction> firstActions : persistentSetFirstActions) {
 			// Variables that have been ignored (if they would be in the precision, more actions have had to be added to the persistent set)
-			Set<Decl<? extends Type>> ignoredVariables = new HashSet<>();
-			Collection<XcfaAction> persistentSet = calculatePersistentSet(allEnabledActions, firstActions, prec, ignoredVariables);
+			Set<Decl<? extends Type>> ignoredVariables = new LinkedHashSet<>();
+			Set<XcfaAction> persistentSet = calculatePersistentSet(allEnabledActions, firstActions, prec, ignoredVariables);
 			if (minimalPersistentSet.size() == 0 || persistentSet.size() < minimalPersistentSet.size()) {
 				minimalPersistentSet = persistentSet;
 				finalIgnoredVariables = ignoredVariables;
@@ -69,7 +64,7 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 
 		finalIgnoredVariables.forEach(ignoredVariable -> {
 			if (!ignoredVariableRegistry.containsKey(ignoredVariable)) {
-				ignoredVariableRegistry.put(ignoredVariable, new HashSet<>());
+				ignoredVariableRegistry.put(ignoredVariable, new LinkedHashSet<>());
 			}
 			ignoredVariableRegistry.get(ignoredVariable).add(state);
 		});
@@ -87,28 +82,28 @@ public final class XcfaAbstractPorLts extends XcfaPorLts {
 	 * @param ignoredVariables variables that have been ignored (if they would be in the precision, more actions have had to be added to the persistent set)
 	 * @return a persistent set of enabled actions in the current abstraction
 	 */
-	private Collection<XcfaAction> calculatePersistentSet(Collection<XcfaAction> enabledActions, Collection<XcfaAction> firstActions, Prec prec, Set<Decl<? extends Type>> ignoredVariables) {
+	private Set<XcfaAction> calculatePersistentSet(Collection<XcfaAction> enabledActions, Collection<XcfaAction> firstActions, Prec prec, Set<Decl<? extends Type>> ignoredVariables) {
 		if (firstActions.stream().anyMatch(this::isBackwardAction)) {
-			return new HashSet<>(enabledActions);
+			return new LinkedHashSet<>(enabledActions);
 		}
 
-		Set<XcfaAction> persistentSet = new HashSet<>(firstActions);
-		Set<XcfaAction> otherActions = new HashSet<>(enabledActions); // actions not in the persistent set
+		Set<XcfaAction> persistentSet = new LinkedHashSet<>(firstActions);
+		Set<XcfaAction> otherActions = new LinkedHashSet<>(enabledActions); // actions not in the persistent set
 		firstActions.forEach(otherActions::remove);
-		Map<XcfaAction, Set<Decl<? extends Type>>> ignoredVariablesByAction = new HashMap<>();
-		otherActions.forEach(action -> ignoredVariablesByAction.put(action, new HashSet<>()));
+		Map<XcfaAction, Set<Decl<? extends Type>>> ignoredVariablesByAction = new LinkedHashMap<>();
+		otherActions.forEach(action -> ignoredVariablesByAction.put(action, new LinkedHashSet<>()));
 
 		boolean addedNewAction = true;
 		while (addedNewAction) {
 			addedNewAction = false;
-			Set<XcfaAction> actionsToRemove = new HashSet<>();
+			Set<XcfaAction> actionsToRemove = new LinkedHashSet<>();
 			for (XcfaAction action : otherActions) {
 				// for every action that is not in the persistent set it is checked whether it should be added to the persistent set
 				// (because it is dependent with an action already in the persistent set)
-				Set<Decl<? extends Type>> potentialIgnoredVariables = new HashSet<>();
+				Set<Decl<? extends Type>> potentialIgnoredVariables = new LinkedHashSet<>();
 				if (persistentSet.stream().anyMatch(persistentSetAction -> areDependents(persistentSetAction, action, prec, potentialIgnoredVariables))) {
 					if (isBackwardAction(action)) {
-						return new HashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
+						return new LinkedHashSet<>(enabledActions); // see POR algorithm for the reason of removing backward transitions
 					}
 
 					persistentSet.add(action);

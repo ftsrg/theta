@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Common interface for Labeled Transition Systems (LTS). An LTS can provide
@@ -30,7 +31,7 @@ public interface LTS<S extends State, A extends Action> {
 	 * @param state the state whose enabled actions we would like to know
 	 * @return the enabled actions
 	 */
-	Collection<A> getEnabledActionsFor(S state);
+	Set<A> getEnabledActionsFor(S state);
 
 	/**
 	 * Gets the enabled actions for a given state using the current precision.
@@ -40,7 +41,7 @@ public interface LTS<S extends State, A extends Action> {
 	 * @param prec  the current precision
 	 * @return the enabled actions
 	 */
-	default <P extends Prec> Collection<A> getEnabledActionsFor(S state, Collection<A> exploredActions, P prec) {
+	default <P extends Prec> Set<A> getEnabledActionsFor(S state, Collection<A> exploredActions, P prec) {
 		return getEnabledActionsFor(state);
 	}
 }
