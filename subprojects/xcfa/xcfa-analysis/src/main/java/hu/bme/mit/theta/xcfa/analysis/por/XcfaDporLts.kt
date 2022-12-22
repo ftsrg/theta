@@ -23,16 +23,34 @@ class XcfaDporLts(
 
     private val random = Random.Default // or use Random(seed) with a seed
 
+    private data class StackItem(
+        val node: ArgNode<S, A>,
+        var backtrack: MutableSet<A>? = null,
+        val processLastAction: Map<Int, Int>,
+        val lastDependents: Map<Int, Map<Int, Int>>,
+        var detectedDisabledRaces: Boolean = false,
+    ) {
+        val action: A get() = node.inEdge.get().action
+    }
+
+    private val simpleXcfaLts = getXcfaLts()
+
+    private val stack: Stack<StackItem> = Stack()
+
+    private val last get() = stack.peek()
+
+    private fun getAllEnabledActionsFor(state: S): Set<A> = simpleXcfaLts.getEnabledActionsFor(state)
+
     val waitlist = object : Waitlist<ArgNode<S, A>> {
 
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
-            (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }
+            (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
         override fun add(item: ArgNode<S, A>) {
             val newaction = item.inEdge.get().action
             val process = newaction.pid
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size - 1 }
-            var newLastDependents: Map<Int, Int> = LinkedHashMap(last.lastDependents[process])
+            var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process])
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
             for (index in stack.size - 1 downTo 1) {
@@ -41,11 +59,17 @@ class XcfaDporLts(
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
                     if (index <= (newLastDependents[action.pid] ?: -1)) {
-                        // there is an action a' such that action -> a' -> newaction (->: happens-before)
+                        // there is an action a' such that  action -> a' -> newaction  (->: happens-before)
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
                         // reversible race
-                        stack[index - 1].backtrack!!.add(TODO("add an initial of 'v'"))
+                        val v = notdep(index, newaction)
+                        val iv = initials(index, v)
+                        val backtrack = stack[index - 1].backtrack!!
+                        if ((iv intersect backtrack).isEmpty()) {
+                            backtrack.add(iv.random(random))
+                        }
+                        newLastDependents[action.pid] = index
                         newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
                         relevantProcesses.remove(action.pid)
                     }
@@ -84,22 +108,6 @@ class XcfaDporLts(
         override fun clear() = stack.clear()
     }
 
-    private data class StackItem(
-        val node: ArgNode<S, A>,
-        var backtrack: MutableSet<A>? = null,
-        val processLastAction: Map<Int, Int>,
-        val lastDependents: Map<Int, Map<Int, Int>>,
-        var detectedDisabledRaces: Boolean = false,
-    )
-
-    private val simpleXcfaLts = getXcfaLts()
-
-    private val stack: Stack<StackItem> = Stack()
-
-    private val last get() = stack.peek()
-
-    private fun getAllEnabledActionsFor(state: S): Set<A> = simpleXcfaLts.getEnabledActionsFor(state)
-
     override fun getEnabledActionsFor(state: S): Set<A> {
         assert(state == last.node.state)
 
@@ -127,7 +135,28 @@ class XcfaDporLts(
         return setOf(actionToExplore)
     }
 
-    fun dependent(a: A, b: A): Boolean {
+    private fun dependent(a: A, b: A): Boolean {
         TODO("implement dependency condition")
+    }
+
+    private fun notdep(start: Int, action: A): List<A> {
+        val e = stack[start].action
+        return stack.slice((start + 1)..stack.size)
+            .map { it.action }
+            .filter { !dependent(e, it) }
+            .toMutableList().apply { add(action) }
+    }
+
+    private fun initials(start: Int, sequence: List<A>): Set<A> {
+        return getAllEnabledActionsFor(stack[start].node.state).filter { enabledAction ->
+            for (action in sequence) {
+                if (action == enabledAction) {
+                    return@filter true
+                } else if (dependent(enabledAction, action)) {
+                    return@filter false
+                }
+            }
+            true
+        }.toSet()
     }
 }
