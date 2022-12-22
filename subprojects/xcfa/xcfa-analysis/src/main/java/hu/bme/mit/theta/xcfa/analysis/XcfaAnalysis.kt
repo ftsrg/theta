@@ -40,6 +40,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.startsAtomic
 import java.util.*
 import java.util.function.Predicate
 
@@ -115,8 +116,10 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
-                                val (globalVars1, isAtomic1) = edge1.getGlobalVars(xcfa)
-                                val (globalVars2, isAtomic2) = edge2.getGlobalVars(xcfa)
+                                val globalVars1 = edge1.getGlobalVars(xcfa)
+                                val globalVars2 = edge2.getGlobalVars(xcfa)
+                                val isAtomic1 = edge1.startsAtomic()
+                                val isAtomic2 = edge2.startsAtomic()
                                 if(!isAtomic1 || !isAtomic2) {
                                     val intersection = globalVars1.keys intersect globalVars2.keys
                                     if (intersection.any { globalVars1[it] == true || globalVars2[it] == true })

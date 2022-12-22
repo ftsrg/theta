@@ -6,6 +6,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
+import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.*
 import java.util.stream.Stream
@@ -138,7 +139,15 @@ class XcfaDporLts(
     }
 
     private fun dependent(a: A, b: A): Boolean {
-        TODO("implement dependency condition")
+        if (a.pid == b.pid) return true
+
+        // TODO caching...
+        val aGlobalVars = a.edge.getGlobalVars(xcfa)
+        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        if((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+            return true
+        }
+        return false
     }
 
     private fun notdep(start: Int, action: A): List<A> {

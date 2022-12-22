@@ -92,7 +92,7 @@ fun XcfaLabel.collectGlobalVars(globalVars: List<VarDecl<*>>) =
  * If the edge starts an atomic block, all variable accesses in the atomic block is returned.
  * Variables are associated with a boolean value: true if the variable is written and false otherwise.
  */
-fun XcfaEdge.getGlobalVars(xcfa: XCFA): Pair<Map<VarDecl<*>, Boolean>, Boolean> {
+fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, Boolean> {
     val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
     var label = this.label
     if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
@@ -112,10 +112,19 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA): Pair<Map<VarDecl<*>, Boolean>, Boolean> 
                 unprocessed.addAll(e.target.outgoingEdges subtract processed)
             }
         }
-        return Pair(vars, true)
+        return vars
     } else {
-        return Pair(label.collectGlobalVars(globalVars), false)
+        return label.collectGlobalVars(globalVars)
     }
+}
+
+/**
+ * Returns true if the edge starts an atomic block.
+ */
+fun XcfaEdge.startsAtomic(): Boolean {
+    var label = this.label
+    if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
+    return label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
 }
 
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
