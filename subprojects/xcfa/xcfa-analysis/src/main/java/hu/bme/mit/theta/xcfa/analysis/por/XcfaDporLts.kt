@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -15,7 +16,7 @@ import kotlin.collections.LinkedHashMap
 import kotlin.math.max
 import kotlin.random.Random
 
-private typealias S = XcfaState<*>
+private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 
 class XcfaDporLts(
@@ -25,10 +26,10 @@ class XcfaDporLts(
     private val random = Random.Default // or use Random(seed) with a seed
 
     private data class StackItem(
-        val node: ArgNode<S, A>,
-        var backtrack: MutableSet<A>? = null,
+        val node: ArgNode<out S, A>,
         val processLastAction: Map<Int, Int>,
         val lastDependents: Map<Int, Map<Int, Int>>,
+        var backtrack: MutableSet<A>? = null,
         var detectedDisabledRaces: Boolean = false,
     ) {
         val action: A get() = node.inEdge.get().action
@@ -42,16 +43,21 @@ class XcfaDporLts(
 
     private fun getAllEnabledActionsFor(state: S): Set<A> = simpleXcfaLts.getEnabledActionsFor(state)
 
-    val waitlist = object : Waitlist<ArgNode<S, A>> {
+    val waitlist = object : Waitlist<ArgNode<out S, A>> {
 
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
-        override fun add(item: ArgNode<S, A>) {
+        override fun add(item: ArgNode<out S, A>) {
+            if (!item.inEdge.isPresent) {
+                stack.push(StackItem(item, LinkedHashMap(), LinkedHashMap()))
+                return
+            }
+
             val newaction = item.inEdge.get().action
             val process = newaction.pid
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size - 1 }
-            var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process])
+            var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf())
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
             for (index in stack.size - 1 downTo 1) {
@@ -86,12 +92,12 @@ class XcfaDporLts(
             )
         }
 
-        override fun addAll(items: Collection<ArgNode<S, A>>) {
+        override fun addAll(items: Collection<ArgNode<out S, A>>) {
             assert(items.size == 1) // TODO <=
             add(items.first())
         }
 
-        override fun addAll(items: Stream<out ArgNode<S, A>>) {
+        override fun addAll(items: Stream<out ArgNode<out S, A>>) {
             val iterator = items.iterator()
             add(iterator.next()) // TODO if (iterator.hasNext())
             assert(!iterator.hasNext())
@@ -99,7 +105,7 @@ class XcfaDporLts(
 
         override fun isEmpty() = stack.isEmpty()
 
-        override fun remove(): ArgNode<S, A> {
+        override fun remove(): ArgNode<out S, A> {
             if (isEmpty) throw NoSuchElementException("The search stack is empty.")
             return stack.peek().node
         }
@@ -130,6 +136,8 @@ class XcfaDporLts(
         if (last.backtrack == null) {
             val randomProcess = enabledProcesses.random(random)
             last.backtrack = enabledActions.filter { it.pid == randomProcess }.toMutableSet()
+
+            // TODO if backward transition: add all enabled actions to backtrack set, prefer not backward ones
         }
 
         val actionToExplore = last.backtrack!!.random()
@@ -144,7 +152,7 @@ class XcfaDporLts(
         // TODO caching...
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        if((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+        if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
             return true
         }
         return false

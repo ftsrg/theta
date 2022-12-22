@@ -22,6 +22,7 @@ import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
@@ -39,6 +41,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
 import java.io.File
@@ -89,14 +92,21 @@ data class XcfaCegarConfig(
 
         val ignoredVarRegistry: Map<Decl<out Type>, Set<XcfaState<*>>> = LinkedHashMap()
 
+        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        val waitlist = if(porLevel == POR.DPOR) {
+            (lts as XcfaDporLts).waitlist
+        } else {
+            PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(search.getComp(xcfa))
+        }
+
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
                 xcfa,
                 abstractionSolverFactory.createSolver(),
                 maxEnum,
-                search.getComp(xcfa),
+                waitlist,
                 refinement.stopCriterion,
                 logger,
-                porLevel.ltsSupplier(xcfa, ignoredVarRegistry),
+                lts,
                 errorDetectionType
         ) as Abstractor<ExprState, ExprAction, Prec>
 

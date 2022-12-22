@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
@@ -29,7 +29,7 @@ import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
+import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -137,25 +137,25 @@ fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
 
 private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(
         analysis: Analysis<S, XcfaAction, P>,
-        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+        lts: LTS<XcfaState<out ExprState>, XcfaAction>,
         errorDetection: ErrorDetection)
 : ArgBuilder<S, XcfaAction, P> =
         ArgBuilder.create(
-                ltsSupplier(),
+                lts,
                 analysis,
                 getXcfaErrorPredicate(errorDetection)
         )
 
 fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
         analysis: Analysis<S, XcfaAction, P>,
-        argNodeComparator: ArgNodeComparators.ArgNodeComparator,
+        waitlist: Waitlist<*>,
         stopCriterion: StopCriterion<*, *>,
         logger: Logger,
-        ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+        lts: LTS<XcfaState<out ExprState>, XcfaAction>,
         errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-        BasicAbstractor.builder(getXcfaArgBuilder(analysis, ltsSupplier, errorDetection))
-                .waitlist(PriorityWaitlist.create(argNodeComparator))
+        BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+                .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
                 .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger).build() // TODO: can we do this nicely?
 
 

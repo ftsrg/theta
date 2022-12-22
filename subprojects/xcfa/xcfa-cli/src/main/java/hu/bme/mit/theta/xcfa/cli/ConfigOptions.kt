@@ -20,6 +20,7 @@ import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
@@ -33,6 +34,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -41,6 +43,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.AtomicNodePruner
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaAbstractPorLts
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaPorLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
@@ -54,12 +57,13 @@ enum class Backend {
     LAZY
 }
 
-enum class POR(val ltsSupplier:
+enum class POR(val getLts:
                (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) ->
-                    () -> LTS<XcfaState<out ExprState>, XcfaAction>) {
-    NOPOR({_, _ -> { getXcfaLts() }}),
-    BASIC({xcfa, _ -> { XcfaPorLts(xcfa) }}),
-    AAPOR({xcfa, registry -> { XcfaAbstractPorLts(xcfa, registry) }}),
+                    LTS<XcfaState<out ExprState>, XcfaAction>) {
+    NOPOR({_, _ -> getXcfaLts() }),
+    BASIC({xcfa, _ -> XcfaPorLts(xcfa) }),
+    DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }),
+    AAPOR({xcfa, registry -> XcfaAbstractPorLts(xcfa, registry) })
 }
 
 enum class Strategy {
@@ -78,10 +82,10 @@ enum class Domain(
             xcfa: XCFA,
             solver: Solver,
             maxEnum: Int,
-            argNodeComparator: ArgNodeComparator,
+            waitlist: Waitlist<out ArgNode<out XcfaState<out ExprState>, XcfaAction>>,
             stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
             logger: Logger,
-            ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
+            lts: LTS<XcfaState<out ExprState>, XcfaAction>,
             errorDetectionType: ErrorDetection
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
         val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
