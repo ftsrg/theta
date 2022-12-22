@@ -81,6 +81,43 @@ fun XcfaLabel.collectVarsWithAccessType(): Map<VarDecl<*>, Boolean> = when(this)
     else -> emptyMap()
 }
 
+/**
+ * Returns the global variables accessed by the label (the variables present in the given argument).
+ */
+fun XcfaLabel.collectGlobalVars(globalVars: List<VarDecl<*>>) =
+    collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
+
+/**
+ * Returns the global variables (potentially indirectly) accessed by the edge.
+ * If the edge starts an atomic block, all variable accesses in the atomic block is returned.
+ * Variables are associated with a boolean value: true if the variable is written and false otherwise.
+ */
+fun XcfaEdge.getGlobalVars(xcfa: XCFA): Pair<Map<VarDecl<*>, Boolean>, Boolean> {
+    val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
+    var label = this.label
+    if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
+    if (label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")) {
+        val vars = mutableMapOf<VarDecl<*>, Boolean>() // true, if write
+        val processed = mutableSetOf<XcfaEdge>()
+        val unprocessed = mutableListOf(this)
+        while (unprocessed.isNotEmpty()) {
+            val e = unprocessed.removeFirst()
+            var eLabel = e.label
+            if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
+            if (!(eLabel is FenceLabel && eLabel.labels.contains("ATOMIC_END"))) {
+                eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
+                    vars[varDecl] = isWrite || (vars[varDecl] ?: false)
+                }
+                processed.add(e)
+                unprocessed.addAll(e.target.outgoingEdges subtract processed)
+            }
+        }
+        return Pair(vars, true)
+    } else {
+        return Pair(label.collectGlobalVars(globalVars), false)
+    }
+}
+
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
     val symbolTable = SymbolTable()
     val scope = XcfaScope(symbolTable)

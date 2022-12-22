@@ -114,9 +114,11 @@ class XcfaDporLts(
         val enabledActions = getAllEnabledActionsFor(state)
         val enabledProcesses = enabledActions.map { it.pid }.toSet()
 
-        if (!last.detectedDisabledRaces && state.processes.size != enabledProcesses.size) {
-            TODO("disabled race detection")
+        if (!last.detectedDisabledRaces && state.processes.size != enabledProcesses.size && state.mutexes.containsKey("")) {
+            // TODO check enabled transition instead of enabled processes (this way, it may not work with LBE)
+            last.backtrack = enabledActions.toMutableSet()
             last.detectedDisabledRaces = true
+            TODO("proper disabled race detection")
         }
 
         if (enabledProcesses.isEmpty()) {

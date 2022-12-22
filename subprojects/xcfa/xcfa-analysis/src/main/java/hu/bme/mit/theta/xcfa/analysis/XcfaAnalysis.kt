@@ -31,14 +31,13 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
@@ -108,34 +107,6 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
     ErrorDetection.ERROR_LOCATION ->
         Predicate<XcfaState<out ExprState>>{ s -> s.processes.any { it.value.locs.peek().error }}
     ErrorDetection.DATA_RACE -> {
-        val collectGlobalVars: XcfaLabel.(List<VarDecl<*>>) -> Map<VarDecl<*>, Boolean> = { globalVars ->
-            collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
-        }
-        val getGlobalVars = { xcfa: XCFA, edge: XcfaEdge ->
-            val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
-            var label = edge.label
-            if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
-            if (label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")) {
-                val vars = mutableMapOf<VarDecl<*>, Boolean>() // true, if write
-                val processed = mutableSetOf<XcfaEdge>()
-                val unprocessed = mutableListOf(edge)
-                while (unprocessed.isNotEmpty()) {
-                    val e = unprocessed.removeFirst()
-                    var eLabel = e.label
-                    if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
-                    if (!(eLabel is FenceLabel && eLabel.labels.contains("ATOMIC_END"))) {
-                        eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
-                            vars[varDecl] = isWrite || (vars[varDecl] ?: false)
-                        }
-                        processed.add(e)
-                        unprocessed.addAll(e.target.outgoingEdges subtract processed)
-                    }
-                }
-                Pair(vars, true)
-            } else {
-                Pair(label.collectGlobalVars(globalVars), false)
-            }
-        }
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
             if (s.mutexes.containsKey("")) return@Predicate false
@@ -144,8 +115,8 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
-                                val (globalVars1, isAtomic1) = getGlobalVars(xcfa, edge1)
-                                val (globalVars2, isAtomic2) = getGlobalVars(xcfa, edge2)
+                                val (globalVars1, isAtomic1) = edge1.getGlobalVars(xcfa)
+                                val (globalVars2, isAtomic2) = edge2.getGlobalVars(xcfa)
                                 if(!isAtomic1 || !isAtomic2) {
                                     val intersection = globalVars1.keys intersect globalVars2.keys
                                     if (intersection.any { globalVars1[it] == true || globalVars2[it] == true })
