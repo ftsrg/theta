@@ -9,10 +9,10 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
 import java.util.stream.Stream
-import kotlin.NoSuchElementException
-import kotlin.collections.LinkedHashMap
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -23,6 +23,12 @@ class XcfaDporLts(
     private val xcfa: XCFA
 ) : LTS<S, A> {
 
+    private val backTransitions = mutableSetOf<XcfaEdge>()
+
+    init {
+        collectBackTransitions()
+    }
+
     private val random = Random.Default // or use Random(seed) with a seed
 
     private data class StackItem(
@@ -30,6 +36,7 @@ class XcfaDporLts(
         val processLastAction: Map<Int, Int>,
         val lastDependents: Map<Int, Map<Int, Int>>,
         var backtrack: MutableSet<A>? = null,
+        val done: MutableSet<A> = mutableSetOf(),
         var detectedDisabledRaces: Boolean = false,
     ) {
         val action: A get() = node.inEdge.get().action
@@ -83,11 +90,16 @@ class XcfaDporLts(
                 }
             }
 
+            last.done.add(newaction)
+            if (backTransitions.contains(newaction.edge)) {
+                last.backtrack = (getAllEnabledActionsFor(last.node.state) subtract last.done).toMutableSet()
+            }
+
             stack.push(
                 StackItem(
                     node = item,
                     processLastAction = newProcessLastAction,
-                    lastDependents = last.lastDependents.toMutableMap().apply { this[process] = newLastDependents }
+                    lastDependents = last.lastDependents.toMutableMap().apply { this[process] = newLastDependents },
                 )
             )
         }
@@ -123,9 +135,9 @@ class XcfaDporLts(
 
         if (!last.detectedDisabledRaces && state.processes.size != enabledProcesses.size && state.mutexes.containsKey("")) {
             // TODO check enabled transition instead of enabled processes (this way, it may not work with LBE)
+            // TODO proper disabled race detection
             last.backtrack = enabledActions.toMutableSet()
             last.detectedDisabledRaces = true
-            TODO("proper disabled race detection")
         }
 
         if (enabledProcesses.isEmpty()) {
@@ -136,8 +148,6 @@ class XcfaDporLts(
         if (last.backtrack == null) {
             val randomProcess = enabledProcesses.random(random)
             last.backtrack = enabledActions.filter { it.pid == randomProcess }.toMutableSet()
-
-            // TODO if backward transition: add all enabled actions to backtrack set, prefer not backward ones
         }
 
         val actionToExplore = last.backtrack!!.random()
@@ -160,7 +170,7 @@ class XcfaDporLts(
 
     private fun notdep(start: Int, action: A): List<A> {
         val e = stack[start].action
-        return stack.slice((start + 1)..stack.size)
+        return stack.slice(start + 1 until stack.size)
             .map { it.action }
             .filter { !dependent(e, it) }
             .toMutableList().apply { add(action) }
@@ -177,5 +187,27 @@ class XcfaDporLts(
             }
             true
         }.toSet()
+    }
+
+    private fun collectBackTransitions() {
+        for (procedure in xcfa.procedures) {
+            // DFS for every procedure of the XCFA to discover back edges
+            val visitedLocations: MutableSet<XcfaLocation> = mutableSetOf()
+            val stack = Stack<XcfaLocation>()
+
+            stack.push(procedure.initLoc) // start from the initial location of the procedure
+            while (!stack.isEmpty()) {
+                val visiting = stack.pop()
+                visitedLocations.add(visiting)
+                for (outgoingEdge in visiting.outgoingEdges) {
+                    val target = outgoingEdge.target
+                    if (visitedLocations.contains(target)) { // backward edge
+                        backTransitions.add(outgoingEdge)
+                    } else {
+                        stack.push(target)
+                    }
+                }
+            }
+        }
     }
 }
