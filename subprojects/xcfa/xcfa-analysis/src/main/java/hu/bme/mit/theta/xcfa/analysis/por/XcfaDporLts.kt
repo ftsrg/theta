@@ -8,9 +8,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import java.util.stream.Stream
 import kotlin.math.max
@@ -19,25 +17,24 @@ import kotlin.random.Random
 private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 
-class XcfaDporLts(
-    private val xcfa: XCFA
-) : LTS<S, A> {
+class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     private val backTransitions = mutableSetOf<XcfaEdge>()
 
     init {
         collectBackTransitions()
+        println(xcfa.toDot())
     }
 
-    private val random = Random.Default // or use Random(seed) with a seed
+    private val random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
     private data class StackItem(
         val node: ArgNode<out S, A>,
         val processLastAction: Map<Int, Int>,
         val lastDependents: Map<Int, Map<Int, Int>>,
         var backtrack: MutableSet<A>? = null,
+        val sleep: MutableSet<A> = mutableSetOf(),
         val done: MutableSet<A> = mutableSetOf(),
-        var detectedDisabledRaces: Boolean = false,
     ) {
         val action: A get() = node.inEdge.get().action
     }
@@ -62,9 +59,19 @@ class XcfaDporLts(
             }
 
             val newaction = item.inEdge.get().action
+            last.backtrack!!.remove(newaction)
+            last.done.add(newaction)
+            last.sleep.add(newaction)
+            if (backTransitions.contains(newaction.edge)) {
+                // TODO replace over-approximation with exact match (covering...)
+                last.backtrack = (getAllEnabledActionsFor(last.node.state) subtract last.done).toMutableSet()
+            }
+
             val process = newaction.pid
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size - 1 }
-            var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf())
+            var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf()).apply {
+                this[process] = stack.size
+            }
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
             for (index in stack.size - 1 downTo 1) {
@@ -77,71 +84,83 @@ class XcfaDporLts(
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
                         // reversible race
+                        newLastDependents[action.pid] = index
+                        newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
+                        relevantProcesses.remove(action.pid)
+
                         val v = notdep(index, newaction)
-                        val iv = initials(index, v)
+                        val iv = initials(index - 1, v)
+                        if(iv.isEmpty()) continue // due to mutex (e.g. atomic block)
+
                         val backtrack = stack[index - 1].backtrack!!
                         if ((iv intersect backtrack).isEmpty()) {
                             backtrack.add(iv.random(random))
                         }
-                        newLastDependents[action.pid] = index
-                        newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
-                        relevantProcesses.remove(action.pid)
                     }
                 }
             }
 
-            last.done.add(newaction)
-            if (backTransitions.contains(newaction.edge)) {
-                last.backtrack = (getAllEnabledActionsFor(last.node.state) subtract last.done).toMutableSet()
-            }
-
+            val newProcesses = item.state.processes.keys subtract last.node.state.processes.keys
             stack.push(
                 StackItem(
                     node = item,
                     processLastAction = newProcessLastAction,
-                    lastDependents = last.lastDependents.toMutableMap().apply { this[process] = newLastDependents },
+                    lastDependents = last.lastDependents.toMutableMap().apply {
+                        this[process] = newLastDependents
+                        newProcesses.forEach {
+                            this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
+                        }
+                    },
+                    sleep = last.sleep.filter { !dependent(it, newaction) }.toMutableSet()
                 )
             )
         }
 
         override fun addAll(items: Collection<ArgNode<out S, A>>) {
-            assert(items.size == 1) // TODO <=
-            add(items.first())
+            require(items.size <= 1)
+            if (items.isNotEmpty()) add(items.first())
         }
 
         override fun addAll(items: Stream<out ArgNode<out S, A>>) {
             val iterator = items.iterator()
-            add(iterator.next()) // TODO if (iterator.hasNext())
-            assert(!iterator.hasNext())
+            if (iterator.hasNext()) add(iterator.next())
+            require(!iterator.hasNext())
         }
 
-        override fun isEmpty() = stack.isEmpty()
+        override fun isEmpty(): Boolean {
+            clearReadyItems()
+            return stack.isEmpty()
+        }
 
         override fun remove(): ArgNode<out S, A> {
+            clearReadyItems()
             if (isEmpty) throw NoSuchElementException("The search stack is empty.")
-            return stack.peek().node
+            return last.node
         }
 
         override fun size() = stack.count { it.backtrack == null || it.backtrack!!.isNotEmpty() }
 
         override fun clear() = stack.clear()
+
+        private fun clearReadyItems() {
+            while (stack.isNotEmpty() && (last.node.isSubsumed || last.backtrack?.isEmpty() == true)) stack.pop()
+        }
     }
 
     override fun getEnabledActionsFor(state: S): Set<A> {
         assert(state == last.node.state)
 
-        val enabledActions = getAllEnabledActionsFor(state)
+        val enabledActions = getAllEnabledActionsFor(state) subtract last.sleep
         val enabledProcesses = enabledActions.map { it.pid }.toSet()
 
-        if (!last.detectedDisabledRaces && state.processes.size != enabledProcesses.size && state.mutexes.containsKey("")) {
+        if (last.backtrack == null && state.processes.size != enabledProcesses.size && state.mutexes.containsKey("")) {
             // TODO check enabled transition instead of enabled processes (this way, it may not work with LBE)
             // TODO proper disabled race detection
             last.backtrack = enabledActions.toMutableSet()
-            last.detectedDisabledRaces = true
         }
 
         if (enabledProcesses.isEmpty()) {
-            do stack.pop() while (stack.isNotEmpty() && last.backtrack!!.isEmpty())
+            last.backtrack = mutableSetOf()
             return emptySet()
         }
 
@@ -151,8 +170,6 @@ class XcfaDporLts(
         }
 
         val actionToExplore = last.backtrack!!.random()
-        last.backtrack!!.remove(actionToExplore)
-
         return setOf(actionToExplore)
     }
 
@@ -190,6 +207,7 @@ class XcfaDporLts(
     }
 
     private fun collectBackTransitions() {
+        // TODO replace with state check in Waitlist::add
         for (procedure in xcfa.procedures) {
             // DFS for every procedure of the XCFA to discover back edges
             val visitedLocations: MutableSet<XcfaLocation> = mutableSetOf()
