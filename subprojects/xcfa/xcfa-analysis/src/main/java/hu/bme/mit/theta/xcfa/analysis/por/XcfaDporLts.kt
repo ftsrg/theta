@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
@@ -10,20 +11,41 @@ import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
+import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.math.max
+import kotlin.properties.ReadWriteProperty
 import kotlin.random.Random
+import kotlin.reflect.KProperty
 
 private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 
+private class ExtensionProperty<T> : ReadWriteProperty<State, T?> {
+    val map = mutableMapOf<State, T?>()
+    override fun getValue(thisRef: State, property: KProperty<*>) = map[thisRef]
+    override fun setValue(thisRef: State, property: KProperty<*>, value: T?) {
+        map[thisRef] = value
+    }
+}
+
+private fun <T> extension() = ExtensionProperty<T>()
+
+var State.reachedNumber: Int? by extension()
+var State.backtrack: Set<A>? by extension()
+var State.sleep: Set<A>? by extension()
+
+
+/**
+ * Dynamic partial order reduction algorithm for state space exploration.
+ * @see <a href="https://doi.org/10.1145/3073408">Source Sets: A Foundation for Optimal Dynamic Partial Order Reduction</a>
+ */
 class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     private val backTransitions = mutableSetOf<XcfaEdge>()
 
     init {
         collectBackTransitions()
-        println(xcfa.toDot())
     }
 
     private val random = Random.Default // use Random(seed) with a seed or Random.Default without seed
@@ -35,8 +57,10 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         var backtrack: MutableSet<A>? = null,
         val sleep: MutableSet<A> = mutableSetOf(),
         val done: MutableSet<A> = mutableSetOf(),
+        val mutexLocks: MutableMap<String, Int> = mutableMapOf(),
     ) {
         val action: A get() = node.inEdge.get().action
+        val state: S get() = node.state
     }
 
     private val simpleXcfaLts = getXcfaLts()
@@ -49,22 +73,26 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     val waitlist = object : Waitlist<ArgNode<out S, A>> {
 
+        var counter = 0
+
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
         override fun add(item: ArgNode<out S, A>) {
+            item.state.reachedNumber = counter++
             if (!item.inEdge.isPresent) {
                 stack.push(StackItem(item, LinkedHashMap(), LinkedHashMap()))
                 return
             }
 
             val newaction = item.inEdge.get().action
-            last.backtrack!!.remove(newaction)
+            val bottom = item.state.isBottom
+            //last.backtrack!!.remove(newaction)
             last.done.add(newaction)
             last.sleep.add(newaction)
             if (backTransitions.contains(newaction.edge)) {
                 // TODO replace over-approximation with exact match (covering...)
-                last.backtrack = (getAllEnabledActionsFor(last.node.state) subtract last.done).toMutableSet()
+                last.backtrack = (getAllEnabledActionsFor(last.state) subtract last.done).toMutableSet()
             }
 
             val process = newaction.pid
@@ -79,28 +107,40 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 val node = stack[index].node
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
-                    if (index <= (newLastDependents[action.pid] ?: -1)) {
+                    if (newLastDependents.containsKey(action.pid) && index <= newLastDependents[action.pid]!!) {
                         // there is an action a' such that  action -> a' -> newaction  (->: happens-before)
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
                         // reversible race
-                        newLastDependents[action.pid] = index
-                        newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
-                        relevantProcesses.remove(action.pid)
-
                         val v = notdep(index, newaction)
                         val iv = initials(index - 1, v)
-                        if(iv.isEmpty()) continue // due to mutex (e.g. atomic block)
+                        if (iv.isEmpty()) continue // due to mutex (e.g. atomic block)
 
                         val backtrack = stack[index - 1].backtrack!!
                         if ((iv intersect backtrack).isEmpty()) {
                             backtrack.add(iv.random(random))
                         }
+
+                        newLastDependents[action.pid] = index
+                        newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
+                        relevantProcesses.remove(action.pid)
                     }
                 }
             }
 
-            val newProcesses = item.state.processes.keys subtract last.node.state.processes.keys
+            // DEBUG
+            last.state.backtrack = last.backtrack
+            last.state.sleep = last.sleep
+            // GUBED
+
+            // MUTEXES
+            val oldMutexes = last.state.mutexes.keys
+            val newMutexes = item.state.mutexes.keys
+            val lockedMutexes = newMutexes - oldMutexes
+            val releasedMutexes = oldMutexes - newMutexes
+            releasedMutexes.forEach { m -> last.mutexLocks[m]?.let { stack[it].mutexLocks.remove(m) } }
+
+            val newProcesses = item.state.processes.keys subtract last.state.processes.keys
             stack.push(
                 StackItem(
                     node = item,
@@ -111,7 +151,11 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                             this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
                         }
                     },
-                    sleep = last.sleep.filter { !dependent(it, newaction) }.toMutableSet()
+                    sleep = last.sleep.filter { !dependent(it, newaction) }.toMutableSet(),
+                    mutexLocks = last.mutexLocks.apply {
+                        lockedMutexes.forEach { this[it] = stack.size }
+                        releasedMutexes.forEach(::remove)
+                    }
                 )
             )
         }
@@ -128,12 +172,28 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         }
 
         override fun isEmpty(): Boolean {
-            clearReadyItems()
+            while (stack.isNotEmpty() &&
+                (last.node.isSubsumed || last.backtrack?.subtract(last.sleep)?.isEmpty() == true)
+            ) {
+                if (stack.size >= 2) {
+                    val lastButOne = stack[stack.size - 2]
+                    if (last.mutexLocks.containsKey("") &&
+                        (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
+                    ) {
+                        val disabledDueToLock = getAllEnabledActionsFor(lastButOne.state)
+                            .filter { it.pid != last.state.mutexes[""] && !lastButOne.sleep.contains(it) }.toSet()
+                        val explored = lastButOne.node.outEdges.map { it.action }.collect(Collectors.toSet())
+                        if (disabledDueToLock.isNotEmpty() && (explored intersect disabledDueToLock).isEmpty()) {
+                            lastButOne.backtrack!!.add(disabledDueToLock.random(random))
+                        }
+                    }
+                }
+                stack.pop()
+            }
             return stack.isEmpty()
         }
 
         override fun remove(): ArgNode<out S, A> {
-            clearReadyItems()
             if (isEmpty) throw NoSuchElementException("The search stack is empty.")
             return last.node
         }
@@ -141,35 +201,25 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         override fun size() = stack.count { it.backtrack == null || it.backtrack!!.isNotEmpty() }
 
         override fun clear() = stack.clear()
-
-        private fun clearReadyItems() {
-            while (stack.isNotEmpty() && (last.node.isSubsumed || last.backtrack?.isEmpty() == true)) stack.pop()
-        }
     }
 
     override fun getEnabledActionsFor(state: S): Set<A> {
-        assert(state == last.node.state)
+        assert(state == last.state)
 
         val enabledActions = getAllEnabledActionsFor(state) subtract last.sleep
         val enabledProcesses = enabledActions.map { it.pid }.toSet()
 
-        if (last.backtrack == null && state.processes.size != enabledProcesses.size && state.mutexes.containsKey("")) {
-            // TODO check enabled transition instead of enabled processes (this way, it may not work with LBE)
-            // TODO proper disabled race detection
-            last.backtrack = enabledActions.toMutableSet()
-        }
-
-        if (enabledProcesses.isEmpty()) {
-            last.backtrack = mutableSetOf()
-            return emptySet()
-        }
-
         if (last.backtrack == null) {
-            val randomProcess = enabledProcesses.random(random)
-            last.backtrack = enabledActions.filter { it.pid == randomProcess }.toMutableSet()
+            if (enabledProcesses.isEmpty()) {
+                last.backtrack = mutableSetOf()
+                return emptySet()
+            }
+
+            last.backtrack = mutableSetOf(enabledActions.random(random))
         }
 
-        val actionToExplore = last.backtrack!!.random()
+        val actionToExplore = (last.backtrack!! subtract last.sleep).random() // not empty, see isEmpty
+        last.backtrack!!.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
         return setOf(actionToExplore)
     }
 
@@ -180,6 +230,7 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
         if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+            // they access the same variable (at least one write)
             return true
         }
         return false

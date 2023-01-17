@@ -23,13 +23,10 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
 import java.util.concurrent.TimeUnit;
 
@@ -107,10 +104,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			}
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
-
-		System.out.println("Printing ARG..." + System.lineSeparator());
-		Graph g = ArgVisualizer.getDefault().visualize(arg);
-		System.out.println(GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
 
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
