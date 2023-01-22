@@ -87,6 +87,9 @@ fun XcfaLabel.collectVarsWithAccessType(): Map<VarDecl<*>, Boolean> = when(this)
 fun XcfaLabel.collectGlobalVars(globalVars: List<VarDecl<*>>) =
     collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
 
+inline val XcfaLabel.isAtomicBegin get() = this is FenceLabel && this.labels.contains("ATOMIC_BEGIN")
+inline val XcfaLabel.isAtomicEnd get() = this is FenceLabel && this.labels.contains("ATOMIC_END")
+
 /**
  * Returns the global variables (potentially indirectly) accessed by the edge.
  * If the edge starts an atomic block, all variable accesses in the atomic block is returned.
@@ -96,7 +99,7 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, Boolean> {
     val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
     var label = this.label
     if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
-    if (label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")) {
+    if (label.isAtomicBegin || (label is SequenceLabel && label.labels.any { it.isAtomicBegin } && label.labels.none { it.isAtomicEnd })) {
         val vars = mutableMapOf<VarDecl<*>, Boolean>() // true, if write
         val processed = mutableSetOf<XcfaEdge>()
         val unprocessed = mutableListOf(this)
@@ -104,11 +107,11 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, Boolean> {
             val e = unprocessed.removeFirst()
             var eLabel = e.label
             if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
-            if (!(eLabel is FenceLabel && eLabel.labels.contains("ATOMIC_END"))) {
-                eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
-                    vars[varDecl] = isWrite || (vars[varDecl] ?: false)
-                }
-                processed.add(e)
+            eLabel.collectGlobalVars(globalVars).forEach { (varDecl, isWrite) ->
+                vars[varDecl] = isWrite || (vars[varDecl] ?: false)
+            }
+            processed.add(e)
+            if (!(eLabel.isAtomicEnd || (eLabel is SequenceLabel && eLabel.labels.any { it.isAtomicEnd }))) {
                 unprocessed.addAll(e.target.outgoingEdges subtract processed)
             }
         }
