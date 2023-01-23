@@ -47,7 +47,7 @@ var State.backtrack: Set<A>? by nullableExtension()
 var State.sleep: Set<A>? by nullableExtension()
 // GUBED
 
-var Node.backtrack: MutableSet<A>? by nullableExtension()
+var Node.backtrack: MutableSet<A> by extension()
 var Node.sleep: MutableSet<A> by extension()
 
 val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
@@ -58,10 +58,7 @@ val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.
  */
 class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
-    private val backTransitions = mutableSetOf<XcfaEdge>()
-
     init {
-        collectBackTransitions()
         System.err.println(xcfa.toDot())
     }
 
@@ -73,18 +70,19 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val node: Node,
         val processLastAction: Map<Int, Int> = mutableMapOf(),
         val lastDependents: Map<Int, Map<Int, Int>> = mutableMapOf(),
-        val done: MutableSet<A> = mutableSetOf(),
         val mutexLocks: MutableMap<String, Int> = mutableMapOf(),
-        private val initialSleep: MutableSet<A> = mutableSetOf()
+        private val _backtrack: MutableSet<A> = mutableSetOf(),
+        private val _sleep: MutableSet<A> = mutableSetOf(),
     ) {
         val action: A get() = node.inEdge.get().action
         val state: S get() = node.state
-        var backtrack: MutableSet<A>? by node::backtrack
+        var backtrack: MutableSet<A> by node::backtrack
         var sleep: MutableSet<A> by node::sleep
             private set
 
         init {
-            sleep = initialSleep
+            backtrack = _backtrack
+            sleep = _sleep
         }
 
         override fun toString() = action.toString()
@@ -134,22 +132,14 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 virtualTraversal(last.node.coveringNode.get(), last.sleep)
             }
             while (stack.isNotEmpty() &&
-                (last.node.isSubsumed || last.backtrack?.subtract(last.sleep)?.isEmpty() == true)
+                (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
             ) {
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
-                    if (last.state.isBottom || (last.mutexLocks.containsKey("") &&
-                                (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(""))
-                    ) {
-                        val disabledDueToLock = getAllEnabledActionsFor(lastButOne.state)
-                            .filter {
-                                (last.state.isBottom && it != last.node.inEdge.get().action) ||
-                                        (it.pid != last.state.mutexes[""] && !lastButOne.sleep.contains(it))
-                            }.toSet()
-                        val explored = lastButOne.node.outEdges.map { it.action }.collect(Collectors.toSet())
-                        if (disabledDueToLock.isNotEmpty() && (explored intersect disabledDueToLock).isEmpty()) {
-                            lastButOne.backtrack!!.add(disabledDueToLock.random(random))
-                        }
+                    val mutexNeverReleased = last.mutexLocks.containsKey("") &&
+                            (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
+                    if (last.node.explored.isEmpty() || mutexNeverReleased) {
+                        lastButOne.backtrack = getAllEnabledActionsFor(lastButOne.state).toMutableSet()
                     }
                 }
                 stack.pop()
@@ -162,23 +152,18 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             return last.node
         }
 
-        override fun size() = stack.count { it.backtrack == null || it.backtrack!!.isNotEmpty() }
+        override fun size() = stack.count { it.backtrack.isNotEmpty() }
 
         override fun clear() = stack.clear()
 
         private fun push(item: Node, virtualLimit: Int) {
             if (!item.inEdge.isPresent) {
-                stack.push(StackItem(item))
+                stack.push(StackItem(item, _backtrack = getAllEnabledActionsFor(item.state).toMutableSet()))
                 return
             }
 
             val newaction = item.inEdge.get().action
-            last.done.add(newaction)
             last.sleep.add(newaction)
-            if (backTransitions.contains(newaction.edge)) {
-                // TODO replace over-approximation with exact match (covering...)
-                last.backtrack = (getAllEnabledActionsFor(last.state) subtract last.done).toMutableSet()
-            }
 
             val process = newaction.pid
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size - 1 }
@@ -187,6 +172,7 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             }
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
+            // Race detection
             for (index in stack.size - 1 downTo 1) {
                 if (relevantProcesses.isEmpty()) break
                 val node = stack[index].node
@@ -202,7 +188,7 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                             val iv = initials(index - 1, v)
                             if (iv.isEmpty()) continue // due to mutex (e.g. atomic block)
 
-                            val backtrack = stack[index - 1].backtrack!!
+                            val backtrack = stack[index - 1].backtrack
                             if ((iv intersect backtrack).isEmpty()) {
                                 backtrack.add(iv.random(random))
                             }
@@ -215,14 +201,19 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 }
             }
 
-            // MUTEXES
+            // Set properties of new stack item
+            val newProcesses = item.state.processes.keys subtract last.state.processes.keys
+
             val oldMutexes = last.state.mutexes.keys
             val newMutexes = item.state.mutexes.keys
             val lockedMutexes = newMutexes - oldMutexes
             val releasedMutexes = oldMutexes - newMutexes
             releasedMutexes.forEach { m -> last.mutexLocks[m]?.let { stack[it].mutexLocks.remove(m) } }
 
-            val newProcesses = item.state.processes.keys subtract last.state.processes.keys
+            val newSleep = last.sleep.filter { !dependent(it, newaction) }.toMutableSet()
+            val enabledActions = getAllEnabledActionsFor(item.state) subtract newSleep
+            val enabledProcesses = enabledActions.map { it.pid }.toSet()
+
             stack.push(
                 StackItem(
                     node = item,
@@ -233,44 +224,38 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                             this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
                         }
                     },
-                    initialSleep = last.sleep.filter { !dependent(it, newaction) }.toMutableSet(),
                     mutexLocks = last.mutexLocks.apply {
                         lockedMutexes.forEach { this[it] = stack.size }
                         releasedMutexes.forEach(::remove)
-                    }
+                    },
+                    _backtrack = if (enabledProcesses.isEmpty()) {
+                        mutableSetOf()
+                    } else {
+                        mutableSetOf(enabledActions.random(random))
+                    },
+                    _sleep = newSleep,
                 )
             )
         }
 
-        private fun virtualTraversal(node: Node, _originalSleep: Set<A>) {
-            var originalSleep: Set<A>? = _originalSleep.toSet()
+        private fun virtualTraversal(node: Node, originalSleep: Set<A>) {
+            stack.find { it.node == node }?.let { // a cycle in the state space
+                it.backtrack = getAllEnabledActionsFor(it.state).toMutableSet()
+                return
+            }
+            //val sleepDiff = node.sleep subtract node.explored subtract originalSleep
+            // TODO eradicate sleepDiff elements from sleep sets in reachable nodes
+
             val originalStackSize = stack.size
-            //val originalActions = stack.map { it.action }.toSet() // TODO skip some actions
             val virtualStack = Stack<Node>()
             virtualStack.push(node)
             while (virtualStack.isNotEmpty()) {
                 val visiting = virtualStack.pop()
-                if (originalSleep != null) { // Reached via a cover edge
-                    val sleepDelta = (visiting.sleep subtract originalSleep subtract visiting.explored).toMutableSet()
-                    var virtualRoot = visiting
-                    while (sleepDelta.isNotEmpty()) {
-                        virtualRoot = virtualRoot.parent.get()
-                        val intersection = virtualRoot.explored intersect sleepDelta
-                        if (intersection.isNotEmpty()) {
-                            virtualRoot.outEdges.filter { intersection.contains(it.action) }
-                                .forEach { virtualStack.push(it.target) }
-                            sleepDelta.removeAll(intersection)
-                        }
-                    }
-                    originalSleep = null
-                } else {
-                    while (stack.size > originalStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
-                    push(visiting, originalStackSize)
-                }
+                while (stack.size > originalStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
+                push(visiting, originalStackSize)
                 if (visiting.isCovered) {
                     val coveringNode = visiting.coveringNode.get()
-                    virtualStack.push(coveringNode)
-                    originalSleep = visiting.sleep
+                    virtualTraversal(coveringNode, visiting.sleep)
                 } else {
                     visiting.outEdges.forEach { virtualStack.push(it.target) }
                 }
@@ -281,21 +266,12 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     override fun getEnabledActionsFor(state: S): Set<A> {
         require(state == last.state)
+        val possibleActions = last.backtrack subtract last.sleep
+        if (possibleActions.isEmpty()) return emptySet()
 
-        val enabledActions = getAllEnabledActionsFor(state) subtract last.sleep
-        val enabledProcesses = enabledActions.map { it.pid }.toSet()
-
-        if (last.backtrack == null) {
-            if (enabledProcesses.isEmpty()) {
-                last.backtrack = mutableSetOf()
-                return emptySet()
-            }
-
-            last.backtrack = mutableSetOf(enabledActions.random(random))
-        }
-
-        val actionToExplore = (last.backtrack!! subtract last.sleep).random() // not empty, see isEmpty
-        last.backtrack!!.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
+        val actionToExplore = possibleActions.random()
+        val enabledActions = getAllEnabledActionsFor(state)
+        last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
         return setOf(actionToExplore)
     }
 
@@ -331,28 +307,5 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             }
             true
         }.toSet()
-    }
-
-    private fun collectBackTransitions() {
-        // TODO replace with state check in Waitlist::add
-        for (procedure in xcfa.procedures) {
-            // DFS for every procedure of the XCFA to discover back edges
-            val visitedLocations: MutableSet<XcfaLocation> = mutableSetOf()
-            val stack = Stack<XcfaLocation>()
-
-            stack.push(procedure.initLoc) // start from the initial location of the procedure
-            while (!stack.isEmpty()) {
-                val visiting = stack.pop()
-                visitedLocations.add(visiting)
-                for (outgoingEdge in visiting.outgoingEdges) {
-                    val target = outgoingEdge.target
-                    if (visitedLocations.contains(target)) { // backward edge
-                        backTransitions.add(outgoingEdge)
-                    } else {
-                        stack.push(target)
-                    }
-                }
-            }
-        }
     }
 }
