@@ -41,10 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.analysis.por.AtomicNodePruner
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaAbstractPorLts
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaPorLts
+import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.collectVars
@@ -57,12 +54,15 @@ enum class Backend {
     LAZY
 }
 
-enum class POR(val getLts: (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) ->
-                            LTS<XcfaState<out ExprState>, XcfaAction>) {
-    NOPOR({_, _ -> getXcfaLts() }),
-    BASIC({xcfa, _ -> XcfaPorLts(xcfa) }),
-    DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }),
-    AAPOR({xcfa, registry -> XcfaAbstractPorLts(xcfa, registry) })
+enum class POR(
+    val getLts: (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) -> LTS<XcfaState<out ExprState>, XcfaAction>,
+    val isDynamic: Boolean
+) {
+    NOPOR({_, _ -> getXcfaLts() }, false),
+    BASIC({xcfa, _ -> XcfaPorLts(xcfa) }, false),
+    DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }, true),
+    AAPOR({xcfa, registry -> XcfaAbstractPorLts(xcfa, registry) }, false),
+    AADPOR({xcfa, _ -> XcfaAadporLts(xcfa) }, true)
 }
 
 enum class Strategy {

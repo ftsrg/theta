@@ -94,7 +94,7 @@ data class XcfaCegarConfig(
         val ignoredVarRegistry: Map<Decl<out Type>, Set<XcfaState<*>>> = LinkedHashMap()
 
         val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
-        val waitlist = if(porLevel == POR.DPOR) {
+        val waitlist = if(porLevel.isDynamic) {
             (lts as XcfaDporLts).waitlist
         } else {
             PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(search.getComp(xcfa))
@@ -111,7 +111,7 @@ data class XcfaCegarConfig(
                 logger,
                 lts,
                 errorDetectionType,
-                if(porLevel == POR.DPOR) {
+                if(porLevel.isDynamic) {
                     XcfaDporLts.getPartialOrder(corePartialOrd)
                 } else {
                     corePartialOrd

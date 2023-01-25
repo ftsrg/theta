@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -52,13 +53,13 @@ var State.sleep: MutableSet<A> by extension() // TODO private
 val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
 /**
- * Dynamic partial order reduction algorithm for state space exploration.
+ * Dynamic partial order reduction (DPOR) algorithm for state space exploration.
  * @see <a href="https://doi.org/10.1145/3073408">Source Sets: A Foundation for Optimal Dynamic Partial Order Reduction</a>
  */
-class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
+open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     init {
-        System.err.println(xcfa.toDot())
+        //System.err.println(xcfa.toDot())
     }
 
     companion object {
@@ -113,9 +114,6 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     val waitlist = object : Waitlist<Node> {
 
         var counter = 0
-
-        private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
-            (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
         override fun add(item: Node) {
             item.state.reachedNumber = counter++
@@ -265,31 +263,21 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 val visiting = virtualStack.pop()
                 while (stack.size > startStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
 
-                if (push(visiting, startStackSize) && !noInfluenceOnRealExploration(realStackSize)) {
-                    // visiting is not on the stack: no cycle && further virtual exploration can influence real exploration
-                    if (visiting.isCovered) {
-                        val coveringNode = visiting.coveringNode.get()
-                        virtualExploration(coveringNode, realStackSize)
-                    } else {
-                        visiting.outEdges.forEach { virtualStack.push(it.target) }
-                    }
+                if (!push(visiting, startStackSize) || noInfluenceOnRealExploration(realStackSize)) continue
+
+                // visiting is not on the stack: no cycle && further virtual exploration can influence real exploration
+                if (visiting.isCovered) {
+                    val coveringNode = visiting.coveringNode.get()
+                    virtualExploration(coveringNode, realStackSize)
+                } else {
+                    visiting.outEdges.forEach { virtualStack.push(it.target) }
                 }
             }
             while (stack.size > startStackSize) stack.pop()
         }
 
-        private fun dependent(a: A, b: A): Boolean {
-            if (a.pid == b.pid) return true
-
-            // TODO caching...
-            val aGlobalVars = a.edge.getGlobalVars(xcfa)
-            val bGlobalVars = b.edge.getGlobalVars(xcfa)
-            if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
-                // they access the same variable (at least one write)
-                return true
-            }
-            return false
-        }
+        private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
+            (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
@@ -317,5 +305,42 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 index >= realStackSize || index >= last.processLastAction[otherProcess]!!
             }
         }
+    }
+
+    protected open fun dependent(a: A, b: A): Boolean {
+        if (a.pid == b.pid) return true
+
+        val aGlobalVars = a.edge.getGlobalVars(xcfa)
+        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+            // they access the same variable (at least one write)
+            return true
+        }
+        return false
+    }
+}
+
+/**
+ * Abstraction-aware dynamic partial order reduction (AADPOR) algorithm for state space exploration.
+ */
+class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
+
+    private lateinit var prec: Prec
+    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: MutableCollection<A>?, prec: P): Set<A> {
+        this.prec = prec
+        return getEnabledActionsFor(state)
+    }
+
+    override fun dependent(a: A, b: A): Boolean {
+        if (a.pid == b.pid) return true
+
+        val aGlobalVars = a.edge.getGlobalVars(xcfa)
+        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        val precVars = prec.usedVars.toSet()
+        if ((aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+            // they access the same variable in the precision (at least one write)
+            return true
+        }
+        return false
     }
 }
