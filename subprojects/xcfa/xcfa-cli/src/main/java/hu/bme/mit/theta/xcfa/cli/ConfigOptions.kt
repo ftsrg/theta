@@ -57,9 +57,8 @@ enum class Backend {
     LAZY
 }
 
-enum class POR(val getLts:
-               (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) ->
-                    LTS<XcfaState<out ExprState>, XcfaAction>) {
+enum class POR(val getLts: (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) ->
+                            LTS<XcfaState<out ExprState>, XcfaAction>) {
     NOPOR({_, _ -> getXcfaLts() }),
     BASIC({xcfa, _ -> XcfaPorLts(xcfa) }),
     DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }),
@@ -77,6 +76,7 @@ enum class Portfolio {
     COMPLEX
 }
 
+// TODO partial orders nicely
 enum class Domain(
         val abstractor: (
             xcfa: XCFA,
@@ -86,7 +86,8 @@ enum class Domain(
             stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
             logger: Logger,
             lts: LTS<XcfaState<out ExprState>, XcfaAction>,
-            errorDetectionType: ErrorDetection
+            errorDetectionType: ErrorDetection,
+            partialOrd: PartialOrd<out XcfaState<out ExprState>>
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
         val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
         val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
@@ -96,7 +97,7 @@ enum class Domain(
 ) {
 
         EXPL(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<ExplState>>), d, e, f, g, h) },
             itpPrecRefiner = { XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec()) },
             initPrec = { x, ip -> ip.explPrec(x) },
             partialOrd = { getPartialOrder<ExplState> {s1, s2 -> s1.isLeq(s2)} },
@@ -104,7 +105,7 @@ enum class Domain(
             stateType = TypeToken.get(ExplState::class.java).type
         ),
         PRED_BOOL(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -112,7 +113,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_CART(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -120,7 +121,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_SPLIT(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },

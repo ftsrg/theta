@@ -178,8 +178,8 @@ private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int): (XcfaState<ExplS
     }
 }
 
-class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int) : XcfaAnalysis<ExplState, ExplPrec>(
-        corePartialOrd = getPartialOrder { s1, s2 -> s1.isLeq(s2) },
+class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int, partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
+        corePartialOrd = partialOrd,
         coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
         coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
 )
@@ -202,8 +202,8 @@ private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor)
     }
 }
 
-class PredXcfaAnalaysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor) : XcfaAnalysis<PredState, PredPrec>(
-        corePartialOrd = getPartialOrder(PredOrd.create(solver)),
+class PredXcfaAnalaysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor, partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
+        corePartialOrd = partialOrd,
         coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
         coreTransFunc = getPredXcfaTransFunc(predAbstractor)
 )

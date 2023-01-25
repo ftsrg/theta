@@ -21,6 +21,7 @@ import com.google.gson.reflect.TypeToken
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
+import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
@@ -99,15 +100,22 @@ data class XcfaCegarConfig(
             PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(search.getComp(xcfa))
         }
 
+        val abstractionSolverInstance = abstractionSolverFactory.createSolver()
+        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(abstractionSolverInstance)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
                 xcfa,
-                abstractionSolverFactory.createSolver(),
+                abstractionSolverInstance,
                 maxEnum,
                 waitlist,
                 refinement.stopCriterion,
                 logger,
                 lts,
-                errorDetectionType
+                errorDetectionType,
+                if(porLevel == POR.DPOR) {
+                    XcfaDporLts.getPartialOrder(corePartialOrd)
+                } else {
+                    corePartialOrd
+                }
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =

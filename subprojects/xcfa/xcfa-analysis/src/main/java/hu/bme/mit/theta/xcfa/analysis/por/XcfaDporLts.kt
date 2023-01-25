@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -43,12 +44,10 @@ private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
 
 // DEBUG
 var State.reachedNumber: Int? by nullableExtension()
-var State.backtrack: Set<A>? by nullableExtension()
-var State.sleep: Set<A>? by nullableExtension()
 // GUBED
 
-var Node.backtrack: MutableSet<A> by extension()
-var Node.sleep: MutableSet<A> by extension()
+var State.backtrack: MutableSet<A> by extension() // TODO private
+var State.sleep: MutableSet<A> by extension() // TODO private
 
 val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
@@ -64,6 +63,9 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     companion object {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
+
+        fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
+            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep) }
     }
 
     private data class StackItem(
@@ -76,8 +78,8 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     ) {
         val action: A get() = node.inEdge.get().action
         val state: S get() = node.state
-        var backtrack: MutableSet<A> by node::backtrack
-        var sleep: MutableSet<A> by node::sleep
+        var backtrack: MutableSet<A> by node.state::backtrack
+        var sleep: MutableSet<A> by node.state::sleep
             private set
 
         init {
@@ -95,6 +97,18 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     private val last get() = stack.peek()
 
     private fun getAllEnabledActionsFor(state: S): Set<A> = simpleXcfaLts.getEnabledActionsFor(state)
+
+    override fun getEnabledActionsFor(state: S): Set<A> {
+        require(state == last.state)
+        val possibleActions = last.backtrack subtract last.sleep
+        if (possibleActions.isEmpty()) return emptySet()
+
+        val actionToExplore = possibleActions.random()
+        val enabledActions = getAllEnabledActionsFor(state)
+        last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
+        last.sleep.add(actionToExplore)
+        return setOf(actionToExplore)
+    }
 
     val waitlist = object : Waitlist<Node> {
 
@@ -129,7 +143,7 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         override fun isEmpty(): Boolean {
             if (last.node.isCovered && last.node.isFeasible) {
-                virtualTraversal(last.node.coveringNode.get(), last.sleep)
+                virtualExploration(last.node.coveringNode.get(), stack.size)
             }
             while (stack.isNotEmpty() &&
                 (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
@@ -156,17 +170,15 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         override fun clear() = stack.clear()
 
-        private fun push(item: Node, virtualLimit: Int) {
+        private fun push(item: Node, virtualLimit: Int): Boolean {
             if (!item.inEdge.isPresent) {
                 stack.push(StackItem(item, _backtrack = getAllEnabledActionsFor(item.state).toMutableSet()))
-                return
+                return true
             }
 
             val newaction = item.inEdge.get().action
-            last.sleep.add(newaction)
-
             val process = newaction.pid
-            val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size - 1 }
+            val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size }
             var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf()).apply {
                 this[process] = stack.size
             }
@@ -214,6 +226,12 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val enabledActions = getAllEnabledActionsFor(item.state) subtract newSleep
             val enabledProcesses = enabledActions.map { it.pid }.toSet()
 
+            // Check cycle before pushing new item on stack
+            stack.find { it.node == item }?.let { // a cycle in the state space
+                it.backtrack = getAllEnabledActionsFor(it.state).toMutableSet()
+                return false
+            }
+
             stack.push(
                 StackItem(
                     node = item,
@@ -236,76 +254,68 @@ class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                     _sleep = newSleep,
                 )
             )
+            return true
         }
 
-        private fun virtualTraversal(node: Node, originalSleep: Set<A>) {
-            stack.find { it.node == node }?.let { // a cycle in the state space
-                it.backtrack = getAllEnabledActionsFor(it.state).toMutableSet()
-                return
-            }
-            //val sleepDiff = node.sleep subtract node.explored subtract originalSleep
-            // TODO eradicate sleepDiff elements from sleep sets in reachable nodes
-
-            val originalStackSize = stack.size
+        private fun virtualExploration(node: Node, realStackSize: Int) {
+            val startStackSize = stack.size
             val virtualStack = Stack<Node>()
             virtualStack.push(node)
             while (virtualStack.isNotEmpty()) {
                 val visiting = virtualStack.pop()
-                while (stack.size > originalStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
-                push(visiting, originalStackSize)
-                if (visiting.isCovered) {
-                    val coveringNode = visiting.coveringNode.get()
-                    virtualTraversal(coveringNode, visiting.sleep)
-                } else {
-                    visiting.outEdges.forEach { virtualStack.push(it.target) }
+                while (stack.size > startStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
+
+                if (push(visiting, startStackSize) && !noInfluenceOnRealExploration(realStackSize)) {
+                    // visiting is not on the stack: no cycle && further virtual exploration can influence real exploration
+                    if (visiting.isCovered) {
+                        val coveringNode = visiting.coveringNode.get()
+                        virtualExploration(coveringNode, realStackSize)
+                    } else {
+                        visiting.outEdges.forEach { virtualStack.push(it.target) }
+                    }
                 }
             }
-            while (stack.size > originalStackSize) stack.pop()
+            while (stack.size > startStackSize) stack.pop()
         }
-    }
 
-    override fun getEnabledActionsFor(state: S): Set<A> {
-        require(state == last.state)
-        val possibleActions = last.backtrack subtract last.sleep
-        if (possibleActions.isEmpty()) return emptySet()
+        private fun dependent(a: A, b: A): Boolean {
+            if (a.pid == b.pid) return true
 
-        val actionToExplore = possibleActions.random()
-        val enabledActions = getAllEnabledActionsFor(state)
-        last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
-        return setOf(actionToExplore)
-    }
-
-    private fun dependent(a: A, b: A): Boolean {
-        if (a.pid == b.pid) return true
-
-        // TODO caching...
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
-            // they access the same variable (at least one write)
-            return true
-        }
-        return false
-    }
-
-    private fun notdep(start: Int, action: A): List<A> {
-        val e = stack[start].action
-        return stack.slice(start + 1 until stack.size)
-            .map { it.action }
-            .filter { !dependent(e, it) }
-            .toMutableList().apply { add(action) }
-    }
-
-    private fun initials(start: Int, sequence: List<A>): Set<A> {
-        return getAllEnabledActionsFor(stack[start].node.state).filter { enabledAction ->
-            for (action in sequence) {
-                if (action == enabledAction) {
-                    return@filter true
-                } else if (dependent(enabledAction, action)) {
-                    return@filter false
-                }
+            // TODO caching...
+            val aGlobalVars = a.edge.getGlobalVars(xcfa)
+            val bGlobalVars = b.edge.getGlobalVars(xcfa)
+            if ((aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }) {
+                // they access the same variable (at least one write)
+                return true
             }
-            true
-        }.toSet()
+            return false
+        }
+
+        private fun notdep(start: Int, action: A): List<A> {
+            val e = stack[start].action
+            return stack.slice(start + 1 until stack.size)
+                .map { it.action }
+                .filter { !dependent(e, it) }
+                .toMutableList().apply { add(action) }
+        }
+
+        private fun initials(start: Int, sequence: List<A>): Set<A> {
+            return getAllEnabledActionsFor(stack[start].node.state).filter { enabledAction ->
+                for (action in sequence) {
+                    if (action == enabledAction) {
+                        return@filter true
+                    } else if (dependent(enabledAction, action)) {
+                        return@filter false
+                    }
+                }
+                true
+            }.toSet()
+        }
+
+        private fun noInfluenceOnRealExploration(realStackSize: Int) = last.processLastAction.keys.all { process ->
+            last.lastDependents.containsKey(process) && last.lastDependents[process]!!.all { (otherProcess, index) ->
+                index >= realStackSize || index >= last.processLastAction[otherProcess]!!
+            }
+        }
     }
 }
