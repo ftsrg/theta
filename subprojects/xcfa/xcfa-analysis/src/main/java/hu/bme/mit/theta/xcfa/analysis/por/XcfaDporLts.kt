@@ -45,6 +45,11 @@ private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
 
 // DEBUG
 var State.reachedNumber: Int? by nullableExtension()
+var _xcfa: XCFA? = null
+fun Set<A>.toStr() = "[${map {
+    val vars = it.edge.getGlobalVars(_xcfa!!)
+    "${it.pid}: ${it.source} -> ${it.target} W${vars.filter { e -> e.value }.keys.map { v -> v.name }} R${vars.filter { e -> !e.value }.keys.map { v -> v.name }}"
+}}"
 // GUBED
 
 var State.backtrack: MutableSet<A> by extension() // TODO private
@@ -59,6 +64,7 @@ val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.
 open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     init {
+        _xcfa = xcfa
         //System.err.println(xcfa.toDot())
     }
 
@@ -104,7 +110,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val possibleActions = last.backtrack subtract last.sleep
         if (possibleActions.isEmpty()) return emptySet()
 
-        val actionToExplore = possibleActions.random()
+        val actionToExplore = possibleActions.random(random)
         val enabledActions = getAllEnabledActionsFor(state)
         last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
         last.sleep.add(actionToExplore)
@@ -288,7 +294,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         }
 
         private fun initials(start: Int, sequence: List<A>): Set<A> {
-            return getAllEnabledActionsFor(stack[start].node.state).filter { enabledAction ->
+            val state = stack[start].node.state
+            return (getAllEnabledActionsFor(state) subtract state.sleep).filter { enabledAction ->
                 for (action in sequence) {
                     if (action == enabledAction) {
                         return@filter true
@@ -326,7 +333,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
 
     private lateinit var prec: Prec
-    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: MutableCollection<A>?, prec: P): Set<A> {
+    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: Collection<A>, prec: P): Set<A> {
         this.prec = prec
         return getEnabledActionsFor(state)
     }
