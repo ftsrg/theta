@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class AbstractPorRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
+public final class AaporRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
 
 	private final Refiner<S, A, P> refiner;
 
@@ -38,18 +38,18 @@ public final class AbstractPorRefiner<S extends ExprState, A extends ExprAction,
 
 	private final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry;
 
-	private AbstractPorRefiner(final Refiner<S, A, P> refiner,
-							   final PruneStrategy pruneStrategy,
-							   final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry) {
+	private AaporRefiner(final Refiner<S, A, P> refiner,
+						 final PruneStrategy pruneStrategy,
+						 final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry) {
 		this.refiner = refiner;
 		this.pruneStrategy = pruneStrategy;
 		this.ignoredVariableRegistry = ignoredVariableRegistry;
 	}
 
-	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> AbstractPorRefiner<S, A, P> create(
+	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> AaporRefiner<S, A, P> create(
 			final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
 			final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry) {
-		return new AbstractPorRefiner<>(refiner, pruneStrategy, ignoredVariableRegistry);
+		return new AaporRefiner<>(refiner, pruneStrategy, ignoredVariableRegistry);
 	}
 
 	@Override

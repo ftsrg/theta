@@ -25,11 +25,11 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.util.*;
 
-public final class XcfaAbstractPorLts extends XcfaPorLts {
+public final class XcfaAaporLts extends XcfaPorLts {
 
 	private final Map<Decl<? extends Type>, Set<XcfaState<?>>> ignoredVariableRegistry;
 
-	public XcfaAbstractPorLts(XCFA xcfa, Map<Decl<? extends Type>, Set<XcfaState<?>>> ignoredVariableRegistry) {
+	public XcfaAaporLts(XCFA xcfa, Map<Decl<? extends Type>, Set<XcfaState<?>>> ignoredVariableRegistry) {
 		super(xcfa);
 		this.ignoredVariableRegistry = ignoredVariableRegistry;
 	}

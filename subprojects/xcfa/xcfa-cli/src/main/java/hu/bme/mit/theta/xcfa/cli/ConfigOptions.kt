@@ -61,7 +61,7 @@ enum class POR(
     NOPOR({_, _ -> getXcfaLts() }, false),
     BASIC({xcfa, _ -> XcfaPorLts(xcfa) }, false),
     DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }, true),
-    AAPOR({xcfa, registry -> XcfaAbstractPorLts(xcfa, registry) }, false),
+    AAPOR({xcfa, registry -> XcfaAaporLts(xcfa, registry) }, false),
     AADPOR({xcfa, _ -> XcfaAadporLts(xcfa) }, true)
 }
 

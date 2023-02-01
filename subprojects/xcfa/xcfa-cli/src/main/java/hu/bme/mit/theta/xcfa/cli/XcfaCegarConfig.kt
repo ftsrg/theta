@@ -145,7 +145,7 @@ data class XcfaCegarConfig(
         }
 
         return if(porLevel == POR.AAPOR)
-            CegarChecker.create(abstractor, AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
+            CegarChecker.create(abstractor, AaporRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
         else
             CegarChecker.create(abstractor, refiner, logger)
     }
