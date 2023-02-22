@@ -6,11 +6,8 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
@@ -61,6 +58,7 @@ fun Set<A>.toStr() = "${
 
 var State.backtrack: MutableSet<A> by extension() // TODO private
 var State.sleep: MutableSet<A> by extension() // TODO private
+var State.explored: MutableSet<A> by extension() // TODO private
 
 val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
@@ -79,7 +77,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
-            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep) }
+            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep - s2.explored)}
     }
 
     private data class StackItem(
@@ -95,10 +93,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         var backtrack: MutableSet<A> by node.state::backtrack
         var sleep: MutableSet<A> by node.state::sleep
             private set
+        var explored: MutableSet<A> by node.state::explored
+            private set
 
         init {
             backtrack = _backtrack
             sleep = _sleep
+            explored = mutableSetOf()
         }
 
         override fun toString() = action.toString()
@@ -121,6 +122,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val enabledActions = getAllEnabledActionsFor(state)
         last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
         last.sleep.add(actionToExplore)
+        last.explored.add(actionToExplore)
         return setOf(actionToExplore)
     }
 
@@ -359,30 +361,5 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
         val precVars = prec.usedVars.toSet()
         // dependent if they access the same variable in the precision (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it] == true || bGlobalVars[it] == true }
-    }
-}
-
-class XcfaPredDporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
-
-    private lateinit var prec: PredPrec
-
-    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: Collection<A>, prec: P): Set<A> {
-        require(prec is XcfaPrec<*> && prec.p is PredPrec)
-        this.prec = prec.p
-        return getEnabledActionsFor(state)
-    }
-
-    override fun dependent(a: A, b: A): Boolean {
-        if (a.pid == b.pid) return true
-
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        return prec.preds.map(ExprUtils::getVars).any { predVars ->
-            val aIntersect = aGlobalVars.keys intersect predVars
-            val bIntersect = bGlobalVars.keys intersect predVars
-            val aWrites = aIntersect.any { aGlobalVars[it]!! }
-            val bWrites = bIntersect.any { bGlobalVars[it]!! }
-            aIntersect.isNotEmpty() && bIntersect.isNotEmpty() && (aWrites || bWrites)
-        }
     }
 }
