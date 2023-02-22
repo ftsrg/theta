@@ -62,7 +62,7 @@ fun traceToWitness(
         )
         if(node != WitnessNode(id = "N${newStates.size}")) {
             newStates.add(node)
-            val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id)
+            val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id, threadId = trace.actions[i].pid.toString())
             newActions.add(edge)
             lastNode = node
         }
