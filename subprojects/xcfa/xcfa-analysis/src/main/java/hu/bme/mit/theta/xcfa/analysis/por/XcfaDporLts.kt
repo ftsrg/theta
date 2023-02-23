@@ -77,7 +77,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
-            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep - s2.explored)}
+            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep - s2.explored) }
     }
 
     private data class StackItem(
@@ -197,6 +197,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             for (index in stack.size - 1 downTo 1) {
                 if (relevantProcesses.isEmpty()) break
                 val node = stack[index].node
+                if (node.parent.get() != stack[index - 1].node) continue // skip covering node
+
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
                     if (newLastDependents.containsKey(action.pid) && index <= newLastDependents[action.pid]!!) {
@@ -232,7 +234,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val releasedMutexes = oldMutexes - newMutexes
             releasedMutexes.forEach { m -> last.mutexLocks[m]?.let { stack[it].mutexLocks.remove(m) } }
 
-            val isVirtualExploration = virtualLimit < stack.size || item.parent.get() != last.node
+            val isCoveringNode = item.parent.get() != last.node
+            val isVirtualExploration = virtualLimit < stack.size || isCoveringNode
             val newSleep = if (isVirtualExploration) {
                 item.state.sleep
             } else {
@@ -259,11 +262,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             stack.push(
                 StackItem(
                     node = item,
-                    processLastAction = newProcessLastAction,
+                    processLastAction = if (!isCoveringNode) newProcessLastAction else last.processLastAction.toMutableMap(),
                     lastDependents = last.lastDependents.toMutableMap().apply {
-                        this[process] = newLastDependents
-                        newProcesses.forEach {
-                            this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
+                        if (!isCoveringNode) {
+                            this[process] = newLastDependents
+                            newProcesses.forEach {
+                                this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
+                            }
                         }
                     },
                     mutexLocks = last.mutexLocks.apply {
@@ -305,8 +310,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
             return stack.slice(start + 1 until stack.size)
+                .filterIndexed { index, item ->
+                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(e, item.action)
+                }
                 .map { it.action }
-                .filter { !dependent(e, it) }
                 .toMutableList().apply { add(action) }
         }
 
