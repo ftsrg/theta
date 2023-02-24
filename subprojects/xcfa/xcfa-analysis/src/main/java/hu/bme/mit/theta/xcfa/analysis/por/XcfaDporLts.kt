@@ -140,12 +140,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         var counter = 0
 
         override fun add(item: Node) {
-            var root = item
-            while (stack.isEmpty() && item.parent.isPresent) root = root.parent.get()
+            var node = item
+            while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-            item.state.reachedNumber = counter++
-            item.state.reExplored = true
-            push(item, stack.size)
+            node.state.reachedNumber = counter++
+            node.state.reExplored = true
+            push(node, stack.size)
         }
 
         override fun addAll(items: Collection<Node>) {
@@ -320,7 +320,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         }
 
         private fun exploreLazily() {
-            while (true) {
+            while (stack.isNotEmpty()) {
                 val lazilyExplorable = last.node.outEdges
                     .filter { it.target.state.reExplored != true && it.action !in last.sleep }
                     .collect(Collectors.toSet())
