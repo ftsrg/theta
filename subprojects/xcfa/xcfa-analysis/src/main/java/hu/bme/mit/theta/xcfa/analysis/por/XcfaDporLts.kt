@@ -25,19 +25,21 @@ private typealias A = XcfaAction
 private typealias Node = ArgNode<out S, A>
 
 private class ExtensionProperty<R, T> : ReadWriteProperty<R, T> {
-    val map = IdentityHashMap<R, T>()
+    private val map = IdentityHashMap<R, T>()
     override fun getValue(thisRef: R, property: KProperty<*>) = map[thisRef]!!
     override fun setValue(thisRef: R, property: KProperty<*>, value: T) {
         map[thisRef] = value
     }
 }
 
-private class NullableExtensionProperty<R, T> : ReadWriteProperty<R, T?> {
-    val map = IdentityHashMap<R, T?>()
+private open class NullableExtensionProperty<R, T> : ReadWriteProperty<R, T?> {
+    protected val map = IdentityHashMap<R, T?>()
     override fun getValue(thisRef: R, property: KProperty<*>) = map[thisRef]
     override fun setValue(thisRef: R, property: KProperty<*>, value: T?) {
         map[thisRef] = value
     }
+
+    fun clear() = map.clear()
 }
 
 private fun <R, T> extension() = ExtensionProperty<R, T>()
@@ -45,7 +47,6 @@ private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
 
 // DEBUG
 var State.reachedNumber: Int? by nullableExtension()
-var State.enabled: Set<A>? by nullableExtension()
 var State.sleepsAtCovering: Pair<Set<A>, Set<A>>? by nullableExtension()
 var _xcfa: XCFA? = null
 fun Set<A>.toStr() = "${
@@ -60,7 +61,10 @@ var State.backtrack: MutableSet<A> by extension() // TODO private
 var State.sleep: MutableSet<A> by extension() // TODO private
 var State.explored: MutableSet<A> by extension() // TODO private
 
-val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
+private val reExploredDelegate = nullableExtension<State, Boolean?>()
+private var State.reExplored: Boolean? by reExploredDelegate
+
+private val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
 /**
  * Dynamic partial order reduction (DPOR) algorithm for state space exploration.
@@ -76,8 +80,14 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     companion object {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
+        private val simpleXcfaLts = getXcfaLts()
+
+        private val State.enabled: Set<A> get() = simpleXcfaLts.getEnabledActionsFor(this as S)
+
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
-            PartialOrd<E> { s1, s2 -> partialOrd.isLeq(s1, s2) && s1.sleep.containsAll(s2.sleep - s2.explored) }
+            PartialOrd<E> { s1, s2 ->
+                partialOrd.isLeq(s1, s2) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
+            }
     }
 
     private data class StackItem(
@@ -89,10 +99,14 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private val _sleep: MutableSet<A> = mutableSetOf(),
     ) {
         val action: A get() = node.inEdge.get().action
+
         val state: S get() = node.state
+
         var backtrack: MutableSet<A> by node.state::backtrack
+
         var sleep: MutableSet<A> by node.state::sleep
             private set
+
         var explored: MutableSet<A> by node.state::explored
             private set
 
@@ -105,13 +119,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         override fun toString() = action.toString()
     }
 
-    private val simpleXcfaLts = getXcfaLts()
-
     private val stack: Stack<StackItem> = Stack()
 
     private val last get() = stack.peek()
-
-    private fun getAllEnabledActionsFor(state: S): Set<A> = simpleXcfaLts.getEnabledActionsFor(state)
 
     override fun getEnabledActionsFor(state: S): Set<A> {
         require(state == last.state)
@@ -119,8 +129,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         if (possibleActions.isEmpty()) return emptySet()
 
         val actionToExplore = possibleActions.random(random)
-        val enabledActions = getAllEnabledActionsFor(state)
-        last.backtrack.addAll(enabledActions.filter { it.pid == actionToExplore.pid })
+        last.backtrack.addAll(state.enabled.filter { it.pid == actionToExplore.pid })
         last.sleep.add(actionToExplore)
         last.explored.add(actionToExplore)
         return setOf(actionToExplore)
@@ -128,14 +137,14 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     val waitlist = object : Waitlist<Node> {
 
-        override fun newCoveredNode(node: Node) {
-            node.state.sleepsAtCovering = Pair(node.state.sleep, node.coveringNode.get().state.sleep)
-        }
-
         var counter = 0
 
         override fun add(item: Node) {
+            var root = item
+            while (stack.isEmpty() && item.parent.isPresent) root = root.parent.get()
+
             item.state.reachedNumber = counter++
+            item.state.reExplored = true
             push(item, stack.size)
         }
 
@@ -153,6 +162,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         override fun isEmpty(): Boolean {
             if (last.node.isCovered && last.node.isFeasible) {
                 virtualExploration(last.node.coveringNode.get(), stack.size)
+            } else {
+                exploreLazily()
             }
             while (stack.isNotEmpty() &&
                 (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
@@ -162,10 +173,11 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                     val mutexNeverReleased = last.mutexLocks.containsKey("") &&
                             (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
-                        lastButOne.backtrack = getAllEnabledActionsFor(lastButOne.state).toMutableSet()
+                        lastButOne.backtrack = lastButOne.state.enabled.toMutableSet()
                     }
                 }
                 stack.pop()
+                exploreLazily()
             }
             return stack.isEmpty()
         }
@@ -175,13 +187,16 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             return last.node
         }
 
-        override fun size() = stack.count { it.backtrack.isNotEmpty() }
+        override fun size() = stack.size
 
-        override fun clear() = stack.clear()
+        override fun clear() {
+            stack.clear()
+            reExploredDelegate.clear()
+        }
 
         private fun push(item: Node, virtualLimit: Int): Boolean {
             if (!item.inEdge.isPresent) {
-                stack.push(StackItem(item, _backtrack = getAllEnabledActionsFor(item.state).toMutableSet()))
+                stack.push(StackItem(item, _backtrack = item.state.enabled.toMutableSet()))
                 return true
             }
 
@@ -241,10 +256,11 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             } else {
                 last.sleep.filter { !dependent(it, newaction) }.toMutableSet()
             }
-            val enabledActions = getAllEnabledActionsFor(item.state) subtract newSleep
+            val enabledActions = item.state.enabled subtract newSleep
             val enabledProcesses = enabledActions.map { it.pid }.toSet()
             val newBacktrack = when {
-                isVirtualExploration -> item.state.backtrack
+                isVirtualExploration -> item.state.backtrack // for virtual exploration through a covering relation
+                item.explored.isNotEmpty() -> item.explored.toMutableSet() // for LAZY pruning
                 enabledProcesses.isEmpty() -> mutableSetOf()
                 else -> mutableSetOf(enabledActions.random(random))
             }
@@ -253,7 +269,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             stack.indexOfFirst { it.node == item }.let {
                 if (it != -1) {
                     if (it < virtualLimit) {
-                        stack[it].backtrack = getAllEnabledActionsFor(stack[it].state).toMutableSet()
+                        stack[it].backtrack = stack[it].state.enabled.toMutableSet()
                     }
                     return false
                 }
@@ -279,7 +295,6 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                     _sleep = newSleep,
                 )
             )
-            item.state.enabled = getAllEnabledActionsFor(item.state)
             return true
         }
 
@@ -304,6 +319,22 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             while (stack.size > startStackSize) stack.pop()
         }
 
+        private fun exploreLazily() {
+            while (true) {
+                val lazilyExplorable = last.node.outEdges
+                    .filter { it.target.state.reExplored != true && it.action !in last.sleep }
+                    .collect(Collectors.toSet())
+                if (lazilyExplorable.isEmpty()) return
+
+                val edgeToExplore = lazilyExplorable.random(random)
+                val actionToExplore = edgeToExplore.action
+                last.backtrack.addAll(last.state.enabled.filter { it.pid == actionToExplore.pid })
+                last.sleep.add(actionToExplore)
+                last.explored.add(actionToExplore)
+                add(edgeToExplore.target)
+            }
+        }
+
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
@@ -319,7 +350,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         private fun initials(start: Int, sequence: List<A>): Set<A> {
             val state = stack[start].node.state
-            return (getAllEnabledActionsFor(state) subtract state.sleep).filter { enabledAction ->
+            return (state.enabled subtract state.sleep).filter { enabledAction ->
                 for (action in sequence) {
                     if (action == enabledAction) {
                         return@filter true
