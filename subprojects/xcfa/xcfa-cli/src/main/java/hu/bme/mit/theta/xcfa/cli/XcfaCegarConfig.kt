@@ -79,6 +79,8 @@ data class XcfaCegarConfig(
         var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
         @Parameter(names = ["--no-cex-check"])
         var noCexCheck: Boolean = false,
+        @Parameter(names = ["--check-arg"])
+        var checkArg: Boolean = false,
         @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
         var timeoutMs: Long = 0
 ) {
@@ -123,7 +125,11 @@ data class XcfaCegarConfig(
         if (noCexCheck) {
             ArgCexCheckHandler.instance.setArgCexCheck(false, false)
         } else {
-            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement == Refinement.MULTI_SEQ)
+            if(checkArg) {
+                ArgCexCheckHandler.instance.setArgCexCheck(true, true)
+            } else {
+                ArgCexCheckHandler.instance.setArgCexCheck(true, false)
+            }
         }
 
         return if(porLevel == POR.AAPOR)

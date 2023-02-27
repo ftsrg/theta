@@ -27,12 +27,12 @@ public class ArgCexCheckHandler<S extends State, A extends Action> {
 	public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
 	private AbstractArgStorage<S, A> abstractArgStorage;
 
-	public void setArgCexCheck(boolean shouldCheck, boolean multiseq) {
+	public void setArgCexCheck(boolean shouldCheck, boolean shouldStoreArg) {
 		if (shouldCheck) {
-			if (multiseq) {
-				abstractArgStorage = new MultiCexAbstractArgStorage<S, A>();
-			} else {
+			if (shouldStoreArg) {
 				abstractArgStorage = new SingleCexAbstractArgStorage<S, A>();
+			} else {
+				abstractArgStorage = new CexStorage<S, A>();
 			}
 		} else {
 			abstractArgStorage = null;
