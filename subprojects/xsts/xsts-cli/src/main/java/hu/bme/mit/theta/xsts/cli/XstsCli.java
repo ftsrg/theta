@@ -102,8 +102,10 @@ public class XstsCli {
 
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
+    @Parameter(names = "--check-arg")
+    boolean argCheck = false;
 
-	@Parameter(names = "--no-stuck-check")
+	@Parameter(names = "--no-cex-check")
 	boolean noStuckCheck = false;
 
 	private Logger logger;
@@ -206,9 +208,11 @@ public class XstsCli {
 		// set up stopping analysis if it is stuck on same ARGs and precisions
 		if (noStuckCheck || refinement.equals(Refinement.MULTI_SEQ)) {
 			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
-		} else {
+		} else if(argCheck) {
 			ArgCexCheckHandler.instance.setArgCexCheck(true, true);
-		}
+		} else {
+            ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+        }
 
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
