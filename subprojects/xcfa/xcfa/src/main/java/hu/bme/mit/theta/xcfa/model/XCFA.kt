@@ -27,6 +27,8 @@ class XCFA(
         procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
         initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
 ) {
+    var cachedHash: Int? = null
+
     var procedures: Set<XcfaProcedure> =                                // procedure definitions
             procedureBuilders.map { it.build(this) }.toSet()
         private set
@@ -60,10 +62,12 @@ class XCFA(
     }
 
     override fun hashCode(): Int {
+        if(cachedHash!=null) return cachedHash as Int
         var result = name.hashCode()
         result = 31 * result + vars.hashCode()
         result = 31 * result + procedures.hashCode()
         result = 31 * result + initProcedures.hashCode()
+        cachedHash = result
         return result
     }
 }
