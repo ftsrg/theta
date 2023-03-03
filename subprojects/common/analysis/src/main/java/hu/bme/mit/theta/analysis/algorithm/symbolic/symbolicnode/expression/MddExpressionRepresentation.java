@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -92,11 +93,32 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return getLazyTraverser().queryEdge(key);
     }
 
+    public static int getCounter = 0;
+
     @Override
     public MddNode get(int key) {
-        getLazyTraverser().queryEdge(key);
-        // Traverser is responsible for caching
-        return explicitRepresentation.getCacheView().get(key);
+        final var cached = explicitRepresentation.getCacheView().get(key);
+        if (cached != null) return cached;
+
+        final MutableValuation val = new MutableValuation();
+        val.put(decl, LitExprConverter.toLitExpr(key, decl.getType()));
+        final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, val);
+
+        final MddNode childNode;
+        if (mddVariable.getLower().isPresent()) {
+            final MddExpressionTemplate template = MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverSupplier);
+            childNode = mddVariable.getLower().get().checkInNode(template);
+        } else {
+            final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(simplifiedExpr));
+            MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
+        }
+
+        if(!childNode.equals(mddVariable.getMddGraph().getTerminalZeroNode())) explicitRepresentation.cacheNode(key, childNode);
+        return childNode;
+
+//        getLazyTraverser().queryEdge(key);
+//        return explicitRepresentation.getCacheView().get(key);
     }
 
     @Override
@@ -236,7 +258,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return false;
         }
 
-        public MddNode peakDown(int assignment) {
+        public MddNode peekDown(int assignment) {
             queryEdge(assignment);
             return currentRepresentation.explicitRepresentation.getCacheView().get(assignment);
         }
@@ -371,8 +393,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             final MddExpressionTemplate template = MddExpressionTemplate.of(expr, o -> (Decl) o, representation.solverSupplier);
                             childNode = lower.get().checkInNode(template);
                         } else {
+                            final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
                             MddGraph<Expr> mddGraph = (MddGraph<Expr>) variable.getMddGraph();
-                            childNode = mddGraph.getNodeFor(expr);
+                            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
                         }
 
                         representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literalToCache), childNode);
@@ -382,7 +405,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 if(childNode.isTerminal()) break;
 
                 if(lower.isPresent()){
-                    Preconditions.checkArgument(childNode.getRepresentation() instanceof MddExpressionRepresentation);
+                    //Preconditions.checkArgument(childNode.getRepresentation() instanceof MddExpressionRepresentation);
                     representation = (MddExpressionRepresentation) childNode.getRepresentation();
                 }
                 variable = lower.orElse(null);
@@ -476,11 +499,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 parent.unblock();
             }
 
+            // TODO: exception
             @Override
             public int key() {
                 return 0;
             }
 
+            // TODO: exception
             @Override
             public MddNode value() {
                 return null;
@@ -511,7 +536,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public RecursiveIntObjCursor<MddNode> valueCursor() {
             this.blocked = true;
-            final MddNode childNode = this.traverser.peakDown(key);
+            final MddNode childNode = this.traverser.peekDown(key);
             if(childNode.isTerminal()) {
                 return new Terminal(this);
             } else {

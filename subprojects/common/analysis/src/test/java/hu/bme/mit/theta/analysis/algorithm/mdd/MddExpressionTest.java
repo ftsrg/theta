@@ -56,7 +56,7 @@ public class MddExpressionTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try(var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
         }
