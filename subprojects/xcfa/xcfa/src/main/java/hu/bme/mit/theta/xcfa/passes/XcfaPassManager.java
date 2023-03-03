@@ -37,6 +37,7 @@ import hu.bme.mit.theta.xcfa.passes.procedurepass.SimplifyExprs;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.VerifierFunctionsToLabels;
 import hu.bme.mit.theta.xcfa.passes.processpass.AnalyzeCallGraph;
+import hu.bme.mit.theta.xcfa.passes.processpass.AssignFunctionParam;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
 import hu.bme.mit.theta.xcfa.passes.xcfapass.DemoteThreadLocalGlobals;
@@ -88,7 +89,9 @@ public class XcfaPassManager {
 		));
 		processPasses.addAll(List.of(
 				new AnalyzeCallGraph(),
-				new FunctionInlining()));
+				new FunctionInlining(),
+				new AssignFunctionParam()
+		));
 		xcfaPasses.addAll((List.of(
 				new RemoveUnusedGlobals(),
 				new DemoteThreadLocalGlobals())));
@@ -119,10 +122,12 @@ public class XcfaPassManager {
 	}
 
 	public static XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+		XcfaProcedure.Builder runningBuilder = builder;
 		for (ProcedurePass procedurePass : procedurePasses) {
-			if (!procedurePass.isPostInlining() || ProcedurePass.postInlining) builder = procedurePass.run(builder);
+			if (FunctionInlining.inlining != FunctionInlining.InlineFunctions.ON || !procedurePass.isPostInlining() || ProcedurePass.postInlining)
+				runningBuilder = procedurePass.run(runningBuilder);
 		}
-		return builder;
+		return runningBuilder;
 	}
 
 	public static XcfaProcess.Builder run(XcfaProcess.Builder builder) {

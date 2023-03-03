@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
+import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,18 +42,18 @@ public class VerifierFunctionsToLabels extends ProcedurePass {
 				for (XcfaLabel label : edge.getLabels()) {
 					if (label == e.get()) {
 						final String procName = ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure();
-						if (procName.startsWith("__VERIFIER_nondet")) collect.add(label);
-						else {
-							switch (procName) {
-								case atomicBegin:
-									collect.add(AtomicBegin());
-									break;
-								case atomicEnd:
-									collect.add(AtomicEnd());
-									break;
-								default:
+						switch (procName) {
+							case atomicBegin:
+								collect.add(AtomicBegin());
+								break;
+							case atomicEnd:
+								collect.add(AtomicEnd());
+								break;
+							default:
+								if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON && !procName.startsWith("__VERIFIER_nondet"))
 									throw new UnsupportedOperationException("Not yet supported: " + procName);
-							}
+								collect.add(label);
+								break;
 						}
 					} else collect.add(label);
 				}

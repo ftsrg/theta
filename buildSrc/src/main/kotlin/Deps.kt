@@ -29,7 +29,7 @@ object Deps {
     val jing = "com.thaiopensource:jing:${Versions.jing}"
     val logback = "ch.qos.logback:logback-classic:${Versions.logback}"
 
-    val delta = "lib/hu.bme.mit.delta:${Versions.delta}"
+    val delta = "lib/hu.bme.mit.delta"
     val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
 
     val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"

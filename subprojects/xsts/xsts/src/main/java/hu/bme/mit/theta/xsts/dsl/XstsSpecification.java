@@ -87,17 +87,18 @@ public class XstsSpecification implements DynamicScope {
 			if(varDeclContext.CTRL()!=null) ctrlVars.add(var);
 			if(varDeclContext.initValue!=null){
 				initExprs.add(Eq(var.getRef(),new XstsExpression(this,typeTable,varDeclContext.initValue).instantiate(env)));
-			} else {
-				initExprs.add(varToType.get(var).createBoundExpr(var));
 			}
 			env.define(symbol,var);
 		}
 
-		final Expr<BoolType> initFormula = ExprUtils.simplify(And(initExprs));
-
 		final NonDetStmt tranSet = new XstsTransitionSet(this,typeTable,context.tran.transitionSet(), varToType).instantiate(env);
 		final NonDetStmt initSet = new XstsTransitionSet(this,typeTable,context.init.transitionSet(), varToType).instantiate(env);
 		final NonDetStmt envSet = new XstsTransitionSet(this,typeTable,context.env.transitionSet(), varToType).instantiate(env);
+
+		for(VarDecl varDecl: varToType.keySet()){
+			initExprs.add(varToType.get(varDecl).createBoundExpr(varDecl));
+		}
+		final Expr<BoolType> initFormula = ExprUtils.simplify(And(initExprs));
 
 		final Expr<BoolType> prop = cast(new XstsExpression(this,typeTable,context.prop).instantiate(env),Bool());
 

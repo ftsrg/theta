@@ -16,12 +16,16 @@
 package hu.bme.mit.theta.xcfa.analysis.impl.singlethread;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.frontend.FrontendMetadata;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.utils.XcfaLabelVarReplacer;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -42,6 +46,10 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
 
 	public static XcfaSTAction create(final XcfaEdge edge) {
 		return new XcfaSTAction(edge.getSource(), edge.getTarget(), edge.getLabels());
+	}
+
+	public static XcfaSTAction createWithVars(final XcfaEdge edge, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+		return new XcfaSTAction(edge.getSource(), edge.getTarget(), XcfaLabelVarReplacer.replaceVars(edge.getLabels(), newVarLut));
 	}
 
 	public XcfaLocation getSource() {
@@ -68,6 +76,13 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
 
 	public XcfaSTAction withLabels(final List<XcfaLabel> stmts) {
 		return new XcfaSTAction(source, target, stmts);
+	}
+
+	public static XcfaSTAction copyOf(XcfaSTAction action, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+		List<XcfaLabel> newStmts = XcfaLabelVarReplacer.replaceVars(action.getLabels(), newVarLut);
+		XcfaSTAction xcfaSTAction = new XcfaSTAction(action.source, action.target, newStmts);
+		FrontendMetadata.lookupMetadata(action).forEach((s, o) -> FrontendMetadata.create(xcfaSTAction, s, o));
+		return xcfaSTAction;
 	}
 
 	@Override
