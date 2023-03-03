@@ -17,5 +17,5 @@ dependencies {
     implementation(Deps.emfEcoreXmi)
     implementation(Deps.emfCommon)
 
-    compile(project(":theta-core"))
+    implementation(project(":theta-core"))
 }

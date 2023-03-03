@@ -20,8 +20,14 @@ plugins {
 
 dependencies {
     implementation(files(rootDir.resolve(Deps.delta)))
-    compile(project(":theta-common"))
-    compile(project(":theta-core"))
-    compile(project(":theta-solver"))
-    testImplementation(project(":theta-solver-z3"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-solver"))
+    implementation(Deps.javasmt)
+    implementation(project(":theta-solver-javasmt"))
+    implementation(project(":theta-solver-z3-legacy"))
+    implementation(project(":theta-graph-solver"))
+    implementation(project(mapOf("path" to ":theta-solver-z3-legacy")))
+    testImplementation(project(":theta-solver-z3-legacy"))
+    implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
 }

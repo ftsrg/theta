@@ -8,7 +8,7 @@ dependencies {
     implementation(Deps.axiomImpl)
     implementation(Deps.jing)
 
-    compile(project(":theta-core"))
-    compile(project(":theta-analysis"))
-    compile(project(":theta-petrinet-model"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-analysis"))
+    implementation(project(":theta-petrinet-model"))
 }
