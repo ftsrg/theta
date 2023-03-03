@@ -50,6 +50,7 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(expr);
 
+        // TODO: we might not need this
         // Check if terminal 1
         if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
             if (canonizedExpr instanceof FalseExpr) {

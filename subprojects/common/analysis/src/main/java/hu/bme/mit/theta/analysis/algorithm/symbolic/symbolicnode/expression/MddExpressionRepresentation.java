@@ -236,7 +236,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return false;
         }
 
-        public MddNode peakDown(int assignment) {
+        public MddNode peekDown(int assignment) {
             queryEdge(assignment);
             return currentRepresentation.explicitRepresentation.getCacheView().get(assignment);
         }
@@ -382,7 +382,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 if(childNode.isTerminal()) break;
 
                 if(lower.isPresent()){
-                    Preconditions.checkArgument(childNode.getRepresentation() instanceof MddExpressionRepresentation);
+                    //Preconditions.checkArgument(childNode.getRepresentation() instanceof MddExpressionRepresentation);
                     representation = (MddExpressionRepresentation) childNode.getRepresentation();
                 }
                 variable = lower.orElse(null);
@@ -476,11 +476,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 parent.unblock();
             }
 
+            // TODO: exception
             @Override
             public int key() {
                 return 0;
             }
 
+            // TODO: exception
             @Override
             public MddNode value() {
                 return null;
@@ -511,7 +513,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         @Override
         public RecursiveIntObjCursor<MddNode> valueCursor() {
             this.blocked = true;
-            final MddNode childNode = this.traverser.peakDown(key);
+            final MddNode childNode = this.traverser.peekDown(key);
             if(childNode.isTerminal()) {
                 return new Terminal(this);
             } else {
