@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     implementation(files(rootDir.resolve(Deps.delta)))
-    compile(project(":theta-common"))
-    compile(project(":theta-core"))
-    compile(project(":theta-solver"))
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-solver"))
     testImplementation(project(":theta-solver-z3"))
 }

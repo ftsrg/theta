@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    compile(project(":theta-core"))
-    compile(project(":theta-xsts"))
-    compile(project(":theta-petrinet-model"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-xsts"))
+    implementation(project(":theta-petrinet-model"))
 
     testImplementation(project(":theta-xsts-analysis"))
     testImplementation(project(":theta-solver-z3"))
