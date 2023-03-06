@@ -59,13 +59,13 @@ public final class StopCriterions {
 	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
-			return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
+			return arg.getUnsafeNodes().findAny().isPresent(); // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
 		}
 
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-			return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
-					&& arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
+			return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded()));
+					// && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
 		}
 
 		@Override
