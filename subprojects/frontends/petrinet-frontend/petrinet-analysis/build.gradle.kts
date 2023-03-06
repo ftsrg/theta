@@ -9,6 +9,7 @@ dependencies {
     implementation(Deps.jing)
 
     implementation(project(":theta-core"))
+    implementation(project(":theta-common"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-petrinet-model"))
 }
