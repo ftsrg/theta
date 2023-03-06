@@ -85,13 +85,10 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-        assert arg.getCexs().count() == 1 : "There should be exactly one counterexample in the ARG";
-		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst();
-
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
 		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
-        boolean cexIsNew = ArgCexCheckHandler.instance.checkIfCounterexampleNew(cexToConcretize);
 
-        final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
+		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
 		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
 		logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
 
@@ -111,35 +108,17 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-            if(cexIsNew) {
-                ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
-            }
+			ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
 
 			switch (pruneStrategy) {
 				case LAZY:
-                    if(cexIsNew) {
-                        logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
-                        final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
-                        nodePruner.prune(arg, nodeToPrune);
-                    } else {
-                        logger.write(Level.SUBSTEP, "|  |  Pruning from index %d and adding coverage of itself of node %d...", pruneIndex+1, pruneIndex);
-                        final ArgNode<S, A> nodeToKeep = cexToConcretize.node(pruneIndex);
-                        final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex+1);
-                        nodePruner.prune(arg, nodeToPrune);
-                        nodeToKeep.expanded = true;
-                    }
+					logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
+					final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
+					nodePruner.prune(arg, nodeToPrune);
 					break;
 				case FULL:
-                    if(cexIsNew) {
-                        logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
-                        arg.pruneAll();
-                    } else {
-                        logger.write(Level.SUBSTEP, "|  |  Pruning down covered-by edges from infeasible cex");
-                        // TODO - not the perfect mitigation, as it might still get stuck, as next time it might prune down the whole thing on a new cex
-                        for (ArgNode<S, A> node : cexToConcretize.nodes()) {
-                            node.clearCoveredNodes();
-                        }
-                    }
+					logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
+					arg.pruneAll();
 					break;
 				default:
 					throw new UnsupportedOperationException("Unsupported pruning strategy");
