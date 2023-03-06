@@ -23,14 +23,11 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 
-import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
-import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -74,7 +71,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		final ARG<S, A> arg = abstractor.createArg();
 		P prec = initPrec;
 		int iteration = 0;
-        WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
 		do {
 			++iteration;
 
@@ -84,9 +80,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
-
-            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
-            String precString = prec.toString();
 
 			if (abstractorResult.isUnsafe()) {
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
@@ -110,13 +103,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 			}
 
-            wdl.addIteration(iteration, argGraph, precString);
-        } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
+		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-        String fileName = "wdl-output.json";
-        WebDebuggerLogger.getInstance().writeToFile(fileName);
-
-        stopwatch.stop();
+		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
 				refinerTime, iteration);
