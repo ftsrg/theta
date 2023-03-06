@@ -18,4 +18,5 @@ dependencies {
     implementation(Deps.emfCommon)
 
     implementation(project(":theta-core"))
+    implementation(project(":theta-common"))
 }
