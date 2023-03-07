@@ -59,9 +59,9 @@ enum class POR(
     val isDynamic: Boolean
 ) {
     NOPOR({_, _ -> getXcfaLts() }, false),
-    BASIC({xcfa, _ -> XcfaPorLts(xcfa) }, false),
+    SPOR({ xcfa, _ -> XcfaPorLts(xcfa) }, false),
     DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }, true),
-    AAPOR({xcfa, registry -> XcfaAaporLts(xcfa, registry) }, false),
+    AASPOR({ xcfa, registry -> XcfaAaporLts(xcfa, registry) }, false),
     AADPOR({xcfa, _ -> XcfaAadporLts(xcfa) }, true)
 }
 

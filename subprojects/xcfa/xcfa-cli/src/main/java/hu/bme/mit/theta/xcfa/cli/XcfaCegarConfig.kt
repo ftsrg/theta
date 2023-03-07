@@ -127,12 +127,12 @@ data class XcfaCegarConfig(
         val atomicNodePruner: NodePruner<ExprState, ExprAction> = domain.nodePruner as NodePruner<ExprState, ExprAction>
         val refiner: Refiner<ExprState, ExprAction, Prec> =
                 if (refinement == Refinement.MULTI_SEQ)
-                    if(porLevel == POR.AAPOR)
+                    if(porLevel == POR.AASPOR)
                         MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
                     else
                         MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
                 else
-                    if(porLevel == POR.AAPOR)
+                    if(porLevel == POR.AASPOR)
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
                     else
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
@@ -144,7 +144,7 @@ data class XcfaCegarConfig(
             ArgCexCheckHandler.instance.setArgCexCheck(true, refinement == Refinement.MULTI_SEQ)
         }
 
-        return if(porLevel == POR.AAPOR)
+        return if(porLevel == POR.AASPOR)
             CegarChecker.create(abstractor, AaporRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
         else
             CegarChecker.create(abstractor, refiner, logger)

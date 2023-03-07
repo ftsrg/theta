@@ -38,6 +38,7 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -51,6 +52,7 @@ import javax.script.Bindings
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleBindings
+import kotlin.random.Random
 import kotlin.system.exitProcess
 
 
@@ -115,6 +117,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter
     var remainingFlags: MutableList<String> = ArrayList()
 
+    @Parameter(names = ["--seed"], description = "Random seed")
+    var randomSeed: Int = -1
+
     private fun run() {
         /// Checking flags
         try {
@@ -162,6 +167,8 @@ class XcfaCli(private val args: Array<String>) {
         /// Starting frontend
         val swFrontend = Stopwatch.createStarted()
         LbePass.level = lbeLevel
+
+        if(randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
 
         val xcfa = try {
             val stream = FileInputStream(input!!)

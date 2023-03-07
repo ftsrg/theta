@@ -257,12 +257,15 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 last.sleep.filter { !dependent(it, newaction) }.toMutableSet()
             }
             val enabledActions = item.state.enabled subtract newSleep
-            val enabledProcesses = enabledActions.map { it.pid }.toSet()
             val newBacktrack = when {
                 isVirtualExploration -> item.state.backtrack // for virtual exploration through a covering relation
-                item.explored.isNotEmpty() -> item.explored.toMutableSet() // for LAZY pruning
-                enabledProcesses.isEmpty() -> mutableSetOf()
-                else -> mutableSetOf(enabledActions.random(random))
+                item.explored.isNotEmpty() -> item.explored.toMutableSet().apply {
+                    if (newSleep.containsAll(this) && enabledActions.isNotEmpty()) {
+                        this.add(enabledActions.random(random))
+                    }
+                } // for LAZY pruning
+                enabledActions.isNotEmpty() -> mutableSetOf(enabledActions.random(random))
+                else -> mutableSetOf()
             }
 
             // Check cycle before pushing new item on stack
