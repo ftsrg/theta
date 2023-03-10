@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 
 import java.util.LinkedHashSet;
@@ -35,16 +36,30 @@ import static com.google.common.base.Preconditions.checkState;
 public class CexStorage<S extends State, A extends Action> extends AbstractArgStorage<S, A> {
 	private final Set<Integer> counterexamples = new LinkedHashSet<>();
 
-	<P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {
-	}
+	<P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {}
 
 	void addCounterexample(ArgTrace<S, A> cex) {
 		int cexHashCode = cex.hashCode();
 		counterexamples.add(cexHashCode);
 	}
 
-	boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
+    boolean wasCexRefinedBefore(ArgTrace<S, A> cex) {
+        int cexHashCode = cex.hashCode();
+        // we also remove the covered-by edges pointing to the (old) infeasible cex here
+        if(counterexamples.contains(cexHashCode)) {
+            cex.nodes().forEach(ArgNode::clearCoveredNodes);
+            cex.nodes().forEach(ArgNode::disableCoveringAbility);
+        }
+        return !counterexamples.contains(cexHashCode);
+    }
+
+	private boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
 		int cexHashCode = cex.hashCode();
+        // we also remove the covered-by edges pointing to the (old) infeasible cex here
+        /*if(counterexamples.contains(cexHashCode)) {
+            cex.nodes().forEach(ArgNode::clearCoveredNodes);
+            cex.nodes().forEach(ArgNode::disableCoveringAbility);
+        }*/
         return !counterexamples.contains(cexHashCode);
     }
 

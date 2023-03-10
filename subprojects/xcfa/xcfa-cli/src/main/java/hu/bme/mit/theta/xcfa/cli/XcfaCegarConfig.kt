@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.solver.SolverFactory
@@ -79,8 +80,9 @@ data class XcfaCegarConfig(
         var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
         @Parameter(names = ["--no-cex-check"])
         var noCexCheck: Boolean = false,
-        @Parameter(names = ["--check-arg"])
         var checkArg: Boolean = false,
+        @Parameter(names = ["--mitigate-no-progress"])
+        var mitigation: Boolean = false,
         @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
         var timeoutMs: Long = 0
 ) {
@@ -123,12 +125,12 @@ data class XcfaCegarConfig(
 
         // set up stopping analysis if it is stuck on same ARGs and precisions
         if (noCexCheck) {
-            ArgCexCheckHandler.instance.setArgCexCheck(false, false)
+            ArgCexCheckHandler.instance.setArgCexCheck(false, false, mitigation)
         } else {
             if(checkArg) {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, true)
+                ArgCexCheckHandler.instance.setArgCexCheck(true, true, mitigation)
             } else {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, false)
+                ArgCexCheckHandler.instance.setArgCexCheck(true, false, mitigation)
             }
         }
 
@@ -138,7 +140,16 @@ data class XcfaCegarConfig(
             CegarChecker.create(abstractor, refiner, logger)
     }
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
-            getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
+        try {
+            val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
+            val fileName = "wdl-output.json"
+            WebDebuggerLogger.getInstance().writeToFile(fileName)
+            check
+        } catch (e: Exception) {
+            val fileName = "wdl-output.json"
+            WebDebuggerLogger.getInstance().writeToFile(fileName)
+            throw e
+        }
 
     fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
         val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})

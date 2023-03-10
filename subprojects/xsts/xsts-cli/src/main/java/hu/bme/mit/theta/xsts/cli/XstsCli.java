@@ -207,11 +207,11 @@ public class XstsCli {
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		// set up stopping analysis if it is stuck on same ARGs and precisions
 		if (noStuckCheck || refinement.equals(Refinement.MULTI_SEQ)) {
-			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false, true);
 		} else if(argCheck) {
-			ArgCexCheckHandler.instance.setArgCexCheck(true, true);
+			ArgCexCheckHandler.instance.setArgCexCheck(true, true,true);
 		} else {
-            ArgCexCheckHandler.instance.setArgCexCheck(true, false);
+            ArgCexCheckHandler.instance.setArgCexCheck(true, false,true);
         }
 
 		try {

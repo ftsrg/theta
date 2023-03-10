@@ -26,8 +26,10 @@ import hu.bme.mit.theta.common.exception.NotSolvableException;
 public class ArgCexCheckHandler<S extends State, A extends Action> {
 	public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
 	private AbstractArgStorage<S, A> abstractArgStorage;
+    private boolean shouldTryMitigation;
 
-	public void setArgCexCheck(boolean shouldCheck, boolean shouldStoreArg) {
+	public void setArgCexCheck(boolean shouldCheck, boolean shouldStoreArg, boolean shouldTryMitigation) {
+        this.shouldTryMitigation = shouldTryMitigation;
 		if (shouldCheck) {
 			if (shouldStoreArg) {
 				abstractArgStorage = new SingleCexAbstractArgStorage<S, A>();
@@ -40,8 +42,9 @@ public class ArgCexCheckHandler<S extends State, A extends Action> {
 	}
 
 	public boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
+        if(!shouldTryMitigation) return true;
 		if (abstractArgStorage != null) {
-			return abstractArgStorage.checkIfCounterexampleNew(cex);
+			return abstractArgStorage.wasCexRefinedBefore(cex);
 		} else return true;
 	}
 

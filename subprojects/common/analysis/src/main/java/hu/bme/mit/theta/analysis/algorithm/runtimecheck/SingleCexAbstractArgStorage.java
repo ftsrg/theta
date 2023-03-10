@@ -63,4 +63,9 @@ public class SingleCexAbstractArgStorage<S extends State, A extends Action> exte
 	<P extends Prec> boolean check(ARG<S, A> arg, P prec) {
 		return arg.getCexs().noneMatch(this::checkIfCounterexampleNew);
 	}
+
+    @Override
+    boolean wasCexRefinedBefore(ArgTrace<S, A> cex) {
+        return checkIfCounterexampleNew(cex);
+    }
 }

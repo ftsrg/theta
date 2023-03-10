@@ -66,8 +66,12 @@ public class MultiCexAbstractArgStorage<S extends State, A extends Action> exten
 		return checkIfArgNew(new AbstractArg<>(arg, prec));
 	}
 
-	@Override
-	boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
+    @Override
+    boolean wasCexRefinedBefore(ArgTrace<S, A> cex) {
+        return checkIfCounterexampleNew(cex);
+    }
+
+    boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
 		return true; // always return true
 	}
 

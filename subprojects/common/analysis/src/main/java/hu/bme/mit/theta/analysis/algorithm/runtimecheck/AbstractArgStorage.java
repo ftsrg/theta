@@ -36,5 +36,5 @@ abstract class AbstractArgStorage<S extends State, A extends Action> {
 
 	abstract <P extends Prec> boolean check(ARG<S, A> arg, P prec);
 
-	abstract boolean checkIfCounterexampleNew(ArgTrace<S, A> cex);
+	abstract boolean wasCexRefinedBefore(ArgTrace<S, A> cex);
 }
