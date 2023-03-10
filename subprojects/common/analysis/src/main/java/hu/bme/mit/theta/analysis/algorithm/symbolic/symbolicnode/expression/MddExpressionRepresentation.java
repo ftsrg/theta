@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -371,8 +372,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             final MddExpressionTemplate template = MddExpressionTemplate.of(expr, o -> (Decl) o, representation.solverSupplier);
                             childNode = lower.get().checkInNode(template);
                         } else {
+                            final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
                             MddGraph<Expr> mddGraph = (MddGraph<Expr>) variable.getMddGraph();
-                            childNode = mddGraph.getNodeFor(expr);
+                            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
                         }
 
                         representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literalToCache), childNode);
