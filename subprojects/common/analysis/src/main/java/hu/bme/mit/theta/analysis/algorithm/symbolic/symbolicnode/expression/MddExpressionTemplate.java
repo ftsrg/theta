@@ -48,7 +48,7 @@ public class MddExpressionTemplate implements MddNode.Template {
     public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
 
-        final Expr<BoolType> canonizedExpr = ExprUtils.canonize(expr);
+        final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
         // TODO: we might not need this
         // Check if terminal 1

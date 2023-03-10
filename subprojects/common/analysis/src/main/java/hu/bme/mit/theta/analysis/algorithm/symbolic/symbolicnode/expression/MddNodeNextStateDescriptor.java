@@ -10,8 +10,12 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle node;
 
-    public MddNodeNextStateDescriptor(MddHandle node) {
+    private MddNodeNextStateDescriptor(MddHandle node) {
         this.node = node;
+    }
+
+    public static AbstractNextStateDescriptor of(MddHandle node){
+        return node.isTerminalZero() ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node);
     }
 
     @Override
@@ -21,12 +25,12 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(node, (n, key) -> new MddNodeNextStateDescriptor(n.get(key)));
+        return new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(node, (n, key) -> MddNodeNextStateDescriptor.of(n.get(key)));
     }
 
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
         return new IntObjMapViews.Transforming<MddHandle, IntObjMapView<AbstractNextStateDescriptor>>(node,
-                outerNode -> new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(outerNode, MddNodeNextStateDescriptor::new));
+                outerNode -> new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(outerNode, MddNodeNextStateDescriptor::of));
     }
 }

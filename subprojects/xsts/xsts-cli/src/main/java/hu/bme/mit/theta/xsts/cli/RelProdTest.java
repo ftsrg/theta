@@ -2,7 +2,9 @@ package hu.bme.mit.theta.xsts.cli;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.BfsProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.RelationalProductProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
@@ -43,8 +45,12 @@ public class RelProdTest {
         MddVariable x_prime_trans = transOrder.createOnTop(MddVariableDescriptor.create(declXPrime, 0));
         MddVariable x_trans = transOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
+        MddVariableOrder stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
+        MddVariable y_state = stateOrder.createOnTop(MddVariableDescriptor.create(declY, 0));
+        MddVariable x_state = stateOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
+
         var transSig = transOrder.getDefaultSetSignature();
-        var stateSig = (MddSignature) transOrder.createSignatureFromTraceInfos(List.of(declX, declY));
+        var stateSig = stateOrder.getDefaultSetSignature();
 
         // x = 0, y = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)));
@@ -55,14 +61,20 @@ public class RelProdTest {
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(6)));
 
         MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
-        AbstractNextStateDescriptor nextStates = new MddNodeNextStateDescriptor(transitionNode);
+        AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
         var relprod = new RelationalProductProvider(stateSig.getVariableOrder());
-        var resNode = relprod.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+        var relResult = relprod.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(resNode.getNode());
+        var bfs = new BfsProvider(stateSig.getVariableOrder());
+        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+
+//        var saturation = new SimpleSaturationProvider(stateSig.getVariableOrder());
+//        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+
+        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(bfsResult.getNode());
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
