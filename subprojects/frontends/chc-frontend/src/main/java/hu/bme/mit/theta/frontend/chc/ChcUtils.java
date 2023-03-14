@@ -38,11 +38,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class ChcUtils {
-    private static final GenericSmtLibSymbolTable initialSymbolTable = new GenericSmtLibSymbolTable();
+    private static GenericSmtLibSymbolTable initialSymbolTable = new GenericSmtLibSymbolTable();
     private static GenericSmtLibSymbolTable symbolTable;
-    private static final SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
+    private static SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
     private static SmtLibTermTransformer termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
     private static CharStream charStream;
+
+    public static void init(CharStream cs) {
+        initialSymbolTable = new GenericSmtLibSymbolTable();
+        typeTransformer = new GenericSmtLibTypeTransformer(null);
+        termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
+        charStream = cs;
+    }
 
     public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
@@ -60,10 +67,6 @@ public class ChcUtils {
             labels.add(XcfaLabel.Stmt(AssumeStmt.of(replacedExpr)));
         });
         return labels;
-    }
-
-    public static void setCharStream(CharStream charStream) {
-        ChcUtils.charStream = charStream;
     }
 
     public static String getOriginalText(ParserRuleContext ctx) {

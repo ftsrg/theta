@@ -43,7 +43,6 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.chc.ChcFrontend;
-import hu.bme.mit.theta.frontend.chc.ChcUtils;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
@@ -208,7 +207,7 @@ public class XcfaCli {
 	boolean chc = false;
 
 	@Parameter(names="--chc-transformation", description = "Direction of transformation from CHC to XCFA")
-	ChcFrontend.ChcTransformation chcTransformation = ChcFrontend.ChcTransformation.FORWARD;
+	ChcFrontend.ChcTransformation chcTransformation;
 
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
@@ -295,12 +294,23 @@ public class XcfaCli {
 		XCFA xcfa = null;
 		if (input != null) {
 			try {
-				final CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
+				CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
 				if (chc) {
-					ChcFrontend.chcTransformation = chcTransformation;
-					ChcUtils.setCharStream(input);
-					ChcFrontend chcFrontend = new ChcFrontend();
-					xcfaBuilder = chcFrontend.buildXcfa(input);
+					ChcFrontend chcFrontend;
+					if (chcTransformation == null) { // try forward, fallback to backward
+						chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.FORWARD);
+						try {
+							xcfaBuilder = chcFrontend.buildXcfa(input);
+						} catch (UnsupportedOperationException e) {
+							System.err.println("Non-linear CHC found, retrying using backward transformation...");
+							chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD);
+							input = CharStreams.fromStream(new FileInputStream(this.input));
+							xcfaBuilder = chcFrontend.buildXcfa(input);
+						}
+					} else {
+						chcFrontend = new ChcFrontend(chcTransformation);
+						xcfaBuilder = chcFrontend.buildXcfa(input);
+					}
 				} else {
 					final CLexer lexer = new CLexer(input);
 					final CommonTokenStream tokens = new CommonTokenStream(lexer);

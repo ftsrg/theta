@@ -7,14 +7,19 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 public class ChcFrontend {
-    public static ChcTransformation chcTransformation = ChcTransformation.FORWARD;
-
     public enum ChcTransformation {
         FORWARD,
         BACKWARD
     }
 
+    private final ChcTransformation chcTransformation;
+
+    public ChcFrontend(ChcTransformation transformation) {
+        chcTransformation = transformation;
+    }
+
     public XCFA.Builder buildXcfa(CharStream charStream) {
+        ChcUtils.init(charStream);
         CHCParser parser = new CHCParser(new CommonTokenStream(new CHCLexer(charStream)));
         ChcXcfaBuilder chcXcfaBuilder = switch (chcTransformation) {
             case FORWARD -> new ChcForwardXcfaBuilder();
