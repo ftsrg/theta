@@ -6,6 +6,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ftsrg/theta&amp;utm_campaign=Badge_Grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ftsrg/theta&utm_campaign=Badge_Coverage)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=blagazsolt_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=blagazsolt_theta)
 
 ![Theta logo](doc/theta-logo.png)
 
