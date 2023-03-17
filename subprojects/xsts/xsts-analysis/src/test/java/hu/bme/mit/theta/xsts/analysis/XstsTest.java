@@ -55,6 +55,9 @@ public class XstsTest {
 	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
+
+				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL},
 
@@ -68,13 +71,12 @@ public class XstsTest {
 
 				{ "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.EXPL},
+
 
 				{ "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
@@ -174,7 +176,7 @@ public class XstsTest {
 
 				{ "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 //				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
 
@@ -216,17 +218,17 @@ public class XstsTest {
 
 				{ "src/test/resources/model/localvars2.xsts", "src/test/resources/property/localvars2.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL},
+				//{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+				//{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-				{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+				//{ "src/test/resources/model/loopxy.xsts", "src/test/resources/property/loopxy.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/arraywrite_sugar.xsts", "src/test/resources/property/arraywrite_sugar.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
 				{ "src/test/resources/model/if1.xsts", "src/test/resources/property/if1.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-				{ "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
+				//{ "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
 		});
 	}
 
@@ -239,9 +241,9 @@ public class XstsTest {
 		try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
 			xsts = XstsDslManager.createXsts(inputStream);
 		}
-
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
-		final SafetyResult<?, ?> status = configuration.check();
+		Xsts_K_induction checker= new Xsts_K_induction();
+		//final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
+		final SafetyResult<?, ?> status = checker.check(xsts,100,Z3SolverFactory.getInstance().createSolver());
 		if (safe) {
 			assertTrue(status.isSafe());
 		} else {

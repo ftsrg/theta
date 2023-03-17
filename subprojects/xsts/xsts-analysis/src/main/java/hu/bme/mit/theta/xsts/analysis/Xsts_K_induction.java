@@ -3,7 +3,9 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import com.google.errorprone.annotations.Var;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -36,88 +38,78 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 public class Xsts_K_induction {
 
 
-
     public SafetyResult<XstsState<ExplState>, XstsAction> check(XSTS xsts, int bound, Solver solver) {
         int i = 0;
+        ARG<XstsState<ExplState>, XstsAction> justAnArg = ARG.create(XstsOrd.create(ExplOrd.getInstance()));
 
         List<Stmt> stmts = new ArrayList<>();
 
-        stmts.add(xsts.getTran());
         stmts.add(xsts.getEnv());
-        var exp= StmtUtils.toExpr(xsts.getInit(),VarIndexingFactory.indexing(0));
+        stmts.add(xsts.getTran());
+        var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 
+        var unfoldResult = StmtUtils.toExpr(stmts, init.getIndexing());
+        var unfoldResult2 = StmtUtils.toExpr(stmts, VarIndexingFactory.indexing(0));
 
-        var states= new ArrayList<Expr<BoolType>>();
+        final var exprsFromStart = new ArrayList<Expr<BoolType>>();
+        exprsFromStart.add(xsts.getInitFormula());
+        exprsFromStart.addAll(init.getExprs());
+        exprsFromStart.addAll(unfoldResult.getExprs());
 
-        var unfoldResult =
-                StmtUtils.toExpr(stmts, exp.getIndexing());
-        var unfoldResult2 = StmtUtils.toExpr(stmts, exp.getIndexing());
-        var exprs =new ArrayList<>(exp.getExprs());
-        exprs.add(xsts.getInitFormula());
-
-        var init =StmtUtils.toExpr(xsts.getInit(),VarIndexingFactory.indexing(0));
-        exprs.addAll(init.getExprs());
-        exprs.addAll(unfoldResult.getExprs());
-        var exprs2 = new ArrayList<Expr<BoolType>>(unfoldResult2.getExprs());
-        var temp= unfoldResult;
-        exprs2.add(xsts.getProp());
+        var exprsForInductivity = new ArrayList<>(unfoldResult.getExprs());
+        var temp = unfoldResult;
+        exprsForInductivity.add(xsts.getProp());
         var listOfIndexes = new ArrayList<VarIndexing>();
         listOfIndexes.add(VarIndexingFactory.indexing(0));
         listOfIndexes.add(unfoldResult.getIndexing());
 
-        ArrayList<XstsState<ExplState>> list =new ArrayList<>();
-        ArrayList<XstsAction> actionList=new ArrayList<>();
+        ArrayList<XstsState<ExplState>> list = new ArrayList<>();
+        ArrayList<XstsAction> actionList = new ArrayList<>();
 
         while (i < bound) {
             if (i > 0) {
-                exprs.addAll(StmtUtils.toExpr(stmts, unfoldResult.getIndexing()).getExprs());
-                temp= unfoldResult;
+                exprsFromStart.addAll(StmtUtils.toExpr(stmts, unfoldResult.getIndexing()).getExprs());
+                temp = unfoldResult;
                 unfoldResult = StmtUtils.toExpr(stmts, unfoldResult.getIndexing());
                 listOfIndexes.add(unfoldResult.getIndexing());
 
-                exprs2.addAll(StmtUtils.toExpr(stmts,unfoldResult2.getIndexing()).getExprs());
-                exprs2.add(ExprUtils.applyPrimes(xsts.getProp(),unfoldResult2.getIndexing()));
-                unfoldResult2=StmtUtils.toExpr(stmts,unfoldResult2.getIndexing());
-
-
-
-
-
+                exprsForInductivity.addAll(StmtUtils.toExpr(stmts, unfoldResult2.getIndexing()).getExprs());
+                exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), unfoldResult2.getIndexing()));
+                unfoldResult2 = StmtUtils.toExpr(stmts, unfoldResult2.getIndexing());
             }
 
-            exprs.add(xsts.getInitFormula());
-            exprs.add(ExprUtils.applyPrimes(xsts.getProp(),temp.getIndexing()));
+
+            exprsFromStart.add(ExprUtils.applyPrimes(Not(xsts.getProp()), temp.getIndexing()));
 
             try (var s = new WithPushPop(solver)) {
-                solver.add(PathUtils.unfold(And(exprs), 0));
+                solver.add(PathUtils.unfold(And(exprsFromStart), 0));
 
                 if (solver.check().isSat()) {
 
-                    for(int j=0;j<listOfIndexes.size();j++){
-                        var valuation=PathUtils.extractValuation(solver.getModel(),listOfIndexes.get(j),xsts.getVars());
-                        var el=XstsState.of(ExplState.of(valuation),false,true);
-                        XstsAction concatAction=XstsAction.create(List.of(xsts.getEnv(),xsts.getTran()));
+                    for (int j = 0; j < listOfIndexes.size(); j++) {
+                        var valuation = PathUtils.extractValuation(solver.getModel(), listOfIndexes.get(j), xsts.getVars());
+                        var el = XstsState.of(ExplState.of(valuation), false, true);
+                        XstsAction concatAction = XstsAction.create(List.of(xsts.getEnv(), xsts.getTran()));
                         actionList.add(concatAction);
                         list.add(el);
                     }
-                    actionList.remove(actionList.size()-1);
-                    var trace= Trace.of(list,actionList);
-                    return SafetyResult.unsafe(trace,null);
+                    actionList.remove(actionList.size() - 1);
+                    var trace = Trace.of(list, actionList);
+                    return SafetyResult.unsafe(trace, justAnArg);
                 }
-
+                exprsFromStart.remove(exprsFromStart.size()-1);
             }
             try (var s = new WithPushPop(solver)) {
-                exprs2.addAll(StmtUtils.toExpr(stmts, unfoldResult.getIndexing()).getExprs());
-                exprs2.add(ExprUtils.applyPrimes(xsts.getProp(),unfoldResult2.getIndexing()));
+                exprsForInductivity.addAll(StmtUtils.toExpr(stmts, unfoldResult.getIndexing()).getExprs());
+                exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), unfoldResult2.getIndexing()));
 
-                solver.add(PathUtils.unfold(And(exprs2), VarIndexingFactory.indexing(0)));
-                if(solver.check().isUnsat()) return SafetyResult.safe(null);
-
-
+                solver.add(PathUtils.unfold(And(exprsForInductivity), VarIndexingFactory.indexing(0)));
+                if (solver.check().isUnsat()) return SafetyResult.safe(justAnArg);
             }
             i++;
         }
 
+        //return SafetyResult.safe(justAnArg);
         throw new RuntimeException("unknown");
 
     }
