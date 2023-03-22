@@ -64,7 +64,7 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 		if (result == 0) {
 			result = getHashSeed();
 			result = 37 * result + getOp().hashCode();
-			result = hashCode;
+            hashCode = result;
 		}
 		return result;
 	}

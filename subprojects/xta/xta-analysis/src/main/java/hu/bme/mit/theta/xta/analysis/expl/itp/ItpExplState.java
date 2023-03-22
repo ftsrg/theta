@@ -78,7 +78,7 @@ public final class ItpExplState implements ExprState {
 			result = HASH_SEED;
 			result = 37 * result + concrState.hashCode();
 			result = 37 * result + abstrState.hashCode();
-			result = hashCode;
+            hashCode = result;
 		}
 		return result;
 	}
