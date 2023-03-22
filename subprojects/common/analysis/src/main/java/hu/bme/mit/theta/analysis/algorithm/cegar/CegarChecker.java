@@ -88,6 +88,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
             String precString = prec.toString();
 
+            wdl.addIteration(iteration, argGraph, precString);
+
             if (abstractorResult.isUnsafe()) {
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
 
@@ -110,7 +112,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 			}
 
-            wdl.addIteration(iteration, argGraph, precString);
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         String fileName = "wdl-output.json";

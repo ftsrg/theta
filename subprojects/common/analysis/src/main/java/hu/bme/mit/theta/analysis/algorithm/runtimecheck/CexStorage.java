@@ -35,12 +35,14 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class CexStorage<S extends State, A extends Action> extends AbstractArgStorage<S, A> {
 	private final Set<Integer> counterexamples = new LinkedHashSet<>();
+    private final Set<ArgTrace<S,A>> fullCounterexamples = new LinkedHashSet<>();
 
 	<P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {}
 
 	void addCounterexample(ArgTrace<S, A> cex) {
 		int cexHashCode = cex.hashCode();
 		counterexamples.add(cexHashCode);
+        fullCounterexamples.add(cex);
 	}
 
     boolean wasCexRefinedBefore(ArgTrace<S, A> cex) {
@@ -55,11 +57,7 @@ public class CexStorage<S extends State, A extends Action> extends AbstractArgSt
 
 	private boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
 		int cexHashCode = cex.hashCode();
-        // we also remove the covered-by edges pointing to the (old) infeasible cex here
-        /*if(counterexamples.contains(cexHashCode)) {
-            cex.nodes().forEach(ArgNode::clearCoveredNodes);
-            cex.nodes().forEach(ArgNode::disableCoveringAbility);
-        }*/
+        // we DO NOT remove the covered-by edges pointing to the (old) infeasible cex here (for that, see wasCexRefinedBefore)
         return !counterexamples.contains(cexHashCode);
     }
 

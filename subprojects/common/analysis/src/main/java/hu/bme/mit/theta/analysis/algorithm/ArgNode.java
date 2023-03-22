@@ -291,6 +291,6 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
     public void disableCoveringAbility() {
-        canCover = true;
+        canCover = false;
     }
 }

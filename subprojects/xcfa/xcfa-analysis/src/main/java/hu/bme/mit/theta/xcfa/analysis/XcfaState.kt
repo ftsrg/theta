@@ -226,7 +226,7 @@ data class XcfaProcessState(
 
     override fun hashCode(): Int {
         var result = locs.hashCode()
-        result = 31 * result + paramsInitialized.hashCode()
+        result = 31 * result + paramsInitialized.hashCode() // TODO FRICKIN INNER STATE HASH
         return result
     }
 
