@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.xsts.cli;
 
+import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.RelationalProductProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
@@ -57,8 +59,8 @@ public class RelProdTest {
 
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
 
-        // x' = x + 1, y' = y - 1
-        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(6)));
+        // x' = x + 1, y' = y - 1, x < 9
+        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(9)));
 
         MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
         AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
@@ -69,10 +71,12 @@ public class RelProdTest {
         var bfs = new BfsProvider(stateSig.getVariableOrder());
         var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-//        var saturation = new SimpleSaturationProvider(stateSig.getVariableOrder());
-//        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(bfsResult.getNode());
+        System.out.println(Z3SolverFactory.solversCreated);
+
+        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(satResult.getNode());
         try {
             GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
@@ -82,6 +86,7 @@ public class RelProdTest {
     }
 
     private static String nodeToString(MddNode node){
+        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

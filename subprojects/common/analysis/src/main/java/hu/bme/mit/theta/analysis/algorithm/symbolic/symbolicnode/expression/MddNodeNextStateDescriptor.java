@@ -25,7 +25,10 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(node, (n, key) -> MddNodeNextStateDescriptor.of(n.get(key)));
+        return new IntObjMapViews.Transforming<MddHandle, AbstractNextStateDescriptor>(node, (n, key) -> {
+            if(key == null) return AbstractNextStateDescriptor.terminalEmpty();
+            else return MddNodeNextStateDescriptor.of(n.get(key));
+        });
     }
 
     @Override
