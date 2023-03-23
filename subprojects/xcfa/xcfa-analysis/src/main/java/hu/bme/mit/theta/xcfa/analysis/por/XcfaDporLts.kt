@@ -7,10 +7,13 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
+import hu.bme.mit.theta.xcfa.isRead
+import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import java.util.stream.Collectors
@@ -47,12 +50,11 @@ private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
 
 // DEBUG
 var State.reachedNumber: Int? by nullableExtension()
-var State.sleepsAtCovering: Pair<Set<A>, Set<A>>? by nullableExtension()
 var _xcfa: XCFA? = null
 fun Set<A>.toStr() = "${
     map {
         val vars = it.edge.getGlobalVars(_xcfa!!)
-        "${it.pid}: ${it.source} -> ${it.target} W${vars.filter { e -> e.value }.keys.map { v -> v.name }} R${vars.filter { e -> !e.value }.keys.map { v -> v.name }}"
+        "${it.pid}: ${it.source} -> ${it.target} W${vars.filter { e -> e.value.isWritten }.keys.map { v -> v.name }} R${vars.filter { e -> e.value.isRead }.keys.map { v -> v.name }}"
     }
 }"
 // GUBED
@@ -63,6 +65,7 @@ var State.explored: MutableSet<A> by extension() // TODO private
 
 private val reExploredDelegate = nullableExtension<State, Boolean?>()
 private var State.reExplored: Boolean? by reExploredDelegate
+private var A.varLookUp: Map<VarDecl<*>, VarDecl<*>> by extension()
 
 private val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
@@ -82,7 +85,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         private val simpleXcfaLts = getXcfaLts()
 
-        private val State.enabled: Set<A> get() = simpleXcfaLts.getEnabledActionsFor(this as S)
+        private val State.enabled: Set<A>
+            get() {
+                val enabledActions = simpleXcfaLts.getEnabledActionsFor(this as S)
+                enabledActions.forEach { it.varLookUp = this.processes[it.pid]!!.varLookup.peek() }
+                return enabledActions
+            }
 
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
             PartialOrd<E> { s1, s2 ->
@@ -202,6 +210,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
             val newaction = item.inEdge.get().action
             val process = newaction.pid
+            newaction.varLookUp = item.parent.get().state.processes[process]!!.varLookup.peek()
+
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size }
             var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf()).apply {
                 this[process] = stack.size
@@ -221,12 +231,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
                         // reversible race
+                        val v = notdep(index, newaction)
+                        val iv = initials(index - 1, v)
+                        if (iv.isEmpty()) continue // due to mutex (e.g. atomic block)
+
                         if (index < virtualLimit) {
                             // only add new action to backtrack sets in the "real" part of the stack
-                            val v = notdep(index, newaction)
-                            val iv = initials(index - 1, v)
-                            if (iv.isEmpty()) continue // due to mutex (e.g. atomic block)
-
                             val backtrack = stack[index - 1].backtrack
                             if ((iv intersect backtrack).isEmpty()) {
                                 backtrack.add(iv.random(random))
@@ -378,7 +388,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
         // dependent if they access the same variable (at least one write)
-        return (aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it] == true || bGlobalVars[it] == true }
+        return (aGlobalVars.keys intersect bGlobalVars.keys)
+            .any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
 }
 
@@ -397,10 +408,17 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        val precVars = prec.usedVars.toSet()
+        val precVars = prec.usedVars.flatMap { precVar ->
+            buildList<VarDecl<*>> {
+                add(precVar)
+                a.varLookUp[precVar]?.let { add(it) }
+                b.varLookUp[precVar]?.let { add(it) }
+            }
+        }.toSet()
+        val aGlobalVars = a.edge.getGlobalVars(xcfa, precVars)
+        val bGlobalVars = b.edge.getGlobalVars(xcfa, precVars)
         // dependent if they access the same variable in the precision (at least one write)
-        return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it] == true || bGlobalVars[it] == true }
+        return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars)
+            .any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
 }

@@ -38,6 +38,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
+import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.startsAtomic
@@ -120,9 +121,9 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
                                 val globalVars2 = edge2.getGlobalVars(xcfa)
                                 val isAtomic1 = edge1.startsAtomic()
                                 val isAtomic2 = edge2.startsAtomic()
-                                if(!isAtomic1 || !isAtomic2) {
+                                if (!isAtomic1 || !isAtomic2) {
                                     val intersection = globalVars1.keys intersect globalVars2.keys
-                                    if (intersection.any { globalVars1[it] == true || globalVars2[it] == true })
+                                    if (intersection.any { globalVars1[it].isWritten || globalVars2[it].isWritten })
                                         return@Predicate true
                                 }
                             }
