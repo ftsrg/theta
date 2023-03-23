@@ -1,13 +1,17 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.EmptyNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.IdentityNextStateDescriptor;
 
 import java.util.Optional;
 
 public interface AbstractNextStateDescriptor {
+
 	interface Precondition extends AbstractNextStateDescriptor {
 		IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace);
 		
@@ -64,8 +68,10 @@ public interface AbstractNextStateDescriptor {
 		return true;
 	}
 
+
 	IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace);
-	
+
+
 	IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace);
 	
 	default Optional<Iterable<AbstractNextStateDescriptor>> split() {

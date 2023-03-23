@@ -93,11 +93,32 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return getLazyTraverser().queryEdge(key);
     }
 
+    public static int getCounter = 0;
+
     @Override
     public MddNode get(int key) {
-        getLazyTraverser().queryEdge(key);
-        // Traverser is responsible for caching
-        return explicitRepresentation.getCacheView().get(key);
+        final var cached = explicitRepresentation.getCacheView().get(key);
+        if (cached != null) return cached;
+
+        final MutableValuation val = new MutableValuation();
+        val.put(decl, LitExprConverter.toLitExpr(key, decl.getType()));
+        final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, val);
+
+        final MddNode childNode;
+        if (mddVariable.getLower().isPresent()) {
+            final MddExpressionTemplate template = MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverSupplier);
+            childNode = mddVariable.getLower().get().checkInNode(template);
+        } else {
+            final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(simplifiedExpr));
+            MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
+        }
+
+        if(!childNode.equals(mddVariable.getMddGraph().getTerminalZeroNode())) explicitRepresentation.cacheNode(key, childNode);
+        return childNode;
+
+//        getLazyTraverser().queryEdge(key);
+//        return explicitRepresentation.getCacheView().get(key);
     }
 
     @Override
