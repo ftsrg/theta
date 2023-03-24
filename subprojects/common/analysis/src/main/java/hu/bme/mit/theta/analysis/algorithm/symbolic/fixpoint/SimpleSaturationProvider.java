@@ -17,12 +17,12 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 	public static boolean verbose = false;
 	
 	private       MddVariableOrder              variableOrder;
-	private       RelationalProductProvider     relProdProvider;
+	private 	  RelationalProductProvider relProdProvider;
 	private final CacheManager<SaturationCache> cacheManager = new CacheManager<>(v -> new SaturationCache());
 	private       MddNode                       terminalZeroNode;
 	
 	public SimpleSaturationProvider(final MddVariableOrder variableOrder) {
-		this(variableOrder, new RelationalProductProvider(variableOrder));
+		this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
 	}
 	
 	public SimpleSaturationProvider(

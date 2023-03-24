@@ -221,9 +221,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             this.solver = solverSupplier.get();
             this.stack = new Stack<>();
 
-            setCurrentRepresentation(Preconditions.checkNotNull(rootRepresentation));
             solver.add(rootRepresentation.expr);
             solver.push();
+            setCurrentRepresentation(Preconditions.checkNotNull(rootRepresentation));
         }
 
         public MddExpressionRepresentation moveUp() {
@@ -523,7 +523,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             Preconditions.checkState(!closed, "Cursor can't be moved if it was closed");
 
             var currentRepresentation = traverser.currentRepresentation;
-            if(currentRepresentation.containsKey(key) || !currentRepresentation.explicitRepresentation.isComplete() && traverser.queryEdge(key)){
+            if(currentRepresentation.explicitRepresentation.getCacheView().containsKey(key) || !currentRepresentation.explicitRepresentation.isComplete() && traverser.queryEdge(key)){
                 this.key = key;
                 this.value = currentRepresentation.get(key);
                 this.initialized = true;
@@ -535,6 +535,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         @Override
         public RecursiveIntObjCursor<MddNode> valueCursor() {
+            Preconditions.checkState(!blocked, "Can't provide value cursor for blocked cursor");
+            Preconditions.checkState(!closed, "Can't provide value cursor for closed cursor");
+
             this.blocked = true;
             final MddNode childNode = this.traverser.peekDown(key);
             if(childNode.isTerminal()) {
