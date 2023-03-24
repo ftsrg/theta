@@ -94,7 +94,7 @@ public interface AbstractNextStateDescriptor {
 		return ns == null || ns == terminalEmpty();
 	}
 	
-	static boolean isNullOrEmpty(IntObjMapView<AbstractNextStateDescriptor> ns) {
+	static boolean isNullOrEmpty(IntObjMapView<? extends AbstractNextStateDescriptor> ns) {
 		return ns == null || (ns.isEmpty() && isNullOrEmpty(ns.defaultValue()));
 	}
 }
