@@ -62,7 +62,6 @@ public class SatTest {
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
 
         var c = initNode.getNode().cursor();
-        initNode.get(0).get(0);
         var c2 = initNode.get(0).cursor();
         c2.moveNext();
         c2.moveNext();
