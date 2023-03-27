@@ -50,7 +50,7 @@ public class Xsts_K_induction {
         listOfIndexes.add(VarIndexingFactory.indexing(0));
         listOfIndexes.add(currStep.getIndexing());
 
-        //TODO: ez tényleg currstep vagy inductiveCurrStep akart lenni?
+
         var exprsForInductivity = new ArrayList<>(inductiveCurrStep.getExprs());
         exprsForInductivity.add(xsts.getProp());
 
@@ -63,7 +63,7 @@ public class Xsts_K_induction {
                 currStep = StmtUtils.toExpr(atomicStep, currStep.getIndexing());
                 listOfIndexes.add(currStep.getIndexing());
 
-                //TODO: ha mindenhol máshol currStep az indexelés, akkor lehet az többi helyen csere helyett itt is az az atomicStepAt0 helyett
+                
                 exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), inductiveCurrStep.getIndexing()));
                 inductiveCurrStep = StmtUtils.toExpr(atomicStep, inductiveCurrStep.getIndexing());
                 exprsForInductivity.addAll(inductiveCurrStep.getExprs());
