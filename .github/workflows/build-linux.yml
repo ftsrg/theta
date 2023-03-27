@@ -16,8 +16,9 @@ jobs:
       with:
         java-version: 1.17
     - name: Build with Gradle
-      run: ./gradlew build
-    - name: Send test coverage to Codacy
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Java $(find '**/jacoco*.xml' -printf '-r %p ')
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: ./gradlew build --scan
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ThetaJars
+          path: subprojects/**/*-all.jar
+    
