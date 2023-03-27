@@ -122,7 +122,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         newProcesses.remove(pid)
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes.remove("$pid")
-        return copy(processes=newProcesses)
+        return copy(processes=newProcesses, mutexes = newMutexes)
     }
 
     private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaState<S> {
@@ -161,11 +161,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        try {
-            return "$reachedNumber ${backtrack.toStr()}\n${sleep.toStr()}\n$processes {${if(bottom) ", bottom" else ""}}\nThis: ${sleepsAtCovering?.first?.toStr()}\nCovering: ${sleepsAtCovering?.second?.toStr()}"
-        } catch (e: Exception) {
-            return "$processes {$sGlobal, mutex=$mutexes${if(bottom) ", bottom" else ""}}"
-        }
+        return "$processes {$sGlobal, mutex=$mutexes${if(bottom) ", bottom" else ""}}"
     }
 }
 data class XcfaProcessState(

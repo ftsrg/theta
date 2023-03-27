@@ -69,32 +69,23 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
 }
 
-private fun extendRelevantVars(relevantVars: Set<VarDecl<*>>?, labels: Collection<XcfaLabel>): Set<VarDecl<*>>? =
-    relevantVars?.toMutableSet()?.apply {
-        val accesses = labels.map { it.collectVarsWithAccessType(null) }.mergeAndCollect()
-        addAll(accesses.filter { it.value.isWritten && it.value.isRead }.keys)
-    }
-
 /**
  * Returns the list of accessed variables by the label.
  * The variable is associated with true if the variable is written and false otherwise.
  */
-private fun XcfaLabel.collectVarsWithAccessType(relevantVars: Set<VarDecl<*>>?): VarAccessMap = when(this) {
+private fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when(this) {
     is StmtLabel -> {
         when(stmt) {
-            is HavocStmt<*> -> if(relevantVars?.let { stmt.varDecl in it} != false) mapOf(stmt.varDecl to WRITE) else mapOf()
-            is AssignStmt<*> -> if(relevantVars?.let { stmt.varDecl in it} != false)
-                                    StmtUtils.getVars(stmt).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-                                else
-                                    mapOf()
+            is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
+            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }
     is NondetLabel -> {
-        labels.map { it.collectVarsWithAccessType(extendRelevantVars(relevantVars, labels)) }.mergeAndCollect()
+        labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     }
     is SequenceLabel -> {
-        labels.map { it.collectVarsWithAccessType(extendRelevantVars(relevantVars, labels)) }.mergeAndCollect()
+        labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     }
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
     is JoinLabel -> mapOf(pidVar to READ)
@@ -107,8 +98,8 @@ private fun XcfaLabel.collectVarsWithAccessType(relevantVars: Set<VarDecl<*>>?):
 /**
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
-private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>, relevantVars: Set<VarDecl<*>>?) =
-    collectVarsWithAccessType(relevantVars).filter { labelVar -> globalVars.any { it == labelVar.key } }
+private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>) =
+    collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
 
 inline val XcfaLabel.isAtomicBegin get() = this is FenceLabel && this.labels.contains("ATOMIC_BEGIN")
 inline val XcfaLabel.isAtomicEnd get() = this is FenceLabel && this.labels.contains("ATOMIC_END")
@@ -116,9 +107,9 @@ inline val XcfaLabel.isAtomicEnd get() = this is FenceLabel && this.labels.conta
 /**
  * Returns the global variables (potentially indirectly) accessed by the edge.
  * If the edge starts an atomic block, all variable accesses in the atomic block is returned.
- * Variables are associated with a boolean value: true if the variable is written and false otherwise.
+ * Variables are associated with a pair of boolean values: the first is true if the variable is read and false otherwise. The second is similar for write access.
  */
-fun XcfaEdge.getGlobalVars(xcfa: XCFA, relevantVars: Set<VarDecl<*>>? = null): Map<VarDecl<*>, AccessType> {
+fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, AccessType> {
     val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
     var label = this.label
     if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
@@ -130,7 +121,7 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA, relevantVars: Set<VarDecl<*>>? = null): M
             val e = unprocessed.removeFirst()
             var eLabel = e.label
             if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
-            eLabel.collectGlobalVars(globalVars, relevantVars).forEach { (varDecl, accessType) ->
+            eLabel.collectGlobalVars(globalVars).forEach { (varDecl, accessType) ->
                 vars[varDecl] = accessType.merge(vars[varDecl])
             }
             processed.add(e)
@@ -140,7 +131,7 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA, relevantVars: Set<VarDecl<*>>? = null): M
         }
         return vars
     } else {
-        return label.collectGlobalVars(globalVars, relevantVars)
+        return label.collectGlobalVars(globalVars)
     }
 }
 

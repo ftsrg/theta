@@ -7,14 +7,12 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.getGlobalVars
-import hu.bme.mit.theta.xcfa.isRead
 import hu.bme.mit.theta.xcfa.isWritten
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -48,24 +46,12 @@ private open class NullableExtensionProperty<R, T> : ReadWriteProperty<R, T?> {
 private fun <R, T> extension() = ExtensionProperty<R, T>()
 private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
 
-// DEBUG
-var State.reachedNumber: Int? by nullableExtension()
-var _xcfa: XCFA? = null
-fun Set<A>.toStr() = "${
-    map {
-        val vars = it.edge.getGlobalVars(_xcfa!!)
-        "${it.pid}: ${it.source} -> ${it.target} W${vars.filter { e -> e.value.isWritten }.keys.map { v -> v.name }} R${vars.filter { e -> e.value.isRead }.keys.map { v -> v.name }}"
-    }
-}"
-// GUBED
-
-var State.backtrack: MutableSet<A> by extension() // TODO private
-var State.sleep: MutableSet<A> by extension() // TODO private
-var State.explored: MutableSet<A> by extension() // TODO private
+private var State.backtrack: MutableSet<A> by extension()
+private var State.sleep: MutableSet<A> by extension()
+private var State.explored: MutableSet<A> by extension()
 
 private val reExploredDelegate = nullableExtension<State, Boolean?>()
 private var State.reExplored: Boolean? by reExploredDelegate
-private var A.varLookUp: Map<VarDecl<*>, VarDecl<*>> by extension()
 
 private val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
@@ -75,22 +61,12 @@ private val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Col
  */
 open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
-    init {
-        _xcfa = xcfa
-        //System.err.println(xcfa.toDot())
-    }
-
     companion object {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
         private val simpleXcfaLts = getXcfaLts()
 
-        private val State.enabled: Set<A>
-            get() {
-                val enabledActions = simpleXcfaLts.getEnabledActionsFor(this as S)
-                enabledActions.forEach { it.varLookUp = this.processes[it.pid]!!.varLookup.peek() }
-                return enabledActions
-            }
+        private val State.enabled: Collection<A> get() = simpleXcfaLts.getEnabledActionsFor(this as S)
 
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
             PartialOrd<E> { s1, s2 ->
@@ -145,13 +121,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     val waitlist = object : Waitlist<Node> {
 
-        var counter = 0
-
         override fun add(item: Node) {
             var node = item
             while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-            node.state.reachedNumber = counter++
             node.state.reExplored = true
             push(node, stack.size)
         }
@@ -210,7 +183,6 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
             val newaction = item.inEdge.get().action
             val process = newaction.pid
-            newaction.varLookUp = item.parent.get().state.processes[process]!!.varLookup.peek()
 
             val newProcessLastAction = LinkedHashMap(last.processLastAction).apply { this[process] = stack.size }
             var newLastDependents: MutableMap<Int, Int> = LinkedHashMap(last.lastDependents[process] ?: mapOf()).apply {
@@ -334,9 +306,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         private fun exploreLazily() {
             while (stack.isNotEmpty()) {
-                val lazilyExplorable = last.node.outEdges
+                val lazilyExplorable = last.node.outEdges.toList()
                     .filter { it.target.state.reExplored != true && it.action !in last.sleep }
-                    .collect(Collectors.toSet())
+                    .toSet()
                 if (lazilyExplorable.isEmpty()) return
 
                 val edgeToExplore = lazilyExplorable.random(random)
@@ -408,17 +380,10 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
-        val precVars = prec.usedVars.flatMap { precVar ->
-            buildList<VarDecl<*>> {
-                add(precVar)
-                a.varLookUp[precVar]?.let { add(it) }
-                b.varLookUp[precVar]?.let { add(it) }
-            }
-        }.toSet()
-        val aGlobalVars = a.edge.getGlobalVars(xcfa, precVars)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa, precVars)
+        val aGlobalVars = a.edge.getGlobalVars(xcfa)
+        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        val precVars = prec.usedVars.toSet()
         // dependent if they access the same variable in the precision (at least one write)
-        return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars)
-            .any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
+        return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
 }

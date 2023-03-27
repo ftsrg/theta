@@ -25,5 +25,4 @@ import java.util.Collection;
 public interface Prec {
 
 	Collection<VarDecl<?>> getUsedVars();
-
 }

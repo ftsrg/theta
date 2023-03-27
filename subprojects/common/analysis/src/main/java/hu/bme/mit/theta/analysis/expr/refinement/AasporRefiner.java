@@ -30,26 +30,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class AaporRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
+public final class AasporRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
 
 	private final Refiner<S, A, P> refiner;
 
 	private final PruneStrategy pruneStrategy;
 
-	private final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry;
+	private final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry;
 
-	private AaporRefiner(final Refiner<S, A, P> refiner,
-						 final PruneStrategy pruneStrategy,
-						 final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry) {
+	private AasporRefiner(final Refiner<S, A, P> refiner,
+						  final PruneStrategy pruneStrategy,
+						  final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
 		this.refiner = refiner;
 		this.pruneStrategy = pruneStrategy;
-		this.ignoredVariableRegistry = ignoredVariableRegistry;
+		this.ignoredVarRegistry = ignoredVarRegistry;
 	}
 
-	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> AaporRefiner<S, A, P> create(
+	public static <S extends ExprState, A extends ExprAction, P extends Prec> AasporRefiner<S, A, P> create(
 			final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
-			final Map<Decl<? extends Type>, Set<S>> ignoredVariableRegistry) {
-		return new AaporRefiner<>(refiner, pruneStrategy, ignoredVariableRegistry);
+			final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
+		return new AasporRefiner<>(refiner, pruneStrategy, ignoredVarRegistry);
 	}
 
 	@Override
@@ -62,12 +62,12 @@ public final class AaporRefiner<S extends ExprState, A extends ExprAction, P ext
 		newlyAddedVars.removeAll(prec.getUsedVars());
 
 		newlyAddedVars.forEach(newVar -> {
-			if (ignoredVariableRegistry.containsKey(newVar)) {
-				Set<ArgNode<S, A>> nodesToReExpand = ignoredVariableRegistry.get(newVar).stream().flatMap(stateToPrune ->
+			if (ignoredVarRegistry.containsKey(newVar)) {
+				Set<ArgNode<S, A>> nodesToReExpand = ignoredVarRegistry.get(newVar).stream().flatMap(stateToPrune ->
 						arg.getNodes().filter(node -> node.getState().equals(stateToPrune)) // TODO one state can be in one ARG node?
 				).collect(Collectors.toSet());
 				nodesToReExpand.forEach(arg::markForReExpansion);
-				ignoredVariableRegistry.remove(newVar);
+				ignoredVarRegistry.remove(newVar);
 			}
 		});
 

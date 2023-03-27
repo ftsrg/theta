@@ -122,7 +122,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @param state the state whose enabled actions are to be returned
 	 * @return the enabled actions in the state
 	 */
-	protected abstract Set<A> getAllEnabledActionsFor(S state);
+	protected abstract Collection<A> getAllEnabledActionsFor(S state);
 
 	/**
 	 * Returns the actions from where persistent sets will be calculated (a subset of the given enabled actions).
@@ -144,19 +144,19 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * @return true, if the two actions are dependent in the context of persistent sets
 	 */
 	protected boolean areDependents(A persistentSetAction, A action) {
-		return canEnOrDisableEachOther(persistentSetAction, action) ||
-				getInfluencedSharedObjects(getTransitionOf(action)).stream().anyMatch(varDecl ->
-						getCachedUsedSharedObjects(getTransitionOf(persistentSetAction)).contains(varDecl));
+		var usedByPersistentSetAction = getCachedUsedSharedObjects(getTransitionOf(persistentSetAction));
+		return isSameProcess(persistentSetAction, action) ||
+				getInfluencedSharedObjects(getTransitionOf(action)).stream().anyMatch(usedByPersistentSetAction::contains);
 	}
 
 	/**
-	 * Determines whether two actions can enable or disable each other (if true, the two actions are dependent).
+	 * Determines whether two actions are in the same process.
 	 *
 	 * @param action1 action 1
 	 * @param action2 action 2
-	 * @return true, if the two actions can enable or disable each other
+	 * @return true, if the two actions are in the same process
 	 */
-	protected abstract boolean canEnOrDisableEachOther(A action1, A action2);
+	protected abstract boolean isSameProcess(A action1, A action2);
 
 	/**
 	 * Determines whether the given action is a backward action.
@@ -236,7 +236,8 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	 * Returns shared objects (~global variables) encountered in a search starting from a given transition.
 	 *
 	 * @param startTransition the start point (transition) of the search
-	 * @param goFurther the predicate that tells whether more transitions have to be explored through this transition
+	 * @param goFurther       the predicate that tells whether more transitions have to be explored through this
+	 *                        transition
 	 * @return the set of encountered shared objects
 	 */
 	protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition, Predicate<T> goFurther) {
@@ -261,9 +262,4 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 		}
 		return vars;
 	}
-
-	/**
-	 * Collects backward transitions of the transition system.
-	 */
-	protected abstract void collectBackwardTransitions();
 }

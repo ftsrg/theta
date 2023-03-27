@@ -55,13 +55,13 @@ enum class Backend {
 }
 
 enum class POR(
-    val getLts: (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) -> LTS<XcfaState<out ExprState>, XcfaAction>,
+    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>) -> LTS<XcfaState<out ExprState>, XcfaAction>,
     val isDynamic: Boolean
 ) {
     NOPOR({_, _ -> getXcfaLts() }, false),
-    SPOR({ xcfa, _ -> XcfaPorLts(xcfa) }, false),
+    SPOR({ xcfa, _ -> XcfaSporLts(xcfa) }, false),
+    AASPOR({ xcfa, registry -> XcfaAasporLts(xcfa, registry) }, false),
     DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }, true),
-    AASPOR({ xcfa, registry -> XcfaAaporLts(xcfa, registry) }, false),
     AADPOR({xcfa, _ -> XcfaAadporLts(xcfa) }, true)
 }
 

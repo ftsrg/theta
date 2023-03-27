@@ -91,7 +91,7 @@ data class XcfaCegarConfig(
         val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
         val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
 
-        val ignoredVarRegistry: Map<Decl<out Type>, Set<XcfaState<*>>> = LinkedHashMap()
+        val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
         val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
         val waitlist = if(porLevel.isDynamic) {
@@ -145,7 +145,7 @@ data class XcfaCegarConfig(
         }
 
         return if(porLevel == POR.AASPOR)
-            CegarChecker.create(abstractor, AaporRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
+            CegarChecker.create(abstractor, AasporRefiner.create(refiner, pruneStrategy, ignoredVarRegistry), logger)
         else
             CegarChecker.create(abstractor, refiner, logger)
     }

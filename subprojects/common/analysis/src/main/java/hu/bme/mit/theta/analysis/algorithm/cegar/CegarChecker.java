@@ -24,16 +24,11 @@ import hu.bme.mit.theta.analysis.algorithm.PorLogger;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -113,17 +108,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			}
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
-
-//		System.err.println("Printing ARG..." + System.lineSeparator());
-//		Graph g = ArgVisualizer.create(s -> s.toString().replace(" initialized=true", ""), Object::toString).visualize(arg);
-//		try {
-//			FileWriter myWriter = new FileWriter("/mnt/d/Theta/test/arg-latest.dot");
-//			myWriter.write(GraphvizWriter.getInstance().writeString(g));
-//			myWriter.close();
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//		System.err.println(arg.size() + System.lineSeparator());
 
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
