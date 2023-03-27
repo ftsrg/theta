@@ -1,0 +1,41 @@
+name: Version Bump
+on: 
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Specify the type of version bump'
+        required: true
+        type: chocie
+        options:
+            - major
+            - minor
+            - patch
+        default: 'patch'
+        
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Determine new version
+      run: |
+        version=$(grep -Po "(?<=version = \").*(?=\")" build.gradle.kts)
+        IFS='.' read -r -a array <<< "$version"
+        case "${{ github.event.inputs.version_type }}" in
+          "major") new_version="$((array[0]+1)).0.0" ;;
+          "minor") new_version="${array[0]}.$((array[1]+1)).0" ;;
+          "patch") new_version="${array[0]}.${array[1]}.$((array[2]+1))" ;;
+          *) echo "Invalid version type" && exit 1 ;;
+        esac
+        echo "New version: $new_version"
+      
+    - name: Update version
+      run: sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
+      
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
