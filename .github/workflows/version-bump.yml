@@ -25,19 +25,6 @@ jobs:
         version=$(grep -Po '[0-9]+\.[0-9]+\.[0-9]+' build.gradle.kts)
         IFS='.' read -r -a array <<< "$version"
         echo "Previous version: $version"
-        case "$patch" in
-        "major") new_version="$((array[0]+1)).0.0" ;;
-        "minor") new_version="${array[0]}.$((array[1]+1)).0" ;;
-        "patch") new_version="${array[0]}.${array[1]}.$((array[2]+1))" ;;
-        *) echo "Invalid version type" && exit 1 ;;
-        esac
-        echo "New version: $new_version"
-
+        
       
-    - name: Update version
-      run: sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
-      
-    - name: Push changes
-      uses: ad-m/github-push-action@v0.6.0
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+    
