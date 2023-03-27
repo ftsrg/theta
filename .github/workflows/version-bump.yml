@@ -22,8 +22,7 @@ jobs:
       
     - name: Determine new version
       run: >-
-        version=$(grep -o 'version = "[0-9]\+\.[0-9]\+\.[0-9]\+"' build.gradle.kts | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-        IFS='.' read -r -a array <<< "$version"
+        version=$grep -P '[0-9]+\.[0-9]+\.[0-9]+' build.gradle.kts IFS='.' read -r -a array <<< "$version"
         case "${{ github.event.inputs.version_type }}" in
           "major") new_version="$((array[0]+1)).0.0" ;;
           "minor") new_version="${array[0]}.$((array[1]+1)).0" ;;
