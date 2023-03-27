@@ -6,9 +6,12 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -19,10 +22,14 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import hu.bme.mit.theta.xsts.XSTS;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+
 
 public class Xsts_K_induction {
 
@@ -57,17 +64,37 @@ public class Xsts_K_induction {
         ArrayList<XstsState<ExplState>> list = new ArrayList<>();
         ArrayList<XstsAction> actionList = new ArrayList<>();
 
+        var varEqs = new ArrayList<Expr<BoolType>>();
+        var varExpr = And(varEqs);
         while (i < bound) {
             if (i > 0) {
                 exprsFromStart.addAll(StmtUtils.toExpr(atomicStep, currStep.getIndexing()).getExprs());
+                var tempIndex= currStep.getIndexing();
                 currStep = StmtUtils.toExpr(atomicStep, currStep.getIndexing());
                 listOfIndexes.add(currStep.getIndexing());
 
-                
+                for(var v: xsts.getVars()){
+                    varEqs.add(Eq(PathUtils.unfold(v.getRef(),tempIndex),PathUtils.unfold(v.getRef(),currStep.getIndexing())));
+
+                }
+                varExpr = Not(And(varEqs));
+
                 exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), inductiveCurrStep.getIndexing()));
                 inductiveCurrStep = StmtUtils.toExpr(atomicStep, inductiveCurrStep.getIndexing());
                 exprsForInductivity.addAll(inductiveCurrStep.getExprs());
             }
+
+            // Checking loop free path of length i
+            try (var s = new WithPushPop(solver)) {
+                solver.add(PathUtils.unfold(And(exprsFromStart), 0));
+                solver.add(varExpr);
+
+                if(solver.check().isUnsat()){
+                    return SafetyResult.safe(justAnArg);
+                }
+            }
+
+
 
             // Counterexample feasibility check
             try (var s = new WithPushPop(solver)) {
@@ -108,5 +135,7 @@ public class Xsts_K_induction {
         throw new RuntimeException("unknown");
 
     }
+
+
 }
 
