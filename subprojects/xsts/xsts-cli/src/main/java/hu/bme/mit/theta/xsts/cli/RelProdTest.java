@@ -68,15 +68,15 @@ public class RelProdTest {
         var relprod = new RelationalProductProvider(stateSig.getVariableOrder());
         var relResult = relprod.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-        var bfs = new BfsProvider(stateSig.getVariableOrder());
-        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
-
-        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+//        var bfs = new BfsProvider(stateSig.getVariableOrder());
+//        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+//
+//        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+//        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(Z3SolverFactory.solversCreated);
 
-        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(satResult.getNode());
+        final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(relResult.getNode());
         try {
             GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
