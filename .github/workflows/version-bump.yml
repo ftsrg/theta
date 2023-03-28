@@ -11,7 +11,7 @@ on:
             - major
             - minor
             - patch
-        default: 'minor'
+        default: 'patch'
 
 jobs:
   version-bump:
@@ -22,7 +22,7 @@ jobs:
       
     - name: Determine new version
       run: |
-        version=$(grep -Po "(?<=version = \").*(?=\")" build.gradle.kts)
+        echo "version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )"
         IFS='.' read -r -a array <<< "$version"
         case "${{ github.event.inputs.version_type }}" in
           "major") new_version="$((array[0]+1)).0.0" ;;
