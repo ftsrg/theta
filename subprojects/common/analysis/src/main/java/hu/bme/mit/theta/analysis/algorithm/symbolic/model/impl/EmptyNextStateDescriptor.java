@@ -4,10 +4,9 @@ import java.util.Optional;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.model.RecursiveAbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
-public final class EmptyNextStateDescriptor implements RecursiveAbstractNextStateDescriptor {
+public final class EmptyNextStateDescriptor implements AbstractNextStateDescriptor {
 	private EmptyNextStateDescriptor() {}
 	
 	public static final EmptyNextStateDescriptor INSTANCE = new EmptyNextStateDescriptor();
@@ -33,10 +32,5 @@ public final class EmptyNextStateDescriptor implements RecursiveAbstractNextStat
 	@Override
 	public boolean evaluate() {
 		return false;
-	}
-
-	@Override
-	public Cursor cursor(int from) {
-		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

@@ -8,6 +8,7 @@ import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.EmptyNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.IdentityNextStateDescriptor;
 
+import java.io.Closeable;
 import java.util.Optional;
 
 public interface AbstractNextStateDescriptor {
@@ -96,5 +97,28 @@ public interface AbstractNextStateDescriptor {
 	
 	static boolean isNullOrEmpty(IntObjMapView<? extends AbstractNextStateDescriptor> ns) {
 		return ns == null || (ns.isEmpty() && isNullOrEmpty(ns.defaultValue()));
+	}
+
+	interface Cursor extends Closeable {
+
+		int key();
+
+		AbstractNextStateDescriptor value();
+
+		boolean moveNext();
+
+		boolean moveTo(int key);
+
+		Cursor valueCursor(int from);
+
+		void close();
+	}
+
+	default Cursor cursor(int from) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	default Cursor rootCursor() {
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }
