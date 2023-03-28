@@ -54,7 +54,7 @@ public class ExprNodeTest6 {
 
         final Graph graph = new MddNodeVisualizer(ExprNodeTest6::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

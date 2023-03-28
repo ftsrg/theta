@@ -1,15 +1,14 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.model.RecursiveAbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.EmptyNextStateDescriptor;
 
-public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDescriptor {
+public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle node;
 
@@ -17,8 +16,8 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
         this.node = node;
     }
 
-    public static RecursiveAbstractNextStateDescriptor of(MddHandle node){
-        return node.isTerminalZero() ? EmptyNextStateDescriptor.INSTANCE : new MddNodeNextStateDescriptor(node);
+    public static AbstractNextStateDescriptor of(MddHandle node){
+        return node.isTerminalZero() ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node);
     }
 
     @Override
@@ -29,7 +28,7 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         return new IntObjMapViews.Transforming<>(node, (n, key) -> {
-            if(key == null) return EmptyNextStateDescriptor.INSTANCE;
+            if(key == null) return AbstractNextStateDescriptor.terminalEmpty();
             else return MddNodeNextStateDescriptor.of((MddHandle) n.get(key));
         });
     }
@@ -41,20 +40,15 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
     }
 
     @Override
-    public RecursiveAbstractNextStateDescriptor.Cursor cursor(int from) {
-        return new Cursor(node.cursor());
+    public AbstractNextStateDescriptor.Cursor rootCursor() {
+        return new RootCursor(this);
     }
 
-    public static class Cursor implements RecursiveAbstractNextStateDescriptor.Cursor {
+    public class Cursor implements AbstractNextStateDescriptor.Cursor {
 
         private final RecursiveIntObjCursor<? extends MddHandle> wrapped, fromCursor;
 
-        public Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped){
-            this.wrapped = wrapped;
-            this.fromCursor = null;
-        }
-
-        public Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, RecursiveIntObjCursor<? extends MddHandle> fromCursor){
+        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, RecursiveIntObjCursor<? extends MddHandle> fromCursor){
             this.wrapped = wrapped;
             this.fromCursor = fromCursor;
         }
@@ -65,7 +59,7 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
         }
 
         @Override
-        public RecursiveAbstractNextStateDescriptor value() {
+        public AbstractNextStateDescriptor value() {
             return MddNodeNextStateDescriptor.of(wrapped.value());
         }
 
@@ -75,9 +69,14 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
         }
 
         @Override
-        public RecursiveAbstractNextStateDescriptor.Cursor valueCursor(int from) {
+        public boolean moveTo(int key) {
+            return wrapped.moveTo(key);
+        }
+
+        @Override
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
             var fromCursor = wrapped.valueCursor();
-            fromCursor.moveTo(from);
+            Preconditions.checkState(fromCursor.moveTo(from));
             return new Cursor(fromCursor.valueCursor(), fromCursor);
         }
 
@@ -85,7 +84,47 @@ public class MddNodeNextStateDescriptor implements RecursiveAbstractNextStateDes
         @Override
         public void close() {
             wrapped.close();
-            if(fromCursor != null) fromCursor.close();
+            fromCursor.close();
         }
+    }
+
+    public class RootCursor implements AbstractNextStateDescriptor.Cursor {
+
+        private final MddNodeNextStateDescriptor descriptor;
+
+        public RootCursor(MddNodeNextStateDescriptor descriptor) {
+            this.descriptor = descriptor;
+        }
+
+        @Override
+        public int key() {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+        }
+
+        @Override
+        public AbstractNextStateDescriptor value() {
+            return descriptor;
+        }
+
+        @Override
+        public boolean moveNext() {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+        }
+
+        @Override
+        public boolean moveTo(int key) {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+        }
+
+        @Override
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+            var fromCursor = descriptor.node.cursor();
+            Preconditions.checkState(fromCursor.moveTo(from));
+            return new Cursor(fromCursor.valueCursor(), fromCursor);
+        }
+
+        @Override
+        public void close() {}
+
     }
 }
