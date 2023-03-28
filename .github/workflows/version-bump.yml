@@ -22,7 +22,7 @@ jobs:
       
     - name: Determine new version
       run: |
-        version=$(grep -o 'version = "[0-9]\+\.[0-9]\+\.[0-9]\+"' build.gradle.kts | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+        version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
         IFS='.' read -r -a array <<< "$version"
         echo "Previous version: $version"
         case "${{ github.event.inputs.version_type }}" in
