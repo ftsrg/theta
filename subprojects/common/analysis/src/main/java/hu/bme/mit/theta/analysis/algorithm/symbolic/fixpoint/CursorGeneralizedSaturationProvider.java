@@ -13,19 +13,19 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class SimpleSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class CursorGeneralizedSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
 	public static boolean verbose = false;
-	
+
 	private       MddVariableOrder              variableOrder;
-	private 	  RelationalProductProvider relProdProvider;
+	private       RelationalProductProvider relProdProvider;
 	private final CacheManager<SaturationCache> cacheManager = new CacheManager<>(v -> new SaturationCache());
 	private       MddNode                       terminalZeroNode;
-	
-	public SimpleSaturationProvider(final MddVariableOrder variableOrder) {
+
+	public CursorGeneralizedSaturationProvider(final MddVariableOrder variableOrder) {
 		this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
 	}
-	
-	public SimpleSaturationProvider(
+
+	public CursorGeneralizedSaturationProvider(
 		final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider
 	) {
 		this.variableOrder = variableOrder;
@@ -109,20 +109,42 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		if (verbose) {
 			printIndent();
 			System.out.println("Saturating on level " + variable.getTraceInfo() + " with " + d);
+			
 		}
 		// indent++;
 		
 		final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
-		
+
 		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
-			(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
-				d.getDiagonal(stateSpaceInfo).get(key),
-				variable.getLower().orElse(null),
-				cache.getLower()
-			))
+				(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
+						d.getDiagonal(stateSpaceInfo).get(key),
+						variable.getLower().orElse(null),
+						cache.getLower()
+				))
 		);
-		
+
 		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
+
+//		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
+//
+//		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ){
+//			try(var cTo = dCursor.valueCursor(cFrom.key())){
+//				if(cTo.moveTo(cFrom.key())) {
+//					MddNode s = saturate(cFrom.value(),
+//							cTo.value(),
+//							cTo,
+//							variable.getLower().orElse(null),
+//							cache.getLower()
+//					);
+//
+//					templateBuilder.set(cTo.key(),
+//							terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+//					);
+//				}
+//			}
+//		}
+//
+//		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 		
 		boolean changed;
 		
@@ -136,8 +158,7 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 					if (dfire.isLocallyIdentity(stateSpaceInfo)) {
 						continue;
 					}
-					MddNode nfire = satFire(nsat, d, dfire, variable, cache, stateSpaceInfo);
-					
+					MddNode nfire = satFire(nsat, d, dfire, dfire.rootCursor(), variable, cache, stateSpaceInfo);
 					nfire = variable.union(nsat, nfire);
 					
 					if (nfire != nsat) {
@@ -147,8 +168,7 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 				}
 			} else if (!d.isLocallyIdentity(stateSpaceInfo)) {
 				//System.out.println("Applying transition: " + d);
-				MddNode nfire = satFire(nsat, d, d, variable, cache, stateSpaceInfo);
-				
+				MddNode nfire = satFire(nsat, d, d, d.rootCursor(), variable, cache, stateSpaceInfo);
 				nfire = variable.union(nsat, nfire);
 				
 				if (nfire != nsat) {
@@ -177,6 +197,7 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		MddNode n,
 		AbstractNextStateDescriptor dsat,
 		AbstractNextStateDescriptor dfire,
+		AbstractNextStateDescriptor.Cursor dfireCursor,
 		MddVariable variable,
 		CacheManager<SaturationCache>.CacheHolder cache,
 		final MddStateSpaceInfo stateSpaceInfo
@@ -202,62 +223,38 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		
 		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 		
-		final IntObjMapView<AbstractNextStateDescriptor> diagonal = dfire.getDiagonal(stateSpaceInfo);
 		final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
 			stateSpaceInfo);
 		
 		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
-			
-			// Identity step
-			final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-			if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
-				
-				if (verbose) {
-					System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-				}
-				
-				MddNode s = relProd(cFrom.value(),
-					dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-					diagonalContinuation,
-					variable.getLower().orElse(null),
-					cache.getLower()
-				);
-				
-				if (s != terminalZeroNode) {
-					// confirm(variable, cFrom.key());
-					
-					templateBuilder.set(cFrom.key(),
-						terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+			try(var cTo = dfireCursor.valueCursor(cFrom.key())){
+				for (;cTo.moveNext();) {
+					if (cFrom.key() == cTo.key()) {
+						continue;
+					}
+
+					if (verbose) {
+						System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
+					}
+
+					assert cFrom.value() != terminalZeroNode;
+					assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
+
+					MddNode s = relProd(cFrom.value(),
+							dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
+							cTo.value(),
+							cTo,
+							variable.getLower().orElse(null),
+							cache.getLower()
 					);
-				}
-			}
-			
-			for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
-				cFrom.key()).cursor(); cTo.moveNext(); ) {
-				if (cFrom.key() == cTo.key()) {
-					continue;
-				}
-				
-				if (verbose) {
-					System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-				}
-				
-				assert cFrom.value() != terminalZeroNode;
-				assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-				
-				MddNode s = relProd(cFrom.value(),
-					dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-					cTo.value(),
-					variable.getLower().orElse(null),
-					cache.getLower()
-				);
-				
-				if (s != terminalZeroNode) {
-					confirm(variable, cTo.key());
-					
-					templateBuilder.set(cTo.key(),
-						terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-					);
+
+					if (s != terminalZeroNode) {
+						confirm(variable, cTo.key());
+
+						templateBuilder.set(cTo.key(),
+								terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+						);
+					}
 				}
 			}
 		}
@@ -277,6 +274,7 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		MddNode n,
 		AbstractNextStateDescriptor dsat,
 		AbstractNextStateDescriptor dfire,
+		AbstractNextStateDescriptor.Cursor dfireCursor,
 		MddVariable variable,
 		CacheManager<SaturationCache>.CacheHolder cache
 	) {
@@ -321,57 +319,84 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		
 		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
 			// Identity step
-			final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-			if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
-				
-				if (verbose) {
-					System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-				}
-				
-				MddNode s = relProd(cFrom.value(),
-					dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-					diagonalContinuation,
-					variable.getLower().orElse(null),
-					cache.getLower()
-				);
-				
-				if (s != terminalZeroNode) {
-					// confirm(variable, cFrom.key());
-					
-					templateBuilder.set(cFrom.key(),
-						terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+//			final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
+//			if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
+//
+//				if (verbose) {
+//					System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
+//				}
+//
+//				MddNode s = relProd(cFrom.value(),
+//					dsat.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+//					diagonalContinuation,
+//					variable.getLower().orElse(null),
+//					cache.getLower()
+//				);
+//
+//				if (s != terminalZeroNode) {
+//					// confirm(variable, cFrom.key());
+//
+//					templateBuilder.set(cFrom.key(),
+//						terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+//					);
+//				}
+//			}
+			try(var cTo = dfireCursor.valueCursor(cFrom.key())) {
+				if (cTo.moveTo(cFrom.key())) {
+
+					if (verbose) {
+						System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
+					}
+
+					MddNode s = relProd(cFrom.value(),
+							dsat.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+							cTo.value(),
+							cTo,
+							variable.getLower().orElse(null),
+							cache.getLower()
 					);
+
+					if (s != terminalZeroNode) {
+						// confirm(variable, cFrom.key());
+
+						templateBuilder.set(cFrom.key(),
+								terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+						);
+					}
 				}
 			}
-			
-			for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(cFrom.key()).cursor();
-			     cTo.moveNext(); ) {
-				if (cFrom.key() == cTo.key()) {
-					continue;
-				}
-				
-				if (verbose) {
-					System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-				}
-				
-				assert cFrom.value() != terminalZeroNode;
-				assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-				
-				MddNode s = relProd(cFrom.value(),
-					dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-					cTo.value(),
-					variable.getLower().orElse(null),
-					cache.getLower()
-				);
-				
-				if (s != terminalZeroNode) {
-					confirm(variable, cTo.key());
-					
-					templateBuilder.set(cTo.key(),
-						terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+
+			try(var cTo = dfireCursor.valueCursor(cFrom.key())) {
+				for (;cTo.moveNext();) {
+					if (cFrom.key() == cTo.key()) {
+						continue;
+					}
+
+					if (verbose) {
+						System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
+					}
+
+					assert cFrom.value() != terminalZeroNode;
+					assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
+
+					MddNode s = relProd(cFrom.value(),
+							dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
+							cTo.value(),
+							cTo,
+							variable.getLower().orElse(null),
+							cache.getLower()
 					);
+
+					if (s != terminalZeroNode) {
+						confirm(variable, cTo.key());
+
+						templateBuilder.set(cTo.key(),
+								terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+						);
+					}
 				}
 			}
+
 		}
 		
 		ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
@@ -483,8 +508,6 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 		
 		return new SaturateCache(cacheManager);
 	}
-	
-	
 	
 	// TODO: HAXXXX DON'T DO THIS EVER AGAIN
 	public Set<MddNode> getSaturatedNodes() {
