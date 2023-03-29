@@ -14,7 +14,7 @@ public final class BfsProvider implements MddTransformationProvider<AbstractNext
 	private final RelationalProductProvider relProdProvider;
 	
 	public BfsProvider(final MddVariableOrder variableOrder) {
-		this(variableOrder, new RelationalProductProvider(variableOrder));
+		this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
 	}
 	
 	public BfsProvider(final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider) {

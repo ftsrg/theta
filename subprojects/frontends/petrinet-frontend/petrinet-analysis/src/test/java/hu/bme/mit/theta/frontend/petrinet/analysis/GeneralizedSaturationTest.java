@@ -8,7 +8,7 @@ import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.RelationalProductProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.CursorRelationalProductProvider;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -53,7 +53,7 @@ public final class GeneralizedSaturationTest {
 		}
 		
 		GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder,
-			new RelationalProductProvider(variableOrder));
+			new CursorRelationalProductProvider(variableOrder));
 		
 		final MddHandle stateSpace = gs.compute(system.getInitializer(),
 			system.getTransitions(),
