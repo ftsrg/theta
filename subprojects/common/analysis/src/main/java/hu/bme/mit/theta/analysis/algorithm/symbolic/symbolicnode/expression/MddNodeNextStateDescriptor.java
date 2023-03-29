@@ -76,8 +76,9 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         @Override
         public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
             var fromCursor = wrapped.valueCursor();
-            Preconditions.checkState(fromCursor.moveTo(from));
-            return new Cursor(fromCursor.valueCursor(), fromCursor);
+            if (fromCursor.moveTo(from)) {
+                return new Cursor(fromCursor.valueCursor(), fromCursor);
+            } else return EmptyCursor.INSTANCE;
         }
 
 
@@ -119,8 +120,48 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         @Override
         public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
             var fromCursor = descriptor.node.cursor();
-            Preconditions.checkState(fromCursor.moveTo(from));
-            return new Cursor(fromCursor.valueCursor(), fromCursor);
+            if(fromCursor.moveTo(from)) {
+                return new Cursor(fromCursor.valueCursor(), fromCursor);
+            } else {
+                return EmptyCursor.INSTANCE;
+            }
+
+        }
+
+        @Override
+        public void close() {}
+
+    }
+
+    public static class EmptyCursor implements AbstractNextStateDescriptor.Cursor {
+
+        public static EmptyCursor INSTANCE = new EmptyCursor();
+
+        private EmptyCursor(){}
+
+        @Override
+        public int key() {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+        }
+
+        @Override
+        public AbstractNextStateDescriptor value() {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+        }
+
+        @Override
+        public boolean moveNext() {
+            return false;
+        }
+
+        @Override
+        public boolean moveTo(int key) {
+            return false;
+        }
+
+        @Override
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
         }
 
         @Override

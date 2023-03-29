@@ -10,11 +10,11 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescr
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class ValueCursorRelationalProductProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class CursorRelationalProductProvider implements RelationalProductProvider {
     private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
 
-    public ValueCursorRelationalProductProvider(final MddVariableOrder variableOrder) {
+    public CursorRelationalProductProvider(final MddVariableOrder variableOrder) {
         this.variableOrder = variableOrder;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
     }

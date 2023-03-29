@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.cli;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.CursorGeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
@@ -65,10 +66,10 @@ public class SatTest {
         c.moveNext();
 
         // x' = x, y' = y - 1, x < 9, y > -9
-        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),declX.getRef()), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(9)), IntExprs.Gt(declYPrime.getRef(), Int(-9)));
+        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),declX.getRef()), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(40)), IntExprs.Gt(declYPrime.getRef(), Int(-40)));
 
         // x' = x + 1, y' = y, x < 9
-        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(9)));
+        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(40)));
 
         MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
         MddHandle trans2Node = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(trans2Expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
@@ -84,7 +85,7 @@ public class SatTest {
 //        var bfs = new BfsProvider(stateSig.getVariableOrder());
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
         var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(mddGraph.getUniqueTableSize());
