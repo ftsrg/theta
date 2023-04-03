@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
 
+import com.google.common.base.Preconditions;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
@@ -85,12 +86,16 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 	public MddNode compute(
 		final MddNode mddNode, final AbstractNextStateDescriptor nextState, final MddVariable mddVariable
 	) {
-		return saturate(mddNode, nextState, mddVariable, cacheManager.getCacheFor(mddVariable));
+		try(var nextStateCursor = nextState.rootCursor()){
+			Preconditions.checkState(nextStateCursor.moveNext());
+			return saturate(mddNode, nextState, nextStateCursor, mddVariable, cacheManager.getCacheFor(mddVariable));
+		}
 	}
 	
 	private MddNode saturate(
 		final MddNode n,
 		AbstractNextStateDescriptor d,
+		AbstractNextStateDescriptor.Cursor dCursor,
 		MddVariable variable,
 		CacheManager<SaturationCache>.CacheHolder cache
 	) {
@@ -115,36 +120,36 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 		
 		final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
-		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
-				(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
-						d.getDiagonal(stateSpaceInfo).get(key),
-						variable.getLower().orElse(null),
-						cache.getLower()
-				))
-		);
+//		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
+//				(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
+//						d.getDiagonal(stateSpaceInfo).get(key),
+//						variable.getLower().orElse(null),
+//						cache.getLower()
+//				))
+//		);
+//
+//		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
 
-		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
+		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
-//		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-//
-//		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ){
-//			try(var cTo = dCursor.valueCursor(cFrom.key())){
-//				if(cTo.moveTo(cFrom.key())) {
-//					MddNode s = saturate(cFrom.value(),
-//							cTo.value(),
-//							cTo,
-//							variable.getLower().orElse(null),
-//							cache.getLower()
-//					);
-//
-//					templateBuilder.set(cTo.key(),
-//							terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-//					);
-//				}
-//			}
-//		}
-//
-//		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ){
+			try(var cTo = dCursor.valueCursor(cFrom.key())){
+				if(cTo.moveTo(cFrom.key())) {
+					MddNode s = saturate(cFrom.value(),
+							cTo.value(),
+							cTo,
+							variable.getLower().orElse(null),
+							cache.getLower()
+					);
+
+					templateBuilder.set(cTo.key(),
+							terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+					);
+				}
+			}
+		}
+
+		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 		
 		boolean changed;
 		
@@ -158,23 +163,31 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 					if (dfire.isLocallyIdentity(stateSpaceInfo)) {
 						continue;
 					}
-					MddNode nfire = satFire(nsat, d, dfire, dfire.rootCursor(), variable, cache, stateSpaceInfo);
+					try(var dfireCursor = dfire.rootCursor()){
+						Preconditions.checkState(dfireCursor.moveNext());
+						MddNode nfire = satFire(nsat, d, dfire, dfireCursor, variable, cache, stateSpaceInfo);
+						nfire = variable.union(nsat, nfire);
+
+						if (nfire != nsat) {
+							nsat = nfire;
+							changed = true;
+						}
+					}
+
+				}
+			} else if (!d.isLocallyIdentity(stateSpaceInfo)) {
+				//System.out.println("Applying transition: " + d);
+//				try(var dCursor = d.rootCursor()){
+//					Preconditions.checkState(dCursor.moveNext());
+					MddNode nfire = satFire(nsat, d, d, dCursor, variable, cache, stateSpaceInfo);
 					nfire = variable.union(nsat, nfire);
-					
+
 					if (nfire != nsat) {
 						nsat = nfire;
 						changed = true;
 					}
-				}
-			} else if (!d.isLocallyIdentity(stateSpaceInfo)) {
-				//System.out.println("Applying transition: " + d);
-				MddNode nfire = satFire(nsat, d, d, d.rootCursor(), variable, cache, stateSpaceInfo);
-				nfire = variable.union(nsat, nfire);
-				
-				if (nfire != nsat) {
-					nsat = nfire;
-					changed = true;
-				}
+//				}
+
 			}
 		} while (changed);
 		
@@ -228,7 +241,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 		
 		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
 			try(var cTo = dfireCursor.valueCursor(cFrom.key())){
-				for (;cTo.moveNext();) {
+				while (cTo.moveNext()) {
 					if (cFrom.key() == cTo.key()) {
 						continue;
 					}
@@ -367,7 +380,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 			}
 
 			try(var cTo = dfireCursor.valueCursor(cFrom.key())) {
-				for (;cTo.moveNext();) {
+				while (cTo.moveNext()) {
 					if (cFrom.key() == cTo.key()) {
 						continue;
 					}
@@ -401,7 +414,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 		
 		ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 		
-		ret = saturate(ret, dsat, variable, cache);
+		ret = saturate(ret, dsat, dsat.rootCursor(), variable, cache);
 		
 		cache.getCache().getRelProdCache().addToCache(n, dsat, dfire, ret);
 		

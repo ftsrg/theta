@@ -186,4 +186,134 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 	public String toString() {
 		return operands.stream().map(ns -> ns.toString()).collect(Collectors.joining(", "));
 	}
+
+	@Override
+	public Cursor cursor(int from) {
+		return AbstractNextStateDescriptor.super.cursor(from);
+	}
+
+	@Override
+	public Cursor rootCursor() {
+		return RootOrCursor.of(operands.stream().map(AbstractNextStateDescriptor::rootCursor).toList());
+	}
+
+	public static class RootOrCursor implements AbstractNextStateDescriptor.Cursor {
+
+		private final List<AbstractNextStateDescriptor.Cursor> cursors;
+
+		private int currentPosition;
+
+		private RootOrCursor(final List<Cursor> cursors) {
+			this.cursors = cursors;
+			this.currentPosition = -1;
+		}
+
+		public static AbstractNextStateDescriptor.Cursor of(final List<Cursor> cursors) {
+			if(cursors.size() == 1) return cursors.get(0);
+			else return new RootOrCursor(cursors);
+		}
+
+		@Override
+		public int key() {
+			throw new UnsupportedOperationException("Not (yet) implemented");
+		}
+
+		@Override
+		public AbstractNextStateDescriptor value() {
+			throw new UnsupportedOperationException("Not (yet) implemented");
+		}
+
+		@Override
+		public boolean moveNext() {
+			currentPosition++;
+			this.cursors.forEach(AbstractNextStateDescriptor.Cursor::moveNext);
+			return currentPosition == 0;
+		}
+
+		@Override
+		public boolean moveTo(int key) {
+			throw new UnsupportedOperationException("Not (yet) implemented");
+		}
+
+		@Override
+		public Cursor valueCursor(int from) {
+			return OrCursor.of(cursors.stream().map(c -> c.valueCursor(from)).toList());
+		}
+
+		@Override
+		public void close() {
+
+		}
+	}
+
+	public static class OrCursor implements AbstractNextStateDescriptor.Cursor {
+
+		private final List<AbstractNextStateDescriptor.Cursor> cursors;
+
+		private List<AbstractNextStateDescriptor.Cursor> activeCursors;
+		private Optional<Integer> key;
+
+		private OrCursor(final List<AbstractNextStateDescriptor.Cursor> cursors) {
+			this.cursors = cursors;
+			this.activeCursors = new ArrayList<>();
+			this.key = Optional.empty();
+		}
+
+		public static AbstractNextStateDescriptor.Cursor of(final List<AbstractNextStateDescriptor.Cursor> cursors){
+			if(cursors.size() == 1) return cursors.get(0);
+			else return new OrCursor(cursors);
+		}
+
+		@Override
+		public int key() {
+			return key.orElseThrow();
+		}
+
+		@Override
+		public AbstractNextStateDescriptor value() {
+			AbstractNextStateDescriptor ret;
+
+			if (activeCursors.isEmpty()) {
+				ret = AbstractNextStateDescriptor.terminalEmpty();
+			} else 	if (activeCursors.size() == 1) {
+				ret = activeCursors.get(0).value();
+			} else {
+				ret = OrNextStateDescriptor.create(activeCursors.stream().map(AbstractNextStateDescriptor.Cursor::value).toList());
+			}
+			return ret;
+		}
+
+		@Override
+		public boolean moveNext() {
+			throw new UnsupportedOperationException("Not (yet) implemented");
+		}
+
+		@Override
+		public boolean moveTo(int key) {
+			boolean res = false;
+			this.activeCursors = new ArrayList<>();
+			for (AbstractNextStateDescriptor.Cursor cursor : cursors) {
+				if(cursor.moveTo(key)){
+					activeCursors.add(cursor);
+					res = true;
+				}
+			}
+			if(res) {
+				this.key = Optional.of(key);
+			} else {
+				this.key = Optional.empty();
+			}
+			return res;
+		}
+
+		@Override
+		public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+			return OrCursor.of(activeCursors.stream().map(c -> c.valueCursor(from)).toList());
+		}
+
+		@Override
+		public void close() {
+
+		}
+	}
 }
