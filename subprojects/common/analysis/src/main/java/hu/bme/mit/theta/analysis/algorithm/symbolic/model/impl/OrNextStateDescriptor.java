@@ -242,7 +242,7 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
 		@Override
 		public void close() {
-
+			cursors.forEach(AbstractNextStateDescriptor.Cursor::close);
 		}
 	}
 
@@ -313,7 +313,7 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
 		@Override
 		public void close() {
-
+			cursors.forEach(AbstractNextStateDescriptor.Cursor::close);
 		}
 	}
 }

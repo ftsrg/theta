@@ -85,12 +85,14 @@ public class SatTest {
 //        var bfs = new BfsProvider(stateSig.getVariableOrder());
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-//        var c = nextStates.rootCursor();
-//        c.moveNext();
-//        var c2 = c.valueCursor(0);
-//        c2.moveTo(0);
-//
-//        var asd = c2.value();
+//        try(var c = nextStates.rootCursor()){
+//            c.moveNext();
+//            try(var c2 = c.valueCursor(0)){
+//                c2.moveTo(0);
+//                var asd = c2.value();
+//            }
+//        }
+
 
         var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
         var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());

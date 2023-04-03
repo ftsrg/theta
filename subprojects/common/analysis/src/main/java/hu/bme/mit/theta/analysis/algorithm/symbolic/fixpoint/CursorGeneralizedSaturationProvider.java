@@ -134,18 +134,17 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 
 		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ){
 			try(var cTo = dCursor.valueCursor(cFrom.key())){
-				if(cTo.moveTo(cFrom.key())) {
-					MddNode s = saturate(cFrom.value(),
-							cTo.value(),
-							cTo,
-							variable.getLower().orElse(null),
-							cache.getLower()
-					);
+				MddNode s = saturate(cFrom.value(),
+						cTo.moveTo(cFrom.key()) ? cTo.value() : AbstractNextStateDescriptor.terminalEmpty(),
+						cTo,
+						variable.getLower().orElse(null),
+						cache.getLower()
+				);
 
-					templateBuilder.set(cTo.key(),
-							terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-					);
-				}
+				templateBuilder.set(cFrom.key(),
+						terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+				);
+
 			}
 		}
 
@@ -413,8 +412,11 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 		}
 		
 		ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
-		
-		ret = saturate(ret, dsat, dsat.rootCursor(), variable, cache);
+
+		try(var dsatCursor = dsat.rootCursor()){
+			Preconditions.checkState(dsatCursor.moveNext());
+			ret = saturate(ret, dsat, dsatCursor, variable, cache);
+		}
 		
 		cache.getCache().getRelProdCache().addToCache(n, dsat, dfire, ret);
 		
