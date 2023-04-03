@@ -83,7 +83,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {
                 return new Cursor(fromCursor.valueCursor(), () -> fromCursor.close());
-            } else return EmptyCursor.INSTANCE;
+            } else return new EmptyCursor(() -> fromCursor.close());
         }
 
         @Override
@@ -160,9 +160,12 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     public static class EmptyCursor implements AbstractNextStateDescriptor.Cursor {
 
-        public static EmptyCursor INSTANCE = new EmptyCursor();
+        private final Runnable closer;
 
-        private EmptyCursor(){}
+        public EmptyCursor(Runnable closer) {
+            this.closer = closer;
+        }
+
 
         @Override
         public int key() {
@@ -190,7 +193,9 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            this.closer.run();
+        }
 
     }
 }
