@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
-import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
@@ -41,16 +40,22 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public AbstractNextStateDescriptor.Cursor rootCursor() {
-        return new RootCursor(this);
+        return new Cursor(RecursiveIntObjCursor.singleton(0, this.node));
     }
 
-    public class Cursor implements AbstractNextStateDescriptor.Cursor {
+    public static class Cursor implements AbstractNextStateDescriptor.Cursor {
+        private final RecursiveIntObjCursor<? extends MddHandle> wrapped;
 
-        private final RecursiveIntObjCursor<? extends MddHandle> wrapped, fromCursor;
+        private final Runnable closer;
 
-        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, RecursiveIntObjCursor<? extends MddHandle> fromCursor){
+        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, Runnable closer){
             this.wrapped = wrapped;
-            this.fromCursor = fromCursor;
+            this.closer = closer;
+        }
+
+        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped){
+            this.wrapped = wrapped;
+            this.closer = () -> {};
         }
 
         @Override
@@ -77,61 +82,81 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {
-                return new Cursor(fromCursor.valueCursor(), fromCursor);
+                return new Cursor(fromCursor.valueCursor(), () -> fromCursor.close());
             } else return EmptyCursor.INSTANCE;
         }
-
 
         @Override
         public void close() {
             wrapped.close();
-            fromCursor.close();
+            closer.run();
         }
     }
 
-    public class RootCursor implements AbstractNextStateDescriptor.Cursor {
-
-        private final MddNodeNextStateDescriptor descriptor;
-
-        public RootCursor(MddNodeNextStateDescriptor descriptor) {
-            this.descriptor = descriptor;
-        }
-
-        @Override
-        public int key() {
-            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
-        }
-
-        @Override
-        public AbstractNextStateDescriptor value() {
-            return descriptor;
-        }
-
-        @Override
-        public boolean moveNext() {
-            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
-        }
-
-        @Override
-        public boolean moveTo(int key) {
-            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
-        }
-
-        @Override
-        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
-            var fromCursor = descriptor.node.cursor();
-            if(fromCursor.moveTo(from)) {
-                return new Cursor(fromCursor.valueCursor(), fromCursor);
-            } else {
-                return EmptyCursor.INSTANCE;
-            }
-
-        }
-
-        @Override
-        public void close() {}
-
-    }
+//    public class Cursor extends CursorBase {
+//
+//        private final RecursiveIntObjCursor<? extends MddHandle> fromCursor;
+//
+//        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, RecursiveIntObjCursor<? extends MddHandle> fromCursor){
+//            super(wrapped);
+//            this.fromCursor = fromCursor;
+//        }
+//
+//        @Override
+//        public void close() {
+//            super.close();
+//            fromCursor.close();
+//        }
+//    }
+//
+//    public class RootCursor extends CursorBase {
+//
+//        private final MddNodeNextStateDescriptor descriptor;
+//
+//        private int currentPosition;
+//
+//        public RootCursor(MddNodeNextStateDescriptor descriptor) {
+//            super(descriptor.node.cursor());
+//            this.descriptor = descriptor;
+//            this.currentPosition = -1;
+//        }
+//
+//        @Override
+//        public int key() {
+//            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+//        }
+//
+//        @Override
+//        public AbstractNextStateDescriptor value() {
+//            return descriptor;
+//        }
+//
+//        @Override
+//        public boolean moveNext() {
+//            currentPosition++;
+//            return currentPosition == 0;
+//        }
+//
+//        @Override
+//        public boolean moveTo(int key) {
+//            throw new UnsupportedOperationException("This operation is not supported on the root cursor");
+//        }
+//
+//        @Override
+//        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+//            var fromCursor = descriptor.node.cursor();
+//            if(fromCursor.moveTo(from)) {
+//                return new Cursor(fromCursor.valueCursor(), fromCursor);
+//            } else {
+//                return EmptyCursor.INSTANCE;
+//            }
+//
+//        }
+//
+//        @Override
+//        public void close() {}
+//
+//    }
 
     public static class EmptyCursor implements AbstractNextStateDescriptor.Cursor {
 

@@ -535,6 +535,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         @Override
         public RecursiveIntObjCursor<MddNode> valueCursor() {
+            Preconditions.checkState(!blocked, "Can't provide value cursor for blocked cursor");
+            Preconditions.checkState(!closed, "Can't provide value cursor for closed cursor");
+
             this.blocked = true;
             final MddNode childNode = this.traverser.peekDown(key);
             if(childNode.isTerminal()) {
