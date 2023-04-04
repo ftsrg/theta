@@ -27,7 +27,7 @@ public class SolverPool {
     }
 
     public void returnSolver(Solver solver){
-        Preconditions.checkState(solver.getAssertions().isEmpty());
+        Preconditions.checkState(solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
         this.available.add(solver);
     }
 
