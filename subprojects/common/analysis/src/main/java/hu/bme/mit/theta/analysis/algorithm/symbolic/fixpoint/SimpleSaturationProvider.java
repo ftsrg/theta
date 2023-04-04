@@ -246,6 +246,7 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
 				assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
 				
 				MddNode s = relProd(cFrom.value(),
+					// Level skip will be encoded as default value
 					dsat.getDiagonal(stateSpaceInfo).defaultValue(),
 					cTo.value(),
 					variable.getLower().orElse(null),

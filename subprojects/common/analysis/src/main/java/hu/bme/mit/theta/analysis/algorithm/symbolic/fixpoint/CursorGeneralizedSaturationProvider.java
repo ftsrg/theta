@@ -155,23 +155,23 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 		do {
 			changed = false;
 			
-			final Optional<Iterable<AbstractNextStateDescriptor>> splitNS = d.split();
-			if (splitNS.isPresent()) {
-				for (AbstractNextStateDescriptor dfire : splitNS.get()) {
+//			final Optional<Iterable<AbstractNextStateDescriptor>> splitNS = d.split();
+			final Optional<Iterable<AbstractNextStateDescriptor.Cursor>> splitNSCursor = dCursor.split();
+			if (splitNSCursor.isPresent()) {
+				for (AbstractNextStateDescriptor.Cursor dfireCursor : splitNSCursor.get()) {
 					//System.out.println("Applying transition: " + dfire);
-					if (dfire.isLocallyIdentity(stateSpaceInfo)) {
+					if (dfireCursor.value().isLocallyIdentity(stateSpaceInfo)) {
 						continue;
 					}
-					try(var dfireCursor = dfire.rootCursor()){
-						Preconditions.checkState(dfireCursor.moveNext());
-						MddNode nfire = satFire(nsat, d, dfire, dfireCursor, variable, cache, stateSpaceInfo);
-						nfire = variable.union(nsat, nfire);
 
-						if (nfire != nsat) {
-							nsat = nfire;
-							changed = true;
-						}
+					MddNode nfire = satFire(nsat, d, dfireCursor.value(), dfireCursor, variable, cache, stateSpaceInfo);
+					nfire = variable.union(nsat, nfire);
+
+					if (nfire != nsat) {
+						nsat = nfire;
+						changed = true;
 					}
+
 
 				}
 			} else if (!d.isLocallyIdentity(stateSpaceInfo)) {

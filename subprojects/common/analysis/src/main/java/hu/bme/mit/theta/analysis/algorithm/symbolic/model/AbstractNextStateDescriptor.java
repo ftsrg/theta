@@ -112,6 +112,10 @@ public interface AbstractNextStateDescriptor {
 		Cursor valueCursor(int from);
 
 		void close();
+
+		default Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+			return Optional.empty();
+		}
 	}
 
 	default Cursor cursor(int from) {

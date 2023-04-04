@@ -7,6 +7,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.CursorGeneralizedSa
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeNextStateDescriptor;
@@ -56,14 +57,14 @@ public class SatTest {
         // x = 0, y = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)));
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
 
-//        var c = initNode.getNode().cursor();
-//        var c2 = initNode.get(0).cursor();
-//        c2.moveNext();
-//        c2.moveNext();
-//        c.moveNext();
-//        c.moveNext();
+        var c = initNode.getNode().cursor();
+        var c2 = initNode.get(0).cursor();
+        c2.moveNext();
+        c2.moveNext();
+        c.moveNext();
+        c.moveNext();
 
         // x' = x, y' = y - 1, x < 9, y > -9
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),declX.getRef()), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(40)), IntExprs.Gt(declYPrime.getRef(), Int(-40)));
@@ -71,8 +72,10 @@ public class SatTest {
         // x' = x + 1, y' = y, x < 9
         Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(40)));
 
-        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
-        MddHandle trans2Node = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(trans2Expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        var solverPool = new SolverPool(Z3SolverFactory.getInstance()::createSolver);
+
+        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
+        MddHandle trans2Node = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(trans2Expr, o -> (Decl) o, solverPool));
 
         AbstractNextStateDescriptor trans1 = MddNodeNextStateDescriptor.of(transitionNode);
         AbstractNextStateDescriptor trans2 = MddNodeNextStateDescriptor.of(trans2Node);
@@ -92,7 +95,6 @@ public class SatTest {
 //                var asd = c2.value();
 //            }
 //        }
-
 
         var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
         var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());

@@ -244,6 +244,12 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 		public void close() {
 			cursors.forEach(AbstractNextStateDescriptor.Cursor::close);
 		}
+
+		@Override
+		public Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+			return Optional.of(cursors);
+		}
+
 	}
 
 	public static class OrCursor implements AbstractNextStateDescriptor.Cursor {
@@ -314,6 +320,11 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 		@Override
 		public void close() {
 			cursors.forEach(AbstractNextStateDescriptor.Cursor::close);
+		}
+
+		@Override
+		public Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+			return Optional.of(activeCursors);
 		}
 	}
 }

@@ -5,6 +5,7 @@ import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -20,12 +21,12 @@ public class MddExpressionTemplate implements MddNode.Template {
 
     private final Expr<BoolType> expr;
     private final Function<Object, Decl> extractDecl;
-    private final Supplier<Solver> solverSupplier;
+    private final SolverPool solverPool;
 
     private static Solver lazySolver;
 
-    private static boolean isSat(Expr<BoolType> expr, Supplier<Solver> solverSupplier) {
-        if (lazySolver == null) lazySolver = solverSupplier.get();
+    private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
+        if (lazySolver == null) lazySolver = solverPool.requestSolver();
         boolean res;
         try (var wpp = new WithPushPop(lazySolver)) {
             lazySolver.add(expr);
@@ -34,14 +35,14 @@ public class MddExpressionTemplate implements MddNode.Template {
         return res;
     }
 
-    private MddExpressionTemplate(Expr<BoolType> expr, Function<Object, Decl> extractDecl, Supplier<Solver> solverSupplier) {
+    private MddExpressionTemplate(Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
         this.expr = expr;
         this.extractDecl = extractDecl;
-        this.solverSupplier = solverSupplier;
+        this.solverPool = solverPool;
     }
 
-    public static MddExpressionTemplate of(Expr<BoolType> expr, Function<Object, Decl> extractDecl, Supplier<Solver> solverSupplier) {
-        return new MddExpressionTemplate(expr, extractDecl, solverSupplier);
+    public static MddExpressionTemplate of(Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool);
     }
 
     @Override
@@ -64,17 +65,17 @@ public class MddExpressionTemplate implements MddNode.Template {
         // Check if default
         if (!ExprUtils.getConstants(canonizedExpr).contains(decl)) {
             if (mddVariable.getLower().isPresent()) {
-                final MddNode childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverSupplier));
-                return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverSupplier, childNode);
+                final MddNode childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverPool));
+                return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverPool, childNode);
             }
         }
 
         // Check if terminal 0
-        if (!isSat(canonizedExpr, solverSupplier)) {
+        if (!isSat(canonizedExpr, solverPool)) {
             return mddVariable.getMddGraph().getTerminalZeroNode();
         }
 
-        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverSupplier);
+        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
 
     }
 }
