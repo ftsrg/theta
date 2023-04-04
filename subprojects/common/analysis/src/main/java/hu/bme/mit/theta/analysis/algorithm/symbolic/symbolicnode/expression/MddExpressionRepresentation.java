@@ -10,6 +10,7 @@ import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -23,6 +24,9 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
@@ -30,6 +34,7 @@ import java.util.function.Supplier;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
 
@@ -40,22 +45,22 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     private Traverser lazyTraverser;
     private final ExplicitRepresentation explicitRepresentation;
 
-    private final Supplier<Solver> solverSupplier;
+    private final SolverPool solverPool;
 
-    private MddExpressionRepresentation(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final Supplier<Solver> solverSupplier) {
+    private MddExpressionRepresentation(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final SolverPool solverPool) {
         this.expr = expr;
         this.decl = decl;
         this.mddVariable = mddVariable;
-        this.solverSupplier = solverSupplier;
+        this.solverPool = solverPool;
         this.explicitRepresentation = new ExplicitRepresentation();
     }
 
-    public static MddExpressionRepresentation of(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final Supplier<Solver> solverSupplier) {
-        return new MddExpressionRepresentation(expr, decl, mddVariable, solverSupplier);
+    public static MddExpressionRepresentation of(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final SolverPool solverPool) {
+        return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool);
     }
 
-    public static MddExpressionRepresentation ofDefault(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final Supplier<Solver> solverSupplier, final MddNode defaultValue) {
-        final MddExpressionRepresentation representation = new MddExpressionRepresentation(expr, decl, mddVariable, solverSupplier);
+    public static MddExpressionRepresentation ofDefault(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final SolverPool solverPool, final MddNode defaultValue) {
+        final MddExpressionRepresentation representation = new MddExpressionRepresentation(expr, decl, mddVariable, solverPool);
         representation.explicitRepresentation.cacheDefault(defaultValue);
         representation.explicitRepresentation.setComplete();
         return representation;
@@ -74,7 +79,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     }
 
     private Traverser getLazyTraverser() {
-        if (lazyTraverser == null) lazyTraverser = new Traverser(this, solverSupplier);
+        if (lazyTraverser == null) lazyTraverser = new Traverser(this, solverPool);
         return lazyTraverser;
     }
 
@@ -106,7 +111,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         final MddNode childNode;
         if (mddVariable.getLower().isPresent()) {
-            final MddExpressionTemplate template = MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverSupplier);
+            final MddExpressionTemplate template = MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverPool);
             childNode = mddVariable.getLower().get().checkInNode(template);
         } else {
             final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(simplifiedExpr));
@@ -128,7 +133,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public RecursiveIntObjCursor<? extends MddNode> cursor() {
-        return new Cursor(null, new Traverser(this, solverSupplier));
+        return new Cursor(null, new Traverser(this, solverPool));
 //        throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -208,21 +213,23 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
     }
 
-    private static class Traverser {
+    private static class Traverser implements Closeable {
 
         private MddExpressionRepresentation currentRepresentation;
 
-        private final Solver solver;
+        private final SolverPool solverPool;
+        private Solver solver;
 
         private final Stack<MddExpressionRepresentation> stack;
         private int pushedNegatedAssignments = 0;
 
-        public Traverser(MddExpressionRepresentation rootRepresentation, Supplier<Solver> solverSupplier) {
-            this.solver = solverSupplier.get();
+        public Traverser(MddExpressionRepresentation rootRepresentation, SolverPool solverPool) {
+            this.solverPool = solverPool;
+            this.solver = solverPool.requestSolver();
             this.stack = new Stack<>();
 
-            solver.add(rootRepresentation.expr);
             solver.push();
+            solver.add(rootRepresentation.expr);
             setCurrentRepresentation(Preconditions.checkNotNull(rootRepresentation));
         }
 
@@ -331,10 +338,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         private void pushNegatedAssignments() {
             solver.push();
+            final var negatedAssignments = new ArrayList<Expr<BoolType>>();
             for (var cur = currentRepresentation.explicitRepresentation.getCacheView().cursor(); cur.moveNext(); ) {
-                solver.add(Neq(currentRepresentation.decl.getRef(), LitExprConverter.toLitExpr(cur.key(), currentRepresentation.decl.getType())));
+                negatedAssignments.add(Neq(currentRepresentation.decl.getRef(), LitExprConverter.toLitExpr(cur.key(), currentRepresentation.decl.getType())));
                 pushedNegatedAssignments++;
             }
+            solver.add(And(negatedAssignments));
         }
 
         private void popNegatedAssignments() {
@@ -390,7 +399,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     } else {
 
                         if (lower.isPresent()) {
-                            final MddExpressionTemplate template = MddExpressionTemplate.of(expr, o -> (Decl) o, representation.solverSupplier);
+                            final MddExpressionTemplate template = MddExpressionTemplate.of(expr, o -> (Decl) o, representation.solverPool);
                             childNode = lower.get().checkInNode(template);
                         } else {
                             final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
@@ -415,6 +424,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         private void setCurrentRepresentation(MddExpressionRepresentation representation) {
             this.currentRepresentation = representation;
             pushNegatedAssignments();
+        }
+
+        @Override
+        public void close() {
+            popNegatedAssignments();
+            solver.pop(); // pop base expression
+            solverPool.returnSolver(this.solver);
+            this.solver = null;
         }
 
         private static class QueryResult {
@@ -592,6 +609,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             if(parent != null) {
                 traverser.moveUp();
                 parent.unblock();
+            } else {
+                traverser.close();
             }
         }
 

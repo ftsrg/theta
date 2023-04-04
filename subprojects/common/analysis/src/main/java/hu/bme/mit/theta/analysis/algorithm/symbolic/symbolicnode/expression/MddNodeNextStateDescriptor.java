@@ -7,6 +7,9 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
+import java.util.List;
+import java.util.Optional;
+
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle node;
@@ -90,6 +93,11 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         public void close() {
             wrapped.close();
             closer.run();
+        }
+
+        @Override
+        public Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+            return Optional.of(List.of(this));
         }
     }
 
@@ -195,6 +203,11 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         @Override
         public void close() {
             this.closer.run();
+        }
+
+        @Override
+        public Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+            return Optional.of(List.of(this));
         }
 
     }

@@ -5,6 +5,7 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.*;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeNextStateDescriptor;
@@ -53,12 +54,12 @@ public class XstsTest {
         // x = 0, y = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)));
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
 
         // x' = x + 1, y' = y - 1, x < 9
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(9)));
 
-        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
         AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
         try (var c = nextStates.rootCursor()) {
