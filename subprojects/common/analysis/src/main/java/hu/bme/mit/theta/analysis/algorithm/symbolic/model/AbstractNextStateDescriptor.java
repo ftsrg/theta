@@ -1,10 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
-import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.EmptyNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.IdentityNextStateDescriptor;
 
@@ -116,6 +113,50 @@ public interface AbstractNextStateDescriptor {
 		default Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
 			return Optional.empty();
 		}
+
+		class Singleton implements Cursor {
+
+			private final AbstractNextStateDescriptor value;
+
+			private int currentPosition;
+
+			public Singleton(AbstractNextStateDescriptor value) {
+				this.value = value;
+				this.currentPosition = -1;
+			}
+
+			@Override
+			public int key() {
+				return 0;
+			}
+
+			@Override
+			public AbstractNextStateDescriptor value() {
+				return value;
+			}
+
+			@Override
+			public boolean moveNext() {
+				currentPosition++;
+				return currentPosition == 0;
+			}
+
+			@Override
+			public boolean moveTo(int key) {
+				return false;
+			}
+
+			@Override
+			public Cursor valueCursor(int from) {
+				return null;
+			}
+
+			@Override
+			public void close() {
+
+			}
+		}
+
 	}
 
 	default Cursor cursor(int from) {
@@ -123,6 +164,6 @@ public interface AbstractNextStateDescriptor {
 	}
 
 	default Cursor rootCursor() {
-		throw new UnsupportedOperationException("Not yet implemented");
+		return new Cursor.Singleton(this);
 	}
 }
