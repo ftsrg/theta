@@ -59,18 +59,18 @@ public class SatTest {
 
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
 
-        var c = initNode.getNode().cursor();
-        var c2 = initNode.get(0).cursor();
-        c2.moveNext();
-        c2.moveNext();
-        c.moveNext();
-        c.moveNext();
+//        var c = initNode.getNode().cursor();
+//        var c2 = initNode.get(0).cursor();
+//        c2.moveNext();
+//        c2.moveNext();
+//        c.moveNext();
+//        c.moveNext();
 
         // x' = x, y' = y - 1, x < 9, y > -9
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),declX.getRef()), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(40)), IntExprs.Gt(declYPrime.getRef(), Int(-40)));
 
         // x' = x + 1, y' = y, x < 9
-        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(40)));
+        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(60)));
 
         var solverPool = new SolverPool(Z3SolverFactory.getInstance()::createSolver);
 
@@ -87,14 +87,6 @@ public class SatTest {
 
 //        var bfs = new BfsProvider(stateSig.getVariableOrder());
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
-
-//        try(var c = nextStates.rootCursor()){
-//            c.moveNext();
-//            try(var c2 = c.valueCursor(0)){
-//                c2.moveTo(0);
-//                var asd = c2.value();
-//            }
-//        }
 
         var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
         var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
