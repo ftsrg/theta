@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.cli;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -42,7 +43,7 @@ public class ExprNodeTest7 {
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
         Expr<BoolType> expr = And(And(Geq(declX.getRef(),Int(0)), Leq(declX.getRef(),Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
