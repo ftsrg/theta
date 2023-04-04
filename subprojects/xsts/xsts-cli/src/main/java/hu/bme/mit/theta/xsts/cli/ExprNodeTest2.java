@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xsts.cli;
 
 import hu.bme.mit.delta.Pair;
@@ -5,6 +20,7 @@ import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -17,7 +33,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.FileNotFoundException;
 import java.util.Set;
@@ -43,26 +59,29 @@ public class ExprNodeTest2 {
 
         Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
-        for (var c = rootNode.cursor(); c.moveNext(); ){}
+        for (var c = rootNode.cursor(); c.moveNext(); ) {
+        }
 
         var node2 = rootNode.get(0);
 
-        for (var c = node2.cursor(); c.moveNext(); ){}
+        for (var c = node2.cursor(); c.moveNext(); ) {
+        }
 
         var node3 = node2.get(0);
 
-        for (var c = node3.cursor(); c.moveNext(); ){}
+        for (var c = node3.cursor(); c.moveNext(); ) {
+        }
 
         var node4 = rootNode.get(1);
 
-        for (var c = node4.cursor(); c.moveNext(); ){}
+        for (var c = node4.cursor(); c.moveNext(); ) {
+        }
 
 //        var node5 = node4.get(1);
 //
 //        for (var c = node5.cursor(); c.moveNext(); ){}
-
 
 
 //        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
@@ -102,7 +121,7 @@ public class ExprNodeTest2 {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
