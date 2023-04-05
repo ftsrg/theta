@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xsts.cli;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
+import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.*;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
@@ -118,22 +119,25 @@ public class XstsTest {
 //        var bfs = new BfsProvider(stateSig.getVariableOrder(), relprod);
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-//        final PtNetSystem system = new PtNetSystem(petriNet, ordering);
-//
-//        final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
-//        ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
-//
-//        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
-//
-//        final MddHandle satResult = gs.compute(system.getInitializer(),
-//                system.getTransitions(),
-//                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-//        );
+        final PtNetSystem system = new PtNetSystem(petriNet, ordering);
 
-        var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+        final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
+        ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
+
+        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+
+        final MddHandle satResult = gs.compute(system.getInitializer(),
+                system.getTransitions(),
+                variableOrder.getDefaultSetSignature().getTopVariableHandle()
+        );
+
+//        var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
+//        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(Z3SolverFactory.solversCreated);
+
+        Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
+        System.out.println("State space size: "+stateSpaceSize);
 //
         final Graph graph = new MddNodeVisualizer(XstsTest::nodeToString).visualize(satResult.getNode());
         try {
