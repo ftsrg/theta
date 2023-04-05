@@ -39,7 +39,7 @@ public class PetriNetToXSTS {
 		final List<Expr<BoolType>> initExprs = new ArrayList<>();
 		// Create a variable for each place and initialize them
 		for (Place place: net.getPlaces()){
-			final VarDecl<IntType> placeVar = Decls.Var("place"+place.getId(),IntType.getInstance());
+			final VarDecl<IntType> placeVar = Decls.Var(place.getId(),IntType.getInstance());
 			placeIdToVar.put(place.getId(),placeVar);
 			initExprs.add(Eq(placeVar.getRef(), IntExprs.Int(BigInteger.valueOf(place.getInitialMarking()))));
 		}
