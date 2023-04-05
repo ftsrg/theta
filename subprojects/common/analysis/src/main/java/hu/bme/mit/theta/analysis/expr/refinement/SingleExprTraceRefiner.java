@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.analysis.runtimemonitor.old.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
@@ -39,7 +39,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
-
 	private final ExprTraceChecker<R> exprTraceChecker;
 	private final PrecRefiner<S, A, P, R> precRefiner;
 	private final PruneStrategy pruneStrategy;
@@ -85,6 +84,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
+        // TODO use CexMonitor getLastCex()
+        // TODO and maybe later smarten ArgTrace up a bit so monitor does not have to explicitly be here?
 		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
 		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
@@ -108,6 +109,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
+            // TODO change to CexMonitor
 			ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
 
 			switch (pruneStrategy) {

@@ -14,13 +14,14 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.runtimecheck;
+package hu.bme.mit.theta.analysis.runtimemonitor.old;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.runtimemonitor.container.AbstractArgStorage;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 
 public class ArgCexCheckHandler<S extends State, A extends Action> {
@@ -31,11 +32,7 @@ public class ArgCexCheckHandler<S extends State, A extends Action> {
 	public void setArgCexCheck(boolean shouldCheck, boolean shouldStoreArg, boolean shouldTryMitigation) {
         this.shouldTryMitigation = shouldTryMitigation;
 		if (shouldCheck) {
-			if (shouldStoreArg) {
-				abstractArgStorage = new SingleCexAbstractArgStorage<S, A>();
-			} else {
-				abstractArgStorage = new CexStorage<S, A>();
-			}
+            abstractArgStorage = new CexStorage<S, A>();
 		} else {
 			abstractArgStorage = null;
 		}

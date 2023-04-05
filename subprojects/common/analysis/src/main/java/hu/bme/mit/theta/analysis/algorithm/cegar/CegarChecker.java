@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.analysis.runtimemonitor.old.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -91,6 +91,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             wdl.addIteration(iteration, argGraph, precString);
 
             if (abstractorResult.isUnsafe()) {
+                // TODO CexMonitor
 				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
 
 				P lastPrec = prec;
