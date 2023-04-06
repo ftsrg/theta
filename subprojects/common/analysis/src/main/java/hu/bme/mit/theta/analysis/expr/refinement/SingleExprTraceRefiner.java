@@ -84,9 +84,9 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 		checkNotNull(prec);
 		assert !arg.isSafe() : "ARG must be unsafe";
 
-        // TODO use CexMonitor getLastCex()
+        // TODO use CexMonitor lastCex somehow?
         // TODO and maybe later smarten ArgTrace up a bit so monitor does not have to explicitly be here?
-		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst(); //filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
 		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();

@@ -32,6 +32,8 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.core.decl.Decl
@@ -120,6 +122,7 @@ data class XcfaCegarConfig(
                     else
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
+        /*
         // set up stopping analysis if it is stuck on same ARGs and precisions
         if (disableCexMonitor) {
             ArgCexCheckHandler.instance.setArgCexCheck(false, false, mitigation)
@@ -130,12 +133,38 @@ data class XcfaCegarConfig(
                 ArgCexCheckHandler.instance.setArgCexCheck(true, false, mitigation)
             }
         }
+        */
 
-        return if(porLevel == POR.AAPOR)
-            CegarChecker.create(abstractor, AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
+        val cegarChecker = if (porLevel == POR.AAPOR)
+            CegarChecker.create(
+                abstractor,
+                AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(
+                    refiner,
+                    pruneStrategy,
+                    ignoredVarRegistry
+                ),
+                logger
+            )
         else
             CegarChecker.create(abstractor, refiner, logger)
+
+        initializeMonitors(cegarChecker, logger)
+
+        return cegarChecker
     }
+
+    private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
+        if(cexMonitor!=CexMonitorOptions.DISABLE) {
+            val cm = if(cexMonitor==CexMonitorOptions.MITIGATE) {
+                throw RuntimeException("Mitigation is temporarily unusable, use DISABLE or CHECK instead")
+                // CexMonitor(true, logger, cc.arg)
+            } else { // CHECK
+                CexMonitor(false, logger, cc.arg)
+            }
+            MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
+        }
+    }
+
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
         try {
             val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))

@@ -60,14 +60,14 @@ public final class StopCriterions {
 		@Override
 		public boolean canStop(final ARG<S, A> arg) {
             // TODO Move runtime check out to CegarChecker? (CexMonitor)
-			return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
+			return arg.getUnsafeNodes().findAny().isPresent(); // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
 		}
 
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
             // TODO Move runtime check out to CegarChecker? (CexMonitor)
-            return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
-					&& arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
+            return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded()));
+					// && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
 		}
 
 		@Override

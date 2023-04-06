@@ -1,5 +1,5 @@
 package hu.bme.mit.theta.analysis.runtimemonitor
 
 interface Monitor {
-    fun run(checkpointName : String)
+    fun execute(checkpointName : String)
 }

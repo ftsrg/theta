@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
-import hu.bme.mit.theta.analysis.runtimemonitor.container.AbstractArgStorage;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 
 public class ArgCexCheckHandler<S extends State, A extends Action> {
