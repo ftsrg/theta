@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.runtimemonitor.old.ArgCexCheckHandler;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Collection;

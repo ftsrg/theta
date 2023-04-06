@@ -7,7 +7,6 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.runtimemonitor.old.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -206,6 +205,8 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		// set up stopping analysis if it is stuck on same ARGs and precisions
+        // TODO replace with new classes
+/*
 		if (noStuckCheck || refinement.equals(Refinement.MULTI_SEQ)) {
 			ArgCexCheckHandler.instance.setArgCexCheck(false, false, true);
 		} else if(argCheck) {
@@ -213,6 +214,7 @@ public class XstsCli {
 		} else {
             ArgCexCheckHandler.instance.setArgCexCheck(true, false,true);
         }
+*/
 
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())

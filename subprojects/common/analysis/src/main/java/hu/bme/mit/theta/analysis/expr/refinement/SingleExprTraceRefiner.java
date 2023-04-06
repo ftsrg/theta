@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
-import hu.bme.mit.theta.analysis.runtimemonitor.old.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
@@ -109,8 +108,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-            // TODO change to CexMonitor
-			ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
+            // TODO change to CexMonitor (right now it is added earlier on, but with mitigation and more options that will have to change)
+			// ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
 
 			switch (pruneStrategy) {
 				case LAZY:
