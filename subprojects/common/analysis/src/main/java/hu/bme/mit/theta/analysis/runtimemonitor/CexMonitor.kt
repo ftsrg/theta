@@ -20,10 +20,10 @@ class CexMonitor<S : State?, A : Action?> constructor(
     fun checkIfNewCexFound(): Boolean {
         return if (arg.cexs.anyMatch { cex -> !cexHashStorage.contains(cex) }) {
             logger.write(Logger.Level.VERBOSE, "Counterexample hash check: new cex found successfully")
-            false
+            true
         } else {
             logger.write(Logger.Level.INFO, "Counterexample hash check: NO new cex found")
-            true
+            false
         }
     }
 
@@ -41,7 +41,7 @@ class CexMonitor<S : State?, A : Action?> constructor(
 
     override fun execute(checkpointName: String) {
         when (checkpointName) {
-            "CegarChecker.unsafeARG" -> if(checkIfNewCexFound()) throwNotSolvable() else addNewCounterexample()
+            "CegarChecker.unsafeARG" -> if(checkIfNewCexFound()) addNewCounterexample() else throwNotSolvable()
             else -> throw RuntimeException("Unknown checkpoint name in CexMonitor execution: $checkpointName")
         }
     }

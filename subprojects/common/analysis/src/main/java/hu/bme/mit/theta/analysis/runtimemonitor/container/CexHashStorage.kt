@@ -12,6 +12,6 @@ class CexHashStorage<S : State?, A : Action?> :
     }
 
     override operator fun contains(data: ArgTrace<S, A>?): Boolean {
-        return !counterexamples.contains(data.hashCode())
+        return counterexamples.contains(data.hashCode())
     }
 }
