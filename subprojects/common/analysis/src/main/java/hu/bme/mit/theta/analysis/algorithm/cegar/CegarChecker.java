@@ -119,9 +119,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-        String fileName = "wdl-output.json";
-        WebDebuggerLogger.getInstance().writeToFile(fileName);
-
         stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,

@@ -82,7 +82,9 @@ data class XcfaCegarConfig(
     @Parameter(names = ["--cex-monitor"])
         var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
     @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
-        var timeoutMs: Long = 0
+        var timeoutMs: Long = 0,
+    @Parameter(names = ["--arg-to-file"])
+        var argToFile: Boolean = false
 ) {
     @Suppress("UNCHECKED_CAST")
     private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
@@ -167,12 +169,16 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
         try {
             val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
-            val fileName = "wdl-output.json"
-            WebDebuggerLogger.getInstance().writeToFile(fileName)
+            if(argToFile) {
+                val fileName = "wdl-output.json"
+                WebDebuggerLogger.getInstance().writeToFile(fileName)
+            }
             check
         } catch (e: Exception) {
-            val fileName = "wdl-output.json"
-            WebDebuggerLogger.getInstance().writeToFile(fileName)
+            if(argToFile) {
+                val fileName = "wdl-output.json"
+                WebDebuggerLogger.getInstance().writeToFile(fileName)
+            }
             throw e
         }
 
