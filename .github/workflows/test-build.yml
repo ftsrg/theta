@@ -4,6 +4,7 @@ on:
   push:
   pull_request:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   build-linux:
@@ -18,8 +19,12 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.17
-    - name: Build with Gradle
-      run: ./gradlew build
+    - uses: gradle/gradle-build-action@v2
+      with:
+        arguments: build
+    - uses: gradle/gradle-build-action@v2
+      with:
+          arguments: scan
     - uses: actions/upload-artifact@v3
       with:
           name: gradle-build
