@@ -24,7 +24,7 @@ jobs:
         arguments: build
     - uses: gradle/gradle-build-action@v2
       with:
-          arguments: scan
+          arguments: --scan
     - uses: actions/upload-artifact@v3
       with:
           name: gradle-build
