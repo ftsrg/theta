@@ -2,7 +2,11 @@ name: Create release file
 'on':
   workflow_dispatch: null
 jobs:
+  calling_build_workflow:
+    uses: blagazsolt/theta/.github/workflows/build-linux.yml@master
+    
   gradle:
+    needs: calling_build_workflow
     name: Run Gradle
     runs-on:
       - ubuntu-latest
