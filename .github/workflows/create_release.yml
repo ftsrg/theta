@@ -16,7 +16,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: blagazsolt/theta/.github/workflows/build-linux.yml@master
       - uses: actions/download-artifact@v3
         with:
           name: gradle-build
