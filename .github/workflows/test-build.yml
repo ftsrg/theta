@@ -1,13 +1,16 @@
-name: Testing gradle build
+name: Linux build
 
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+  workflow_call:
 
 jobs:
   build-linux:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -15,8 +18,10 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.17
-    - name: Gradle build
-    - uses: gradle/gradle-build-action@v2
-      id: build
+    - name: Build with Gradle
+      run: ./gradlew build
+    - uses: actions/upload-artifact@v3
       with:
-        arguments: build --scan 
+          name: gradle-build
+          path: subprojects/**
+    
