@@ -16,10 +16,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: actions/download-artifact@v3
-        with:
-          name: gradle-build
-          path: subprojects/
       - name: Setup and execute Gradle 'build' task
         uses: gradle/gradle-build-action@v2
         id: build
