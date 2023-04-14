@@ -3,16 +3,16 @@ description: 'Running gradle build and cache the results'
 runs:
   using: composit
   steps:
-    - uses: actions/cache@v3
-    with:
-      path: |
-        ~/.gradle/caches
-        ~/.gradle/wrapper
-      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-      restore-keys: |
-        ${{ runner.os }}-gradle-
+   - uses: actions/cache@v3
+     with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
-    -name: running gradle if needed 
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: ./gradlew build
-      shell: bash
+-name: running gradle if needed 
+if: steps.cache.outputs.cache-hit != 'true'
+run: ./gradlew build
+shell: bash
