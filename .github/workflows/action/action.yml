@@ -1,7 +1,7 @@
 name: Gradle build action
 description: 'Running gradle build and cache the results'
 runs:
-  using: composit
+  using: "composite"
   steps:
    - uses: actions/cache@v3
      with:
