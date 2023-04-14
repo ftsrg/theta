@@ -16,7 +16,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: ./.github/workflows/build-local-action
+      - uses: ./.github/workflows/action/build-local-action
       - name: Setup and execute Gradle 'build' task
         uses: gradle/gradle-build-action@v2
         id: build
