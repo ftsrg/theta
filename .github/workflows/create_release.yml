@@ -2,11 +2,11 @@ name: Create release file
 'on':
   workflow_dispatch: null
 jobs:
-  calling_build_workflow:
-    uses: blagazsolt/theta/.github/workflows/test-build.yml@master
+  # calling_build_workflow:
+  #  uses: blagazsolt/theta/.github/workflows/test-build.yml@master
     
   gradle:
-    needs: calling_build_workflow
+   # needs: calling_build_workflow
     name: Run Gradle
     runs-on:
       - ubuntu-latest
@@ -16,6 +16,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - uses: ./.github/workflows/build-local-action
       - name: Setup and execute Gradle 'build' task
         uses: gradle/gradle-build-action@v2
         id: build
