@@ -4,15 +4,15 @@ description: 'Running gradle build and cache the results'
 runs:
   using: "composite"
   steps:
-        -name: list before build task
+       -name: list before build task
         run: ls -1 **/subprojects
         shell: bash
 
-        -name: Setup and execute Gradle 'build' task
+       -name: Setup and execute Gradle 'build' task
         uses: gradle/gradle-build-action@v2
         with:
         arguments: build
         
-        -name: list after build task
+       -name: list after build task
         run: ls -1 **/subprojects
         shell: bash
