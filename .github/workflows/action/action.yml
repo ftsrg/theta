@@ -1,18 +1,23 @@
-
-name: Gradle build action
+name: 'Gradle build action'
 description: 'Running gradle build and cache the results'
 runs:
   using: "composite"
   steps:
-  -name: list before build task
-   run: ls -1 **/subprojects
-   shell: bash
-   
-  -name: Setup and execute Gradle 'build' task
-   uses: gradle/gradle-build-action@v2
-   with:
-   arguments: build
-        
-  -name: list after build task
-   run: ls -1 **/subprojects
-   shell: bash
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: .
+        key: ${{ github.sha }}-a.txt
+
+    - name: list before build task
+      run: ls -1 **/subprojects
+      shell: bash
+    
+    - name: Setup and execute Gradle 'build' task
+      uses: gradle/gradle-build-action@v2
+      with:
+      arguments: build
+      
+    - name: list after build task
+      run: ls -1 **/subprojects
+      shell: bash
