@@ -12,7 +12,9 @@ runs:
 #    - name: list before build task
 #      run: ls -1 **/subprojects
 #      shell: bash
-    
+    - uses: actions/setup-java@v1
+      with:
+        java-version: 1.17    
     - uses: gradle/gradle-build-action@v2
       with:
         arguments: build
