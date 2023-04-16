@@ -9,14 +9,14 @@ runs:
         path: .
         key: ${{ github.sha }}-a.txt
 
-    - name: list before build task
-      run: ls -1 **/subprojects
-      shell: bash
+#    - name: list before build task
+#      run: ls -1 **/subprojects
+#      shell: bash
     
     - uses: gradle/gradle-build-action@v2
       with:
         arguments: build
       
-    - name: list after build task
-      run: ls -1 **/subprojects
-      shell: bash
+#    - name: list before build task
+#      run: ls -1 **/subprojects
+#      shell: bash
