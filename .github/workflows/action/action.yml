@@ -13,6 +13,6 @@ runs:
           ${{ runner.os }}-gradle-
 
 -name: running gradle if needed 
-if: steps.cache.outputs.cache-hit != 'true'
+#if: steps.cache.outputs.cache-hit != 'true'
 run: ./gradlew build
 shell: bash
