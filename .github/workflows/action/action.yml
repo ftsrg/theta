@@ -12,7 +12,7 @@ runs:
 #        restore-keys: |
 #          ${{ runner.os }}-gradle-
 
- - name: Setup and execute Gradle 'build' task
-      uses: gradle/gradle-build-action@v2
-      with:
-        arguments: build
+- name: Setup and execute Gradle 'build' task
+  uses: gradle/gradle-build-action@v2
+  with:
+    arguments: build
