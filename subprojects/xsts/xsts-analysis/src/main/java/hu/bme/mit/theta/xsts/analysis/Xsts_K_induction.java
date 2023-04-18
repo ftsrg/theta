@@ -6,14 +6,12 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
@@ -22,9 +20,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import hu.bme.mit.theta.xsts.XSTS;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
@@ -64,20 +60,22 @@ public class Xsts_K_induction {
         ArrayList<XstsState<ExplState>> list = new ArrayList<>();
         ArrayList<XstsAction> actionList = new ArrayList<>();
 
-        var varEqs = new ArrayList<Expr<BoolType>>();
-        var varExpr = And(varEqs);
+
+
         while (i < bound) {
+            var varEqs = new ArrayList<Expr<BoolType>>();
+            var varExpr = And(varEqs);
             if (i > 0) {
                 exprsFromStart.addAll(StmtUtils.toExpr(atomicStep, currStep.getIndexing()).getExprs());
-                var tempIndex= currStep.getIndexing();
                 currStep = StmtUtils.toExpr(atomicStep, currStep.getIndexing());
-                listOfIndexes.add(currStep.getIndexing());
 
-                for(var v: xsts.getVars()){
-                    varEqs.add(Eq(PathUtils.unfold(v.getRef(),tempIndex),PathUtils.unfold(v.getRef(),currStep.getIndexing())));
+
+                for(int j = 0; j < listOfIndexes.size(); j++) {
+                    createVarEqs(xsts, currStep, listOfIndexes, varEqs, j);
 
                 }
                 varExpr = Not(And(varEqs));
+                listOfIndexes.add(currStep.getIndexing());
 
                 exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), inductiveCurrStep.getIndexing()));
                 inductiveCurrStep = StmtUtils.toExpr(atomicStep, inductiveCurrStep.getIndexing());
@@ -90,6 +88,7 @@ public class Xsts_K_induction {
                 solver.add(varExpr);
 
                 if(solver.check().isUnsat()){
+                    var x=0;
                     return SafetyResult.safe(justAnArg);
                 }
             }
@@ -134,6 +133,13 @@ public class Xsts_K_induction {
         //return SafetyResult.safe(justAnArg);
         throw new RuntimeException("unknown");
 
+    }
+
+    public static void createVarEqs(XSTS xsts, StmtUnfoldResult currStep, ArrayList<VarIndexing> listOfIndexes, ArrayList<Expr<BoolType>> varEqs, int j) {
+        for (var v : xsts.getVars()) {
+            varEqs.add(Eq(PathUtils.unfold(v.getRef(), currStep.getIndexing()), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
+
+        }
     }
 
 
