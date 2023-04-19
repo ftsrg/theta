@@ -4,6 +4,7 @@ package hu.bme.mit.theta.xsts.analysis;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -31,6 +32,11 @@ public class Xsts_K_induction {
 
 
     public SafetyResult<XstsState<ExplState>, XstsAction> check(XSTS xsts, int bound, Solver solver) {
+
+//        new KIndChecker<XstsState<ExplState>, XstsAction>(null, null, null, 0, null, null, null,
+//                (v) -> XstsState.of(ExplState.of(v), false, true));
+        // (v) -> ExplState.of(v)
+
         int i = 0;
         // Used as a placeholder for now for a real ARG just to be able to return a safety result
         ARG<XstsState<ExplState>, XstsAction> justAnArg = ARG.create(XstsOrd.create(ExplOrd.getInstance()));
