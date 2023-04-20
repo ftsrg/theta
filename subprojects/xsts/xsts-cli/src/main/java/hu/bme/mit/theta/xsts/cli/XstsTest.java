@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem;
+import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -59,10 +60,16 @@ public class XstsTest {
             throw new RuntimeException(e);
         }
 
-        final List<Place> ordering = new ArrayList<>(petriNet.getPlaces());
-        ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
-                reverseString(p2.getId())
-        ));
+//        final List<Place> ordering = new ArrayList<>(petriNet.getPlaces());
+//        ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
+//                reverseString(p2.getId())
+//        ));
+        final List<Place> ordering;
+        try {
+            ordering = VariableOrderingFactory.fromFile("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\Philosophers-5.pnml.order", petriNet);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         final XSTS xsts = PetriNetToXSTS.createXSTS(petriNet, null);
 
@@ -93,8 +100,10 @@ public class XstsTest {
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
 
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
-        final List<Stmt> stmts = new ArrayList<>();
-        for(int i = 0; i<25; i++) stmts.add(tran.getStmts().get(i));
+        final List<MddHandle> transitionHandles = new ArrayList<>();
+//        final List<Stmt> stmts = new ArrayList<>();
+//        for(int i = 0; i<25; i++) stmts.add(tran.getStmts().get(i));
+        final var stmts = new ArrayList<>(tran.getStmts());
         for(Stmt stmt : stmts){
             final var stmtToExpr = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
             var stmtUnfold = PathUtils.unfold(stmtToExpr.getExprs().stream().findFirst().get(), 0);
@@ -106,6 +115,7 @@ public class XstsTest {
             if(!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
             MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+            transitionHandles.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
 
@@ -124,20 +134,23 @@ public class XstsTest {
         final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
         ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
 
-        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+//        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+//        final MddHandle satResult = gs.compute(system.getInitializer(),
+//                system.getTransitions(),
+//                variableOrder.getDefaultSetSignature().getTopVariableHandle()
+//        );
 
-        final MddHandle satResult = gs.compute(system.getInitializer(),
-                system.getTransitions(),
-                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-        );
-
-//        var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
-//        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+        var gs = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(Z3SolverFactory.solversCreated);
 
         Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
         System.out.println("State space size: "+stateSpaceSize);
+
+        System.out.println("Hit count: "+gs.getSaturateCache().getHitCount());
+        System.out.println("Query count: "+gs.getSaturateCache().getQueryCount());
+        System.out.println("Cache size: "+gs.getSaturateCache().getCacheSize());
 //
         final Graph graph = new MddNodeVisualizer(XstsTest::nodeToString).visualize(satResult.getNode());
         try {
@@ -145,6 +158,16 @@ public class XstsTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+//        int i = 0;
+//        for(var handle: transitionHandles){
+//            final Graph g = new MddNodeVisualizer(XstsTest::nodeToString).visualize(handle.getNode());
+//            try {
+//                GraphvizWriter.getInstance().writeFile(g, "build\\tran"+ (i++) +".dot");
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
     }
 

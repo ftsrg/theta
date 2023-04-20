@@ -8,11 +8,25 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescr
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private final MddHandle node;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MddNodeNextStateDescriptor that = (MddNodeNextStateDescriptor) o;
+        return Objects.equals(node, that.node);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node);
+    }
 
     private MddNodeNextStateDescriptor(MddHandle node) {
         this.node = node;
