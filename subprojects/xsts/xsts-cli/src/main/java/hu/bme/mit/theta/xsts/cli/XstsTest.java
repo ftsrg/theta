@@ -12,6 +12,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.utils.MddNodeCacheVisualizer;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -55,7 +56,7 @@ public class XstsTest {
 
         final PetriNet petriNet;
         try {
-            petriNet = PetriNetParser.loadPnml(new File("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\Philosophers-5.pnml")).parsePTNet().get(0);
+            petriNet = PetriNetParser.loadPnml(new File("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\dekker-15.pnml")).parsePTNet().get(0);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -66,7 +67,7 @@ public class XstsTest {
 //        ));
         final List<Place> ordering;
         try {
-            ordering = VariableOrderingFactory.fromFile("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\Philosophers-5.pnml.order", petriNet);
+            ordering = VariableOrderingFactory.fromFile("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\dekker-15.pnml.gsat.order", petriNet);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -134,14 +135,14 @@ public class XstsTest {
         final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
         ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
 
-//        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
-//        final MddHandle satResult = gs.compute(system.getInitializer(),
-//                system.getTransitions(),
-//                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-//        );
+        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+        final MddHandle satResult = gs.compute(system.getInitializer(),
+                system.getTransitions(),
+                variableOrder.getDefaultSetSignature().getTopVariableHandle()
+        );
 
-        var gs = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+//        var gs = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
+//        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(Z3SolverFactory.solversCreated);
 
@@ -161,7 +162,7 @@ public class XstsTest {
 
 //        int i = 0;
 //        for(var handle: transitionHandles){
-//            final Graph g = new MddNodeVisualizer(XstsTest::nodeToString).visualize(handle.getNode());
+//            final Graph g = new MddNodeCacheVisualizer(XstsTest::nodeToString).visualize(handle.getNode());
 //            try {
 //                GraphvizWriter.getInstance().writeFile(g, "build\\tran"+ (i++) +".dot");
 //            } catch (FileNotFoundException e) {

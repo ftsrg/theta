@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
@@ -49,6 +50,7 @@ public class PetriNetToXSTS {
 		// Create a transition for each variable
 		for (Transition transition: net.getTransitions()){
 			final List<Stmt> stmts = new ArrayList<>();
+			final Map<VarDecl<IntType>, Long> takesPutsMap = new HashMap<>();
 
 			// Check if enough tokens are present and remove input tokens
 			for(PTArc inArc: transition.getIncomingArcs()){
@@ -60,8 +62,9 @@ public class PetriNetToXSTS {
 				final Stmt enoughTokens = AssumeStmt.of(GeqExpr.create2(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
 				stmts.add(enoughTokens);
 
-				final Stmt removeTokens = AssignStmt.of(placeVar,Sub(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
-				stmts.add(removeTokens);
+				takesPutsMap.merge(placeVar, -weight, Long::sum);
+//				final Stmt removeTokens = AssignStmt.of(placeVar,Sub(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
+//				stmts.add(removeTokens);
 			}
 
 			// Place output tokens
@@ -71,9 +74,14 @@ public class PetriNetToXSTS {
 				final VarDecl<IntType> placeVar = placeIdToVar.get(targetPlace.getId());
 				final long weight = outArc.getWeight();
 
-				final Stmt placeTokens = AssignStmt.of(placeVar,Add(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
-				stmts.add(placeTokens);
+				takesPutsMap.merge(placeVar, weight, Long::sum);
+//				final Stmt placeTokens = AssignStmt.of(placeVar,Add(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
+//				stmts.add(placeTokens);
 			}
+
+			takesPutsMap.forEach(
+					(placeVar, weight) -> stmts.add(AssignStmt.of(placeVar, Add(placeVar.getRef(), Int(BigInteger.valueOf(weight)))))
+			);
 
 			tranStmts.add(SequenceStmt.of(stmts));
 		}
