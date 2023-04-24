@@ -55,6 +55,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         this.explicitRepresentation = new ExplicitRepresentation();
     }
 
+    //TODO only for debugging
+    public ExplicitRepresentation getExplicitRepresentation(){
+        return explicitRepresentation;
+    }
+
     public static MddExpressionRepresentation of(final Expr<BoolType> expr, final Decl<?> decl, final MddVariable mddVariable, final SolverPool solverPool) {
         return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool);
     }
@@ -167,7 +172,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     }
 
-    private static class ExplicitRepresentation {
+    public static class ExplicitRepresentation {
         private final HashIntObjMap<MddNode> cache;
         private final GrowingIntArray edgeOrdering;
         private MddNode defaultValue;
