@@ -23,13 +23,10 @@ jobs:
         with:
           arguments: build --scan
       - run: 'echo "${{steps.build.outputs.build}}"'
-      - name: Display structure of cached files
-        run: ls -R
-     # - run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
-     # - uses: actions/upload-artifact@v3
-     #   with:
-     #     name: ThetaJars
-     #     path: subprojects/**/*-all.jar
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ThetaJars
+          path: subprojects/**/*-all.jar
   publish:
     name: Publish Release
     needs: gradle
@@ -43,14 +40,14 @@ jobs:
         id: value
         shell: bash
       - run: 'echo "${{steps.value.outputs.version}}"'
-      #- uses: actions/download-artifact@v3
-      #  with:
-      #    name: ThetaJars
-      #    path: jar/
+      - uses: actions/download-artifact@v3
+        with:
+          name: ThetaJars
+          path: jar/
       - name: Display structure of downloaded files
         run: ls -R
-      #- run: find jar
-      #- run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
+      - run: find jar
+      - run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
