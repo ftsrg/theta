@@ -36,6 +36,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	private final int id;
 	private final int depth;
 	private final boolean target;
+    private boolean canCover = true;
 
 	private S state;
 
@@ -92,6 +93,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public void setCoveringNode(final ArgNode<S, A> node) {
+        if(!node.canCover) return;
 		checkNotNull(node);
 		checkArgument(node.arg == this.arg, "Nodes belong to different ARGs");
 		unsetCoveringNode();
@@ -288,4 +290,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		return Utils.lispStringBuilder("ArgNode").add(id).body().add(state).toString();
 	}
 
+    public void disableCoveringAbility() {
+        canCover = false;
+    }
 }

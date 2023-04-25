@@ -246,7 +246,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
 				result = 37 * result + state2.hashCode();
 				result = 37 * result + state3.hashCode();
 				result = 37 * result + state4.hashCode();
-				result = hashCode;
+                hashCode = result;
 			}
 			return result;
 		}
@@ -306,7 +306,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
 				result = HASH_SEED;
 				result = 37 * result + getIndex();
 				result = 37 * result + getState().hashCode();
-				result = hashCode;
+                hashCode = result;
 			}
 			return result;
 		}

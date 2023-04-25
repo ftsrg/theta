@@ -26,13 +26,15 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.solver.SolverFactory
@@ -51,36 +53,38 @@ import kotlin.system.exitProcess
 
 
 data class XcfaCegarConfig(
-        @Parameter(names = ["--error-detection"], description = "What kinds of errors to check for (ERROR_LOCATION or DATA_RACE)")
+    @Parameter(names = ["--error-detection"], description = "What kinds of errors to check for (ERROR_LOCATION or DATA_RACE)")
         var errorDetectionType: ErrorDetection = ErrorDetection.ERROR_LOCATION,
-        @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+    @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
         var abstractionSolver: String = "Z3",
-        @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
         var validateAbstractionSolver: Boolean = false,
-        @Parameter(names = ["--domain"], description = "Abstraction domain")
+    @Parameter(names = ["--domain"], description = "Abstraction domain")
         var domain: Domain = Domain.EXPL,
-        @Parameter(names = ["--maxenum"], description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
+    @Parameter(names = ["--maxenum"], description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
         var maxEnum: Int = 0,
-        @Parameter(names = ["--search"], description = "Search strategy")
+    @Parameter(names = ["--search"], description = "Search strategy")
         var search: Search = Search.ERR,
-        @Parameter(names = ["--initprec"], description = "Initial precision")
+    @Parameter(names = ["--initprec"], description = "Initial precision")
         var initPrec: InitPrec = InitPrec.EMPTY,
-        @Parameter(names = ["--por-level"], description = "POR dependency level")
+    @Parameter(names = ["--por-level"], description = "POR dependency level")
         var porLevel: POR = POR.NOPOR,
-        @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
+    @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
         var refinementSolver: String = "Z3",
-        @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
         var validateRefinementSolver: Boolean = false,
-        @Parameter(names = ["--refinement"], description = "Refinement strategy")
+    @Parameter(names = ["--refinement"], description = "Refinement strategy")
         var refinement: Refinement = Refinement.SEQ_ITP,
-        @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
+    @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
         var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
-        @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
+    @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
         var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
-        @Parameter(names = ["--no-cex-check"])
-        var noCexCheck: Boolean = false,
-        @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
-        var timeoutMs: Long = 0
+    @Parameter(names = ["--cex-monitor"])
+        var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
+    @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
+        var timeoutMs: Long = 0,
+    @Parameter(names = ["--arg-to-file"])
+        var argToFile: Boolean = false
 ) {
     @Suppress("UNCHECKED_CAST")
     private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
@@ -119,20 +123,64 @@ data class XcfaCegarConfig(
                     else
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
+        /*
         // set up stopping analysis if it is stuck on same ARGs and precisions
-        if (noCexCheck) {
-            ArgCexCheckHandler.instance.setArgCexCheck(false, false)
+        if (disableCexMonitor) {
+            ArgCexCheckHandler.instance.setArgCexCheck(false, false, mitigation)
         } else {
-            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement == Refinement.MULTI_SEQ)
+            if(checkArg) {
+                ArgCexCheckHandler.instance.setArgCexCheck(true, true, mitigation)
+            } else {
+                ArgCexCheckHandler.instance.setArgCexCheck(true, false, mitigation)
+            }
         }
+        */
 
-        return if(porLevel == POR.AAPOR)
-            CegarChecker.create(abstractor, AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(refiner, pruneStrategy, ignoredVarRegistry), logger)
+        val cegarChecker = if (porLevel == POR.AAPOR)
+            CegarChecker.create(
+                abstractor,
+                AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(
+                    refiner,
+                    pruneStrategy,
+                    ignoredVarRegistry
+                ),
+                logger
+            )
         else
             CegarChecker.create(abstractor, refiner, logger)
+
+        initializeMonitors(cegarChecker, logger)
+
+        return cegarChecker
     }
+
+    private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
+        if(cexMonitor!=CexMonitorOptions.DISABLE) {
+            val cm = if(cexMonitor==CexMonitorOptions.MITIGATE) {
+                throw RuntimeException("Mitigation is temporarily unusable, use DISABLE or CHECK instead")
+                // CexMonitor(true, logger, cc.arg)
+            } else { // CHECK
+                CexMonitor(false, logger, cc.arg)
+            }
+            MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
+        }
+    }
+
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
-            getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
+        try {
+            val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
+            if(argToFile) {
+                val fileName = "wdl-output.json"
+                WebDebuggerLogger.getInstance().writeToFile(fileName)
+            }
+            check
+        } catch (e: Exception) {
+            if(argToFile) {
+                val fileName = "wdl-output.json"
+                WebDebuggerLogger.getInstance().writeToFile(fileName)
+            }
+            throw e
+        }
 
     fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
         val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})

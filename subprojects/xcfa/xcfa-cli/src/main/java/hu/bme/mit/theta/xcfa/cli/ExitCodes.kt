@@ -18,9 +18,11 @@ package hu.bme.mit.theta.xcfa.cli
 
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
+import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.validator.SolverValidationException
 import kotlin.system.exitProcess
+
 
 enum class ExitCodes(val code: Int) {
     GENERIC_ERROR(1),

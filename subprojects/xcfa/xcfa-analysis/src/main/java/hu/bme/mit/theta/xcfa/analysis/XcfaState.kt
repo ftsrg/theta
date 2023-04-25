@@ -32,7 +32,7 @@ import java.util.*
 private var nameCnt = 0
 
 data class XcfaState<S : ExprState> @JvmOverloads constructor(
-        val xcfa: XCFA?, // TODO: remove this
+        val xcfa: XCFA?,
         val processes: Map<Int, XcfaProcessState>,
         val sGlobal: S,
         val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
@@ -226,7 +226,7 @@ data class XcfaProcessState(
 
     override fun hashCode(): Int {
         var result = locs.hashCode()
-        result = 31 * result + paramsInitialized.hashCode()
+        result = 31 * result + paramsInitialized.hashCode() // TODO FRICKIN INNER STATE HASH
         return result
     }
 

@@ -7,7 +7,6 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -102,8 +101,10 @@ public class XstsCli {
 
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
+    @Parameter(names = "--check-arg")
+    boolean argCheck = false;
 
-	@Parameter(names = "--no-stuck-check")
+	@Parameter(names = "--no-cex-check")
 	boolean noStuckCheck = false;
 
 	private Logger logger;
@@ -204,11 +205,16 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		// set up stopping analysis if it is stuck on same ARGs and precisions
-		if (noStuckCheck) {
-			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+        // TODO replace with new classes
+/*
+		if (noStuckCheck || refinement.equals(Refinement.MULTI_SEQ)) {
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false, true);
+		} else if(argCheck) {
+			ArgCexCheckHandler.instance.setArgCexCheck(true, true,true);
 		} else {
-			ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
-		}
+            ArgCexCheckHandler.instance.setArgCexCheck(true, false,true);
+        }
+*/
 
 		try {
 			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
