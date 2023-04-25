@@ -4,12 +4,6 @@ runs:
   using: "composite"
   steps:
     - uses: actions/cache@v3
-      id: cache
-      with:
-        path: .
-        key: ${{ github.sha }}-a.txt
-
-    - uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -23,7 +17,3 @@ runs:
       uses: gradle/gradle-build-action@v2
       with:
         arguments: build
-      
-#    - name: list before build task
-#      run: ls -1 **/subprojects
-#      shell: bash
