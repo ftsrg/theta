@@ -18,10 +18,12 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.17
-    - name: Build with Gradle
-      run: ./gradlew build
-    - uses: actions/upload-artifact@v3
-      with:
-          name: gradle-build
-          path: subprojects/**
+        
+    - name: Using own build action
+      uses: ./.github/workflows/action
+    #- name: Build with Gradle
+    #  run: ./gradlew build
+    #- uses: actions/upload-artifact@v3
+    # with:
+    #      name: gradle-build
     
