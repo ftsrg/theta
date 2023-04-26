@@ -12,7 +12,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-gradle-
       
-    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'false' }}
+    - if: ${{ steps.cache-/.gradle/caches.outputs.cache-hit != 'false' }}
       uses: gradle/gradle-build-action@v2
       with:
         arguments: build
