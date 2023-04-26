@@ -4,8 +4,8 @@ runs:
   using: "composite"
   steps:
     - uses: actions/cache@v3
+      id: gradleCache
       with:
-        id: gradleCache
         path: ./gradleCache
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         
