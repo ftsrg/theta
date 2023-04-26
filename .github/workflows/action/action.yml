@@ -13,6 +13,7 @@ runs:
           ${{ runner.os }}-gradle-
       
     - name: build gradle
+      echo $steps.cache.outputs.cache-hit
       if: steps.cache.outputs.cache-hit != 'false'
       uses: gradle/gradle-build-action@v2
       with:
