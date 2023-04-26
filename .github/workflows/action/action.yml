@@ -1,16 +1,18 @@
+
 name: 'Gradle build action'
 description: 'Running gradle build and cache the results'
 runs:
   using: "composite"
   steps:
     - uses: actions/cache@v3
-      id: gradleCache
+      id: cache
       with:
         path: .
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        
-    #- name: Run build if needed  
-    - if: steps.gradleCache.outputs.cache-hit != 'false'
+      
+    - name: build gradle
+      if: steps.cache.outputs.cache-hit != 'true'
       uses: gradle/gradle-build-action@v2
       with:
         arguments: build
+      
