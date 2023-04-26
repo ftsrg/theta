@@ -5,14 +5,12 @@ runs:
   steps:
     - uses: actions/cache@v3
       with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
+        id: gradleCache
+        path: ./gradleCache
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        
       
-    - if: ${{ steps.cache-/.gradle/caches.outputs.cache-hit != 'false' }}
+    - if: steps.gradleCache.outputs.cache-hit != != 'false'
       uses: gradle/gradle-build-action@v2
       with:
         arguments: build
