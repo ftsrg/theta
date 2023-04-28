@@ -32,7 +32,7 @@ import java.util.function.Predicate;
  * @param <A> the type of the action (transition in the state space)
  * @param <T> the type of the transition in the original formalism
  */
-public abstract class PorLts<S extends State, A extends Action, T> implements LTS<S, A> {
+public abstract class SporLts<S extends State, A extends Action, T> implements LTS<S, A> {
 
 	/* CACHE COLLECTIONS */
 
@@ -205,7 +205,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 	}
 
 	/**
-	 * Same as {@link PorLts#getUsedSharedObjects(T transition)} with an additional cache layer.
+	 * Same as {@link SporLts#getUsedSharedObjects(T transition)} with an additional cache layer.
 	 *
 	 * @param transition whose shared objects are to be returned
 	 * @return the set of directly or indirectly used shared objects

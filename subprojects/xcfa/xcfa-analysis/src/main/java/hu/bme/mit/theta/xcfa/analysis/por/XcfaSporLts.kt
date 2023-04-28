@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.por
 
-import hu.bme.mit.theta.analysis.algorithm.PorLts
+import hu.bme.mit.theta.analysis.algorithm.SporLts
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import kotlin.random.Random
 
-open class XcfaSporLts(private val xcfa: XCFA) : PorLts<XcfaState<*>, XcfaAction, XcfaEdge>() {
+open class XcfaSporLts(private val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAction, XcfaEdge>() {
 
     companion object {
         private val random: Random = Random.Default
