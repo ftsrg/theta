@@ -242,3 +242,10 @@ enum class InitPrec(
     ),
 
 }
+
+// TODO CexMonitor: disable for multi_seq?
+enum class CexMonitorOptions {
+    CHECK,
+    MITIGATE,
+    DISABLE
+}

@@ -56,7 +56,7 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
 			result = HASH_SEED;
 			result = 37 * result + prec1.hashCode();
 			result = 37 * result + prec2.hashCode();
-			result = hashCode;
+            hashCode = result;
 		}
 		return result;
 	}

@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -133,10 +132,6 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 				if (!skip.get(i)) {
 					refinedPrec = precRefiner.refine(refinedPrec, traces.get(i), refutations.get(i));
 				}
-			}
-
-			for (ArgTrace<S, A> cex : cexs) {
-				ArgCexCheckHandler.instance.addCounterexample(cex);
 			}
 
 			switch (pruneStrategy) {

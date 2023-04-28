@@ -32,6 +32,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
@@ -200,6 +201,8 @@ class XcfaCli(private val args: Array<String>) {
                 xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
             }
         }
+
+        WebDebuggerLogger.getInstance().setTitle(input?.name);
 
         if (noAnalysis) {
             logger.write(Logger.Level.RESULT, "ParsingResult Success")
