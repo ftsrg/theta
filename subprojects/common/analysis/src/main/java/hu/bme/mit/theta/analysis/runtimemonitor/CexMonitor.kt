@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import java.lang.RuntimeException
+import java.util.stream.Stream
 
 
 // TODO implement mitigation
@@ -33,21 +34,26 @@ class CexMonitor<S : State?, A : Action?> constructor(
     private val cexHashStorage = CexHashStorage<S, A>()
     var lastCex: ArgTrace<S, A>? = null
 
-    fun checkIfNewCexFound(): Boolean {
+    private fun disableCoversInTrace() {
+        // as we do not know specific counterexamples, disable all cexs - we know none of them are new
+        arg.cexs.forEach { it.nodes().forEach { argNode -> argNode.disableCoveringAbility() } }
+    }
+
+    private fun checkIfNewCexFound(): Boolean {
         return if (arg.cexs.anyMatch { cex -> !cexHashStorage.contains(cex) }) {
-            logger.write(Logger.Level.VERBOSE,
-                "Counterexample hash check: new cex found successfully")
+            if(mitigate) GlobalMonitorData.updateNewCexInArg(true)
+            logger.write(Logger.Level.INFO, "Counterexample hash check: new cex found successfully\n")
             true
         } else {
-            logger.write(Logger.Level.INFO, "Counterexample hash check: NO new cex found")
+            if(mitigate) GlobalMonitorData.updateNewCexInArg(false)
+            logger.write(Logger.Level.VERBOSE, "Counterexample hash check: NO new cex found\n")
             false
         }
     }
 
-    fun addNewCounterexample() {
-        val newCexs: List<ArgTrace<S, A>> = arg.cexs.filter { !cexHashStorage.contains(it) }
-            .toList()
-        assert(newCexs.size == 1, { "Found ${newCexs.size} new cex instead of one" })
+    private fun addNewCounterexample() {
+        val newCexs : List<ArgTrace<S,A>> = arg.cexs.filter { !cexHashStorage.contains(it) }.toList()
+        assert(newCexs.size==1, { "Found ${newCexs.size} new cex instead of one" })
 
         lastCex = newCexs.get(0)
         cexHashStorage.addData(lastCex)
@@ -59,9 +65,9 @@ class CexMonitor<S : State?, A : Action?> constructor(
 
     override fun execute(checkpointName: String) {
         when (checkpointName) {
-            "CegarChecker.unsafeARG" -> if (checkIfNewCexFound()) addNewCounterexample() else throwNotSolvable()
-            else -> throw RuntimeException(
-                "Unknown checkpoint name in CexMonitor execution: $checkpointName")
+            "CegarChecker.unsafeARG" -> if(checkIfNewCexFound()) addNewCounterexample() else throwNotSolvable()
+            "BasicAbstractor.beforeStopCriterion" -> if(mitigate) { if(!checkIfNewCexFound()) disableCoversInTrace() }
+            else -> throw RuntimeException("Unknown checkpoint name in CexMonitor execution: $checkpointName")
         }
     }
 }

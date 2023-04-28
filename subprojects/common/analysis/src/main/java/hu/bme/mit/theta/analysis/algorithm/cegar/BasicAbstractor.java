@@ -24,6 +24,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
+import hu.bme.mit.theta.analysis.runtimemonitor.GlobalMonitorData;
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.Utils;
@@ -92,9 +94,10 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         reachedSet.addAll(arg.getNodes());
         waitlist.addAll(arg.getIncompleteNodes());
 
-        if (!stopCriterion.canStop(arg)) {
-            while (!waitlist.isEmpty()) {
-                final ArgNode<S, A> node = waitlist.remove();
+        MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
+		if (!(stopCriterion.canStop(arg) && GlobalMonitorData.INSTANCE.isNewCexInArg())) {
+			while (!waitlist.isEmpty()) {
+				final ArgNode<S, A> node = waitlist.remove();
 
                 Collection<ArgNode<S, A>> newNodes = Collections.emptyList();
                 close(node, reachedSet.get(node));
@@ -104,9 +107,10 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                     waitlist.addAll(newNodes);
                 }
 
-                if (stopCriterion.canStop(arg, newNodes)) break;
-            }
-        }
+                MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
+                if (stopCriterion.canStop(arg, newNodes) && GlobalMonitorData.INSTANCE.isNewCexInArg()) break;
+			}
+		}
 
         logger.write(Level.SUBSTEP, "done%n");
         logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),

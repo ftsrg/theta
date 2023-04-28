@@ -185,15 +185,14 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
-        if (cexMonitor != CexMonitorOptions.DISABLE) {
-            val cm = if (cexMonitor == CexMonitorOptions.MITIGATE) {
-                throw RuntimeException(
-                    "Mitigation is temporarily unusable, use DISABLE or CHECK instead")
-                // CexMonitor(true, logger, cc.arg)
+        if(cexMonitor!=CexMonitorOptions.DISABLE) {
+            val cm = if(cexMonitor==CexMonitorOptions.MITIGATE) {
+                CexMonitor(true, logger, cc.arg)
             } else { // CHECK
                 CexMonitor(false, logger, cc.arg)
             }
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
+            MonitorCheckpoint.register(cm, "BasicAbstractor.beforeStopCriterion")
         }
     }
 

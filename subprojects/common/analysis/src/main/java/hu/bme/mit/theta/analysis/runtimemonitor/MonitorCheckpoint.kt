@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.runtimemonitor
 
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
+
 /**
  * This class handles the creation, registering and execution of monitor checkpoints.
  * If you would like to add a new checkpoint do the following:
@@ -40,6 +42,7 @@ class MonitorCheckpoint internal constructor(private val name: String) {
         // Add any new checkpoints here
         private val checkpointNames = setOf(
             "CegarChecker.unsafeARG",
+            "BasicAbstractor.beforeStopCriterion",
         )
 
         private val registeredCheckpoints: HashMap<String, MonitorCheckpoint> = HashMap()
