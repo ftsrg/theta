@@ -67,7 +67,7 @@ class XcfaCli(private val args: Array<String>) {
     var property: File? = null
 
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
-    var lbeLevel: LbePass.LBELevel = LbePass.LBELevel.LBE_SEQ
+    var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
 
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -139,16 +139,16 @@ class XcfaCli(private val args: Array<String>) {
                         ErrorDetection.ERROR_LOCATION
                     } else if (property!!.name.endsWith("no-data-race.prp")) {
                         remainingFlags.add(ErrorDetection.DATA_RACE.toString())
-                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                        if(lbeLevel != LbePass.LbeLevel.NO_LBE) {
                             System.err.println("Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
-                            lbeLevel = LbePass.LBELevel.NO_LBE
+                            lbeLevel = LbePass.LbeLevel.NO_LBE
                         }
                         ErrorDetection.DATA_RACE
                     } else if (property!!.name.endsWith("no-overflow.prp")) {
                         remainingFlags.add(ErrorDetection.OVERFLOW.toString())
-                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                        if(lbeLevel != LbePass.LbeLevel.NO_LBE) {
                             System.err.println("Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
-                            lbeLevel = LbePass.LBELevel.NO_LBE
+                            lbeLevel = LbePass.LbeLevel.NO_LBE
                         }
                         ErrorDetection.OVERFLOW
                     } else {
