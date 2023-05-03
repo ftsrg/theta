@@ -4,15 +4,14 @@ package hu.bme.mit.theta.xsts.analysis;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
@@ -69,18 +68,22 @@ public class Xsts_K_induction {
 
 
         while (i < bound) {
-            var varEqs = new ArrayList<Expr<BoolType>>();
-            var varExpr = And(varEqs);
+
+            var varExp = new ArrayList<Expr<BoolType>>();
+
             if (i > 0) {
                 exprsFromStart.addAll(StmtUtils.toExpr(atomicStep, currStep.getIndexing()).getExprs());
                 currStep = StmtUtils.toExpr(atomicStep, currStep.getIndexing());
 
-
                 for(int j = 0; j < listOfIndexes.size(); j++) {
-                    createVarEqs(xsts, currStep, listOfIndexes, varEqs, j);
-
+                    var varEqs = new ArrayList<Expr<BoolType>>();
+                    for (var v : xsts.getVars()) {
+                        varEqs.add(Eq(PathUtils.unfold(v.getRef(), currStep.getIndexing()), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
+                    }
+                    varExp.add(Not(And(varEqs)));
                 }
-                varExpr = Not(And(varEqs));
+
+
                 listOfIndexes.add(currStep.getIndexing());
 
                 exprsForInductivity.add(ExprUtils.applyPrimes(xsts.getProp(), inductiveCurrStep.getIndexing()));
@@ -90,13 +93,13 @@ public class Xsts_K_induction {
 
             // Checking loop free path of length i
             try (var s = new WithPushPop(solver)) {
-                solver.add(PathUtils.unfold(And(exprsFromStart), 0));
-                solver.add(varExpr);
+               solver.add(PathUtils.unfold(And(exprsFromStart), 0));
+               solver.add(varExp);
 
-                if(solver.check().isUnsat()){
+               if(solver.check().isUnsat()){
                     var x=0;
                     return SafetyResult.safe(justAnArg);
-                }
+               }
             }
 
 
@@ -139,13 +142,6 @@ public class Xsts_K_induction {
         //return SafetyResult.safe(justAnArg);
         throw new RuntimeException("unknown");
 
-    }
-
-    public static void createVarEqs(XSTS xsts, StmtUnfoldResult currStep, ArrayList<VarIndexing> listOfIndexes, ArrayList<Expr<BoolType>> varEqs, int j) {
-        for (var v : xsts.getVars()) {
-            varEqs.add(Eq(PathUtils.unfold(v.getRef(), currStep.getIndexing()), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
-
-        }
     }
 
 
