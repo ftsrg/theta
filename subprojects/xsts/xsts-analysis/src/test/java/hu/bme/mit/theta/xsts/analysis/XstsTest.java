@@ -16,14 +16,24 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.Stmts;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
+import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,9 +42,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
@@ -88,9 +101,13 @@ public class XstsTest {
                         "src/test/resources/property/x_between_0_and_5.prop", true,
                         XstsConfigBuilder.Domain.PRED_CART},
 
+<<<<<<< HEAD
                 {"src/test/resources/model/counter5.xsts",
                         "src/test/resources/property/x_between_0_and_5.prop", true,
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+=======
+
+>>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
                 {"src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop",
                         false, XstsConfigBuilder.Domain.EXPL},
@@ -252,9 +269,13 @@ public class XstsTest {
                         "src/test/resources/property/count_up_down2.prop", true,
                         XstsConfigBuilder.Domain.EXPL},
 
+<<<<<<< HEAD
                 {"src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down2.prop", true,
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+=======
+
+>>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
                 {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop",
                         true, XstsConfigBuilder.Domain.PRED_CART},
@@ -355,6 +376,7 @@ public class XstsTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
+<<<<<<< HEAD
         final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
                 XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(),
                 Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL)
@@ -368,5 +390,40 @@ public class XstsTest {
             assertTrue(status.isUnsafe());
         }
     }
+=======
+		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+
+		XSTS xsts;
+		try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
+			xsts = XstsDslManager.createXsts(inputStream);
+		}
+
+		var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
+		Expr<BoolType> ini;
+
+
+		Expr<BoolType> initExpr = init.getExprs().iterator().next();
+		ini = And(initExpr,xsts.getInitFormula());
+		var firstIndex= init.getIndexing();
+
+		var merged = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
+		StmtUnfoldResult trans = StmtUtils.toExpr(merged, VarIndexingFactory.indexing(0));
+		Expr<BoolType> transExpr = trans.getExprs().iterator().next();
+		var offset= trans.getIndexing();
+
+		var action = XstsAction.create(merged);
+
+		var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), 50,Z3SolverFactory.getInstance().createSolver(),firstIndex,offset,(x)->XstsState.of(ExplState.of(x), false, true),xsts.getVars());
+		var old = new Xsts_K_induction();
+		//final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
+		final SafetyResult<?, ?> status = checker.check(null);
+		//final SafetyResult<?, ?> status = old.check(xsts,50,Z3SolverFactory.getInstance().createSolver());
+		if (safe) {
+			assertTrue(status.isSafe());
+		} else {
+			assertTrue(status.isUnsafe());
+		}
+	}
+>>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
 }
