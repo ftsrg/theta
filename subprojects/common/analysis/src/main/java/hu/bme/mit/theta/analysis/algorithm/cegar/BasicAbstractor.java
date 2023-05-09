@@ -95,7 +95,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         waitlist.addAll(arg.getIncompleteNodes());
 
         MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
-		if (!(stopCriterion.canStop(arg) && GlobalMonitorData.INSTANCE.isNewCexInArg())) {
+		if (!(stopCriterion.canStop(arg))) {
 			while (!waitlist.isEmpty()) {
 				final ArgNode<S, A> node = waitlist.remove();
 
@@ -108,7 +108,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                 }
 
                 MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
-                if (stopCriterion.canStop(arg, newNodes) && GlobalMonitorData.INSTANCE.isNewCexInArg()) break;
+                if (stopCriterion.canStop(arg, newNodes)) break;
 			}
 		}
 

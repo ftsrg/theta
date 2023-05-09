@@ -43,6 +43,7 @@ class MonitorCheckpoint internal constructor(private val name: String) {
         private val checkpointNames = setOf(
             "CegarChecker.unsafeARG",
             "BasicAbstractor.beforeStopCriterion",
+            "SingleExprTraceRefiner.refinedCex",
         )
 
         private val registeredCheckpoints: HashMap<String, MonitorCheckpoint> = HashMap()

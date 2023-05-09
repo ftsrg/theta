@@ -55,19 +55,18 @@ public final class StopCriterions {
         return new AtLeastNCexs<>(n);
     }
 
-    private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
-        @Override
-        public boolean canStop(final ARG<S, A> arg) {
-            // TODO Move runtime check out to CegarChecker? (CexMonitor)
-            return arg.getUnsafeNodes().findAny().isPresent(); // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
-        }
+	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
+		@Override
+		public boolean canStop(final ARG<S, A> arg) {
+			return arg.getNewCexs().findAny().isPresent();
+            // return arg.getUnsafeNodes().findAny().isPresent();
+		}
 
-        @Override
-        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-            // TODO Move runtime check out to CegarChecker? (CexMonitor)
-            return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded()));
-            // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
-        }
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+            return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())) &&
+                arg.getNewCexs().findAny().isPresent();
+		}
 
         @Override
         public String toString() {

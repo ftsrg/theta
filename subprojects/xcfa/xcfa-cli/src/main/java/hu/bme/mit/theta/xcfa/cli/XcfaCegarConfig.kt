@@ -193,6 +193,7 @@ data class XcfaCegarConfig(
             }
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
             MonitorCheckpoint.register(cm, "BasicAbstractor.beforeStopCriterion")
+            MonitorCheckpoint.register(cm, "SingleExprTraceRefiner.refinedCex")
         }
     }
 

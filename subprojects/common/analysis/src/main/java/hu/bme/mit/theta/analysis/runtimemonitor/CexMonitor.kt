@@ -19,19 +19,14 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ARG
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace
-import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import java.lang.RuntimeException
-import java.util.stream.Stream
 
-
-// TODO implement mitigation
 class CexMonitor<S : State?, A : Action?> constructor(
     private val mitigate: Boolean, private val logger: Logger, private val arg: ARG<S, A>
 ) : Monitor {
-
-    private val cexHashStorage = CexHashStorage<S, A>()
+    // private val cexHashStorage = CexHashStorage<S, A>()
     var lastCex: ArgTrace<S, A>? = null
 
     private fun disableCoversInTrace() {
@@ -40,7 +35,7 @@ class CexMonitor<S : State?, A : Action?> constructor(
     }
 
     private fun checkIfNewCexFound(): Boolean {
-        return if (arg.cexs.anyMatch { cex -> !cexHashStorage.contains(cex) }) {
+        return if (arg.cexs.anyMatch { cex -> !arg.cexHashStorage.contains(cex) }) {
             if(mitigate) GlobalMonitorData.updateNewCexInArg(true)
             logger.write(Logger.Level.INFO, "Counterexample hash check: new cex found successfully\n")
             true
@@ -52,11 +47,14 @@ class CexMonitor<S : State?, A : Action?> constructor(
     }
 
     private fun addNewCounterexample() {
-        val newCexs : List<ArgTrace<S,A>> = arg.cexs.filter { !cexHashStorage.contains(it) }.toList()
+        val newCexs : List<ArgTrace<S,A>> = arg.newCexs.toList()
         assert(newCexs.size==1, { "Found ${newCexs.size} new cex instead of one" })
 
         lastCex = newCexs.get(0)
-        cexHashStorage.addData(lastCex)
+    }
+
+    private fun refinedNewCounterexample() {
+        arg.cexHashStorage.addData(lastCex)
     }
 
     private fun throwNotSolvable() {
@@ -67,6 +65,7 @@ class CexMonitor<S : State?, A : Action?> constructor(
         when (checkpointName) {
             "CegarChecker.unsafeARG" -> if(checkIfNewCexFound()) addNewCounterexample() else throwNotSolvable()
             "BasicAbstractor.beforeStopCriterion" -> if(mitigate) { if(!checkIfNewCexFound()) disableCoversInTrace() }
+            "SingleExprTraceRefiner.refinedCex" -> refinedNewCounterexample()
             else -> throw RuntimeException("Unknown checkpoint name in CexMonitor execution: $checkpointName")
         }
     }

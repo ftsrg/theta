@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
@@ -36,17 +37,19 @@ import static java.util.stream.Collectors.toList;
  * ArgBuilder.
  */
 public final class ARG<S extends State, A extends Action> {
+	private final Collection<ArgNode<S, A>> initNodes;
+	public boolean initialized; // Set by ArgBuilder
+	private int nextId = 0;
+	private final PartialOrd<S> partialOrd;
 
-    private final Collection<ArgNode<S, A>> initNodes;
-    public boolean initialized; // Set by ArgBuilder
-    private int nextId = 0;
-    private final PartialOrd<S> partialOrd;
+    private final CexHashStorage<S, A> cexHashStorage;
 
-    private ARG(final PartialOrd<S> partialOrd) {
-        initNodes = Containers.createSet();
-        this.partialOrd = partialOrd;
-        this.initialized = false;
-    }
+	private ARG(final PartialOrd<S> partialOrd) {
+		initNodes = Containers.createSet();
+		this.partialOrd = partialOrd;
+		this.initialized = false;
+        this.cexHashStorage = new CexHashStorage<S, A>();
+	}
 
     public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
         return new ARG<>(partialOrd);
@@ -196,11 +199,19 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     /**
-     * Gets the size of the ARG, i.e., the number of nodes.
+     * Gets counterexamples that have not been refined before
+     * (if CexHashStorage is empty, then returns all counterexamples, same as getCexs() )
      */
-    public long size() {
-        return getNodes().count();
+    public Stream<ArgTrace<S, A>> getNewCexs() {
+        return getUnsafeNodes().map(ArgTrace::to).filter(trace -> !cexHashStorage.contains(trace));
     }
+
+    /**
+	 * Gets the size of the ARG, i.e., the number of nodes.
+	 */
+	public long size() {
+		return getNodes().count();
+	}
 
     /**
      * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
@@ -231,8 +242,12 @@ public final class ARG<S extends State, A extends Action> {
                 initNodes.equals(arg.initNodes);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(initNodes, initialized, partialOrd);
+	@Override
+	public int hashCode() {
+		return Objects.hash(initNodes, initialized, partialOrd);
+	}
+
+    public CexHashStorage<S, A> getCexHashStorage() {
+        return cexHashStorage;
     }
 }

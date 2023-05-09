@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -83,10 +84,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";
 
-        // TODO use CexMonitor lastCex somehow?
-        // TODO and maybe later smarten ArgTrace up a bit so monitor does not have to explicitly be here?
-        Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst(); //filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
-        final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
+		Optional<ArgTrace<S, A>> optionalNewCex = arg.getNewCexs().findFirst();
+		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
         final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
         logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
@@ -98,15 +97,16 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
         assert cexStatus.isFeasible() || cexStatus.isInfeasible() : "Unknown CEX status";
 
-        if (cexStatus.isFeasible()) {
-            return RefinerResult.unsafe(traceToConcretize);
-        } else {
+		if (cexStatus.isFeasible()) {
+			return RefinerResult.unsafe(traceToConcretize);
+		} else {
+            MonitorCheckpoint.Checkpoints.execute("SingleExprTraceRefiner.refinedCex");
             final R refutation = cexStatus.asInfeasible().getRefutation();
-            logger.write(Level.DETAIL, "|  |  |  Refutation: %s%n", refutation);
-            final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
-            final int pruneIndex = refutation.getPruneIndex();
-            assert 0 <= pruneIndex : "Pruning index must be non-negative";
-            assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
+			logger.write(Level.DETAIL, "|  |  |  Refutation: %s%n", refutation);
+			final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
+			final int pruneIndex = refutation.getPruneIndex();
+			assert 0 <= pruneIndex : "Pruning index must be non-negative";
+			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
             // TODO change to CexMonitor (right now it is added earlier on, but with mitigation and more options that will have to change)
             // ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
