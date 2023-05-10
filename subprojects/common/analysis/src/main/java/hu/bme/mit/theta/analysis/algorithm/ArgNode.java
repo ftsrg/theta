@@ -208,19 +208,23 @@ public final class ArgNode<S extends State, A extends Action> {
         return outEdges.isEmpty();
     }
 
-    /**
-     * Checks if the node is safe, i.e., not target or excluded.
-     */
-    public boolean isSafe() {
-        return !isTarget() || isExcluded();
+	/**
+	 * Checks if the node is safe, i.e., not target or excluded.
+	 */
+	public boolean isSafe() {
+		return !isTarget() || isExcluded() || !isTargetOfKnownInfeasibleTrace();
+	}
+
+    private boolean isTargetOfKnownInfeasibleTrace() {
+        return isTarget() && !arg.getCexHashStorage().contains(ArgTrace.to(this)); // cex hash storage contains the known infeasible
     }
 
     /**
-     * Checks if the node is complete, i.e., expanded or excluded.
-     */
-    public boolean isComplete() {
-        return isExpanded() || isExcluded();
-    }
+	 * Checks if the node is complete, i.e., expanded or excluded.
+	 */
+	public boolean isComplete() {
+		return isExpanded() || isExcluded();
+	}
 
     ////
 
