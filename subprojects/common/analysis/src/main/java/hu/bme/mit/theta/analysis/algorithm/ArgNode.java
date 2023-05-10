@@ -212,11 +212,11 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is safe, i.e., not target or excluded.
 	 */
 	public boolean isSafe() {
-		return !isTarget() || isExcluded() || !isTargetOfKnownInfeasibleTrace();
+		return !isTarget() || isExcluded() || isTargetOfKnownInfeasibleTrace();
 	}
 
     private boolean isTargetOfKnownInfeasibleTrace() {
-        return isTarget() && !arg.getCexHashStorage().contains(ArgTrace.to(this)); // cex hash storage contains the known infeasible
+        return isTarget() && arg.getCexHashStorage().contains(ArgTrace.to(this)); // cex hash storage contains the known infeasible
     }
 
     /**
