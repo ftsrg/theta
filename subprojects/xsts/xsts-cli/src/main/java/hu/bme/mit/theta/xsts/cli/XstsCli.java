@@ -21,7 +21,14 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+<<<<<<< HEAD
+=======
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+>>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -34,9 +41,18 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+<<<<<<< HEAD
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+=======
+import hu.bme.mit.theta.core.stmt.Stmts;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
+import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+>>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -53,9 +69,15 @@ import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.*;
+<<<<<<< HEAD
 import java.nio.file.Path;
+=======
+import java.util.List;
+>>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class XstsCli {
 
@@ -63,11 +85,19 @@ public class XstsCli {
     private final String[] args;
     private final TableWriter writer;
 
-    @Parameter(names = {"--domain"}, description = "Abstract domain")
-    Domain domain = Domain.PRED_CART;
+	enum Algorithm{
+		Cegar,
+		Kinduction
+	}
 
-    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
-    Refinement refinement = Refinement.SEQ_ITP;
+	@Parameter(names = {"--domain"}, description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
+
+	@Parameter(names = {"--algorithm"}, description = "Algorithm")
+	Algorithm algorithm = Algorithm.Cegar;
+
+	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
 
     @Parameter(names = {"--search"}, description = "Search strategy")
     Search search = Search.BFS;
@@ -147,6 +177,7 @@ public class XstsCli {
         mainApp.run();
     }
 
+<<<<<<< HEAD
     private void run() {
         try {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
@@ -167,6 +198,52 @@ public class XstsCli {
             CliUtils.printVersion(System.out);
             return;
         }
+=======
+		try {
+			final Stopwatch sw = Stopwatch.createStarted();
+			final XSTS xsts = loadModel();
+			SafetyResult<?, ?> status = null;
+			if (metrics) {
+				XstsMetrics.printMetrics(logger, xsts);
+				return;
+			}
+			if(algorithm.equals(Algorithm.Cegar)) {
+				final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+				status = check(configuration);
+				sw.stop();
+			}else if(algorithm.equals(Algorithm.Kinduction)){
+				
+				var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
+				Expr<BoolType> ini;
+
+
+				Expr<BoolType> initExpr = init.getExprs().iterator().next();
+				ini = And(initExpr,xsts.getInitFormula());
+				var firstIndex= init.getIndexing();
+
+				var merged = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
+				StmtUnfoldResult trans = StmtUtils.toExpr(merged, VarIndexingFactory.indexing(0));
+				Expr<BoolType> transExpr = trans.getExprs().iterator().next();
+				var offset= trans.getIndexing();
+				
+				var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), 50,Z3SolverFactory.getInstance().createSolver(),firstIndex,offset,(x)->XstsState.of(ExplState.of(x), false, true),xsts.getVars());
+				status = checker.check(null);
+				logger.write(Logger.Level.RESULT, "%s%n", status);
+				sw.stop();
+			}
+			printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(status.asUnsafe(), xsts);
+			}
+			if (dotfile != null) {
+				writeVisualStatus(status, dotfile);
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+			System.exit(1);
+		}
+	}
+>>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 
         try {
             final Stopwatch sw = Stopwatch.createStarted();
@@ -224,12 +301,37 @@ public class XstsCli {
                 }
             }
 
+<<<<<<< HEAD
         } catch (Exception ex) {
             throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
         } finally {
             if (propStream != null) propStream.close();
         }
     }
+=======
+	private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
+		final CegarStatistics stats = (CegarStatistics)
+				status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+		if (benchmarkMode) {
+			writer.cell(status.isSafe());
+			writer.cell(totalTimeMs);
+			writer.cell(stats.getAlgorithmTimeMs());
+			writer.cell(stats.getAbstractorTimeMs());
+			writer.cell(stats.getRefinerTimeMs());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				writer.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				writer.cell("");
+			}
+			writer.cell(sts.getVars().size());
+			writer.newRow();
+		}
+	}
+>>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
         // set up stopping analysis if it is stuck on same ARGs and precisions
