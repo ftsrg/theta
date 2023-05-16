@@ -21,17 +21,15 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-<<<<<<< HEAD
-=======
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expl.ExplState;
->>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -41,18 +39,15 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-<<<<<<< HEAD
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-=======
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
->>>>>>> 9f0e3e321 (xsts cli with k-induction added)
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
@@ -68,12 +63,13 @@ import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
+import java.awt.geom.QuadCurve2D;
 import java.io.*;
-<<<<<<< HEAD
 import java.nio.file.Path;
-=======
 import java.util.List;
->>>>>>> 9f0e3e321 (xsts cli with k-induction added)
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -85,19 +81,19 @@ public class XstsCli {
     private final String[] args;
     private final TableWriter writer;
 
-	enum Algorithm{
-		Cegar,
-		Kinduction
-	}
+    enum Algorithm {
+        CEGAR,
+        KINDUCTION
+    }
 
-	@Parameter(names = {"--domain"}, description = "Abstract domain")
-	Domain domain = Domain.PRED_CART;
+    @Parameter(names = {"--domain"}, description = "Abstract domain")
+    Domain domain = Domain.PRED_CART;
 
-	@Parameter(names = {"--algorithm"}, description = "Algorithm")
-	Algorithm algorithm = Algorithm.Cegar;
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
-	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
-	Refinement refinement = Refinement.SEQ_ITP;
+    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
+    Refinement refinement = Refinement.SEQ_ITP;
 
     @Parameter(names = {"--search"}, description = "Search strategy")
     Search search = Search.BFS;
@@ -153,6 +149,7 @@ public class XstsCli {
     @Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
     String dotfile = null;
 
+<<<<<<< HEAD
     @Parameter(names = {"--refinement-solver"}, description = "Refinement solver name")
     String refinementSolver = "Z3";
 
@@ -215,12 +212,73 @@ public class XstsCli {
 				
 				var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 				Expr<BoolType> ini;
+=======
+    @Parameter(names = "--no-stuck-check")
+    boolean noStuckCheck = false;
+
+    private Logger logger;
+
+    public XstsCli(final String[] args) {
+        this.args = args;
+        writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+    }
+
+    public static void main(final String[] args) {
+        final XstsCli mainApp = new XstsCli(args);
+        mainApp.run();
+    }
+
+    private void run() {
+        try {
+            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+        } catch (final ParameterException ex) {
+            System.out.println("Invalid parameters, details:");
+            System.out.println(ex.getMessage());
+            ex.usage();
+            return;
+        }
+
+        if (headerOnly) {
+            printHeader();
+            return;
+        }
+
+        if (versionInfo) {
+            CliUtils.printVersion(System.out);
+            return;
+        }
+
+        try {
+            final Stopwatch sw = Stopwatch.createStarted();
+            final XSTS xsts;
+            if (model.endsWith(".cfa")) {
+                xsts = CfaToXsts.create(loadCFAModel());
+            } else {
+                xsts = loadModel();
+            }
+
+            SafetyResult<?, ?> status = null;
+            if (metrics) {
+                XstsMetrics.printMetrics(logger, xsts);
+                return;
+            }
+            if (algorithm.equals(Algorithm.CEGAR)) {
+                final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+                status = check(configuration);
+                sw.stop();
+            } else if (algorithm.equals(Algorithm.KINDUCTION)) {
+
+                var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
+                Expr<BoolType> ini;
+>>>>>>> f0dd9b613 (added cfa and sts k-induction)
 
 
-				Expr<BoolType> initExpr = init.getExprs().iterator().next();
-				ini = And(initExpr,xsts.getInitFormula());
-				var firstIndex= init.getIndexing();
+                Expr<BoolType> initExpr = init.getExprs().iterator().next();
+                ini = And(initExpr, xsts.getInitFormula());
+                var firstIndex = init.getIndexing();
 
+<<<<<<< HEAD
 				var merged = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
 				StmtUnfoldResult trans = StmtUtils.toExpr(merged, VarIndexingFactory.indexing(0));
 				Expr<BoolType> transExpr = trans.getExprs().iterator().next();
@@ -393,6 +451,136 @@ public class XstsCli {
         }
     }
 
+=======
+                var merged = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
+                StmtUnfoldResult trans = StmtUtils.toExpr(merged, VarIndexingFactory.indexing(0));
+                Expr<BoolType> transExpr = trans.getExprs().iterator().next();
+                var offset = trans.getIndexing();
+
+                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), firstIndex, offset, (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            }
+            printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(status.asUnsafe(), xsts);
+            }
+            if (dotfile != null) {
+                writeVisualStatus(status, dotfile);
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+            System.exit(1);
+        }
+    }
+
+    private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+        try {
+            return configuration.check();
+        } catch (final Exception ex) {
+            String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+            throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
+        }
+    }
+
+    private void printHeader() {
+        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
+        writer.newRow();
+    }
+
+    private XSTS loadModel() throws Exception {
+        InputStream propStream = null;
+        try {
+            if (property.endsWith(".prop")) propStream = new FileInputStream(property);
+            else propStream = new ByteArrayInputStream(("prop { " + property + " }").getBytes());
+
+            if (model.endsWith(".pnml")) {
+                final PnmlNet pnmlNet = PnmlParser.parse(model, initialMarking);
+                return PnmlToXSTS.createXSTS(pnmlNet, propStream);
+            } else {
+
+                try (SequenceInputStream inputStream = new SequenceInputStream(new FileInputStream(model), propStream)) {
+                    return XstsDslManager.createXsts(inputStream);
+                }
+            }
+
+        } catch (Exception ex) {
+            throw new Exception("Could not parse XSTS: " + ex.getMessage(), ex);
+        } finally {
+            if (propStream != null) propStream.close();
+        }
+    }
+
+    private CFA loadCFAModel() throws Exception {
+        try (InputStream inputStream = new FileInputStream(model)) {
+            try {
+                return CfaDslManager.createCfa(inputStream);
+            } catch (final Exception ex) {
+                throw new Exception("Could not parse CFA: " + ex.getMessage(), ex);
+            }
+        }
+    }
+
+    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+        // set up stopping analysis if it is stuck on same ARGs and precisions
+        if (noStuckCheck) {
+            ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+        } else {
+            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+        }
+
+        try {
+            return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+                    .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
+                    .search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
+        } catch (final Exception ex) {
+            throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(stats.getAlgorithmTimeMs());
+            writer.cell(stats.getAbstractorTimeMs());
+            writer.cell(stats.getRefinerTimeMs());
+            writer.cell(stats.getIterations());
+            writer.cell(status.getArg().size());
+            writer.cell(status.getArg().getDepth());
+            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getTrace().length() + "");
+            } else {
+                writer.cell("");
+            }
+            writer.cell(sts.getVars().size());
+            writer.newRow();
+        }
+    }
+
+    private void printError(final Throwable ex) {
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
+        if (benchmarkMode) {
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+            writer.newRow();
+        } else {
+            logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                logger.write(Logger.Level.RESULT, "Trace:%n%s%n", errors.toString());
+            } else {
+                logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n");
+            }
+        }
+    }
+
+>>>>>>> f0dd9b613 (added cfa and sts k-induction)
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
@@ -409,6 +597,7 @@ public class XstsCli {
                 : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
+<<<<<<< HEAD
 
     private void registerAllSolverManagers(String home, Logger logger) throws Exception {
         SolverManager.closeAll();
@@ -418,5 +607,7 @@ public class XstsCli {
             SolverManager.registerSolverManager(smtLibSolverManager);
         }
     }
+=======
+>>>>>>> f0dd9b613 (added cfa and sts k-induction)
 
 }

@@ -27,6 +27,8 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.CliUtils;
@@ -40,7 +42,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3.*;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
@@ -69,8 +71,19 @@ public class StsCli {
     private final String[] args;
     private final TableWriter writer;
 
-    @Parameter(names = {"--domain"}, description = "Abstract domain")
-    Domain domain = Domain.PRED_CART;
+	enum Algorithm{
+		CEGAR,
+		KINDUCTION
+	}
+
+	@Parameter(names = {"--domain"}, description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
+
+	@Parameter(names = {"--algorithm"}, description = "Algorithm")
+	Algorithm algorithm = Algorithm.CEGAR;
+
+	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
 
     @Parameter(names = {"--refinement"}, description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
@@ -141,6 +154,29 @@ public class StsCli {
             CliUtils.printVersion(System.out);
             return;
         }
+		try {
+			final Stopwatch sw = Stopwatch.createStarted();
+			final STS sts = loadModel();
+
+			SafetyResult<?, ?> status = null;
+			if(algorithm.equals(Algorithm.CEGAR)) {
+				final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
+				status = check(configuration);
+			}else if(algorithm.equals(Algorithm.KINDUCTION))
+			{
+				var checker=new KIndChecker<>(sts.getTrans(), sts.getInit(), sts.getProp(),Integer.MAX_VALUE,Z3SolverFactory.getInstance().createSolver(), VarIndexingFactory.indexing(0),VarIndexingFactory.indexing(1),v -> ExplState.of(v),sts.getVars());
+				status=checker.check(null);
+			}
+			sw.stop();
+			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(sts, status.asUnsafe());
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+			System.exit(1);
+		}
+	}
 
         try {
             final Stopwatch sw = Stopwatch.createStarted();
