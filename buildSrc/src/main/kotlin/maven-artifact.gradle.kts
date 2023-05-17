@@ -4,7 +4,6 @@ plugins {
     signing
 }
 
-
 open class MavenArtifactExtension(project: Project) {
     var artifactId: String = project.name
     var name: String = project.name.split("-").joinToString(" ", transform = String::capitalize)
@@ -70,16 +69,22 @@ tasks {
         }
         repositories {
             maven {
-                val releasesRepoUrl = uri("${project.gradle.gradleUserHomeDir}/.m2/releases")
-                val snapshotsRepoUrl = uri("${project.gradle.gradleUserHomeDir}/.m2/snapshots")
+                val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
                 url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                print(url)
+                credentials{
+                    username = System.getenv("OSSRH_USERNAME")
+                    password = System.getenv("OSSRH_PASSWORD")
+                }
             }
         }
     }
 }
 
 signing {
+    val key = System.getenv("PGP_KEY")
+    val pwd = System.getenv("PGP_PWD")
+    useInMemoryPgpKeys(key, pwd)
     sign(publishing.publications["mavenJava"])
 }
 
