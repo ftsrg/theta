@@ -82,7 +82,7 @@ public class PnmlTest {
 			xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
 		}
 
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
+		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
 		final SafetyResult<?, ?> status = configuration.check();
 		if (safe) {
 			assertTrue(status.isSafe());
