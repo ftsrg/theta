@@ -199,13 +199,12 @@ public class XstsStatement {
 
             final Stmt result;
             if (ctx.initValue == null) {
-                final Stmt havoc = Havoc(decl);
                 if (xstsType instanceof XstsCustomType) {
                     final Expr<BoolType> expr = xstsType.createBoundExpr(decl);
                     final AssumeStmt assume = Assume(expr);
-                    result = SequenceStmt.of(List.of(havoc, assume));
+                    result = assume;
                 } else {
-                    result = havoc;
+                    result = SkipStmt.getInstance();
                 }
             } else {
                 var expr = new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(env);
@@ -220,6 +219,7 @@ public class XstsStatement {
 
             currentScope.declare(symbol);
             env.define(symbol, decl);
+            varToType.put(decl, xstsType);
 
             return result;
         }
