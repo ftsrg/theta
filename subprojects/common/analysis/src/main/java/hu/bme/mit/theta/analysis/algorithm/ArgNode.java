@@ -163,20 +163,24 @@ public final class ArgNode<S extends State, A extends Action> {
         return coveringNode.isPresent();
     }
 
-    /**
-     * Checks if the node is not a bottom state.
-     */
-    public boolean isFeasible() {
-        return !state.isBottom();
+	/**
+	 * Checks if the node is not a bottom state.
+	 */
+	public boolean isFeasible() {
+		return !state.isBottom() || isTargetOfKnownInfeasibleTrace();
+	}
+
+    private boolean isTargetOfKnownInfeasibleTrace() {
+        return isTarget() && arg.getCexHashStorage().contains(ArgTrace.to(this)); // cex hash storage contains an infeasible trace to it
     }
 
     /**
-     * Checks if the node is subsumed, i.e., the node is covered or not
-     * feasible.
-     */
-    public boolean isSubsumed() {
-        return isCovered() || !isFeasible();
-    }
+	 * Checks if the node is subsumed, i.e., the node is covered or not
+	 * feasible.
+	 */
+	public boolean isSubsumed() {
+		return isCovered() || !isFeasible();
+	}
 
     /**
      * Checks if the node is excluded, i.e., the node is subsumed or has an
@@ -212,12 +216,8 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is safe, i.e., not target or excluded.
 	 */
 	public boolean isSafe() {
-		return !isTarget() || isExcluded() || isTargetOfKnownInfeasibleTrace();
+		return !isTarget() || isExcluded();
 	}
-
-    private boolean isTargetOfKnownInfeasibleTrace() {
-        return isTarget() && arg.getCexHashStorage().contains(ArgTrace.to(this)); // cex hash storage contains the known infeasible
-    }
 
     /**
 	 * Checks if the node is complete, i.e., expanded or excluded.

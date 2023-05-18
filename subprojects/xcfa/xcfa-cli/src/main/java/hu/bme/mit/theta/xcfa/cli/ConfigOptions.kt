@@ -314,6 +314,8 @@ enum class InitPrec(
 enum class CexMonitorOptions {
 
     CHECK,
+    CHECK_ARG,
     MITIGATE,
+    MITIGATE_ARG,
     DISABLE
 }

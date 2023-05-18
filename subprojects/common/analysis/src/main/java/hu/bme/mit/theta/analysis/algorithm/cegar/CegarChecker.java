@@ -48,6 +48,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
     private final Refiner<S, A, P> refiner;
     private final Logger logger;
     private final ARG<S, A> arg; // TODO I don't think putting the ARG up here from check below causes any issues, but keep it in mind, that it might
+    private P prec = null;
 
     private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
         this.abstractor = checkNotNull(abstractor);
@@ -69,17 +70,18 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
     public ARG<S, A> getArg() {
         return arg;
     }
+    public Prec getCurrentPrec() { return prec; }
 
     @Override
-    public SafetyResult<S, A> check(final P initPrec) {
-        logger.write(Level.INFO, "Configuration: %s%n", this);
-        final Stopwatch stopwatch = Stopwatch.createStarted();
-        long abstractorTime = 0;
-        long refinerTime = 0;
-        RefinerResult<S, A, P> refinerResult = null;
-        AbstractorResult abstractorResult = null;
-        P prec = initPrec;
-        int iteration = 0;
+	public SafetyResult<S, A> check(final P initPrec) {
+		logger.write(Level.INFO, "Configuration: %s%n", this);
+		final Stopwatch stopwatch = Stopwatch.createStarted();
+		long abstractorTime = 0;
+		long refinerTime = 0;
+		RefinerResult<S, A, P> refinerResult = null;
+		AbstractorResult abstractorResult = null;
+		prec = initPrec;
+		int iteration = 0;
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;

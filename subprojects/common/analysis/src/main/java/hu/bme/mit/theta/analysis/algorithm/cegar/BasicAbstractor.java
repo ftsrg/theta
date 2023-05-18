@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
-import hu.bme.mit.theta.analysis.runtimemonitor.GlobalMonitorData;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -95,7 +94,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         waitlist.addAll(arg.getIncompleteNodes());
 
         MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
-		if (!(stopCriterion.canStop(arg))) {
+		if (!(stopCriterion.canStop(arg, prec))) {
 			while (!waitlist.isEmpty()) {
 				final ArgNode<S, A> node = waitlist.remove();
 
@@ -108,7 +107,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                 }
 
                 MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
-                if (stopCriterion.canStop(arg, newNodes)) break;
+                if (stopCriterion.canStop(arg, newNodes, prec)) break;
 			}
 		}
 

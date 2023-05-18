@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar.abstractor;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
@@ -57,15 +58,15 @@ public final class StopCriterions {
 
 	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
 		@Override
-		public boolean canStop(final ARG<S, A> arg) {
-			return arg.getNewCexs().findAny().isPresent();
+		public boolean canStop(final ARG<S, A> arg, Prec prec) {
+			return arg.getNewCexs(prec).findAny().isPresent();
             // return arg.getUnsafeNodes().findAny().isPresent();
 		}
 
 		@Override
-		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes, Prec prec) {
             return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())) &&
-                arg.getNewCexs().findAny().isPresent();
+                arg.getNewCexs(prec).findAny().isPresent();
 		}
 
         @Override
@@ -75,16 +76,16 @@ public final class StopCriterions {
         }
     }
 
-    private static final class FullExploration<S extends State, A extends Action> implements StopCriterion<S, A> {
-        @Override
-        public boolean canStop(final ARG<S, A> arg) {
-            return false;
-        }
+	private static final class FullExploration<S extends State, A extends Action, P extends Prec> implements StopCriterion<S, A> {
+		@Override
+		public boolean canStop(final ARG<S, A> arg, final Prec prec) {
+			return false;
+		}
 
-        @Override
-        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-            return false;
-        }
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes, final Prec prec) {
+			return false;
+		}
 
         @Override
         public String toString() {
@@ -101,17 +102,17 @@ public final class StopCriterions {
             this.n = n;
         }
 
-        @Override
-        public boolean canStop(final ARG<S, A> arg) {
-            // TODO: this could be optimized: we don't need to count it,
-            // we just need to know if there are >= n elements
-            return arg.getUnsafeNodes().count() >= n;
-        }
+		@Override
+		public boolean canStop(final ARG<S, A> arg, final Prec prec) {
+			// TODO: this could be optimized: we don't need to count it,
+			// we just need to know if there are >= n elements
+			return arg.getUnsafeNodes().count() >= n;
+		}
 
-        @Override
-        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-            return canStop(arg);
-        }
+		@Override
+		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes, final Prec prec) {
+			return canStop(arg, prec);
+		}
 
         @Override
         public String toString() {

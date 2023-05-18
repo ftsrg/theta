@@ -16,45 +16,48 @@
 package hu.bme.mit.theta.analysis.runtimemonitor
 
 import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
+import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import java.lang.RuntimeException
 
-class CexMonitor<S : State?, A : Action?> constructor(
-    private val mitigate: Boolean, private val logger: Logger, private val arg: ARG<S, A>
+class CexMonitor<S : State?, A : Action?, P : Prec?> constructor(
+    private val mitigate: Boolean, private val storeArgs : Boolean, private val logger: Logger, private val cegarChecker: CegarChecker<S, A, P>
 ) : Monitor {
-    // private val cexHashStorage = CexHashStorage<S, A>()
     var lastCex: ArgTrace<S, A>? = null
 
     private fun disableCoversInTrace() {
         // as we do not know specific counterexamples, disable all cexs - we know none of them are new
-        arg.cexs.forEach { it.nodes().forEach { argNode -> argNode.disableCoveringAbility() } }
+        cegarChecker.arg.cexs.forEach { it.nodes().forEach { argNode -> argNode.disableCoveringAbility() } }
     }
 
     private fun checkIfNewCexFound(): Boolean {
-        return if (arg.cexs.anyMatch { cex -> !arg.cexHashStorage.contains(cex) }) {
-            if(mitigate) GlobalMonitorData.updateNewCexInArg(true)
+        return if (cegarChecker.arg.cexs.anyMatch { cex ->
+                cegarChecker.arg.getNewCexs(cegarChecker.currentPrec).toList().contains(cex)} ) {
             logger.write(Logger.Level.INFO, "Counterexample hash check: new cex found successfully\n")
             true
         } else {
-            if(mitigate) GlobalMonitorData.updateNewCexInArg(false)
             logger.write(Logger.Level.VERBOSE, "Counterexample hash check: NO new cex found\n")
             false
         }
     }
 
     private fun addNewCounterexample() {
-        val newCexs : List<ArgTrace<S,A>> = arg.newCexs.toList()
+        val newCexs : List<ArgTrace<S,A>> = cegarChecker.arg.getNewCexs(cegarChecker.currentPrec).toList()
         assert(newCexs.size==1, { "Found ${newCexs.size} new cex instead of one" })
 
         lastCex = newCexs.get(0)
     }
 
     private fun refinedNewCounterexample() {
-        arg.cexHashStorage.addData(lastCex)
+        cegarChecker.arg.cexHashStorage.addData(lastCex)
+        if(storeArgs) {
+            cegarChecker.arg.argPrecHashStorage.addData(Tuple2.of(cegarChecker.arg, cegarChecker.currentPrec))
+        }
     }
 
     private fun throwNotSolvable() {
