@@ -315,7 +315,7 @@ enum class CexMonitorOptions {
 
     CHECK,
     CHECK_ARG,
-    MITIGATE,
-    MITIGATE_ARG,
+    //MITIGATE, // TODO either fix or remove all remnants of this
+    //MITIGATE_ARG, // TODO either fix or remove all remnants of this
     DISABLE
 }
