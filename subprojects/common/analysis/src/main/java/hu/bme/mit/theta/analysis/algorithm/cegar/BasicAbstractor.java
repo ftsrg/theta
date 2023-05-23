@@ -115,7 +115,9 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         waitlist.clear(); // Optimization
 
-        MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
+        if(!arg.isComplete()) {
+            MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
+        }
 
 		if (arg.isSafe()) {
 			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
