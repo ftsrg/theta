@@ -20,10 +20,11 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
+import hu.bme.mit.theta.analysis.runtimemonitor.container.ArgPrecHashStorage
+import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
-import java.lang.RuntimeException
 
 class CexMonitor<S : State?, A : Action?, P : Prec?> constructor(
     private val mitigate: Boolean, private val storeArgs : Boolean, private val logger: Logger, private val cegarChecker: CegarChecker<S, A, P>
@@ -36,12 +37,11 @@ class CexMonitor<S : State?, A : Action?, P : Prec?> constructor(
     }
 
     private fun checkIfNewCexFound(): Boolean {
-        return if (cegarChecker.arg.cexs.anyMatch { cex ->
-                cegarChecker.arg.getNewCexs(cegarChecker.currentPrec).toList().contains(cex)} ) {
-            logger.write(Logger.Level.INFO, "Counterexample hash check: new cex found successfully\n")
+        return if (cegarChecker.arg.getNewCexs(cegarChecker.currentPrec).toList().size > 0) {
+            logger.write(Logger.Level.INFO, "\nnew cex found successfully\n")
             true
         } else {
-            logger.write(Logger.Level.VERBOSE, "Counterexample hash check: NO new cex found\n")
+            logger.write(Logger.Level.INFO, "\nNO new cex found, removing covered by edges to infeasible traces\n")
             false
         }
     }
@@ -67,9 +67,15 @@ class CexMonitor<S : State?, A : Action?, P : Prec?> constructor(
     override fun execute(checkpointName: String) {
         when (checkpointName) {
             "CegarChecker.unsafeARG" -> if(checkIfNewCexFound()) addNewCounterexample() else throwNotSolvable()
-            "BasicAbstractor.beforeStopCriterion" -> if(mitigate) { if(!checkIfNewCexFound()) disableCoversInTrace() }
+            "StopCriterion.noNewCexFound" -> if(mitigate) { if(!checkIfNewCexFound()) disableCoversInTrace() }
             "SingleExprTraceRefiner.refinedCex" -> refinedNewCounterexample()
             else -> throw RuntimeException("Unknown checkpoint name in CexMonitor execution: $checkpointName")
         }
     }
+}
+
+class CexHashStorageObject<S : State, A : Action> {
+    val cexHashStorage: CexHashStorage<S, A>? = CexHashStorage<S, A>()
+    val argPrecHashStorage: ArgPrecHashStorage<S, A, Prec>? =
+        ArgPrecHashStorage<S, A, Prec>() // TODO not the best solution with Prec
 }

@@ -20,9 +20,12 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -42,11 +45,18 @@ public final class StopCriterions {
     }
 
     /**
-     * @return Criterion that explores the whole state space
+     * @return Criterion that stops at the first counterexample
      */
-    public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
-        return new FullExploration<>();
+    public static <S extends State, A extends Action> StopCriterion<S, A> firstCexWithMitigation() {
+        return new FirstCexWithMitigation<>();
     }
+
+	/**
+	 * @return Criterion that explores the whole state space
+	 */
+	public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
+		return new FullExploration<>();
+	}
 
     /**
      * @param n Number of counterexamples to collect
@@ -56,17 +66,49 @@ public final class StopCriterions {
         return new AtLeastNCexs<>(n);
     }
 
-	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
+    private static final class FirstCexWithMitigation<S extends State, A extends Action> implements StopCriterion<S, A> {
+        @Override
+        public boolean canStop(final ARG<S, A> arg, Prec prec) {
+            boolean present = arg.getNewCexs(prec).findAny().isPresent();
+            if(!present) MonitorCheckpoint.Checkpoints.execute("StopCriterion.noNewCexFound");
+            return present;
+            // return arg.getUnsafeNodes().findAny().isPresent();
+        }
+
+        @Override
+        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes, Prec prec) {
+            Optional<ArgNode<S, A>> any = newNodes.stream()
+                .filter(n -> n.isTarget() && !n.isExcluded()).findFirst();
+            if(any.isPresent()) {
+                if(!arg.getNewCexs(prec).toList().contains(ArgTrace.to(any.get()))) {
+                    // cex is not new, remove covers
+                    MonitorCheckpoint.Checkpoints.execute("StopCriterion.noNewCexFound");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+                .toString();
+        }
+    }
+
+    private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
 		@Override
 		public boolean canStop(final ARG<S, A> arg, Prec prec) {
-			return arg.getNewCexs(prec).findAny().isPresent();
+			return arg.getCexs().findAny().isPresent();
             // return arg.getUnsafeNodes().findAny().isPresent();
 		}
 
 		@Override
 		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes, Prec prec) {
             return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())) &&
-                arg.getNewCexs(prec).findAny().isPresent();
+                arg.getCexs().findAny().isPresent();
 		}
 
         @Override

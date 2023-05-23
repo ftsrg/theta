@@ -121,19 +121,14 @@ data class XcfaCegarConfig(
         val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(
             abstractionSolverInstance)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
-            xcfa,
-            abstractionSolverInstance,
-            maxEnum,
-            waitlist,
-            refinement.stopCriterion,
-            logger,
-            lts,
-            errorDetectionType,
-            if (porLevel.isDynamic) {
-                XcfaDporLts.getPartialOrder(corePartialOrd)
-            } else {
-                corePartialOrd
-            }
+                xcfa,
+                abstractionSolverFactory.createSolver(),
+                maxEnum,
+                search.getComp(xcfa),
+                refinement.stopCriterion(cexMonitor),
+                logger,
+                porLevel.ltsSupplier(xcfa, ignoredVarRegistry),
+                errorDetectionType
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
@@ -196,7 +191,7 @@ data class XcfaCegarConfig(
                 CexMonitor(mitigate = false, storeArgs = false, logger = logger, cegarChecker = cc)
             }
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
-            MonitorCheckpoint.register(cm, "BasicAbstractor.beforeStopCriterion")
+            MonitorCheckpoint.register(cm, "StopCriterion.noNewCexFound")
             MonitorCheckpoint.register(cm, "SingleExprTraceRefiner.refinedCex")
         }
     }

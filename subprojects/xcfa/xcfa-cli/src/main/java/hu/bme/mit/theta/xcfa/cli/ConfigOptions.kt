@@ -155,102 +155,91 @@ enum class Domain(
 }
 
 enum class Refinement(
-    val refiner: (solverFactory: SolverFactory) -> ExprTraceChecker<out Refutation>,
-    val stopCriterion: StopCriterion<XcfaState<out ExprState>, XcfaAction>
+        val refiner: (solverFactory: SolverFactory) -> ExprTraceChecker<out Refutation>,
+        val stopCriterion: (c: CexMonitorOptions) -> StopCriterion<XcfaState<out ExprState>, XcfaAction>
 ) {
-
-    FW_BIN_ITP(
-        refiner = { s ->
-            ExprTraceFwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
-        },
-        stopCriterion = StopCriterions.firstCex()
+    FW_BIN_ITP  (
+            refiner = { s -> ExprTraceFwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    BW_BIN_ITP(
-        refiner = { s ->
-            ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
-        },
-        stopCriterion = StopCriterions.firstCex()
+    BW_BIN_ITP  (
+            refiner = { s -> ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    SEQ_ITP(
-        refiner = { s ->
-            ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
-        },
-        stopCriterion = StopCriterions.firstCex()
+    SEQ_ITP     (
+            refiner = { s -> ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    MULTI_SEQ(
-        refiner = { s ->
-            ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
-        },
-        stopCriterion = StopCriterions.fullExploration()
+    MULTI_SEQ   (
+            refiner = { s -> ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver()) },
+            stopCriterion = { c -> if(c != CexMonitorOptions.DISABLE) error("refinement progress check (cex monitor) is not available for MULTI_SEQ") else StopCriterions.fullExploration()}
     ),
-    UNSAT_CORE(
-        refiner = { s ->
-            ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-        },
-        stopCriterion = StopCriterions.firstCex()
+    UNSAT_CORE  (
+            refiner = { s -> ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()) },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    UCB(
-        refiner = { s ->
-            ExprTraceUCBChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-        },
-        stopCriterion = StopCriterions.firstCex()
+    UCB         (
+            refiner = { s -> ExprTraceUCBChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()) },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
 
-    NWT_SP(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withoutIT().withSP().withoutLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_SP      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withSP().withoutLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_WP(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withoutIT().withWP().withoutLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_WP      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withWP().withoutLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_SP_LV(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withoutIT().withSP().withLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_SP_LV   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withSP().withLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_WP_LV(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withoutIT().withWP().withLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_WP_LV   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withoutIT().withWP().withLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_IT_WP(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withIT().withWP().withoutLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_IT_WP   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withWP().withoutLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_IT_SP(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withIT().withSP().withoutLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_IT_SP   (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withSP().withoutLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
     NWT_IT_WP_LV(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withIT().withWP().withLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withWP().withLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     ),
-    NWT_IT_SP_LV(
-        refiner = { s ->
-            ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-                .withIT().withSP().withLV()
-        },
-        stopCriterion = StopCriterions.firstCex()
+    NWT_IT_SP_LV      (
+            refiner = { s -> ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver()).withIT().withSP().withLV() },
+            stopCriterion = { c -> if(c==CexMonitorOptions.MITIGATE || c==CexMonitorOptions.MITIGATE_ARG)
+                StopCriterions.firstCexWithMitigation()
+            else StopCriterions.firstCex()}
     )
 }
 
@@ -310,12 +299,11 @@ enum class InitPrec(
 
 }
 
-// TODO CexMonitor: disable for multi_seq?
 enum class CexMonitorOptions {
 
     CHECK,
     CHECK_ARG,
-    //MITIGATE, // TODO either fix or remove all remnants of this
-    //MITIGATE_ARG, // TODO either fix or remove all remnants of this
+    MITIGATE,
+    MITIGATE_ARG,
     DISABLE
 }

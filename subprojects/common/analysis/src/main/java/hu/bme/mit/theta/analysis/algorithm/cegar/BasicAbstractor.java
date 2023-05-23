@@ -93,7 +93,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         reachedSet.addAll(arg.getNodes());
         waitlist.addAll(arg.getIncompleteNodes());
 
-        MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
 		if (!(stopCriterion.canStop(arg, prec))) {
 			while (!waitlist.isEmpty()) {
 				final ArgNode<S, A> node = waitlist.remove();
@@ -106,7 +105,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                     waitlist.addAll(newNodes);
                 }
 
-                MonitorCheckpoint.Checkpoints.execute("BasicAbstractor.beforeStopCriterion");
                 if (stopCriterion.canStop(arg, newNodes, prec)) break;
 			}
 		}
@@ -117,13 +115,15 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         waitlist.clear(); // Optimization
 
-        if (arg.isSafe()) {
-            checkState(arg.isComplete(), "Returning incomplete ARG as safe");
-            return AbstractorResult.safe();
-        } else {
-            return AbstractorResult.unsafe();
-        }
-    }
+        MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
+
+		if (arg.isSafe()) {
+			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
+			return AbstractorResult.safe();
+		} else {
+			return AbstractorResult.unsafe();
+		}
+	}
 
     private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
         if (!node.isLeaf()) {

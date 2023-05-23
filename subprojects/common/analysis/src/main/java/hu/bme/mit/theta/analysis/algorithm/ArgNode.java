@@ -167,7 +167,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is not a bottom state.
 	 */
 	public boolean isFeasible() {
-		return !state.isBottom() || isTargetOfKnownInfeasibleTrace();
+		return !state.isBottom();
 	}
 
     private boolean isTargetOfKnownInfeasibleTrace() {
@@ -216,7 +216,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is safe, i.e., not target or excluded.
 	 */
 	public boolean isSafe() {
-		return !isTarget() || isExcluded();
+		return !isTarget() || isExcluded() || isTargetOfKnownInfeasibleTrace();
 	}
 
     /**
