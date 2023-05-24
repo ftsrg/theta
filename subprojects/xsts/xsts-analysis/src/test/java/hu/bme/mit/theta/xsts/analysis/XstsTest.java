@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -413,7 +414,7 @@ public class XstsTest {
 
 		var action = XstsAction.create(merged);
 
-		var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), 50,Z3SolverFactory.getInstance().createSolver(),firstIndex,offset,(x)->XstsState.of(ExplState.of(x), false, true),xsts.getVars());
+		var checker = new KIndChecker2<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), 50,Z3SolverFactory.getInstance().createSolver(),Z3SolverFactory.getInstance().createSolver(),firstIndex,offset,(x)->XstsState.of(ExplState.of(x), false, true),xsts.getVars());
 		var old = new Xsts_K_induction();
 		//final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
 		final SafetyResult<?, ?> status = checker.check(null);
