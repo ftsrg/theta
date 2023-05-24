@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -39,9 +40,11 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.CfaKIndCheckerBuilder;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
@@ -61,6 +64,13 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.Stmts;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
+import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -68,6 +78,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
@@ -77,9 +88,11 @@ public class CfaCli {
     private static final String JAR_NAME = "theta-cfa-cli.jar";
     private final String[] args;
     private final TableWriter writer;
+	@Parameter(names = {"--algorithm"}, description = "Algorithm")
+	Algorithm algorithm = Algorithm.CEGAR;
 
-    @Parameter(names = "--domain", description = "Abstract domain")
-    Domain domain = Domain.PRED_CART;
+	@Parameter(names = "--domain", description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
 
     @Parameter(names = "--refinement", description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
@@ -231,19 +244,29 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-            final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc,
-                    abstractionSolverFactory, refinementSolverFactory);
-            final SafetyResult<?, ?> status = check(configuration);
-            sw.stop();
-            printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile != null) {
-                writeCex(status.asUnsafe());
-            }
-        } catch (final Throwable ex) {
-            printError(ex);
-            System.exit(1);
-        }
-    }
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
+			final SafetyResult<?, ?> status;
+			if(algorithm == Algorithm.CEGAR){
+				status = check(configuration);
+				sw.stop();
+				printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
+			} else if(algorithm == Algorithm.KINDUCTION){
+				var checker = CfaKIndCheckerBuilder.create(cfa, Z3SolverFactory.getInstance(), Integer.MAX_VALUE);
+				status = checker.check(null);
+				logger.write(Logger.Level.RESULT, "%s%n", status);
+				sw.stop();
+			} else {
+				throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+			}
+
+			if (status.isUnsafe() && cexfile != null) {
+				writeCex(status.asUnsafe());
+			}
+		} catch (final Throwable ex) {
+			printError(ex);
+			System.exit(1);
+		}
+	}
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
