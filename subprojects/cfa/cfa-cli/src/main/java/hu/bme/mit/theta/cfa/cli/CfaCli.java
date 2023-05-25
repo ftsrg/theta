@@ -244,12 +244,11 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
 			final SafetyResult<?, ?> status;
 			if(algorithm == Algorithm.CEGAR){
+				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
 				status = check(configuration);
 				sw.stop();
-				printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
 			} else if(algorithm == Algorithm.KINDUCTION){
 				var checker = CfaKIndCheckerBuilder.create(cfa, Z3SolverFactory.getInstance(), Integer.MAX_VALUE);
 				status = checker.check(null);
@@ -259,6 +258,7 @@ public class CfaCli {
 				throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
 			}
 
+			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
 			}
