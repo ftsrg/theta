@@ -309,26 +309,27 @@ public class CfaCli {
         }
     }
 
-    private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-        if (benchmarkMode) {
-            writer.cell(status.isSafe());
-            writer.cell(totalTimeMs);
-            writer.cell(stats.getAlgorithmTimeMs());
-            writer.cell(stats.getAbstractorTimeMs());
-            writer.cell(stats.getRefinerTimeMs());
-            writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
-            if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
-            } else {
-                writer.cell("");
-            }
-            writer.newRow();
-        }
-    }
+	private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
+		final CegarStatistics stats = (CegarStatistics)
+				status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+		if (benchmarkMode) {
+			writer.cell(status.isSafe());
+			writer.cell(totalTimeMs);
+			writer.cell(stats.getAlgorithmTimeMs());
+			writer.cell(stats.getAbstractorTimeMs());
+			writer.cell(stats.getRefinerTimeMs());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				writer.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				writer.cell("");
+			}
+			writer.newRow();
+		}
+	}
 
     private void printError(final Throwable ex) {
         final String message = ex.getMessage() == null ? "" : ex.getMessage();
