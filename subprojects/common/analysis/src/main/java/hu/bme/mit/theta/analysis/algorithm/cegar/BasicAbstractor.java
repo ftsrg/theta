@@ -119,7 +119,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
             MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
         }
 
-		if (arg.isSafe()) {
+        if (arg.isSafe() && arg.getNewCexs(prec).toList().isEmpty()) { // TODO the second half of the condition is a quick fix and the check ARG part should especially be refactored
 			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
 			return AbstractorResult.safe();
 		} else {

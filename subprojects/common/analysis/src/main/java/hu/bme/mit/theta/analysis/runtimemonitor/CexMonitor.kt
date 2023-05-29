@@ -20,8 +20,6 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.runtimemonitor.container.ArgPrecHashStorage
-import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
@@ -72,10 +70,4 @@ class CexMonitor<S : State?, A : Action?, P : Prec?> constructor(
             else -> throw RuntimeException("Unknown checkpoint name in CexMonitor execution: $checkpointName")
         }
     }
-}
-
-class CexHashStorageObject<S : State, A : Action> {
-    val cexHashStorage: CexHashStorage<S, A>? = CexHashStorage<S, A>()
-    val argPrecHashStorage: ArgPrecHashStorage<S, A, Prec>? =
-        ArgPrecHashStorage<S, A, Prec>() // TODO not the best solution with Prec
 }
