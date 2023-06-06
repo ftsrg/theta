@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Common interface for Labeled Transition Systems (LTS). An LTS can provide
