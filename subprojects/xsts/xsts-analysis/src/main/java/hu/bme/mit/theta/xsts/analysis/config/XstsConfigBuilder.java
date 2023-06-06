@@ -162,7 +162,8 @@ public class XstsConfigBuilder {
 	}
 
 	private Logger logger = NullLogger.getInstance();
-	private final SolverFactory solverFactory;
+	private final SolverFactory abstractionSolverFactory;
+	private final SolverFactory refinementSolverFactory;
 	private final Domain domain;
 	private final Refinement refinement;
 	private Search search = Search.BFS;
@@ -173,10 +174,11 @@ public class XstsConfigBuilder {
 	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
 	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
-	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
+	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
 		this.domain = domain;
 		this.refinement = refinement;
-		this.solverFactory = solverFactory;
+		this.abstractionSolverFactory = abstractionSolverFactory;
+		this.refinementSolverFactory = refinementSolverFactory;
 	}
 
 	public XstsConfigBuilder logger(final Logger logger) {
@@ -220,7 +222,7 @@ public class XstsConfigBuilder {
 	}
 
 	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
-		final Solver abstractionSolver = solverFactory.createSolver();
+		final Solver abstractionSolver = abstractionSolverFactory.createSolver();
 		final Expr<BoolType> negProp = Not(xsts.getProp());
 
 		if (domain == Domain.EXPL) {
@@ -245,23 +247,23 @@ public class XstsConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
-					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp, solverFactory.createUCSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createUCSolver()),
 							JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
@@ -310,16 +312,16 @@ public class XstsConfigBuilder {
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
 				case FW_BIN_ITP:
-					exprTraceChecker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver());
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver());
 					break;
 				case BW_BIN_ITP:
-					exprTraceChecker = ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver());
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver());
 					break;
 				case SEQ_ITP:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver());
+					exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver());
 					break;
 				case MULTI_SEQ:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver());
+					exprTraceChecker = ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver());
 					break;
 				default:
 					throw new UnsupportedOperationException(
@@ -397,19 +399,19 @@ public class XstsConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
 					break;
 				default:

@@ -1186,7 +1186,7 @@ public final class ExprSimplifier {
 				} else {
 					value = value.concat(litOp);
 				}
-				iterator.remove();
+//				iterator.remove();
 			} else {
 				return expr.withOps(ops);
 			}
