@@ -17,46 +17,43 @@ import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.math.max
-import kotlin.properties.ReadWriteProperty
 import kotlin.random.Random
-import kotlin.reflect.KProperty
 
+/**
+ * Type definitions for states, actions and ARG nodes.
+ */
 private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 private typealias Node = ArgNode<out S, A>
 
-private class ExtensionProperty<R, T> : ReadWriteProperty<R, T> {
-    private val map = IdentityHashMap<R, T>()
-    override fun getValue(thisRef: R, property: KProperty<*>) = map[thisRef]!!
-    override fun setValue(thisRef: R, property: KProperty<*>, value: T) {
-        map[thisRef] = value
-    }
-}
-
-private open class NullableExtensionProperty<R, T> : ReadWriteProperty<R, T?> {
-    protected val map = IdentityHashMap<R, T?>()
-    override fun getValue(thisRef: R, property: KProperty<*>) = map[thisRef]
-    override fun setValue(thisRef: R, property: KProperty<*>, value: T?) {
-        map[thisRef] = value
-    }
-
-    fun clear() = map.clear()
-}
-
-private fun <R, T> extension() = ExtensionProperty<R, T>()
-private fun <R, T> nullableExtension() = NullableExtensionProperty<R, T?>()
-
+/**
+ * Backtrack set of a state: actions to be explored when backtracking in DFS.
+ */
 private var State.backtrack: MutableSet<A> by extension()
+
+/**
+ * Sleep set of a state: actions that need not be explored.
+ */
 private var State.sleep: MutableSet<A> by extension()
+
+/**
+ * Set of explored actions from a state.
+ */
 private var State.explored: MutableSet<A> by extension()
 
+/**
+ * Reexplored actions in a new CEGAR iteration (only relevant when lazy pruning is used).
+ */
 private val reExploredDelegate = nullableExtension<State, Boolean?>()
 private var State.reExplored: Boolean? by reExploredDelegate
 
+/**
+ * Explored actions from an ARG node.
+ */
 private val Node.explored: Set<A> get() = outEdges.map { it.action }.collect(Collectors.toSet())
 
 /**
- * Dynamic partial order reduction (DPOR) algorithm for state space exploration.
+ * An LTS implementing a dynamic partial order reduction algorithm (Source-DPOR) for state space exploration.
  * @see <a href="https://doi.org/10.1145/3073408">Source Sets: A Foundation for Optimal Dynamic Partial Order Reduction</a>
  */
 open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
@@ -64,34 +61,46 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     companion object {
         var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
 
+        /**
+         * Simple LTS that returns the enabled actions in a state.
+         */
         private val simpleXcfaLts = getXcfaLts()
 
+        /**
+         * The enabled actions of a state.
+         */
         private val State.enabled: Collection<A> get() = simpleXcfaLts.getEnabledActionsFor(this as S)
 
+        /**
+         * Partial order of states considering sleep sets (unexplored behavior).
+         */
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) =
             PartialOrd<E> { s1, s2 ->
                 partialOrd.isLeq(s1, s2) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
             }
     }
 
+    /**
+     * Represents an element of the DFS search stack.
+     */
     private data class StackItem(
-        val node: Node,
-        val processLastAction: Map<Int, Int> = mutableMapOf(),
-        val lastDependents: Map<Int, Map<Int, Int>> = mutableMapOf(),
-        val mutexLocks: MutableMap<String, Int> = mutableMapOf(),
+        val node: Node, // the ARG node
+        val processLastAction: Map<Int, Int> = mutableMapOf(), // the index of the last actions of processes in the search stack
+        val lastDependents: Map<Int, Map<Int, Int>> = mutableMapOf(), // for each process p it stores the index of the last action of each process that is dependent with the last actions of p
+        val mutexLocks: MutableMap<String, Int> = mutableMapOf(), // for each locked mutex the index of the state on the stack where the mutex has been locked
         private val _backtrack: MutableSet<A> = mutableSetOf(),
         private val _sleep: MutableSet<A> = mutableSetOf(),
     ) {
-        val action: A get() = node.inEdge.get().action
+        val action: A get() = node.inEdge.get().action // the incoming action to the current state
 
-        val state: S get() = node.state
+        val state: S get() = node.state // the current state of this stack item
 
-        var backtrack: MutableSet<A> by node.state::backtrack
+        var backtrack: MutableSet<A> by node.state::backtrack // backtrack set of the current state
 
-        var sleep: MutableSet<A> by node.state::sleep
+        var sleep: MutableSet<A> by node.state::sleep // sleep set of the current state
             private set
 
-        var explored: MutableSet<A> by node.state::explored
+        var explored: MutableSet<A> by node.state::explored // explored actions from the current state
             private set
 
         init {
@@ -103,10 +112,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         override fun toString() = action.toString()
     }
 
-    private val stack: Stack<StackItem> = Stack()
+    private val stack: Stack<StackItem> = Stack() // the DFS search stack
 
-    private val last get() = stack.peek()
+    private val last get() = stack.peek() // the top item of the search stack
 
+    /**
+     * Returns an action (wrapped into a set) to be explored from the given state.
+     */
     override fun getEnabledActionsFor(state: S): Set<A> {
         require(state == last.state)
         val possibleActions = last.backtrack subtract last.sleep
@@ -119,13 +131,20 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         return setOf(actionToExplore)
     }
 
+    /**
+     * A waitlist implementation that controls the search: from which state do we need to explore, pops states from the search stack.
+     */
     val waitlist = object : Waitlist<Node> {
 
+        /**
+         * Adds a new ARG node to the search stack.
+         */
         override fun add(item: Node) {
             var node = item
+            // lazy pruning: goes to the root when the stack is empty
             while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-            node.state.reExplored = true
+            node.state.reExplored = true // lazy pruning: indicates that the state is explored in the current iteration
             push(node, stack.size)
         }
 
@@ -140,20 +159,26 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             require(!iterator.hasNext())
         }
 
+        /**
+         * Returns true if there is no more actions to explore. States are popped from the stack while there is no more action to be explored.
+         */
         override fun isEmpty(): Boolean {
             if (last.node.isCovered && last.node.isFeasible) {
+                // if the last node is covered, the subtree of the covering node is explored again (to detect possible races)
                 virtualExploration(last.node.coveringNode.get(), stack.size)
             } else {
+                // when lazy pruning is used the explored parts from previous iterations are reexplored to detect possible races
                 exploreLazily()
             }
             while (stack.isNotEmpty() &&
                 (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
-            ) {
+            ) { // until we need to pop (the last is covered or not feasible, or it has no more actions that need to be explored
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
                     val mutexNeverReleased = last.mutexLocks.containsKey("") &&
                             (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
+                        // if a mutex is never released another action (practically all the others) have to be explored
                         lastButOne.backtrack = lastButOne.state.enabled.toMutableSet()
                     }
                 }
@@ -163,6 +188,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             return stack.isEmpty()
         }
 
+        /**
+         * Returns the last element of the stack after all unnecessary actions have been removed.
+         */
         override fun remove(): Node {
             if (isEmpty) throw NoSuchElementException("The search stack is empty.")
             return last.node
@@ -170,13 +198,19 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
         override fun size() = stack.size
 
+        /**
+         * Clears the search stack and the registry of reexplored actions needed for lazy pruning.
+         */
         override fun clear() {
             stack.clear()
             reExploredDelegate.clear()
         }
 
+        /**
+         * Pushes an item to the search stack.
+         */
         private fun push(item: Node, virtualLimit: Int): Boolean {
-            if (!item.inEdge.isPresent) {
+            if (!item.inEdge.isPresent) { // the first item is simply put on the stack
                 stack.push(StackItem(item, _backtrack = item.state.enabled.toMutableSet()))
                 return true
             }
@@ -260,6 +294,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 }
             }
 
+            // Push new item on the stack
             stack.push(
                 StackItem(
                     node = item,
@@ -283,6 +318,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             return true
         }
 
+        /**
+         * Virtually reexplores part of the ARG for race detection. Used when a node is covered.
+         */
         private fun virtualExploration(node: Node, realStackSize: Int) {
             val startStackSize = stack.size
             val virtualStack = Stack<Node>()
@@ -304,6 +342,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             while (stack.size > startStackSize) stack.pop()
         }
 
+        /**
+         * Explores the part of the ARG preserved from previous iterations (see lazy pruning).
+         */
         private fun exploreLazily() {
             while (stack.isNotEmpty()) {
                 val lazilyExplorable = last.node.outEdges.toList()
@@ -320,9 +361,15 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             }
         }
 
+        /**
+         * Returns a map with the keys of the original maps and the maximum of the reference numbers associated to each key.
+         */
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
 
+        /**
+         * See the article for the definition of notdep.
+         */
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
             return stack.slice(start + 1 until stack.size)
@@ -333,6 +380,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 .toMutableList().apply { add(action) }
         }
 
+        /**
+         * See the article for the definition of initials.
+         */
         private fun initials(start: Int, sequence: List<A>): Set<A> {
             val state = stack[start].node.state
             return (state.enabled subtract state.sleep).filter { enabledAction ->
@@ -347,6 +397,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             }.toSet()
         }
 
+        /**
+         * Returns true when the virtual exploration cannot detect any more races relevant in the "real" exploration (the part of the search stack before the first covering node).
+         */
         private fun noInfluenceOnRealExploration(realStackSize: Int) = last.processLastAction.keys.all { process ->
             last.lastDependents.containsKey(process) && last.lastDependents[process]!!.all { (otherProcess, index) ->
                 index >= realStackSize || index >= last.processLastAction[otherProcess]!!
@@ -354,6 +407,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         }
     }
 
+    /**
+     * Returns true if a and b are dependent actions.
+     */
     protected open fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
@@ -370,13 +426,22 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
  */
 class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
 
+    /**
+     * The current precision of the abstraction.
+     */
     private lateinit var prec: Prec
 
+    /**
+     * Returns actions to be explored from the given state considering the given precision.
+     */
     override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: Collection<A>, prec: P): Set<A> {
         this.prec = prec
         return getEnabledActionsFor(state)
     }
 
+    /**
+     * Returns true if a and b are dependent actions in the current abstraction.
+     */
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
