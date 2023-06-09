@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.PorLogger;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
@@ -83,8 +82,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
 			++iteration;
-			PorLogger.exploredActions.add(0);
-			PorLogger.preservedStates.add(arg.size());
 
 			logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
 			logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
@@ -92,7 +89,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
-			PorLogger.exploredStates.add(arg.size());
 
             String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
             String precString = prec.toString();
@@ -139,11 +135,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		assert cegarResult != null;
 		logger.write(Level.RESULT, "%s%n", cegarResult);
 		logger.write(Level.INFO, "%s%n", stats);
-
-		System.err.println("[EXPLORED STATES] " + PorLogger.exploredStates);
-		System.err.println("[EXPLORED ACTIONS] " + PorLogger.exploredActions);
-		System.err.println("[PRESERVED STATES] " + PorLogger.preservedStates);
-
 		return cegarResult;
 	}
 
