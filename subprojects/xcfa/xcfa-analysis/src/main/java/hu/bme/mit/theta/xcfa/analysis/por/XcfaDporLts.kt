@@ -385,7 +385,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          */
         private fun initials(start: Int, sequence: List<A>): Set<A> {
             val state = stack[start].node.state
-            return (state.enabled subtract state.sleep).filter { enabledAction ->
+            return (state.enabled subtract (state.sleep subtract state.explored)).filter { enabledAction ->
                 for (action in sequence) {
                     if (action == enabledAction) {
                         return@filter true
