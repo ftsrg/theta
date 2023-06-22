@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
 
 import java.util.*;
@@ -142,7 +142,7 @@ public class DynamicTransFunc<A extends StmtAction> implements TransFunc<Prod2St
                     final PredPrec temporaryPrec = PredPrec.of(remainingPredicates);
                     final var abstractor = PredAbstractors.cartesianAbstractor(solver);
                     final var succStates = abstractor.createStatesForExpr(
-                            expr, VarIndexing.all(0), temporaryPrec, action.nextIndexing());
+                            expr, VarIndexingFactory.indexing(0), temporaryPrec, action.nextIndexing());
                     final var succStatesSimplified = succStates.stream().map(
                             s -> PredState.of(ExprUtils.simplify(s.toExpr(), tuple.get1())) // TODO
                     ).collect(Collectors.toSet());

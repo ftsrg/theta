@@ -408,19 +408,19 @@ public class XstsConfigBuilder {
             final RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> precRefiner = AutomaticItpRefToProd2ExplPredPrec.create(autoExpl.builder.create(xsts), predSplit.splitter);
             switch (refinement) {
                 case FW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
                             JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
                     break;
                 case BW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
                             JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
                     break;
                 case SEQ_ITP:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+                    refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
                             JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
                     break;
                 case MULTI_SEQ:
-                    refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, solverFactory.createItpSolver()),
+                    refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp, refinementSolverFactory.createItpSolver()),
                             JoiningPrecRefiner.create(precRefiner), pruneStrategy, logger);
                     break;
                 default:
