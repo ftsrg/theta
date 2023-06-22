@@ -20,6 +20,8 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.ir.Utils;
@@ -103,16 +105,16 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         } else if (oldVar.get2() == 1) {
             if (potentialParam != null && functionState.getParams().contains(potentialParam.get1())) {
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
-                functionState.getProcedureBuilder().getLocalVars().remove(var);
+                functionState.getProcedureBuilder().getVars().remove(var);
                 var = functionState.getLocalVars().get(op1.getName()).get1();
                 functionState.getLocalVars().put(op2.getName(), Tuple2.of(var, 0));
                 functionState.getValues().put(op1.getName(), var.getRef());
                 functionState.getValues().put(op2.getName(), var.getRef());
             } else {
-                XcfaLocation loc = XcfaLocation.create(blockState.getName() + "_" + blockState.getBlockCnt());
+                XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
                 Stmt stmt = Assign(cast(var, var.getType()), cast(op1.getExpr(functionState.getValues()), var.getType()));
-                XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), loc, List.of(stmt));
+                XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE));
                 if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
                 functionState.getProcedureBuilder().addLoc(loc);
                 functionState.getProcedureBuilder().addEdge(edge);
@@ -130,7 +132,7 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         Optional<RegArgument> retVar = instruction.getRetVar();
         checkState(retVar.isPresent(), "Alloca must have a variable tied to it");
         VarDecl<?> var = Var(retVar.get().getName(), retVar.get().getType());
-        functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+        functionState.getProcedureBuilder().getVars().add(var);
         functionState.getLocalVars().put(retVar.get().getName(), Tuple2.of(var, 1));
         functionState.getValues().put(retVar.get().getName(), var.getRef());
     }

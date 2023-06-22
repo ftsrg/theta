@@ -31,8 +31,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.LocalArgument;
@@ -150,7 +149,7 @@ public class Utils {
         Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
         if(objects == null) {
             var = Var(regArgument.getName(), regArgument.getType());
-            functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+            functionState.getProcedureBuilder().getVars().add(var);
             functionState.getLocalVars().put(regArgument.getName(), Tuple2.of(var, 1));
             functionState.getValues().put(regArgument.getName(), var.getRef());
             return var;
@@ -159,7 +158,7 @@ public class Utils {
             objects = functionState.getLocalVars().get(typedName);
             if(objects == null) {
                 var = Var(typedName, regArgument.getType());
-                functionState.getProcedureBuilder().getLocalVars().put(var, Optional.empty());
+                functionState.getProcedureBuilder().getVars().add(var);
                 functionState.getLocalVars().put(typedName, Tuple2.of(var, 1));
                 functionState.getValues().put(typedName, var.getRef());
                 return var;
@@ -175,14 +174,14 @@ public class Utils {
         //noinspection OptionalGetWithoutIsPresent
         RegArgument ret = instruction.getRetVar().get();
         if(ret instanceof LocalArgument) {
-            XcfaLocation loc = XcfaLocation.create(blockState.getName() + "_" + blockState.getBlockCnt());
+            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;
             if(!lhs.getRef().equals(op))
-                edge = XcfaEdge.create(blockState.getLastLocation(), loc, List.of(stmt));
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE));
             else
-                edge = XcfaEdge.create(blockState.getLastLocation(), loc, List.of());
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, NopLabel.INSTANCE);
             if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);

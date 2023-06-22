@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
@@ -77,12 +79,12 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
         checkState(arr.getType() instanceof ArrayType<?, ?>, "getArrayElement used on non-array type.");
         checkState(idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
 
-        XcfaLocation loc = XcfaLocation.create(blockState.getName() + "_" + blockState.getBlockCnt());
+        XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
         VarDecl<?> var = functionState.getLocalVars().get(arr.getName()).get1();
 
         Expr<?> expr = ArrayExprs.Write(cast(var.getRef(), ArrayType.of(Int(), val.getType())), cast(idx.getExpr(functionState.getValues()), Int()), cast(val.getExpr(functionState.getValues()), val.getType()));
         Stmt stmt = Assign(cast(var, var.getType()), cast(expr, var.getType()));
-        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), loc, List.of(stmt));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE));
         if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addLoc(loc);
         functionState.getProcedureBuilder().addEdge(edge);

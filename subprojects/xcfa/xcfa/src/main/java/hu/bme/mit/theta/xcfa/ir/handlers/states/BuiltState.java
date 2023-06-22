@@ -17,8 +17,7 @@
 package hu.bme.mit.theta.xcfa.ir.handlers.states;
 
 import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,11 +26,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class BuiltState {
 	private XCFA xcfa;
-	private Map<String, XcfaProcess> processes;
-	private Map<String, XcfaProcedure.Builder> procedures;
+	private Map<String, XcfaProcedureBuilder> procedures;
 
 	public BuiltState() {
-		processes = new HashMap<>();
 		procedures = new HashMap<>();
 	}
 
@@ -44,19 +41,11 @@ public class BuiltState {
 		this.xcfa = xcfa;
 	}
 
-	public Map<String, XcfaProcess> getProcesses() {
-		return processes;
-	}
-
-	public void setProcesses(Map<String, XcfaProcess> processes) {
-		this.processes = processes;
-	}
-
-	public Map<String, XcfaProcedure.Builder> getProcedures() {
+	public Map<String, XcfaProcedureBuilder> getProcedures() {
 		return procedures;
 	}
 
-	public void setProcedures(Map<String, XcfaProcedure.Builder> procedures) {
+	public void setProcedures(Map<String, XcfaProcedureBuilder> procedures) {
 		this.procedures = procedures;
 	}
 }

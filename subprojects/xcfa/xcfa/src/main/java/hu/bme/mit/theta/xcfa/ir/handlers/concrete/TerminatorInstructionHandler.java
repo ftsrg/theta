@@ -27,8 +27,7 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
@@ -76,10 +75,9 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
     }
 
     private void unreachable(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        XcfaLocation errLoc = XcfaLocation.create(blockState.getName() + "_" + blockState.getBlockCnt());
-        functionState.getProcedureBuilder().addLoc(errLoc);
-        functionState.getProcedureBuilder().setErrorLoc(errLoc);
-        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), errLoc, List.of());
+        functionState.getProcedureBuilder().createErrorLoc();
+        XcfaLocation errLoc = functionState.getProcedureBuilder().getErrorLoc().get();
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, NopLabel.INSTANCE);
         if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);
@@ -87,23 +85,24 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
 
     private void ret(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         List<Stmt> stmts = new ArrayList<>();
-        VarDecl<?> retVar = functionState.getProcedureBuilder().getRetType() == null ? null : functionState.getProcedureBuilder().getParams().keySet().iterator().next();
-        switch (instruction.getArguments().size()) {
-            case 0:
-                checkState(retVar == null, "Not returning a value from non-void function!");
-                break;
-            case 1:
-                checkState(retVar != null, "Returning a value from void function!");
-                Stmt assignStmt = Assign(cast(retVar, retVar.getType()), cast(instruction.getArguments().get(0).getExpr(functionState.getValues()), retVar.getType()));
-                stmts.add(assignStmt);
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
-        }
-        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), functionState.getProcedureBuilder().getFinalLoc(), stmts);
-        if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
-        functionState.getProcedureBuilder().addEdge(edge);
-        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
+        throw new UnsupportedOperationException("Not yet ported!");
+//        VarDecl<?> retVar = functionState.getProcedureBuilder().getRetType() == null ? null : functionState.getProcedureBuilder().getParams().keySet().iterator().next();
+//        switch (instruction.getArguments().size()) {
+//            case 0:
+//                checkState(retVar == null, "Not returning a value from non-void function!");
+//                break;
+//            case 1:
+//                checkState(retVar != null, "Returning a value from void function!");
+//                Stmt assignStmt = Assign(cast(retVar, retVar.getType()), cast(instruction.getArguments().get(0).getExpr(functionState.getValues()), retVar.getType()));
+//                stmts.add(assignStmt);
+//                break;
+//            default:
+//                throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
+//        }
+//        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), functionState.getProcedureBuilder().getFinalLoc(), stmts);
+//        if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+//        functionState.getProcedureBuilder().addEdge(edge);
+//        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
     }
 
     private void br(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -135,7 +134,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
         }
-        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
+        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().get());
     }
 
     private void sw(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
@@ -155,10 +154,10 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc, stmts, instruction.getLineNumber()));
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
-        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), loc, List.of(Assume(BoolExprs.Not(defaultBranch))));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(Assume(BoolExprs.Not(defaultBranch)), EmptyMetaData.INSTANCE));
         if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
-        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc());
+        blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().get());
     }
 
 

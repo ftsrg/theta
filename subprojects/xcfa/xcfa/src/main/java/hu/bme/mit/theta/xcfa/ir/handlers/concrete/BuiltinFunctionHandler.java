@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.model.NopLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
@@ -51,12 +52,11 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     }
 
     private void error(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        XcfaLocation newLoc = XcfaLocation.create(blockState.getName() + "_" + blockState.getBlockCnt());
-        XcfaEdge edge = XcfaEdge.create(blockState.getLastLocation(), newLoc, List.of());
+        functionState.getProcedureBuilder().createErrorLoc();
+        XcfaLocation newLoc = functionState.getProcedureBuilder().getErrorLoc().get();
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, NopLabel.INSTANCE);
         if (instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
-        functionState.getProcedureBuilder().addLoc(newLoc);
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(newLoc);
-        functionState.getProcedureBuilder().setErrorLoc(newLoc);
     }
 }

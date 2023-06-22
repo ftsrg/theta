@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
 import hu.bme.mit.theta.xcfa.model.XCFA;
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
+import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +36,7 @@ import static hu.bme.mit.theta.xcfa.ir.Utils.createConstant;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createVariable;
 
 public class GlobalState {
-    private final XCFA.Builder builder;
+    private final XcfaBuilder builder;
     private final Map<String, VarDecl<?>> globalVars;
     private final List<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> procedures;
     private final SSAProvider ssa;
@@ -44,8 +46,7 @@ public class GlobalState {
     public GlobalState(SSAProvider ssa, ArithmeticType arithmeticType) {
         this.ssa = ssa;
         this.arithmeticType = arithmeticType;
-        builder = XCFA.builder();
-        builder.setDynamic(true);
+        builder = new XcfaBuilder("llvm");
         this.globalVars = new HashMap<>();
         this.procedures = new ArrayList<>();
 
@@ -53,7 +54,7 @@ public class GlobalState {
         for (Tuple3<String, String, String> globalVariable : ssa.getGlobalVariables()) {
             VarDecl<?> variable = createVariable(globalVariable.get1(), globalVariable.get2());
             globalVars.put(globalVariable.get1(), variable);
-            builder.getGlobalVars().put(variable, Optional.of(createConstant(variable.getType(), globalVariable.get3())));
+            builder.addVar(new XcfaGlobalVar(variable, createConstant(variable.getType(), globalVariable.get3())));
         }
 
         procedures.addAll(ssa.getFunctions());
@@ -88,7 +89,7 @@ public class GlobalState {
         return ssa;
     }
 
-    public XCFA.Builder getBuilder() {
+    public XcfaBuilder getBuilder() {
         return builder;
     }
 

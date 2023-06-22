@@ -21,12 +21,6 @@ import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import hu.bme.mit.theta.xcfa.model.XcfaProcess;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.EmptyEdgeRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.ProcedurePass;
-import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
-import hu.bme.mit.theta.xcfa.passes.processpass.ProcessPass;
-import hu.bme.mit.theta.xcfa.passes.xcfapass.XcfaPass;
 import hu.bme.mit.theta.xcfa.ir.ArithmeticType;
 import hu.bme.mit.theta.xcfa.ir.LlvmIrProvider;
 import hu.bme.mit.theta.xcfa.ir.SSAProvider;
@@ -38,6 +32,7 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BuiltState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -80,23 +75,22 @@ public class XcfaUtils {
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      */
     public static XCFA createXCFA(SSAProvider ssa, ArithmeticType arithmeticType) {
-        return createXCFA(ssa, List.of(), List.of(), List.of(new UnusedVarRemovalPass(), new EmptyEdgeRemovalPass()), arithmeticType);
+        return createXCFA(ssa, List.of(), arithmeticType);
     }
 
     /*
      * Creates an XCFA from the provided SSAProvider using its getter methods.
      * Runs the specified passes when a specific stage is complete.
      */
-    public static XCFA createXCFA(SSAProvider ssa, List<XcfaPass> xcfaPasses, List<ProcessPass> processPasses, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
-        if(ssa.hasStructs()) {
+    public static XCFA createXCFA(SSAProvider ssa, List<ProcedurePass> procedurePasses, ArithmeticType arithmeticType) {
+        if (ssa.hasStructs()) {
             throw new UnsupportedOperationException("Structs are not yet supported!");
         }
 
-        if(arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()){
+        if (arithmeticType == ArithmeticType.efficient && ssa.shouldUseBitwiseArithmetics()) {
             System.out.println("Using bitvector arithmetic!");
             arithmeticType = ArithmeticType.bitvector;
-        }
-        else if(arithmeticType == ArithmeticType.efficient) {
+        } else if (arithmeticType == ArithmeticType.efficient) {
             System.out.println("Using integer arithmetic!");
             arithmeticType = ArithmeticType.integer;
         }
@@ -106,7 +100,7 @@ public class XcfaUtils {
         GlobalState globalState = new GlobalState(ssa, arithmeticType);
 
         for (Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function : ssa.getFunctions()) {
-            if(function.get1().equals("reach_error")) continue;
+            if (function.get1().equals("reach_error")) continue;
             FunctionState functionState = new FunctionState(globalState, function);
 
             for (String block : ssa.getBlocks(function.get1())) {
@@ -130,43 +124,45 @@ public class XcfaUtils {
             }
 
             builtState.getProcedures().put(function.get1(), functionState.getProcedureBuilder());
+
         }
-
-        if(builtState.getProcedures().size() > 1) {
-            System.err.println("Inlining failed.");
-            System.exit(-80);
-        }
-
-        builtState.getProcedures().forEach((s, builder) -> {
-            if(builder.getErrorLoc() == null) {
-                System.err.println("Frontend failed");
-                System.exit(-80);
-            }
-        });
-
-        final XCFA.Builder builder = globalState.getBuilder();
-
-        return new XCFA(builder.getGlobalVars(),
-                        List.of(
-                                xcfa -> new XcfaProcess("proc",
-                                                        List.of(),
-                                                        Map.of(),
-                                                        builtState.getProcedures().entrySet().stream().map(e ->
-                                                                (Function<XcfaProcess, XcfaProcedure>)
-                                                                (XcfaProcess xcfaProc) -> new XcfaProcedure(
-                                                                        e.getKey(),
-                                                                        Map.of(),
-                                                                        e.getValue().getLocalVars(),
-                                                                        e.getValue().getLocs(),
-                                                                        e.getValue().getRetType(),
-                                                                        e.getValue().getInitLoc(),
-                                                                        e.getValue().getErrorLoc(),
-                                                                        e.getValue().getFinalLoc(),
-                                                                        e.getValue().getEdges(),
-                                                                        xcfaProc)
-                                                            ).collect(Collectors.toList()),
-                                                        xcfa)),
-                        "xcfa",
-                        true);
+        return globalState.getBuilder().build();
     }
+//
+//        if(builtState.getProcedures().size() > 1) {
+//            System.err.println("Inlining failed.");
+//            System.exit(-80);
+//        }
+//
+//        builtState.getProcedures().forEach((s, builder) -> {
+//            if(builder.getErrorLoc() == null) {
+//                System.err.println("Frontend failed");
+//                System.exit(-80);
+//            }
+//        });
+//
+//        final XCFA.Builder builder = globalState.getBuilder();
+//
+//        return new XCFA(builder.getGlobalVars(),
+//                        List.of(
+//                                xcfa -> new XcfaProcess("proc",
+//                                                        List.of(),
+//                                                        Map.of(),
+//                                                        builtState.getProcedures().entrySet().stream().map(e ->
+//                                                                (Function<XcfaProcess, XcfaProcedure>)
+//                                                                (XcfaProcess xcfaProc) -> new XcfaProcedure(
+//                                                                        e.getKey(),
+//                                                                        Map.of(),
+//                                                                        e.getValue().getLocalVars(),
+//                                                                        e.getValue().getLocs(),
+//                                                                        e.getValue().getRetType(),
+//                                                                        e.getValue().getInitLoc(),
+//                                                                        e.getValue().getErrorLoc(),
+//                                                                        e.getValue().getFinalLoc(),
+//                                                                        e.getValue().getEdges(),
+//                                                                        xcfaProc)
+//                                                            ).collect(Collectors.toList()),
+//                                                        xcfa)),
+//                        "xcfa",
+//                        true);
 }
