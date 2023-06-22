@@ -17,13 +17,15 @@
 package hu.bme.mit.theta.solver.smtlib.impl.cvc4;
 
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 
 import java.nio.file.Path;
+import java.util.EnumSet;
 
 public class CVC4SmtLibSolverFactory extends GenericSmtLibSolverFactory {
 	private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {
-		super(solverPath, args, true);
+		super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.CVC4));
 	}
 
 	public static CVC4SmtLibSolverFactory create(Path solverPath, String[] args) {

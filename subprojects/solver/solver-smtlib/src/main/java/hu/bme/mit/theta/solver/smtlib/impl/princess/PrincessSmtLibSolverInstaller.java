@@ -27,10 +27,15 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
 
-        final var downloadUrl = URI.create(String.format(
-            "http://www.philipp.ruemmer.org/princess/princess-bin-%s.zip",
-            version
-        ));
+        final var downloadUrl = Integer.parseInt(version.substring(0, 4)) > 2021 ?
+            URI.create(String.format(
+                "https://github.com/uuverifiers/princess/releases/download/snapshot-%s/princess-bin-%s.zip",
+                version, version
+            )) :
+            URI.create(String.format(
+                "http://www.philipp.ruemmer.org/princess/princess-bin-%s.zip",
+                version
+            ));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
@@ -68,6 +73,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
+            "2022-07-01", "2021-11-15",
             "2021-05-10", "2021-03-10", "2020-03-12", "2019-10-02", "2019-07-24",
             "2018-10-26", "2018-05-25", "2018-01-27", "2017-12-06", "2017-07-17"
         );

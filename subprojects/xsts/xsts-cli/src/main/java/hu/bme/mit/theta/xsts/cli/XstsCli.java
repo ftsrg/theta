@@ -74,7 +74,7 @@ public class XstsCli {
 	Integer maxEnum = 0;
 
 	@Parameter(names = "--autoexpl", description = "Predicate to explicit switching strategy")
- 	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;

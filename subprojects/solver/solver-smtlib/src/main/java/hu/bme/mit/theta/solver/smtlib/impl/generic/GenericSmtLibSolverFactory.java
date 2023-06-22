@@ -23,20 +23,21 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 
 import java.nio.file.Path;
+import java.util.EnumSet;
 
 public class GenericSmtLibSolverFactory implements SolverFactory {
 	protected final Path solverPath;
 	protected final String[] args;
-	private final boolean isCvc4;
+	private final EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride;
 
 	protected GenericSmtLibSolverFactory(Path solverPath, String[] args) {
-		this(solverPath, args, false);
+		this(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
 	}
 
-	protected GenericSmtLibSolverFactory(Path solverPath, String[] args, boolean isCvc4) {
+	protected GenericSmtLibSolverFactory(Path solverPath, String[] args, EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
 		this.solverPath = solverPath;
 		this.args = args;
-		this.isCvc4 = isCvc4;
+		this.solverOverride = solverOverride;
 	}
 
 	public static GenericSmtLibSolverFactory create(Path solverPath, String[] args) {
@@ -48,7 +49,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
 		final var symbolTable = new GenericSmtLibSymbolTable();
 		final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
 		final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, isCvc4);
+		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
 		return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
 	}
@@ -58,7 +59,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
 		final var symbolTable = new GenericSmtLibSymbolTable();
 		final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
 		final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, isCvc4);
+		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
 		return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
 	}

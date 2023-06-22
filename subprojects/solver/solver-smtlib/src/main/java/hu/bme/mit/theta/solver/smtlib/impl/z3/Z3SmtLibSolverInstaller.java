@@ -32,6 +32,13 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             .addString(LINUX, X64, "x64-glibc-2.31")
             .addString(WINDOWS, X64, "x64-win")
             .addString(WINDOWS, X86, "x86-win")
+            .addString(MAC, X64, "x64-osx-10.16")
+            .build()
+        );
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.11"))
+            .addString(LINUX, X64, "x64-glibc-2.31")
+            .addString(WINDOWS, X64, "x64-win")
+            .addString(WINDOWS, X86, "x86-win")
             .addString(MAC, X64, "x64-osx-10.15.7")
             .build()
         );
@@ -142,14 +149,23 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName());
-        return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0);
+        if(SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0) {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.OLD);
+        }
+        else if(SemVer.of(version).compareTo(SemVer.of("4.8.8")) >= 0) {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.NEW);
+        }
+        else {
+            return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs, Z3SmtLibSolverFactory.Z3ItpSupport.NONE);
+        }
     }
 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-            "4.8.12", "4.8.11", "3.8.10", "4.8.9", "4.8.8", "4.8.7", "4.8.6", "4.8.5", "4.8.4", "4.8.3",
-            "4.8.2", "4.8.1", "4.7.1", "4.6.0", "4.5.0", "4.4.1", "4.4.0", "4.3.2"
+            "4.11.2", "4.11.0", "4.10.2", "4.10.1", "4.10.0", "4.9.1", "4.9.0",
+            "4.8.17", "4.8.16", "4.8.15", "4.8.14", "4.8.13", "4.8.12", "4.8.11", "4.8.10", "4.8.9", "4.8.8", "4.8.7",
+            "4.8.6", "4.8.5", "4.8.4", "4.8.3", "4.8.2", "4.8.1", "4.7.1", "4.6.0", "4.5.0", "4.4.1", "4.4.0", "4.3.2"
         );
     }
 

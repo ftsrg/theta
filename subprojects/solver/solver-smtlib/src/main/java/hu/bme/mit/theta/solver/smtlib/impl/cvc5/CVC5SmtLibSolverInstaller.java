@@ -1,9 +1,11 @@
-package hu.bme.mit.theta.solver.smtlib.impl.smtinterpol;
+package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,29 +14,42 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.*;
 
-    public SMTInterpolSmtLibSolverInstaller(final Logger logger) {
+public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+    private final List<SemVer.VersionDecoder> versions;
+
+    public CVC5SmtLibSolverInstaller(final Logger logger) {
         super(logger);
+
+        versions = new ArrayList<>();
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("1.0.0"))
+            .addString(LINUX, X64, "Linux")
+            .addString(MAC, X64, "macOS")
+            .addString(WINDOWS, X64, "Win64")
+            .build()
+        );
     }
 
     @Override
     protected String getSolverName() {
-        return "smtinterpol";
+        return "cvc5";
     }
 
     @Override
     protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
-
         try(
             final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
             final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
         ) {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
+            installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
         }
         catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
@@ -50,38 +65,50 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] { "-smt2", "-q" };
+        return new String[] {
+            "--lang", "smt2",
+            "--output-lang", "smt2",
+            "--quiet",
+            "--incremental"
+        };
     }
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
-        return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
+        return Arrays.asList("1.0.2", "1.0.1", "1.0.0");
     }
 
     private URL getDownloadUrl(final String version) throws SmtLibSolverInstallerException, MalformedURLException {
-        final String fileName;
-        switch (version) {
-            case "2.5-1230": fileName = "2.5-1230-g3eafb46a"; break;
-            case "2.5-916": fileName = "2.5-916-ga5843d8b"; break;
-            case "2.5-663": fileName = "2.5-663-gf15aa217"; break;
-            case "2.5-479": fileName = "2.5-479-ga49e50b1"; break;
-            case "2.5-7": fileName = "2.5-7-g64ec65d"; break;
-            default: throw new SmtLibSolverInstallerException("Unsupported solver version.");
-        }
-
         return URI.create(String.format(
-            "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",
-            fileName
+            "https://github.com/cvc5/cvc5/releases/download/cvc5-%s/cvc5-%s",
+            version, getArchString(version)
         )).toURL();
     }
 
-    private String getSolverBinaryName(final String version) {
-        return String.format("smtinterpol-%s.jar", version);
+    private String getArchString(final String version) throws SmtLibSolverInstallerException {
+        final var semVer = SemVer.of(version);
+        String archStr = null;
+
+        for (final var versionDecoder : versions) {
+            if (semVer.compareTo(versionDecoder.getVersion()) >= 0) {
+                archStr = versionDecoder.getOsArchString(OsHelper.getOs(), OsHelper.getArch());
+                break;
+            }
+        }
+        if (archStr == null) {
+            throw new SmtLibSolverInstallerException(String.format("MathSAT on operating system %s and architecture %s is not supported", OsHelper.getOs(), OsHelper.getArch()));
+        }
+
+        return archStr;
+    }
+
+    private String getSolverBinaryName(final String version) throws SmtLibSolverInstallerException {
+        return String.format("cvc5-%s", getArchString(version));
     }
 }
