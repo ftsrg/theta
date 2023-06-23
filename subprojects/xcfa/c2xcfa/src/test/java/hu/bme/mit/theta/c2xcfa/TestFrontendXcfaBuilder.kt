@@ -67,6 +67,6 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, explicitProperty == hu.bme.mit.theta.xcfa.analysis.ErrorDetection.OVERFLOW)
+        getXcfaFromC(stream!!, false)
     }
 }

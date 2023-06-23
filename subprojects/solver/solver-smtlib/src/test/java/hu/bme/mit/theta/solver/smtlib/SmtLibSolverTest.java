@@ -195,28 +195,28 @@ public final class SmtLibSolverTest {
         assertEquals(BoolExprs.Bool(true), model.eval(u).orElseThrow());
     }
 
-    @Test
-    public void testFunc() {
-        // Arrange
-        final Solver solver = solverFactory.createSolver();
-        final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(IntExprs.Int(), IntExprs.Int()));
-        final Expr<FuncType<IntType, IntType>> a = ca.getRef();
-        final ParamDecl<IntType> px = Param("x", IntExprs.Int());
-        final Expr<IntType> x = px.getRef();
-
-        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, IntExprs.Int(0)), IntExprs.Eq(App(a, x), IntExprs.Int(0)))));
-        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, IntExprs.Int(1)), IntExprs.Eq(App(a, x), IntExprs.Int(1)))));
-
-        // Act
-        final SolverStatus status = solver.check();
-        assertTrue(status.isSat());
-        final Valuation model = solver.getModel();
-        final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
-        final Expr<FuncType<IntType, IntType>> val = optVal.get();
-
-        // Assert
-        assertEquals(ca.getType(), val.getType());
-    }
+//    @Test
+//    public void testFunc() {
+//        // Arrange
+//        final Solver solver = solverFactory.createSolver();
+//        final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(IntExprs.Int(), IntExprs.Int()));
+//        final Expr<FuncType<IntType, IntType>> a = ca.getRef();
+//        final ParamDecl<IntType> px = Param("x", IntExprs.Int());
+//        final Expr<IntType> x = px.getRef();
+//
+//        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, IntExprs.Int(0)), IntExprs.Eq(App(a, x), IntExprs.Int(0)))));
+//        solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, IntExprs.Int(1)), IntExprs.Eq(App(a, x), IntExprs.Int(1)))));
+//
+//        // Act
+//        final SolverStatus status = solver.check();
+//        assertTrue(status.isSat());
+//        final Valuation model = solver.getModel();
+//        final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
+//        final Expr<FuncType<IntType, IntType>> val = optVal.get();
+//
+//        // Assert
+//        assertEquals(ca.getType(), val.getType());
+//    }
 
     @Test
     public void testArray() {

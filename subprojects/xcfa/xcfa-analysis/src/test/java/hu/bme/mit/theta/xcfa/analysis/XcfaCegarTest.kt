@@ -67,14 +67,14 @@ class XcfaCegarTest {
     @Test
     fun check() {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, explicitProperty == ErrorDetection.OVERFLOW)
+        val xcfa = getXcfaFromC(stream!!, false)
 
 //        System.err.println(xcfa.toDot())
 
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(xcfa.initProcedures[0].first.initLoc)
 
-        val initState = XcfaState(xcfa, mapOf(Pair(0, XcfaProcessState(initLocStack))), ExplState.top())
+        val initState = XcfaState(xcfa, mapOf(Pair(0, XcfaProcessState(initLocStack, LinkedList()))), ExplState.top())
 
         val explTransFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver())
 
