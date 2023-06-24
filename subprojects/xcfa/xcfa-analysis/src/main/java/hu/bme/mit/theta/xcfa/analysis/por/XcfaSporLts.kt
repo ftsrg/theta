@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import kotlin.random.Random
 
-open class XcfaSporLts(private val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAction, XcfaEdge>() {
+open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAction, XcfaEdge>() {
 
     companion object {
         private val random: Random = Random.Default
