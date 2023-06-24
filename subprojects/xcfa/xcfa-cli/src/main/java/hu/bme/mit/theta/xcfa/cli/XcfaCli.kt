@@ -39,6 +39,7 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -52,6 +53,7 @@ import javax.script.Bindings
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleBindings
+import kotlin.random.Random
 import kotlin.system.exitProcess
 
 
@@ -65,7 +67,7 @@ class XcfaCli(private val args: Array<String>) {
     var property: File? = null
 
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
-    var lbeLevel: LbePass.LBELevel = LbePass.LBELevel.LBE_SEQ
+    var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
 
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -116,6 +118,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter
     var remainingFlags: MutableList<String> = ArrayList()
 
+    @Parameter(names = ["--seed"], description = "Random seed")
+    var randomSeed: Int = -1
+
     private fun run() {
         /// Checking flags
         try {
@@ -134,16 +139,16 @@ class XcfaCli(private val args: Array<String>) {
                         ErrorDetection.ERROR_LOCATION
                     } else if (property!!.name.endsWith("no-data-race.prp")) {
                         remainingFlags.add(ErrorDetection.DATA_RACE.toString())
-                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                        if(lbeLevel != LbePass.LbeLevel.NO_LBE) {
                             System.err.println("Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
-                            lbeLevel = LbePass.LBELevel.NO_LBE
+                            lbeLevel = LbePass.LbeLevel.NO_LBE
                         }
                         ErrorDetection.DATA_RACE
                     } else if (property!!.name.endsWith("no-overflow.prp")) {
                         remainingFlags.add(ErrorDetection.OVERFLOW.toString())
-                        if(lbeLevel != LbePass.LBELevel.NO_LBE) {
+                        if(lbeLevel != LbePass.LbeLevel.NO_LBE) {
                             System.err.println("Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
-                            lbeLevel = LbePass.LBELevel.NO_LBE
+                            lbeLevel = LbePass.LbeLevel.NO_LBE
                         }
                         ErrorDetection.OVERFLOW
                     } else {
@@ -163,6 +168,8 @@ class XcfaCli(private val args: Array<String>) {
         /// Starting frontend
         val swFrontend = Stopwatch.createStarted()
         LbePass.level = lbeLevel
+
+        if(randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
 
         val xcfa = try {
             val stream = FileInputStream(input!!)

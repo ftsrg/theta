@@ -20,6 +20,7 @@ import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
@@ -33,15 +34,14 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.analysis.por.AtomicNodePruner
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaAbstractPorLts
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaPorLts
+import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.collectVars
@@ -54,12 +54,15 @@ enum class Backend {
     LAZY
 }
 
-enum class POR(val ltsSupplier:
-               (XCFA, Map<Decl<out hu.bme.mit.theta.core.type.Type>, Set<XcfaState<*>>>) ->
-                    () -> LTS<XcfaState<out ExprState>, XcfaAction>) {
-    NOPOR({_, _ -> { getXcfaLts() }}),
-    BASIC({xcfa, _ -> { XcfaPorLts(xcfa) }}),
-    AAPOR({xcfa, registry -> { XcfaAbstractPorLts(xcfa, registry) }}),
+enum class POR(
+    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>) -> LTS<XcfaState<out ExprState>, XcfaAction>,
+    val isDynamic: Boolean
+) {
+    NOPOR({_, _ -> getXcfaLts() }, false),
+    SPOR({ xcfa, _ -> XcfaSporLts(xcfa) }, false),
+    AASPOR({ xcfa, registry -> XcfaAasporLts(xcfa, registry) }, false),
+    DPOR({xcfa, _ ->  XcfaDporLts(xcfa) }, true),
+    AADPOR({xcfa, _ -> XcfaAadporLts(xcfa) }, true)
 }
 
 enum class Strategy {
@@ -73,16 +76,18 @@ enum class Portfolio {
     COMPLEX
 }
 
+// TODO partial orders nicely
 enum class Domain(
         val abstractor: (
             xcfa: XCFA,
             solver: Solver,
             maxEnum: Int,
-            argNodeComparator: ArgNodeComparator,
+            waitlist: Waitlist<out ArgNode<out XcfaState<out ExprState>, XcfaAction>>,
             stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
             logger: Logger,
-            ltsSupplier: () -> LTS<XcfaState<out ExprState>, XcfaAction>,
-            errorDetectionType: ErrorDetection
+            lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+            errorDetectionType: ErrorDetection,
+            partialOrd: PartialOrd<out XcfaState<out ExprState>>
         ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
         val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
         val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
@@ -92,7 +97,7 @@ enum class Domain(
 ) {
 
         EXPL(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<ExplState>>), d, e, f, g, h) },
             itpPrecRefiner = { XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec()) },
             initPrec = { x, ip -> ip.explPrec(x) },
             partialOrd = { getPartialOrder<ExplState> {s1, s2 -> s1.isLeq(s2)} },
@@ -100,7 +105,7 @@ enum class Domain(
             stateType = TypeToken.get(ExplState::class.java).type
         ),
         PRED_BOOL(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -108,7 +113,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_CART(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
@@ -116,7 +121,7 @@ enum class Domain(
             stateType = TypeToken.get(PredState::class.java).type
         ),
         PRED_SPLIT(
-            abstractor = { a, b, c, d, e, f, g, h -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b)), d, e, f, g, h) },
+            abstractor = { a, b, c, d, e, f, g, h, i -> getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b), i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h) },
             itpPrecRefiner = { a -> XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a)) },
             initPrec = { x, ip -> ip.predPrec(x) },
             partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },

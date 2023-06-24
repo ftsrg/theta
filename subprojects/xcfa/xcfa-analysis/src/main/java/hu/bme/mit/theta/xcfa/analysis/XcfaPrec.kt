@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 
 data class XcfaPrec<P: Prec>(val p: P) : Prec {
-    override fun getUsedVars(): MutableCollection<VarDecl<*>> {
+    override fun getUsedVars(): Collection<VarDecl<*>> {
         return p.usedVars
     }
 

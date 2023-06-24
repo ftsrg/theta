@@ -21,7 +21,9 @@ import com.google.gson.reflect.TypeToken
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
+import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
@@ -31,6 +33,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.common.logging.Logger
@@ -41,6 +44,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
 import java.io.File
@@ -91,17 +95,31 @@ data class XcfaCegarConfig(
         val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
         val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
 
-        val ignoredVarRegistry: Map<Decl<out Type>, Set<XcfaState<*>>> = LinkedHashMap()
+        val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
+        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        val waitlist = if(porLevel.isDynamic) {
+            (lts as XcfaDporLts).waitlist
+        } else {
+            PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(search.getComp(xcfa))
+        }
+
+        val abstractionSolverInstance = abstractionSolverFactory.createSolver()
+        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(abstractionSolverInstance)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
                 xcfa,
-                abstractionSolverFactory.createSolver(),
+                abstractionSolverInstance,
                 maxEnum,
-                search.getComp(xcfa),
+                waitlist,
                 refinement.stopCriterion,
                 logger,
-                porLevel.ltsSupplier(xcfa, ignoredVarRegistry),
-                errorDetectionType
+                lts,
+                errorDetectionType,
+                if(porLevel.isDynamic) {
+                    XcfaDporLts.getPartialOrder(corePartialOrd)
+                } else {
+                    corePartialOrd
+                }
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
@@ -113,12 +131,12 @@ data class XcfaCegarConfig(
         val atomicNodePruner: NodePruner<ExprState, ExprAction> = domain.nodePruner as NodePruner<ExprState, ExprAction>
         val refiner: Refiner<ExprState, ExprAction, Prec> =
                 if (refinement == Refinement.MULTI_SEQ)
-                    if(porLevel == POR.AAPOR)
+                    if(porLevel == POR.AASPOR)
                         MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
                     else
                         MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
                 else
-                    if(porLevel == POR.AAPOR)
+                    if(porLevel == POR.AASPOR)
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
                     else
                         SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
@@ -136,14 +154,10 @@ data class XcfaCegarConfig(
         }
         */
 
-        val cegarChecker = if (porLevel == POR.AAPOR)
+        val cegarChecker = if (porLevel == POR.AASPOR)
             CegarChecker.create(
                 abstractor,
-                AbstractPorRefiner.create<ExprState, ExprAction, Prec, Refutation>(
-                    refiner,
-                    pruneStrategy,
-                    ignoredVarRegistry
-                ),
+                AasporRefiner.create(refiner, pruneStrategy, ignoredVarRegistry),
                 logger
             )
         else
