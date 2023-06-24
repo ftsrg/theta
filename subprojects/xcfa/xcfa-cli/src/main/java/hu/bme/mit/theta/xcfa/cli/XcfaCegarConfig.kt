@@ -213,9 +213,12 @@ data class XcfaCegarConfig(
         error("Done debugging")
     }
 
+    private fun getJavaExecutable() : String =
+        ProcessHandle.current().info().command().orElse("java")
+
     fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
-                "java",
+                getJavaExecutable(),
                 "-cp",
                 File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
                 XcfaCegarServer::class.qualifiedName,

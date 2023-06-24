@@ -69,7 +69,8 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             "--lang", "smt2",
             "--output-lang", "smt2",
             "--quiet",
-            "--incremental"
+            "--incremental",
+            "--fp-exp"
         };
     }
 
