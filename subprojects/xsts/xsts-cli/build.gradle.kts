@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-common"))
     implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver-smtlib"))
     implementation(project(":theta-solver"))
 }
 

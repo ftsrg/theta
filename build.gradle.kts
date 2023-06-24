@@ -2,6 +2,7 @@ plugins {
     base
     id("jacoco-common")
     id("io.freefair.aggregate-javadoc") version "5.2"
+    id("io.codearte.nexus-staging") version "0.30.0" apply true
 }
 
 buildscript {
@@ -10,8 +11,8 @@ buildscript {
 }
 
 allprojects {
-    group = "hu.bme.mit.inf.theta"
-    version = "4.2.2"
+    group = "hu.bme.mit.theta"
+    version = "4.2.5"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -50,5 +51,11 @@ tasks {
 
     check {
         dependsOn(test)
+    }
+
+    nexusStaging {
+        serverUrl = "https://s01.oss.sonatype.org/service/local/"
+        username = System.getenv("OSSRH_USERNAME")
+        password = System.getenv("OSSRH_PASSWORD")
     }
 }
