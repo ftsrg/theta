@@ -70,6 +70,12 @@ class XCFA(
         cachedHash = result
         return result
     }
+
+    override fun toString(): String {
+        return "XCFA(name='$name', vars=$vars, procedures=$procedures, initProcedures=$initProcedures)"
+    }
+
+
 }
 
 data class XcfaProcedure(

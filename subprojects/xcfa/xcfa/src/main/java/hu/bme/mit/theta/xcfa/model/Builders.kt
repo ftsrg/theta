@@ -20,7 +20,10 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
+@DslMarker
+annotation class XcfaDsl
 
+@XcfaDsl
 class XcfaBuilder @JvmOverloads constructor(
         var name: String,
         private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
@@ -54,7 +57,7 @@ class XcfaBuilder @JvmOverloads constructor(
         initProcedures.add(Pair(toAdd, params))
     }
 }
-
+@XcfaDsl
 class XcfaProcedureBuilder @JvmOverloads constructor(
         var name: String,
         private val manager: ProcedurePassManager,
