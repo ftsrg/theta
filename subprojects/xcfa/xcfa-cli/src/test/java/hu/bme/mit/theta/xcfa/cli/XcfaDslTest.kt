@@ -73,16 +73,16 @@ class XcfaDslTest {
     fun verifyXcfa() {
         SolverManager.registerSolverManager(Z3SolverManager.create())
         val config = XcfaCegarConfig(maxEnum = 1, search = Search.BFS, initPrec = InitPrec.ALLVARS)
-
-        val xcfa = getAsyncXcfa()
-        val xcfaDotFile = File("/tmp/output", "xcfa.dot")
-        xcfaDotFile.writeText(xcfa.toDot())
-
-        val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
-        val argFile = File("/tmp/output", "arg-${safetyResult.isSafe}.dot")
-        val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
-        argFile.writeText(GraphvizWriter.getInstance().writeString(g))
-        Assert.assertTrue(safetyResult.isSafe)
+        run {
+            val xcfa = getSyncXcfa()
+            val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
+            Assert.assertTrue(safetyResult.isSafe)
+        }
+        run {
+            val xcfa = getAsyncXcfa()
+            val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
+            Assert.assertTrue(safetyResult.isSafe)
+        }
     }
 
 }
