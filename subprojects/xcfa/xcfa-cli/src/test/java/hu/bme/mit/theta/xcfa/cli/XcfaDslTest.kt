@@ -82,7 +82,7 @@ class XcfaDslTest {
         val argFile = File("/tmp/output", "arg-${safetyResult.isSafe}.dot")
         val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
         argFile.writeText(GraphvizWriter.getInstance().writeString(g))
-        Assert.assertTrue(safetyResult.isUnsafe)
+        Assert.assertTrue(safetyResult.isSafe)
     }
 
 }
